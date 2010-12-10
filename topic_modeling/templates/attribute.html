@@ -1,0 +1,116 @@
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+
+{% extends "base.html" %}
+
+{% block scripts %}
+	<script charset="utf-8" type="text/javascript">
+		$.fn.attr_vars = function () {};
+		$.fn.attr_vars.baseurl = "{{ baseurl }}";
+		$.fn.attr_vars.dataset = "{{ dataset }}";
+		$.fn.attr_vars.analysis = "{{ analysis }}";
+		$.fn.attr_vars.curvalue = "{{ curvalue.value }}";
+		$.fn.attr_vars.curattr = "{{ attribute.name }}";
+	</script>
+{% endblock %}
+
+{% block above_sidebar %}
+	<table class="above_inset">
+		<tr><th><label>Attribute Name:</label></th>
+		<td>
+			<select id="id_attribute" OnChange="location.href=document.getElementById('id_attribute').options[selectedIndex].value">
+				{% for a in attributes %}
+				<option value="{{ baseurl }}/{{ a.name }}" {% ifequal attribute a %}selected{% endifequal %}>{{ a.name }}</option>
+				{% endfor %}
+			</select>
+		</td>
+	</table>
+{% endblock %}
+
+{% block sidebar %}
+	<script charset="utf-8" type="text/javascript"
+		src="/site-media/common_scripts/sidebar.js">
+	</script>
+	<script charset="utf-8" type="text/javascript"
+		src="/site-media/attribute_scripts/attribute_sidebar.js">
+	</script>
+	<div id="attributes_list" class="inset"></div>
+	<script charset="utf=8" type="text/javascript">
+		$(document).ready(function () {
+			get_attribute_page({{ page_num }});
+		});
+	</script>
+{% endblock %}
+
+{% block presentation_area %}
+	<div id="presentation-area-sidebar">
+		<div class="widget full-width" id="attribute_stats_widget">
+			
+			<div class="widget-title">Stats</div>
+			<div class="widget-body">
+			<ul class="list">
+				<li>Number of tokens: <span class="value">{{ num_tokens }}</span></li>
+				<li>Number of types: <span class="value">{{ num_types }}</span></li>
+				<li>Number of documents: <span class="value">{{ num_docs }}</span></li>
+			</ul><!--
+				<table>
+					<tr>
+						<td>Number of tokens: </td>
+						<td class="left-align">{{ num_tokens }}</td>
+					</tr>
+					<tr>
+						<td>Number of types: </td>
+						<td class="left-align">{{ num_types }}</td>
+					</tr>
+					<tr>
+						<td>Number of documents: </td>
+						<td class="left-align">{{ num_docs }}</td>
+					</tr>
+				</table>-->
+			</div>
+		</div>
+		<div class="widget" id="top_words_widget">
+			<div class="widget-title">Top Words p(w|attribute)</div>
+			<img class="widget-body" src="{{ chart_address }}"/>
+		</div>
+	</div>
+	<div id="presentation-area-main-column">
+		<div class="widget" id="word_cloud_widget">
+			<div class="widget-title">Word Cloud</div>
+			<div class="widget-body">{{ word_cloud|safe }}</div>
+		</div>
+		{% if ngram_cloud %}
+		<div class="widget" id="ngram_word_cloud_widget">
+			<div class="widget-title">N-Gram Word Cloud</div>
+			<div class="widget-body">{{ ngram_cloud|safe }}</div>
+		</div>
+		{% endif %}
+		
+		<div class="widget" id="topic_cloud_widget">
+			<div class="widget-title">Topic Cloud</div>
+			<div class="widget-body">{{ topic_cloud|safe }}</div>
+		</div>
+	</div>
+{% endblock %}
+

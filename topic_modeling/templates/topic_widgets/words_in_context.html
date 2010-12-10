@@ -1,0 +1,60 @@
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+
+<div class="widget full-width" id="top-words-in-context">
+	<div class="widget-title">Top Words in Context</div>
+	<div class="widget-body">
+		<table>
+			{% for word in words_in_context %}
+			<tr id="id_{{ word.word }}">
+				<td>
+					(<a href="{{ baseurl }}/{{ curtopic.number }}/documents/{{ word.doc_id }} ">{{ word.doc_name }}</a>)
+				</td>
+				<td class="right-align">
+					{{ word.left_context }}
+				</td>
+				<td class="word">
+					<a href="{{ baseurl }}/{{ curtopic.number }}/words/{{ word.word }} ">{{ word.word }}</a>
+				</td>
+				<td class="left-align">
+					{{ word.right_context }}
+				</td>
+				<td id="id_new_context_{{ word.word }}" class="clickable_text">
+					<img src="/site-media/stock_reload.png" border="0"/>
+				</td>
+			</tr>
+			{% endfor %}
+		</table>
+	</div>
+	<script charset="utf-8" type="text/javascript"
+		src="/site-media/topic_scripts/words_in_context.js">
+	</script>
+	<script charset="utf=8" type="text/javascript">
+		$(document).ready(function () {
+		{% for word in words_in_context %}
+			get_context_for_word("{{ word.word }}");
+		{% endfor %}
+		});
+	</script>
+</div>

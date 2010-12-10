@@ -1,0 +1,47 @@
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+
+<div class="widget" id="turbo-topics-ngrams">
+	<div class="widget-title">Turbo Topics N-Grams</div>
+	<div class="widget-body">
+		<table>
+			<tr>
+				<td>
+					<div class="clickable_text" id="id_turbo_topics_more">
+						More
+					</div>
+					<div class="turbo_topics_less">
+						{{ turbo_topics_less|linebreaks }}
+					</div>
+					<div class="turbo_topics_more" style="display:none">
+						{{ turbo_topics_more|linebreaks }}
+					</div>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<script charset="utf-8" type="text/javascript"
+		src="/site-media/topic_scripts/turbo_topics.js">
+	</script>
+</div>

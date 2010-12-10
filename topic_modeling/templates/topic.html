@@ -1,0 +1,98 @@
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+
+{% extends "base.html" %}
+
+{% block scripts %}
+	<script charset="utf-8" type="text/javascript">
+		$.fn.topic_vars = function () {};
+		$.fn.topic_vars.baseurl = "{{ baseurl }}";
+		$.fn.topic_vars.dataset = "{{ dataset }}";
+		$.fn.topic_vars.analysis = "{{ analysis }}";
+		$.fn.topic_vars.curtopic_number = {{ curtopic.number }};
+		$.fn.topic_vars.post_link = "{{ topic_post_link }}";
+	</script>
+{% endblock %}
+
+{% block above_sidebar %}
+	<script charset="utf-8" type="text/javascript"
+		src="/site-media/topic_scripts/filters.js">
+	</script>
+	<table class="above_inset">
+		{{ sort_form }}
+		<tr><td>Filters</td><td colspan=4><hr></td></tr>
+		<tbody id="id_filter_form">
+			{{ filter|safe }}
+		</tbody>
+	</table>
+{% endblock %}
+
+{% block sidebar %}
+	<script charset="utf-8" type="text/javascript"
+		src="/site-media/common_scripts/sidebar.js">
+	</script>
+	<script charset="utf-8" type="text/javascript"
+		src="/site-media/topic_scripts/sidebar.js">
+	</script>
+	<div id="topics_list" class="inset"></div>
+	<script charset="utf=8" type="text/javascript">
+		$(document).ready(function () {
+			get_topic_page({{ page_num }});
+		});
+	</script>
+{% endblock %}
+
+{% block presentation_area %}
+	<div id="presentation-area-main-column">
+		{% include "topic_widgets/topic_name.html" %}
+		{% if metrics %}
+		{% include "topic_widgets/stats.html" %}
+		{% endif %}
+		
+		{% if topic_map_url %}
+		{% include "topic_widgets/topic_map.html" %}
+		{% endif %}
+		
+		{% if ngram_cloud %}
+		{% include "topic_widgets/ngram_cloud.html" %}
+		{% endif %}
+		{% include "topic_widgets/words_in_context.html" %}
+		
+		{% for widget in extra_widgets %}
+		{% include widget %}
+		{% endfor %}
+	</div>
+	<div id="presentation-area-sidebar">
+		{% include "topic_widgets/word_chart.html" %}
+		{% if similar_topics %}
+		{% include "topic_widgets/similar_topics.html" %}
+		{% endif %}
+		{% include "topic_widgets/word_cloud.html" %}
+	</div>
+	<div id="presentation-area-footer">
+		{% include "topic_widgets/top_documents.html" %}
+		{% include "topic_widgets/top_values.html" %}
+	</div>
+{% endblock %}
+

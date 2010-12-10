@@ -1,0 +1,72 @@
+Last updated: 9 December 2010
+
+--------------------------------------------
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+--------------------------------------------
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+
+-------------------------------------------------------------------------------
+
+We also request that any published papers resulting from the use of this code
+cite the following paper:
+
+Matthew J. Gardner, Joshua Lutes, Jeff Lund, Josh Hansen, Dan Walker, Eric
+Ringger, Kevin Seppi. "The Topic Browser: An Interactive Tool for Browsing
+Topic Models".  In the Proceedings of the Workshop on Challenges of Data
+Visualization, held in conjunction with the 24th Annual Conference on Neural
+Information Processing Systems (NIPS 2010). December 11, 2010. Whistler, BC,
+Canada.
+
+-------------------------------------------------------------------------------
+
+We welcome contributions to the code of this project.  At present the best way
+to contribute is to email a patch to textmining@cs.byu.edu (if that contact
+information goes out of date, the next place to look is at
+http://nlp.cs.byu.edu/topic_browser).  For licensing purposes we ask that you
+assign the copyright of any patch that you contribute to Brigham Young
+University.
+
+-------------------------------------------------------------------------------
+
+Further information, documentation, and a live demo of the code can be found at
+the project website: http://nlp.cs.byu.edu/topic_browser.  We choose not to
+repeat most of the documentation in the code itself, though we give some simple
+instructions on how to run the code below.
+
+-------------------------------------------------------------------------------
+
+The program requires django, django-admin, matplotlib and numpy to be installed.
+django-admin needs to be installed for the django server to run.
+
+Quick Start:
+
+1) Run dodo.py as received in the code; it will run MALLET on a very small
+example dataset that we distribute with the code, then load the results into
+the browser database.
+TODO(matt): pick a small example dataset (just a few documents) and make a
+simple script for it.
+          
+2) Run the server with the following command:
+python topic_modeling/manage.py runserver
+
+3) Open a web browser and navigate to http://localhost:8000/
+
