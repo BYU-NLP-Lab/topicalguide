@@ -1,0 +1,48 @@
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+
+{% extends "topic.html" %}
+
+{% block presentation_area %}
+<table>
+	<tr>
+		<td colspan="2">Words
+			<table class="inset">
+				{% for document in documents %}
+				<tr>
+					<td>(<a href="{{ baseurl }}/{{ curtopic.number }}/documents/{{ document.doc_id }}
+							{% if sort %}
+							?sort={{ sort }}
+							{% endif %}
+							">{{ document.doc_name }}</a>)</td>
+					<td class="right-align">{{ document.left_context }}</td>
+					<td class="word"><a href="{{ document.url }}">{{ document.word }}</a></td>
+					<td class="left-align">{{ document.right_context }}</td>
+				</tr>
+				{% endfor %}
+			</table>
+		</td>
+	</tr>
+</table>
+{% endblock %}

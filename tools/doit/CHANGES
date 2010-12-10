@@ -1,0 +1,121 @@
+
+=======
+Changes
+=======
+
+0.9.0 (*2010-06-08*)
+=====================
+
+- support for dynamic calculated dependencies "calc_dep"
+- support for user defined reporters
+- support "auto" command on mac
+- fix installer on mac. installer aware of different python versions
+- deprecate 'dependencies'. use file_dep, task_dep, result_dep.
+
+0.8.0 (*2010-05-16*)
+=======================
+
+- parallel execution of tasks (multi-process support)
+- sub-command "list" option "--deps", show list of file dependencies
+- select task by wildcard (fnmatch) i.e. test:folderXXX/*
+- task-setup can be another task
+- task property "teardown" substitute of setup-objects cleanup
+- deprecate setup-objects
+
+
+0.7.0 (*2010-04-08*)
+=====================
+
+- configure options on dodo file (deprecate DEFAULT_TASKS)(#524387)
+- clean and forget act only on default tasks (not all tasks) (#444243)
+- sub-command "clean" option "clean-dep" to follow dependencies (#444247)
+- task dependency "False" means never up-to-date, "None" ignored
+- sub-command "list" by default do not show tasks starting with an underscore, added option (-p/--private)
+- new sub-command "auto"
+
+
+0.6.0 (*2010-01-25*)
+=====================
+
+- improve (speed optimization) of check if file modified (#370920)
+- sub-command "clean" dry-run option (-n/--dry-run) (#444246)
+- sub-command "clean" has a more verbose output (#444245)
+- sub-command "list" option to show task status (-s/--status) (#497661)
+- sub-command "list" filter tasks passed as positional parameters
+- tools.set_trace, PDB with stdout redirection (#494903)
+- accept command line optional parameters passed before sub-command (#494901)
+- give a clear errror message if .doit.db file is corrupted (#500269)
+- added task option "getargs". actions can use computed values from other tasks (#486569)
+- python-action might return a dictionary on success
+
+
+0.5.1 (*2009-12-03*)
+=====================
+
+- fix. task-result-dependencies should be also added as task-dependency to force its execution.
+
+
+0.5.0 (*2009-11-30*)
+=====================
+
+- task parameter 'clean' == True, cleans empty folders, and display warning for non-empty folders
+- added command line option --continue. Execute all tasks even if tasks fails
+- added command line option --reporter to select result output reporter
+- added executed-only reporter
+- added json reporter
+- support for task-result dependency #438174
+- added sub-command ignore task
+- added command line option --outfile. write output to specified file path
+- added support for passing arguments to tasks on cmd line
+- added command line option --dir (-d) to set current working directory
+- removed dodo-sample sub-command
+- added task field 'verbosity'
+- added task field 'title'
+- modified default way a task is printed on console (just show ".  name"), old way added to doit.tools.task_title_with_actions
+
+
+0.4.0 (*2009-10-05*)
+====================
+
+- deprecate anything other than a boolean values as return of python actions
+- sub-cmd clean (#421450)
+- remove support for task generators returning action (not documented behavior)
+- setup parameter for a task should be a list - single value deprecated (#437225)
+- PythonAction support 'dependencies', 'targets', 'changed' parameters
+- added tools.create_folder (#421453)
+- deprecate folder-dependency
+- CmdActions reference to dependencies, targets and changed dependencies (#434327)
+- print task description when printing through doit list (#425811)
+- action as list of commands/python (#421445)
+- deprecate "action" use "actions"
+
+
+0.3.0 (*2009-08-30*)
+=====================
+
+- added subcommand "forget" to clear successful runs status (#370911)
+- save run results in text file using JSON. (removed dbm)
+- added support for DEFAULT_TASKS in dodo file
+- targets md5 is not checked anymore. if target exist, task is up-to-date. it also supports folders
+- cmd line sub-commands (#370909)
+- remove hashlib dependency on python 2.4
+- sub-cmd to create dodo template
+- cmd-task supports a list of shell commands
+- setup/cleanup for task (#370905)
+
+
+0.2.0 (*2009-04-16*)
+====================
+
+- docs generated using sphinx
+- execute once (dependency = True)
+- group task
+- support python 2.4 and 2.6
+- folder dependency
+
+
+0.1.0 (*2008-04-14*)
+====================
+
+- initial release
+

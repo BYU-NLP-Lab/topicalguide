@@ -1,0 +1,41 @@
+0.10
+------
+
+. cyclilc MP test
+. more MP (tree)
+. cache file MD5 (on read & write)
+. key/value storage
+
+0.X
+----------
+
+. setup/task  single process/all procces
+. --enable/--disable cmd line options
+
+. dynamic task
+. GLOBAL vars from cmd line
+
+. tools - profile
+. tools - code coverage
+
+. color output on the terminal. (#263576)
+. tab-complete
+
+. option dont save successful results
+. forget a dependency, not a task
+. option to make sub-task not part of a group
+. task name alias
+. cache dir files (speed optimization)
+
+needs volunteer
+----------------
+
+. windows (#218276)
+
+not clear how to implement
+---------------------------
+
+. dont get subtasks if task is not going to be executed (#370923)
+. one .doit for each dodo file
+. multiple (include) dodo files (#218279)
+. sub-command/task unification. all sub-commands (but run) implemented as tasks
