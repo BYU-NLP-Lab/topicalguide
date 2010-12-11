@@ -116,12 +116,14 @@ java_bin = java_base + "/bin"
 graph_builder_class="edu.byu.nlp.topicvis.TopicMapGraphBuilder"
 graphs_min_value = 1
 graphs_base_url = "http://127.0.0.1:8000"
-name_scheme_ns = {'Top-N':[5], 'TF-ITF':[5]}
+name_scheme_ns = {'TopN':[5], 'TF-ITF_topN':[5]}
 graphs_topic_name_scheme_top_n = 5
 graphs_topic_name_scheme = "top{0}".format(graphs_topic_name_scheme_top_n)
 graphs_pairwise_metric = "Document Correlation"
 yamba_file = base_dir + "/yamba"
-
+if not os.path.exists(yamba_file):
+    print "Initializing database file..."
+    os.system("python topic_modeling/manage.py syncdb --noinput > /dev/null")
 
 print "----- Topic Browser Build System -----"
 print "Dataset name: " + dataset_name
@@ -192,7 +194,7 @@ def task_dataset_import():
     # analysis_import.py, now that we are using this build script - we don't
     #  need standalone scripts anymore for that stuff
     actions = [(import_scripts.dataset_import.main, [mallet_output, dataset_name, attributes_file, dataset_dir, files_dir, dataset_description])]
-    file_deps = [mallet_output, attributes_file]
+    file_deps = [mallet_output, attributes_file, yamba_file]
     clean = [(remove_dataset, [dataset_name])]
     return {'actions':actions, 'file_dep':file_deps, 'clean':clean}
 
@@ -355,35 +357,34 @@ def task_pairwise_document_metrics():
 def task_metrics():
     return {'actions':None, 'task_dep': ['analysis_import', 'topic_metrics','pairwise_topic_metrics','document_metrics','pairwise_document_metrics']}
 
-from helper_scripts.name_schemes import name_schemes as name_scheme_classes
-
-
+from helper_scripts.name_schemes import name_scheme_classes
 
 name_schemes = {}
+def get_name_scheme(base_name, n):
+    try:
+        ns = name_schemes[(base_name,n)]
+    except KeyError:
+        ns = name_scheme_classes[base_name](dataset_name, analysis_name, n)
+        name_schemes[(base_name,n)] = ns
+    return ns
+
 def task_name_schemes():
-    def instantiate(name_scheme_name,n):
-        return name_scheme_classes[name_scheme_name](dataset_name, analysis_name, n)
+    def generate_names(base_name, n):
+        get_name_scheme(base_name,n).name_all_topics()
     
-    
-    for name_scheme_name in name_scheme_classes:
-        for n in name_scheme_ns[name_scheme_name]:
-            name_schemes["{0}_{1}".format(name_scheme_name,n)] = instantiate(name_scheme_name,n)
-    
-    def generate_names(name_scheme_name,n):
-        name_schemes["{0}_{1}".format(name_scheme_name,n)].name_all_topics()
-    
-    def clean_names(name_scheme_name,n):
-        name_schemes["{0}_{1}".format(name_scheme_name,n)].unname_all_topics()
+    def clean_names(base_name, n):
+        get_name_scheme(base_name,n).unname_all_topics()
     
     print "Available topic name schemes: ",
-    for name_scheme_name in name_scheme_classes:
-        for n in name_scheme_ns[name_scheme_name]:
-            name = "{0}_{1}".format(name_scheme_name,n)
-            print name + ",",
-            actions = [(generate_names,[name_scheme_name,n])]
+    for name_scheme_class in name_scheme_classes:
+        base_name = name_scheme_class.scheme_name()
+        for n in name_scheme_ns[base_name]:
+            full_name = "{0}_{1}".format(base_name,n)
+            print full_name + ",",
+            actions = [(generate_names,[base_name,n])]
             task_deps = ['analysis_import']
-            clean = [(clean_names,[name_scheme_name,n])]
-            yield {'name':name, 'actions':actions, 'task_dep':task_deps, 'clean':clean}
+            clean = [(clean_names,[base_name,n])]
+            yield {'name':full_name, 'actions':actions, 'task_dep':task_deps, 'clean':clean}
     print
 
 def task_hash_java():
@@ -396,20 +397,18 @@ def task_java():
     return {'actions':actions, 'result_dep':result_deps, 'clean':clean}
 
 def task_graphs():
-    for name_scheme_name in name_scheme_classes:
-        for n in name_scheme_ns[name_scheme_name]:
-            full_name = "{0}_{1}".format(name_scheme_name, n)
-            full_scheme_name = name_schemes[full_name].scheme_name()
+    for name_scheme_class in name_scheme_classes:
+        base_name = name_scheme_class.scheme_name()
+        for n in name_scheme_ns[base_name]:
+            full_name = "{0}_{1}".format(base_name,n)
             
-            graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(dataset_dir, analysis_name, full_scheme_name)
+            graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(dataset_dir, analysis_name, full_name)
             graphs_unlinked_img_dir = graphs_img_dir + "-unlinked"
             gexf_file_name = "{0}/full_graph.gexf".format(graphs_img_dir)
             
-            
-            
             actions = [
                 'java -cp {0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/sqlitejdbc-v056.jar {2} {3} {4} {5} {6} {7} "{8}" {9} {10} {11} {12}'
-                .format(java_bin,java_base,graph_builder_class,graphs_min_value,graphs_base_url,dataset_name,analysis_name,full_scheme_name,graphs_pairwise_metric, yamba_file, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
+                .format(java_bin,java_base,graph_builder_class,graphs_min_value,graphs_base_url,dataset_name,analysis_name,full_name,graphs_pairwise_metric, yamba_file, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
             ]
             task_deps = ['pairwise_topic_metrics', 'name_schemes', 'java']
             result_deps = ['hash_java']

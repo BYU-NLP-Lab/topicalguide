@@ -48,8 +48,9 @@ class TfitfTopicNamer:
         self.name_scheme,self.created = TopicNameScheme.objects.get_or_create(name=self.scheme_name(),analysis=self.analysis)
         self.total_number_of_topics = Topic.objects.filter(analysis=self.analysis).count()
     
-    def scheme_name(self):
-        return 'TF-ITF_top'+str(self.n)
+    @staticmethod
+    def scheme_name():
+        return 'TF-ITF_topN'
     
     @transaction.commit_manually
     def name_all_topics(self):
