@@ -23,7 +23,4 @@
 
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
-name_schemes = {}
-name_schemes
-name_schemes['Top-N'] = TopNTopicNamer
-name_schemes['TF-ITF'] = TfitfTopicNamer
+name_scheme_classes = [TopNTopicNamer, TfitfTopicNamer]
