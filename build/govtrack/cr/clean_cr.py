@@ -20,6 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
+import os
 from sys import argv
 from string import punctuation, digits
 from build.common.cleaner import Cleaner
@@ -48,15 +49,17 @@ class CRCleaner(Cleaner):
                     if node2.hasChildNodes():
                         child = node2.firstChild
                         if child.nodeType == child.TEXT_NODE:
-                            arr += [child.data]
+                            arr += [child.data.replace('&nbsp;',' ')]
         return ' '.join(arr)
     
     def new_filename(self, old_filename):
         return old_filename.replace('.xml', '.txt')
 
 def clean_cr(src_dir, dest_dir):
-    c = CRCleaner(src_dir, dest_dir)
-    c.clean()
+    if not os.path.exists(dest_dir):
+        os.mkdir(dest_dir)
+        c = CRCleaner(src_dir, dest_dir)
+        c.clean()
 
 if __name__ == '__main__':
     clean_cr(argv[1], argv[2])

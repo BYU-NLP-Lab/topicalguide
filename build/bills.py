@@ -20,27 +20,27 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-#Congressional Record Dataset build settings
+#Congressional Bills Dataset build settings
 import os
-from build.govtrack.cr.clean_cr import clean_cr
+from build.govtrack.bills import clean_bills
 from build.govtrack.cr.generate_attributes_file import generate_attributes_file
 
 data_dir = os.environ['HOME'] + "/Data"
 govtrack_dir = data_dir + "/govtrack.us"
 rsync_dest_dir = govtrack_dir + "/111"
-cr_dir = rsync_dest_dir + "/cr"
+bills_dir = rsync_dest_dir + "/bills"
 
 def get_dataset_name(locals):
-    return "congressional_record"
+    return "bills"
 
 def get_dataset_description(locals):
-    return "Floor debate from the Congressional Record of the 111th United States Congress"
+    return "Text of legislation from the 111th United States Congress"
 
 def get_copy_dataset(locals):
     return True
 
 def get_mallet_token_regex(locals):
-    return r"\\w+"
+    return r"\\[a-zA-Z]+"
 
 def get_attributes_file(locals):
     return "{0}/attributes.json".format(locals['dataset_dir'])
@@ -49,7 +49,7 @@ def get_files_dir(locals):
     return locals['dataset_dir'] + "/files"
 
 def task_hash_cr():
-    return {'actions': [(directory_timestamp, [cr_dir])],
+    return {'actions': [(directory_timestamp, [bills_dir])],
             'task_dep':['download_congressional_record']}
 
 def task_attributes_file():
@@ -60,13 +60,13 @@ def task_attributes_file():
     return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
 
 def task_download_congressional_record():
-    actions = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/111/cr "+rsync_dest_dir]
-    clean = ["rm -rf " + cr_dir]
+    actions = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/bills.txt/111 "+rsync_dest_dir]
+    clean = ["rm -rf " + bills_dir]
     return {'actions':actions, 'clean':clean}
 
 def task_copy_and_transform_dataset():
     actions = [
-        (clean_cr, [cr_dir,files_dir])
+        (clean_bills, [bills_dir,files_dir])
     ]
     clean = [
         'rm -rf '+files_dir

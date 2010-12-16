@@ -61,7 +61,7 @@ class Cleaner(object):
     
     def clean(self):
         for filename in os.listdir(self.input_dir):
-            print filename
+#            print filename
             in_path = '{0}/{1}'.format(self.input_dir, filename)
             out_path = '{0}/{1}'.format(self.output_dir, self.new_filename(filename))
             
@@ -72,8 +72,8 @@ class Cleaner(object):
             if self.show_text:
                 print '\t' + text
                 print '\t' + cleaned_txt
-            
-            codecs.open(out_path, 'w', 'utf-8').write(cleaned_txt)
+            if len(cleaned_txt) > 0:
+                codecs.open(out_path, 'w', 'utf-8').write(cleaned_txt)
     
     def new_filename(self, old_filename):
         return old_filename
