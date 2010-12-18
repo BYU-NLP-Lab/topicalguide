@@ -61,9 +61,8 @@ if __name__ == "__main__":
     from doit.doit_cmd import cmd_main
     sys.exit(cmd_main(sys.argv[1:]))
 
-#build = "bom"
+build = "state_of_the_union"
 #build = "congressional_record"
-build = "nytimes_twitter"
 filename = "build/{0}.py".format(build)
 ast = compile(open(filename).read(), filename, 'exec')
 eval(ast, globals(), locals())
