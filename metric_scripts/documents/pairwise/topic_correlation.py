@@ -24,6 +24,7 @@
 
 
 from __future__ import division
+from math import isnan
 
 from django.db import transaction
 
@@ -62,9 +63,12 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         for j, doc2 in enumerate(documents):
             doc2_topic_vals = doctopicvectors[j]
             correlation_coeff = pmcc(doc1_topic_vals, doc2_topic_vals)
-            PairwiseDocumentMetricValue.objects.create(document1=doc1, 
+            if not isnan(correlation_coeff):
+                PairwiseDocumentMetricValue.objects.create(document1=doc1, 
                     document2=doc2, metric=metric, value=correlation_coeff)
-    transaction.commit()
+            else:
+                print "Error computing metric between {0} and {1}".format(doc1,doc2)
+        transaction.commit()
     
 
 def metric_names_generated(dataset, analysis):
