@@ -51,6 +51,9 @@ def task_attributes_file():
     clean = ["rm -f "+attributes_file]
     return {'targets':targets, 'actions':actions, 'clean':clean}
 
+def task_dir_timestamp():
+    return {'actions': [(directory_timestamp, [files_dir])]}
+
 def task_copy_and_transform_dataset():
     actions = [
         (extract_state_of_the_union, [dataset_dir+'/'+chron_list_filename,dataset_dir+'/'+addresses_filename,files_dir])
@@ -58,5 +61,5 @@ def task_copy_and_transform_dataset():
     clean = [
         'rm -rf '+files_dir
     ]
-    
-    return {'actions': actions, 'clean': clean}
+    result_deps = ['dir_timestamp']
+    return {'actions': actions, 'clean': clean, 'result_dep':result_deps}
