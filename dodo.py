@@ -360,10 +360,17 @@ from helper_scripts.name_schemes import name_scheme_classes
 
 name_schemes = {}
 def get_name_scheme(base_name, n):
+    def matching_class(name):
+        for ns in name_scheme_classes:
+            if ns.scheme_name()==name:
+                return ns
+        return None
+
     try:
         ns = name_schemes[(base_name,n)]
     except KeyError:
-        ns = name_scheme_classes[base_name](dataset_name, analysis_name, n)
+        
+        ns = matching_class(base_name)(dataset_name, analysis_name, n)
         name_schemes[(base_name,n)] = ns
     return ns
 
