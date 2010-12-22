@@ -39,9 +39,8 @@ class TopNTopicNamer:
         self.name_scheme,self.created = TopicNameScheme.objects.get_or_create(name=self.scheme_name(),analysis=self.analysis)
         self.total_number_of_topics = Topic.objects.filter(analysis=self.analysis).count()
     
-    @staticmethod
-    def scheme_name():
-        return "TopN"
+    def scheme_name(self):
+        return "Top" + str(self.n)
     
     @transaction.commit_manually
     def name_all_topics(self):

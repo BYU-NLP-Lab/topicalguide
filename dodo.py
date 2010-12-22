@@ -42,7 +42,6 @@
 #  Allow specification of multiple num_topics
 #
 
-
 import os, sys
 import hashlib
 from subprocess import Popen, PIPE
@@ -52,6 +51,8 @@ import import_scripts.dataset_import
 import import_scripts.analysis_import
 from build.common.db_cleanup import remove_dataset, remove_analysis
 from topic_modeling.visualize.models import Analysis, Dataset, TopicMetric, PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric
+from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
+from helper_scripts.name_schemes.top_n import TopNTopicNamer
 
 #If this file is invoked directly, pass it in to the doit system for processing.
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
@@ -96,6 +97,8 @@ topic_metrics = ["token count", "type count", "document entropy", "word entropy"
 pairwise_topic_metrics = ["document correlation", "word correlation"]
 document_metrics = ['token count', 'type count', 'topic entropy']
 pairwise_document_metrics = ['word correlation']#['topic correlation', 'word correlation']
+name_schemes = [TopNTopicNamer(dataset_name,analysis_name,5),
+               TfitfTopicNamer(dataset_name,analysis_name,5)]
 
 #Mallet
 mallet = base_dir + "/tools/mallet/mallet"
@@ -115,9 +118,6 @@ java_bin = java_base + "/bin"
 graph_builder_class="edu.byu.nlp.topicvis.TopicMapGraphBuilder"
 graphs_min_value = 1
 graphs_base_url = "http://127.0.0.1:8000"
-name_scheme_ns = {'TopN':[5], 'TF-ITF_topN':[5]}
-graphs_topic_name_scheme_top_n = 5
-graphs_topic_name_scheme = "top{0}".format(graphs_topic_name_scheme_top_n)
 graphs_pairwise_metric = "Document Correlation"
 yamba_file = base_dir + "/yamba"
 if not os.path.exists(yamba_file):
@@ -356,41 +356,19 @@ def task_pairwise_document_metrics():
 def task_metrics():
     return {'actions':None, 'task_dep': ['analysis_import', 'topic_metrics','pairwise_topic_metrics','document_metrics','pairwise_document_metrics']}
 
-from helper_scripts.name_schemes import name_scheme_classes
-
-name_schemes = {}
-def get_name_scheme(base_name, n):
-    def matching_class(name):
-        for ns in name_scheme_classes:
-            if ns.scheme_name()==name:
-                return ns
-        return None
-
-    try:
-        ns = name_schemes[(base_name,n)]
-    except KeyError:
-        
-        ns = matching_class(base_name)(dataset_name, analysis_name, n)
-        name_schemes[(base_name,n)] = ns
-    return ns
-
 def task_name_schemes():
-    def generate_names(base_name, n):
-        get_name_scheme(base_name,n).name_all_topics()
-    
-    def clean_names(base_name, n):
-        get_name_scheme(base_name,n).unname_all_topics()
+    def generate_names(ns):
+        ns.name_all_topics()
+    def clean_names(ns):
+        ns.unname_all_topics()
     
     print "Available topic name schemes: ",
-    for name_scheme_class in name_scheme_classes:
-        base_name = name_scheme_class.scheme_name()
-        for n in name_scheme_ns[base_name]:
-            full_name = "{0}_{1}".format(base_name,n)
-            print full_name + ",",
-            actions = [(generate_names,[base_name,n])]
-            task_deps = ['analysis_import']
-            clean = [(clean_names,[base_name,n])]
-            yield {'name':full_name, 'actions':actions, 'task_dep':task_deps, 'clean':clean}
+    for ns in name_schemes:
+        print ns.scheme_name() + ",",
+        actions = [(generate_names,[ns])]
+        task_deps = ['analysis_import']
+        clean = [(clean_names,[ns])]
+        yield {'name':ns.scheme_name(), 'actions':actions, 'task_dep':task_deps, 'clean':clean}
     print
 
 def task_hash_java():
@@ -403,26 +381,22 @@ def task_java():
     return {'actions':actions, 'result_dep':result_deps, 'clean':clean}
 
 def task_graphs():
-    for name_scheme_class in name_scheme_classes:
-        base_name = name_scheme_class.scheme_name()
-        for n in name_scheme_ns[base_name]:
-            full_name = "{0}_{1}".format(base_name,n)
-            
-            graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(dataset_dir, analysis_name, full_name)
-            graphs_unlinked_img_dir = graphs_img_dir + "-unlinked"
-            gexf_file_name = "{0}/full_graph.gexf".format(graphs_img_dir)
-            
-            actions = [
-                'java -cp {0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/sqlitejdbc-v056.jar {2} {3} {4} {5} {6} {7} "{8}" {9} {10} {11} {12}'
-                .format(java_bin,java_base,graph_builder_class,graphs_min_value,graphs_base_url,dataset_name,analysis_name,full_name,graphs_pairwise_metric, yamba_file, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
-            ]
-            task_deps = ['pairwise_topic_metrics', 'name_schemes', 'java']
-            result_deps = ['hash_java']
-            clean =  [
-                'rm -rf '+graphs_unlinked_img_dir,
-                'rm -rf '+graphs_img_dir
-            ]
-            yield {'name':full_name, 'actions':actions, 'task_dep':task_deps, 'result_dep':result_deps, 'clean':clean}
+    for ns in name_schemes:
+        graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(dataset_dir, analysis_name, ns.scheme_name())
+        graphs_unlinked_img_dir = graphs_img_dir + "-unlinked"
+        gexf_file_name = "{0}/full_graph.gexf".format(graphs_img_dir)
+        
+        actions = [
+            'java -cp {0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/sqlitejdbc-v056.jar {2} {3} {4} {5} {6} {7} "{8}" {9} {10} {11} {12}'
+            .format(java_bin,java_base,graph_builder_class,graphs_min_value,graphs_base_url,dataset_name,analysis_name,ns.scheme_name(),graphs_pairwise_metric, yamba_file, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
+        ]
+        task_deps = ['pairwise_topic_metrics', 'name_schemes', 'java']
+        result_deps = ['hash_java']
+        clean =  [
+            'rm -rf '+graphs_unlinked_img_dir,
+            'rm -rf '+graphs_img_dir
+        ]
+        yield {'name':ns.scheme_name(), 'actions':actions, 'task_dep':task_deps, 'result_dep':result_deps, 'clean':clean}
 
 def task_reset_db():
     actions = ['yes "yes" | python topic_modeling/manage.py reset visualize']
