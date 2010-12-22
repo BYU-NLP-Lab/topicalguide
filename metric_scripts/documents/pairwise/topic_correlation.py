@@ -32,7 +32,7 @@ from numpy import dot, zeros
 from numpy.linalg import norm
 from optparse import OptionParser
 
-from topic_modeling.visualize.models import Analysis, Dataset, Topic
+from topic_modeling.visualize.models import Analysis, Dataset
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetricValue
 
@@ -51,12 +51,13 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         metric = PairwiseDocumentMetric(name=metric_name, analysis=analysis)
         metric.save()
     
-    num_topics = Topic.objects.order_by('-pk')[0].id + 1
+    topics = analysis.topic_set.all()
+    topic_idx = {}
+    for i,topic in enumerate(topics):
+        topic_idx[topic.id] = i
+    
     documents = list(dataset.document_set.all())
-
-    doctopicvectors = []
-    for document in documents:
-        doctopicvectors.append(document_topic_vector(document, num_topics))
+    doctopicvectors = [document_topic_vector(doc,topic_idx) for doc in documents]
     
     for i, doc1 in enumerate(documents):
         doc1_topic_vals = doctopicvectors[i]
@@ -69,7 +70,8 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
             else:
                 print "Error computing metric between {0} and {1}".format(doc1,doc2)
         transaction.commit()
-    
+
+
 
 def metric_names_generated(dataset, analysis):
     return metric_name
@@ -79,10 +81,10 @@ def pmcc(doc1_topic_vals, doc2_topic_vals):
         * norm(doc2_topic_vals)))
 
 
-def document_topic_vector(document, num_topics):
-    document_topic_vals = zeros(num_topics)
+def document_topic_vector(document, topic_idx):
+    document_topic_vals = zeros(len(topic_idx))
     for doctopic in document.documenttopic_set.all():
-        document_topic_vals[doctopic.topic_id] = doctopic.count
+        document_topic_vals[topic_idx[doctopic.topic_id]] = doctopic.count
     return document_topic_vals
 
 
