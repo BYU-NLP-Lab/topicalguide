@@ -36,37 +36,39 @@ from topic_modeling.visualize.models import TopicNameScheme,TopicName,Topic,Topi
 import math
 
 class TfitfTopicNamer:
-    analysis = None
-    name_scheme = None
-    n = None
-    total_number_of_topics = None
-    
     def __init__(self,dataset_name,analysis_name,n):
-        dataset = Dataset.objects.get(name=dataset_name)
-        self.analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
+        self.dataset_name = dataset_name
+        self.analysis_name = analysis_name
         self.n = n
-        self.name_scheme,self.created = TopicNameScheme.objects.get_or_create(name=self.scheme_name(),analysis=self.analysis)
-        self.total_number_of_topics = Topic.objects.filter(analysis=self.analysis).count()
+        
+    def init(self):
+        dataset = Dataset.objects.get(name=self.dataset_name)
+        analysis = Analysis.objects.get(dataset=dataset, name=self.analysis_name)
+        name_scheme,created = TopicNameScheme.objects.get_or_create(name=self.scheme_name(),analysis=analysis)
+        total_number_of_topics = Topic.objects.filter(analysis=analysis).count()
+        return dataset,analysis,name_scheme,created,total_number_of_topics
     
     def scheme_name(self):
         return 'TF-ITF_top' + str(self.n)
     
     @transaction.commit_manually
     def name_all_topics(self):
-        if self.created:
-            topics = Topic.objects.filter(analysis=self.analysis)
+        _,analysis,name_scheme,created,self.total_number_of_topics = self.init()
+        if created:
+            topics = Topic.objects.filter(analysis=analysis)
             for topic in topics:
                 print "topic:", topic
                 name = self.topic_name(topic)
                 print name.encode('utf-8')
-                TopicName.objects.create(topic=topic,name_scheme=self.name_scheme,name=name)
+                TopicName.objects.create(topic=topic,name_scheme=name_scheme,name=name)
             transaction.commit()
         else:
-            print "Name scheme {0} already exists for analysis {1}. Skipping.".format(self.name_scheme, self.analysis)
+            print "Name scheme {0} already exists for analysis {1}. Skipping.".format(name_scheme, analysis)
     
     @transaction.commit_manually
     def unname_all_topics(self):
-        self.name_scheme.delete()
+        _,_,name_scheme,_,_ = self.init()
+        name_scheme.delete()
         transaction.commit()
     
     def topic_name(self,topic):
