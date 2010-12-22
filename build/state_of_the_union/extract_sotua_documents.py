@@ -3,7 +3,7 @@ import os
 from nltk.tokenize import TreebankWordTokenizer
 import codecs
 
-chron_entry_regex = r"\[\[(?P<title>(?P<president_name>.+)'s? .*State of the Union Address)\|(?P<address_number>\w+) State of the Union Address\]\] - \[\[author:(?P<author_name>.+)\|.+\]\], \((?P<day>\d+) (?P<month>\w+) \[\[w:(?P<year>\d+)\|(?P=year)\]\]\)"
+chron_entry_regex = r"\[\[(?P<title>(?P<president_name>.+)'s? .*State of the Union (?:Address|Speech))\|(?P<address_number>\w+) State of the Union Address\]\] - \[\[author:(?P<author_name>.+)\|.+\]\], \((?P<day>\d+) (?P<month>\w+) \[\[w:(?P<year>\d+)\|(?P=year)\]\]\)"
 
 def metadata(chron_list_wiki_file):
     text = codecs.open(chron_list_wiki_file,'r','utf-8').read()
@@ -44,6 +44,7 @@ def extract_state_of_the_union(chron_list_filename, addresses_filename, dest_dir
     print 'Extracted "{0}"'.format(current_speech_title)
     extracted_count += 1
     print 'Addresses extracted: ' + str(extracted_count)
+    print 'Missed: ' + str(len(titles)-extracted_count)
 
 
 
