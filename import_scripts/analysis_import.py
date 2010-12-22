@@ -23,6 +23,8 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 import codecs, os, sys
+from topic_modeling.visualize.models import Dataset, Analysis, Topic,\
+    DocumentTopic, TopicWord, DocumentTopicWord, AttributeValueTopic, Document
 
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
@@ -32,12 +34,8 @@ settings.DEBUG = False
 
 from django.db import connection, transaction
 
-from topic_modeling.visualize.models import *
-from dataset_import import parse_dataset_description
-
 from collections import defaultdict
 from datetime import datetime
-from optparse import OptionParser
 
 import cjson
 import simplejson
@@ -66,28 +64,11 @@ def main(dataset_name, dataset_attr_file, analysis_name, analysis_description, s
     cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
 
     global dataset
-#    dataset_file = options.dataset_description
-#    name, attr_file, _, __ = parse_dataset_description(dataset_file)
     dataset = Dataset.objects.get(name=dataset_name)
-
-    # Incomplete... TODO(matt): add topic metric stuff to the description file
-#    analysis_file = options.analysis_description
-#    analysis_variables = parse_analysis_description(analysis_file)
-#    create_analysis(analysis_variables['name'],
-#            analysis_variables['description'])
     created = create_analysis(analysis_name, analysis_description)
     
     if created:
-        # The attribute file is relative to the description file, but this will
-        # break on Windows
-    #    path = '/'.join(dataset_file.split('/')[:-1])
-    #    attr_file = '/'.join([path, attr_file])
         doc_index, attr_index, value_index, attr_table = parse_attributes(dataset_attr_file)
-    
-        # The state and tokenized files are relative to the analysis desc. file
-    #    path = '/'.join(analysis_file.split('/')[:-1])
-    #    state_file = '/'.join([path, analysis_variables['state_file']])
-    #    tokenized_file = '/'.join([path, analysis_variables['tokenized_file']])
         dt, tw, dtw, avt, topics, word_index = parse_mallet_file(state_file,
                 attr_table, tokenized_file, files_dir)
     
