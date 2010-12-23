@@ -96,7 +96,7 @@ copy_dataset = get_copy_dataset(locals())
 topic_metrics = ["token count", "type count", "document entropy", "word entropy"]
 pairwise_topic_metrics = ["document correlation", "word correlation"]
 document_metrics = ['token count', 'type count', 'topic entropy']
-pairwise_document_metrics = ['word correlation']#['topic correlation', 'word correlation']
+pairwise_document_metrics = ['word correlation','topic correlation']
 name_schemes = [TopNTopicNamer(dataset_name,analysis_name,5),
                TfitfTopicNamer(dataset_name,analysis_name,5)]
 
@@ -397,7 +397,7 @@ def task_graphs():
             'rm -rf '+graphs_img_dir
         ]
         yield {'name':ns.scheme_name(), 'actions':actions, 'task_dep':task_deps, 'result_dep':result_deps, 'clean':clean}
-
-def task_reset_db():
-    actions = ['yes "yes" | python topic_modeling/manage.py reset visualize']
-    return {'actions':actions}
+#
+#def task_reset_db():
+#    actions = ['yes "yes" | python topic_modeling/manage.py reset visualize']
+#    return {'actions':actions}
