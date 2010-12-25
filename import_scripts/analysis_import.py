@@ -25,6 +25,7 @@
 import codecs, os, sys
 from topic_modeling.visualize.models import Dataset, Analysis, Topic,\
     DocumentTopic, TopicWord, DocumentTopicWord, AttributeValueTopic, Document
+import re
 
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
@@ -51,7 +52,7 @@ NUM_DOTS = 100
 # to put one in, so I just use print statements.
 
 #def main(options):
-def main(dataset_name, dataset_attr_file, analysis_name, analysis_description, state_file, tokenized_file, files_dir):
+def main(dataset_name, dataset_attr_file, analysis_name, analysis_description, state_file, tokenized_file, files_dir, split_regex):
     print "analysis_import({0}, {1}, {2}, {3}, {4}, {5}, {6})".format(dataset_name, dataset_attr_file, analysis_name, analysis_description, state_file, tokenized_file, files_dir)
     start_time = datetime.now()
     print 'Starting time:', start_time
@@ -70,7 +71,7 @@ def main(dataset_name, dataset_attr_file, analysis_name, analysis_description, s
     if created:
         doc_index, attr_index, value_index, attr_table = parse_attributes(dataset_attr_file)
         dt, tw, dtw, avt, topics, word_index = parse_mallet_file(state_file,
-                attr_table, tokenized_file, files_dir)
+                attr_table, tokenized_file, files_dir, split_regex)
     
         topicinfo = create_topic_info(tw)
         topic_index = create_topic_table(topics, topicinfo)
@@ -309,7 +310,7 @@ def parse_attributes(attribute_file):
 
 
 @transaction.commit_manually
-def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir):
+def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, split_regex):
     """ Parses the state output file from mallet
 
     That file lists individual tokens one per line in the following format:
@@ -323,11 +324,11 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir):
     file once.  It makes the code a little more messy, but it saves a lot of
     time when the mallet file is really large.
     """
-    print 'Parsing the mallet file and creating markup files...',
+    print 'Parsing the mallet file and creating markup files...'
     sys.stdout.flush()
     start = datetime.now()
     tokenized_file = codecs.open(tokenized_file, 'r', 'utf-8')
-    markup_state = MarkupState(tokenized_file)
+    markup_state = MarkupState(tokenized_file, split_regex)
     doctopic = defaultdict(int)
     topicword = defaultdict(int)
     doctopicword = defaultdict(int)
@@ -348,7 +349,7 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir):
             # Handle markup file stuff
             if docpath != markup_state.path:
                 if markup_state.initialized:
-                    markup_state.markup_stop_words()
+#                    markup_state.markup_stop_words()
                     markup_state.output_file()
                 markup_state.initialize(files_dir, docpath)
             markup_state.markup_stop_words(word)
@@ -367,7 +368,7 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir):
                     values_set = value
                 for value in values_set:
                     attrvaltopic[(attr, value, topic)] += 1
-    markup_state.markup_stop_words()
+#    markup_state.markup_stop_words()
     markup_state.output_file()
     transaction.commit()
     f.close()
@@ -418,7 +419,7 @@ def create_topic_info(topicword):
 #############################################################################
 
 class MarkupState(object):
-    def __init__(self, tokenized_file):
+    def __init__(self, tokenized_file, split_regex):
         self.path = None
         self.doc_string = None
         self.tokens = None
@@ -427,6 +428,7 @@ class MarkupState(object):
         self.token_index = 0
         self.tokenized_file = tokenized_file
         self.initialized = False
+        self.split_regex = split_regex
 
     def initialize(self, files_dir, path):
         self.initialized = True
@@ -453,38 +455,25 @@ class MarkupState(object):
             self.token_index = 0
 
     def read_original_file(self, path):
-        return codecs.open(path, 'r', 'utf-8').read()
+        return codecs.open(path, 'r', 'utf-8').read().lower()
 
     def read_token_file(self):
         # This is pretty specific to our file format!
-        next_tokens = self.tokenized_file.readline().split()
-        token_filename, group = next_tokens[:2]
-        tokens = next_tokens[2:]
-        # The current clustering code doesn't handle asterisks correctly
-        filtered_tokens = []
-        for token in tokens:
-            if '*' in token:
-                parts = token.split('*')
-                for p in parts:
-                    if p:
-                        filtered_tokens.append(p)
-            else:
-                filtered_tokens.append(token)
-        return token_filename, filtered_tokens
+        text = self.tokenized_file.readline()
+        text_arr = text.split()
+        token_filename, group = text_arr[:2]
+        doc_content_only = text[len(token_filename)+len(group)+2:].lower()
+        tokens = re.split(self.split_regex, doc_content_only)
+        return token_filename, tokens
 
-    def markup_stop_words(self, word=None):
-        if word is not None:
-            word_lower = word.lower()
-        
+    def markup_stop_words(self, word):
+        '''This assumes that C{word} and the tokens are all in the same case'''
         try:
-            def stopping_condition():
+            def have_reached_non_stopword():
                 if self.token_index >= len(self.tokens):
-                    return False
-                if word:
-                    return self.tokens[self.token_index].lower() != word_lower
-                else:
-                    return self.token_index < len(self.tokens)
-            while stopping_condition():
+                    return True
+                return self.tokens[self.token_index] == word
+            while not have_reached_non_stopword():
                 self.markup_word(self.tokens[self.token_index], 'stop word')
         except IndexError:
             print 'IndexError!'

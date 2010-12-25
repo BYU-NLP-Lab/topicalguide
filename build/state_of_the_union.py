@@ -39,6 +39,9 @@ def get_copy_dataset(locals):
 def get_mallet_token_regex(locals):
     return r"[a-zA-Z]+"
 
+def get_split_regex(locals):
+    return r"[^a-zA-Z]+"
+
 def get_attributes_file(locals):
     return "{0}/attributes.json".format(locals['dataset_dir'])
 

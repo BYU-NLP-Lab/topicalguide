@@ -97,8 +97,10 @@ topic_metrics = ["token count", "type count", "document entropy", "word entropy"
 pairwise_topic_metrics = ["document correlation", "word correlation"]
 document_metrics = ['token count', 'type count', 'topic entropy']
 pairwise_document_metrics = ['word correlation','topic correlation']
-name_schemes = [TopNTopicNamer(dataset_name,analysis_name,5),
-               TfitfTopicNamer(dataset_name,analysis_name,5)]
+name_schemes = [
+               TopNTopicNamer(dataset_name,analysis_name,3),
+#               TfitfTopicNamer(dataset_name,analysis_name,5)
+               ]
 
 #Mallet
 mallet = base_dir + "/tools/mallet/mallet"
@@ -109,6 +111,7 @@ mallet_output_gz = "{0}/{1}.outputstate.gz".format(dataset_dir, analysis_name)
 mallet_output = "{0}/{1}.outputstate".format(dataset_dir, analysis_name)
 mallet_doctopics_output = "{0}/{1}.doctopics".format(dataset_dir, analysis_name)
 mallet_token_regex = get_mallet_token_regex(locals())
+split_regex = get_split_regex(locals())
 mallet_optimize_interval = 10
 mallet_num_iterations = 1000
 
@@ -198,7 +201,7 @@ def task_dataset_import():
     return {'actions':actions, 'file_dep':file_deps, 'clean':clean}
 
 def task_analysis_import():
-    actions = [(import_scripts.analysis_import.main, [dataset_name, attributes_file, analysis_name, analysis_description, mallet_output, mallet_input, files_dir])]
+    actions = [(import_scripts.analysis_import.main, [dataset_name, attributes_file, analysis_name, analysis_description, mallet_output, mallet_input, files_dir, split_regex])]
     file_deps = [mallet_output, mallet_input, attributes_file]
     clean = [
         (remove_analysis, [dataset_name, analysis_name]),
