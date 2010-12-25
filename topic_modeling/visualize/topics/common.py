@@ -86,7 +86,9 @@ class RenameForm(forms.Form):
         super(RenameForm, self).__init__(*args, **kwargs)
         self.fields['topic_name'] = forms.CharField(
                 widget=forms.TextInput(attrs={'size':'50'}),
-                max_length=100, initial=topic_name)
+                max_length=100,
+                initial=topic_name,
+                label='')
         self.fields['topic_name'].widget.attrs['onchange'] = 'rename_topic()'
 
 
