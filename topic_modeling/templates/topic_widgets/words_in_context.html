@@ -25,25 +25,16 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <div class="widget full-width" id="top-words-in-context">
 	<div class="widget-title">Top Words in Context</div>
 	<div class="widget-body">
-		<table>
+		<table id="top_words_in_context_table">
+			<col width="25%""/>
+			<col width="23%"/>
+			<col width="23%"/>
+			<col width="22%"/>
+			<col width="5%"/>
+			
+			{% comment %}These rows are placeholders for jQuery to insert row content into{% endcomment %}
 			{% for word in words_in_context %}
-			<tr id="id_{{ word.word }}">
-				<td>
-					(<a href="{{ baseurl }}/{{ curtopic.number }}/documents/{{ word.doc_id }} ">{{ word.doc_name }}</a>)
-				</td>
-				<td class="right-align">
-					{{ word.left_context }}
-				</td>
-				<td class="word">
-					<a href="{{ baseurl }}/{{ curtopic.number }}/words/{{ word.word }} ">{{ word.word }}</a>
-				</td>
-				<td class="left-align">
-					{{ word.right_context }}
-				</td>
-				<td id="id_new_context_{{ word.word }}" class="clickable_text">
-					<img src="/site-media/stock_reload.png" border="0"/>
-				</td>
-			</tr>
+			<tr class="top-words-in-context-row" id="id_{{ word.word }}"></tr>
 			{% endfor %}
 		</table>
 	</div>
