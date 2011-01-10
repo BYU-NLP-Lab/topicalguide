@@ -26,8 +26,14 @@
 from __future__ import division
 from math import isnan
 
+import os, sys
+
+sys.path.append(os.curdir)
+os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+
 from django.db import transaction
 
+from datetime import datetime
 from numpy import dot, zeros
 from numpy.linalg import norm
 from optparse import OptionParser
@@ -53,32 +59,43 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     
     topics = analysis.topic_set.all()
     topic_idx = {}
-    for i,topic in enumerate(topics):
+    for i, topic in enumerate(topics):
         topic_idx[topic.id] = i
     
     documents = list(dataset.document_set.all())
-    doctopicvectors = [document_topic_vector(doc,topic_idx) for doc in documents]
+    doctopicvectors = [document_topic_vector(doc, topic_idx)
+            for doc in documents]
+    vectornorms = [norm(vector) for vector in doctopicvectors]
+    num_docs = len(documents)
     
+    start = datetime.now()
     for i, doc1 in enumerate(documents):
+        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
+        print >> sys.stderr, 'Time for last document:', datetime.now() - start
+        start = datetime.now()
         doc1_topic_vals = doctopicvectors[i]
+        doc1_norm = vectornorms[i]
         for j, doc2 in enumerate(documents):
             doc2_topic_vals = doctopicvectors[j]
-            correlation_coeff = pmcc(doc1_topic_vals, doc2_topic_vals)
+            doc2_norm = vectornorms[j]
+            correlation_coeff = pmcc(doc1_topic_vals, doc2_topic_vals,
+                    doc1_norm, doc2_norm)
             if not isnan(correlation_coeff):
-                PairwiseDocumentMetricValue.objects.create(document1=doc1, 
+                mv = PairwiseDocumentMetricValue(document1=doc1, 
                     document2=doc2, metric=metric, value=correlation_coeff)
+                mv.save()
             else:
-                print "Error computing metric between {0} and {1}".format(doc1,doc2)
+                pass
         transaction.commit()
-
 
 
 def metric_names_generated(dataset, analysis):
     return metric_name
 
-def pmcc(doc1_topic_vals, doc2_topic_vals):
-    return float(dot(doc1_topic_vals, doc2_topic_vals) / (norm(doc1_topic_vals)
-        * norm(doc2_topic_vals)))
+
+def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
+    return float(dot(doc1_topic_vals, doc2_topic_vals) /
+            (doc1_norm * doc2_norm))
 
 
 def document_topic_vector(document, topic_idx):

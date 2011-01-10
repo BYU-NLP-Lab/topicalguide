@@ -26,6 +26,11 @@
 from __future__ import division
 from math import isnan
 
+import os, sys
+
+sys.path.append(os.curdir)
+os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+
 from django.db import transaction
 
 from math import log
@@ -54,31 +59,39 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         metric.save()
     
     num_words = Word.objects.order_by('-pk')[0].id + 1
-    documents = list(dataset.document_set.all())
 
-    docwordvectors = []
-    for document in documents:
-        docwordvectors.append(document_word_vector(document, num_words))
+    documents = list(dataset.document_set.all())
+    docwordvectors = [document_word_vector(doc, num_words) for doc in documents]
+    vectornorms = [norm(vector) for vector in docwordvectors]
+    num_docs = len(documents)
     
+    start = datetime.now()
     for i, doc1 in enumerate(documents):
+        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
+        print >> sys.stderr, 'Time for last document:', datetime.now() - start
+        start = datetime.now()
         doc1_word_vals = docwordvectors[i]
+        doc1_norm = vectornorms[i]
         for j, doc2 in enumerate(documents):
             doc2_word_vals = docwordvectors[j]
+            doc2_norm = vectornorms[j]
             correlation_coeff = pmcc(doc1_word_vals, doc2_word_vals)
             if not isnan(correlation_coeff):
-                PairwiseDocumentMetricValue.objects.create(document1=doc1, 
+                mv = PairwiseDocumentMetricValue(document1=doc1, 
                     document2=doc2, metric=metric, value=correlation_coeff)
+                mv.save()
             else:
-                print "Error computing metric between {0} and {1}".format(doc1,doc2)
+                pass
         transaction.commit()
     
 
 def metric_names_generated(dataset, analysis):
     return metric_name
 
-def pmcc(doc1_word_vals, doc2_word_vals):
-    return float(dot(doc1_word_vals, doc2_word_vals) / (norm(doc1_word_vals)
-        * norm(doc2_word_vals)))
+
+def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
+    return float(dot(doc1_topic_vals, doc2_topic_vals) /
+            (doc1_norm * doc2_norm))
 
 
 def document_word_vector(document, num_words):
