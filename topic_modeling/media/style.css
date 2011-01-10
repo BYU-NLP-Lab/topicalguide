@@ -33,6 +33,7 @@
 #sidebar {
 	float: left;
 	height: 100%;
+	max-width: 28%;
 }
 
 #information-area {
