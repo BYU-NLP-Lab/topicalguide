@@ -25,6 +25,12 @@
 
 from __future__ import division
 
+import os
+import sys
+
+sys.path.append(os.curdir)
+os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+
 from django.db import transaction
 from optparse import OptionParser
 
@@ -32,11 +38,11 @@ from topic_modeling.visualize.models import Analysis, Dataset
 from topic_modeling.visualize.models import TopicNameScheme,TopicName,Topic,TopicWord
 
 class TopNTopicNamer:
-    def __init__(self,dataset_name,analysis_name,n):
+    def __init__(self, dataset_name, analysis_name, n):
         self.dataset_name = dataset_name
         self.analysis_name = analysis_name
         self.n = n
-        
+
     def init(self):
         dataset = Dataset.objects.get(name=self.dataset_name)
         analysis = Analysis.objects.get(dataset=dataset, name=self.analysis_name)
@@ -83,12 +89,17 @@ class TopNTopicNamer:
 
 if __name__ == '__main__':
     parser = OptionParser()
+    parser.add_option('-d', '--dataset-name',
+        dest='dataset_name',
+        help='The name of the dataset for which to add this topic metric',
+    )
     parser.add_option('-a', '--analysis-name',
         dest='analysis_name',
         help='The name of the analysis for which to add this topic metric',
     )
     parser.add_option('-n', '--top-n',
         dest='top_n',
+        default=2,
         help='How many of the top terms by P(w|z) to include in the name',
         type='int'
     )
@@ -100,7 +111,8 @@ if __name__ == '__main__':
 #            )
     
     options, args = parser.parse_args()
-    namer = TopNTopicNamer(options.analysis_name,options.top_n)
+    namer = TopNTopicNamer(options.dataset_name, options.analysis_name,
+            options.top_n)
     namer.name_all_topics()
     
 # vim: et sw=4 sts=4
