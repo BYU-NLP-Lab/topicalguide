@@ -27,11 +27,15 @@ from sys import argv
 def make_token_file(docs_dir, output_file):
     w = codecs.open(output_file, 'w', 'utf-8')
     
-    for doc_filename in os.listdir(docs_dir):
-        path = '{0}/{1}'.format(docs_dir, doc_filename)
-        text = codecs.open(path, 'r', 'utf-8').read().strip().replace('\n',' ')
-        w.write(u'{0} all {1}'.format(doc_filename, text))
-        w.write(u'\n')
+    for root, dirs, files in os.walk(docs_dir):
+        for f in files:
+            path = '{0}/{1}'.format(root, f)
+            # the [1:] takes off a leading /
+            partial_root = root.replace(docs_dir, '')[1:]
+            mallet_path = '{0}/{1}'.format(partial_root, f)
+            text = open(path).read().decode('utf-8').strip().replace('\n',' ')
+            w.write(u'{0} all {1}'.format(mallet_path, text))
+            w.write(u'\n')
 
 if __name__ == '__main__':
     make_token_file(argv[1], argv[2])
