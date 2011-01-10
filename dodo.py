@@ -210,6 +210,21 @@ def task_analysis_import():
     task_deps = ['dataset_import']
     return {'actions':actions, 'file_dep':file_deps, 'task_dep':task_deps, 'clean':clean}
 
+def task_name_schemes():
+    def generate_names(ns):
+        ns.name_all_topics()
+    def clean_names(ns):
+        ns.unname_all_topics()
+    
+    print "Available topic name schemes: ",
+    for ns in name_schemes:
+        print ns.scheme_name() + ",",
+        actions = [(generate_names,[ns])]
+        task_deps = ['analysis_import']
+        clean = [(clean_names,[ns])]
+        yield {'name':ns.scheme_name(), 'actions':actions, 'task_dep':task_deps, 'clean':clean}
+    print
+
 def task_topic_metrics():
     from metric_scripts.topics import metrics
     def import_metric(topic_metric):
@@ -358,21 +373,6 @@ def task_pairwise_document_metrics():
 
 def task_metrics():
     return {'actions':None, 'task_dep': ['analysis_import', 'topic_metrics','pairwise_topic_metrics','document_metrics','pairwise_document_metrics']}
-
-def task_name_schemes():
-    def generate_names(ns):
-        ns.name_all_topics()
-    def clean_names(ns):
-        ns.unname_all_topics()
-    
-    print "Available topic name schemes: ",
-    for ns in name_schemes:
-        print ns.scheme_name() + ",",
-        actions = [(generate_names,[ns])]
-        task_deps = ['analysis_import']
-        clean = [(clean_names,[ns])]
-        yield {'name':ns.scheme_name(), 'actions':actions, 'task_dep':task_deps, 'clean':clean}
-    print
 
 def task_hash_java():
     return {'actions': [(directory_recursive_hash, [java_base])]}
