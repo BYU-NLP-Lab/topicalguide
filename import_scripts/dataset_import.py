@@ -31,7 +31,16 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 from topic_modeling import settings
 settings.DEBUG = False
 
-from topic_modeling.visualize.models import Attribute, AttributeValue, AttributeValueDocument, AttributeValueWord, Dataset, Document, DocumentWord, Value, Word
+from topic_modeling.visualize.models import Attribute
+from topic_modeling.visualize.models import AttributeValue
+from topic_modeling.visualize.models import AttributeValueDocument
+from topic_modeling.visualize.models import AttributeValueWord
+from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.models import Document
+from topic_modeling.visualize.models import DocumentWord
+from topic_modeling.visualize.models import Value
+from topic_modeling.visualize.models import Word
+
 from django.db import connection, transaction
 
 from collections import defaultdict
@@ -50,9 +59,10 @@ NUM_DOTS = 100
 # to put one in, so I just use print statements.
 
 def main(state_file, name, attr_file, root, files_dir, description):
-    print "dataset_import({0}, {1}, {2}, {3}, {4}, {5})".format(state_file, name, attr_file, root, files_dir, description)
+    print >> sys.stderr, "dataset_import({0}, {1}, {2}, {3}, {4}, {5})".format(
+            state_file, name, attr_file, root, files_dir, description)
     start_time = datetime.now()
-    print 'Starting time:', start_time
+    print >> sys.stderr, 'Starting time:', start_time
     # These are some attempts to make the database access a little faster
     cursor = connection.cursor()
     cursor.execute('PRAGMA temp_store=MEMORY')
@@ -71,19 +81,22 @@ def main(state_file, name, attr_file, root, files_dir, description):
         create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index)
     
         # BAD!  We currently rely on a Mallet output file in order to give us
-        # counts for the database.  This should be fixed somehow.  The problem is
-        # that it depends on stopword lists and other kinds of formating.
-        words, docword, attrval, attrvalword = parse_mallet_file(state_file, attr_table)
+        # counts for the database.  This should be fixed somehow.  The problem
+        # is that it depends on stopword lists and other kinds of formating.
+        words, docword, attrval, attrvalword = parse_mallet_file(state_file,
+                attr_table)
         word_index = create_word_table(words)
         create_docword_table(docword, doc_index, word_index)
         create_attrval_table(attrval, attr_index, value_index)
-        create_attrvalword_table(attrvalword, attr_index, value_index, word_index)
+        create_attrvalword_table(attrvalword, attr_index, value_index,
+                word_index)
     
         cursor.execute('PRAGMA journal_mode=DELETE')
         cursor.execute('PRAGMA locking_mode=NORMAL')
         end_time = datetime.now()
-        print 'Finishing time:', end_time
-        print 'It took', end_time - start_time, 'to import the dataset'
+        print >> sys.stderr, 'Finishing time:', end_time
+        print >> sys.stderr, 'It took', end_time - start_time,
+        print >> sys.stderr, 'to import the dataset'
 
     
 
@@ -92,24 +105,27 @@ def main(state_file, name, attr_file, root, files_dir, description):
 #############################################################################
 
 def create_dataset(name, path, files_dir, description):
-    print 'Creating the dataset...  ',
+    print >> sys.stderr, 'Creating the dataset...  ',
     try:
         Dataset.objects.get(name=name)
-        print 'Dataset {n} already exists!  Doing nothing...'.format(n=name)
+        print >> sys.stderr, 'Dataset {n} already exists!  Doing nothing...'.\
+                format(n=name)
         return False
     except Dataset.DoesNotExist:
-        d = Dataset(name=name, data_root=path, files_dir = files_dir, description=description)
+        d = Dataset(name=name, data_root=path, files_dir=files_dir,
+                description=description)
         d.save()
         global dataset
         dataset = d
-    print 'Done'
+    print >> sys.stderr, 'Done'
     return True
 
 
 @transaction.commit_manually
 def create_document_table(filenames):
     num_per_dot = max(1, int(len(filenames)/NUM_DOTS))
-    print 'Creating the Document Table (%d documents per dot)' % (num_per_dot),
+    print >> sys.stderr, 'Creating the Document Table',
+    print >> sys.stderr, '(%d documents per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
@@ -117,22 +133,22 @@ def create_document_table(filenames):
     for filename in filenames:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         doc = Document(filename=filename, dataset=dataset)
         doc.save()
         doc_index[filename] = doc
     transaction.commit()
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
     return doc_index
 
 
 @transaction.commit_manually
 def create_attribute_table(attributes):
     num_per_dot = max(1, int(len(attributes)/NUM_DOTS))
-    print 'Creating the Attribute Table (%d attributes per dot)' % (
-            num_per_dot),
+    print >> sys.stderr, 'Creating the Attribute Table',
+    print >> sys.stderr, '(%d attributes per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
@@ -140,14 +156,14 @@ def create_attribute_table(attributes):
     for attribute in attributes:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         attr = Attribute(name=attribute, dataset=dataset)
         attr.save()
         attr_index[attribute] = attr
     transaction.commit()
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
     return attr_index
 
 
@@ -157,7 +173,8 @@ def create_value_table(values, attr_index):
     for attribute in values:
         entries.extend(values[attribute])
     num_per_dot = max(1, int(len(entries)/NUM_DOTS))
-    print 'Creating the Value Table (%d values per dot)' % (num_per_dot),
+    print >> sys.stderr, 'Creating the Value Table',
+    print >> sys.stderr, '(%d values per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
@@ -166,29 +183,29 @@ def create_value_table(values, attr_index):
         for value in values[attribute]:
             num_so_far += 1
             if num_so_far % num_per_dot == 0:
-                print '.',
+                print >> sys.stderr, '.',
                 sys.stdout.flush()
             val = Value(value=value, attribute=attr_index[attribute])
             val.save()
             value_index[(value, attribute)] = val
     transaction.commit()
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
     return value_index
 
 
 @transaction.commit_manually
 def create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index):
     num_per_dot = max(1, int(len(attrvaldoc)/NUM_DOTS))
-    print 'Creating the AttributeValueDocument Table (%d entries per dot)' % (
-            num_per_dot),
+    print >> sys.stderr, 'Creating the AttributeValueDocument Table',
+    print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
     for attribute, value, filename in attrvaldoc:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         doc = doc_index[filename]
         attr = attr_index[attribute]
@@ -198,13 +215,14 @@ def create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index):
         attrvaldoc.save()
     transaction.commit()
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
 
 
 @transaction.commit_manually
 def create_word_table(words):
     num_per_dot = max(1, int(len(words)/NUM_DOTS))
-    print 'Creating the Word Table (%d words per dot)' % (num_per_dot),
+    print >> sys.stderr, 'Creating the Word Table',
+    print >> sys.stderr, '(%d words per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
@@ -212,7 +230,7 @@ def create_word_table(words):
     for word in words:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         count = words[word]
         if '_' in word:
@@ -223,15 +241,15 @@ def create_word_table(words):
         word_index[word] = w
     transaction.commit()
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
     return word_index
 
 
 @transaction.commit_manually
 def create_docword_table(docword, doc_index, word_index):
     num_per_dot = max(1, int(len(docword)/NUM_DOTS))
-    print 'Creating the DocumentWord table (%d entries per dot)' % (
-            num_per_dot),
+    print >> sys.stderr, 'Creating the DocumentWord table',
+    print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
     sys.stdout.flush()
     num_so_far = 0
     start = datetime.now()
@@ -239,7 +257,7 @@ def create_docword_table(docword, doc_index, word_index):
     for filename, word in docword:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         doc = doc_index[filename]
         w = word_index[word]
@@ -249,28 +267,28 @@ def create_docword_table(docword, doc_index, word_index):
         total_doc_counts[filename] += count
     transaction.commit()
     end = datetime.now()
-    print '  Done', end-start
-    print 'Updating Document total word counts...  ',
+    print >> sys.stderr, '  Done', end-start
+    print >> sys.stderr, 'Updating Document total word counts...  ',
     for filename in total_doc_counts:
         doc = doc_index[filename]
         doc.word_count = total_doc_counts[filename]
         doc.save()
     transaction.commit()
-    print 'Done'
+    print >> sys.stderr, 'Done'
 
 
 @transaction.commit_manually
 def create_attrval_table(attrval, attr_index, value_index):
     num_per_dot = max(1, int(len(attrval)/NUM_DOTS))
-    print 'Creating the AttributeValue Table (%d entries per dot)' % (
-            num_per_dot),
+    print >> sys.stderr, 'Creating the AttributeValue Table',
+    print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
     for attribute, value in attrval:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         attr = attr_index[attribute]
         val = value_index[(value, attribute)]
@@ -279,21 +297,21 @@ def create_attrval_table(attrval, attr_index, value_index):
         av.save()
     transaction.commit()
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
 
 
 @transaction.commit_manually
 def create_attrvalword_table(attrvalword, attr_index, value_index, word_index):
     num_per_dot = max(1, int(len(attrvalword)/NUM_DOTS))
-    print 'Creating the AttributeValueWord Table (%d entries per dot)' % (
-            num_per_dot),
+    print >> sys.stderr, 'Creating the AttributeValueWord Table',
+    print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
     for attribute, value, word in attrvalword:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         attr = attr_index[attribute]
         val = value_index[(value, attribute)]
@@ -303,7 +321,7 @@ def create_attrvalword_table(attrvalword, attr_index, value_index, word_index):
         avw.save()
     transaction.commit()
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
 
 
 #############################################################################
@@ -311,17 +329,18 @@ def create_attrvalword_table(attrvalword, attr_index, value_index, word_index):
 #############################################################################
 
 def parse_dataset_description(description_file):
-    print 'Reading dataset file...'
+    print >> sys.stderr, 'Reading dataset file...'
     f = open(description_file, 'r').read()
     values_map = cjson.decode(f)
-    print 'This is the information I found about the dataset.  Cancel this now'\
-            ' and fix your description file if this is wrong.\n'
-    print 'Name:', values_map['name']
-    print 'Attribute File:', values_map['attribute_file']
-    print 'Data Root:', values_map['data_root']
-    print 'Description:'
-    print values_map['description']
-    print
+    print >> sys.stderr, 'This is the information I found about the dataset.'
+    print >> sys.stderr, 'Cancel this now and fix your description file if',
+    print >> sys.stderr, 'this is wrong.\n'
+    print >> sys.stderr, 'Name:', values_map['name']
+    print >> sys.stderr, 'Attribute File:', values_map['attribute_file']
+    print >> sys.stderr, 'Data Root:', values_map['data_root']
+    print >> sys.stderr, 'Description:'
+    print >> sys.stderr, values_map['description']
+    print >> sys.stderr
     return (values_map['name'], values_map['attribute_file'],
             values_map['data_root'], values_map['description'])
 
@@ -332,7 +351,7 @@ def parse_attributes(attribute_file):
     consist of a JSON formatted text file with the following
     format: [ {'path': <path>, 'attributes':{'attribute': 'value',...}}, ...] 
     """
-    print 'Parsing the JSON attributes file...  ',
+    print >> sys.stderr, 'Parsing the JSON attributes file...  ',
     sys.stdout.flush()
     start = datetime.now()
     file_data = open(attribute_file).read()
@@ -346,7 +365,7 @@ def parse_attributes(attribute_file):
     for document in parsed_data:
         count += 1
         if count % 50000 == 0:
-            print count
+            print >> sys.stderr, count
             sys.stdout.flush()
         attribute_values = document['attributes']
         filename = document['path']
@@ -362,9 +381,9 @@ def parse_attributes(attribute_file):
             for value in values_set:
                 values[attribute].add(value)
                 attrvaldoc.add((attribute, value, filename))
-    print 'Done'
+    print >> sys.stderr, 'Done'
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
     return documents, attributes, values, attrvaldoc, attribute_table
 
@@ -379,7 +398,7 @@ def parse_mallet_file(state_file, attribute_table):
     The state file is output from MALLET in a gzipped format.  This method
     assumes that the file has already been un-compressed.
     """
-    print 'Parsing the mallet file...  ',
+    print >> sys.stderr, 'Parsing the mallet file...  ',
     sys.stdout.flush()
     start = datetime.now()
     words = defaultdict(int)
@@ -392,7 +411,7 @@ def parse_mallet_file(state_file, attribute_table):
     for line in f:
         count += 1
         if count % 100000 == 0:
-            print count
+            print >> sys.stderr, count
         line = line.strip()
         if line[0] != "#":
             _, docpath, __, ___, word, ____ = line.split()
@@ -410,7 +429,7 @@ def parse_mallet_file(state_file, attribute_table):
     f.close()
 
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
     return words, docword, attrvalue, attrvalueword
 

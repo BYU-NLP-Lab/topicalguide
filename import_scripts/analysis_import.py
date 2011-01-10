@@ -23,8 +23,6 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 import codecs, os, sys
-from topic_modeling.visualize.models import Dataset, Analysis, Topic,\
-    DocumentTopic, TopicWord, DocumentTopicWord, AttributeValueTopic, Document
 import re
 
 sys.path.append(os.curdir)
@@ -32,6 +30,16 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
 from topic_modeling import settings
 settings.DEBUG = False
+from topic_modeling.visualize.models import Analysis
+from topic_modeling.visualize.models import AttributeValueTopic
+from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.models import Document
+from topic_modeling.visualize.models import DocumentTopic
+from topic_modeling.visualize.models import DocumentTopicWord
+from topic_modeling.visualize.models import Topic
+from topic_modeling.visualize.models import TopicWord
+
+from build.common.util import create_dirs_and_open
 
 from django.db import connection, transaction
 
@@ -52,10 +60,13 @@ NUM_DOTS = 100
 # to put one in, so I just use print statements.
 
 #def main(options):
-def main(dataset_name, dataset_attr_file, analysis_name, analysis_description, state_file, tokenized_file, files_dir, split_regex):
-    print "analysis_import({0}, {1}, {2}, {3}, {4}, {5}, {6})".format(dataset_name, dataset_attr_file, analysis_name, analysis_description, state_file, tokenized_file, files_dir)
+def main(dataset_name, dataset_attr_file, analysis_name, analysis_description,
+        state_file, tokenized_file, files_dir, split_regex):
+    print >> sys.stderr, "analysis_import({0}, {1}, {2}, {3}, {4}, {5}, {6})".\
+            format(dataset_name, dataset_attr_file, analysis_name,
+            analysis_description, state_file, tokenized_file, files_dir)
     start_time = datetime.now()
-    print 'Starting time:', start_time
+    print >> sys.stderr, 'Starting time:', start_time
     # These are some attempts to make the database access a little faster
     cursor = connection.cursor()
     cursor.execute('PRAGMA temp_store=MEMORY')
@@ -67,24 +78,26 @@ def main(dataset_name, dataset_attr_file, analysis_name, analysis_description, s
     global dataset
     dataset = Dataset.objects.get(name=dataset_name)
     created = create_analysis(analysis_name, analysis_description)
-    
+
     if created:
-        doc_index, attr_index, value_index, attr_table = parse_attributes(dataset_attr_file)
+        doc_index, attr_index, value_index, attr_table = parse_attributes(
+                dataset_attr_file)
         dt, tw, dtw, avt, topics, word_index = parse_mallet_file(state_file,
                 attr_table, tokenized_file, files_dir, split_regex)
-    
+
         topicinfo = create_topic_info(tw)
         topic_index = create_topic_table(topics, topicinfo)
-    
+
         create_doctopic_table(dt, doc_index, topic_index)
         create_topicword_table(tw, topic_index, word_index)
         create_doctopicword_table(dtw, doc_index, topic_index, word_index)
         create_attrvaltopic_table(avt, attr_index, value_index, topic_index)
-    
+
         end_time = datetime.now()
-        print 'Finishing time:', end_time
-        print 'It took', end_time - start_time, 'to import the analysis'
-    
+        print >> sys.stderr, 'Finishing time:', end_time
+        print >> sys.stderr, 'It took', end_time - start_time,
+        print >> sys.stderr, 'to import the analysis'
+
     cursor.execute('PRAGMA journal_mode=DELETE')
     cursor.execute('PRAGMA locking_mode=NORMAL')
 
@@ -98,12 +111,11 @@ def create_analysis(name, description):
     """
     
     result = False
-    print 'Creating the analysis...  ',
+    print >> sys.stderr, 'Creating the analysis...  ',
     try:
         Analysis.objects.get(name=name, dataset=dataset)
-        print 'Analysis {n} already exists! Doing nothing...'.format(n=name)
-#        print 'Analysis {n} already exists!  Exiting...'.format(n=name)
-#        exit(-1)
+        print >> sys.stderr, 'Analysis {n} already exists! Doing nothing...'.\
+                format(n=name)
     except Analysis.DoesNotExist:
         a = Analysis(name=name, description=description, dataset=dataset)
         a.save()
@@ -113,16 +125,17 @@ def create_analysis(name, description):
         try:
             os.mkdir('%s/%s-markup' % (dataset.data_root, analysis.name))
         except OSError:
-            print 'The markup directory already exists.  Doing nothing...'
-#        exit(-1)
-    print 'Done'
+            print >> sys.stderr, 'The markup directory already exists.  ',
+            print >> sys.stderr, 'Doing nothing...'
+    print >> sys.stderr, 'Done'
     return result
 
 
 @transaction.commit_manually
 def create_topic_table(topics, topicinfo):
     num_per_dot = max(1, int(len(topics)/NUM_DOTS))
-    print 'Creating the Topic Table (%d topics per dot)' % (num_per_dot),
+    print >> sys.stderr, 'Creating the Topic Table (%d topics per dot)' % (
+            num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
@@ -130,7 +143,7 @@ def create_topic_table(topics, topicinfo):
     for topic in topics:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         t = Topic(number=topic, analysis=analysis, name=topicinfo[topic][1],
                 total_count=topicinfo[topic][0])
@@ -138,22 +151,22 @@ def create_topic_table(topics, topicinfo):
         topic_index[topic] = t
     transaction.commit()
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
     return topic_index
 
 
 @transaction.commit_manually
 def create_doctopic_table(doctopic, doc_index, topic_index):
     num_per_dot = max(1, int(len(doctopic)/NUM_DOTS))
-    print 'Creating the DocumentTopic table (%d entries per dot)' % (
-            num_per_dot),
+    print >> sys.stderr, 'Creating the DocumentTopic table',
+    print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
     sys.stdout.flush()
     num_so_far = 0
     start = datetime.now()
     for filename, topic in doctopic:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         doc = doc_index[filename]
         t = topic_index[topic]
@@ -162,13 +175,13 @@ def create_doctopic_table(doctopic, doc_index, topic_index):
         dt.save()
     transaction.commit()
     end = datetime.now()
-    print '  Done', end-start
+    print >> sys.stderr, '  Done', end-start
 
 
 @transaction.commit_manually
 def create_topicword_table(topicword, topic_index, word_index):
     num_per_dot = max(1, int(len(topicword)/NUM_DOTS))
-    print 'Creating the TopicWord table (%d entries per dot)' % (
+    print >> sys.stderr, 'Creating the TopicWord table (%d entries per dot)' % (
             num_per_dot),
     sys.stdout.flush()
     num_so_far = 0
@@ -176,7 +189,7 @@ def create_topicword_table(topicword, topic_index, word_index):
     for topic, word in topicword:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         t = topic_index[topic]
         w = word_index[word]
@@ -185,21 +198,21 @@ def create_topicword_table(topicword, topic_index, word_index):
         tw.save()
     transaction.commit()
     end = datetime.now()
-    print '  Done', end-start
+    print >> sys.stderr, '  Done', end-start
 
 
 @transaction.commit_manually
 def create_doctopicword_table(doctopicword, doc_index, topic_index, word_index):
     num_per_dot = max(1, int(len(doctopicword)/NUM_DOTS))
-    print 'Creating the DocumentTopicWord table (%d entries per dot)' % (
-            num_per_dot),
+    print >> sys.stderr, 'Creating the DocumentTopicWord table',
+    print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
     sys.stdout.flush()
     num_so_far = 0
     start = datetime.now()
     for filename, topic, word in doctopicword:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         doc = doc_index[filename]
         t = topic_index[topic]
@@ -209,21 +222,21 @@ def create_doctopicword_table(doctopicword, doc_index, topic_index, word_index):
         dtw.save()
     transaction.commit()
     end = datetime.now()
-    print '  Done', end-start
+    print >> sys.stderr, '  Done', end-start
 
 
 @transaction.commit_manually
 def create_attrvaltopic_table(attrvaltopic, attr_index, val_index, topic_index):
     num_per_dot = max(1, int(len(attrvaltopic)/NUM_DOTS))
-    print 'Creating the AttributeValueTopic Table (%d entries per dot)' % (
-            num_per_dot),
+    print >> sys.stderr, 'Creating the AttributeValueTopic Table',
+    print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
     for attribute, value, topic in attrvaltopic:
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
-            print '.',
+            print >> sys.stderr, '.',
             sys.stdout.flush()
         attr = attr_index[attribute]
         val = val_index[(value, attribute)]
@@ -234,7 +247,7 @@ def create_attrvaltopic_table(attrvaltopic, attr_index, val_index, topic_index):
         avt.save()
     transaction.commit()
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
 
 
 #############################################################################
@@ -242,16 +255,17 @@ def create_attrvaltopic_table(attrvaltopic, attr_index, val_index, topic_index):
 #############################################################################
 
 def parse_analysis_description(description_file):
-    print 'Reading analysis file...'
+    print >> sys.stderr, 'Reading analysis file...'
     f = open(description_file).read()
     vars = cjson.decode(f)
-    print 'This is the information I found about the analysis.  Cancel this'\
-            ' now and fix your description file if this is wrong.\n'
-    print 'Name:', vars['name']
-    print 'State File:', vars['state_file']
-    print 'Description:'
-    print vars['description']
-    print
+    print >> sys.stderr, 'This is the information I found about the analysis.'
+    print >> sys.stderr, 'Cancel this now and fix your description file if',
+    print >> sys.stderr, 'this is wrong.\n'
+    print >> sys.stderr, 'Name:', vars['name']
+    print >> sys.stderr, 'State File:', vars['state_file']
+    print >> sys.stderr, 'Description:'
+    print >> sys.stderr, vars['description']
+    print >> sys.stderr
     return vars
 
 
@@ -261,7 +275,7 @@ def parse_attributes(attribute_file):
     consist of a JSON formatted text file with the following
     format: [ {'path': <path>, 'attributes':{'attribute': 'value',...}}, ...] 
     """
-    print 'Parsing the JSON attributes file...',
+    print >> sys.stderr, 'Parsing the JSON attributes file...',
     sys.stdout.flush()
     start = datetime.now()
     file_data = open(attribute_file).read()
@@ -275,7 +289,7 @@ def parse_attributes(attribute_file):
     for document in parsed_data:
         count += 1
         if count % 50000 == 0:
-            print count
+            print >> sys.stderr, count
             sys.stdout.flush()
         attribute_values = document['attributes']
         filename = document['path']
@@ -291,8 +305,8 @@ def parse_attributes(attribute_file):
             for value in values_set:
                 values[attribute].add(value)
     end = datetime.now()
-    print '  Done', end - start
-    print 'Populating the indexes for faster lookups...',
+    print >> sys.stderr, '  Done', end - start
+    print >> sys.stderr, 'Populating the indexes for faster lookups...',
     start = datetime.now()
     sys.stdout.flush()
     doc_index = dict()
@@ -305,7 +319,7 @@ def parse_attributes(attribute_file):
         for val in attr.value_set.all():
             value_index[(val.value, attr.name)] = val
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
     return doc_index, attr_index, value_index, attribute_table
 
 
@@ -324,7 +338,7 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, sp
     file once.  It makes the code a little more messy, but it saves a lot of
     time when the mallet file is really large.
     """
-    print 'Parsing the mallet file and creating markup files...'
+    print >> sys.stderr, 'Parsing the mallet file and creating markup files...'
     sys.stdout.flush()
     start = datetime.now()
     tokenized_file = codecs.open(tokenized_file, 'r', 'utf-8')
@@ -341,7 +355,7 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, sp
     for line in f:
         count += 1
         if count % 100000 == 0:
-            print count
+            print >> sys.stderr, count
         line = line.strip()
         if line[0] != "#":
             _, docpath, __, ___, word, topic = line.split()
@@ -349,7 +363,7 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, sp
             # Handle markup file stuff
             if docpath != markup_state.path:
                 if markup_state.initialized:
-#                    markup_state.markup_stop_words()
+                    markup_state.markup_stop_words()
                     markup_state.output_file()
                 markup_state.initialize(files_dir, docpath)
             markup_state.markup_stop_words(word)
@@ -368,21 +382,21 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, sp
                     values_set = value
                 for value in values_set:
                     attrvaltopic[(attr, value, topic)] += 1
-#    markup_state.markup_stop_words()
+    markup_state.markup_stop_words()
     markup_state.output_file()
-    transaction.commit()
     f.close()
+    transaction.commit()
 
     end = datetime.now()
-    print '  Done', end - start
-    print 'Populating the word index...',
+    print >> sys.stderr, '  Done', end - start
+    print >> sys.stderr, 'Populating the word index...',
     start = datetime.now()
     sys.stdout.flush()
     word_index = dict()
     for word in dataset.word_set.all():
         word_index[word.type] = word
     end = datetime.now()
-    print '  Done', end - start
+    print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
     return doctopic, topicword, doctopicword, attrvaltopic, topics, word_index
 
@@ -466,20 +480,24 @@ class MarkupState(object):
         tokens = re.split(self.split_regex, doc_content_only)
         return token_filename, tokens
 
-    def markup_stop_words(self, word):
-        '''This assumes that C{word} and the tokens are all in the same case'''
+    def markup_stop_words(self, word=None):
+        '''This assumes that C{word} and the tokens are all in the same case
+
+        If word is None, then we mark the rest of the file as stop words.
+        '''
         try:
-            def have_reached_non_stopword():
-                if self.token_index >= len(self.tokens):
-                    return True
-                return self.tokens[self.token_index] == word
-            while not have_reached_non_stopword():
+            def reached_non_stopword():
+                if word:
+                    return self.tokens[self.token_index] == word
+                else:
+                    return self.token_index >= len(self.tokens)
+            while not reached_non_stopword():
                 self.markup_word(self.tokens[self.token_index], 'stop word')
         except IndexError:
-            print 'IndexError!'
+            print >> sys.stderr, 'IndexError!'
             for m in self.markup:
-                print m
-            print self.path
+                print >> sys.stderr, m
+            print >> sys.stderr, self.path
             import traceback
             traceback.print_exc()
             raise
@@ -496,8 +514,8 @@ class MarkupState(object):
 
     def output_file(self):
         markup_file_name = '%s-markup/' % analysis.name
-        markup_file_name += self.path.replace('/', '_')
-        file = open(dataset.data_root + '/' + markup_file_name, 'w')
+        markup_file_name += self.path
+        file = create_dirs_and_open(dataset.data_root + '/' + markup_file_name)
         file.write(simplejson.dumps(self.markup, indent=2))
         document = Document.objects.get(filename=self.path)
         document.markup_file = markup_file_name
