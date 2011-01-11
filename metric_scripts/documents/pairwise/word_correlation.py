@@ -33,6 +33,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
 from django.db import transaction
 
+from datetime import datetime
 from math import log
 from numpy import dot, zeros
 from numpy.linalg import norm
@@ -75,7 +76,8 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         for j, doc2 in enumerate(documents):
             doc2_word_vals = docwordvectors[j]
             doc2_norm = vectornorms[j]
-            correlation_coeff = pmcc(doc1_word_vals, doc2_word_vals)
+            correlation_coeff = pmcc(doc1_word_vals, doc2_word_vals, doc1_norm,
+                    doc2_norm)
             if not isnan(correlation_coeff):
                 mv = PairwiseDocumentMetricValue(document1=doc1, 
                     document2=doc2, metric=metric, value=correlation_coeff)

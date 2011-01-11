@@ -32,7 +32,10 @@ def make_token_file(docs_dir, output_file):
             path = '{0}/{1}'.format(root, f)
             # the [1:] takes off a leading /
             partial_root = root.replace(docs_dir, '')[1:]
-            mallet_path = '{0}/{1}'.format(partial_root, f)
+            if partial_root:
+                mallet_path = '{0}/{1}'.format(partial_root, f)
+            else:
+                mallet_path = f
             text = open(path).read().decode('utf-8').strip().replace('\n',' ')
             w.write(u'{0} all {1}'.format(mallet_path, text))
             w.write(u'\n')

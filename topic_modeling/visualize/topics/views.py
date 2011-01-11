@@ -95,7 +95,8 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
 
     context['metrics'] = topic.topicmetricvalue_set.all()
     
-    name_schemes = TopicNameScheme.objects.filter(analysis=topic.analysis).order_by('name')
+    name_schemes = TopicNameScheme.objects.filter(
+            analysis=topic.analysis).order_by('name')
     context['nameschemes'] = name_schemes
     if 'current_name_scheme_id' not in request.session:
         request.session['current_name_scheme_id'] = context['nameschemes'][0].id
@@ -106,7 +107,8 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
     #Make it available to the topic template
     context['currentnamescheme'] = current_name_scheme
 
-    topic_name = TopicName.objects.get(topic=topic,name_scheme=current_name_scheme).name
+    topic_name = TopicName.objects.get(topic=topic,
+            name_scheme=current_name_scheme).name
     context['topic_name'] = topic_name
 
     # Build the bread crumb
