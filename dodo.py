@@ -68,6 +68,22 @@ filename = "build/{0}.py".format(build)
 ast = compile(open(filename).read(), filename, 'exec')
 eval(ast, globals(), locals())
 
+# Variables and Paths
+
+# This variable should be with Mallet, but it is needed to name the analysis,
+# so we have it up here.
+num_topics = 20
+
+dataset_name = get_dataset_name(locals())
+dataset_description = get_dataset_description(locals())
+analysis_name = "lda{0}topics".format(num_topics)
+analysis_description = "Mallet LDA with {0} topics".format(num_topics)
+
+base_dir = os.curdir
+datasets_dir = base_dir + "/datasets"
+dataset_dir = "{0}/{1}".format(datasets_dir, dataset_name)
+files_dir = get_files_dir(locals())
+
 # Mallet
 mallet = base_dir + "/tools/mallet/mallet"
 mallet_input_file_name = "mallet_input.txt"
@@ -80,18 +96,6 @@ mallet_token_regex = get_mallet_token_regex(locals())
 split_regex = get_split_regex(locals())
 mallet_optimize_interval = 10
 mallet_num_iterations = 1000
-num_topics = 20
-
-#Variables and Paths
-dataset_name = get_dataset_name(locals())
-dataset_description = get_dataset_description(locals())
-analysis_name = "lda{0}topics".format(num_topics)
-analysis_description = "Mallet LDA with {0} topics".format(num_topics)
-
-base_dir = os.curdir
-datasets_dir = base_dir + "/datasets"
-dataset_dir = "{0}/{1}".format(datasets_dir, dataset_name)
-files_dir = get_files_dir(locals())
 
 #For dynamically generated attributes file, define task_attributes_file
 attributes_file = get_attributes_file(locals())
