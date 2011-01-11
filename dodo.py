@@ -68,10 +68,23 @@ filename = "build/{0}.py".format(build)
 ast = compile(open(filename).read(), filename, 'exec')
 eval(ast, globals(), locals())
 
+# Mallet
+mallet = base_dir + "/tools/mallet/mallet"
+mallet_input_file_name = "mallet_input.txt"
+mallet_input = "{0}/{1}".format(dataset_dir, mallet_input_file_name)
+mallet_imported_data = dataset_dir + "/imported_data.mallet"
+mallet_output_gz = "{0}/{1}.outputstate.gz".format(dataset_dir, analysis_name)
+mallet_output = "{0}/{1}.outputstate".format(dataset_dir, analysis_name)
+mallet_doctopics_output = "{0}/{1}.doctopics".format(dataset_dir, analysis_name)
+mallet_token_regex = get_mallet_token_regex(locals())
+split_regex = get_split_regex(locals())
+mallet_optimize_interval = 10
+mallet_num_iterations = 1000
+num_topics = 20
+
 #Variables and Paths
 dataset_name = get_dataset_name(locals())
 dataset_description = get_dataset_description(locals())
-num_topics = 20
 analysis_name = "lda{0}topics".format(num_topics)
 analysis_description = "Mallet LDA with {0} topics".format(num_topics)
 
@@ -98,22 +111,9 @@ pairwise_topic_metrics = ["document correlation", "word correlation"]
 document_metrics = ['token count', 'type count', 'topic entropy']
 pairwise_document_metrics = ['word correlation','topic correlation']
 name_schemes = [
-               TopNTopicNamer(dataset_name,analysis_name,3),
-#               TfitfTopicNamer(dataset_name,analysis_name,5)
+               TopNTopicNamer(dataset_name, analysis_name, 2),
+#               TfitfTopicNamer(dataset_name, analysis_name, 5)
                ]
-
-#Mallet
-mallet = base_dir + "/tools/mallet/mallet"
-mallet_input_file_name = "mallet_input.txt"
-mallet_input = "{0}/{1}".format(dataset_dir, mallet_input_file_name)
-mallet_imported_data = dataset_dir + "/imported_data.mallet"
-mallet_output_gz = "{0}/{1}.outputstate.gz".format(dataset_dir, analysis_name)
-mallet_output = "{0}/{1}.outputstate".format(dataset_dir, analysis_name)
-mallet_doctopics_output = "{0}/{1}.doctopics".format(dataset_dir, analysis_name)
-mallet_token_regex = get_mallet_token_regex(locals())
-split_regex = get_split_regex(locals())
-mallet_optimize_interval = 10
-mallet_num_iterations = 1000
 
 #Graph-based Visualization
 java_base = base_dir + "/java"
