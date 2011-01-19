@@ -34,6 +34,7 @@ from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import TopicName
 from topic_modeling.visualize.models import TopicNameScheme
 from topic_modeling.visualize.topics.common import top_values_for_attr_topic
+from topic_modeling.visualize.topics.common import get_topic_name
 from topic_modeling.visualize.topics.filters import clean_topics_from_session
 from topic_modeling.visualize.topics.filters import get_topic_filter_by_name
 from topic_modeling.visualize.topics.filters import possible_topic_filters
@@ -42,6 +43,7 @@ from topic_modeling.visualize.topics.filters import possible_topic_filters
 ###########################
 
 def rename_topic(request, dataset, analysis, topic, name):
+    raise NotImplementedError('This is currently broken')
     topic = Topic.objects.get(analysis__dataset__name=dataset,
             analysis__name=analysis, number=topic)
     topic.name = name
@@ -57,7 +59,8 @@ def topic_ordering(request, dataset, analysis, order_by):
     topics = Topic.objects.filter(analysis__name=analysis,
             analysis__dataset__name=dataset)
     topics, _, num_pages = clean_topics_from_session(topics, request.session)
-    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic, name_scheme_id))) for topic in topics]
+    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic,
+        name_scheme_id))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = 1
     return HttpResponse(simplejson.dumps(ret_val))
@@ -74,7 +77,8 @@ def get_topic_page(request, dataset, analysis, topic, number):
     num_per_page = request.session.get('topics-per-page', 20)
     page = int(number)
     topics, num_pages, _ = paginate_list(topics, page, num_per_page)
-    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic, name_scheme_id))) for topic in topics]
+    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic,
+        name_scheme_id))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
     return HttpResponse(simplejson.dumps(ret_val))
@@ -146,7 +150,8 @@ def filtered_topics_response(request, dataset, analysis):
             request.session)
     ret_val = dict()
     ret_val['filter_form'] = filter_form.__unicode__()
-    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic, name_scheme_id))) for topic in topics]
+    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic,
+        name_scheme_id))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = request.session.get('topic-page', 1)
     return HttpResponse(simplejson.dumps(ret_val))
@@ -206,13 +211,10 @@ def update_topic_word_filter(request, dataset, analysis, topic, number, word):
     request.session.modified = True
     return filtered_topics_response(request, dataset, analysis)
 
-def get_topic_name(topic, name_scheme_id):
-    ns = TopicNameScheme.objects.get(id=name_scheme_id)
-    return str(topic.number) + ": " + TopicName.objects.get(topic=topic,name_scheme=ns).name
 
 class AjaxTopic(object):
     def __init__(self, topic, topic_name):
-        self.name = topic_name
+        self.name = str(topic.number) + ': ' + topic_name
         self.number = topic.number
 
 

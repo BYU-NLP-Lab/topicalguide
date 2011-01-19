@@ -76,7 +76,7 @@ def clean_topics_from_session(topics, session, extra_filters=[], topic=None):
     for filter in extra_filters:
         topics = filter.apply(topics)
     sort_by = session.get('topic-sort', 'name')
-    topics = sort_topics(topics, sort_by)
+    topics = sort_topics(topics, sort_by, session)
     session['topics-list'] = topics
     page_num = session.get('topic-page', 1)
     per_page = session.get('topics-per-page', 20)
