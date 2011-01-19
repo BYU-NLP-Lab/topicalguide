@@ -25,19 +25,32 @@
 
 from django import forms
 
+from topic_modeling.visualize.models import TopicName
+from topic_modeling.visualize.models import TopicNameScheme
+
 
 # Methods
 #########
 
-def sort_topics(topics, sort_by):
+def get_topic_name(topic, name_scheme_id):
+    ns = TopicNameScheme.objects.get(id=name_scheme_id)
+    return TopicName.objects.get(topic=topic, name_scheme=ns).name
+
+
+def sort_topics(topics, sort_by, session):
     # Because of the way I had to implement metric sorting, and the way that
     # filtering is implemented, you cannot filter after you have sorted.  Be
     # sure to call this method after filtering, and before paginate_list,
     # unless you really know what you are doing.
-    django_orderings = ['total_count', '-total_count', 'number', '-number',
-            'name', '-name']
+    django_orderings = ['total_count', '-total_count', 'number', '-number']
     if sort_by in django_orderings:
         return topics.order_by(sort_by)
+    elif sort_by == 'name':
+        name_scheme_id = session['current_name_scheme_id']
+        ns = TopicNameScheme.objects.get(id=name_scheme_id)
+        topic_list = list(topics.all())
+        topic_list.sort(key=lambda x: get_topic_name(x, name_scheme_id))
+        return topic_list
     elif 'metric:' in sort_by:
         metric_name = sort_by[7:]
         topic_list = list(topics.all())
