@@ -2,7 +2,7 @@
 Command run
 ============
 
-Most of the time you just want to execute your tasks that's what *run* does. Since it is by far the most common operation it is also the default, so if you don't specify any sub-command to *doit* it will *run*. So ``$ doit`` and ``$ doit run`` are the same thing.
+Most of the time you just want to execute your tasks, that's what *run* does. Since it is by far the most common operation it is also the default, so if you don't specify any sub-command to *doit* it will *run*. So ``$ doit`` and ``$ doit run`` are the same thing.
 
 The basics of task selection were introduced in :ref:`Task Selection <task-selection>`.
 
@@ -15,7 +15,7 @@ By default all commands are relative to ``dodo.py`` in the current folder. You c
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit -f release.py
+    $ doit -f release.py
 
 
 
@@ -44,7 +44,7 @@ You can control the verbosity by:
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit --verbosity 2
+    $ doit --verbosity 2
 
 * task attribute verbosity
 
@@ -52,7 +52,7 @@ You can control the verbosity by:
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit
+    $ doit
     .  print
     hello
 
@@ -73,7 +73,7 @@ For python-actions the python function must define arguments with the same name 
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit py_params -p abc --param2 4
+    $ doit py_params -p abc --param2 4
     .  py_params
     abc
     9
@@ -82,7 +82,7 @@ For cmd-actions use python string substitution notation:
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit cmd_params -f "-c --other value"
+    $ doit cmd_params -f "-c --other value"
     .  cmd_params
     mycmd -c --other value xxx
 
@@ -96,7 +96,7 @@ By default when you run `doit` only the task name is printed out on the output. 
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit
+    $ doit
     .  executing... Cmd: echo abc efg
 
 
@@ -107,7 +107,7 @@ By default relative paths of file used on the `dodo` file and the "current worki
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit --dir path/to/another/cwd
+    $ doit --dir path/to/another/cwd
 
 
 continue
@@ -117,7 +117,7 @@ By default the execution of tasks is halted on the first task failure or error. 
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit --continue
+    $ doit --continue
 
 
 
@@ -128,7 +128,7 @@ parallel execution
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit -n 3
+    $ doit -n 3
 
 
 
@@ -137,12 +137,12 @@ reporter
 
 `doit` provides different "reporters" to display running tasks info on the console. Use the option --reporter/-r to choose a reporter. Apart from the default it also includes:
 
- * executed-only: Produces zero output unless a task is executed
+ * executed-only: Produces zero output if no task is executed
  * json: Output results in JSON format
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit --reporter json
+    $ doit --reporter json
 
 
 custom reporter
@@ -161,7 +161,7 @@ The option --output-file/-o let you output the result to a file.
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit --output-file result.txt
+    $ doit --output-file result.txt
 
 
 config
@@ -175,13 +175,13 @@ So if you just execute
 
 .. code-block:: console
 
-   eduardo@eduardo:~$ doit
+   $ doit
 
 it will have the same effect as executing
 
 .. code-block:: console
 
-   eduardo@eduardo:~$ doit --continue --reporter json my_task_1 my_task_2
+   $ doit --continue --reporter json my_task_1 my_task_2
 
 You need to check `doit_cmd.py <http://bazaar.launchpad.net/~schettino72/doit/trunk/annotate/head%3A/doit/doit_cmd.py>`_ to find out how parameter maps to config names.
 

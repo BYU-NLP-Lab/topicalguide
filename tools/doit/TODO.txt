@@ -1,14 +1,13 @@
-0.10
-------
+big refactorings
+------------------
 
-. cyclilc MP test
-. more MP (tree)
-. cache file MD5 (on read & write)
-. key/value storage
+Task into TaskDep + Task
+TaskControl into Create + Process
 
 0.X
 ----------
 
+. more MP (tree)
 . setup/task  single process/all procces
 . --enable/--disable cmd line options
 

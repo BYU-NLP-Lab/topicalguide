@@ -7,7 +7,6 @@ import traceback
 import doit
 from doit.exceptions import InvalidDodoFile, InvalidCommand
 from doit import loader
-from doit import task
 from doit import cmdparse
 from doit.cmds import doit_run, doit_clean, doit_list, doit_forget, doit_ignore
 from doit.cmds import doit_auto
@@ -119,7 +118,7 @@ opt_verbosity = {'name':'verbosity',
 opt_reporter = {'name':'reporter',
                  'short':'r',
                  'long':'reporter',
-                 'type':str, #TODO type choice
+                 'type':str, #TODO type choice (limit the accepted strings)
                  'default': 'default',
                  'help':
 """Choose output reporter. Available:
@@ -335,7 +334,7 @@ help_doc = {'purpose': "show help",
             'usage': "",
             'description': None}
 
-#FIXME dependencies descriptions is outdated
+
 def print_task_help():
     """print help for 'task' usage """
     print """
@@ -345,7 +344,7 @@ Task Dictionary parameters
 
 Tasks are defined by functions starting with the string ``task_``. It must return a dictionary describing the task with the following fields:
 
-action [required]:
+actions [required]:
   - type: Python-Task -> tuple (callable, `*args`, `**kwargs`)
   - type: Cmd-Task -> string or list of strings (each item is a different command). to be executed by shell.
   - type: Group-Task -> None.
@@ -353,26 +352,43 @@ action [required]:
 name [required for sub-task]:
   - type: string. sub-task identifier
 
-dependencies:
+file_dep:
   - type: list. items:
     * file (string) path relative to the dodo file
-    * task (string) ":<task_name>"
-    * TODO "?<task_name>"
+
+run_once:
+  - type: bool
     * run-once (True bool)
     * never up-to-date (False bool)
     * None values will be just ignored
+
+task_dep:
+  - type: list. items:
+    * task name (string)
+
+result_dep:
+  - type: list. items:
+    * task name (string)
+
+calc_dep:
+  - type: list. items:
+    * task name (string)
 
 getargs:
   - type: dictionary
     * key: string with the name of the function parater (used in a python-action)
     * value: string on the format <task-name>.<variable-name>
 
+setup:
+ - type: list. items:
+   * task name (string)
+
+teardown:
+ - type: (list) of actions (see above)
+
 targets:
   - type: list of strings
   - each item is file-path relative to the dodo file (accepts both files and folders)
-
-setup:
- - type: list of objects with methods 'setup' and 'cleanup'
 
 doc:
  - type: string -> the description text
@@ -456,24 +472,23 @@ def cmd_main(cmd_args):
                                         cmd_auto, auto_doc)
 
 
+
     try:
         return sub_cmd['run'](cmd_args, sub=sub_cmd)
 
     # in python 2.4 SystemExit and KeyboardInterrupt subclass
     # from Exception.
-    # TODO maybe I should do something to help the user find out who
-    # is raising SystemExit. because it shouldnt happen...
     except (SystemExit, KeyboardInterrupt):
         raise
 
     # dont show traceback for user errors.
+    # TODO check no InvalidTask exception endup here.
     except (cmdparse.CmdParseError, InvalidDodoFile,
-            InvalidCommand, task.InvalidTask), err:
-        print "ERROR:", str(err)
+            InvalidCommand), err:
+        sys.stderr.write("ERROR: %s\n" % str(err))
         return 1
 
-    # make sure exception is printed out. we migth have redirected stderr
     except Exception:
-        sys.__stderr__.write(traceback.format_exc())
+        sys.stderr.write(traceback.format_exc())
         return 1
 
