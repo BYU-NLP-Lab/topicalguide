@@ -26,22 +26,18 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	<div class="widget-title">Top Values</div>
 	<div class="widget-header">
 		for Attribute 
-		<select id="id_attribute" onChange="get_top_attribute_values()">
+		<select id="id_attribute" onchange="get_top_attribute_values()">
 			{% for a in attributes %}
-			<option value="{{ a.name }}"
-			{% ifequal attribute a %}
-			selected
-			{% endifequal %}
-			>
+			<option value="{{ a.name }}"{% ifequal attribute a %} selected="selected"{% endifequal %}>
 				{{ a.name }}
 			</option>
 			{% endfor %}
 		</select>
 		<input type="radio" name="ordering" value="count" id="id_order_by_count"
-		checked onChange="get_top_attribute_values()">
+		checked="checked" onchange="get_top_attribute_values()"/>
 		By count
 		<input type="radio" name="ordering" value="percent" id="id_order_by_percent"
-		onChange="get_top_attribute_values()">
+		onchange="get_top_attribute_values()"/>
 		By percent
 	</div>
 	<div class="widget-body">

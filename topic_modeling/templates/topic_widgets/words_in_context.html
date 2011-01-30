@@ -26,22 +26,22 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	<div class="widget-title">Top Words in Context</div>
 	<div class="widget-body">
 		<table id="top_words_in_context_table">
-			<col width="25%""/>
-			<col width="23%"/>
-			<col width="23%"/>
-			<col width="22%"/>
-			<col width="5%"/>
+			<col class="col1"/>
+			<col class="col2"/>
+			<col class="col3"/>
+			<col class="col4"/>
+			<col class="col5"/>
 			
 			{% comment %}These rows are placeholders for jQuery to insert row content into{% endcomment %}
 			{% for word in words_in_context %}
-			<tr class="top-words-in-context-row" id="id_{{ word.word }}"></tr>
+			<tr class="top-words-in-context-row" id="id_{{ word.word }}"><td></td><td></td><td></td><td></td><td></td></tr>
 			{% endfor %}
 		</table>
 	</div>
-	<script charset="utf-8" type="text/javascript"
+	<script type="text/javascript"
 		src="/site-media/topic_scripts/words_in_context.js">
 	</script>
-	<script charset="utf=8" type="text/javascript">
+	<script type="text/javascript">
 		$(document).ready(function () {
 		{% for word in words_in_context %}
 			get_context_for_word("{{ word.word }}");

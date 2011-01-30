@@ -20,20 +20,30 @@ with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
 If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
-{% endcomment %}
-
-<html>
+{% endcomment %}<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 	<head><title>Topic Browser</title>
 		<link rel="shortcut icon" href="/site-media/byunlp-135px.png" />
 		<script type="text/javascript" src="/site-media/jquery-1.4.2.min.js"></script>
 		<script type="text/javascript" src="/site-media/cursor.js"></script>
 		<script type="text/javascript" src="/site-media/name-scheme.js"></script>
+        <script type="text/javascript">
+            $("a.new-window[href]").live(
+                "click",
+                function(event)
+                {
+                    window.open($(this).attr("href"));
+                    event.preventDefault();
+                }
+            );
+        </script>
 		<link rel="stylesheet" title="default" href="/site-media/style.css" type="text/css" />
 		
 		{% block scripts %}
 		{% endblock %}
 		
-		<script charset="utf=8" type="text/javascript">
+		<script type="text/javascript">
 			function add_favorite(){
 				{% for item in breadcrumb %}
 					{% if forloop.last %}
@@ -52,12 +62,12 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 				<div id="sidebar">
 					<div id="branding">
 						<span class="branding-logo">
-							<a href="http://nlp.cs.byu.edu/">
-								<img src="/site-media/byunlp-135px.png" height="100" width="100" border="0"/>
+							<a href="http://nlp.cs.byu.edu/" class="new-window">
+								<img src="/site-media/byunlp-135px.png" alt="BYU NLP Lab Logo"/>
 							</a>
 						</span>
 						<span class="branding-title-text">
-							<a href="/about/" target="_blank">Topic Browser</a>
+							<a href="/about/" class="new-window">Topic Browser</a>
 						</span>
 					</div><!-- end div branding -->
 					<div id="tab_pane">
@@ -115,7 +125,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 								<button type="button" onclick="add_favorite();">Add to Favorites</button>
 							{% endif %}
 						</span>
-						<div id="namescheme-dropdown">
+						<span id="namescheme-dropdown">
 							Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
 							{% for namescheme in nameschemes %}
 							<option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
@@ -131,7 +141,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 				</div><!-- end div information-area -->
 			</div><!-- end div main -->
 			<div id="footer">
-				<a href="/about/" target="_blank">More about Topic Browser</a>
+				<a href="/about/" class="new-window">More about Topic Browser</a>
 			</div><!-- end div footer -->
 		</div><!-- end div page -->
 	</body>
