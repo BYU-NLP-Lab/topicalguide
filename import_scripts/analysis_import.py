@@ -61,7 +61,7 @@ NUM_DOTS = 100
 
 #def main(options):
 def main(dataset_name, dataset_attr_file, analysis_name, analysis_description,
-        state_file, tokenized_file, files_dir, split_regex):
+        state_file, tokenized_file, files_dir, token_regex):
     print >> sys.stderr, "analysis_import({0}, {1}, {2}, {3}, {4}, {5}, {6})".\
             format(dataset_name, dataset_attr_file, analysis_name,
             analysis_description, state_file, tokenized_file, files_dir)
@@ -83,7 +83,7 @@ def main(dataset_name, dataset_attr_file, analysis_name, analysis_description,
         doc_index, attr_index, value_index, attr_table = parse_attributes(
                 dataset_attr_file)
         dt, tw, dtw, avt, topics, word_index = parse_mallet_file(state_file,
-                attr_table, tokenized_file, files_dir, split_regex)
+                attr_table, tokenized_file, files_dir, token_regex)
 
         topicinfo = create_topic_info(tw)
         topic_index = create_topic_table(topics, topicinfo)
@@ -324,7 +324,7 @@ def parse_attributes(attribute_file):
 
 
 @transaction.commit_manually
-def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, split_regex):
+def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, token_regex):
     """ Parses the state output file from mallet
 
     That file lists individual tokens one per line in the following format:
@@ -342,7 +342,7 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, sp
     sys.stdout.flush()
     start = datetime.now()
     tokenized_file = codecs.open(tokenized_file, 'r', 'utf-8')
-    markup_state = MarkupState(tokenized_file, split_regex)
+    markup_state = MarkupState(tokenized_file, token_regex)
     doctopic = defaultdict(int)
     topicword = defaultdict(int)
     doctopicword = defaultdict(int)
@@ -433,7 +433,7 @@ def create_topic_info(topicword):
 #############################################################################
 
 class MarkupState(object):
-    def __init__(self, tokenized_file, split_regex):
+    def __init__(self, tokenized_file, token_regex):
         self.path = None
         self.doc_string = None
         self.tokens = None
@@ -442,7 +442,7 @@ class MarkupState(object):
         self.token_index = 0
         self.tokenized_file = tokenized_file
         self.initialized = False
-        self.split_regex = split_regex
+        self.token_regex = token_regex
 
     def initialize(self, files_dir, path):
         self.initialized = True
@@ -477,7 +477,7 @@ class MarkupState(object):
         text_arr = text.split()
         token_filename, group = text_arr[:2]
         doc_content_only = text[len(token_filename)+len(group)+2:].lower()
-        tokens = re.split(self.split_regex, doc_content_only)
+        tokens = re.findall(self.token_regex, doc_content_only)
         return token_filename, tokens
 
     def markup_stop_words(self, word=None):

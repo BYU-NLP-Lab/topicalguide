@@ -83,6 +83,7 @@ base_dir = os.curdir
 datasets_dir = base_dir + "/datasets"
 dataset_dir = "{0}/{1}".format(datasets_dir, dataset_name)
 files_dir = get_files_dir(locals())
+token_regex = get_token_regex(locals())
 
 # Mallet
 mallet = base_dir + "/tools/mallet/mallet"
@@ -92,8 +93,6 @@ mallet_imported_data = dataset_dir + "/imported_data.mallet"
 mallet_output_gz = "{0}/{1}.outputstate.gz".format(dataset_dir, analysis_name)
 mallet_output = "{0}/{1}.outputstate".format(dataset_dir, analysis_name)
 mallet_doctopics_output = "{0}/{1}.doctopics".format(dataset_dir, analysis_name)
-mallet_token_regex = get_mallet_token_regex(locals())
-split_regex = get_split_regex(locals())
 mallet_optimize_interval = 10
 mallet_num_iterations = 1000
 
@@ -169,8 +168,8 @@ def task_mallet_input():
 def task_mallet_imported_data():
     targets = [mallet_imported_data]
     cmd = '{0} import-file --input {1} --output {2} --keep-sequence --set-source-by-name --remove-stopwords'.format(mallet, mallet_input, mallet_imported_data)
-    if mallet_token_regex is not None:
-        cmd += " --token-regex "+mallet_token_regex
+    if token_regex is not None:
+        cmd += " --token-regex "+token_regex
     actions = [cmd]
     file_deps = [mallet_input]
     clean = ["rm -f "+mallet_imported_data]
@@ -205,7 +204,7 @@ def task_dataset_import():
     return {'actions':actions, 'file_dep':file_deps, 'clean':clean}
 
 def task_analysis_import():
-    actions = [(import_scripts.analysis_import.main, [dataset_name, attributes_file, analysis_name, analysis_description, mallet_output, mallet_input, files_dir, split_regex])]
+    actions = [(import_scripts.analysis_import.main, [dataset_name, attributes_file, analysis_name, analysis_description, mallet_output, mallet_input, files_dir, token_regex])]
     file_deps = [mallet_output, mallet_input, attributes_file]
     clean = [
         (remove_analysis, [dataset_name, analysis_name]),
