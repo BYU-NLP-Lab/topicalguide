@@ -3,6 +3,7 @@
 import os
 import anydbm
 
+#FIXME move json import to __init__.py
 # Use simplejson or Python 2.6 json
 # simplejson is much faster that py26:json. so use simplejson if available
 try:
@@ -138,7 +139,7 @@ class JsonDB(object):
         self._db = {}
 
 
-class DBM_DB(object):
+class DbmDB(object):
     """Backend using a DBM file with individual values encoded in JSON
 
     On initialization all items are read from DBM file and loaded on _dbm.
@@ -319,12 +320,22 @@ class DependencyBase(object):
             return 'ignore'
 
         task.dep_changed = []
+
+        # check uptodate bool/callables
+        checked_uptodate = False
+        for uptodate in task.uptodate:
+            # None means uptodate was not really calculated and should be
+            # just ignored
+            if uptodate is None:
+                continue
+            if uptodate:
+                checked_uptodate = True
+            else:
+                return 'run'
+
         # no dependencies means it is never up to date.
         if ((not task.file_dep) and (not task.result_dep)
-            and (not task.run_once)):
-            return 'run'
-
-        if task.run_always:
+            and (not task.run_once) and (not checked_uptodate)):
             return 'run'
 
         # user managed dependency not up-to-date if it doesnt exist
@@ -334,7 +345,7 @@ class DependencyBase(object):
         # if target file is not there, task is not up to date
         for targ in task.targets:
             if not os.path.exists(targ):
-                task.dep_changed = task.file_dep[:]
+                task.dep_changed = list(task.file_dep)
                 return 'run'
 
         # check for modified dependencies
@@ -363,10 +374,10 @@ class JsonDependency(DependencyBase):
     def __init__(self, name):
         DependencyBase.__init__(self, JsonDB(name))
 
-class DBM_Dependency(DependencyBase):
+class DbmDependency(DependencyBase):
     """Task dependency manager with DBM backend"""
     def __init__(self, name):
-        DependencyBase.__init__(self, DBM_DB(name))
+        DependencyBase.__init__(self, DbmDB(name))
 
 # default "Dependency" implementation to be used
-Dependency = DBM_Dependency
+Dependency = DbmDependency
