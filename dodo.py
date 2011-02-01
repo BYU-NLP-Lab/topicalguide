@@ -62,7 +62,8 @@ if __name__ == "__main__":
     from doit.doit_cmd import cmd_main
     sys.exit(cmd_main(sys.argv[1:]))
 
-build = "state_of_the_union"
+build = "kcna/kcna"
+#build = "state_of_the_union"
 #build = "congressional_record"
 filename = "build/{0}.py".format(build)
 ast = compile(open(filename).read(), filename, 'exec')
@@ -183,20 +184,22 @@ def directory_recursive_hash(dir):
     if not os.path.exists(dir): return "0"
     return hash(cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir)))
 
-def task_hash_dataset():
-    dict = {}
-    dict['actions'] = [(directory_timestamp, [files_dir])]
-    if 'task_copy_and_transform_dataset' in locals():
-        dict['task_dep'] = ['copy_and_transform_dataset']
-    return dict
+#def task_hash_dataset():
+#    dict = {}
+#    dict['actions'] = [(directory_timestamp, [files_dir])]
+#    if 'task_copy_and_transform_dataset' in locals():
+#        dict['task_dep'] = ['copy_and_transform_dataset']
+#    return dict
 
 if 'task_mallet_input' not in locals():
     def task_mallet_input():
-        targets = [mallet_input]
-        actions = [(make_token_file, [files_dir, mallet_input])]
-        result_deps = ['hash_dataset']
-        clean = ["rm -f "+mallet_input]
-        return {'targets':targets, 'actions':actions, 'result_dep':result_deps, 'clean':clean}
+        task = dict()
+        task['targets'] = [mallet_input]
+        task['actions'] = [(make_token_file, [files_dir, mallet_input])]
+        task['clean']   = ["rm -f "+mallet_input]
+        if 'task_copy_and_transform_dataset' in locals():
+            task['task_dep'] = ['copy_and_transform_dataset']
+        return task
 
 if 'task_mallet_imported_data' not in locals():
     def task_mallet_imported_data():
