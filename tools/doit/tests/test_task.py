@@ -67,29 +67,42 @@ class TestTaskInit(object):
         t = task.Task("t", ["q"])
         assert t.run_status is None
 
+    def test_dependencyTrueRunOnce(self):
+        t = task.Task("Task X",["taskcmd"], run_once=True)
+        assert t.run_once
+
+
+class TestTaskUpToDate(object):
+
+    def test_dependencyFalseRunalways(self):
+        t = task.Task("Task X",["taskcmd"], uptodate=[False])
+        assert t.uptodate == [False]
+
+    def test_dependencyNoneIgnored(self):
+        t = task.Task("Task X",["taskcmd"], uptodate=[None])
+        assert not t.run_once
+        assert t.uptodate == [None]
+
+    # deprecate bool and none values for file_dep. to be removed on 0.11
+    def test_deprecation(self):
+        t = task.Task("Task x", ["taskcmd"], file_dep=[True, False, None])
+        assert 0 == len(t.file_dep)
+        assert True == t.run_once
+        assert [False, None] == t.uptodate
 
 class TestTaskExpandFileDep(object):
 
     def test_dependencyStringIsFile(self):
         my_task = task.Task("Task X", ["taskcmd"], file_dep=["123","456"])
-        assert ["123","456"] == my_task.file_dep
-
-    def test_dependencyTrueRunonce(self):
-        t = task.Task("Task X",["taskcmd"], file_dep=[True])
-        assert t.run_once
-
-    def test_dependencyFalseRunalways(self):
-        t = task.Task("Task X",["taskcmd"], file_dep=[False])
-        assert t.run_always
-
-    def test_dependencyNoneIgnored(self):
-        t = task.Task("Task X",["taskcmd"], file_dep=[None])
-        assert not t.run_once
-        assert not t.run_always
+        assert set(["123","456"]) == my_task.file_dep
 
     def test_runOnce_or_fileDependency(self):
-        py.test.raises(task.InvalidTask, task.Task,
-                      "Task X",["taskcmd"], file_dep=[True,"whatever"])
+        py.test.raises(task.InvalidTask, task.Task, "Task X",
+                       ["taskcmd"], file_dep=["whatever"], run_once=True)
+
+    def test_file_dep_must_be_string(self):
+        py.test.raises(task.InvalidTask, task.Task, "Task X", ["taskcmd"],
+                       file_dep=[['aaaa']])
 
 
 class TestTaskDeps(object):
@@ -111,16 +124,19 @@ class TestTaskDeps(object):
 
     def test_update_deps(self):
         my_task = task.Task("Task X", ["taskcmd"], file_dep=["fileX"],
-                            calc_dep=["calcX"], result_dep=["resultX"])
+                            calc_dep=["calcX"], result_dep=["resultX"],
+                            uptodate=[None])
         my_task.update_deps({'file_dep': ['fileY'],
                              'task_dep': ['taskY'],
                              'calc_dep': ['calcX', 'calcY'],
                              'result_dep': ['resultY'],
+                             'uptodate': [True],
                              })
-        assert ['fileX', 'fileY'] == my_task.file_dep
+        assert set(['fileX', 'fileY']) == my_task.file_dep
         assert ['resultX', 'taskY', 'resultY'] == my_task.task_dep
         assert ['calcX', 'calcY'] == my_task.calc_dep
         assert ['resultX', 'resultY'] == my_task.result_dep
+        assert [None, True] == my_task.uptodate
 
 
 class TestTask_Getargs(object):

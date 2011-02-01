@@ -26,28 +26,22 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	<div class="widget-title">Similar Topics</div>
 	<div class="widget-header">
 		by
-		<select id="id_similarity_measure" onChange="get_similar_topics()">
+		<select id="id_similarity_measure" onchange="get_similar_topics()">
 			{% for s in similarity_measures %}
-			<option value="{{ s.name }}"
-			{% ifequal similarity_measure s %}
-			selected
-			{% endifequal %}
-			>
+			<option value="{{ s.name }}"{% ifequal similarity_measure s %} selected="selected"{% endifequal %}>
 				{{ s.name }}
 			</option>
 			{% endfor %}
 		</select>
 	</div>
-	<div class="widget-body">
-		<ul class="list">
-			{% for t in similar_topics %}
-			<li>
-				<a href="{{ baseurl }}/{{ t.number }}">{{ t.name }}</a>
-				<span class="value">{{ t.value|floatformat:"2" }}</span>
-			</li>
-		{% endfor %}
-		</ul>
-	</div>
+	<ul class="list widget-body">
+		{% for t in similar_topics %}
+		<li>
+			<a href="{{ baseurl }}/{{ t.number }}">{{ t.name }}</a>
+			<span class="value">{{ t.value|floatformat:"2" }}</span>
+		</li>
+	{% endfor %}
+	</ul>
 	<script charset="utf-8" type="text/javascript"
 		src="/site-media/topic_scripts/similar_topics.js">
 	</script>

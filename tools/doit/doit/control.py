@@ -1,8 +1,8 @@
 """Control tasks execution order"""
 import fnmatch
 
-from doit.exceptions import InvalidCommand, InvalidDodoFile
-from doit.task import InvalidTask, Task
+from doit.exceptions import InvalidTask, InvalidCommand, InvalidDodoFile
+from doit.task import Task
 
 
 class WaitTask(object):
@@ -241,7 +241,9 @@ class TaskControl(object):
             # this task should run, so schedule setup-tasks before itself
             if this_task.run_status == 'run' or include_setup:
                 for setup_task in this_task.setup_tasks:
-                    # TODO check setup_task is a valid task name
+                    if setup_task not in self.tasks:
+                        msg = "Task '%s': invalid setup task '%s'."
+                        raise InvalidTask(msg % (this_task.name, setup_task))
                     for setup_dep in self._add_task(gen_id, setup_task,
                                                     include_setup):
                         yield setup_dep
@@ -286,7 +288,7 @@ class TaskControl(object):
 
             # get task group from tasks_to_run
             if not current_gen:
-                # all task are waiting, hold on
+                # all tasks are waiting, hold on
                 if not tasks_to_run:
                     yield "hold on"
                     continue

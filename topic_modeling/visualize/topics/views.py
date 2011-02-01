@@ -78,6 +78,17 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
     sort_by = request.session.get('topic-sort', 'name')
     context['sort_form'].fields['sort'].initial = sort_by
 
+    # Get the name scheme stuff ready
+    name_schemes = TopicNameScheme.objects.filter(
+            analysis=analysis).order_by('name')
+    context['nameschemes'] = name_schemes
+    if 'current_name_scheme_id' not in request.session:
+        request.session['current_name_scheme_id'] = name_schemes[0].id
+    
+    current_name_scheme_id = request.session['current_name_scheme_id']
+    current_name_scheme = TopicNameScheme.objects.get(id=current_name_scheme_id)
+    context['currentnamescheme'] = current_name_scheme
+
     # Filter, sort, and paginate the topics
     if topic:
         topic = get_object_or_404(Topic, number=topic, analysis=analysis)
@@ -95,18 +106,6 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
 
     context['metrics'] = topic.topicmetricvalue_set.all()
     
-    name_schemes = TopicNameScheme.objects.filter(
-            analysis=topic.analysis).order_by('name')
-    context['nameschemes'] = name_schemes
-    if 'current_name_scheme_id' not in request.session:
-        request.session['current_name_scheme_id'] = context['nameschemes'][0].id
-    
-    current_name_scheme_id = request.session['current_name_scheme_id']
-    current_name_scheme = TopicNameScheme.objects.get(id=current_name_scheme_id)
-    
-    #Make it available to the topic template
-    context['currentnamescheme'] = current_name_scheme
-
     topic_name = TopicName.objects.get(topic=topic,
             name_scheme=current_name_scheme).name
     context['topic_name'] = topic_name

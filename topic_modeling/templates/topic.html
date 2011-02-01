@@ -24,7 +24,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
 {% block scripts %}
-	<script charset="utf-8" type="text/javascript">
+	<script type="text/javascript">
 		$.fn.topic_vars = function () {};
 		$.fn.topic_vars.baseurl = "{{ baseurl }}";
 		$.fn.topic_vars.dataset = "{{ dataset }}";
@@ -35,27 +35,25 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block above_sidebar %}
-	<script charset="utf-8" type="text/javascript"
+	<script type="text/javascript"
 		src="/site-media/topic_scripts/filters.js">
 	</script>
 	<table class="above_inset">
 		{{ sort_form }}
-		<tr><td>Filters</td><td colspan=4><hr></td></tr>
-		<tbody id="id_filter_form">
-			{{ filter|safe }}
-		</tbody>
+		<tr><td>Filters</td><td><hr/></td></tr>
+		{{ filter|safe }}
 	</table>
 {% endblock %}
 
 {% block sidebar %}
-	<script charset="utf-8" type="text/javascript"
+	<script type="text/javascript"
 		src="/site-media/common_scripts/sidebar.js">
 	</script>
-	<script charset="utf-8" type="text/javascript"
+	<script type="text/javascript"
 		src="/site-media/topic_scripts/sidebar.js">
 	</script>
 	<div id="topics_list" class="inset"></div>
-	<script charset="utf=8" type="text/javascript">
+	<script type="text/javascript">
 		$(document).ready(function () {
 			get_topic_page({{ page_num }});
 		});
@@ -72,7 +70,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		{% if topic_map_url %}
 		{% include "topic_widgets/topic_map.html" %}
 		{% endif %}
-		
+        
 		{% if ngram_cloud %}
 		{% include "topic_widgets/ngram_cloud.html" %}
 		{% endif %}
