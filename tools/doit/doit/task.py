@@ -4,8 +4,8 @@ import types
 import os
 
 from doit import cmdparse
-from doit.exceptions import CatchedException
-from doit.action import create_action, InvalidTask
+from doit.exceptions import CatchedException, InvalidTask
+from doit.action import create_action
 
 
 class Task(object):
@@ -18,14 +18,15 @@ class Task(object):
     @ivar targets: (list -string)
     @ivar task_dep: (list - string)
     @ivar wild_dep: (list - string) task dependency using wildcard *
-    @ivar file_dep: (list - string)
+    @ivar file_dep: (set - string)
     @ivar result_dep: (list -string)
     @ivar calc_dep: (list - string) reference to a task
     @ivar calc_dep_stack: (list - string) unprocessed calc_dep
     @ivar dep_changed (list - string): list of file-dependencies that changed
           (are not up_to_date). this must be set before
     @ivar run_once: (bool) task without dependencies should run
-    @ivar run_always: (bool) task always run even if up-to-date
+    @ivar uptodate: (list - bool/None) use bool/computed value instead of
+                                       checking dependencies
     @ivar setup_tasks (list - string): references to task-names
     @ivar is_subtask: (bool) indicate this task is a subtask.
     @ivar result: (str) last action "result". used to check task-result-dep
@@ -38,7 +39,13 @@ class Task(object):
     @ivar custom_title: function reference that takes a task object as
                         parameter and returns a string.
     @ivar run_status (str): contains the result of Dependency.get_status
-            modified by runner, value can be: None, run, ignore, up-to-date
+            modified by runner, value can be:
+           - None: not processed yet
+           - run: task is selected to be executed (it might be running or
+                   waiting for setup)
+           - ignore: task wont be executed (user forced deselect)
+           - up-to-date: task wont be executed (no need)
+           - done: task finished its execution
     """
 
     DEFAULT_VERBOSITY = 1
@@ -49,6 +56,8 @@ class Task(object):
                   'file_dep': ([list, tuple], []),
                   'task_dep': ([list, tuple], []),
                   'result_dep': ([list, tuple], []),
+                  'uptodate': ([list, tuple], []),
+                  'run_once': ([bool], []),
                   'calc_dep': ([list, tuple], []),
                   'targets': ([list, tuple], []),
                   'setup': ([list, tuple], []),
@@ -63,9 +72,9 @@ class Task(object):
 
 
     def __init__(self, name, actions, file_dep=(), targets=(),
-                 task_dep=(), result_dep=(), calc_dep=(),
-                 setup=(), clean=(), teardown=(), is_subtask=False, doc=None,
-                 params=(), verbosity=None, title=None, getargs=None):
+                 task_dep=(), result_dep=(), uptodate=(), run_once=False,
+                 calc_dep=(), setup=(), clean=(), teardown=(), is_subtask=False,
+                 doc=None, params=(), verbosity=None, title=None, getargs=None):
         """sanity checks and initialization
 
         @param params: (list of option parameters) see cmdparse.Command.__init__
@@ -79,8 +88,8 @@ class Task(object):
 
         self.name = name
         self.targets = targets
-        self.run_once = False
-        self.run_always = False
+        self.uptodate = list(uptodate)
+        self.run_once = run_once
         self.is_subtask = is_subtask
         self.result = None
         self.values = {}
@@ -115,7 +124,8 @@ class Task(object):
         # dependencies
         self.dep_changed = None
 
-        self.file_dep = []
+        # file_dep
+        self.file_dep = set()
         self._expand_file_dep(file_dep)
 
         # task_dep
@@ -139,26 +149,34 @@ class Task(object):
 
 
     def _expand_file_dep(self, file_dep):
-        """convert file_dep input into file_dep, run_once, run_always"""
+        """put input into file_dep"""
         for dep in file_dep:
-            # bool
-            if isinstance(dep, bool):
-                if dep is True:
-                    self.run_once = True
-                if dep is False:
-                    self.run_always = True
-            # ignore None values
-            elif dep is None:
+
+            # deprecation to be removed on 0.11
+            if dep is True:
+                self.run_once = True
+                print "DEPRECATION WARNING: task %s" % self.name
+                print "file_dep can not be True, use run_once"
                 continue
-            else:
-                # TODO store file_deps in a set
-                if dep not in self.file_dep:
-                    self.file_dep.append(dep)
+
+            if dep in (False, None):
+                self.uptodate.append(dep)
+                print "DEPRECATION WARNING: task %s" % self.name
+                print "file_dep can not be %s, use uptodate" % repr(dep)
+                continue
+            # end - deprecation to be removed on 0.11
+
+            if not isinstance(dep, str):
+                raise InvalidTask("%s. file_dep must be a str got '%r' (%s)" %
+                                  (self.name, dep, type(dep)))
+
+            if dep not in self.file_dep:
+                self.file_dep.add(dep)
 
         # run_once can't be used together with file dependencies
         if self.run_once and self.file_dep:
-            msg = ("%s. task cant have file and dependencies and True " +
-                   "at the same time. (just remove True)")
+            msg = ("%s. task cant have file and dependencies and run_once " +
+                   "at the same time. (just remove run_once)")
             raise InvalidTask(msg % self.name)
 
 
@@ -196,7 +214,8 @@ class Task(object):
                 self._expand_result_dep(dep_values)
             elif dep == 'calc_dep':
                 self._expand_calc_dep(dep_values)
-
+            elif dep == 'uptodate':
+                self.uptodate.extend(dep_values)
 
     def _init_getargs(self):
         """task getargs attribute define implicit task dependencies"""
@@ -234,7 +253,6 @@ class Task(object):
         @param valid (list): of valid types/value accepted
         @raises InvalidTask if invalid input
         """
-        msg = "Task %s attribute '%s' must be {%s} got:%r %s"
         value_type = type(value)
         if value_type in valid[0]:
             return
@@ -242,8 +260,11 @@ class Task(object):
             return
 
         # input value didnt match any valid type/value, raise execption
-        accept = ", ".join([getattr(v, '__name__', str(v)) for v in valid])
-        raise InvalidTask(msg % (task, attr, accept, str(value), type(value)))
+        msg = "Task '%s' attribute '%s' must be " % (task, attr)
+        accept = ", ".join([getattr(v, '__name__', str(v)) for v in
+                            (valid[0] + valid[1])])
+        msg += "{%s} got:%r %s" % (accept, value, type(value))
+        raise InvalidTask(msg)
 
 
     def _get_out_err(self, out, err, verbosity):

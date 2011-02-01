@@ -23,46 +23,31 @@
 #State of the Union Addresses Dataset build settings
 from build.state_of_the_union.extract_sotua_documents import extract_state_of_the_union
 from build.state_of_the_union.generate_attributes_file import generate_attributes_file
+import os
 
 chron_list_filename = 'chronological_list.wiki'
 addresses_filename = 'state_of_the_union_addresses.txt'
-
-def get_dataset_name(locals):
-    return "state_of_the_union"
-
-def get_dataset_description(locals):
-    return "State of the Union Addresses 1790-2010"
-
-def get_copy_dataset(locals):
-    return True
-
-def get_mallet_token_regex(locals):
-    return r"[a-zA-Z]+"
-
-def get_split_regex(locals):
-    return r"[^a-zA-Z]+"
-
-def get_attributes_file(locals):
-    return "{0}/attributes.json".format(locals['dataset_dir'])
-
-def get_files_dir(locals):
-    return locals['dataset_dir'] + "/files"
+dataset_name = "state_of_the_union"
+dataset_description = "State of the Union Addresses 1790-2010"
 
 def task_attributes_file():
     targets = [attributes_file]
-    actions = [(generate_attributes_file, [dataset_dir+'/'+chron_list_filename, attributes_file])]
+    actions = [(generate_attributes_file,
+                [dataset_dir+'/'+chron_list_filename, attributes_file])]
     clean = ["rm -f "+attributes_file]
     return {'targets':targets, 'actions':actions, 'clean':clean}
 
-def task_dir_timestamp():
-    return {'actions': [(directory_timestamp, [files_dir])]}
-
 def task_copy_and_transform_dataset():
-    actions = [
-        (extract_state_of_the_union, [dataset_dir+'/'+chron_list_filename,dataset_dir+'/'+addresses_filename,files_dir])
+    task = dict()
+    task['actions'] = [
+        (extract_state_of_the_union,
+         [dataset_dir+'/'+chron_list_filename,
+          dataset_dir+'/'+addresses_filename,
+          files_dir]
+        )
     ]
-    clean = [
+    task['clean'] = [
         'rm -rf '+files_dir
     ]
-    result_deps = ['dir_timestamp']
-    return {'actions': actions, 'clean': clean, 'result_dep':result_deps}
+    task['uptodate'] = [os.path.exists(files_dir)]
+    return task

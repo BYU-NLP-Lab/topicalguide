@@ -26,7 +26,7 @@ list
 
 .. code-block:: console
 
-   eduardo@eduardo:~$ doit list
+   $ doit list
    link : create binary program
    compile : compile C files
    install : install executable (TODO)
@@ -40,17 +40,17 @@ forget
 -------
 
 
-Suppose you change the compilation parameters in the compile action. Or you changed the code frmo a python-action. *doit* will think your task is up-to-date based on  the dependencies but actually it is not! In this case you can use the *forget* command to make sure the given task will be executed again even with no changes in the dependencies.
+Suppose you change the compilation parameters in the compile action. Or you changed the code from a python-action. *doit* will think your task is up-to-date based on  the dependencies but actually it is not! In this case you can use the *forget* command to make sure the given task will be executed again even with no changes in the dependencies.
 
 If you do not specify any task, the default tasks are "*forget*".
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit forget
+    $ doit forget
 
 .. note::
 
-  *doit* keeps track of which tasks are successful in the file ``.doit.db``. This file uses JSON.
+  *doit* keeps track of which tasks are successful in the file ``.doit.db``.
 
 
 clean
@@ -64,7 +64,7 @@ You can specify which task to *clean*. If no task is specified the clean operati
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit clean
+    $ doit clean
 
 
 ignore
@@ -77,13 +77,13 @@ It is possible to set a task to be ignored/skipped (that is not executed). This 
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit
+    $ doit
     .  create_file:file0.txt
     .  create_file:file1.txt
     .  create_file:file2.txt
-    eduardo@eduardo:~$ doit ignore create_file:file1.txt
+    $ doit ignore create_file:file1.txt
     ignoring create_file:file1.txt
-    eduardo@eduardo:~$
+    $ doit
     .  create_file:file0.txt
     !! create_file:file1.txt
     .  create_file:file2.txt
@@ -102,5 +102,5 @@ auto
 
 .. code-block:: console
 
-    eduardo@eduardo:~$ doit auto
+    $ doit auto
 
