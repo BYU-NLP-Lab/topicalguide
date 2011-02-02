@@ -171,11 +171,11 @@ def document_index(request, dataset, analysis, topic, document):
     filter = TopicFilterByDocument(Analysis.objects.get(dataset__name=dataset,
             name=analysis), 0)
     filter.current_document_id = document
-    context, _, topic = base_context(request, dataset, analysis, topic,
+    context, analysis, topic = base_context(request, dataset, analysis, topic,
             extra_filters=[filter])
 
     document = Document.objects.get(dataset__name=dataset, id=document)
-    text = document.get_highlighted_text(topics=[topic.number])
+    text = document.get_highlighted_text([topic.number], analysis)
 
     context['doc_name'] = document.filename
     context['text'] = text

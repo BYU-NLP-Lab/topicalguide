@@ -101,6 +101,8 @@ def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
 def document_topic_vector(document, topic_idx):
     document_topic_vals = zeros(len(topic_idx))
     for doctopic in document.documenttopic_set.all():
+        if doctopic.topic_id not in topic_idx:
+            continue
         document_topic_vals[topic_idx[doctopic.topic_id]] = doctopic.count
     return document_topic_vals
 
