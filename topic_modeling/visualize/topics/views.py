@@ -145,7 +145,7 @@ def word_index(request, dataset, analysis, topic, word):
             name=analysis), 0)
     filter.current_word = word
 
-    context, _, topic = base_context(request, dataset, analysis, topic,
+    context, analysis, topic = base_context(request, dataset, analysis, topic,
             extra_filters=[filter])
 
     word = Word.objects.get(dataset__name=dataset, type=word)
@@ -155,7 +155,7 @@ def word_index(request, dataset, analysis, topic, word):
     for dtw in documents:
         d = dtw.document
         w = WordSummary(word.type)
-        set_word_context(w, d, topic.number)
+        set_word_context(w, d, analysis, topic.number)
         docs.append(w)
         w.url = "%s/%d/documents/%d?kwic=%s" % (context['baseurl'],
                 topic.number, d.id, word.type)

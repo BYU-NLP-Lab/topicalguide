@@ -54,10 +54,13 @@ class Document(models.Model):
     
     def __unicode__(self):
         return unicode(self.filename)
-    
-    def get_context_for_word(self, word_to_find, topic=None):
+
+    def get_markup(self, analysis):
         markup = cjson.decode(open(self.dataset.data_root + '/' +
                 self.markup_file).read())
+    
+    def get_context_for_word(self, word_to_find, analysis, topic=None):
+        markup = self.get_markup(analysis)
         indices = []
         for i, word in enumerate(markup):
             if word['word'] == word_to_find:
@@ -88,9 +91,8 @@ class Document(models.Model):
         left_context = text[start_index:end_index]
         return right_context, left_context
 
-    def get_highlighted_text(self, topics):
-        markup = cjson.decode(open(self.dataset.data_root + '/' +
-                self.markup_file).read())
+    def get_highlighted_text(self, topics, analysis):
+        markup = self.get_markup(analysis)
         indices = []
         for i, word in enumerate(markup):
             if word['topic'] in topics:
