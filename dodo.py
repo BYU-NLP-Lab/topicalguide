@@ -63,7 +63,6 @@ if __name__ == "__main__":
     sys.exit(cmd_main(sys.argv[1:]))
 
 build = "state_of_the_union"
-#build = "congressional_record"
 filename = "build/{0}.py".format(build)
 ast = compile(open(filename).read(), filename, 'exec')
 eval(ast, globals(), locals())
