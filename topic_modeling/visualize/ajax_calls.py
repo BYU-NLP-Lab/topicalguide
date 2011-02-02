@@ -43,14 +43,14 @@ import urllib
 ####################
 
 def word_in_context(request, dataset, analysis, topic, word):
-    topic = Topic.objects.get(analysis__dataset__name=dataset,
-            analysis__name=analysis, number=topic)
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    topic = analysis.topic_set.get(number=topic)
     w = Word.objects.get(dataset__name=dataset, type=word)
     word = WordSummary(word)
     docset = topic.documenttopicword_set.filter(word=w)
     num_docs = len(docset)
     d = docset[random.randint(0, num_docs - 1)]
-    set_word_context(word, d.document, topic.number)
+    set_word_context(word, d.document, analysis, topic.number)
     word.doc_name = d.document.filename
     word.doc_id = d.document.id
     return HttpResponse(simplejson.dumps(vars(word)))
