@@ -1,34 +1,4 @@
-% 
-% The Topic Browser
-% An Interactive Tool for Browsing Topic Models
-% Matthew J. Gardner
-% Department of Computer Science
-% Brigham Young University
-% mjg82@byu.edu
-% Joshua Lutes
-% Department of Computer Science
-% Brigham Young University
-% jlutes@byu.edu
-% Jeff Lund
-% Department of Computer Science
-% Brigham Young University
-% jefflund@gmail.com
-% Josh Hansen
-% Department of Computer Science
-% Brigham Young University
-% jjfresh@byu.edu
-% Dan Walker
-% Department of Computer Science
-% Brigham Young University
-% danwalkeriv@gmail.com
-% Eric Ringger
-% Department of Computer Science
-% Brigham Young University
-% ringger@cs.byu.edu
-% Kevin Seppi
-% Department of Computer Science
-% Brigham Young University
-% kseppi@cs.byu.edu
+
 % Abstract
 % Topic models have been shown to reveal the semantic content in large corpora.
 % Many individualized visualizations of topic models have been reported in the lit-
@@ -39,26 +9,7 @@
 % ideas that greatly enhance the visualization of these models.
 % 1
 % Introduction
-% Proper visualizations are essential to extracting information from and identifying trends in data,
-% especially large, high dimensional data. Large text corpora are particularly difﬁcult to visualize, as
-% they may include many thousands of documents and millions of words. Topic modeling [1] is a
-% method of reducing the dimensionality of a corpus into a set of meaningful topics. Topic models
-% have been used with some success as an aid to corpus visualization [3, 9]. However, in many papers
-% the presentation of topic models has been limited to hand-selected, coherent topics, when often there
-% are many meaningless topics to sift through. These presentations leave the viewer wondering what
-% else the topic model discovered and provide little help in gaining a deep understanding of the model.
-% To aid in the visualization of topic models and in pattern discovery in document collections, we
-% present The Topic Browser, a web-based tool for interactively exploring both the output of a topic
-% modeling algorithm and its attendant corpus. Our topic browser incorporates many visualizations of
-% topic models previously published as well as some innovative ideas of our own. The Topic Browser
-% 
-% is an aid both to those who wish to browse through a corpus and for those who wish to analyze
-% the topic model itself. We believe that this interactive approach to visualization in browsing reveals
-% topics and topical trends in large document collections in a way that is not possible with static
-% visualizations. The rest of this paper describes the Topic Browser in an attempt to demonstrate that
-% this is true. We display our tool with a topic model run using MALLET’s implementation of LDA [6]
-% with 150 topics on a collection of about 460 campaign speeches from the 2008 presidential primary
-% and general elections retrieved from http://2008election.procon.org.
+
 % 
 % 2
 % Extra Information
@@ -275,58 +226,6 @@
 % 9
 
 
-% \documentclass[a4paper,10pt]{article}
-% \usepackage[utf8x]{inputenc}
-% 
-% 
-% %opening
-% \title{Exploring Your Favorite Corpus with The Topic Browser}
-% \author{}
-% 
-% \begin{document}
-% 
-% \maketitle
-% 
-
-% % 
-% % \section{Why?}
-
-% % 
-% % Previous visualization attempts....
-% % 
-% % Why they fail
-% % 
-% % 
-% % 
-% % 
-% % 
-% % \subsection{...but their output is hard for humans to digest}
-% % \subsection{Topics aren't isolated entities, but form a network in combination
-% % with documents, words, authors, etc.}
-% % \subsection{This network is implied by a topic model, but generally not made
-% % explicit (?)}
-% % \subsection{More informative}
-% % Experience suggests that an explicit representation of the relationships between
-% % all entities modeled and makes topic model output more informative and usable.
-% % [We're in the process of formally validating this claim.]
-% % 
-
-% 
-% 
-% 
-% 
-% 
-% \end{document}
-
-%
-% File acl-hlt2011.tex
-%
-% Contact: gdzhou@suda.edu.cn
-%%
-%% Based on the style files for ACL2008 by Joakim Nivre and Noah Smith
-%% and that of ACL2010 by Jing-Shin Chang and Philipp Koehn
-
-
 \documentclass[11pt]{article}
 \usepackage{acl-hlt2011}
 \usepackage{times}
@@ -368,17 +267,17 @@ how to use it to explore the corpus (or topic model) of your choice.
 \end{abstract}
 
 \section{Introduction}
-Since their introduction in 2003, LDA-based topic models have been extended to
-account for time, authors, citations, multiple languages, etc. [][][][][]
-Baseline LDA generates a topic assignment per (non-stop) token -- a massive
-output in the gigaword era. Humans are incapable of fully assimilating the
-resulting models, calling for more effective means of characterizing and
-visualizing the output.
-
-The Topic Browser is an open-source web application for interactive exploration
-and visualization of document collections. All entities implied by topic model output are first-class citizens in the Topic
-Browser. 
-
+% Since their introduction in 2003, LDA-based topic models have been extended to
+% account for time, authors, citations, multiple languages, etc. [][][][][]
+% Baseline LDA generates a topic assignment per (non-stop) token -- a massive
+% output in the gigaword era. Humans are incapable of fully assimilating the
+% resulting models, calling for more effective means of characterizing and
+% visualizing the output.
+% 
+% The Topic Browser is an open-source web application for interactive exploration
+% and visualization of document collections. All entities implied by topic model output are first-class citizens in the Topic
+% Browser. 
+% 
 % \subsection{Entities}
 % \begin{figure}[ht]
 %  \centering
@@ -389,6 +288,55 @@ Browser.
 %  \label{fig:object_model}
 % \end{figure}
 
+Since its introduction, topic modeling has become standard fare for those wishing
+to automatically distill large text collections into something more immediately
+useful to humans and computers alike. The usefulness of this sort of
+dimensionality reduction is widely acknowledged, and topic models continue to be
+extended into exciting new territory. However, these models
+output a topic assignment per non-stop token, resulting in an output that is a
+corpus unto itself. Though the range of possible values is substantially reduced,
+output size remains on the same order as input size. Notwithstanding, papers
+introducing new topic models lean heavily on the hope that displaying a few hand-
+picked topics will convince others of the model's effectiveness. But the very
+vastness of topic model output renders this sort of shallow presentation
+unconvincing. Unfortunately, tools for deep understanding of topic model output
+have thus far been lacking.
+
+Simultaneously, massive digitization efforts by libraries and other institutions
+are generating gargantuan quantities of electronic text, increasing demand for tools such as
+topic models. Because of their ability to quickly characterize the contents of
+corpora, topic models seem to hold great promise for archival
+institutions wishing to make their newly-digitized collections accessible to
+researchers and the public. However, readily available tools for exploration of 
+document collections in terms of topic models have been either unsatisfactory
+or nonexistent.
+
+We present The Topic Browser, an open-source web application for interactive,
+topic-aware exploration and visualization of both document collections and the
+topic models inferred on them.
+
+
+% Proper visualizations are essential to extracting information from and identifying trends in data,
+% especially large, high-dimensional data. Large text corpora are particularly difﬁcult to visualize, as
+% they may include many thousands of documents and millions of words. Topic modeling [1] is a
+% method of reducing the dimensionality of a corpus into a set of meaningful topics. Topic models
+% have been used with some success as an aid to corpus visualization [3, 9]. However, in many papers
+% the presentation of topic models has been limited to hand-selected, coherent topics, when often there
+% are many meaningless topics to sift through. These presentations leave the viewer wondering what
+% else the topic model discovered and provide little help in gaining a deep understanding of the model.
+% To aid in the visualization of topic models and in pattern discovery in document collections, we
+% present The Topic Browser, a web-based tool for interactively exploring both the output of a topic
+% modeling algorithm and its attendant corpus. Our topic browser incorporates many visualizations of
+% topic models previously published as well as some innovative ideas of our own. The Topic Browser
+% 
+% is an aid both to those who wish to browse through a corpus and for those who wish to analyze
+% the topic model itself. We believe that this interactive approach to visualization in browsing reveals
+% topics and topical trends in large document collections in a way that is not possible with static
+% visualizations. The rest of this paper describes the Topic Browser in an attempt to demonstrate that
+% this is true. We display our tool with a topic model run using MALLET’s implementation of LDA [6]
+% with 150 topics on a collection of about 460 campaign speeches from the 2008 presidential primary
+% and general elections retrieved from http://2008election.procon.org.
+
 \subsection{Topics}
 
 \subsection{Documents}
@@ -396,22 +344,23 @@ Browser.
 \subsection{Words}
 
 \subsection{Metrics}
-Topic-centric document exploration is enhanced by means of \textit{metrics}.\footnote{These do not necessarily constitute ``metrics'' in the formal sense.} Metrics describe either topics or documents and come in two flavors: unary and binary (or pairwise). 
+Topic-centric document exploration is enhanced by means of \textit{metrics}.
+Metrics are functions that give users additional insight into the nature of
+topics or documents. They can be either unary and binary,
+here called \textit{pairwise}.\footnote{Pairwise metrics do not necessarily
+constitute ``metrics'' in the formal sense. We leave it to implementers to
+determine whether to satisfy the triangle inequality, etc.} Topic metrics range
+from simple metrics, such as the number of word tokens and types labeled with
+the topic, to more complicated metrics such as how dispersed the topic is across
+documents, the semantic coherence of its words [10]. Pairwise topic metrics
+include Pearson correlation on documents and on words. These are used to automatically
+display a list of similar topics.
 
-% topic, topic-topic, document, document-document
-% if 'topic_metrics' not in locals():
-%     topic_metrics = ["token count", "type count", "document entropy", "word entropy"]
-% if 'pairwise_topic_metrics' not in locals():
-%     pairwise_topic_metrics = ["document correlation", "word correlation"]
-% if 'document_metrics' not in locals():
-%     document_metrics = ['token count', 'type count', 'topic entropy']
-% if 'pairwise_document_metrics' not in locals():
-%     pairwise_document_metrics = ['word correlation','topic correlation']
-% if 'name_schemes' not in locals():
-%     name_schemes = [
-%                TopNTopicNamer(dataset_name, analysis_name, 2),
-% #               TfitfTopicNamer(dataset_name, analysis_name, 5)
-%                ]
+Similar to topic metrics, one can also compute document metrics. Beyond simple metrics like to-
+ken count in the document, these include things such as the entropy of the topic distribution of
+the document [8]. And as with topics, we make use of pairwise document metrics such as topic
+correlation [3] to show similar documents.
+
 \subsection{Charts}
 
 
