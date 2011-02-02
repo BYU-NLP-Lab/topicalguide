@@ -34,6 +34,7 @@ from topic_modeling.visualize.common import get_word_list
 from topic_modeling.visualize.common import paginate_list
 from topic_modeling.visualize.common import set_word_context
 from topic_modeling.visualize.common import WordSummary
+from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word

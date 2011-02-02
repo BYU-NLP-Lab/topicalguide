@@ -58,6 +58,7 @@ class Document(models.Model):
     def get_markup(self, analysis):
         markup = cjson.decode(open(self.dataset.data_root + '/' +
                 self.markup_file).read())
+        return markup
     
     def get_context_for_word(self, word_to_find, analysis, topic=None):
         markup = self.get_markup(analysis)
