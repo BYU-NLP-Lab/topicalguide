@@ -36,6 +36,7 @@ from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.models import DocumentTopic
 from topic_modeling.visualize.models import DocumentTopicWord
+from topic_modeling.visualize.models import MarkupFile
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import TopicWord
 
@@ -518,7 +519,9 @@ class MarkupState(object):
         file = create_dirs_and_open(dataset.data_root + '/' + markup_file_name)
         file.write(simplejson.dumps(self.markup, indent=2))
         document = Document.objects.get(filename=self.path)
-        document.markup_file = markup_file_name
-        document.save()
+        markup_file = MarkupFile(document=document, analysis=analysis,
+                path=markup_file_name)
+        markup_file.save()
+
 
 # vim: et sw=4 sts=4

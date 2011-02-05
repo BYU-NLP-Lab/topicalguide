@@ -149,13 +149,14 @@ def word_index(request, dataset, analysis, attribute, value, word):
     page_vars, attribute, value = base_page_vars(request, dataset, analysis,
             attribute, value)
     word = Word.objects.get(dataset__name=dataset, type=word)
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
 
     documents = word.document_set.filter(attribute=attribute,
             attributevaluedocument__value=value)
     words = []
     for document in documents:
         w = WordSummary(word.type)
-        set_word_context(w, document)
+        set_word_context(w, document, analysis)
         words.append(w)
         w.url = '%s/%s/values/%s/documents/%d?kwic=%s' % (
                                                           page_vars['baseurl'],

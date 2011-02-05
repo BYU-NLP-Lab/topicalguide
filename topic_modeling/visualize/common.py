@@ -151,8 +151,8 @@ class WordFindForm(forms.Form):
 # General helper functions
 ##########################
 
-def set_word_context(word, document, topic=None):
-    right, left = document.get_context_for_word(word.word, topic)
+def set_word_context(word, document, analysis, topic=None):
+    right, left = document.get_context_for_word(word.word, analysis, topic)
     word.left_context = left
     word.right_context = right
 
