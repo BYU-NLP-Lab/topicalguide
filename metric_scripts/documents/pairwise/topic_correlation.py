@@ -90,7 +90,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
 
 
 def metric_names_generated(dataset, analysis):
-    return metric_name
+    return [metric_name]
 
 
 def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):

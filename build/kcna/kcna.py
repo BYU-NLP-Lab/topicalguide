@@ -29,25 +29,18 @@ data_dir = os.environ['HOME'] + "/Data"
 kcna_dir = data_dir + "/kcna.co.jp"
 
 def task_download_kcna():
-    actions = ["mkdir -p {kcna_dir} && cd {kcna_dir}  && wget --mirror -nH {url}".format(kcna_dir=kcna_dir,url=url)]
-    clean = ["rm -rf " + kcna_dir]
-    return {'actions':actions, 'clean':clean, 'uptodate':[os.path.exists(kcna_dir)]}
+    task = dict()
+    task['actions'] = ["mkdir -p {kcna_dir} && cd {kcna_dir}  && wget --mirror -nH {url}".format(kcna_dir=kcna_dir,url=url)]
+    task['clean'] = ["rm -rf " + kcna_dir]
+    task['uptodate'] = [os.path.exists(kcna_dir)]
+    return task
 
-def task_copy_and_transform_dataset():
-    targets = [attributes_file]
-    actions = ["mkdir -p "+files_dir,
+def task_extract_data():
+    task = dict()
+    task['targets'] = [files_dir, attributes_file]
+    task['actions'] = ["mkdir -p "+files_dir,
                (extract, [kcna_dir, files_dir, attributes_file])]
-    clean = ['rm -rf '+files_dir]
-    task_deps = ['download_kcna']
-    return {'targets': targets, 'actions': actions, 'clean': clean, 'task_dep': task_deps, 'uptodate': [os.path.exists(files_dir)]}
-
-#def task_mallet_imported_data():
-#    task = dict()
-#    task['targets'] = [mallet_imported_data]
-#    cmd = '{0} import-dir --input {1} --output {2} --keep-sequence --set-source-by-name --remove-stopwords'.format(mallet, files_dir, mallet_imported_data)
-#    if token_regex is not None:
-#        cmd += " --token-regex "+token_regex
-#    task['actions'] = [cmd]
-#    task['clean'] = ["rm -f "+mallet_imported_data]
-#    task['task_dep'] = ['copy_and_transform_dataset']
-#    return task
+    task['clean'] = ['rm -rf '+files_dir, 'rm -f '+attributes_file]
+    task['task_dep'] = ['download_kcna']
+    task['uptodate'] = [os.path.exists(files_dir) and os.path.exists(attributes_file)]
+    return task

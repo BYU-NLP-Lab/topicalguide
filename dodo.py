@@ -50,7 +50,8 @@ from build.common.make_token_file import make_token_file
 import import_scripts.dataset_import
 import import_scripts.analysis_import
 from build.common.db_cleanup import remove_dataset, remove_analysis
-from topic_modeling.visualize.models import Analysis, Dataset, TopicMetric, PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric
+from topic_modeling.visualize.models import Analysis, Dataset, TopicMetric, PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric,\
+    TopicNameScheme
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
 
@@ -60,7 +61,10 @@ from helper_scripts.name_schemes.top_n import TopNTopicNamer
 if __name__ == "__main__":
     sys.path.append("tools/doit")
     from doit.doit_cmd import cmd_main
-    sys.exit(cmd_main(sys.argv[1:]))
+    path = os.path.abspath(sys.argv[0])
+    print 'path: ' + path
+    args = ['-f', path] +sys.argv[1:]
+    sys.exit(cmd_main(args))
 
 build = "kcna/kcna"
 #build = "state_of_the_union"
@@ -166,8 +170,6 @@ print "----- Topic Browser Build System -----"
 print "Dataset name: " + dataset_name
 
 if not os.path.exists(dataset_dir): os.mkdir(dataset_dir)
-#if not os.path.exists(files_dir): os.mkdir(files_dir)
-
 
 def cmd_output(cmd):
     return Popen(cmd, shell=True, bufsize=512, stdout=PIPE).stdout.read()
@@ -184,51 +186,49 @@ def directory_recursive_hash(dir):
     if not os.path.exists(dir): return "0"
     return hash(cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir)))
 
-#def task_hash_dataset():
-#    dict = {}
-#    dict['actions'] = [(directory_timestamp, [files_dir])]
-#    if 'task_copy_and_transform_dataset' in locals():
-#        dict['task_dep'] = ['copy_and_transform_dataset']
-#    return dict
-
 if 'task_mallet_input' not in locals():
     def task_mallet_input():
         task = dict()
         task['targets'] = [mallet_input]
         task['actions'] = [(make_token_file, [files_dir, mallet_input])]
         task['clean']   = ["rm -f "+mallet_input]
-        if 'task_copy_and_transform_dataset' in locals():
-            task['task_dep'] = ['copy_and_transform_dataset']
+        if 'task_extract_data' in locals():
+            task['task_dep'] = ['extract_data']
+        task['uptodate'] = [os.path.exists(mallet_input)]
+#        task['file_dep'] = [files_dir]
         return task
 
 if 'task_mallet_imported_data' not in locals():
     def task_mallet_imported_data():
-        targets = [mallet_imported_data]
+        task = dict()
+        task['targets'] = [mallet_imported_data]
         cmd = '{0} import-file --input {1} --output {2} --keep-sequence --set-source-by-name --remove-stopwords'.format(mallet, mallet_input, mallet_imported_data)
         if token_regex is not None:
             cmd += " --token-regex "+token_regex
-        actions = [cmd]
-        file_deps = [mallet_input]
-        clean = ["rm -f "+mallet_imported_data]
-        return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
+        task['actions'] = [cmd]
+        task['file_dep'] = [mallet_input]
+        task['clean'] = ["rm -f "+mallet_imported_data]
+        return task
 
 if 'task_mallet_output_gz' not in locals():
     def task_mallet_output_gz():
-        targets = [mallet_output_gz, mallet_doctopics_output]
-        actions = ['{0} train-topics --input {1} --optimize-interval {2} --num-iterations {3} --num-topics {4} --output-state {5} --output-doc-topics {6}'
+        task = dict()
+        task['targets'] = [mallet_output_gz, mallet_doctopics_output]
+        task['actions'] = ['{0} train-topics --input {1} --optimize-interval {2} --num-iterations {3} --num-topics {4} --output-state {5} --output-doc-topics {6}'
                    .format(mallet, mallet_imported_data, mallet_optimize_interval, mallet_num_iterations, num_topics, mallet_output_gz, mallet_doctopics_output)]
-        file_deps = [mallet_imported_data]
-        clean = ["rm -f "+mallet_output_gz,
+        task['file_dep'] = [mallet_imported_data]
+        task['clean'] = ["rm -f "+mallet_output_gz,
                  "rm -f "+mallet_doctopics_output]
-        return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
+        return task
 
 if 'task_mallet_output' not in locals():
     def task_mallet_output():
-        targets = [mallet_output]
-        actions = ["zcat {0} > {1}".format(mallet_output_gz,mallet_output)]
-        file_deps = [mallet_output_gz]
-        clean = ["rm -f "+mallet_output]
-        return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
+        task = dict()
+        task['targets'] = [mallet_output]
+        task['actions'] = ["zcat {0} > {1}".format(mallet_output_gz,mallet_output)]
+        task['file_dep'] = [mallet_output_gz]
+        task['clean'] = ["rm -f "+mallet_output]
+        return task
 
 if 'task_mallet' not in locals():
     def task_mallet():
@@ -236,27 +236,52 @@ if 'task_mallet' not in locals():
 
 if 'task_dataset_import' not in locals():
     def task_dataset_import():
+        def dataset_in_database():
+            try:
+                Dataset.objects.get(name=dataset_name)
+                return True
+            except Dataset.DoesNotExist:
+                return False
         # TODO(matt): clean up and possibly rename dataset_import.py and
         # analysis_import.py, now that we are using this build script - we don't
         #  need standalone scripts anymore for that stuff
-        actions = [(import_scripts.dataset_import.main, [mallet_output, dataset_name, attributes_file, dataset_dir, files_dir, dataset_description])]
-        file_deps = [mallet_output, attributes_file, yamba_file]
-        clean = [(remove_dataset, [dataset_name])]
-        return {'actions':actions, 'file_dep':file_deps, 'clean':clean}
+        task = dict()
+        task['actions'] = [(import_scripts.dataset_import.main, [mallet_output, dataset_name, attributes_file, dataset_dir, files_dir, dataset_description])]
+        task['file_dep'] = [mallet_output, attributes_file, yamba_file]
+        task['clean'] = [(remove_dataset, [dataset_name])]
+        task['uptodate'] = [dataset_in_database()]
+        return task
 
 if 'task_analysis_import' not in locals():
     def task_analysis_import():
-        actions = [(import_scripts.analysis_import.main, [dataset_name, attributes_file, analysis_name, analysis_description, mallet_output, mallet_input, files_dir, token_regex])]
-        file_deps = [mallet_output, mallet_input, attributes_file]
-        clean = [
+        def analysis_in_database():
+            try:
+                d = Dataset.objects.get(name=dataset_name)
+                Analysis.objects.get(dataset=d, name=analysis_name)
+                return True
+            except (Dataset.DoesNotExist,Analysis.DoesNotExist):
+                return False
+        task = dict()
+        task['actions'] = [(import_scripts.analysis_import.main, [dataset_name, attributes_file, analysis_name, analysis_description, mallet_output, mallet_input, files_dir, token_regex])]
+        task['file_dep'] = [mallet_output, mallet_input, attributes_file]
+        task['clean'] = [
             (remove_analysis, [dataset_name, analysis_name]),
             "rm -rf {0}".format(markup_dir)
         ]
-        task_deps = ['dataset_import']
-        return {'actions':actions, 'file_dep':file_deps, 'task_dep':task_deps, 'clean':clean}
+        task['task_dep'] = ['dataset_import']
+        task['uptodate'] = [analysis_in_database()]
+        return task
 
 if 'task_name_schemes' not in locals():
     def task_name_schemes():
+        def scheme_in_database(ns):
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
+                TopicNameScheme.objects.get(analysis=analysis, name=ns.scheme_name())
+                return True
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist, TopicNameScheme.DoesNotExist):
+                return False
         def generate_names(ns):
             ns.name_all_topics()
         def clean_names(ns):
@@ -264,14 +289,28 @@ if 'task_name_schemes' not in locals():
         
         print "Available topic name schemes: " + u', '.join([ns.scheme_name() for ns in name_schemes])
         for ns in name_schemes:
-            actions = [(generate_names,[ns])]
-            task_deps = ['analysis_import']
-            clean = [(clean_names,[ns])]
-            yield {'name':ns.scheme_name(), 'actions':actions, 'task_dep':task_deps, 'clean':clean}
+            task = dict()
+            task['name'] = ns.scheme_name()
+            task['actions'] = [(generate_names,[ns])]
+            task['task_dep'] = ['analysis_import']
+            task['clean'] = [(clean_names,[ns])]
+            yield task
 
 if 'task_topic_metrics' not in locals():
     def task_topic_metrics():
         from metric_scripts.topics import metrics
+        
+        def metric_in_database(topic_metric):
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
+                names = metrics[topic_metric].metric_names_generated(dataset_name, analysis_name)
+                for name in names:
+                    TopicMetric.objects.get(analysis=analysis, name=name)
+                return True
+            except (Dataset.DoesNotExist,Analysis.DoesNotExist,TopicMetric.DoesNotExist):
+                return False
+        
         def import_metric(topic_metric):
             start_time = datetime.now()
             print 'Adding %s...' % topic_metric,
@@ -290,24 +329,37 @@ if 'task_topic_metrics' not in locals():
         
         def clean_metric(topic_metric):
             print "Removing topic metric: " + topic_metric
+            dataset = Dataset.objects.get(name=dataset_name)
+            analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
             names = metrics[topic_metric].metric_names_generated(dataset_name, analysis_name)
-            if isinstance(names, basestring): names = [names]
             for topic_metric_name in names:
-                dataset = Dataset.objects.get(name=dataset_name)
-                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-                metric = TopicMetric.objects.get(analysis=analysis, name=topic_metric_name)
-                metric.delete()
+                TopicMetric.objects.get(analysis=analysis, name=topic_metric_name).delete()
         
         print "Available topic metrics: " + u', '.join(topic_metrics)
         for topic_metric in topic_metrics:
-            actions = [(import_metric, [topic_metric])]
-            clean = ["ls", (clean_metric, [topic_metric])]
-            task_deps = ['analysis_import']
-            yield {'name': topic_metric.replace(' ','_'),'actions':actions, 'task_dep':task_deps, 'clean':clean}
+            task = dict()
+            task['name'] = topic_metric.replace(' ','_')
+            task['actions'] = [(import_metric, [topic_metric])]
+            task['clean'] = ["ls", (clean_metric, [topic_metric])]
+            task['task_dep'] = ['analysis_import']
+            task['uptodate'] = [metric_in_database(topic_metric)]
+            yield task
     
 if 'task_pairwise_topic_metrics' not in locals():
     def task_pairwise_topic_metrics():
         from metric_scripts.topics import pairwise_metrics
+        
+        def metric_in_database(metric):
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
+                names = pairwise_metrics[metric].metric_names_generated(dataset_name, analysis_name)
+                for name in names:
+                    PairwiseTopicMetric.objects.get(analysis=analysis, name=name)
+                return True
+            except (Dataset.DoesNotExist,Analysis.DoesNotExist,PairwiseTopicMetric.DoesNotExist):
+                return False
+        
         def import_metric(metric):
             start_time = datetime.now()
             print 'Adding %s...' % metric,
@@ -326,23 +378,37 @@ if 'task_pairwise_topic_metrics' not in locals():
         
         def clean_metric(metric):
             print "Removing pairwise topic metric: " + metric
+            dataset = Dataset.objects.get(name=dataset_name)
+            analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
             names = pairwise_metrics[metric].metric_names_generated(dataset_name, analysis_name)
-            if isinstance(names, basestring): names = [names]
             for metric_name in names:
-                dataset = Dataset.objects.get(name=dataset_name)
-                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
                 PairwiseTopicMetric.objects.get(analysis=analysis, name=metric_name).delete()
         
         print "Available pairwise topic metrics: " + u', '.join(pairwise_metrics)
-        for topic_metric in pairwise_metrics:
-            actions = [(import_metric, [topic_metric])]
-            clean = [(clean_metric, [topic_metric])]
-            task_deps = ['analysis_import']
-            yield {'name': topic_metric.replace(' ','_'),'actions':actions, 'task_dep':task_deps, 'clean':clean}
+        for pairwise_topic_metric in pairwise_metrics:
+            task = dict()
+            task['name'] = pairwise_topic_metric.replace(' ','_')
+            task['actions'] = [(import_metric, [pairwise_topic_metric])]
+            task['clean'] = [(clean_metric, [pairwise_topic_metric])]
+            task['task_dep'] = ['analysis_import']
+            task['uptodate'] = [metric_in_database(pairwise_topic_metric)]
+            yield task
 
 if 'task_document_metrics' not in locals():
     def task_document_metrics():
         from metric_scripts.documents import metrics
+        
+        def metric_in_database(metric):
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
+                names = metrics[metric].metric_names_generated(dataset_name, analysis_name)
+                for name in names:
+                    DocumentMetric.objects.get(analysis=analysis, name=name)
+                return True
+            except (Dataset.DoesNotExist,Analysis.DoesNotExist,DocumentMetric.DoesNotExist):
+                return False
+        
         def import_metric(metric):
             start_time = datetime.now()
             print 'Adding %s...' % metric,
@@ -361,24 +427,37 @@ if 'task_document_metrics' not in locals():
         
         def clean_metric(metric):
             print "Removing document metric: " + metric
+            dataset = Dataset.objects.get(name=dataset_name)
+            analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
             names = metrics[metric].metric_names_generated(dataset_name, analysis_name)
-            if isinstance(names, basestring): names = [names]
             for metric_name in names:
-                dataset = Dataset.objects.get(name=dataset_name)
-                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-                metric = DocumentMetric.objects.get(analysis=analysis, name=metric_name)
-                metric.delete()
+                metric = DocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
         
         print "Available document metrics: " + u', '.join(metrics)
         for metric in metrics:
-            actions = [(import_metric, [metric])]
-            clean = ["ls", (clean_metric, [metric])]
-            task_deps = ['analysis_import']
-            yield {'name': metric.replace(' ','_'),'actions':actions, 'task_dep':task_deps, 'clean':clean}
+            task = dict()
+            task['name'] = metric.replace(' ','_')
+            task['actions'] = [(import_metric, [metric])]
+            task['clean'] = ["ls", (clean_metric, [metric])]
+            task['task_dep'] = ['analysis_import']
+            task['uptodate'] = [metric_in_database(metric)]
+            yield task
 
 if 'task_pairwise_document_metrics' not in locals():
     def task_pairwise_document_metrics():
         from metric_scripts.documents import pairwise_metrics
+        
+        def metric_in_database(metric):
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
+                names = pairwise_metrics[metric].metric_names_generated(dataset_name, analysis_name)
+                for name in names:
+                    PairwiseDocumentMetric.objects.get(analysis=analysis, name=name)
+                return True
+            except (Dataset.DoesNotExist,Analysis.DoesNotExist,PairwiseDocumentMetric.DoesNotExist):
+                return False
+        
         def import_metric(metric):
             start_time = datetime.now()
             print 'Adding %s...' % metric,
@@ -397,19 +476,21 @@ if 'task_pairwise_document_metrics' not in locals():
         
         def clean_metric(metric):
             print "Removing pairwise document metric: " + metric
+            dataset = Dataset.objects.get(name=dataset_name)
+            analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
             names = pairwise_metrics[metric].metric_names_generated(dataset_name, analysis_name)
             if isinstance(names, basestring): names = [names]
             for metric_name in names:
-                dataset = Dataset.objects.get(name=dataset_name)
-                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
                 PairwiseDocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
         
         print "Available pairwise document metrics: " + u', '.join(pairwise_metrics)
         for metric in pairwise_metrics:
-            actions = [(import_metric, [metric])]
-            clean = [(clean_metric, [metric])]
-            task_deps = ['analysis_import']
-            yield {'name': metric.replace(' ','_'),'actions':actions, 'task_dep':task_deps, 'clean':clean}
+            task = dict()
+            task['name'] = metric.replace(' ','_')
+            task['actions'] = [(import_metric, [metric])]
+            task['clean'] = [(clean_metric, [metric])]
+            task['task_dep'] = ['analysis_import']
+            yield task
 
 if 'task_metrics' not in locals():
     def task_metrics():
