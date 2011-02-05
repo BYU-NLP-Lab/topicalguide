@@ -59,8 +59,8 @@ from helper_scripts.name_schemes.top_n import TopNTopicNamer
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
 # cleaned up when we have time.
 
-build = "kcna/kcna"
-#build = "state_of_the_union"
+build = "state_of_the_union"
+#build = "kcna/kcna"
 #build = "congressional_record"
 
 if __name__ == "__main__":

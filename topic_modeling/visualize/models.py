@@ -45,7 +45,6 @@ class Dataset(models.Model):
 
 class Document(models.Model):
     filename = models.CharField(max_length=128, db_index=True)
-    markup_file = models.CharField(max_length=128, null=True)
     dataset = models.ForeignKey(Dataset)
     word_count = models.IntegerField(default=0)
     words = models.ManyToManyField('Word', through='DocumentWord')
@@ -54,10 +53,15 @@ class Document(models.Model):
     
     def __unicode__(self):
         return unicode(self.filename)
-    
-    def get_context_for_word(self, word_to_find, topic=None):
+
+    def get_markup(self, analysis):
+        markup_file = MarkupFile.objects.get(document=self, analysis=analysis)
         markup = cjson.decode(open(self.dataset.data_root + '/' +
-                self.markup_file).read())
+                markup_file.path).read())
+        return markup
+    
+    def get_context_for_word(self, word_to_find, analysis, topic=None):
+        markup = self.get_markup(analysis)
         indices = []
         for i, word in enumerate(markup):
             if word['word'] == word_to_find:
@@ -88,9 +92,8 @@ class Document(models.Model):
         left_context = text[start_index:end_index]
         return right_context, left_context
 
-    def get_highlighted_text(self, topics):
-        markup = cjson.decode(open(self.dataset.data_root + '/' +
-                self.markup_file).read())
+    def get_highlighted_text(self, topics, analysis):
+        markup = self.get_markup(analysis)
         indices = []
         for i, word in enumerate(markup):
             if word['topic'] in topics:
@@ -136,7 +139,7 @@ class Document(models.Model):
         return open(self.dataset.data_root + "/" + 
             self.filename, 'r').read()
 
-    def get_kwic_context_word(self, word, text = None):
+    def get_kwic_context_word(self, word, text=None):
         if text is None:
             text = self.get_text_for_kwic()
         
@@ -147,7 +150,7 @@ class Document(models.Model):
         else:
             return -1, -1 
     
-    def get_kwic_context_ends(self, word, text = None):
+    def get_kwic_context_ends(self, word, text=None):
         context_size = 50
         
         if text is None:
@@ -219,6 +222,7 @@ class AttributeValueDocument(models.Model):
         return u'{a} is "{v}" for {d}'.format(a=self.attribute, v=self.value,
                 d=self.document)
 
+
 class AttributeValue(models.Model):
     attribute = models.ForeignKey(Attribute)
     value = models.ForeignKey(Value)
@@ -255,6 +259,12 @@ class Analysis(models.Model):
         return self.dataset.name + '-' + self.name
 
 
+class MarkupFile(models.Model):
+    document = models.ForeignKey(Document)
+    analysis = models.ForeignKey(Analysis)
+    path = models.CharField(max_length=128)
+
+
 class Topic(models.Model):
     number = models.IntegerField()
     name = models.CharField(max_length=128)
@@ -270,6 +280,7 @@ class Topic(models.Model):
     class Meta:
         ordering = ['name']
 
+
 class TopicNameScheme(models.Model):
     analysis = models.ForeignKey(Analysis)
     name = models.CharField(max_length=128)
@@ -277,10 +288,12 @@ class TopicNameScheme(models.Model):
     def __unicode__(self):
         return self.name
 
+
 class TopicName(models.Model):
     topic = models.ForeignKey(Topic)
     name_scheme = models.ForeignKey(TopicNameScheme)
     name = models.CharField(max_length=128)
+
 
 class TopicMetric(models.Model):
     name = models.CharField(max_length=128)
@@ -393,5 +406,6 @@ class ExtraTopicInformationValue(models.Model):
     topic = models.ForeignKey(Topic)
     type = models.ForeignKey(ExtraTopicInformation)
     value = models.TextField()
+
 
 # vim: et sw=4 sts=4

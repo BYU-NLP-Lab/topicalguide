@@ -28,7 +28,7 @@ from build.common.util import create_dirs_and_open
 data_dir = '/aml/data/mjg82/student_ratings/comments'
 
 def get_dataset_name(locals):
-    return "ratings"
+    return "ratings-bio100"
 
 
 def get_dataset_description(locals):
@@ -41,10 +41,6 @@ def get_copy_dataset(locals):
 
 def get_mallet_token_regex(locals):
     return r"[a-zA-Z]+"
-
-
-def get_split_regex(locals):
-    return r"[^a-zA-Z]+"
 
 
 def get_attributes_file(locals):
@@ -82,11 +78,19 @@ def clean_ratings(src_dir, dest_dir):
     c.clean()
 
 
+def skipping_condition(path):
+    if 'BIO_100' not in path:
+        return True
+    if '20095' not in path:
+        return True
+    return False
+
+
 def gen_attr_file(src_dir, output_file):
     file_dicts = []
     for root, dirs, files in os.walk(src_dir):
         partial_root = root.replace(src_dir, '')[1:]
-        if 'REL_A_121' not in root: continue
+        if skipping_condition(root): continue
         for f in files:
             c = SubsetRatingsCleaner(src_dir, '', '', '')
             in_path = '/'.join([src_dir, partial_root, f])
@@ -112,7 +116,7 @@ def gen_attr_file(src_dir, output_file):
 class SubsetRatingsCleaner(Cleaner):
     def clean(self):
         for root, dirs, files in os.walk(self.input_dir):
-            if 'REL_A_121' not in root: continue
+            if skipping_condition(root): continue
             # To create a similar structure in output_dir, we need to isolate
             # the part of root that is above input_dir
             # the [1:] takes off a leading /
