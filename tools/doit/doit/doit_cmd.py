@@ -64,7 +64,7 @@ opt_outfile = {'name': 'outfile',
 # choose internal dependency file.
 opt_depfile = {'name': 'dep_file',
                'short':'',
-               'long': '',
+               'long': 'db',
                'type': str,
                'default': ".doit.db",
                'help': "file used to save successful runs"
