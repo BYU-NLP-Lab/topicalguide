@@ -67,7 +67,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     transaction.commit()
 
 def metric_names_generated(dataset, analysis):
-    return metric_name
+    return [metric_name]
 
 def pmcc(topic1_word_vals, topic2_word_vals):
     return float(dot(topic1_word_vals, topic2_word_vals) /

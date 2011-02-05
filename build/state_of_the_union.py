@@ -21,24 +21,26 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 #State of the Union Addresses Dataset build settings
+import os
 from build.state_of_the_union.extract_sotua_documents import extract_state_of_the_union
 from build.state_of_the_union.generate_attributes_file import generate_attributes_file
-import os
 
 chron_list_filename = 'chronological_list.wiki'
 addresses_filename = 'state_of_the_union_addresses.txt'
-dataset_name = "state_of_the_union"
-dataset_description = "State of the Union Addresses 1790-2010"
+dataset_name = 'state_of_the_union'
+dataset_description = 'State of the Union Addresses 1790-2010'
 
 def task_attributes_file():
-    targets = [attributes_file]
-    actions = [(generate_attributes_file,
-                [dataset_dir+'/'+chron_list_filename, attributes_file])]
-    clean = ["rm -f "+attributes_file]
-    return {'targets':targets, 'actions':actions, 'clean':clean}
-
-def task_copy_and_transform_dataset():
     task = dict()
+    task['targets'] = [attributes_file]
+    task['actions'] = [(generate_attributes_file,
+                [dataset_dir+'/'+chron_list_filename, attributes_file])]
+    task['clean'] = ['rm -f '+attributes_file]
+    return task
+
+def task_extract_data():
+    task = dict()
+    task['targets'] = files_dir
     task['actions'] = [
         (extract_state_of_the_union,
          [dataset_dir+'/'+chron_list_filename,
@@ -46,8 +48,6 @@ def task_copy_and_transform_dataset():
           files_dir]
         )
     ]
-    task['clean'] = [
-        'rm -rf '+files_dir
-    ]
+    task['clean'] = ['rm -rf '+files_dir]
     task['uptodate'] = [os.path.exists(files_dir)]
     return task

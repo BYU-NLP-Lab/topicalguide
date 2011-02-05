@@ -53,7 +53,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     transaction.commit()
 
 def metric_names_generated(dataset, analysis):
-    return metric_name
+    return [metric_name]
 
 if __name__ == '__main__':
     parser = OptionParser()
