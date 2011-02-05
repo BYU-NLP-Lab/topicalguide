@@ -225,6 +225,8 @@
 % discovery and data mining, pages 424–433. ACM, 2006.
 % 9
 
+%In case we change the name of the build script, we define a macro for it:
+\newcommand{\buildscript}{backend.py}
 
 \documentclass[11pt]{article}
 \usepackage{acl-hlt2011}
@@ -234,17 +236,16 @@
 \usepackage{multirow}
 \usepackage{url}
 \usepackage{graphicx}
+\usepackage{listings}	
 \DeclareMathOperator*{\argmax}{arg\,max}
 \setlength\titlebox{6.5cm}    % Expanding the titlebox
 
-\title{Exploring Your Favorite Corpus with The Topic Browser}
+\title{Increased Comprehension of Topic Models and Corpora Using The Topic Browser}
 \author{Matthew J. Gardner, Joshua Lutes, Josh Hansen, Jeff Lund, Dan Walker, Eric Ringger, \and Kevin Seppi\\
 Department of Computer Science\\
 Brigham Young University\\
 \tt \{mjg82,jlutes,joshhansen\}@byu.edu, \{jefflund,danwalkeriv\}@gmail.com\\
 \tt \{ringger,kseppi\}@cs.byu.edu}
-
-\date{}
 
 \begin{document}
 \maketitle
@@ -259,41 +260,19 @@ Brigham Young University\\
 % \end{abstract}
 
 \begin{abstract}
-The Topic Browser is an open-source\footnote{Licensed under the terms of the
-Affero General Public License, version 3.}  web application for interactive
-exploration and visualization of topics and documents. Mallet LDA output is used
-as input. We explain why such a tool is warranted, what it is capable of, and
-how to use it to explore the corpus (or topic model) of your choice.
+Though topic models reduce dimensionality, their output is just as large as the training corpus.
+Thus, humans' ability to manually assess model quality is limited. As digitization of historic texts
+proceeds at breakneck pace, institutions correspondingly find an increased need for tools such as
+topic models to make these texts usable. In response to these twin needs, we present The Topic Browser,
+an open-source\footnote{Licensed under the terms of the
+Affero General Public License, version 3.} web application for interactive, topic-centric
+exploration and visualization of topic model output. Mallet LDA output is used.
+We explain why such a tool is warranted, what it is capable of, and
+how to use it to explore the corpus or topic model of your choice.
 \end{abstract}
 
 \section{Introduction}
-% Since their introduction in 2003, LDA-based topic models have been extended to
-% account for time, authors, citations, multiple languages, etc. [][][][][]
-% Baseline LDA generates a topic assignment per (non-stop) token -- a massive
-% output in the gigaword era. Humans are incapable of fully assimilating the
-% resulting models, calling for more effective means of characterizing and
-% visualizing the output.
-% 
-% The Topic Browser is an open-source web application for interactive exploration
-% and visualization of document collections. All entities implied by topic model output are first-class citizens in the Topic
-% Browser. 
-% 
-% \subsection{Entities}
-% \begin{figure}[ht]
-%  \centering
-%  \includegraphics{topic_browser_object_model_transparent.png}
-%  % topic browser object model transparent.png: 582x293 pixel, 96dpi, 15.40x7.75
-% cm, bb=0 0 436 220
-%  \caption{The Topic Browser object model}
-%  \label{fig:object_model}
-% \end{figure}
-
-Since its introduction, topic modeling has become standard fare for those wishing
-to automatically distill large text collections into something more immediately
-useful to humans and computers alike. The usefulness of this sort of
-dimensionality reduction is widely acknowledged, and topic models continue to be
-extended into exciting new territory. However, these models
-output a topic assignment per non-stop token, resulting in an output that is a
+Since its introduction, LDA-based topic modeling \cite{blei_latent_2003} has become standard fare for those wishing to automatically distill large text collections into something more immediately useful to humans and computers alike. The usefulness of this sort of dimensionality reduction is widely acknowledged, and topic models continue to be extended into exciting new territory. \cite{wang_continuous_2008,mimno_polylingual_2009,boyd-graber_holistic_2010,brody_unsupervised_2010,he_detecting_2009,yao_efficient_2009} However, these models output a topic assignment per non-stop token, resulting in an output that is a
 corpus unto itself. Though the range of possible values is substantially reduced,
 output size remains on the same order as input size. Notwithstanding, papers
 introducing new topic models lean heavily on the hope that displaying a few hand-
@@ -314,7 +293,14 @@ or nonexistent.
 We present The Topic Browser, an open-source web application for interactive,
 topic-aware exploration and visualization of both document collections and the
 topic models inferred on them.
-
+\begin{figure*}[ht]
+ %TODO Make all widgets full width
+ \centering
+ \includegraphics[width=400px,keepaspectratio=true]{./topic_page_take2.png}
+ % topic_page_huge_cropped.png: 1394x1027 pixel, 96dpi, 36.88x27.17 cm, bb=0 0 1045 770
+ \caption{The topic page}
+ \label{fig:topic_page}
+\end{figure*}
 
 % Proper visualizations are essential to extracting information from and identifying trends in data,
 % especially large, high-dimensional data. Large text corpora are particularly difﬁcult to visualize, as
@@ -337,11 +323,30 @@ topic models inferred on them.
 % with 150 topics on a collection of about 460 campaign speeches from the 2008 presidential primary
 % and general elections retrieved from http://2008election.procon.org.
 
-\subsection{Topics}
+\section{Browsing}
+The Topic Browser object model and user interface include notions of \textit{datasets} and \textit{analyses}.
+A dataset is a set of documents -- a corpus. An analysis is associated with one dataset and constitutes the set of topics and token-level topic assignments for
+all of the documents in that dataset.
 
-\subsection{Documents}
+All entities explicitly modeled by basic a topic model -- topics, documents, and
+words -- are first-class citizens in The Topic Browser, meaning that the user
+interface provides specific views for each of these entity types. For example, a
+view of the ``government federal`` topic is rendered in Figure \ref{fig:topic_page}.
+It displays statistics about the topic (''STATS''); chart, word-cloud, and
+key-word-in-context representations of top words (''TOP WORDS $P(W|Z)$''/
+''WORD CLOUD''/``TOP WORDS IN CONTEXT``), and both textual and graphical
+representations of similar topics (``SIMILAR TOPICS''/``TOPIC MAP'').
 
-\subsection{Words}
+Intuitive hyperlinks make this a true \textit{browsing} tool. Click on a the
+``government states`` node in the topic map and be sent to its topic view to see
+how presidents have discussed state government. Click on ''federal'' in the word
+cloud to see the word view, which shows top topics and documents in which the
+word occurs. Or click on ''Grover\_\allowbreak{}Cleveland's\_\allowbreak{}Fourth\_\allowbreak{}State\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}Union\_\allowbreak{}Address.txt''
+to see President Cleveland's message with words belonging to the ''government federal''
+topic highlighted.\footnote{For a more complete discussion
+of browsing features see \cite{gardner_browser_2010}.}%TODO Hide from reviewers
+%TODO Make words in the doc view link
+%TODO Show words in context in the word view
 
 \subsection{Metrics}
 Topic-centric document exploration is enhanced by means of \textit{metrics}.
@@ -363,39 +368,35 @@ correlation [3] to show similar documents.
 
 \subsection{Charts}
 
+% \begin{figure*}[ht]
+%  \centering
+%  \includegraphics[height=200px,keepaspectratio=true]{./topics_vs_years.png}
+%  % topics_vs_years.png: 979x520 pixel, 96dpi, 25.90x13.76 cm, bb=0 0 734 390
+%  \label{fig:chart}
+%  \caption{}
+% \end{figure*}
 
 
 \subsection{Topic ``Maps"}
 With topic-to-topic relationships described by means of pairwise topic metrics,
 graph-based visualization of the topic space becomes straightforward. In our
-current implementation, we construct a topic graph G = (N, E) as follows:
-\begin{itemize}
-\item $N$ is a set of $|T|$ nodes such that $\forall_{t\in T} weight(N_{t}) =
-\tau(t)$ where $\tau$ is a topic metric.
-\item $E$ is a set of $|T|^2$ edges such that $\forall_{t\in T}\forall_{u\in T}
-weight(E_{t,u}) = \mu(t,u)$ where $\mu$ is a pairwise topic metric.
-\end{itemize}
+current implementation, we construct a topic graph $G = (N, E)$ as follows:
+$N$ is a set of $|T|$ nodes such that
+\[\forall_{t\in T} weight(N_{t}) = \tau_{1}(t)\]
+and
+\[\forall_{t\in T} color(N_{t}) \sim \tau_{2}(t)\]
+where $\tau_1$ and $\tau_2$ are topic metrics (potentially the same). $E$ is
+constructed as a set of $|T|^2$ edges such that
+  \[\forall_{(t,u)\in T\times T, t\neq u} weight(E_{t,u}) = \pi(t,u)\]
+where $\pi$ is a pairwise topic metric.
 
 We use the Gephi Toolkit\footnote{http://www.gephi.org} to generate such graphs
-and render them as images.
-% \begin{figure}
-%   \begin{center}
-%   \includegraphics[width=200px,keepaspectratio=true]{./topic_map_example.png}
-%   \caption{}
-%   \end{center}
-% \end{figure}
-% \begin{center}
-%  \includegraphics[width=200px,keepaspectratio=true]{./topic_map_example.png}
-%  % topic_map_example.png: 600x533 pixel, 57dpi, 26.76x23.77 cm, bb=0 0 759 674
-% \end{center}
+and render them as images, employing the \texttt{ForceAtlas} force-directed
+layout algorithm to arrange the nodes so that, generally speaking, nodes joined
+by edges of higher weight are closer together, and nodes joined by edges of
+lower weight are further apart.
 
-\begin{figure}[p]
- \centering
- \includegraphics[width=400px,keepaspectratio=true]{./topic_page_huge_cropped.png}
- % topic_page_huge_cropped.png: 1394x1027 pixel, 96dpi, 36.88x27.17 cm, bb=0 0 1045 770
- \caption{The topic page}
- \label{fig:topic_page}
-\end{figure}
+
 
 \subsection{Topic Name Schemes}
 As LDA does not assign names to the topics it generates, automatic generation of
@@ -410,7 +411,7 @@ words with the highest $P(w|z)$ for a given topic $z$), but any number of
 alternative schemes can be imagined and implemented. (MAYBE SHOW TF-ITF?)
 
 \section{Data Import Backend}
-SHOW DEPENDENCY GRAPH?
+%TODO? Show dependency graph
 Automatically turning a raw document collection into an interactive browsing
 experience requires extensive preprocessing. Documents must be converted into a
 representation accepted by the topic model learner. Topics must then be inferred
@@ -421,64 +422,95 @@ improve the efficiency and usability of the data import pipeline we built a
 command-line frontend based on the \verb/doit/ task automation tool, written in
 Python.\footnote{http://doit.sourceforge.net/}
 
-The main \verb/doit/ build script is \verb/dodo.py/. Some example invocations:
+The main \texttt{doit} build script is \texttt{\buildscript}. Some example invocations:
 \begin{itemize}
- \item \verb/dodo.py/: Builds all targets
- \item \verb/dodo.py list/: Lists the available top-level tasks (sub-tasks are not displayed)
- \item \verb/dodo.py clean -c mallet/: Cleans the Mallet files
+ \item \texttt{\buildscript}: Builds all targets
+ \item \texttt{\buildscript} list/: Lists the available top-level tasks (sub-tasks are not displayed)
+ \item \texttt{\buildscript} clean -c mallet/: Cleans the Mallet files
 \end{itemize}
 
 % Useful commands:
-%  dodo.py list #Lists the available top-level tasks (sub-tasks are not displayed)
-%  dodo.py #Builds everything!
-%  dodo.py clean -c mallet #Cleans the mallet files
-%  dodo.py metrics #Computes all metrics
-%  dodo.py topic_metrics #Computes just the topic metrics
-%  dodo.py topic_metrics:document_entropy #Computes just the document entropy topic metric
-%  dodo.py clean topic_metrics:document_entropy #Cleans just the document entropy topic metric
+%  \buildscript list #Lists the available top-level tasks (sub-tasks are not displayed)
+%  \buildscript #Builds everything!
+%  \buildscript clean -c mallet #Cleans the mallet files
+%  \buildscript metrics #Computes all metrics
+%  \buildscript topic_metrics #Computes just the topic metrics
+%  \buildscript topic_metrics:document_entropy #Computes just the document entropy topic metric
+%  \buildscript clean topic_metrics:document_entropy #Cleans just the document entropy topic metric
 %
-%NOTE: probably necessary to do 'dodo.py forget' when switching between datasets/analyses.
+%NOTE: probably necessary to do '\buildscript forget' when switching between datasets/analyses.
 
-how to set different datasets
+***how to set different datasets***
 
 \subsection{Adding Support For Your Dataset}
-The \verb/build/ Python module contains dataset-specific import scripts.
+Python module \texttt{build} contains dataset-specific import scripts.
 Generally, a sub-module contains the scripts for a particular dataset. The
 scripts for the default State of the Union Addresses dataset, for example,
-reside in \verb/build.state_of_the_union/. The main build file for the dataset
-is \verb#build/state_of_the_union/state_of_the_union.py#. This file is
-referenced within the root \verb/dodo.py/ build script by setting the
-\verb/build/ variable:
-\begin{verbatim}
- build = "state_of_the_union/state_of_the_union"
-\end{verbatim}
+reside in \texttt{build.state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union}. The main build file for the dataset
+is \texttt{build/\allowbreak{}state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union/\allowbreak{}state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union.py}. This file is
+referenced within the root \texttt{\buildscript} build script by setting the
+\texttt{build} variable:
+\texttt{build = "state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union/\allowbreak{}state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union"}
 
-At a minimum, the dataset-specific build file should contain the following:
-\begin{itemize}
- \item Declaration of \verb/dataset_name/ variable.
-   \newline Example: \verb/dataset_name = "state_of_the_union"/.
- \item Declaration of \verb/dataset_description/ variable.
-   \newline Example: \verb/dataset_description = "State of the Union Addresses 1790-2010"/.
- \item Definition of \verb/copy_and_transform_dataset/ \verb/doit/ task.
-Example:
-\begin{verbatim}
-def task_copy_and_transform_dataset():
-  task = dict()
-  task['actions'] = [
-    (extract_state_of_the_union,
-    [dataset_dir+'/'+chron_list_filename,
-     dataset_dir+'/'+addresses_filename,
-     files_dir]
-    )
-  ]
-  task['clean'] = [
-    'rm -rf '+files_dir
-  ]
-  task['uptodate'] = [os.path.exists(files_dir)]
-  return task
-\end{verbatim}
+%TODO Talk about attributes.json
 
-\end{itemize}
+A dataset-specific build must do four things:
+\begin{enumerate}
+\item Define \texttt{dataset\_name}.
+    \newline Example: \texttt{dataset\_name='state\_of\_the\_union'}
+  \item Define \texttt{dataset\_description}.
+    \newline Example: \texttt{dataset\_description='State of the Union Addresses'}
+  \item Ensure that all documents in the dataset are located in a single directory.
+    This can be done by pointing to an existing directory, or by overriding the
+    \texttt{extract\_data} task and populating the directory on-the-fly.
+  \item Provide a document metadata file in JSON format. Again, this can be done
+    either by pointing to an existing file (\texttt{attributes\_\allowbreak{}file=\allowbreak{}dataset\_\allowbreak{}dir\allowbreak{}+\allowbreak{}'/attributes\allowbreak{}.json'}), or by defining a task that builds the \texttt{attributes.json} target.
+\end{enumerate}
+
+
+
+% At a minimum, the dataset-specific build file should contain the following:
+% \begin{itemize}
+%  \item Declaration of \verb/dataset_name/ variable.
+%    \newline Example: \verb/dataset_name = "state_of_the_union"/.
+%  \item Declaration of \verb/dataset_description/ variable.
+%    \newline Example: \texttt{dataset_description = "State of the Union Addresses 1790-2010"}.
+%  \item Definition of \verb/copy_and_transform_dataset/ \verb/doit/ task.
+% Example:
+% 
+% \begin{figure*}
+%  \centering
+%   \begin{lstlisting}[numbers=left,language=Python]
+% chron_list_filename = 'chronological_list.wiki'
+% addresses_filename = 'state_of_the_union_addresses.txt'
+% dataset_name = 'state_of_the_union'
+% dataset_description = 'State of the Union Addresses 1790-2010'
+% 
+% def task_attributes_file():
+%     task = dict()
+%     task['targets'] = [attributes_file]
+%     task['actions'] = [(generate_attributes_file,
+%          [dataset_dir+'/'+chron_list_filename,
+%           attributes_file])]
+%     task['clean'] = ['rm -f '+attributes_file]
+%     return task
+% 
+% def task_extract_data():
+%     task = dict()
+%     task['targets'] = files_dir
+%     task['actions'] = [(extract_state_of_the_union,
+%          [dataset_dir+'/'+chron_list_filename,
+%           dataset_dir+'/'+addresses_filename,
+%           files_dir])]
+%     task['clean'] = ['rm -rf '+files_dir]
+%     task['uptodate'] = [os.path.exists(files_dir)]
+%     return task
+% \end{lstlisting}
+% \caption{The data extraction task for the State of the Union dataset. }
+% \label{fig:extract_data}
+% \end{figure*}
+% 
+% \end{itemize}
 
 % \section{Credits}
 % 
@@ -728,39 +760,40 @@ def task_copy_and_transform_dataset():
 % 
 % Do not number the acknowledgment section. Do not include this section when submitting your paper for review.
 
-\begin{thebibliography}{}
-
-\bibitem[\protect\citename{Aho and Ullman}1972]{Aho:72}
-Alfred~V. Aho and Jeffrey~D. Ullman.
-\newblock 1972.
-\newblock {\em The Theory of Parsing, Translation and Compiling}, volume~1.
-\newblock Prentice-{Hall}, Englewood Cliffs, NJ.
-
-\bibitem[\protect\citename{{American Psychological Association}}1983]{APA:83}
-{American Psychological Association}.
-\newblock 1983.
-\newblock {\em Publications Manual}.
-\newblock American Psychological Association, Washington, DC.
-
-\bibitem[\protect\citename{{Association for Computing Machinery}}1983]{ACM:83}
-{Association for Computing Machinery}.
-\newblock 1983.
-\newblock {\em Computing Reviews}, 24(11):503--512.
-
-\bibitem[\protect\citename{Chandra \bgroup et al.\egroup }1981]{Chandra:81}
-Ashok~K. Chandra, Dexter~C. Kozen, and Larry~J. Stockmeyer.
-\newblock 1981.
-\newblock Alternation.
-\newblock {\em Journal of the Association for Computing Machinery},
-  28(1):114--133.
-
-\bibitem[\protect\citename{Gusfield}1997]{Gusfield:97}
-Dan Gusfield.
-\newblock 1997.
-\newblock {\em Algorithms on Strings, Trees and Sequences}.
-\newblock Cambridge University Press, Cambridge, UK.
-
-\end{thebibliography}
-
+% \begin{thebibliography}{}
+% 
+% \bibitem[\protect\citename{Aho and Ullman}1972]{Aho:72}
+% Alfred~V. Aho and Jeffrey~D. Ullman.
+% \newblock 1972.
+% \newblock {\em The Theory of Parsing, Translation and Compiling}, volume~1.
+% \newblock Prentice-{Hall}, Englewood Cliffs, NJ.
+% 
+% \bibitem[\protect\citename{{American Psychological Association}}1983]{APA:83}
+% {American Psychological Association}.
+% \newblock 1983.
+% \newblock {\em Publications Manual}.
+% \newblock American Psychological Association, Washington, DC.
+% 
+% \bibitem[\protect\citename{{Association for Computing Machinery}}1983]{ACM:83}
+% {Association for Computing Machinery}.
+% \newblock 1983.
+% \newblock {\em Computing Reviews}, 24(11):503--512.
+% 
+% \bibitem[\protect\citename{Chandra \bgroup et al.\egroup }1981]{Chandra:81}
+% Ashok~K. Chandra, Dexter~C. Kozen, and Larry~J. Stockmeyer.
+% \newblock 1981.
+% \newblock Alternation.
+% \newblock {\em Journal of the Association for Computing Machinery},
+%   28(1):114--133.
+% 
+% \bibitem[\protect\citename{Gusfield}1997]{Gusfield:97}
+% Dan Gusfield.
+% \newblock 1997.
+% \newblock {\em Algorithms on Strings, Trees and Sequences}.
+% \newblock Cambridge University Press, Cambridge, UK.
+% 
+% \end{thebibliography}
+\bibliographystyle{acl}
+\bibliography{acl2011demo.bib}
 \end{document}
 
