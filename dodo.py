@@ -58,17 +58,22 @@ from helper_scripts.name_schemes.top_n import TopNTopicNamer
 #If this file is invoked directly, pass it in to the doit system for processing.
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
 # cleaned up when we have time.
+
+build = "kcna/kcna"
+#build = "state_of_the_union"
+#build = "congressional_record"
+
 if __name__ == "__main__":
     sys.path.append("tools/doit")
     from doit.doit_cmd import cmd_main
     path = os.path.abspath(sys.argv[0])
     print 'path: ' + path
-    args = ['-f', path] +sys.argv[1:]
+    
+    db_name = ".{0}.db".format(build.replace('/','_'))
+    
+    args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
     sys.exit(cmd_main(args))
 
-build = "kcna/kcna"
-#build = "state_of_the_union"
-#build = "congressional_record"
 filename = "build/{0}.py".format(build)
 ast = compile(open(filename).read(), filename, 'exec')
 eval(ast, globals(), locals())
