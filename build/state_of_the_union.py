@@ -40,7 +40,7 @@ def task_attributes_file():
 
 def task_extract_data():
     task = dict()
-    task['targets'] = files_dir
+    task['targets'] = [files_dir]
     task['actions'] = [
         (extract_state_of_the_union,
          [dataset_dir+'/'+chron_list_filename,
