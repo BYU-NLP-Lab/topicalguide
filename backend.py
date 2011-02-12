@@ -67,8 +67,8 @@ if __name__ == "__main__":
     sys.path.append("tools/doit")
     from doit.doit_cmd import cmd_main
     path = os.path.abspath(sys.argv[0])
-    print 'path: ' + path
     
+    #The database file where we'll store info about this build
     db_name = ".{0}.db".format(build.replace('/','_'))
     
     args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
