@@ -3,7 +3,7 @@
 
 %In case we change the name of the build script, we define a macro for it:
 \newcommand{\buildscript}{backend.py}
-\newcommand{\toolname}{Topical Guide}
+\newcommand{\tool}{Topical Guide}
 \newcommand{\projecturl}{http://nlp.cs.byu.edu/topicalguide}
 
 \documentclass[11pt]{article}
@@ -18,7 +18,7 @@
 \DeclareMathOperator*{\argmax}{arg\,max}
 \setlength\titlebox{6.5cm}    % Expanding the titlebox
 
-\title{Increased Comprehension of Topic Models and Corpora Using the \toolname{}}
+\title{Increased Comprehension of Topic Models and Corpora Using the \tool}
 \author{Josh Hansen, Matthew J. Gardner, Jeff Lund, Dan Walker, Eric Ringger, \and Kevin Seppi\\
 Department of Computer Science\\
 Brigham Young University\\
@@ -28,23 +28,14 @@ Brigham Young University\\
 \begin{document}
 \maketitle
 
-% \begin{abstract}
-% Problem: You're developing yet another LDA variant and want to get a feel for its output.
-% Solution: Use the \toolname{} to check things out at the topic, word, and document levels.
-% Problem: You have a mountain of documents so vast that no non-cyborg could read them all.
-% Solution: Get the \toolname{} and do some interactive, topic-based exploration.
-% Problem: The public has difficulty accessing the treasure trove of documents your institution wishes to make available.
-% Solution: Expose it to the world via the \toolname{}'s web interface.
-% \end{abstract}
-
 \begin{abstract}
 Though topic models reduce dimensionality, their output is just as large as the training corpus.
 Thus, humans' ability to manually assess model quality is limited. As digitization of historic texts
 proceeds at breakneck pace, institutions correspondingly find an increased need for tools such as
-topic models to make these texts usable. In response to these twin needs, we present the \toolname{},
+topic models to make these texts usable. In response to these twin needs, we present the \tool,
 an open-source\footnote{Licensed under the terms of the
 Affero General Public License, version 3.} web application for interactive, topic-centric
-exploration and visualization of topic model output. Mallet LDA output is used.
+exploration and visualization of topic model output.
 We explain why such a tool is warranted, what it is capable of, and
 how to use it to explore the corpus or topic model of your choice.
 \end{abstract}
@@ -56,16 +47,15 @@ collections into something more immediately useful to humans and computers
 alike. The usefulness of this sort of dimensionality reduction is widely
 acknowledged, and topic models continue to be extended into exciting new
 territory.
-\cite{wang_continuous_2008,mimno_polylingual_2009,boyd-graber_holistic_2010,
-brody_unsupervised_2010,he_detecting_2009,yao_efficient_2009} However, these
-models output a topic assignment per token, resulting in an output that is a
-corpus unto itself. Though the range of possible values is substantially
-reduced, output size remains on the same order as input size. Notwithstanding,
-papers introducing new topic models often lean heavily on the hope that
-displaying a few hand-picked topics will convince others of the model's
-effectiveness. But the very vastness of topic model output renders this sort of
-presentation unconvincing. Unfortunately, tools for deep understanding of topic
-model output have thus far been lacking.
+\cite{wang_continuous_2008,mimno_polylingual_2009,boyd-graber_holistic_2010,brody_unsupervised_2010,he_detecting_2009,yao_efficient_2009}
+However, these models output a topic assignment per token, resulting in an
+output that is a corpus unto itself. Though the range of possible values is
+substantially reduced, output size remains on the same order as input size.
+Notwithstanding, papers introducing new topic models often lean heavily on the
+hope that displaying a few hand-picked topics will convince others of the
+model's effectiveness. But the very vastness of topic model output renders this
+sort of presentation unconvincing. Unfortunately, tools for deep understanding
+of topic model output have thus far been lacking.
 
 Simultaneously, massive digitization efforts by libraries and other institutions
 are generating gargantuan quantities of electronic text, increasing demand for tools such as
@@ -76,11 +66,11 @@ researchers and the public. However, readily available tools for exploration of
 document collections in terms of topic models have been either unsatisfactory
 or nonexistent.
 
-We present the \toolname{}, an open-source web application for interactive,
+We present the \tool, an open-source web application for interactive,
 topic-aware exploration and visualization of both document collections and the
 topic models inferred on them. Further information on the project, including
 source code access and a live demonstration server, can be found
-at \texttt{\projecturl{}}.
+at \texttt{\projecturl}.
 %TODO Introduce SOTU dataset
 
 \begin{figure*}[t]
@@ -93,15 +83,15 @@ at \texttt{\projecturl{}}.
 
 %TODO Segue
 
-\section{Browsing}
-The \toolname{} object model and user interface include notions of
+\section{Browsing}%TODO Talk about more features
+The \tool{} object model and user interface include notions of
 \textit{datasets} and \textit{analyses}.
 A dataset is a set of documents --- a corpus. An analysis is associated with one
 dataset and constitutes the set of topics and token-level topic assignments for
 all of the documents in that dataset.
 
 All entities explicitly modeled by a basic topic model --- topics, documents, and
-words --- are first-class citizens in the \toolname{}, meaning that the user
+words --- are first-class citizens in the \tool, meaning that the user
 interface provides specific views for each of these entity types. For example, a
 view of the ``government federal'' topic is rendered in Figure \ref{fig:topic_page}.
 It displays statistics about the topic (``STATS''); chart, word-cloud, and
@@ -174,7 +164,7 @@ lower weight are further apart.
 As LDA does not assign names to the topics it generates, automatic generation of
 topic names is of interest to researchers wishing to make topic models
 human-usable. Research in this area is ongoing \cite{Mei2007,Lau2010}. In order to
-facilitate investigations in this area, we equipped the \toolname{} with a
+facilitate investigations in this area, we equipped the \tool{} with a
 fully pluggable topic naming system. Any number of topic name schemes can be
 used to produce names for all topics in an analysis. Within the user interface
 users can select a name scheme, which is then reflected throughout the
@@ -200,11 +190,11 @@ interface. Unsurprisingly, the dependencies in the import process form a directe
 improve the efficiency and usability of the data import pipeline we built a
 command-line frontend based on the \texttt{doit} task automation tool.\footnote{http://doit.sourceforge.net/}
 
-The main data import script is \texttt{\buildscript{}}. Some example invocations:
+The main data import script is \texttt{\buildscript}. Some example invocations:
 \begin{itemize}
- \item \texttt{\buildscript{}}: Builds all targets
- \item \texttt{\buildscript{}} list/: Lists the available top-level tasks (sub-tasks are not displayed)
- \item \texttt{\buildscript{}} clean -c mallet/: Cleans the Mallet files
+ \item \texttt{\buildscript}: Builds all targets
+ \item \texttt{\buildscript} list/: Lists the available top-level tasks (sub-tasks are not displayed)
+ \item \texttt{\buildscript} clean -c mallet/: Cleans the Mallet files
 \end{itemize}
 
 % Useful commands:
@@ -222,7 +212,7 @@ Generally, a sub-module contains the scripts for a particular dataset. The
 scripts for the default State of the Union Addresses dataset, for example,
 reside in \texttt{build.state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union}. The main build file for the dataset
 is \texttt{build/\allowbreak{}state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union/\allowbreak{}state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union.py}. This file is
-referenced within the root \texttt{\buildscript{}} build script by setting the
+referenced within the root \texttt{\buildscript} build script by setting the
 \texttt{build} variable:
 \texttt{build = "state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union/\allowbreak{}state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union"}
 
@@ -239,12 +229,12 @@ A dataset-specific build must do four things:
     either by pointing to an existing file (\texttt{attributes\_\allowbreak{}file=\allowbreak{}dataset\_\allowbreak{}dir\allowbreak{}+\allowbreak{}'/attributes\allowbreak{}.json'}), or by defining a task that builds the \texttt{attributes.json} target.
 \end{enumerate}
 
-Once \texttt{build} inside of \texttt{\buildscript{}} has been set to point to
-the dataset-specific build, \texttt{\buildscript{}} can be invoked to begin the
+Once \texttt{build} inside of \texttt{\buildscript} has been set to point to
+the dataset-specific build, \texttt{\buildscript} can be invoked to begin the
 import process.
 
 \section{Conclusion}
-In this paper we introduced the \toolname{} as a tool for exploration of
+In this paper we introduced the \tool{} as a tool for exploration of
 topic model output. This serves to improve understanding of both topic models
 and text corpora. We briefly described some of the general features of the tool
 and proceeded to detail the use of metrics and graphs. We then explained how
