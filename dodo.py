@@ -504,8 +504,8 @@ if 'task_metrics' not in locals():
 def task_hash_java():
     return {'actions': [(directory_recursive_hash, [java_base])]}
 
-if 'task_java' not in locals():
-    def task_java():
+if 'task_compile_java' not in locals():
+    def task_compile_java():
         actions = ["cd {0} && ant -lib lib".format(java_base)]
         result_deps = ['hash_java']
         clean = ['rm -rf '+java_bin]
@@ -514,21 +514,23 @@ if 'task_java' not in locals():
 if 'task_graphs' not in locals():
     def task_graphs():
         for ns in name_schemes:
+            task = dict()
             graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(dataset_dir, analysis_name, ns.scheme_name())
             graphs_unlinked_img_dir = graphs_img_dir + "-unlinked"
             gexf_file_name = "{0}/full_graph.gexf".format(graphs_img_dir)
             
-            actions = [
+            task['actions'] = [
                 'java -cp {0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/sqlitejdbc-v056.jar {2} {3} {4} {5} {6} {7} "{8}" {9} {10} {11} {12}'
                 .format(java_bin,java_base,graph_builder_class,graphs_min_value,graphs_base_url,dataset_name,analysis_name,ns.scheme_name(),graphs_pairwise_metric, yamba_file, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
             ]
-            task_deps = ['pairwise_topic_metrics', 'name_schemes', 'java']
-            result_deps = ['hash_java']
-            clean =  [
+            task['task_dep'] = ['pairwise_topic_metrics', 'name_schemes', 'compile_java']
+            task['result_dep'] = ['hash_java']
+            task['clean'] =  [
                 'rm -rf '+graphs_unlinked_img_dir,
                 'rm -rf '+graphs_img_dir
             ]
-            yield {'name':ns.scheme_name(), 'actions':actions, 'task_dep':task_deps, 'result_dep':result_deps, 'clean':clean}
+            task['name'] = ns.scheme_name()
+            yield task
 #
 #def task_reset_db():
 #    actions = ['yes "yes" | python topic_modeling/manage.py reset visualize']
