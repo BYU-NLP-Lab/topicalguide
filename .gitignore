@@ -4,3 +4,5 @@ java/bin
 .doit.db
 yamba
 *.nfs*
+*~
+*.backup
