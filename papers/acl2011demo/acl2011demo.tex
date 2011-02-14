@@ -71,7 +71,10 @@ topic-aware exploration and visualization of both document collections and the
 topic models inferred on them. Further information on the project, including
 source code access and a live demonstration server, can be found
 at \texttt{\projecturl}.
-%TODO Introduce SOTU dataset
+
+Throughout this paper, examples are taken from a
+corpus of State of the Union messages delivered by United States presidents
+from 1790 to 2010. This constitutes 223 documents totalling XXXXXXX tokens. %TODO Count tokens
 
 \begin{figure*}[t]
  \centering
@@ -87,8 +90,11 @@ at \texttt{\projecturl}.
 The \tool{} object model and user interface include notions of
 \textit{datasets} and \textit{analyses}.
 A dataset is a set of documents --- a corpus. An analysis is associated with one
-dataset and constitutes the set of topics and token-level topic assignments for
-all of the documents in that dataset.
+dataset and constitutes a set of topics and token-level topic assignments for
+all of the documents in that dataset. The analysis concept is useful in
+allowing for multiple topic models on a single dataset. For example,
+it could be useful to use LDA to infer both a 20-topic model and a 100-topic model
+on the State of the Union Addresses dataset.
 
 All entities explicitly modeled by a basic topic model --- topics, documents, and
 words --- are first-class citizens in the \tool, meaning that the user
@@ -96,7 +102,7 @@ interface provides specific views for each of these entity types. For example, a
 view of the ``government federal'' topic is rendered in Figure \ref{fig:topic_page}.
 It displays statistics about the topic (``STATS''); chart, word-cloud, and
 key-word-in-context representations of top words (``TOP WORDS $P(W|Z)$''/
-``WORD CLOUD''/``TOP WORDS IN CONTEXT''), and both textual and graphical
+``WORD CLOUD''/``TOP WORDS IN CONTEXT''); and both textual and graphical
 representations of similar topics (``SIMILAR TOPICS''/``TOPIC MAP'').
 
 Intuitive hyperlinks make this a true \textit{browsing} tool. Click on the
@@ -110,25 +116,34 @@ of browsing features see \cite{gardner_browser_2010}.}%TODO Replace with actual 
 %TODO Make words in the doc view link
 %TODO Show words in context in the word view
 
-\subsection{Metrics}
+\section{Document Metadata}
+Acknowledging that more is known about most documents than just their content,
+the \tool{} provides \textit{document attributes}, a mechanism for association
+of arbitrary metadata with documents. This accomodates metadata
+provided by a dataset curator, often including facts about document
+provenance and author identity. Document attributes also allow for metadata
+obtained as part of the output of some model.
+
+\section{Metrics}
 Topic-centric document exploration is enhanced by means of \textit{metrics}.
 Metrics are functions that give users additional insight into the nature of
-topics or documents. They can be either unary or binary,
-here called \textit{pairwise}.\footnote{Pairwise metrics do not necessarily
-constitute ``metrics'' in the formal sense. We leave it to implementers to
-determine whether to satisfy the triangle inequality, etc.} Topic metrics range
-from simple metrics, such as the number of word tokens and types labeled with
-the topic, to more complicated metrics such as dispersion across
-documents, prevailing sentiment, or the semantic coherence of its words [10]. Pairwise topic metrics%TODO: Cite
-include Pearson correlation on documents and on words. These are used to automatically
-display a list of similar topics.
-
-Similar to topic metrics, one can also compute document metrics. Beyond simple metrics like to-
-ken count in the document, these include things such as the entropy of the topic distribution of
-the document [8]. And as with topics, we make use of pairwise document metrics such as topic%TODO: Cite
+topics or documents. They can be either unary or binary, here called
+\textit{pairwise}.\footnote{Pairwise metrics do not necessarily constitute
+``metrics'' in the formal sense. We leave it to implementers to determine
+whether to satisfy the triangle inequality, etc.} Topic metrics range from
+simple metrics, such as the number of word tokens and types labeled with the
+topic, to more complicated metrics such as dispersion across documents,
+prevailing sentiment, or the semantic coherence of its words \cite{Newman2010}.
+Pairwise topic metrics include Pearson correlation on documents and on words.
+These are used to automatically display a list of similar topics and to weight
+the edges of the graph used to generate ``topic maps'' (discussed further in
+\ref{subsec:maps}). Similar to topic metrics, one can also compute document
+metrics. Beyond simple metrics like to- ken count in the document, these include
+things such as the entropy of the topic distribution of the document [8]. And as
+with topics, we make use of pairwise document metrics such as topic%TODO: Cite
 correlation [3] to show similar documents.%TODO: Cite
 
-\subsection{Charts}
+\section{Charts}
 
 \begin{figure*}[t]
  \centering
@@ -139,7 +154,7 @@ correlation [3] to show similar documents.%TODO: Cite
 \end{figure*}
 %TODO: Cite PNAS2005, ToT
 
-\subsection{Topic ``Maps"}
+\section{Topic ``Maps"}\label{subsec:maps}
 With topic-to-topic relationships described by means of pairwise topic metrics,
 graph-based visualization of the topic space becomes straightforward. In our
 current implementation, we construct a topic graph $G = (N, E)$ as follows:
@@ -156,11 +171,14 @@ We use the Gephi Toolkit\footnote{http://www.gephi.org} to generate such graphs
 and render them as images, employing the \texttt{ForceAtlas} force-directed
 layout algorithm to arrange the nodes so that, generally speaking, nodes joined
 by edges of higher weight are closer together, and nodes joined by edges of
-lower weight are further apart.
+lower weight are further apart. In the final rendering of the image, edges
+are omitted to reduce visual complexity. However, the distances between nodes
+are still determined by the interaction of the layout algorithm and the edge
+weights.
 
 %TODO Callback
 
-\subsection{Topic Name Schemes}
+\section{Topic Name Schemes}
 As LDA does not assign names to the topics it generates, automatic generation of
 topic names is of interest to researchers wishing to make topic models
 human-usable. Research in this area is ongoing \cite{Mei2007,Lau2010}. In order to
@@ -170,68 +188,34 @@ used to produce names for all topics in an analysis. Within the user interface
 users can select a name scheme, which is then reflected throughout the
 interface. By default we use a concatenation of the two
 words with the highest probability for a given topic $z$, but any number of
-alternative schemes can be imagined and implemented. (MAYBE SHOW TF-ITF?)
+alternative schemes can be imagined and implemented.%TODO Maybe show TF-ITF?
 
 \section{Data Import Backend}
 \begin{figure*}[t]
  \centering
  \includegraphics[width=400px,keepaspectratio=true]{./build_flowchart.png}
  % build_deps.png: 1188x340 pixel, 72dpi, 41.91x11.99 cm, bb=0 0 1188 340
- \caption{The data import pipeline. Arrows indicate that the source is prerequisite for the target.}
+ \caption{Dependencies within the data import pipeline. Arrows indicate that the source is prerequisite for the target.}
  \label{fig:build_flowchart}
 \end{figure*}
 
 Automatically turning a raw document collection into an interactive browsing
 experience requires extensive preprocessing. Documents must be converted into a
 representation accepted by the topic model learner. Topics must then be inferred
-and model output indexed. Additionally, metrics must be computed, topic names
-generated, and graphs rendered before they become accessible via the user
-interface. Unsurprisingly, the dependencies in the import process form a directed acyclic graph, represented in Figure \ref{fig:build_flowchart}. To
-improve the efficiency and usability of the data import pipeline we built a
-command-line frontend based on the \texttt{doit} task automation tool.\footnote{http://doit.sourceforge.net/}
+and model output indexed for quick retrieval by the web front-end.
+Additionally, metrics must be computed, topic names generated, and graphs rendered
+before they become accessible via the user interface. Unsurprisingly, the dependencies
+in the import process form a directed acyclic graph, represented in Figure \ref{fig:build_flowchart}. To
+improve the efficiency and usability of the data import pipeline we implemented
+the import process in the form of a command-line frontend based on the \texttt{doit}
+task automation tool.\footnote{http://doit.sourceforge.net/} This allows full
+import of a dataset using a single invocation of the import script.
 
-The main data import script is \texttt{\buildscript}. Some example invocations:
-\begin{itemize}
- \item \texttt{\buildscript}: Builds all targets
- \item \texttt{\buildscript} list/: Lists the available top-level tasks (sub-tasks are not displayed)
- \item \texttt{\buildscript} clean -c mallet/: Cleans the Mallet files
-\end{itemize}
-
-% Useful commands:
-%  \buildscript{} list #Lists the available top-level tasks (sub-tasks are not displayed)
-%  \buildscript{} #Builds everything!
-%  \buildscript{} clean -c mallet #Cleans the mallet files
-%  \buildscript{} metrics #Computes all metrics
-%  \buildscript{} topic_metrics #Computes just the topic metrics
-%  \buildscript{} topic_metrics:document_entropy #Computes just the document entropy topic metric
-%  \buildscript{} clean topic_metrics:document_entropy #Cleans just the document entropy topic metric
-
-\subsection{Adding Support For Your Dataset}
-Python module \texttt{build} contains dataset-specific import scripts.
-Generally, a sub-module contains the scripts for a particular dataset. The
-scripts for the default State of the Union Addresses dataset, for example,
-reside in \texttt{build.state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union}. The main build file for the dataset
-is \texttt{build/\allowbreak{}state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union/\allowbreak{}state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union.py}. This file is
-referenced within the root \texttt{\buildscript} build script by setting the
-\texttt{build} variable:
-\texttt{build = "state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union/\allowbreak{}state\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}union"}
-
-A dataset-specific build must do four things:
-\begin{enumerate}
-\item Define \texttt{dataset\_name}.
-    \newline Example: \texttt{dataset\_name='state\_of\_the\_union'}
-  \item Define \texttt{dataset\_description}.
-    \newline Example: \texttt{dataset\_description='State of the Union Addresses'}
-  \item Ensure that all documents in the dataset are located in a single directory.
-    This can be done by pointing to an existing directory (default is \texttt{dataset\_dir+'/files'}, or by overriding the
-    \texttt{extract\_data} task and populating the directory on-the-fly.
-  \item Provide a document metadata file in JSON format. Again, this can be done
-    either by pointing to an existing file (\texttt{attributes\_\allowbreak{}file=\allowbreak{}dataset\_\allowbreak{}dir\allowbreak{}+\allowbreak{}'/attributes\allowbreak{}.json'}), or by defining a task that builds the \texttt{attributes.json} target.
-\end{enumerate}
-
-Once \texttt{build} inside of \texttt{\buildscript} has been set to point to
-the dataset-specific build, \texttt{\buildscript} can be invoked to begin the
-import process.
+Enabling the \tool{} to browse a new dataset can be as simple as picking a name and description,
+converting the documents to plaintext and placing them in a directory, and
+providing a JSON file containing document metadata. The \tool{} will automatically
+invoke MALLET's LDA implementation \cite{McCallum2002}. The import system can
+also make use of existing topic model output in the MALLET format.
 
 \section{Conclusion}
 In this paper we introduced the \tool{} as a tool for exploration of
@@ -239,49 +223,6 @@ topic model output. This serves to improve understanding of both topic models
 and text corpora. We briefly described some of the general features of the tool
 and proceeded to detail the use of metrics and graphs. We then explained how
 new datasets can easily be imported into the tool.
-
-% At a minimum, the dataset-specific build file should contain the following:
-% \begin{itemize}
-%  \item Declaration of \verb/dataset_name/ variable.
-%    \newline Example: \verb/dataset_name = "state_of_the_union"/.
-%  \item Declaration of \verb/dataset_description/ variable.
-%    \newline Example: \texttt{dataset_description = "State of the Union Addresses 1790-2010"}.
-%  \item Definition of \verb/copy_and_transform_dataset/ \verb/doit/ task.
-% Example:
-% 
-% \begin{figure*}
-%  \centering
-%   \begin{lstlisting}[numbers=left,language=Python]
-% chron_list_filename = 'chronological_list.wiki'
-% addresses_filename = 'state_of_the_union_addresses.txt'
-% dataset_name = 'state_of_the_union'
-% dataset_description = 'State of the Union Addresses 1790-2010'
-% 
-% def task_attributes_file():
-%     task = dict()
-%     task['targets'] = [attributes_file]
-%     task['actions'] = [(generate_attributes_file,
-%          [dataset_dir+'/'+chron_list_filename,
-%           attributes_file])]
-%     task['clean'] = ['rm -f '+attributes_file]
-%     return task
-% 
-% def task_extract_data():
-%     task = dict()
-%     task['targets'] = files_dir
-%     task['actions'] = [(extract_state_of_the_union,
-%          [dataset_dir+'/'+chron_list_filename,
-%           dataset_dir+'/'+addresses_filename,
-%           files_dir])]
-%     task['clean'] = ['rm -rf '+files_dir]
-%     task['uptodate'] = [os.path.exists(files_dir)]
-%     return task
-% \end{lstlisting}
-% \caption{The data extraction task for the State of the Union dataset. }
-% \label{fig:extract_data}
-% \end{figure*}
-% 
-% \end{itemize}
 
 \bibliographystyle{acl}
 \bibliography{acl2011demo.bib}
