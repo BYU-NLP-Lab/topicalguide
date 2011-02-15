@@ -16,21 +16,29 @@ def lines_to_string(lines):
     tokenized_txt = u' '.join(tokens)
     return tokenized_txt
 
+ordinal_to_cardinal = {'First':1,'Second':2,'Third':3,'Fourth':4,'Fifth':5,'Sixth':6,'Seventh':7,'Eighth':8,'Ninth':9,'Tenth':10,'Eleventh':11,'Twelfth':12}
+def filename(metadata):
+    return metadata.group('president_name').replace(' ','_') + "_" + str(ordinal_to_cardinal[metadata.group('address_number')]) + '.txt'
 
 def extract_state_of_the_union(chron_list_filename, addresses_filename, dest_dir):
     print "extract_state_of_the_union({0},{1},{2})".format(chron_list_filename, addresses_filename, dest_dir)
-    titles = [m.group('title') for m in metadata(chron_list_filename)]#data_dir+'/chronological_list.wiki')]
+#    titles = [m.group('title') for m in meta]
+    titles = dict()
+    for m in metadata(chron_list_filename):
+        titles[m.group('title')] = m
+    
     print 'Addresses in index: ' + str(len(titles))
     extracted_count = 0
     if not os.path.exists(dest_dir): os.mkdir(dest_dir)
     
     current_speech_title = None
     lines = []
-    for line in codecs.open(addresses_filename,'r','utf-8'):#data_dir+'/state_of_the_union_addresses.txt'):
+    for line in codecs.open(addresses_filename,'r','utf-8'):
         line = line.strip()
         if line in titles:
             if current_speech_title is not None:
-                w = codecs.open(dest_dir+'/'+current_speech_title.replace(' ','_')+'.txt','w','utf-8')
+                m = titles[current_speech_title]
+                w = codecs.open(dest_dir+'/'+filename(m),'w','utf-8')
                 w.write(lines_to_string(lines))
                 lines = []
                 print 'Extracted "{0}"'.format(current_speech_title)
@@ -39,7 +47,8 @@ def extract_state_of_the_union(chron_list_filename, addresses_filename, dest_dir
         else:
             lines += [line]
     
-    w = codecs.open(dest_dir+'/'+current_speech_title.replace(' ','_')+'.txt','w','utf-8')
+    m = titles[current_speech_title]
+    w = codecs.open(dest_dir+'/'+filename(m),'w','utf-8')
     w.write(lines_to_string(lines))
     print 'Extracted "{0}"'.format(current_speech_title)
     extracted_count += 1
