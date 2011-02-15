@@ -67,6 +67,8 @@ def base_context(request, dataset, analysis, document):
     if not document:
         document = context['documents'][0]
     context['curdocument'] = document
+    context['document_text'] = document.text()
+    context['document_title'] = document.filename
 
     context['metrics'] = document.documentmetricvalue_set.all()
 

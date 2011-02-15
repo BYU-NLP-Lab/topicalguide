@@ -166,7 +166,7 @@ def word_index(request, dataset, analysis, topic, word):
     context['topic_post_link'] = '/words/%s' % word.type
     return render_to_response('topic_word.html', context)
 
-
+from topic_modeling.visualize.documents.views import add_top_topics, add_similarity_measures as doc_add_similarity_measures
 def document_index(request, dataset, analysis, topic, document):
     filter = TopicFilterByDocument(Analysis.objects.get(dataset__name=dataset,
             name=analysis), 0)
@@ -176,9 +176,13 @@ def document_index(request, dataset, analysis, topic, document):
 
     document = Document.objects.get(dataset__name=dataset, id=document)
     text = document.get_highlighted_text([topic.number], analysis)
+    context['metrics'] = document.documentmetricvalue_set.all()
+    
+    add_top_topics(request, analysis, document, context)
+    doc_add_similarity_measures(request, analysis, document, context)
 
-    context['doc_name'] = document.filename
-    context['text'] = text
+    context['document_title'] = document.filename
+    context['document_text'] = text
     context['breadcrumb'].document(document)
     context['topic_post_link'] = '/documents/%s' % document.id
 
