@@ -57,9 +57,9 @@ topics will convince others of the model's effectiveness. But the very vastness
 of topic model output renders this sort of presentation unconvincing.
 Unfortunately, tools for deep understanding of topic model output have thus far
 been lacking.
-\begin{figure*}[t]%TODO Make new screenshot that says ``Topical Guide''
+\begin{figure*}[t]
  \centering
- \includegraphics[width=400px,keepaspectratio=true]{./topic_page_take2.png}
+ \includegraphics[width=400px,keepaspectratio=true]{./topic_page_take4.png}
  % topic_page_huge_cropped.png: 1394x1027 pixel, 96dpi, 36.88x27.17 cm, bb=0 0 1045 770
  \caption{The topic view}
  \label{fig:topic_page}
@@ -90,7 +90,14 @@ system. Throughout this paper, examples are taken from a
 corpus of State of the Union messages delivered by United States presidents
 from 1790 to 2010. This constitutes 223 documents totalling XXXXXXX tokens. %TODO Count tokens
 
-\section{Browsing}%TODO Talk about more features
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=400px,keepaspectratio=true]{./topic_word_view.png}
+ % topic_document_view.png: 1359x858 pixel, 96dpi, 35.95x22.70 cm, bb=0 0 1019 643
+ \caption{A view of the word ``billion'' as it occurs in the ``programs federal'' topic.}
+ \label{fig:topic_word}
+\end{figure*}
+\section{Browsing}
 All entities explicitly modeled by a basic topic model --- topics, documents,
 and words --- are first-class citizens in the \tool, meaning that the user
 interface provides specific views for each of these entity types. The topic view
@@ -103,44 +110,40 @@ words (\texttt{TOP WORDS P(W|Z)} / \texttt{WORD CLOUD} / \texttt{TOP WORDS IN CO
 both textual and graphical representations of similar topics (\texttt{SIMILAR
 TOPICS} / \texttt{TOPIC MAP}).
 
-The document view displays the content of the document along with any document
-metrics that have been computed. By means of pairwise document metrics,
-a list of similar documents is shown as well.
+The word view is shown in Figure \ref{fig:topic_word}. It presents the user with
+a list of contexts in which the word appears, along with the total number of
+occurrences, and lists of topics and documents in which the word occurs most
+often. 
 
-The word view
+The document view can be seen in Figure \ref{fig:topic_doc}, showing the content
+of the document along with any document metrics that have been computed. By
+means of pairwise document metrics, a list of similar documents is shown as
+well.
 
 Intuitive hyperlinks make this a true \textit{browsing} tool. Click on the
-\texttt{economic congress} node in the topic map and be sent to its topic view to see
-how presidents have discussed economic issues. Click on ``billion'' in the word
-cloud to see how that word has been used in various addresses. Or click on \texttt{Harry\_S.\_Truman\_1.txt}
-to see President Truman's message with words belonging to the ``programs federal''
-topic highlighted (shown in Figure \ref{fig:topic_doc}).
+``economic congress'' node in the topic map and be sent to its topic view
+to see how presidents have discussed economic issues. Click on ``billion'' in
+the word cloud to see how that word has been used in various addresses (Figure
+\ref{fig:topic_word}). Or click on ``Harry\_S.\_Truman\_1.txt'' to see
+President Truman's message with words belonging to the ``programs federal''
+topic highlighted (Figure \ref{fig:topic_doc}).
 %TODO Make words in the doc view link
 %TODO Show words in context in the word view
 
-%TODO Transition?
-The \tool{} object model and user interface include notions of
-\textit{datasets} and \textit{analyses}.
-A dataset is a set of documents --- a corpus. An analysis is associated with one
-dataset and constitutes a set of topics and token-level topic assignments for
-all of the documents in that dataset. The analysis concept is useful in
-allowing for multiple topic models on a single dataset. For example,
-it could be useful to use LDA to infer both a 20-topic model and a 100-topic model
-on the State of the Union Addresses dataset.
+An important concept used by the \tool{} object model and user interface is the
+notion of \textit{datasets} and \textit{analyses}. A dataset is a set of
+documents --- a corpus. An analysis is associated with one dataset and
+constitutes a set of topics and token-level topic assignments for all of the
+documents in that dataset. The analysis concept is useful in allowing for
+multiple topic models on a single dataset. For example, it could be useful to
+use LDA to infer both a 20-topic model and a 100-topic model on the State of the
+Union Addresses dataset.
 
 \begin{figure*}[t]
  \centering
  \includegraphics[width=400px,keepaspectratio=true]{./topic_document_view.png}
  % topic_document_view.png: 1359x858 pixel, 96dpi, 35.95x22.70 cm, bb=0 0 1019 643
  \caption{A view of Harry Truman's first State of the Union address, highlighting words belonging to the ``programs federal'' topic.}
- \label{fig:topic_doc}
-\end{figure*}
-
-\begin{figure*}[t]
- \centering
- \includegraphics[width=400px,keepaspectratio=true]{./topic_word_view.png}
- % topic_document_view.png: 1359x858 pixel, 96dpi, 35.95x22.70 cm, bb=0 0 1019 643
- \caption{A view of the word ``billion'' as it occurs in the ``programs federal'' topic.}
  \label{fig:topic_doc}
 \end{figure*}
 
@@ -167,10 +170,10 @@ Pairwise topic metrics include Pearson correlation on documents and on words.
 These are used to automatically display a list of similar topics and to weight
 the edges of the graph used to generate ``topic maps'' (discussed further in section
 \ref{sec:maps}). Similar to topic metrics, one can also compute document
-metrics. Beyond simple metrics like to- ken count in the document, these include
-things such as the entropy of the topic distribution of the document [8]. And as
-with topics, we make use of pairwise document metrics such as topic%TODO: Cite
-correlation [3] to show similar documents.%TODO: Cite
+metrics. Beyond simple metrics like token count in the document, these include
+things such as the entropy of the topic distribution of the document \cite{Misra2008}. And as
+with topics, we make use of pairwise document metrics such as topic
+correlation \cite{Blei2009} to show similar documents.
 
 \begin{figure*}[t]
  \centering
