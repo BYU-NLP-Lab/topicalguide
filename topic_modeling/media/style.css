@@ -256,6 +256,11 @@
     height: 500px;
 }
 
+/***** Document View *****/
+h1.document-title {
+    text-align: center;
+}
+
 /***** General *****/
 table.above_inset th {
 	font-weight:normal;
@@ -330,9 +335,10 @@ td.align-top {
 }
 
 .list li {
-	list-style: none;
-	margin: 0;
-	padding: 0.25em;
+    list-style: none;
+    margin: 0;
+    padding: 0.25em;
+    word-wrap:break-word;
 }
 
 .list li a { text-decoration: none; }
