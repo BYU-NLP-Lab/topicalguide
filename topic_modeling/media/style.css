@@ -218,38 +218,41 @@
 	float: left;
 }
 
-#top_words_in_context_table {
+table.kwic {
 	width:100%;
 	table-layout:fixed;
 	/*Make cell borders run together instead of having gaps:*/
 	border-collapse: collapse;
 }
 
-#top_words_in_context_table .col1 {
+
+table.kwic .col1 {
     width: 25%;
 }
-#top_words_in_context_table .col2 {
+table.kwic .col2 {
     width: 23%;
 }
-#top_words_in_context_table .col3 {
+table.kwic .col3 {
     width: 23%;
 }
-#top_words_in_context_table .col4 {
+table.kwic .col4 {
     width: 22%;
 }
-#top_words_in_context_table .col5 {
+table.kwic .col5 {
     width: 5%;
 }
 
-.top-words-doc-name {
-	word-wrap:break-word;
-}
-
-.top-words-in-context-cells {
+table.kwic tr td {
 	border-bottom: 1px solid #C1DAD7;
 	padding-left: 10px;
 	padding-right: 0px;
 }
+
+table.kwic tr td.doc-name {
+	word-wrap:break-word;
+}
+
+
 
 #topic-map-svg {
     width: 100%;

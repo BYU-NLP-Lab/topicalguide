@@ -31,23 +31,23 @@ function get_context_for_word(word, num)
 	link += "/words/" + word;
 	$.getJSON(link, {}, function(word) {
 		new_html = '';
-		new_html += '<td class="words-in-context-cells word-in-context-doc-name"><a href="'+$.fn.topic_vars.baseurl+'/';
+		new_html += '<td class="doc-name"><a href="'+$.fn.topic_vars.baseurl+'/';
 		new_html += $.fn.topic_vars.curtopic_number + '/documents/';
 		new_html += word.doc_id;
 		new_html += '">'+word.doc_name;
 		new_html += '</a></td>';
-		new_html += '<td class="word-in-context-cells right-align">';
+		new_html += '<td class="right-align">';
 		new_html += word.left_context;
-		new_html += '</td><td class="word-in-context-cells word">';
+		new_html += '</td><td class="word">';
 		new_html += '<a href="'+$.fn.topic_vars.baseurl+'/';
 		new_html += $.fn.topic_vars.curtopic_number;
 		new_html += '/words/' + word.word;
 		new_html += '">'+word.word+'</a></td>';
-		new_html += '<td class="word-in-context-cells left-align">';
+		new_html += '<td class="left-align">';
 		new_html += word.right_context;
 		new_html += '</td>';
 		new_html += '<td id="id_new_context_';
-		new_html += num + '" class="word-in-context-cells clickable_text">';
+		new_html += num + '" class="clickable_text">';
 		new_html += '<img src="/site-media/stock_reload.png" border="0"/>';
 		new_html += '</td>';
 		$("#id_"+word.word+"_"+num).html(new_html);
