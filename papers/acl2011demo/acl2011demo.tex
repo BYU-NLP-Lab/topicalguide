@@ -14,7 +14,7 @@
 \usepackage{multirow}
 \usepackage{url}
 \usepackage{graphicx}
-\usepackage{listings}	
+\usepackage{listings}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \setlength\titlebox{6.5cm}    % Expanding the titlebox
 
@@ -29,15 +29,16 @@ Brigham Young University\\
 \maketitle
 
 \begin{abstract}
-Though topic models reduce dimensionality, their output is just as large as the training corpus.
-Thus, humans' ability to manually assess model quality is limited. As digitization of historic texts
-proceeds at breakneck pace, institutions correspondingly find an increased need for tools such as
-topic models to make these texts usable. In response to these twin needs, we present the \tool,
-an open-source\footnote{Licensed under the terms of the
-Affero General Public License, version 3.} web application for interactive, topic-centric
-exploration and visualization of topic model output.
-We explain why such a tool is warranted, what it is capable of, and
-how to use it to explore the corpus or topic model of your choice.
+Though topic models reduce dimensionality, their output is just as large as the
+training corpus. Thus, humans' ability to manually assess model quality is
+limited. As digitization of historic texts proceeds at breakneck pace,
+institutions correspondingly find an increased need for tools such as topic
+models to make these texts usable. In response to these twin needs, we present
+the \tool, an open-source\footnote{Licensed under the terms of the Affero
+General Public License, version 3.} web application for interactive,
+topic-centric exploration and visualization of topic model output. We explain
+why such a tool is warranted, what it is capable of, and how to use it to
+explore the corpus or topic model of your choice.
 \end{abstract}
 
 \section{Introduction}
@@ -48,14 +49,15 @@ alike. The usefulness of this sort of dimensionality reduction is widely
 acknowledged, and topic models continue to be extended into exciting new
 territory.
 \cite{wang_continuous_2008,mimno_polylingual_2009,boyd-graber_holistic_2010,brody_unsupervised_2010,he_detecting_2009,yao_efficient_2009}
-However, these models output a topic assignment per token, resulting in an
-output that is a corpus unto itself. Though the range of possible values is
-substantially reduced, output size remains on the same order as input size.
-Notwithstanding, papers introducing new topic models often lean heavily on the
-hope that displaying a few hand-picked topics will convince others of the
-model's effectiveness. But the very vastness of topic model output renders this
-sort of presentation unconvincing. Unfortunately, tools for deep understanding
-of topic model output have thus far been lacking.
+However, when inferred by means of sampling, these models output a topic
+assignment per token, resulting in an output that is a corpus unto itself.
+Though the range of possible values is substantially reduced, output size
+remains on the same order as input size. Notwithstanding, papers introducing new
+topic models often lean heavily on the hope that displaying a few hand-picked
+topics will convince others of the model's effectiveness. But the very vastness
+of topic model output renders this sort of presentation unconvincing.
+Unfortunately, tools for deep understanding of topic model output have thus far
+been lacking.
 
 Simultaneously, massive digitization efforts by libraries and other institutions
 are generating gargantuan quantities of electronic text, increasing demand for tools such as
@@ -68,25 +70,57 @@ or nonexistent.
 
 We present the \tool, an open-source web application for interactive,
 topic-aware exploration and visualization of both document collections and the
-topic models inferred on them. Further information on the project, including
+topic models inferred on them.\footnote{Further information on the project, including
 source code access and a live demonstration server, can be found
-at \texttt{\projecturl}.
+at \texttt{\projecturl}.} The \tool{} is an aid both to those who wish to
+browse through a corpus and for those who wish to analyze the topic model itself.
+We believe that this interactive, topic-aware approach to corpus and model exploration
+exposes their characteristics to human comprehension in a way that static visualizations cannot.
 
-Throughout this paper, examples are taken from a
+In this paper, we will discuss: browsing of topic model output using the \tool{} user interface, as in \cite{gardner_browser_2010};
+document metadata; document and topic metrics; a topic-space visualization we call
+topic maps; a mechanism for interchangeable topic name schemes; and the data import%TODO Should we call this ``topic maps'' when that name has been used previously?
+system. Throughout this paper, examples are taken from a
 corpus of State of the Union messages delivered by United States presidents
 from 1790 to 2010. This constitutes 223 documents totalling XXXXXXX tokens. %TODO Count tokens
 
-\begin{figure*}[t]
+\begin{figure*}[t]%TODO Make new screenshot that says ``Topical Guide''
  \centering
  \includegraphics[width=400px,keepaspectratio=true]{./topic_page_take2.png}
  % topic_page_huge_cropped.png: 1394x1027 pixel, 96dpi, 36.88x27.17 cm, bb=0 0 1045 770
- \caption{The topic page}
+ \caption{The topic view}
  \label{fig:topic_page}
 \end{figure*}
 
-%TODO Segue
-
 \section{Browsing}%TODO Talk about more features
+All entities explicitly modeled by a basic topic model --- topics, documents,
+and words --- are first-class citizens in the \tool, meaning that the user
+interface provides specific views for each of these entity types. The topic view
+is central to the user experience. A view of the ``government federal'' topic is
+rendered in Figure \ref{fig:topic_page}. At left is a navigation sidebar listing other topics,
+with tabs providing links to other views such as ``Attributes'', ``Documents'', and ``Plots''.
+The remainder of the page shows statistics about the topic
+(``STATS''); chart, word-cloud, and key-word-in-context representations of top
+words (``TOP WORDS $P(W|Z)$''/ ``WORD CLOUD''/``TOP WORDS IN CONTEXT''); and
+both textual and graphical representations of similar topics (``SIMILAR
+TOPICS''/``TOPIC MAP'').
+
+The document view displays the content of the document along with any document
+metrics that have been computed. By means of pairwise document metrics,
+a list of similar documents is shown as well.
+
+The word view
+
+Intuitive hyperlinks make this a true \textit{browsing} tool. Click on the
+``government states'' node in the topic map and be sent to its topic view to see
+how presidents have discussed state government. Click on ``federal'' in the word
+cloud to see the word view, which shows top topics and documents in which the
+word occurs. Or click on ``Grover\_\allowbreak{}Cleveland\_4.txt''
+to see President Cleveland's message with words belonging to the ``government federal''
+topic highlighted.
+%TODO Make words in the doc view link
+%TODO Show words in context in the word view
+
 The \tool{} object model and user interface include notions of
 \textit{datasets} and \textit{analyses}.
 A dataset is a set of documents --- a corpus. An analysis is associated with one
@@ -96,33 +130,16 @@ allowing for multiple topic models on a single dataset. For example,
 it could be useful to use LDA to infer both a 20-topic model and a 100-topic model
 on the State of the Union Addresses dataset.
 
-All entities explicitly modeled by a basic topic model --- topics, documents, and
-words --- are first-class citizens in the \tool, meaning that the user
-interface provides specific views for each of these entity types. For example, a
-view of the ``government federal'' topic is rendered in Figure \ref{fig:topic_page}.
-It displays statistics about the topic (``STATS''); chart, word-cloud, and
-key-word-in-context representations of top words (``TOP WORDS $P(W|Z)$''/
-``WORD CLOUD''/``TOP WORDS IN CONTEXT''); and both textual and graphical
-representations of similar topics (``SIMILAR TOPICS''/``TOPIC MAP'').
-
-Intuitive hyperlinks make this a true \textit{browsing} tool. Click on the
-``government states'' node in the topic map and be sent to its topic view to see
-how presidents have discussed state government. Click on ``federal'' in the word
-cloud to see the word view, which shows top topics and documents in which the
-word occurs. Or click on ``Grover\_\allowbreak{}Cleveland's\_\allowbreak{}Fourth\_\allowbreak{}State\_\allowbreak{}of\_\allowbreak{}the\_\allowbreak{}Union\_\allowbreak{}Address.txt''
-to see President Cleveland's message with words belonging to the ``government federal''
-topic highlighted.\footnote{For a more complete discussion
-of browsing features see \cite{gardner_browser_2010}.}%TODO Replace with actual discussion
-%TODO Make words in the doc view link
-%TODO Show words in context in the word view
-
 \section{Document Metadata}
 Acknowledging that more is known about most documents than just their content,
 the \tool{} provides \textit{document attributes}, a mechanism for association
 of arbitrary metadata with documents. This accomodates metadata
 provided by a dataset curator, often including facts about document
 provenance and author identity. Document attributes also allow for metadata
-obtained as part of the output of some model.
+obtained as part of the output of a model. These attributes can be used to
+filter the list of documents, or as axes in charts.
+
+
 
 \section{Metrics}
 Topic-centric document exploration is enhanced by means of \textit{metrics}.
@@ -136,8 +153,8 @@ topic, to more complicated metrics such as dispersion across documents,
 prevailing sentiment, or the semantic coherence of its words \cite{Newman2010}.
 Pairwise topic metrics include Pearson correlation on documents and on words.
 These are used to automatically display a list of similar topics and to weight
-the edges of the graph used to generate ``topic maps'' (discussed further in
-\ref{subsec:maps}). Similar to topic metrics, one can also compute document
+the edges of the graph used to generate ``topic maps'' (discussed further in section
+\ref{sec:maps}). Similar to topic metrics, one can also compute document
 metrics. Beyond simple metrics like to- ken count in the document, these include
 things such as the entropy of the topic distribution of the document [8]. And as
 with topics, we make use of pairwise document metrics such as topic%TODO: Cite
@@ -154,27 +171,27 @@ correlation [3] to show similar documents.%TODO: Cite
 \end{figure*}
 %TODO: Cite PNAS2005, ToT
 
-\section{Topic ``Maps"}\label{subsec:maps}
+\section{Topic Maps}\label{sec:maps}
 With topic-to-topic relationships described by means of pairwise topic metrics,
 graph-based visualization of the topic space becomes straightforward. In our
 current implementation, we construct a topic graph $G = (N, E)$ as follows:
+
 $N$ is a set of $|T|$ nodes such that
 \[\forall_{t\in T} weight(N_{t}) = \tau_{1}(t)\]
 and
-\[\forall_{t\in T} color(N_{t}) \sim \tau_{2}(t)\]
+\[\forall_{t\in T} color(N_{t}) = \tau_{2}(t)\]
 where $\tau_1$ and $\tau_2$ are topic metrics (potentially the same). $E$ is
 constructed as a set of $|T|^2$ edges such that
   \[\forall_{(t,u)\in T\times T, t\neq u} weight(E_{t,u}) = \pi(t,u)\]
 where $\pi$ is a pairwise topic metric.
 
 We use the Gephi Toolkit\footnote{http://www.gephi.org} to generate such graphs
-and render them as images, employing the \texttt{ForceAtlas} force-directed
-layout algorithm to arrange the nodes so that, generally speaking, nodes joined
-by edges of higher weight are closer together, and nodes joined by edges of
-lower weight are further apart. In the final rendering of the image, edges
-are omitted to reduce visual complexity. However, the distances between nodes
-are still determined by the interaction of the layout algorithm and the edge
-weights.
+and render them as images, employing a force-directed layout algorithm to
+arrange the nodes so that, generally speaking, nodes joined by edges of higher
+weight are closer together, and nodes joined by edges of lower weight are
+further apart. In the final rendering of the image, edges are omitted to reduce
+visual complexity. However, the distances between nodes are still determined by
+the interaction of the layout algorithm and the edge weights. 
 
 %TODO Callback
 
@@ -211,11 +228,14 @@ the import process in the form of a command-line frontend based on the \texttt{d
 task automation tool.\footnote{http://doit.sourceforge.net/} This allows full
 import of a dataset using a single invocation of the import script.
 
-Enabling the \tool{} to browse a new dataset can be as simple as picking a name and description,
-converting the documents to plaintext and placing them in a directory, and
-providing a JSON file containing document metadata. The \tool{} will automatically
-invoke MALLET's LDA implementation \cite{McCallum2002}. The import system can
-also make use of existing topic model output in the MALLET format.
+Enabling the \tool{} to browse a new dataset can be as simple as picking a name
+and description, converting the documents to plaintext, placing them in a
+directory, and providing a JSON file containing document metadata. By default,
+the \tool{} will automatically invoke MALLET's LDA implementation to train a
+topic model\cite{McCallum2002}; however, the import system can also make use of
+existing topic model output in the MALLET format. In fact, the system allows all
+elements of the pipeline to be overridden, allowing for clean integration with
+existing code.
 
 \section{Conclusion}
 In this paper we introduced the \tool{} as a tool for exploration of
