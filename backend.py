@@ -37,7 +37,6 @@
 #  dodo.py topic_metrics:document_entropy #Computes just the document entropy topic metric
 #  dodo.py clean topic_metrics:document_entropy #Cleans just the document entropy topic metric
 #
-#NOTE: probably necessary to do 'dodo.py forget' when switching between datasets/analyses.
 #TODO:
 #  Allow specification of multiple num_topics
 #
@@ -77,11 +76,11 @@ if __name__ == "__main__":
 filename = "build/{0}.py".format(build)
 ast = compile(open(filename).read(), filename, 'exec')
 eval(ast, globals(), locals())
-
 # Variables and Paths
 
 # This variable should be with Mallet, but it is needed to name the analysis,
 # so we have it up here.
+num_topics = 100
 if 'num_topics' not in locals():
     num_topics = 20
 
@@ -197,7 +196,7 @@ if 'task_mallet_input' not in locals():
         task['targets'] = [mallet_input]
         task['actions'] = [(make_token_file, [files_dir, mallet_input])]
         task['clean']   = ["rm -f "+mallet_input]
-        if 'task_extract_data' in locals():
+        if 'task_extract_data' in globals():
             task['task_dep'] = ['extract_data']
         task['uptodate'] = [os.path.exists(mallet_input)]
 #        task['file_dep'] = [files_dir]
@@ -524,12 +523,12 @@ if 'task_graphs' not in locals():
                 .format(java_bin,java_base,graph_builder_class,graphs_min_value,graphs_base_url,dataset_name,analysis_name,ns.scheme_name(),graphs_pairwise_metric, yamba_file, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
             ]
             task['task_dep'] = ['pairwise_topic_metrics', 'name_schemes', 'compile_java']
-            task['result_dep'] = ['hash_java']
             task['clean'] =  [
                 'rm -rf '+graphs_unlinked_img_dir,
                 'rm -rf '+graphs_img_dir
             ]
             task['name'] = ns.scheme_name()
+            task['uptodate'] = [os.path.exists(graphs_img_dir)]
             yield task
 #
 #def task_reset_db():
