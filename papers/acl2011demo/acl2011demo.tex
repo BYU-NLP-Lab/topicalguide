@@ -96,7 +96,7 @@ from 1790 to 2010. This constitutes 223 documents totalling XXXXXXX tokens. %TOD
 All entities explicitly modeled by a basic topic model --- topics, documents,
 and words --- are first-class citizens in the \tool, meaning that the user
 interface provides specific views for each of these entity types. The topic view
-is central to the user experience. A view of the ``government federal'' topic is
+is central to the user experience. A view of the ``programs federal'' topic is
 rendered in Figure \ref{fig:topic_page}. At left is a navigation sidebar listing other topics,
 with tabs providing links to other views such as ``Attributes'', ``Documents'', and ``Plots''.
 The remainder of the page shows statistics about the topic
@@ -112,14 +112,22 @@ a list of similar documents is shown as well.
 The word view
 
 Intuitive hyperlinks make this a true \textit{browsing} tool. Click on the
-``government states'' node in the topic map and be sent to its topic view to see
-how presidents have discussed state government. Click on ``federal'' in the word
-cloud to see the word view, which shows top topics and documents in which the
-word occurs. Or click on ``Grover\_\allowbreak{}Cleveland\_4.txt''
-to see President Cleveland's message with words belonging to the ``government federal''
-topic highlighted.
+``economic congress'' node in the topic map and be sent to its topic view to see
+how presidents have discussed economic issues. Click on ``billion'' in the word
+cloud to see how that word has been used in various addresses. Or click on \texttt{Harry\_S.\_Truman\_1.txt}
+to see President Truman's message with words belonging to the ``programs federal''
+topic highlighted (shown in Figure \ref{fig:topic_doc}).
 %TODO Make words in the doc view link
 %TODO Show words in context in the word view
+
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=400px,keepaspectratio=true]{./topic_document_view.png}
+ % topic_document_view.png: 1359x858 pixel, 96dpi, 35.95x22.70 cm, bb=0 0 1019 643
+ \caption{A view of Harry Truman's first State of the Union address, highlighting words belonging to the ``programs federal'' topic.}
+ \label{fig:topic_doc}
+\end{figure*}
+
 
 The \tool{} object model and user interface include notions of
 \textit{datasets} and \textit{analyses}.
@@ -138,8 +146,6 @@ provided by a dataset curator, often including facts about document
 provenance and author identity. Document attributes also allow for metadata
 obtained as part of the output of a model. These attributes can be used to
 filter the list of documents, or as axes in charts.
-
-
 
 \section{Metrics}
 Topic-centric document exploration is enhanced by means of \textit{metrics}.
@@ -160,7 +166,22 @@ things such as the entropy of the topic distribution of the document [8]. And as
 with topics, we make use of pairwise document metrics such as topic%TODO: Cite
 correlation [3] to show similar documents.%TODO: Cite
 
-\section{Charts}
+\section{Plots}
+The \tool{} allows users to interactively generate two types of plots. The ﬁrst
+shows trends for topics over the values of an attribute -- for example, the year
+of an address, or the political party of the president delivering it. This kind
+of plot has been used in visualizing topic models almost since their
+introduction. These trend plots can be generated over any attribute for any
+topic or combination of topics in the corpus. Figure \ref{fig:chart} shows
+trends for four chosen topics across the \texttt{year} attribute, giving a view
+of topic lifecycles across time as in \cite{Griffiths2004,Wang2006}.
+
+The second type of plot is a scatter plot of topic metrics, which is
+particularly suited to discovery of relationships between topic metrics. For
+example, we have found that document entropy seems to correlate with the
+logarithm of the number of tokens in the topic, and that coherence does not seem
+to correlate with any other topic metric yet implemented.
+
 
 \begin{figure*}[t]
  \centering
@@ -222,18 +243,18 @@ representation accepted by the topic model learner. Topics must then be inferred
 and model output indexed for quick retrieval by the web front-end.
 Additionally, metrics must be computed, topic names generated, and graphs rendered
 before they become accessible via the user interface. Unsurprisingly, the dependencies
-in the import process form a directed acyclic graph, represented in Figure \ref{fig:build_flowchart}. To
-improve the efficiency and usability of the data import pipeline we implemented
-the import process in the form of a command-line frontend based on the \texttt{doit}
+in the import process form a directed acyclic graph, represented in Figure \ref{fig:build_flowchart}.
+In order to make workflows simpler and more efficient, we implemented
+the import process as a command-line frontend based on the \texttt{doit}
 task automation tool.\footnote{http://doit.sourceforge.net/} This allows full
 import of a dataset using a single invocation of the import script.
 
 Enabling the \tool{} to browse a new dataset can be as simple as picking a name
 and description, converting the documents to plaintext, placing them in a
-directory, and providing a JSON file containing document metadata. By default,
+directory, and providing a JSON file containing any document metadata. By default,
 the \tool{} will automatically invoke MALLET's LDA implementation to train a
-topic model\cite{McCallum2002}; however, the import system can also make use of
-existing topic model output in the MALLET format. In fact, the system allows all
+topic model \cite{McCallum2002}; however, the import system can also make use of
+existing topic model output in the MALLET format. The system also allows all
 elements of the pipeline to be overridden, allowing for clean integration with
 existing code.
 
