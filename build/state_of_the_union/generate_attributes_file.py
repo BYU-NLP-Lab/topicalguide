@@ -20,7 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from extract_sotua_documents import metadata
+from extract_sotua_documents import metadata,filename
 
 def generate_attributes_file(chron_list_file, output_file):
     print "Building attributes file {0} using {1}".format(output_file, chron_list_file)
@@ -39,7 +39,7 @@ def generate_attributes_file(chron_list_file, output_file):
             attr_entries += ['\t\t\t"{0}": "{1}"'.format(attr,val)]
         w.write(',\n'.join(attr_entries))
         w.write('\n\t\t},\n')
-        w.write('\t\t"path": "{0}.txt"\n'.format(m.groupdict()['title'].replace(' ','_')))
+        w.write('\t\t"path": "{0}"\n'.format(filename(m)))
         
         w.write('\t}')
         
