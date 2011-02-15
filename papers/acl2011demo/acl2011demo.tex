@@ -34,8 +34,7 @@ training corpus. Thus, humans' ability to manually assess model quality is
 limited. As digitization of historic texts proceeds at breakneck pace,
 institutions correspondingly find an increased need for tools such as topic
 models to make these texts usable. In response to these twin needs, we present
-the \tool, an open-source\footnote{Licensed under the terms of the Affero
-General Public License, version 3.} web application for interactive,
+the \tool, an open-source web application for interactive,
 topic-centric exploration and visualization of topic model output. We explain
 why such a tool is warranted, what it is capable of, and how to use it to
 explore the corpus or topic model of your choice.
@@ -58,7 +57,13 @@ topics will convince others of the model's effectiveness. But the very vastness
 of topic model output renders this sort of presentation unconvincing.
 Unfortunately, tools for deep understanding of topic model output have thus far
 been lacking.
-
+\begin{figure*}[t]%TODO Make new screenshot that says ``Topical Guide''
+ \centering
+ \includegraphics[width=400px,keepaspectratio=true]{./topic_page_take2.png}
+ % topic_page_huge_cropped.png: 1394x1027 pixel, 96dpi, 36.88x27.17 cm, bb=0 0 1045 770
+ \caption{The topic view}
+ \label{fig:topic_page}
+\end{figure*}
 Simultaneously, massive digitization efforts by libraries and other institutions
 are generating gargantuan quantities of electronic text, increasing demand for tools such as
 topic models. Because of their ability to characterize the contents of
@@ -68,7 +73,8 @@ researchers and the public. However, readily available tools for exploration of
 document collections in terms of topic models have been either unsatisfactory
 or nonexistent.
 
-We present the \tool, an open-source web application for interactive,
+We present the \tool, an open-source\footnote{Licensed under the terms of the Affero
+General Public License, version 3.} web application for interactive,
 topic-aware exploration and visualization of both document collections and the
 topic models inferred on them.\footnote{Further information on the project, including
 source code access and a live demonstration server, can be found
@@ -84,26 +90,18 @@ system. Throughout this paper, examples are taken from a
 corpus of State of the Union messages delivered by United States presidents
 from 1790 to 2010. This constitutes 223 documents totalling XXXXXXX tokens. %TODO Count tokens
 
-\begin{figure*}[t]%TODO Make new screenshot that says ``Topical Guide''
- \centering
- \includegraphics[width=400px,keepaspectratio=true]{./topic_page_take2.png}
- % topic_page_huge_cropped.png: 1394x1027 pixel, 96dpi, 36.88x27.17 cm, bb=0 0 1045 770
- \caption{The topic view}
- \label{fig:topic_page}
-\end{figure*}
-
 \section{Browsing}%TODO Talk about more features
 All entities explicitly modeled by a basic topic model --- topics, documents,
 and words --- are first-class citizens in the \tool, meaning that the user
 interface provides specific views for each of these entity types. The topic view
-is central to the user experience. A view of the ``programs federal'' topic is
-rendered in Figure \ref{fig:topic_page}. At left is a navigation sidebar listing other topics,
-with tabs providing links to other views such as ``Attributes'', ``Documents'', and ``Plots''.
+is central to the user experience. A view of the \texttt{programs federal} topic is
+rendered in Figure \ref{fig:topic_page}. On the left is a navigation sidebar listing other topics,
+with tabs providing links to other views such as \texttt{Attributes}, \texttt{Documents}, and \texttt{Plots}.
 The remainder of the page shows statistics about the topic
-(``STATS''); chart, word-cloud, and key-word-in-context representations of top
-words (``TOP WORDS $P(W|Z)$''/ ``WORD CLOUD''/``TOP WORDS IN CONTEXT''); and
-both textual and graphical representations of similar topics (``SIMILAR
-TOPICS''/``TOPIC MAP'').
+(\texttt{STATS}); chart, word-cloud, and key-word-in-context representations of top
+words (\texttt{TOP WORDS P(W|Z)} / \texttt{WORD CLOUD} / \texttt{TOP WORDS IN CONTEXT}); and
+both textual and graphical representations of similar topics (\texttt{SIMILAR
+TOPICS} / \texttt{TOPIC MAP}).
 
 The document view displays the content of the document along with any document
 metrics that have been computed. By means of pairwise document metrics,
@@ -112,13 +110,23 @@ a list of similar documents is shown as well.
 The word view
 
 Intuitive hyperlinks make this a true \textit{browsing} tool. Click on the
-``economic congress'' node in the topic map and be sent to its topic view to see
+\texttt{economic congress} node in the topic map and be sent to its topic view to see
 how presidents have discussed economic issues. Click on ``billion'' in the word
 cloud to see how that word has been used in various addresses. Or click on \texttt{Harry\_S.\_Truman\_1.txt}
 to see President Truman's message with words belonging to the ``programs federal''
 topic highlighted (shown in Figure \ref{fig:topic_doc}).
 %TODO Make words in the doc view link
 %TODO Show words in context in the word view
+
+%TODO Transition?
+The \tool{} object model and user interface include notions of
+\textit{datasets} and \textit{analyses}.
+A dataset is a set of documents --- a corpus. An analysis is associated with one
+dataset and constitutes a set of topics and token-level topic assignments for
+all of the documents in that dataset. The analysis concept is useful in
+allowing for multiple topic models on a single dataset. For example,
+it could be useful to use LDA to infer both a 20-topic model and a 100-topic model
+on the State of the Union Addresses dataset.
 
 \begin{figure*}[t]
  \centering
@@ -128,15 +136,13 @@ topic highlighted (shown in Figure \ref{fig:topic_doc}).
  \label{fig:topic_doc}
 \end{figure*}
 
-
-The \tool{} object model and user interface include notions of
-\textit{datasets} and \textit{analyses}.
-A dataset is a set of documents --- a corpus. An analysis is associated with one
-dataset and constitutes a set of topics and token-level topic assignments for
-all of the documents in that dataset. The analysis concept is useful in
-allowing for multiple topic models on a single dataset. For example,
-it could be useful to use LDA to infer both a 20-topic model and a 100-topic model
-on the State of the Union Addresses dataset.
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=400px,keepaspectratio=true]{./topic_word_view.png}
+ % topic_document_view.png: 1359x858 pixel, 96dpi, 35.95x22.70 cm, bb=0 0 1019 643
+ \caption{A view of the word ``billion'' as it occurs in the ``programs federal'' topic.}
+ \label{fig:topic_doc}
+\end{figure*}
 
 \section{Document Metadata}
 Acknowledging that more is known about most documents than just their content,
@@ -166,6 +172,14 @@ things such as the entropy of the topic distribution of the document [8]. And as
 with topics, we make use of pairwise document metrics such as topic%TODO: Cite
 correlation [3] to show similar documents.%TODO: Cite
 
+\begin{figure*}[t]
+ \centering
+ \includegraphics[height=200px,keepaspectratio=true]{./topics_vs_years.png}
+ % topics_vs_years.png: 979x520 pixel, 96dpi, 25.90x13.76 cm, bb=0 0 734 390
+ \label{fig:chart}
+ \caption{Selected topics over time as a percentage of overall tokens.}
+\end{figure*}
+
 \section{Plots}
 The \tool{} allows users to interactively generate two types of plots. The ﬁrst
 shows trends for topics over the values of an attribute -- for example, the year
@@ -183,14 +197,6 @@ logarithm of the number of tokens in the topic, and that coherence does not seem
 to correlate with any other topic metric yet implemented.
 
 
-\begin{figure*}[t]
- \centering
- \includegraphics[height=200px,keepaspectratio=true]{./topics_vs_years.png}
- % topics_vs_years.png: 979x520 pixel, 96dpi, 25.90x13.76 cm, bb=0 0 734 390
- \label{fig:chart}
- \caption{Selected topics over time as a percentage of overall tokens.}
-\end{figure*}
-%TODO: Cite PNAS2005, ToT
 
 \section{Topic Maps}\label{sec:maps}
 With topic-to-topic relationships described by means of pairwise topic metrics,
@@ -228,15 +234,14 @@ interface. By default we use a concatenation of the two
 words with the highest probability for a given topic $z$, but any number of
 alternative schemes can be imagined and implemented.%TODO Maybe show TF-ITF?
 
-\section{Data Import Backend}
-\begin{figure*}[t]
+\begin{figure*}[ht]
  \centering
  \includegraphics[width=400px,keepaspectratio=true]{./build_flowchart.png}
  % build_deps.png: 1188x340 pixel, 72dpi, 41.91x11.99 cm, bb=0 0 1188 340
  \caption{Dependencies within the data import pipeline. Arrows indicate that the source is prerequisite for the target.}
  \label{fig:build_flowchart}
 \end{figure*}
-
+\section{Data Import Backend}
 Automatically turning a raw document collection into an interactive browsing
 experience requires extensive preprocessing. Documents must be converted into a
 representation accepted by the topic model learner. Topics must then be inferred

@@ -55,19 +55,14 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block presentation_area %}
-<div id="presentation-area-main-column">
-	<div id="total_count_widget" class="widget full-width centered">
-		<span class="widget-title">Total Count In Dataset: </span><span class="widget-body">{{ curword.count }}</span>
+<div id="presentation-area-sidebar">
+		{% include "word_widgets/total_count.html" %}
+		{% include "word_widgets/top_topics.html" %}
+		{% include "word_widgets/top_documents.html" %}
 	</div>
-	<div id="top_topics_widget" class="widget">
-		<div class="widget-title">Top Topics p(z|w)</div>
-		<img class="widget-body" src="{{ topic_chart_address }}"/>
+	<div id="presentation-area-main-column">
+		{% include "word_widgets/word_in_context.html" %}
 	</div>
-	<div id="top_documents_widget" class="widget">
-		<div class="widget-title">Top Documents p(d|w)</div>
-		<img class="widget-body" src="{{ doc_chart_address }}"/>
-	</div>
-</div>
 {% endblock %}
 
 

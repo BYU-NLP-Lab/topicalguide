@@ -60,6 +60,24 @@ def index(request, dataset, analysis, word):
     context['breadcrumb'].analysis(analysis)
     context['breadcrumb'].word(context['curword'])
     
+    add_word_charts(dataset, analysis, context)
+    
+    word_base = request.session.get('word-find-base', '')
+    context['word_find_form'] = WordFindForm(word_base)
+        
+    add_word_contexts(context['curword'].type, context['baseurl'], context)
+#    word = context['curword'].type
+#    words = []
+#    for i in range(0,10):
+#        w = WordSummary(word, number=i)
+#        w.url = context['baseurl'] + word
+#        words.append(w)
+#    
+#    context['word_contexts'] = words
+        
+    return render_to_response('word.html', context)
+
+def add_word_charts(dataset, analysis, context):
     topicwords = context['curword'].topicword_set.filter(
             topic__analysis=analysis)
     total = reduce(lambda x, tw: x + tw.count, topicwords, 0)
@@ -74,8 +92,13 @@ def index(request, dataset, analysis, word):
     docs = sorted([WordSummary(dw.document.filename, float(dw.count) / total)
                    for dw in docwords])
     context['doc_chart_address'] = get_chart(docs)
+
+def add_word_contexts(word, base_url, context):
+    word_url = base_url + word
+    words = []
+    for i in range(0,10):
+        w = WordSummary(word, number=i)
+        w.url = word_url
+        words.append(w)
     
-    word_base = request.session.get('word-find-base', '')
-    context['word_find_form'] = WordFindForm(word_base)
-        
-    return render_to_response('word.html', context)
+    context['word_contexts'] = words
