@@ -73,7 +73,7 @@ researchers and the public. However, readily available tools for exploration of
 document collections in terms of topic models have been either unsatisfactory
 or nonexistent.
 
-We present the \tool, an open-source\footnote{Licensed under the terms of the Affero
+In response, we present the \tool, an open-source\footnote{Licensed under the terms of the Affero
 General Public License, version 3.} web application for interactive,
 topic-aware exploration and visualization of both document collections and the
 topic models inferred on them.\footnote{Further information on the project, including
@@ -81,11 +81,11 @@ source code access and a live demonstration server, can be found
 at \texttt{\projecturl}.} The \tool{} is an aid both to those who wish to
 browse through a corpus and for those who wish to analyze the topic model itself.
 We believe that this interactive, topic-aware approach to corpus and model exploration
-exposes their characteristics to human comprehension in a way that static visualizations cannot.
+exposes meaningful patterns to human comprehension in a way that static visualizations cannot.
 
 In this paper, we will discuss: browsing of topic model output using the \tool{} user interface, as in \cite{gardner_browser_2010};
-document metadata; document and topic metrics; a topic-space visualization we call
-topic maps; a mechanism for interchangeable topic name schemes; and the data import%TODO Should we call this ``topic maps'' when that name has been used previously?
+document metadata; document and topic metrics; a topic-space visualization;
+topic name schemes; and the data import
 system. Throughout this paper, examples are taken from a
 corpus of State of the Union messages delivered by United States presidents
 from 1790 to 2010. This constitutes 223 documents totalling XXXXXXX tokens. %TODO Count tokens
@@ -101,9 +101,9 @@ from 1790 to 2010. This constitutes 223 documents totalling XXXXXXX tokens. %TOD
 All entities explicitly modeled by a basic topic model --- topics, documents,
 and words --- are first-class citizens in the \tool, meaning that the user
 interface provides specific views for each of these entity types. The topic view
-is central to the user experience. A view of the \texttt{programs federal} topic is
+is central to the user experience. A view of the ``programs federal'' topic is
 rendered in Figure \ref{fig:topic_page}. On the left is a navigation sidebar listing other topics,
-with tabs providing links to other views such as \texttt{Attributes}, \texttt{Documents}, and \texttt{Plots}.
+with tabs providing links to other views such as Attributes, Documents, and Plots.
 The remainder of the page shows statistics about the topic
 (\texttt{STATS}); chart, word-cloud, and key-word-in-context representations of top
 words (\texttt{TOP WORDS P(W|Z)} / \texttt{WORD CLOUD} / \texttt{TOP WORDS IN CONTEXT}); and
@@ -116,11 +116,11 @@ occurrences, and lists of topics and documents in which the word occurs most
 often. 
 
 The document view can be seen in Figure \ref{fig:topic_doc}, showing the content
-of the document along with any document metrics that have been computed. By
+of the document along with prominent topics and any document metrics that have been computed. By
 means of pairwise document metrics, a list of similar documents is shown as
 well.
 
-Intuitive hyperlinks make this a true \textit{browsing} tool. Click on the
+Intuitive hyperlinks facilitate an interactive experience. Click on the
 ``economic congress'' node in the topic map and be sent to its topic view
 to see how presidents have discussed economic issues. Click on ``billion'' in
 the word cloud to see how that word has been used in various addresses (Figure
@@ -130,14 +130,14 @@ topic highlighted (Figure \ref{fig:topic_doc}).
 %TODO Make words in the doc view link
 %TODO Show words in context in the word view
 
-An important concept used by the \tool{} object model and user interface is the
-notion of \textit{datasets} and \textit{analyses}. A dataset is a set of
-documents --- a corpus. An analysis is associated with one dataset and
-constitutes a set of topics and token-level topic assignments for all of the
-documents in that dataset. The analysis concept is useful in allowing for
-multiple topic models on a single dataset. For example, it could be useful to
-use LDA to infer both a 20-topic model and a 100-topic model on the State of the
-Union Addresses dataset.
+% An important concept used by the \tool{} object model and user interface is the
+% notion of \textit{datasets} and \textit{analyses}. A dataset is a set of
+% documents --- a corpus. An analysis is associated with one dataset and
+% constitutes a set of topics and token-level topic assignments for all of the
+% documents in that dataset. The analysis concept is useful in allowing for
+% multiple topic models on a single dataset. For example, it could be useful to
+% use LDA to infer both a 20-topic model and a 100-topic model on the State of the
+% Union Addresses dataset.
 
 \begin{figure*}[t]
  \centering
@@ -154,24 +154,27 @@ of arbitrary metadata with documents. This accomodates metadata
 provided by a dataset curator, often including facts about document
 provenance and author identity. Document attributes also allow for metadata
 obtained as part of the output of a model. These attributes can be used to
-filter the list of documents, or as axes in charts.
+filter the list of documents, or as axes in charts as discussed in section \ref{sec:plots}.
 
 \section{Metrics}
 Topic-centric document exploration is enhanced by means of \textit{metrics}.
 Metrics are functions that give users additional insight into the nature of
-topics or documents. They can be either unary or binary, here called
-\textit{pairwise}.\footnote{Pairwise metrics do not necessarily constitute
-``metrics'' in the formal sense. We leave it to implementers to determine
-whether to satisfy the triangle inequality, etc.} Topic metrics range from
+topics or documents. Topic metrics range from
 simple metrics, such as the number of word tokens and types labeled with the
 topic, to more complicated metrics such as dispersion across documents,
-prevailing sentiment, or the semantic coherence of its words \cite{Newman2010}.
-Pairwise topic metrics include Pearson correlation on documents and on words.
-These are used to automatically display a list of similar topics and to weight
-the edges of the graph used to generate ``topic maps'' (discussed further in section
-\ref{sec:maps}). Similar to topic metrics, one can also compute document
-metrics. Beyond simple metrics like token count in the document, these include
-things such as the entropy of the topic distribution of the document \cite{Misra2008}. And as
+prevailing sentiment, or the semantic coherence of its words \cite{Newman2010a}.
+
+\textit{Pairwise} topic metrics describe relationships between
+topics.\footnote{Pairwise metrics do not necessarily constitute
+``metrics'' in the formal sense. We leave it to implementers to determine
+whether to satisfy the triangle inequality, etc.} These include Pearson correlation on documents and on words.
+Pairwise metrics are used to automatically display a list of similar topics and to weight
+the edges of the graph used to generate topic maps (discussed further in section
+\ref{sec:maps}).
+
+Similar to topic metrics, document metrics can also be computed.
+Beyond simple metrics like token count in the document, these include
+things such as the entropy of the topic distribution of the document \cite{Misra2008}. As
 with topics, we make use of pairwise document metrics such as topic
 correlation \cite{Blei2009} to show similar documents.
 
@@ -183,28 +186,30 @@ correlation \cite{Blei2009} to show similar documents.
  \caption{Selected topics over time as a percentage of overall tokens.}
 \end{figure*}
 
-\section{Plots}
-The \tool{} allows users to interactively generate two types of plots. The ﬁrst
-shows trends for topics over the values of an attribute -- for example, the year
+\section{Plots}\label{sec:plots}
+The \tool{} allows users to interactively generate two types of plots. The first
+shows topic trends over the values of an attribute --- for example, the year
 of an address, or the political party of the president delivering it. This kind
 of plot has been used in visualizing topic models almost since their
-introduction. These trend plots can be generated over any attribute for any
+introduction. In our system they can be generated over any attribute for any
 topic or combination of topics in the corpus. Figure \ref{fig:chart} shows
-trends for four chosen topics across the \texttt{year} attribute, giving a view
+trends for four chosen topics across the ``year'' attribute, giving a view
 of topic lifecycles across time as in \cite{Griffiths2004,Wang2006}.
 
-The second type of plot is a scatter plot of topic metrics, which is
-particularly suited to discovery of relationships between topic metrics. For
-example, we have found that document entropy seems to correlate with the
-logarithm of the number of tokens in the topic, and that coherence does not seem
-to correlate with any other topic metric yet implemented.
-
-
+The second type of plot is a scatter plot of topic metrics, by which one topic
+metric is plotted against another. This is particularly suited to discovery of
+relationships between topic metrics. For example, we have found that document
+entropy seems to correlate with the logarithm of the number of tokens in the
+topic, and that coherence does not seem to correlate with any other topic metric
+yet implemented.
 
 \section{Topic Maps}\label{sec:maps}
 With topic-to-topic relationships described by means of pairwise topic metrics,
-graph-based visualization of the topic space becomes straightforward. In our
-current implementation, we construct a topic graph $G = (N, E)$ as follows:
+graph-based visualization of the topic space becomes straightforward, using much
+the same approach as has been described in \cite{Newman2010b}. We
+integrate the topic maps into an overall browsing experience to help users
+quickly assess how topics relate to each other. In our current implementation, we
+construct a topic graph $G = (N, E)$ for a set of topics $T$ as follows:
 
 $N$ is a set of $|T|$ nodes such that
 \[\forall_{t\in T} weight(N_{t}) = \tau_{1}(t)\]
@@ -215,15 +220,14 @@ constructed as a set of $|T|^2$ edges such that
   \[\forall_{(t,u)\in T\times T, t\neq u} weight(E_{t,u}) = \pi(t,u)\]
 where $\pi$ is a pairwise topic metric.
 
-We use the Gephi Toolkit\footnote{http://www.gephi.org} to generate such graphs
-and render them as images, employing a force-directed layout algorithm to
-arrange the nodes so that, generally speaking, nodes joined by edges of higher
-weight are closer together, and nodes joined by edges of lower weight are
-further apart. In the final rendering of the image, edges are omitted to reduce
-visual complexity. However, the distances between nodes are still determined by
-the interaction of the layout algorithm and the edge weights. 
-
-%TODO Callback
+Figure \ref{fig:topic_page} shows such a graph as part of a topic view. We
+use the Gephi Toolkit\footnote{http://www.gephi.org} to generate the graphs and
+render them as images, employing a force-directed layout algorithm to arrange
+the nodes so that, generally speaking, nodes joined by edges of higher weight
+are closer together, and nodes joined by edges of lower weight are further
+apart. In the final rendering of the image, edges are omitted to reduce visual
+complexity. However, the distances between nodes are still determined by the
+interaction of the layout algorithm and the edge weights.
 
 \section{Topic Name Schemes}
 As LDA does not assign names to the topics it generates, automatic generation of
@@ -231,10 +235,10 @@ topic names is of interest to researchers wishing to make topic models
 human-usable. Research in this area is ongoing \cite{Mei2007,Lau2010}. In order to
 facilitate investigations in this area, we equipped the \tool{} with a
 fully pluggable topic naming system. Any number of topic name schemes can be
-used to produce names for all topics in an analysis. Within the user interface
+used to produce names for all topics in a model. Within the user interface
 users can select a name scheme, which is then reflected throughout the
 interface. By default we use a concatenation of the two
-words with the highest probability for a given topic $z$, but any number of
+words with the highest probability for a given topic, but any number of
 alternative schemes can be imagined and implemented.%TODO Maybe show TF-ITF?
 
 \begin{figure*}[ht]
@@ -263,15 +267,17 @@ directory, and providing a JSON file containing any document metadata. By defaul
 the \tool{} will automatically invoke MALLET's LDA implementation to train a
 topic model \cite{McCallum2002}; however, the import system can also make use of
 existing topic model output in the MALLET format. The system also allows all
-elements of the pipeline to be overridden, allowing for clean integration with
-existing code.
+elements of the pipeline to be overridden, allowing for customization and
+clean integration with existing code.
 
 \section{Conclusion}
-In this paper we introduced the \tool{} as a tool for exploration of
-topic model output. This serves to improve understanding of both topic models
-and text corpora. We briefly described some of the general features of the tool
-and proceeded to detail the use of metrics and graphs. We then explained how
-new datasets can easily be imported into the tool.
+We have presented the \tool, an open-source web application for interactive,
+topic-centric exploration and visualization of topic model output.
+It demonstrates the ability of topic modeling to provide
+highly usable online access to otherwise-obscure document collections.
+The free availability of such a tool also makes it easy to expose
+topic model output to third-parties for scrutiny, implicitly challenging
+the field to adopt a higher standard of transparency in future research.
 
 \bibliographystyle{acl}
 \bibliography{acl2011demo.bib}
