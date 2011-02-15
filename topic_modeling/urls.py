@@ -189,7 +189,7 @@ urlpatterns = patterns('',
         'topic_modeling.visualize.ajax_calls.add_favorite'),
 
 # Miscellaneous
-    (r' ^ about / $', 'topic_modeling.visualize.common.about'),
+    (r'^about/$', 'topic_modeling.visualize.common.about'),
 
 # URLS I wasn't sure quite what to do with
 ##########################################
