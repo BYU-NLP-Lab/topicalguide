@@ -119,7 +119,7 @@ class BreadCrumbItem(object):
 ###############
 
 class WordSummary(object):
-    def __init__(self, word="", percent=""):
+    def __init__(self, word="", percent="", number=None):
         self.word = word
         self.url = ""
         self.left_context = ""
@@ -127,6 +127,7 @@ class WordSummary(object):
         self.percent = percent
         self.doc_name = ""
         self.doc_id = ""
+        self.number = number
 
     def normalized(self, total):
         self.percent = 1. * self.count / total

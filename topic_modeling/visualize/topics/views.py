@@ -140,15 +140,20 @@ def index(request, dataset, analysis, topic):
     return render_to_response('topic.html', context)
 
 
+from topic_modeling.visualize.word_views import add_word_charts, add_word_contexts
 def word_index(request, dataset, analysis, topic, word):
-    filter = TopicFilterByWord(Analysis.objects.get(dataset__name=dataset,
+    dataset_name = dataset
+    dataset = Dataset.objects.get(name=dataset_name)
+    
+    filter = TopicFilterByWord(Analysis.objects.get(dataset=dataset,
             name=analysis), 0)
     filter.current_word = word
 
-    context, analysis, topic = base_context(request, dataset, analysis, topic,
+    context, analysis, topic = base_context(request, dataset_name, analysis, topic,
             extra_filters=[filter])
 
-    word = Word.objects.get(dataset__name=dataset, type=word)
+    word = Word.objects.get(dataset=dataset, type=word)
+    context['curword'] = word
     documents = word.documenttopicword_set.filter(topic=topic).order_by(
             'document__filename')
     docs = []
@@ -164,6 +169,24 @@ def word_index(request, dataset, analysis, topic, word):
     context['documents'] = docs
     context['breadcrumb'].word(word)
     context['topic_post_link'] = '/words/%s' % word.type
+    
+    
+    add_word_charts(dataset, analysis, context)
+    
+    topicword = topic.topicword_set.get(word=word,word__ngram=False)
+    word_url = '%s/%d/words/' % (context['baseurl'], topic.number)
+    add_word_contexts(topicword.word.type, word_url, context)
+    
+#    
+#    
+#    words = []
+#    for i in range(0,10):
+#        w = WordSummary(topicword.word.type, number=i)
+#        w.url = word_url + topicword.word.type
+#        words.append(w)
+#    
+#    context['word_contexts'] = words
+    
     return render_to_response('topic_word.html', context)
 
 from topic_modeling.visualize.documents.views import add_top_topics, add_similarity_measures as doc_add_similarity_measures
