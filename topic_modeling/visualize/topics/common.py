@@ -34,8 +34,12 @@ from topic_modeling.visualize.models import TopicNameScheme
 
 def get_topic_name(topic, name_scheme_id):
     ns = TopicNameScheme.objects.get(id=name_scheme_id)
-    return TopicName.objects.get(topic=topic, name_scheme=ns).name
-
+    name = str(topic.number) + ": "
+    try:
+        name += TopicName.objects.get(topic=topic, name_scheme=ns).name
+    except:
+        name += topic.name
+    return name
 
 def sort_topics(topics, sort_by, session):
     # Because of the way I had to implement metric sorting, and the way that
@@ -55,7 +59,7 @@ def sort_topics(topics, sort_by, session):
         metric_name = sort_by[7:]
         topic_list = list(topics.all())
         topic_list.sort(key=lambda x:
-                -x.topicmetricvalue_set.get(metric__name=metric_name).value)
+                - x.topicmetricvalue_set.get(metric__name=metric_name).value)
         return topic_list
     else:
         raise ValueError("We don't current support ordering by %s" % sort_by)
@@ -75,7 +79,7 @@ def top_values_for_attr_topic(analysis, topic, attribute, order_by='count',
         percent = float(count) / total_count
         values.append(ValueListing(value.value, count, percent))
     if order_by == 'percent':
-        values.sort(key=lambda x: -x.percent)
+        values.sort(key=lambda x:-x.percent)
     return values[:number]
 
 
