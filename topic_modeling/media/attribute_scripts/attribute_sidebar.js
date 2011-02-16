@@ -42,7 +42,6 @@ function redraw_values(values_list, page, num_pages) {
     
     $("#attributes_list").html(new_html);
 }
-
 function get_attribute_page(page) {
     $.getJSON('/feeds/attribute-page/datasets/'
             + $.fn.attr_vars.dataset

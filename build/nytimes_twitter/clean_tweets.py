@@ -29,19 +29,20 @@ import re
 
 class TweetCleaner(Cleaner):
     def __init__(self, input_dir, output_dir):
-        super(TweetCleaner,self).__init__(input_dir, output_dir, u"’“”\r\n'-/.,", punctuation+digits.replace('#',''))
-    
+        super(TweetCleaner, self).__init__(input_dir, output_dir, u"’“”\r\n'-/.,", punctuation + digits.replace('#', ''))
+
     def cleaned_text(self, text):
         urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
         for url in urls:
             text = text.replace(url, '')
         text = text.replace('&quot;', '')
-        text = text.replace('&lt;','')
-        text = text.replace('&gt;','')
-        text = text.replace('&amp;','')
-        return super(TweetCleaner,self).cleaned_text(text)
-    
-    
+        text = text.replace('&lt;', '')
+        text = text.replace('&gt;', '')
+        text = text.replace('&amp;', '')
+        text = re.sub('\\brt\\b', '', text)
+        return super(TweetCleaner, self).cleaned_text(text)
+
+
 def clean_tweets(src_dir, dest_dir):
     c = TweetCleaner(src_dir, dest_dir)
     c.clean()

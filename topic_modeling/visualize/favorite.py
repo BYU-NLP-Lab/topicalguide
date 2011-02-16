@@ -23,7 +23,7 @@ from django.shortcuts import render_to_response
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 
-def index(request, dataset, analysis):
+def index(request, dataset, analysis, id):
     page_vars = dict()
     page_vars['highlight'] = 'favorite_tab'
     page_vars['tab'] = 'favorite'
@@ -32,7 +32,17 @@ def index(request, dataset, analysis):
 
     page_vars['page_num'] = 1
     page_vars['num_pages'] = 1
-    page_vars['favorites'] = request.session.get('favorite-list',
-                                                 ['abc', '123'])
+    page_vars['favorites'] = request.session.get('favorite-set', set())
+
+    if id == '':
+        id = 0
+    else:
+        id = int(id)
+
+    page_vars['curr_favorite'] = None
+    for fav in page_vars['favorites']:
+        if fav.id == id:
+            page_vars['curr_favorite'] = fav
 
     return render_to_response('favorite.html', page_vars)
+
