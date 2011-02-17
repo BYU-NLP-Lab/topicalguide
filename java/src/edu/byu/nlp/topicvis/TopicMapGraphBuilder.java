@@ -179,7 +179,7 @@ public class TopicMapGraphBuilder {
 		AttributeColumn centralityColumn = attributeModel.getNodeTable().getColumn(GraphDistance.BETWEENNESS);
 		NodeRanking centralityRanking = rankingController.getRankingModel().getNodeAttributeRanking(centralityColumn);
 		SizeTransformer sizeTransformer = rankingController.getObjectSizeTransformer(centralityRanking);
-		sizeTransformer.setMinSize(10);
+		sizeTransformer.setMinSize(40);
 		sizeTransformer.setMaxSize(80);
 
 		//Interpolator splines = new BezierInterpolator((float) control1.getX(),
