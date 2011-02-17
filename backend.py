@@ -25,17 +25,17 @@
 
 # The doit build file for the Topic Browser.
 #
-# You can either invoke this file directly (./dodo.py) or install doit and run
+# You can either invoke this file directly (./backend.py) or install doit and run
 # `doit` in the same directory as this file
 #
 # Useful commands:
-#  dodo.py list #Lists the available top-level tasks (sub-tasks are not displayed)
-#  dodo.py #Builds everything!
-#  dodo.py clean -c mallet #Cleans the mallet files
-#  dodo.py metrics #Computes all metrics
-#  dodo.py topic_metrics #Computes just the topic metrics
-#  dodo.py topic_metrics:document_entropy #Computes just the document entropy topic metric
-#  dodo.py clean topic_metrics:document_entropy #Cleans just the document entropy topic metric
+#  backend.py list #Lists the available top-level tasks (sub-tasks are not displayed)
+#  backend.py #Builds everything!
+#  backend.py clean -c mallet #Cleans the mallet files
+#  backend.py metrics #Computes all metrics
+#  backend.py topic_metrics #Computes just the topic metrics
+#  backend.py topic_metrics:document_entropy #Computes just the document entropy topic metric
+#  backend.py clean topic_metrics:document_entropy #Cleans just the document entropy topic metric
 #
 #TODO:
 #  Allow specification of multiple num_topics
@@ -170,7 +170,7 @@ if not os.path.exists(yamba_file):
     print "Initializing database..."
     os.system("python topic_modeling/manage.py syncdb --noinput > /dev/null")
 
-print "----- Topic Browser Build System -----"
+print "----- Topical Guide Data Import System -----"
 print "Dataset name: " + dataset_name
 
 if not os.path.exists(dataset_dir): os.mkdir(dataset_dir)
