@@ -75,7 +75,7 @@ class Cleaner(object):
 
                 text = open(in_path).read().decode('utf-8')
                 cleaned_text = self.cleaned_text(text)
-                if cleaned_txt:
+                if cleaned_text:
                     f = create_dirs_and_open(out_path)
                     f.write(cleaned_text.encode('utf-8'))
 

@@ -25,52 +25,35 @@ import os
 from build.govtrack.cr.clean_cr import clean_cr
 from build.govtrack.cr.generate_attributes_file import generate_attributes_file
 
+dataset_name = "congressional_record"
+dataset_description = "Floor debate from the Congressional Record of the 111th United States Congress"
+token_regex = r"\\w+"
+
 data_dir = os.environ['HOME'] + "/Data"
 govtrack_dir = data_dir + "/govtrack.us"
 rsync_dest_dir = govtrack_dir + "/111"
 cr_dir = rsync_dest_dir + "/cr"
 
-def get_dataset_name(locals):
-    return "congressional_record"
-
-def get_dataset_description(locals):
-    return "Floor debate from the Congressional Record of the 111th United States Congress"
-
-def get_copy_dataset(locals):
-    return True
-
-def get_mallet_token_regex(locals):
-    return r"\\w+"
-
-def get_attributes_file(locals):
-    return "{0}/attributes.json".format(locals['dataset_dir'])
-
-def get_files_dir(locals):
-    return locals['dataset_dir'] + "/files"
-
-def task_hash_cr():
-    return {'actions': [(directory_timestamp, [cr_dir])],
-            'task_dep':['download_congressional_record']}
-
 def task_attributes_file():
-    targets = [attributes_file]
-    actions = [(generate_attributes_file, [mallet_input, attributes_file])]
-    file_deps = [mallet_input]
-    clean = ["rm -f "+attributes_file]
-    return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
+    task = dict()
+    task['targets'] = [attributes_file]
+    task['actions'] = [(generate_attributes_file, [mallet_input, attributes_file])]
+    task['file_dep'] = [mallet_input]
+    task['clean'] = ["rm -f "+attributes_file]
+    return task
 
 def task_download_congressional_record():
-    actions = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/111/cr "+rsync_dest_dir]
-    clean = ["rm -rf " + cr_dir]
-    return {'actions':actions, 'clean':clean}
+    task = dict()
+    task['actions'] = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/111/cr "+rsync_dest_dir]
+    task['clean'] = ["rm -rf " + cr_dir]
+    task['uptodate'] = [os.path.exists(rsync_dest_dir)]
+    return task
 
-def task_copy_and_transform_dataset():
-    actions = [
-        (clean_cr, [cr_dir,files_dir])
-    ]
-    clean = [
-        'rm -rf '+files_dir
-    ]
-    
-    result_deps = ['hash_cr']
-    return {'actions': actions, 'clean': clean, 'result_dep':result_deps}
+def task_extract_data():
+    task = dict()
+    task['targets'] = [files_dir]
+    task['actions'] = [(clean_cr, [cr_dir,files_dir])]
+    task['clean'] = ['rm -rf '+files_dir]
+    task['task_dep'] = ['download_congressional_record']
+    task['uptodate'] = [os.path.exists(files_dir)]
+    return task
