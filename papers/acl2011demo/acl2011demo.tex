@@ -1,33 +1,4 @@
 %LaTeX source for the ACL 2011 Demo submission for the Topical Guide project
-% -abs: Though topic models reduce dimensionality --> Although topic models can be employed for dimensionality reduction
-% 
-% -abs: their output is just as large as the training corpus. --> their token-level output is as voluminous as the original data set.
-% 
-% -abs: make these texts usable --> make information in these texts discoverable and thereby usable
-% 
-% -abstract, sec1, and/or sec9: I think we need to say something about how when you first encounter a large corpus, because you cannot read it, you may not even know what the predominant themes are.  Topic models expose the dominant themes, and the Topical Guide makes it possible to explore what the topic analysis has revealed.
-% 
-% -sec1: However, when inferred by means of sampling, these models output a topic assignment per token, resulting in an output that is a corpus unto itself. -- delete "when inferred by means of sampling"; the ensuing statement is true whether or not MCMC is the chosen inference method.
-% 
-% -sec1: very vastness of topic model output --> very vastness of token-level topic model output
-% 
-% -sec1: this sort of presentation unconvincing. --> this sort of presentation unconvincing and of limited utility.
-% 
-% -sec1: Simultaneously, massive digitization efforts by libraries -- precede with paragraph break
-% 
-% -sec1: This constitutes 223 documents totalling XXXXXXX tokens. -- add: "Although this is a small corpus, the Topical Guide has been applied to data sets containing hundreds of thousands of documents." (this is a reference to the student ratings corpus)
-% 
-% -sec3: or as axes in charts as discussed in section 5. --> or as independent variables for plots, as discussed in section 5.
-% 
-% -sec4: these include things such as the entropy --> these include metrics such as the entropy
-% 
-% -sec6: what sets our topic maps apart from the work of Newman et al.?  Let's try to say at least one thing that does.
-% 
-% -sec6: In the final rendering of the image, edges are omitted to reduce visual complexity. -- perhaps the first order edges from the center topic could be reintroduced, with second order edges still omitted; when I look at the graphs without edges, it seems that something is missing.
-% 
-% -sec9: It demonstrates the ability of topic modeling to provide highly usable online access to otherwiseobscure document collections. --> The Topical Guide demonstrates the ability of topic modeling to improve discoverability in and provide usable online access to otherwise obscure or overwhelmingly document collections.
-% 
-% More feedback: figure 5 could be improved to reflect both the procedural steps involved and the products of those steps.  I also think that figure 5 deserves a little more narration.
 
 %In case we change the name of the build script, we define a macro for it:
 \newcommand{\buildscript}{backend.py}
@@ -42,30 +13,34 @@
 \usepackage{multirow}
 \usepackage{url}
 \usepackage{graphicx}
-\usepackage{listings}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \setlength\titlebox{6.5cm}    % Expanding the titlebox
+\newcommand{\comments}[1]{}
 
+%TODO Do we need to anonymize images by removing the logo, and the text by removing the URL?
 \title{Increased Comprehension of Topic Models and Corpora\\ Using the \tool}
-\author{Josh Hansen, Matthew J. Gardner, Jeff Lund, Dan Walker, Eric Ringger, \and Kevin Seppi\\
-Department of Computer Science\\
-Brigham Young University\\
-\tt \{mjg82,jlutes,joshhansen\}@byu.edu, \{jefflund,danwalkeriv\}@gmail.com\\
-\tt \{ringger,kseppi\}@cs.byu.edu}
+% \author{Josh Hansen, Matthew J. Gardner, Jeff Lund, Dan Walker, Eric Ringger, \and Kevin Seppi\\ %TODO De-anonymize after review process
+% Department of Computer Science\\
+% Brigham Young University\\
+% \tt \{mjg82,jlutes,joshhansen\}@byu.edu, \{jefflund,danwalkeriv\}@gmail.com\\
+% \tt \{ringger,kseppi\}@cs.byu.edu}
 
 \begin{document}
 \maketitle
 
+%TODO -abstract, sec1, and/or sec9: I think we need to say something about how when you first encounter a large corpus, because you cannot read it, you may not even know what the predominant themes are.  Topic models expose the dominant themes, and the Topical Guide makes it possible to explore what the topic analysis has revealed.
+
 \begin{abstract}
-Though topic models reduce dimensionality, their output is just as large as the
-training corpus. Thus, humans' ability to manually assess model quality is
-limited. As the quantity of digitized documents worldwide continues to expand,
-institutions correspondingly find an increased need for tools such as topic
-models to make these texts usable. In response to these twin needs, we present
-the \tool, an open-source web application for interactive,
-topic-centric exploration and visualization of topic model output. We explain
-why such a tool is warranted, what it is capable of, and how to use it to
-explore the corpus or topic model of your choice.
+Although topic models can be employed for dimensionality reduction, their
+token-level output is as voluminous as the original dataset. Thus, humans'
+ability to manually assess model quality unaided is limited. Moreover, as the quantity of
+digitized documents worldwide continues to expand, institutions correspondingly
+find an increased need for tools such as topic models to make information in
+these texts discoverable and thereby usable. In response to these twin needs, we
+present the \tool, an open-source web application for interactive, topic-centric
+exploration and visualization of topic model output. We explain why such a tool
+is warranted, what it is capable of, and how to use it to explore the corpus or
+topic model of your choice.
 \end{abstract}
 
 \section{Introduction}
@@ -74,16 +49,16 @@ become standard fare for those wishing to automatically distill large text
 collections into something more immediately useful to humans and computers
 alike. The usefulness of this sort of dimensionality reduction is widely
 acknowledged, and topic models continue to be extended into exciting new
-territory.
-\cite{wang_continuous_2008,mimno_polylingual_2009,boyd-graber_holistic_2010,brody_unsupervised_2010,he_detecting_2009,yao_efficient_2009}
-However, when inferred by means of sampling, these models output a topic
+territory
+\cite{wang_continuous_2008,mimno_polylingual_2009,boyd-graber_holistic_2010,brody_unsupervised_2010,he_detecting_2009,yao_efficient_2009}.
+However, in their most verbose realization, these models output a topic
 assignment per token, resulting in an output that is a corpus unto itself.
 Though the range of possible values is substantially reduced, output size
 remains on the same order as input size. Notwithstanding, papers introducing new
 topic models often lean heavily on the hope that displaying a few hand-picked
 topics will convince others of the model's effectiveness. But the very vastness
-of topic model output renders this sort of presentation unconvincing.
-Unfortunately, tools for deep understanding of topic model output have thus far
+of token-level topic model output renders this sort of presentation unconvincing
+and of limited utility. Unfortunately, tools for deep understanding of topic model output have thus far
 been lacking.
 \begin{figure*}[t]
  \centering
@@ -92,6 +67,7 @@ been lacking.
  \caption{The topic view}
  \label{fig:topic_page}
 \end{figure*}
+
 Simultaneously, massive digitization efforts by libraries and other institutions
 are generating gargantuan quantities of electronic text, increasing demand for tools such as
 topic models. Because of their ability to characterize the contents of
@@ -104,19 +80,21 @@ or nonexistent.
 In response, we present the \tool, an open-source\footnote{Licensed under the terms of the Affero
 General Public License, version 3.} web application for interactive,
 topic-aware exploration and visualization of both document collections and the
-topic models inferred on them.\footnote{Further information on the project, including
+topic models inferred on them.\comments{\footnote{Further information on the project, including %TODO De-anonymize after review process
 source code access and a live demonstration server, can be found
-at \texttt{\projecturl}.} The \tool{} is an aid both to those who wish to
+at \texttt{\projecturl}.}} The \tool{} is an aid both to those who wish to
 browse through a corpus and for those who wish to analyze the topic model itself.
 We believe that this interactive, topic-aware approach to corpus and model exploration
 exposes meaningful patterns to human comprehension in a way that static visualizations cannot.
 
-In this paper, we will discuss: browsing of topic model output using the \tool{} user interface, as in \cite{gardner_browser_2010};
+In this paper, we will discuss: browsing of topic model output using the \tool{} user interface\comments{, as in \newcite{gardner_browser_2010}}; %TODO De-anonymize after review process
 document metadata; document and topic metrics; a topic-space visualization;
 topic name schemes; and the data import
-system. Throughout this paper, examples are taken from a
+system. Throughout the discussion, examples are taken from a
 corpus of State of the Union messages delivered by United States presidents
-from 1790 to 2010. This constitutes 223 documents totalling XXXXXXX tokens. %TODO Count tokens
+from 1790 to 2010. This constitutes 223 documents totalling 757,823 tokens.
+Though this corpus is admittedly small, the \tool{} has also been employed
+on hundreds of thousands of documents. %TODO and congressional record
 
 \begin{figure*}[t]
  \centering
@@ -128,7 +106,7 @@ from 1790 to 2010. This constitutes 223 documents totalling XXXXXXX tokens. %TOD
 \section{Browsing}
 All entities explicitly modeled by a basic topic model---topics, documents,
 and words---are first-class citizens in the \tool, meaning that the user
-interface provides specific views for each of these entity types. The topic view
+interface provides specific views for each. The topic view
 is central to the user experience. A view of the ``programs federal'' topic is
 rendered in Figure \ref{fig:topic_page}. On the left is a navigation sidebar listing other topics,
 with tabs providing links to other views such as Attributes, Documents, and Plots.
@@ -182,27 +160,26 @@ of arbitrary metadata with documents. This accomodates metadata
 provided by a dataset curator, often including facts about document
 provenance and author identity. Document attributes also allow for metadata
 obtained as part of the output of a model. These attributes can be used to
-filter the list of documents, or as axes in charts as discussed in section \ref{sec:plots}.
+filter the list of documents, or as independent variables for plots, as discussed in section \ref{sec:plots}.
 
 \section{Metrics}
 Topic-centric document exploration is enhanced by means of \textit{metrics}.
 Metrics are functions that give users additional insight into the nature of
-topics or documents. Topic metrics range from
-simple metrics, such as the number of word tokens and types labeled with the
-topic, to more complicated metrics such as dispersion across documents,
-prevailing sentiment, or the semantic coherence of its words \cite{Newman2010Coherence}.
+topics or documents. Topic metrics range from the simple, such as the number of word tokens and types labeled with the
+topic, to more complicated metrics like dispersion across documents,
+prevailing sentiment, or semantic coherence of the topic's words \cite{Newman2010Coherence}.
 
 \textit{Pairwise} topic metrics describe relationships between
 topics.\footnote{Pairwise metrics do not necessarily constitute
 ``metrics'' in the formal sense. We leave it to implementers to determine
-whether to satisfy the triangle inequality, etc.} These include Pearson correlation on documents and on words.
+whether to satisfy the triangle inequality, etc.} These include Pearson correlation on both documents and words.
 Pairwise metrics are used to automatically display a list of similar topics and to weight
 the edges of the graph used to generate topic maps (discussed further in section
 \ref{sec:maps}).
 
 Similar to topic metrics, document metrics can also be computed.
 Beyond simple metrics like token count in the document, these include
-things such as the entropy of the topic distribution of the document \cite{Misra2008}. As
+metrics such as the entropy of the topic distribution of the document \cite{Misra2008}. As
 with topics, we make use of pairwise document metrics such as topic
 correlation \cite{Blei2009} to show similar documents.
 
@@ -219,10 +196,10 @@ The \tool{} allows users to interactively generate two types of plots. The first
 shows topic trends over the values of an attribute---for example, the year
 of an address, or the political party of the president delivering it. This kind
 of plot has been used in visualizing topic models almost since their
-introduction. In our system they can be generated over any attribute for any
+introduction \cite{Griffiths2004}. In our system they can be generated over any attribute for any
 topic or combination of topics in the corpus. Figure \ref{fig:chart} shows
 trends for four chosen topics across the ``year'' attribute, giving a view
-of topic lifecycles across time as in \cite{Griffiths2004,Wang2006}.
+of topic lifecycles across time as in \newcite{Griffiths2004} and \newcite{Wang2006}.
 
 The second type of plot is a scatter plot of topic metrics, by which one topic
 metric is plotted against another. This is particularly suited to discovery of
@@ -233,9 +210,7 @@ yet implemented.
 
 \section{Topic Maps}\label{sec:maps}
 With topic-to-topic relationships described by means of pairwise topic metrics,
-graph-based visualization of the topic space becomes straightforward. We
-integrate the topic maps into an overall browsing experience to help users
-quickly assess how topics relate to each other. In our current implementation, we
+graph-based visualization of the topic space becomes straightforward.  We
 construct a topic graph $G = (N, E)$ for a set of topics $T$ as follows:
 
 $N$ is a set of $|T|$ nodes such that
@@ -247,14 +222,16 @@ constructed as a set of $|T|^2$ edges such that
   \[\forall_{(t,u)\in T\times T, t\neq u} weight(E_{t,u}) = \pi(t,u)\]
 where $\pi$ is a pairwise topic metric.
 
-Figure \ref{fig:topic_page} shows such a graph as part of a topic view. We use
-the Gephi Toolkit\footnote{http://www.gephi.org} to generate the graphs and
-render them as images, employing a force-directed layout algorithm to arrange
+We use the Gephi Toolkit\footnote{http://www.gephi.org} to generate the graphs and
+render them as images. We then integrate the visualization into the overall
+browsing experience to help users quickly assess how topics relate to each
+other. Figure \ref{fig:topic_page} shows such a graph as part of a topic view. 
+We employ a force-directed layout algorithm to arrange
 the nodes so that, generally speaking, nodes joined by edges of higher weight
 are closer together, and nodes joined by edges of lower weight are further
 apart. (A similar approach focused on visualization of the document space is
-described in \cite{Newman2010Maps}.) In the final rendering of the image, edges
-are omitted to reduce visual complexity. However, the distances between nodes
+described in \newcite{Newman2010Maps}.) In the final rendering of the image, edges 
+are omitted to reduce visual complexity. However, the distances between nodes %TODO -sec6: In the final rendering of the image, edges are omitted to reduce visual complexity. -- perhaps the first order edges from the center topic could be reintroduced, with second order edges still omitted; when I look at the graphs without edges, it seems that something is missing.
 are still determined by the interaction of the layout algorithm and the edge
 weights.
 
@@ -267,14 +244,15 @@ fully pluggable topic naming system. Any number of topic name schemes can be
 used to produce names for all topics in a model. Within the user interface
 users can select a name scheme, which is then reflected throughout the
 interface. By default we use a concatenation of the two
-words with the highest probability for a given topic, and alternative schemes
+words with the highest probability for a given topic; alternative schemes
 can be imagined and easily implemented.%TODO Maybe show TF-ITF?
 
-\begin{figure*}[ht]
+\begin{figure*}[ht]%TODO % figure 5 could be improved to reflect both the procedural steps involved and the products of those steps.  I also think that figure 5 deserves a little more narration.
  \centering
  \includegraphics[width=400px,keepaspectratio=true]{./build_flowchart2.png}
  % build_deps.png: 1188x340 pixel, 72dpi, 41.91x11.99 cm, bb=0 0 1188 340
- \caption{Dependencies within the data import pipeline. Arrows indicate that the source is prerequisite for the target.}
+ \caption{Dependencies within the data import pipeline. Arrows indicate that the source is prerequisite for the target.
+All stages in the import process shown here can be overridden, allowing clean, domain-specific customizations.}
  \label{fig:build_flowchart}
 \end{figure*}
 \section{Data Import Backend}
@@ -290,7 +268,7 @@ the import process as a command-line frontend based on the \texttt{doit}
 task automation tool.\footnote{http://doit.sourceforge.net/} This allows full
 import of a dataset using a single invocation of the import script.
 
-Enabling the \tool{} to browse a new dataset can be as simple as picking a name
+Enabling the \tool{} to browse a new dataset can be as simple as choosing a name
 and description, converting the documents to plaintext, placing them in a
 directory, and providing a JSON file containing any document metadata. By default,
 the \tool{} will automatically invoke MALLET's LDA implementation to train a
@@ -301,13 +279,12 @@ clean integration with existing code.
 
 \section{Conclusion}
 We have presented the \tool, an open-source web application for interactive,
-topic-centric exploration and visualization of topic model output.
-This software demonstrates the ability of topic modeling to provide
-highly usable online access to otherwise-obscure document collections.
-The free availability of such a tool also makes it easy to expose
-topic model output to third-parties for scrutiny, implicitly challenging
-the field to adopt a higher standard of transparency in future research.
-
+topic-centric exploration and visualization of topic model output. The \tool{}
+demonstrates the ability of topic modeling to improve discoverability in and
+provide usable online access to otherwise obscure document collections. The free
+availability of such a tool also makes it easy to expose topic model output to
+third-parties for scrutiny, implicitly challenging the field to adopt a higher
+standard of transparency in future research.
 \bibliographystyle{acl}
 \bibliography{acl2011demo.bib}
 \end{document}
