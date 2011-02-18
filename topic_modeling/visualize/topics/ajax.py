@@ -66,7 +66,7 @@ def topic_ordering(request, dataset, analysis, order_by):
     return HttpResponse(simplejson.dumps(ret_val))
 
 
-def get_topic_page(request, dataset, analysis, topic, number):
+def get_topic_page(request, dataset, analysis, number):
     request.session['topic-page'] = int(number)
     name_scheme_id = request.session['current_name_scheme_id']
     ret_val = dict()
@@ -77,8 +77,7 @@ def get_topic_page(request, dataset, analysis, topic, number):
     num_per_page = request.session.get('topics-per-page', 20)
     page = int(number)
     topics, num_pages, _ = paginate_list(topics, page, num_per_page)
-    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic,
-        name_scheme_id))) for topic in topics]
+    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic, name_scheme_id))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
     return HttpResponse(simplejson.dumps(ret_val))

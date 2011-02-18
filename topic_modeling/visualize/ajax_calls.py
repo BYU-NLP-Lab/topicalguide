@@ -43,15 +43,26 @@ import urllib
 # General ajax calls
 ####################
 
-def word_in_context(request, dataset, analysis, topic, word):
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    topic = analysis.topic_set.get(number=topic)
+def word_in_context(request, dataset, analysis, word, topic=None):
+    analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)
+    analysis_num = analysis.id
     w = Word.objects.get(dataset__name=dataset, type=word)
     word = WordSummary(word)
-    docset = topic.documenttopicword_set.filter(word=w)
+    
+    if topic is None:
+        docset = w.documentword_set.all()
+#        docset = DocumentWord.objects.filter(word=word)
+    else:
+        topic = Topic.objects.get(analysis=analysis, number=topic)
+        docset = topic.documenttopicword_set.filter(word=w)
+    
+    
     num_docs = len(docset)
     d = docset[random.randint(0, num_docs - 1)]
-    set_word_context(word, d.document, analysis, topic.number)
+    if topic is None:
+        set_word_context(word, d.document, analysis_num)
+    else:
+        set_word_context(word, d.document, analysis_num, topic.number)
     word.doc_name = d.document.filename
     word.doc_id = d.document.id
     return HttpResponse(simplejson.dumps(vars(word)))

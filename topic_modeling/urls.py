@@ -94,6 +94,8 @@ urlpatterns = patterns('',
         'topic_modeling.visualize.plot_views.index'),
 
 # AJAX Calls
+    (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + word + '$',
+        'topic_modeling.visualize.ajax_calls.word_in_context'),
     (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + topic + '/' + word + '$',
         'topic_modeling.visualize.ajax_calls.word_in_context'),
     (r'^feeds/set-current-name-scheme/(?P<name_scheme>[^/]*)$',
@@ -112,7 +114,7 @@ urlpatterns = patterns('',
     (r'^feeds/attrvaltopic/' + dataset + '/' + analysis + '/' + topic + '/' + attribute + \
             '/' + order_by + '$',
         'topic_modeling.visualize.topics.ajax.top_attrvaltopic'),
-    (r'^feeds/topic-page/' + dataset + '/' + analysis + '/' + topic + '/' + number + '$',
+    (r'^feeds/topic-page/' + dataset + '/' + analysis + '/' + number + '$',
         'topic_modeling.visualize.topics.ajax.get_topic_page'),
     (r'^feeds/similar-topics/' + dataset + '/' + analysis + '/' + topic + '/' + measure + '$',
         'topic_modeling.visualize.topics.ajax.similar_topics'),

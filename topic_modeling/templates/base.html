@@ -38,6 +38,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
                 }
             );
         </script>
+        <script type="text/javascript">
+            $.fn.baseurl = "{{ baseurl }}";
+            $.fn.dataset = "{{ dataset }}";
+            $.fn.analysis = "{{ analysis }}";
+        </script>
 		<link rel="stylesheet" title="default" href="/site-media/style.css" type="text/css" />
 		
 		{% block scripts %}
@@ -61,7 +66,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 			<div id="main">
 				<div id="sidebar">
 					<div id="branding">
-						{% comment %}
+                        {% comment %}
+                        <img src="/site-media/topical-guide-logo.png" style="width:100%"/>
+						
 						<span class="branding-logo">
 							<a href="http://nlp.cs.byu.edu/" class="new-window">
 								<img src="/site-media/byunlp-135px.png" alt="BYU NLP Lab Logo"/>
@@ -69,8 +76,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 						</span>
 						{% endcomment %}
 						<span class="branding-title-text">
-							<a href="/about/" class="new-window">Topical Guide</a>
+							<a href="/about/" class="new-window">The Topical Guide</a>
 						</span>
+                        
 					</div><!-- end div branding -->
 					<div id="tab_pane">
 						<div id="tab_row_1" class="tab_row">

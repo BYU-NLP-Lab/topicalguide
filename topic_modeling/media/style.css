@@ -51,7 +51,8 @@
 #branding {
 	/*bottom: 10px;
 	position: fixed;*/
-	height: 100px;
+	/*height: 100px;*/
+    height: 70px;
 	width: 100%;
 	display:table;
 }

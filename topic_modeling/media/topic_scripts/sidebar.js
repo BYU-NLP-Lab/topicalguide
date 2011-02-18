@@ -33,7 +33,7 @@ function redraw_topics(topics_list, page, num_pages) {
 			new_html += ' class="highlight"';
 		}
 		new_html += '>';
-		new_html += '<a href="' + $.fn.topic_vars.baseurl;
+		new_html += '<a href="' + $.fn.baseurl;
 		new_html += '/' + topics_list[i].number;
 		new_html += $.fn.topic_vars.post_link;
 		new_html += '">';
@@ -45,9 +45,9 @@ function redraw_topics(topics_list, page, num_pages) {
 }
 function get_topic_page(page) {
 	cursor_wait();
-	var link = "/feeds/topic-page/datasets/" + $.fn.topic_vars.dataset;
-	link += "/analyses/" + $.fn.topic_vars.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	var link = "/feeds/topic-page/datasets/" + $.fn.dataset;
+	link += "/analyses/" + $.fn.analysis;
+	/*link += "/topics/" + $.fn.topic_vars.curtopic_number;*/
 	link += "/number/" + page;
 	$.getJSON(link, {}, function(data) {
 		redraw_topics(data.topics, data.page, data.num_pages);
@@ -57,8 +57,8 @@ function get_topic_page(page) {
 function sort_topics() {
 	cursor_wait();
 	ordering = $("#id_sort").val();
-	var link = "/feeds/topic-ordering/datasets/" + $.fn.topic_vars.dataset;
-	link += "/analyses/" + $.fn.topic_vars.analysis;
+	var link = "/feeds/topic-ordering/datasets/" + $.fn.dataset;
+	link += "/analyses/" + $.fn.analysis;
 	link += "/order-by/" + ordering;
 	$.getJSON(link, {}, function(data) {
 		redraw_topics(data.topics, data.page, data.num_pages);
