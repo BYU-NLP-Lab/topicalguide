@@ -25,6 +25,7 @@ import os
 from build.state_of_the_union.extract_sotua_documents import extract_state_of_the_union
 from build.state_of_the_union.generate_attributes_file import generate_attributes_file
 
+num_topics = 100
 chron_list_filename = 'chronological_list.wiki'
 addresses_filename = 'state_of_the_union_addresses.txt'
 dataset_name = 'state_of_the_union'
