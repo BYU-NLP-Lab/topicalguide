@@ -165,7 +165,7 @@ topic highlighted (Figure \ref{fig:topic_doc}).
  \label{fig:topic_doc}
 \end{figure*}
 
-\section{Document Metadata}%TODO Another suggestion: I think sections 3 and 5 should be merged.  Meta-data leads to plots, which can be discussed immediately rather than with a forward pointer.  The new merged section could go either before or after the current section 4 on metrics.
+\section{Metadata}%TODO Another suggestion: I think sections 3 and 5 should be merged.  Meta-data leads to plots, which can be discussed immediately rather than with a forward pointer.  The new merged section could go either before or after the current section 4 on metrics.
 Acknowledging that more is known about most documents than just their content,
 the \tool{} provides \textit{document attributes}, a mechanism for association
 of arbitrary metadata with documents. This accomodates metadata
@@ -208,7 +208,8 @@ The \tool{} allows users to interactively generate two types of plots. The first
 shows topic trends over the values of an attribute---for example, the year
 of an address, or the political party of the president delivering it. This kind
 of plot has been used in visualizing topic models almost since their
-introduction \cite{Griffiths2004}. In our system they can be generated over any attribute for any%TODO Sec. 5: citation of Griffiths and Steyvers (2004) for plots should be preceded with an “e.g.”, since there were others who did similar things around that time.
+introduction (e.g. Griffiths and Steyvers, 2004)\comments{\cite{Griffiths2004}}. %TODO Find a way to do 'e.g.' in a non-static fashion
+In our system they can be generated over any attribute for any
 topic or combination of topics in the corpus. Figure \ref{fig:chart} shows
 trends for four chosen topics across the ``year'' attribute, giving a view
 of topic lifecycles across time as in \newcite{Griffiths2004} and \newcite{Wang2006}.
@@ -264,7 +265,7 @@ can be imagined and easily implemented.%TODO Maybe show TF-ITF?
  \includegraphics[width=400px,keepaspectratio=true]{./build_flowchart2.png}
  % build_deps.png: 1188x340 pixel, 72dpi, 41.91x11.99 cm, bb=0 0 1188 340
  \caption{Dependencies within the data import pipeline. Arrows indicate that the source is prerequisite for the target.
-All stages in the import process shown here can be overridden, allowing clean, domain-specific customizations.}
+All stages in the import process shown here can be overridden, allowing clean, dataset-specific customizations.}
  \label{fig:build_flowchart}
 \end{figure*}
 \section{Data Import Backend}
@@ -275,7 +276,7 @@ and model output indexed for quick retrieval by the web front-end.
 Additionally, metrics must be computed, topic names generated, and graphs rendered
 before they become accessible via the user interface. Unsurprisingly, the dependencies
 in the import process form a directed acyclic graph, represented in Figure~\ref{fig:build_flowchart}.
-In order to make workflows simpler and more efficient, we implemented%TODO Sec. 8: “we implemented the import process as a command-line frontend”.  The section is titled “backend”.  Let’s go with “backend” or just “command-line process”.
+In order to make workflows simpler and more efficient, we implemented
 the import process using the \texttt{doit} task automation tool.
 \footnote{http://doit.sourceforge.net/} This allows full
 import of a dataset using a single invocation of the import script.
@@ -283,7 +284,7 @@ import of a dataset using a single invocation of the import script.
 Enabling the \tool{} to browse a new dataset can be as simple as choosing a name
 and description, converting the documents to plaintext, placing them in a
 directory, and providing a JSON file containing any document metadata. By default,
-the \tool{} will automatically invoke MALLET's LDA implementation to train a%TODO Sec. 8: “the Topical Guide will automatically invoke MALLET’s LDA implementation to train a topic model” --> “the Topical Guide import process will automatically invoke …”
+the \tool{} import system will automatically invoke MALLET's LDA implementation to train a
 topic model \cite{McCallum2002}; however, the import system can also make use of
 existing topic model output in the MALLET format. The system also allows all
 elements of the pipeline to be overridden, allowing for customization and
