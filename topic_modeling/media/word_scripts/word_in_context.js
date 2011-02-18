@@ -25,13 +25,12 @@
 function get_context_for_word(word, num)
 {
 	cursor_wait();
-	var link = "/feeds/word-in-context/datasets/" + $.fn.topic_vars.dataset;
-	link += "/analyses/" + $.fn.topic_vars.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	var link = "/feeds/word-in-context/datasets/" + $.fn.dataset;
+	link += "/analyses/" + $.fn.analysis;
 	link += "/words/" + word;
 	$.getJSON(link, {}, function(word) {
 		new_html = '';
-		new_html += '<td class="doc-name"><a href="'+$.fn.topic_vars.baseurl+'/';
+		new_html += '<td class="doc-name"><a href="'+$.fn.baseurl+'/';
 		new_html += $.fn.topic_vars.curtopic_number + '/documents/';
 		new_html += word.doc_id;
 		new_html += '">'+word.doc_name;
@@ -39,7 +38,7 @@ function get_context_for_word(word, num)
 		new_html += '<td class="right-align">';
 		new_html += word.left_context;
 		new_html += '</td><td class="word">';
-		new_html += '<a href="'+$.fn.topic_vars.baseurl+'/';
+		new_html += '<a href="'+$.fn.baseurl+'/';
 		new_html += $.fn.topic_vars.curtopic_number;
 		new_html += '/words/' + word.word;
 		new_html += '">'+word.word+'</a></td>';
