@@ -62,13 +62,14 @@
 
 .branding-logo a img {
     height: 100px;
-    width: 100px;
+    /*width: 100px;*/
     border: 0px;
 }
 .branding-title-text {
 	font-size: 30px;
 	display:table-cell;
 	vertical-align: middle;
+	text-align: center;
 }
 
 #header {
