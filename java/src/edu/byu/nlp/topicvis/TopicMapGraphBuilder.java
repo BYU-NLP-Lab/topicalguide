@@ -63,24 +63,22 @@ import edu.byu.nlp.topicvis.DistanceFilterBuilder.DistanceFilter;
 
 public class TopicMapGraphBuilder {
 	private final YambaDatabase db;
-	private final String baseUrl;
 	private final String datasetName;
 	private final String analysisName;
 	private final String topicNameScheme;
 	private final Bijection<String> topicNameNumIdx;
 
-	public TopicMapGraphBuilder(String yambaFilename, String baseUrl, String datasetName, String analysisName, String topicNameScheme) {
-		this(new YambaDatabase(yambaFilename), baseUrl, datasetName, analysisName, topicNameScheme);
+	public TopicMapGraphBuilder(String yambaFilename, String datasetName, String analysisName, String topicNameScheme) {
+		this(new YambaDatabase(yambaFilename), datasetName, analysisName, topicNameScheme);
 	}
 
-	public TopicMapGraphBuilder(YambaDatabase db, String baseUrl, String datasetName, String analysisName, String topicNameScheme) {
-		this(db, topicNameNumIdx(db, datasetName, analysisName, topicNameScheme), baseUrl, datasetName, analysisName, topicNameScheme);
+	public TopicMapGraphBuilder(YambaDatabase db, String datasetName, String analysisName, String topicNameScheme) {
+		this(db, topicNameNumIdx(db, datasetName, analysisName, topicNameScheme), datasetName, analysisName, topicNameScheme);
 	}
 
-	public TopicMapGraphBuilder(YambaDatabase db, Bijection<String> topicNameNumIdx, String baseUrl, String datasetName, String analysisName, String topicNameScheme) {
+	public TopicMapGraphBuilder(YambaDatabase db, Bijection<String> topicNameNumIdx, String datasetName, String analysisName, String topicNameScheme) {
 		this.db = db;
 		this.topicNameNumIdx = topicNameNumIdx;
-		this.baseUrl = baseUrl;
 		this.datasetName = datasetName;
 		this.analysisName = analysisName;
 		this.topicNameScheme = topicNameScheme;
@@ -155,13 +153,25 @@ public class TopicMapGraphBuilder {
 		autoLayout.addLayout(secondLayout, 0.5f, new AutoLayout.DynamicProperty[]{adjustBySizeProperty, repulsionProperty, attractionProperty, gravityProperty});
 		autoLayout.execute();
 	}
+	
+	public void computeMetrics() {
+		//Get Centrality
+		AttributeModel attributeModel = Lookup.getDefault().lookup(AttributeController.class).getModel();
+		GraphDistance distance = new GraphDistance();
+		distance.setDirected(true);
+		distance.execute(currentModel(), attributeModel);
+	}
 
 	public void doColors() {
 		System.out.println("doColors");
 		//Rank color by Degree
 		RankingController rankingController = Lookup.getDefault().lookup(RankingController.class);
-		NodeRanking degreeRanking = rankingController.getRankingModel().getDegreeRanking();
-		ColorTransformer colorTransformer = rankingController.getObjectColorTransformer(degreeRanking);
+		
+//		NodeRanking degreeRanking = rankingController.getRankingModel().getDegreeRanking();
+		AttributeModel attributeModel = Lookup.getDefault().lookup(AttributeController.class).getModel();
+		AttributeColumn centralityColumn = attributeModel.getNodeTable().getColumn(GraphDistance.BETWEENNESS);
+		NodeRanking<?> centralityRanking = rankingController.getRankingModel().getNodeAttributeRanking(centralityColumn);
+		ColorTransformer<?> colorTransformer = rankingController.getObjectColorTransformer(centralityRanking);
 		colorTransformer.setColors(new Color[]{new Color(0xFCFFFD), new Color(0xFF9702)});
 		rankingController.transform(colorTransformer);
 	}
@@ -169,18 +179,15 @@ public class TopicMapGraphBuilder {
 	public void doSizes() {
 		AttributeModel attributeModel = Lookup.getDefault().lookup(AttributeController.class).getModel();
 		RankingController rankingController = Lookup.getDefault().lookup(RankingController.class);
-
-		//Get Centrality
-		GraphDistance distance = new GraphDistance();
-		distance.setDirected(true);
-		distance.execute(currentModel(), attributeModel);
-
+		
 		//Rank size by centrality
 		AttributeColumn centralityColumn = attributeModel.getNodeTable().getColumn(GraphDistance.BETWEENNESS);
-		NodeRanking centralityRanking = rankingController.getRankingModel().getNodeAttributeRanking(centralityColumn);
-		SizeTransformer sizeTransformer = rankingController.getObjectSizeTransformer(centralityRanking);
+		NodeRanking<?> centralityRanking = rankingController.getRankingModel().getNodeAttributeRanking(centralityColumn);
+		SizeTransformer<?> sizeTransformer = rankingController.getObjectSizeTransformer(centralityRanking);
 		sizeTransformer.setMinSize(40);
 		sizeTransformer.setMaxSize(80);
+		
+		
 
 		//Interpolator splines = new BezierInterpolator((float) control1.getX(),
 		//(float) control1.getY(),
@@ -200,19 +207,30 @@ public class TopicMapGraphBuilder {
 		PreviewModel model = Lookup.getDefault().lookup(PreviewController.class).getModel();
 		model.getNodeSupervisor().setShowNodeLabels(Boolean.TRUE);
 		model.getGlobalEdgeSupervisor().setShowFlag(Boolean.FALSE);
-		//ColorizerFactory colorizerFactory = Lookup.getDefault().lookup(ColorizerFactory.class);
+//		ColorizerFactory colorizerFactory = Lookup.getDefault().lookup(ColorizerFactory.class);
+//		model.getUndirectedEdgeSupervisor().setColorizer((EdgeColorizer) colorizerFactory.createParentColorMode());
+//		model.getUndirectedEdgeSupervisor().setColorizer((EdgeColorizer) colorizerFactory.createEdgeBothBColorMode());
+//		model.getUndirectedEdgeSupervisor().setColorizer(new EdgeColorizer(){
+//			@Override
+//			public void color(EdgeColorizerClient client) {
+//				
+//			}
+//		});
+//		colorizerFactory.createNodeOriginalColorMode()
 		//model.getNodeSupervisor().setNodeColorizer((NodeColorizer) colorizerFactory.createCustomColorMode(Color.BLUE));
-		//model.getUniEdgeSupervisor().setColorizer((EdgeColorizer) colorizerFactory.createCustomColorMode(Color.LIGHT_GRAY));
+//		model.getUniEdgeSupervisor().setColorizer((EdgeColorizer) colorizerFactory.createCustomColorMode(Color.LIGHT_GRAY));
 		//model.getBiEdgeSupervisor().setColorizer((EdgeColorizer) colorizerFactory.createCustomColorMode(Color.GRAY));
+		
 		//model.getUniEdgeSupervisor().setEdgeScale(0.1f);
 		//model.getBiEdgeSupervisor().setEdgeScale(0.1f);
+//		model.getUndirectedEdgeSupervisor().setEdgeScale(10f);
 		model.getNodeSupervisor().setProportionalLabelSize(Boolean.FALSE);
 		model.getNodeSupervisor().setBaseNodeLabelFont(model.getNodeSupervisor().getBaseNodeLabelFont().deriveFont(28f));
 
 		FilterController filterController = Lookup.getDefault().lookup(FilterController.class);
 
 		try {
-			final TopicSVGLinker linker = new TopicSVGLinker(baseUrl, datasetName, analysisName, "#ff0000", topicNameNumIdx);
+			final TopicSVGLinker linker = new TopicSVGLinker(datasetName, analysisName, "#ff0000", topicNameNumIdx);
 			Integer[] topicIDs = db.topicIDs(datasetName, analysisName).toArray(new Integer[0]);
 			Arrays.sort(topicIDs);
 			for(final int topicID : topicIDs) {
@@ -258,19 +276,19 @@ public class TopicMapGraphBuilder {
 
 	public static void main(String[] args) {
 		final int minValue = Integer.parseInt(args[0]);
-		final String baseUrl = args[1];
-		final String datasetName = args[2];
-		final String analysisName = args[3];
-		final String topicNameScheme = args[4];
-		final String pairwiseMetricName = args[5];
-		final String yambaFilename = args[6];
-		final String imgDir = args[7];
-		final String linkedImgDir = args[8];
-		final String gexfFilename = args[9];
+//		final String baseUrl = args[1];
+		final String datasetName = args[1];
+		final String analysisName = args[2];
+		final String topicNameScheme = args[3];
+		final String pairwiseMetricName = args[4];
+		final String yambaFilename = args[5];
+		final String imgDir = args[6];
+		final String linkedImgDir = args[7];
+		final String gexfFilename = args[8];
 
 		System.out.println("TopicMapGraphBuilder");
 		System.out.println("\tmin value: " + minValue);
-		System.out.println("\tbase url: " + baseUrl);
+//		System.out.println("\tbase url: " + baseUrl);
 		System.out.println("\tdataset name: " + datasetName);
 		System.out.println("\tanalysis name: " + analysisName);
 		System.out.println("\ttopic name scheme: " + topicNameScheme);
@@ -282,10 +300,11 @@ public class TopicMapGraphBuilder {
 
 		final YambaDatabase db = new YambaDatabase(yambaFilename);
 		final Bijection<String> topicNameNumIdx = topicNameNumIdx(db, datasetName, analysisName, topicNameScheme);
-		final TopicMapGraphBuilder tmg = new TopicMapGraphBuilder(db, topicNameNumIdx, baseUrl, datasetName, analysisName, topicNameScheme);
+		final TopicMapGraphBuilder tmg = new TopicMapGraphBuilder(db, topicNameNumIdx, datasetName, analysisName, topicNameScheme);
 		final TopicMetricDistanceGraphGenerator generator = new TopicMetricDistanceGraphGenerator(db, datasetName, analysisName, pairwiseMetricName, topicNameNumIdx);
 		generator.setMinValue(minValue);
 		tmg.generateGraph(generator);
+		tmg.computeMetrics();
 		tmg.doColors();
 		tmg.doSizes();
 		tmg.doLayout();

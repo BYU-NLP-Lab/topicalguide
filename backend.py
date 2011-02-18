@@ -80,7 +80,6 @@ eval(ast, globals(), locals())
 
 # This variable should be with Mallet, but it is needed to name the analysis,
 # so we have it up here.
-num_topics = 100
 if 'num_topics' not in locals():
     num_topics = 20
 
@@ -160,8 +159,6 @@ if 'graph_builder_class' not in locals():
     graph_builder_class="edu.byu.nlp.topicvis.TopicMapGraphBuilder"
 if 'graphs_min_value' not in locals():
     graphs_min_value = 1
-if 'graphs_base_url' not in locals():
-    graphs_base_url = "http://127.0.0.1:8000"
 if 'graphs_pairwise_metric' not in locals():
     graphs_pairwise_metric = "Document Correlation"
 if 'yamba_file' not in locals():
@@ -243,8 +240,10 @@ if 'task_dataset_import' not in locals():
         def dataset_in_database():
             try:
                 Dataset.objects.get(name=dataset_name)
+                print 'dataset ' + dataset_name + ' in database'
                 return True
             except Dataset.DoesNotExist:
+                print 'dataset ' + dataset_name + ' NOT in database'
                 return False
         # TODO(matt): clean up and possibly rename dataset_import.py and
         # analysis_import.py, now that we are using this build script - we don't
@@ -298,6 +297,7 @@ if 'task_name_schemes' not in locals():
             task['actions'] = [(generate_names,[ns])]
             task['task_dep'] = ['analysis_import']
             task['clean'] = [(clean_names,[ns])]
+            task['uptodate'] = [scheme_in_database(ns)]
             yield task
 
 if 'task_topic_metrics' not in locals():
@@ -519,8 +519,8 @@ if 'task_graphs' not in locals():
             gexf_file_name = "{0}/full_graph.gexf".format(graphs_img_dir)
             
             task['actions'] = [
-                'java -cp {0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/sqlitejdbc-v056.jar {2} {3} {4} {5} {6} {7} "{8}" {9} {10} {11} {12}'
-                .format(java_bin,java_base,graph_builder_class,graphs_min_value,graphs_base_url,dataset_name,analysis_name,ns.scheme_name(),graphs_pairwise_metric, yamba_file, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
+                'java -cp {0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/sqlitejdbc-v056.jar {2} {3} {4} {5} {6} "{7}" {8} {9} {10} {11}'
+                .format(java_bin,java_base,graph_builder_class,graphs_min_value,dataset_name,analysis_name,ns.scheme_name(),graphs_pairwise_metric, yamba_file, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
             ]
             task['task_dep'] = ['pairwise_topic_metrics', 'name_schemes', 'compile_java']
             task['clean'] =  [

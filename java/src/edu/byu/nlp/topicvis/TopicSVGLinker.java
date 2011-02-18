@@ -82,14 +82,12 @@ public class TopicSVGLinker {
 
 	}
 
-	private final String baseUrl;
 	private final String datasetName;
 	private final String analysisName;
 	private final String highlightColor;
 	private final Bijection<String> topicNameNumIdx;
 
-	public TopicSVGLinker(String baseUrl, String datasetName, String analysisName, final String highlightColor, Bijection<String> topicNameToTopicNum) {
-		this.baseUrl = baseUrl;
+	public TopicSVGLinker(String datasetName, String analysisName, final String highlightColor, Bijection<String> topicNameToTopicNum) {
 		this.datasetName = datasetName;
 		this.analysisName = analysisName;
 		this.highlightColor = highlightColor;
@@ -97,7 +95,7 @@ public class TopicSVGLinker {
 	}
 
 	private String topicUrl(final int topicNum) {
-		return baseUrl + "/datasets/" + datasetName + "/analyses/" + analysisName + "/topics/" + topicNum;
+		return "/datasets/" + datasetName + "/analyses/" + analysisName + "/topics/" + topicNum;
 	}
 
 	public void createLinkedSVG(final String srcSvgFilename, final String destSvgFilename, final int highlightTopicNum) {
