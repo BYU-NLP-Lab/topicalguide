@@ -17,19 +17,6 @@
 \setlength\titlebox{6.5cm}    % Expanding the titlebox
 \newcommand{\comments}[1]{}
 
-
-%TODO
-% Here’s an important point:
-% I also think that we must briefly address the issue of noise in the topic mark-up at the token level.  We need to at least acknowledge that topic assignments to tokens are not always meaningful, for the reasons we discussed yesterday:
-% -          Distributional patterns found by inference are not necessarily semantically informative to humans.
-% -          The topic assignments represent a sample from MCMC and are random, according to the state of the model at the time of the sample.
-% -          (are there other reasons to mention?)
-% We must also claim that despite the low-level noise, higher-level patterns are nonetheless meaningful.  How do we justify this claim in the absence of user studies?  Perhaps we simply highlight the need for user studies, paving the way for our future work, which we can mention.  We should acknowledge existing efforts in this direction, in particular the tea-leaves experiment of Boyd-Graber and others.
-% --Eric
-%p.s. I think this discussion belongs at the end of section 2 after “Or click on “Harry S. Truman 1.txt” to see President Truman’s message with words belonging to the “programs federal” topic highlighted Figure 3).”
-
-
-%TODO Do we need to anonymize images by removing the logo, and the text by removing the URL?
 \title{Increased Comprehension of Topic Models and Corpora\\ Using the \tool}
 % \author{Josh Hansen, Matthew J. Gardner, Jeff Lund, Dan Walker, Eric Ringger, \and Kevin Seppi\\ %TODO De-anonymize after review process
 % Department of Computer Science\\
@@ -40,12 +27,10 @@
 \begin{document}
 \maketitle
 
-%TODO -abstract, sec1, and/or sec9: I think we need to say something about how when you first encounter a large corpus, because you cannot read it, you may not even know what the predominant themes are.  Topic models expose the dominant themes, and the Topical Guide makes it possible to explore what the topic analysis has revealed.
-
 \begin{abstract}
 Although topic models can be employed for dimensionality reduction, their
 token-level output is as voluminous as the original dataset. Thus, humans'
-ability to manually assess model quality unaided is limited. Moreover, as the quantity of
+ability to manually assess model quality is limited. Moreover, as the quantity of
 digitized documents worldwide continues to expand, institutions correspondingly
 find an increased need for tools such as topic models to make information in
 these texts discoverable and thereby usable. In response to these twin needs, we
@@ -62,7 +47,7 @@ collections into something more immediately useful to humans and computers
 alike. The usefulness of this sort of dimensionality reduction is widely
 acknowledged, and topic models continue to be extended into exciting new
 territory
-\cite{wang_continuous_2008,mimno_polylingual_2009,boyd-graber_holistic_2010,brody_unsupervised_2010,he_detecting_2009,yao_efficient_2009}.
+\cite{wang_continuous_2008,mimno_polylingual_2009,brody_unsupervised_2010}.
 However, in their most verbose realization, these models output a topic
 assignment per token, resulting in an output that is a corpus unto itself.
 Though the range of possible values is substantially reduced, output size
@@ -74,15 +59,16 @@ and of limited utility. Unfortunately, tools for deep understanding of topic mod
 been lacking.
 \begin{figure*}[t]
  \centering
- \includegraphics[width=400px,keepaspectratio=true]{./topic_page_take4.png}
+ \includegraphics[width=400px,keepaspectratio=true]{./topic_page_take5_2.png}
  % topic_page_huge_cropped.png: 1394x1027 pixel, 96dpi, 36.88x27.17 cm, bb=0 0 1045 770
- \caption{The topic view}
+ \caption{The topic view. Visual and textual means combine to convey topic properties in a multimodal fashion,
+while hyperlinks connect users to statistics about specific words and documents.}
  \label{fig:topic_page}
 \end{figure*}
 
 Simultaneously, massive digitization efforts by libraries and other institutions
 are generating gargantuan quantities of electronic text, increasing demand for tools such as
-topic models. Because of their ability to characterize the contents of
+topic models. Because of their ability to characterize the contents of even large, unknown
 corpora, topic models seem to hold great promise for archival
 institutions wishing to make their newly-digitized collections accessible to
 researchers and the public. However, readily available tools for exploration of 
@@ -110,7 +96,7 @@ on hundreds of thousands of documents. %TODO and congressional record
 
 \begin{figure*}[t]
  \centering
- \includegraphics[width=400px,keepaspectratio=true]{./topic_word_view2.png}
+ \includegraphics[width=400px,keepaspectratio=true]{./topic_word_view3.png}
  % topic_document_view.png: 1359x858 pixel, 96dpi, 35.95x22.70 cm, bb=0 0 1019 643
  \caption{A view of the word ``billion'' as it occurs in the ``programs federal'' topic.}
  \label{fig:topic_word}
@@ -138,41 +124,27 @@ of the document along with prominent topics and any document metrics that have b
 means of pairwise document metrics, a list of similar documents is shown as
 well.
 
-Intuitive hyperlinks facilitate an interactive experience. Click on the
+Intuitive hyperlinks facilitate an interactive experience. Click on the %TODO Make words in the doc view link
 ``economic congress'' node in the topic map and be sent to its topic view
 to see how presidents have discussed economic issues. Click on ``billion'' in
 the word cloud to see how that word has been used in various addresses (Figure
-\ref{fig:topic_word}). Or click on ``Harry\_S.\_Truman\_1.txt'' to see
+\ref{fig:topic_word}). Or click on ``Harry\_S.\_Truman\_5.txt'' to see
 President Truman's message with words belonging to the ``programs federal''
-topic highlighted (Figure \ref{fig:topic_doc}).
-%TODO Make words in the doc view link
-%TODO Show words in context in the word view
-
-% An important concept used by the \tool{} object model and user interface is the
-% notion of \textit{datasets} and \textit{analyses}. A dataset is a set of
-% documents --- a corpus. An analysis is associated with one dataset and
-% constitutes a set of topics and token-level topic assignments for all of the
-% documents in that dataset. The analysis concept is useful in allowing for
-% multiple topic models on a single dataset. For example, it could be useful to
-% use LDA to infer both a 20-topic model and a 100-topic model on the State of the
-% Union Addresses dataset.
+topic highlighted (Figure \ref{fig:topic_doc}).\footnote{In this case the token-level
+assignments seem to poorly reflect the dominant themes of the topic. While
+the MCMC sampling algorithm employed guarantees convergence at the distribution
+level, this guarantee does not extend to individual components of a sample,
+meaning that many topic assignments will fall outside of what humans would deem
+semantically coherent. Nevertheless, overall topic distributions capture
+an underlying reality recognized by human users \cite{Chang2009}.}
 
 \begin{figure*}[t]
  \centering
- \includegraphics[width=400px,keepaspectratio=true]{./topic_document_view.png}
+ \includegraphics[width=400px,keepaspectratio=true]{./topic_document_view2.png}
  % topic_document_view.png: 1359x858 pixel, 96dpi, 35.95x22.70 cm, bb=0 0 1019 643
- \caption{A view of Harry Truman's first State of the Union address, highlighting words belonging to the ``programs federal'' topic.}
+ \caption{A view of Harry Truman's fifth State of the Union address. Words belonging to the ``programs federal'' topic are highlighted in blue.}
  \label{fig:topic_doc}
 \end{figure*}
-
-\section{Metadata}%TODO Another suggestion: I think sections 3 and 5 should be merged.  Meta-data leads to plots, which can be discussed immediately rather than with a forward pointer.  The new merged section could go either before or after the current section 4 on metrics.
-Acknowledging that more is known about most documents than just their content,
-the \tool{} provides \textit{document attributes}, a mechanism for association
-of arbitrary metadata with documents. This accomodates metadata
-provided by a dataset curator, often including facts about document
-provenance and author identity. Document attributes also allow for metadata
-obtained as part of the output of a model. These attributes can be used to
-filter the list of documents, or as independent variables for plots, as discussed in Section \ref{sec:plots}.
 
 \section{Metrics}
 Topic-centric document exploration is enhanced by means of \textit{metrics}.
@@ -203,16 +175,24 @@ correlation \cite{Blei2009} to show similar documents.
  \caption{Selected topics over time as a percentage of overall tokens.}
 \end{figure*}
 
-\section{Plots}\label{sec:plots}
+\section{Metadata and Plots}\label{sec:plots}
+Acknowledging that more is known about most documents than just their content,
+the \tool{} provides \textit{document attributes}, a mechanism for association
+of arbitrary metadata with documents. This accomodates metadata
+provided by a dataset curator, often including facts about document
+provenance and author identity. Document attributes also allow for metadata
+obtained as part of the output of a model. These attributes can be used to
+filter the list of documents, or as independent variables for plots.
+
 The \tool{} allows users to interactively generate two types of plots. The first
 shows topic trends over the values of an attribute---for example, the year
 of an address, or the political party of the president delivering it. This kind
-of plot has been used in visualizing topic models almost since their
+of plot has been used to visualize topic models almost since their
 introduction (e.g. Griffiths and Steyvers, 2004)\comments{\cite{Griffiths2004}}. %TODO Find a way to do 'e.g.' in a non-static fashion
 In our system they can be generated over any attribute for any
 topic or combination of topics in the corpus. Figure \ref{fig:chart} shows
 trends for four chosen topics across the ``year'' attribute, giving a view
-of topic lifecycles across time as in \newcite{Griffiths2004} and \newcite{Wang2006}.
+of topic lifecycles across time as in \newcite{Griffiths2004}, \newcite{Wang2006}, and others.
 
 The second type of plot is a scatter plot of topic metrics, by which one topic
 metric is plotted against another. This is particularly suited to discovery of
@@ -229,8 +209,10 @@ construct a topic graph $G = (N, E)$ for a set of topics $T$ as follows:
 $N$ is a set of $|T|$ nodes such that
 \[\forall_{t\in T} weight(N_{t}) = \tau_{1}(t)\]
 and
-\[\forall_{t\in T} color(N_{t}) = \tau_{2}(t)\]
-where $\tau_1$ and $\tau_2$ are topic metrics (potentially the same). $E$ is
+\[\forall_{t\in T} color(N_{t}) = interp(C_{1}, C_{2}, \tau_{2}(t))\]
+where $\tau_1$ and $\tau_2$ are topic metrics (potentially the same), $C_{1}$ and
+$C_{2}$ are RGB triples, and $interp$ returns an RGB triple formed by linearly interpolating
+between $C_{1}$ and $C_{2}$. $E$ is
 constructed as a set of $|T|^2$ edges such that
   \[\forall_{(t,u)\in T\times T, t\neq u} weight(E_{t,u}) = \pi(t,u)\]
 where $\pi$ is a pairwise topic metric.
@@ -244,7 +226,7 @@ the nodes so that, generally speaking, nodes joined by edges of higher weight
 are closer together, and nodes joined by edges of lower weight are further
 apart. (A similar approach focused on visualization of the document space is
 described in \newcite{Newman2010Maps}.) In the final rendering of the image, edges 
-are omitted to reduce visual complexity. However, the distances between nodes %TODO -sec6: In the final rendering of the image, edges are omitted to reduce visual complexity. -- perhaps the first order edges from the center topic could be reintroduced, with second order edges still omitted; when I look at the graphs without edges, it seems that something is missing.
+are omitted to reduce visual complexity. However, the distances between nodes
 are still determined by the interaction of the layout algorithm and the edge
 weights.
 
@@ -260,7 +242,7 @@ interface. By default we use a concatenation of the two
 words with the highest probability for a given topic; alternative schemes
 can be imagined and easily implemented.%TODO Maybe show TF-ITF?
 
-\begin{figure*}[ht]%TODO % figure 5 could be improved to reflect both the procedural steps involved and the products of those steps.  I also think that figure 5 deserves a little more narration.
+\begin{figure*}[ht]
  \centering
  \includegraphics[width=400px,keepaspectratio=true]{./build_flowchart2.png}
  % build_deps.png: 1188x340 pixel, 72dpi, 41.91x11.99 cm, bb=0 0 1188 340
@@ -277,9 +259,8 @@ Additionally, metrics must be computed, topic names generated, and graphs render
 before they become accessible via the user interface. Unsurprisingly, the dependencies
 in the import process form a directed acyclic graph, represented in Figure~\ref{fig:build_flowchart}.
 In order to make workflows simpler and more efficient, we implemented
-the import process using the \texttt{doit} task automation tool.
-\footnote{http://doit.sourceforge.net/} This allows full
-import of a dataset using a single invocation of the import script.
+the import process using the \texttt{doit} task automation tool.\footnote{http://doit.sourceforge.net/}
+This allows full import of a dataset using a single invocation of the import script.
 
 Enabling the \tool{} to browse a new dataset can be as simple as choosing a name
 and description, converting the documents to plaintext, placing them in a
