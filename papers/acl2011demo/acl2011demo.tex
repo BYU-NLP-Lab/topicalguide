@@ -21,7 +21,7 @@
 % \author{Josh Hansen, Matthew J. Gardner, Jeff Lund, Dan Walker, Eric Ringger, \and Kevin Seppi\\ %TODO De-anonymize after review process
 % Department of Computer Science\\
 % Brigham Young University\\
-% \tt \{mjg82,jlutes,joshhansen\}@byu.edu, \{jefflund,danwalkeriv\}@gmail.com\\
+% \tt \{joshhansen,mjg82\}@byu.edu, \{jefflund,danwalkeriv\}@gmail.com\\
 % \tt \{ringger,kseppi\}@cs.byu.edu}
 
 \begin{document}
@@ -92,7 +92,7 @@ system. Throughout the discussion, examples are taken from a
 corpus of State of the Union messages delivered by United States presidents
 from 1790 to 2010. This constitutes 223 documents totalling 757,823 tokens.
 Though this corpus is admittedly small, the \tool{} has also been employed
-on hundreds of thousands of documents. %TODO and congressional record
+on corpora of hundreds of thousands of documents and millions of tokens.
 
 \begin{figure*}[t]
  \centering
@@ -209,11 +209,13 @@ construct a topic graph $G = (N, E)$ for a set of topics $T$ as follows:
 $N$ is a set of $|T|$ nodes such that
 \[\forall_{t\in T} weight(N_{t}) = \tau_{1}(t)\]
 and
-\[\forall_{t\in T} color(N_{t}) = interp(C_{1}, C_{2}, \tau_{2}(t))\]
-where $\tau_1$ and $\tau_2$ are topic metrics (potentially the same), $C_{1}$ and
-$C_{2}$ are RGB triples, and $interp$ returns an RGB triple formed by linearly interpolating
-between $C_{1}$ and $C_{2}$. $E$ is
-constructed as a set of $|T|^2$ edges such that
+\[\forall_{t\in T} color(N_{t}) = \tau_{2}(t)\]
+where $\tau_1$ and $\tau_2$ are topic metrics (potentially the same).
+% \[\forall_{t\in T} color(N_{t}) = interp(C_{1}, C_{2}, \tau_{2}(t))\]
+% where $\tau_1$ and $\tau_2$ are topic metrics (potentially the same), $C_{1}$ and
+% $C_{2}$ are RGB triples, and $interp$ returns an RGB triple formed by linearly interpolating
+% between $C_{1}$ and $C_{2}$. $E$ is
+$E$ is constructed as a set of $|T|^2$ edges such that
   \[\forall_{(t,u)\in T\times T, t\neq u} weight(E_{t,u}) = \pi(t,u)\]
 where $\pi$ is a pairwise topic metric.
 
