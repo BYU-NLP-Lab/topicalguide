@@ -26,7 +26,7 @@
 from django.shortcuts import render_to_response, get_object_or_404
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import BreadCrumb
+from topic_modeling.visualize.common import BreadCrumb, root_context
 from topic_modeling.visualize.common import get_word_cloud
 from topic_modeling.visualize.common import paginate_list
 from topic_modeling.visualize.common import set_word_context
@@ -39,13 +39,9 @@ from topic_modeling.visualize.models import Value
 from topic_modeling.visualize.models import Word
 
 def base_page_vars(request, dataset, analysis, attribute, value):
-    page_vars = dict()
+    page_vars = root_context(dataset, analysis)
     page_vars['highlight'] = 'attributes_tab'
     page_vars['tab'] = 'attribute'
-    page_vars['dataset'] = dataset
-    page_vars['analysis'] = analysis
-    page_vars['baseurl'] = '/datasets/%s/analyses/%s/attributes' % (dataset,
-            analysis)
 
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(name=analysis, dataset=dataset)
@@ -99,7 +95,7 @@ def index(request, dataset, analysis, attribute, value=''):
         type = attrvalword.word.type
         percent = float(attrvalword.count) / tokens
         w = WordSummary(type, percent)
-        w.url = (page_vars['baseurl']+'/'+attribute.name+'/values/'+
+        w.url = (page_vars['attributes_url']+'/'+attribute.name+'/values/'+
                 value.value+'/words/'+type)
         words.append(w)
     attrvalngrams = attribute.attributevalueword_set.filter(
@@ -110,7 +106,7 @@ def index(request, dataset, analysis, attribute, value=''):
         type = attrvalngram.word.type
         percent = float(attrvalngram.count) / tokens
         w = WordSummary(type, percent)
-        w.url = (page_vars['baseurl']+'/'+attribute.name+'/values/'+
+        w.url = (page_vars['attributes_url']+'/'+attribute.name+'/values/'+
                 value.value+'/words/'+type)
         ngrams.append(w)
 
@@ -125,9 +121,7 @@ def index(request, dataset, analysis, attribute, value=''):
         type = attrvaltopic.topic.name
         percent = float(attrvaltopic.count) / tokens
         t = WordSummary(type, percent)
-        t.url = '/datasets/%s/analyses/%s/topics/%s' % (
-                page_vars['dataset'], page_vars['analysis'],
-                attrvaltopic.topic.number)
+        t.url = page_vars['analysis_url'] + '/topics/%s' % (attrvaltopic.topic.number)
         topics.append(t)
 
 
@@ -158,8 +152,7 @@ def word_index(request, dataset, analysis, attribute, value, word):
         w = WordSummary(word.type)
         set_word_context(w, document, analysis)
         words.append(w)
-        w.url = '%s/%s/values/%s/documents/%d?kwic=%s' % (
-                                                          page_vars['baseurl'],
+        w.url = page_vars['attributes_url'] + '/%s/values/%s/documents/%d?kwic=%s' % (
                                                           attribute.name, 
                                                           value.value, 
                                                           document.id,

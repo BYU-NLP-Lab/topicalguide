@@ -25,14 +25,13 @@
 function get_top_attribute_values()
 {
 	cursor_wait();
-	var link = "/feeds/attrvaltopic/datasets/" + $.fn.topic_vars.dataset;
-	link += "/analyses/" + $.fn.topic_vars.analysis;
+	var link = "/feeds/attrvaltopic/datasets/" + $.fn.dataset;
+	link += "/analyses/" + $.fn.analysis;
 	link += "/topics/" + $.fn.topic_vars.curtopic_number;
 	link += "/attributes/" + $("#id_attribute").val();
 	link += "/order-by/" + $("input:radio[name=ordering]:checked").val();
 	$.getJSON(link, {}, function(data) {
-		var base = '/datasets/' + $.fn.topic_vars.dataset;
-		base += '/analyses/' + $.fn.topic_vars.analysis + '/';
+		var base = $.fn.analysis_url + '/';
 		values = '';
 		for (var i = 0; i < data.values.length; i++) {
 			values += '<tr>';

@@ -28,7 +28,7 @@ from django.shortcuts import render_to_response
 from django.template import Context
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import BreadCrumb
+from topic_modeling.visualize.common import BreadCrumb, root_context
 from topic_modeling.visualize.common import WordSummary
 from topic_modeling.visualize.documents.common import SortDocumentForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
@@ -38,13 +38,9 @@ from topic_modeling.visualize.models import Topic
 
 
 def base_context(request, dataset, analysis, document):
-    context = Context()
+    context = root_context(dataset, analysis)
     context['highlight'] = 'documents_tab'
     context['tab'] = 'document'
-    context['baseurl'] = '/datasets/%s/analyses/%s/documents' % (dataset,
-            analysis)
-    context['dataset'] = dataset
-    context['analysis'] = analysis
     dataset = Dataset.objects.get(name=dataset)
     analysis = dataset.analysis_set.get(name=analysis)
 

@@ -26,11 +26,11 @@
 from django.shortcuts import render_to_response
 
 from topic_modeling.visualize.models import Dataset
-from topic_modeling.visualize.common import BreadCrumb
+from topic_modeling.visualize.common import BreadCrumb, root_context
 from topic_modeling.visualize.common import paginate_list
 
 def index(request, dataset="", analysis=""):
-    page_vars = dict()
+    page_vars = root_context(dataset, analysis)
     page_vars['highlight'] = 'datasets_tab'
 
     datasets = Dataset.objects.all()

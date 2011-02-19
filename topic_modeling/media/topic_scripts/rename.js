@@ -25,8 +25,8 @@
 function rename_topic() 
 {
 	cursor_wait();
-	var link = "/feeds/rename-topic/datasets/" + $.fn.topic_vars.dataset;
-	link += "/analyses/" + $.fn.topic_vars.analysis;
+	var link = "/feeds/rename-topic/datasets/" + $.fn.dataset;
+	link += "/analyses/" + $.fn.analysis;
 	link += "/topics/" + $.fn.topic_vars.curtopic_number;
 	link += "/name/" + $("#id_topic_name").val();
 	$.get(link, {}, function(name) {

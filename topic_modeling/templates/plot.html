@@ -28,7 +28,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		<ul class="list centered">
 			{% for p in plots %}
 			<li class="list{% ifequal p plot %} highlight{% endifequal %}">
-				<a href="{{ baseurl }}/{{ p }}">{{ p }}</a>
+				<a href="{{ plots_url }}/{{ p }}">{{ p }}</a>
 			</li>
 			{% endfor %}
 		</ul>

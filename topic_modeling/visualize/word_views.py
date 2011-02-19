@@ -26,19 +26,19 @@ from django.template import Context
 
 from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common import BreadCrumb, paginate_list, \
-    WordSummary, WordFindForm, get_word_list
+    WordSummary, WordFindForm, get_word_list, root_context
 from topic_modeling.visualize.models import Dataset, Word
 
 def index(request, dataset, analysis, word):
-    context = Context()
+    context = root_context(dataset, analysis)
     context['highlight'] = 'words_tab'
     context['tab'] = 'word'
-    context['baseurl'] = '/datasets/%s/analyses/%s/words' % (dataset,
-            analysis)
-    context['dataset'] = dataset
-    context['analysis'] = analysis
     dataset = Dataset.objects.get(name=dataset)
     analysis = dataset.analysis_set.get(name=analysis)
+    
+    #Used by word_in_context.html
+    context['doc_base_url'] = context['documents_url']
+    context['word_base_url'] = context['words_url']
     
     words = get_word_list(request, dataset.name)
     
@@ -65,12 +65,12 @@ def index(request, dataset, analysis, word):
     word_base = request.session.get('word-find-base', '')
     context['word_find_form'] = WordFindForm(word_base)
         
-    add_word_contexts(context['curword'].type, context['baseurl'], context)
+    add_word_contexts(context['curword'].type, context['words_url'], context)
 #    word = context['curword'].type
 #    words = []
 #    for i in range(0,10):
 #        w = WordSummary(word, number=i)
-#        w.url = context['baseurl'] + word
+#        w.url = context['words_url'] + word
 #        words.append(w)
 #    
 #    context['word_contexts'] = words

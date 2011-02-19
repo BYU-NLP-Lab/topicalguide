@@ -27,7 +27,7 @@ from django.shortcuts import render_to_response
 from django.http import HttpResponse
 
 from topic_modeling.visualize.charts import plot_types
-from topic_modeling.visualize.common import BreadCrumb
+from topic_modeling.visualize.common import BreadCrumb, root_context
 from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Dataset
@@ -35,14 +35,10 @@ from topic_modeling.visualize.models import Dataset
 
 def index(request, dataset, analysis, plot):
     if not plot:
-      plot = plot_types.keys()[0]
-    page_vars = dict()
+        plot = plot_types.keys()[0]
+    page_vars = root_context(dataset, analysis)
     page_vars['highlight'] = 'plots_tab'
     page_vars['tab'] = 'plot'
-    page_vars['baseurl'] = '/datasets/%s/analyses/%s/plots' % \
-            (dataset, analysis)
-    page_vars['dataset'] = dataset
-    page_vars['analysis'] = analysis
     page_vars['plot'] = plot
 
     dataset = Dataset.objects.get(name=dataset)
@@ -52,22 +48,20 @@ def index(request, dataset, analysis, plot):
     page_vars['breadcrumb'].analysis(analysis)
     page_vars['breadcrumb'].plot()
 
-    histogram = False
-    frequency = False
+#    histogram = False
+#    frequency = False
     attributes = Attribute.objects.filter(dataset=dataset)
     plot_form = plot_types[plot].form(dataset, analysis)
     topics = [analysis.topic_set.all()[0]]
     attribute = attributes[0]
     values = attributes[0].value_set.all()
-
-    baseurl = '/datasets/%s/analyses/%s/' % (dataset.name, analysis.name)
     
-    topic_links = [baseurl + 'topics/%s' % str(topic.number) 
+    topic_links = [page_vars['topics_url'] + '/%s' % str(topic.number) 
                    for topic in topics]
     topic_names = [topic.name for topic in topics]
     page_vars['topic_links'] = zip(topic_links, topic_names)
     
-    attr_links = [baseurl + 'attributes/%s/values/%s' % \
+    attr_links = [page_vars['attributes_url'] + '/%s/values/%s' % \
                   (str(attribute), str(value)) for value in values]
     attr_names = [value.value for value in values]
     page_vars['attr_links'] = zip(attr_links, attr_names)
@@ -91,30 +85,30 @@ def index(request, dataset, analysis, plot):
 
 def create_plot_image(request, chart_type, dataset, analysis, attribute,
         topic, value):
-  """
-  Handles the creation of a topic/nominal attribute plot.  Generates
-  the correct plot data and returns the image data to the client in an
-  HTTP response.
-  """
-  chart_parameters = {'dataset': dataset,
-                      'analysis': analysis,
-                      'attribute': attribute,
-                      'topic': topic,
-                      'value': value} 
-  if request.GET.get('frequency', False):
-      chart_parameters['frequency'] = 'True'
-  if request.GET.get('histogram', False):
-      chart_parameters['histogram'] = 'True'
-  if request.GET.get('normalized', False):
-      chart_parameters['normalized'] = 'True'
-  if request.GET.get('kde', False):
-      chart_parameters['kde'] = 'True'
-  if request.GET.get('points', False):
-      chart_parameters['points'] = 'True'
+    """
+    Handles the creation of a topic/nominal attribute plot.  Generates
+    the correct plot data and returns the image data to the client in an
+    HTTP response.
+    """
+    chart_parameters = {'dataset': dataset,
+                        'analysis': analysis,
+                        'attribute': attribute,
+                        'topic': topic,
+                        'value': value} 
+    if request.GET.get('frequency', False):
+        chart_parameters['frequency'] = 'True'
+    if request.GET.get('histogram', False):
+        chart_parameters['histogram'] = 'True'
+    if request.GET.get('normalized', False):
+        chart_parameters['normalized'] = 'True'
+    if request.GET.get('kde', False):
+        chart_parameters['kde'] = 'True'
+    if request.GET.get('points', False):
+        chart_parameters['points'] = 'True'
 
-  chart = plot_types[chart_type](chart_parameters)
-
-  return HttpResponse(chart.get_chart_image(), mimetype="image/png")
+    chart = plot_types[chart_type](chart_parameters)
+    
+    return HttpResponse(chart.get_chart_image(), mimetype="image/png")
 
 
 # vim: et sw=4 sts=4
