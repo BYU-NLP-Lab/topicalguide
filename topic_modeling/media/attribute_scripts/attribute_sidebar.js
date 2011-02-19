@@ -33,8 +33,8 @@ function redraw_values(values_list, page, num_pages) {
             new_html += ' class="highlight"';
         }
         new_html += '>';
-        new_html += '<a href="' + $.fn.attr_vars.baseurl;
-        new_html += '/' + $.fn.attr_vars.curattr;
+        new_html += '<a href="' + $.fn.attributes_url + "/";
+        new_html += $.fn.attr_vars.curattr;
         new_html += '/values/' + values_list[i].value + '">';
         new_html += values_list[i].value + '</a></li>';
     }
@@ -45,8 +45,8 @@ function redraw_values(values_list, page, num_pages) {
 
 function get_attribute_page(page) {
     $.getJSON('/feeds/attribute-page/datasets/'
-            + $.fn.attr_vars.dataset
-            + '/analyses/' + $.fn.attr_vars.analysis
+            + $.fn.dataset
+            + '/analyses/' + $.fn.analysis
             + '/attributes/' + $.fn.attr_vars.curattr
             + '/number/' + page,
             {}, function(data) {

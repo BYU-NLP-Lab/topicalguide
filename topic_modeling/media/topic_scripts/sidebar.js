@@ -33,7 +33,7 @@ function redraw_topics(topics_list, page, num_pages) {
 			new_html += ' class="highlight"';
 		}
 		new_html += '>';
-		new_html += '<a href="' + $.fn.baseurl;
+		new_html += '<a href="' + $.fn.topics_url;
 		new_html += '/' + topics_list[i].number;
 		new_html += $.fn.topic_vars.post_link;
 		new_html += '">';

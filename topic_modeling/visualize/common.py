@@ -29,6 +29,20 @@ from django.shortcuts import render_to_response
 from django.template.context import Context
 from topic_modeling.visualize.models import Word
 
+def root_context(dataset, analysis):
+    context = Context()
+    context['dataset'] = dataset
+    context['analysis'] = analysis
+    context['dataset_url'] = "/datasets/%s" % (dataset)
+    context['analysis_url'] = "%s/analyses/%s" % (context['dataset_url'], analysis)
+    
+    context['attributes_url'] = context['analysis_url'] + "/attributes"
+    context['documents_url'] = context['analysis_url'] + "/documents"
+    context['plots_url'] = context['analysis_url'] + "/plots"
+    context['topics_url'] = context['analysis_url'] + "/topics"
+    context['words_url'] = context['analysis_url'] + "/words"
+    return context
+
 ################################################################################
 # Classes
 ################################################################################

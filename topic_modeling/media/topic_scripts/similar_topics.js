@@ -25,12 +25,12 @@
 function get_similar_topics()
 {
 	cursor_wait();
-	var link = "/feeds/similar-topics/datasets/" + $.fn.topic_vars.dataset;
-	link += "/analyses/" + $.fn.topic_vars.analysis;
+	var link = "/feeds/similar-topics/datasets/" + $.fn.dataset;
+	link += "/analyses/" + $.fn.analysis;
 	link += "/topics/" + $.fn.topic_vars.curtopic_number;
 	link += "/measures/" + $("#id_similarity_measure").val();
 	$.getJSON(link, {}, function(data) {
-		var base = $.fn.topic_vars.baseurl + "/";
+		var base = $.fn.topic_vars.topics_url + "/";
 		var topics = '';
 		for (var i = 0; i < data.topics.length; i++) {
 			topics += '<tr>';

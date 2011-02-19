@@ -33,7 +33,7 @@ function redraw_words(word_list, page, num_pages) {
             new_html += ' class="highlight"';
         }
         new_html += '>';
-        new_html += '<a href="' + $.fn.word_vars.baseurl;
+        new_html += '<a href="' + $.fn.words_url;
         new_html += '/' + word_list[i].type + '">';
         new_html += word_list[i].type + '</a></li>';
     }
@@ -42,8 +42,8 @@ function redraw_words(word_list, page, num_pages) {
 }
 function get_word_page(page) {
     cursor_wait();
-    $.getJSON('/feeds/word-page/datasets/' + $.fn.word_vars.dataset
-            + '/analyses/' + $.fn.word_vars.analysis
+    $.getJSON('/feeds/word-page/datasets/' + $.fn.dataset
+            + '/analyses/' + $.fn.analysis
             + '/number/' + page,
             {}, function(data) {
             redraw_words(data.words, data.page, data.num_pages);
@@ -53,8 +53,8 @@ function get_word_page(page) {
 function find_word() {
     cursor_wait();
     word_base = document.getElementById("id_find_word").value;
-    $.getJSON('/feeds/word-page-find/datasets/' + $.fn.word_vars.dataset
-            + '/analyses/' + $.fn.word_vars.analysis
+    $.getJSON('/feeds/word-page-find/datasets/' + $.fn.dataset
+            + '/analyses/' + $.fn.analysis
             + '/words/' + word_base,
             {}, function(data) {
             redraw_words(data.words, data.page, data.num_pages);

@@ -37,7 +37,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		<td>
 			<select id="id_attribute" OnChange="location.href=document.getElementById('id_attribute').options[selectedIndex].value">
 				{% for a in attributes %}
-				<option value="{{ baseurl }}/{{ a.name }}" {% ifequal attribute a %}selected{% endifequal %}>{{ a.name }}</option>
+				<option value="{{ attributes_url }}/{{ a.name }}" {% ifequal attribute a %}selected{% endifequal %}>{{ a.name }}</option>
 				{% endfor %}
 			</select>
 		</td>

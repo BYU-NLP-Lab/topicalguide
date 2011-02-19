@@ -31,7 +31,7 @@ function get_context_for_word(word)
 	link += "/words/" + word;
 	$.getJSON(link, {}, function(word) {
 		new_html = '';
-		new_html += '<td class="doc-name"><a href="'+$.fn.baseurl+'/';
+		new_html += '<td class="doc-name"><a href="'+$.fn.topics_url+'/';
 		new_html += $.fn.topic_vars.curtopic_number + '/documents/';
 		new_html += word.doc_id;
 		new_html += '">'+word.doc_name;
@@ -39,7 +39,7 @@ function get_context_for_word(word)
 		new_html += '<td class="right-align">';
 		new_html += word.left_context;
 		new_html += '</td><td class="word">';
-		new_html += '<a href="'+$.fn.baseurl+'/';
+		new_html += '<a href="'+$.fn.topics_url+'/';
 		new_html += $.fn.topic_vars.curtopic_number;
 		new_html += '/words/' + word.word;
 		new_html += '">'+word.word+'</a></td>';

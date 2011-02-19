@@ -34,8 +34,8 @@ function redraw_documents(documents_list, page, num_pages) {
 			new_html += ' class="highlight"';
 		}
 		new_html += '>';
-		new_html += '<a href="' + $.fn.doc_vars.baseurl;
-		new_html += '/' + documents_list[i].id + '">';
+		new_html += '<a href="' + $.fn.documents_url + '/';
+		new_html += documents_list[i].id + '">';
 		new_html += documents_list[i].name + '</a></li>';
 	}
 	new_html += '</ul>';
@@ -44,8 +44,8 @@ function redraw_documents(documents_list, page, num_pages) {
 }
 function get_document_page(page) {
 	cursor_wait();
-	var link = "/feeds/document-page/datasets/" + $.fn.doc_vars.dataset;
-	link += "/analyses/" + $.fn.doc_vars.analysis;
+	var link = "/feeds/document-page/datasets/" + $.fn.dataset;
+	link += "/analyses/" + $.fn.analysis;
 	link += "/documents/" + $.fn.doc_vars.curdocument_id;
 	link += "/number/" + page;
 	$.getJSON(link, {}, function(data) {
@@ -56,8 +56,8 @@ function get_document_page(page) {
 function sort_documents() {
 	cursor_wait();
 	ordering = $("#id_sort").val();
-	var link = "/feeds/document-ordering/datasets/" + $.fn.doc_vars.dataset;
-	link += "/analyses/" + $.fn.doc_vars.analysis;
+	var link = "/feeds/document-ordering/datasets/" + $.fn.dataset;
+	link += "/analyses/" + $.fn.analysis;
 	link += "/order-by/" + ordering;
 	$.getJSON(link, {}, function(data) {
 		redraw_documents(data.documents, data.page, data.num_pages);

@@ -34,7 +34,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseNotFound
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import get_word_cloud
+from topic_modeling.visualize.common import get_word_cloud, root_context
 from topic_modeling.visualize.common import set_word_context
 from topic_modeling.visualize.common import BreadCrumb
 from topic_modeling.visualize.common import WordSummary
@@ -58,13 +58,9 @@ from topic_modeling.visualize.topics.filters import TopicFilterByWord
 
 def base_context(request, dataset, analysis, topic, extra_filters=[]):
     # Basic page variables here
-    context = Context()
+    context = root_context(dataset, analysis)
     context['highlight'] = 'topics_tab'
     context['tab'] = 'topic'
-    context['dataset'] = dataset
-    context['analysis'] = analysis
-    context['baseurl'] = '/datasets/%s/analyses/%s/topics' % (dataset,
-            analysis)
     context['extra_widgets'] = []
     
     ds = Dataset.objects.get(name=dataset)
@@ -162,7 +158,7 @@ def word_index(request, dataset, analysis, topic, word):
         w = WordSummary(word.type)
         set_word_context(w, d, analysis, topic.number)
         docs.append(w)
-        w.url = "%s/%d/documents/%d?kwic=%s" % (context['baseurl'],
+        w.url = "%s/%d/documents/%d?kwic=%s" % (context['topics_url'],
                 topic.number, d.id, word.type)
         w.doc_name = d.filename
         w.doc_id = d.id
@@ -174,7 +170,7 @@ def word_index(request, dataset, analysis, topic, word):
     add_word_charts(dataset, analysis, context)
     
     topicword = topic.topicword_set.get(word=word,word__ngram=False)
-    word_url = '%s/%d/words/' % (context['baseurl'], topic.number)
+    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
     add_word_contexts(topicword.word.type, word_url, context)
     
 #    
@@ -229,7 +225,7 @@ def add_stats(topic, context):
 
 
 def add_word_widgets(topic, context):
-    word_url = '%s/%d/words/' % (context['baseurl'], topic.number)
+    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
     topicwords = topic.topicword_set.filter(
             word__ngram=False).order_by('-count')
     words = []
@@ -244,7 +240,7 @@ def add_word_widgets(topic, context):
 
 
 def add_ngrams(topic, context):
-    word_url = '%s/%d/words/' % (context['baseurl'], topic.number)
+    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
     topicngrams = topic.topicword_set.filter(
             word__ngram=True).order_by('-count')
     ngrams = []
