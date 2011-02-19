@@ -40,10 +40,13 @@ document = r'documents/(?P<document>[^/]*)'
 num_words = r'num-words/(?P<num_words>[^/]*)'
 order_by = r'order-by/(?P<order_by>[^/]*)'
 number = r'number/(?P<number>[^/]*)'
+addnumber = r'addnumber/(?P<addnumber>[^/]*)'
 name = r'name/(?P<name>[^/]*)'
 metric = r'metrics/(?P<metric>[^/]*)'
 measure = r'measures/(?P<measure>[^/]*)'
 comp = r'comps/(?P<comp>[^/]*)'
+tab = r'tab/(?P<tab>[^/]*)'
+id = r'id/(?P<id>[^/]*)'
 
 urlpatterns = patterns('',
 # Dataset View
@@ -87,7 +90,8 @@ urlpatterns = patterns('',
         'topic_modeling.visualize.documents.views.index'),
 
 # Favorite Views
-    (r'^favorite/' + dataset + '/' + analysis + '$', 'topic_modeling.visualize.favorite.index'),
+    (r'^favorite/' + dataset + '/' + analysis + '/' + id + '$',
+     'topic_modeling.visualize.favorite.index'),
 
 # Plot View
     (r'^' + dataset + '/' + analysis + '/' + plot + '$',
@@ -120,6 +124,17 @@ urlpatterns = patterns('',
         'topic_modeling.visualize.topics.ajax.similar_topics'),
     (r'^feeds/rename-topic/' + dataset + '/' + analysis + '/' + topic + '/' + name + '$',
         'topic_modeling.visualize.topics.ajax.rename_topic'),
+# Topic Groups
+    (r'^feeds/create_topic_group/' + dataset + '/' + analysis + '/' + name + '$',
+        'topic_modeling.visualize.topics.ajax.create_topic_group'),
+    (r'^feeds/remove_topic_group/' + number + '$',
+        'topic_modeling.visualize.topics.ajax.remove_topic_group'),
+    (r'^feeds/add_topic_to_group/' + dataset + '/' + analysis + '/' + \
+        number + '/' + addnumber + '$',
+        'topic_modeling.visualize.topics.ajax.add_topic_to_group'),
+    (r'^feeds/remove_topic_from_group/' + dataset + '/' + analysis + '/' + \
+        number + '/' + addnumber + '$',
+        'topic_modeling.visualize.topics.ajax.remove_topic_from_group'),
 # Topic Filters
     (r'^feeds/new-topic-filter/' + dataset + '/' + analysis + '/' + topic + '/' + name + '$',
         'topic_modeling.visualize.topics.ajax.new_topic_filter'),
@@ -187,8 +202,14 @@ urlpatterns = patterns('',
            + number + '$',
         'topic_modeling.visualize.ajax_calls.get_attribute_page'),
 # Favorites
-    (r'^feeds/add_favorite/$',
+    (r'^feeds/add_favorite/' + tab + '$', #?url=<escaped url to save>
         'topic_modeling.visualize.ajax_calls.add_favorite'),
+    (r'^feeds/recall_favorite/' + id + '$',
+        'topic_modeling.visualize.ajax_calls.recall_favorite'),
+    (r'^feeds/clear_favorite$',
+        'topic_modeling.visualize.ajax_calls.remove_all_favorites'),
+    (r'^feeds/favorite-page/' + number + '$',
+        'topic_modeling.visualize.ajax_calls.get_favorite_page'),
 
 # Miscellaneous
     (r'^about/$', 'topic_modeling.visualize.common.about'),

@@ -62,7 +62,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 						var url = "{{ item.url }}";
 					{% endif %}
 				{% endfor %}
-				var link = "/feeds/add_favorite?url="+encodeURIComponent(url);
+				var link = "/feeds/add_favorite/tab/{{tab}}?url="+encodeURIComponent(url);
 				$.get(link);
 			}
 		</script>
@@ -96,7 +96,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 								<a href="/datasets/{{ dataset }}/analyses/{{ analysis }}/attributes/">Attributes</a>
 							</span>
 							<span id="favorites_tab_header" class="tab_header {% ifequal highlight "favorite_tab" %}fg{% else %}bg{% endifequal %}">
-								<a href="/favorite/datasets/{{ dataset }}/analyses/{{ analysis }}">Favorites</a>
+								<a href="/favorite/datasets/{{ dataset }}/analyses/{{ analysis }}/id/{{ favorite.id }}">Favorites</a>
 							</span>
 						</div>
 						<div id="tab_row_2" class="tab_row">

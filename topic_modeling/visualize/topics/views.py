@@ -26,7 +26,6 @@
 import os
 from collections import namedtuple
 
-from django import forms
 from django.db.models import Avg
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import Context
@@ -47,6 +46,7 @@ from topic_modeling.visualize.models import Word
 from topic_modeling.visualize.models import TopicName
 from topic_modeling.visualize.models import TopicNameScheme
 from topic_modeling.visualize.topics.common import RenameForm
+from topic_modeling.visualize.topics.common import  get_topic_name
 from topic_modeling.visualize.topics.common import SortTopicForm
 from topic_modeling.visualize.topics.common import top_values_for_attr_topic
 from topic_modeling.visualize.topics.filters import clean_topics_from_session
@@ -62,7 +62,7 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
     context['highlight'] = 'topics_tab'
     context['tab'] = 'topic'
     context['extra_widgets'] = []
-    
+
     ds = Dataset.objects.get(name=dataset)
     context['topic_map_dir'] = ds.data_root + '/topic_maps'
 
@@ -80,7 +80,7 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
     context['nameschemes'] = name_schemes
     if 'current_name_scheme_id' not in request.session:
         request.session['current_name_scheme_id'] = name_schemes[0].id
-    
+
     current_name_scheme_id = request.session['current_name_scheme_id']
     current_name_scheme = TopicNameScheme.objects.get(id=current_name_scheme_id)
     context['currentnamescheme'] = current_name_scheme
@@ -101,9 +101,11 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
     context['curtopic'] = topic
 
     context['metrics'] = topic.topicmetricvalue_set.all()
-    
-    topic_name = TopicName.objects.get(topic=topic,
-            name_scheme=current_name_scheme).name
+
+#    topic_name = TopicName.objects.get(topic=topic,
+#            name_scheme=current_name_scheme).name
+    topic_name = get_topic_name(topic, current_name_scheme.id)
+
     context['topic_name'] = topic_name
 
     # Build the bread crumb
@@ -260,14 +262,14 @@ def add_topic_map_url(topic, context):
         topic_map_url = '/datasets/' + str(topic.analysis.dataset.name) + '/analyses/' + str(topic.analysis.name) + \
                         '/topics/' + str(topic.number) + '/maps/' + context['currentnamescheme'].name
         context['topic_map_url'] = topic_map_url
-        
+
 
 def topic_map(request, dataset, analysis, topic, namescheme):
     context, analysis, topic = base_context(request, dataset, analysis, topic)
-    
+
     path = str(topic.analysis.name) + '/' + namescheme + '/' + str(topic.number) + '.svg'
     topic_map_local = context['topic_map_dir'] + '/' + path
-    
+
     if os.path.exists(topic_map_local):
         image = open(topic_map_local, 'r').read()
         return HttpResponse(image, mimetype="image/svg+xml")
@@ -294,14 +296,14 @@ def add_similarity_measures(request, analysis, topic, context):
             measure = similarity_measures.get(name=measure)
         else:
             measure = similarity_measures[0]
-            
+
         similar_topics = topic.pairwisetopicmetricvalue_originating.\
                 select_related().filter(metric=measure).order_by('-value')
         entries = []
         for t in similar_topics[1:11]:
             topic = t.topic2
             number = topic.number
-            name = str(number) + ": " + TopicName.objects.get(topic=topic,name_scheme=ns).name
+            name = str(number) + ": " + TopicName.objects.get(topic=topic, name_scheme=ns).name
             entries.append(TopicSimilarityEntry(name, number, t.value))
         context['similar_topics'] = entries
         context['similarity_measures'] = similarity_measures

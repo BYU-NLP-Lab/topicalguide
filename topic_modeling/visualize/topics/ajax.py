@@ -22,22 +22,27 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-
 from django.http import HttpResponse
 from django.utils import simplejson
+from django.db.models.aggregates import Min
 
 from topic_modeling.visualize.common import FilterForm
 from topic_modeling.visualize.common import paginate_list
-from topic_modeling.visualize.models import Analysis
+from topic_modeling.visualize.models import Analysis, DocumentTopicWord
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
-from topic_modeling.visualize.models import TopicName
-from topic_modeling.visualize.models import TopicNameScheme
+from topic_modeling.visualize.models import TopicGroup
+from topic_modeling.visualize.models import TopicGroupTopic
+from topic_modeling.visualize.models import TopicWord
+from topic_modeling.visualize.models import DocumentTopic
+from topic_modeling.visualize.models import AttributeValueTopic
 from topic_modeling.visualize.topics.common import top_values_for_attr_topic
 from topic_modeling.visualize.topics.common import get_topic_name
 from topic_modeling.visualize.topics.filters import clean_topics_from_session
 from topic_modeling.visualize.topics.filters import get_topic_filter_by_name
 from topic_modeling.visualize.topics.filters import possible_topic_filters
+import sys
+from django.db import transaction
 
 # General and Sidebar stuff
 ###########################
@@ -210,11 +215,127 @@ def update_topic_word_filter(request, dataset, analysis, topic, number, word):
     request.session.modified = True
     return filtered_topics_response(request, dataset, analysis)
 
-
 class AjaxTopic(object):
     def __init__(self, topic, topic_name):
-        self.name = str(topic.number) + ': ' + topic_name
+        self.name = topic_name
         self.number = topic.number
+        try:
+            self.topicgroup = [topic.name for topic
+                               in topic.topicgroup.subtopics]
+        except:
+            self.topicgroup = False
 
+# Topic Groups
+
+def create_topic_group(request, dataset, analysis, name):
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    number = Topic.objects.aggregate(Min('number'))['number__min'] - 1#usually < 0...
+    topic_group = TopicGroup(analysis=analysis, name=name, number=number)
+    topic_group.total_count = 0
+    topic_group.save()
+    return HttpResponse('Group %d:"%s" Created!' % (topic_group.number, topic_group.name))
+
+def remove_topic_group(request, number):
+    number = int(number)
+    topic_group = TopicGroup.objects.get(number=number)
+    topic_group.delete()
+    return HttpResponse('Group %d removed.' % number)
+
+@transaction.commit_manually
+def clear_topic_group(topic_group):
+    topic_group.total_count = 0
+    for topic_word in topic_group.topicword_set.all():
+        topic_word.delete()
+    for doctop in topic_group.documenttopic_set.all():
+        doctop.delete()
+    for avt in topic_group.attributevaluetopic_set.all():
+        avt.delete()
+    for doctopword in topic_group.documenttopicword_set.all():
+        doctopword.delete()
+
+    transaction.commit()
+
+@transaction.commit_manually
+def reaggregate_words(topic_group):
+    words = {}
+    for topic in topic_group.subtopics:
+        for topic_word in topic.topicword_set.all():
+            words[topic_word.word] = words.get(topic_word.word, 0) + topic_word.count
+            topic_group.total_count += topic_word.count
+
+    for word, count in words.iteritems():
+        TopicWord(topic=topic_group, word=word, count=count).save()
+    topic_group.save()
+
+    transaction.commit()
+
+@transaction.commit_manually
+def reaggregate_docs(topic_group):
+    docs = {}
+    for topic in topic_group.subtopics:
+        for dt in topic.documenttopic_set.all():
+            docs[dt.document] = docs.get(dt.document, 0) + dt.count
+
+    for doc, count in docs.iteritems():
+        DocumentTopic(topic=topic_group, document=doc, count=count).save()
+
+    transaction.commit()
+
+@transaction.commit_manually
+def reaggregate_attrs(topic_group):
+    attrs = {}
+    for topic in topic_group.subtopics:
+        for avt in topic.attributevaluetopic_set.all():
+            attrs[avt.value] = attrs.get(avt.value, 0) + avt.count
+
+    for val, count in attrs.iteritems():
+        AttributeValueTopic(topic=topic_group,
+                            value=val,
+                            attribute=val.attribute,
+                            count=count).save()
+
+    transaction.commit()
+
+@transaction.commit_manually
+def reaggregate_doctopicword(topic_group):
+    doctopwords = {}
+    for topic in topic_group.subtopics:
+        for dtw in topic.documenttopicword_set.all():
+            count = doctopwords.get((dtw.topic, dtw.word, dtw.document), 0)
+            doctopwords[dtw.topic, dtw.word, dtw.document] = count + dtw.count
+
+    for keys, count in doctopwords.iteritems():
+        topic, word, doc = keys
+        DocumentTopicWord(topic=topic,
+                          word=word,
+                          document=doc,
+                          count=count).save()
+
+    transaction.commit()
+
+def reaggregate_topicgroup(topic_group):
+    clear_topic_group(topic_group)
+    reaggregate_words(topic_group)
+    reaggregate_docs(topic_group)
+    reaggregate_attrs(topic_group)
+    reaggregate_doctopicword(topic_group)
+
+def add_topic_to_group(request, dataset, analysis, number, addnumber):
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    topic_group = analysis.topic_set.get(number=number).topicgroup
+    topic = analysis.topic_set.get(number=addnumber)
+    if topic not in topic_group.subtopics:
+        TopicGroupTopic(topic=topic, group=topic_group).save()
+        reaggregate_topicgroup(topic_group)
+        return HttpResponse('Added topic %d to group %d' % (topic.number, topic_group.number))
+
+def remove_topic_from_group(request, dataset, analysis, number, addnumber):
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    topic_group = analysis.topic_set.get(number=number).topicgroup
+    topic = analysis.topic_set.get(number=addnumber)
+    if topic in topic_group.subtopics:
+        TopicGroupTopic.objects.get(topic=topic, group=topic_group).delete()
+        reaggregate_topicgroup(topic_group)
+        return HttpResponse('Removed topic %d to group %d' % (topic.number, topic_group.number))
 
 # vim: et sw=4 sts=4

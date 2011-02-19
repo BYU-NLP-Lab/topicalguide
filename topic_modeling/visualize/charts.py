@@ -137,7 +137,7 @@ class Chart(object):
 
 class Button(Input):
     input_type = 'button'
-    
+
     def __init__(self, attrs=None, value=None, onClick=None):
         super(Button, self).__init__(attrs)
         if value:
@@ -177,11 +177,11 @@ class TopicAttributePlotForm(forms.Form):
                     initial=[values[0]])
             self.fields['values'].widget.attrs['onchange'] = \
                     'update_topic_attribute_plot()'
-                    
+
         button = Button(onClick='highlight_all_topic_attribute_values(1)',
                         value='Select All')
-        self.fields['select-all'] = forms.Field(label = '',
-                                                widget = button)
+        self.fields['select-all'] = forms.Field(label='',
+                                                widget=button)
 
 class TopicAttributeChart(object):
     """ A chart that plots nominally-valued attributes against topics"""
@@ -229,7 +229,7 @@ class TopicAttributeChart(object):
             The created png data.
         """
         fig = pylab.figure()
-        
+
         sum_y = zeros(len(self.chartdata[self.topics[0]]))
         correlated_colors = dict(zip(self.chartdata,
                 plotting_colors[:len(self.chartdata)]))
@@ -252,7 +252,7 @@ class TopicAttributeChart(object):
         pylab.xticks(arange(len(self.values)), thinned_labels, rotation=90,
                 size='small')
 
-        bar_chart_image = StringIO.StringIO() 
+        bar_chart_image = StringIO.StringIO()
         fig.canvas.print_figure(bar_chart_image, dpi=80)
         return bar_chart_image.getvalue()
 
@@ -263,8 +263,9 @@ class TopicAttributeChart(object):
         
         """
         fig = pylab.figure()
-        
+
         thinned_labels = self.values
+
         if len(self.values) > 30:
             thinned_labels = thin_labels(self.values, len(self.values) / 30)
         for topic in self.chartdata:
@@ -272,7 +273,7 @@ class TopicAttributeChart(object):
                 label=topic.name)
         pylab.xticks(arange(len(self.values)), thinned_labels, rotation=90,
                 size='small')
-        
+
         pylab.legend(loc=0)
         pylab.xlabel(self.attribute)
         if self.frequency:
@@ -316,7 +317,7 @@ class TopicMetricChart(object):
     """A chart that plots one TopicMetric vs. another TopicMetric"""
     form = TopicMetricForm
     update_function = "update_topic_metric_plot()"
-    
+
     def __init__(self, chart_parameters):
         self.analysis = Analysis.objects.get(name=chart_parameters['analysis'],
                 dataset__name=chart_parameters['dataset'])
@@ -328,7 +329,7 @@ class TopicMetricChart(object):
 
     def get_chart_image(self):
         fig = pylab.figure()
-        
+
         x = []
         y = []
         for topic in self.analysis.topic_set.all():
@@ -390,7 +391,7 @@ class NumericalAttributesDistributionChart(Chart):
         self.dataset = Dataset.objects.get(name=chart_parameters['dataset'])
         analysis = Analysis.objects.get(dataset=self.dataset,
                                         name=chart_parameters['analysis'])
-        if chart_parameters['attribute']:     
+        if chart_parameters['attribute']:
             attribute_ids = chart_parameters['attribute'].split('_')
             self.attributes = Attribute.objects.filter(id__in=attribute_ids)
         else:
@@ -404,7 +405,7 @@ class NumericalAttributesDistributionChart(Chart):
                 and self.chart_parameters['histogram']):
             self.histogram = True
         self.normalized = True
-        if ('frequency' in self.chart_parameters 
+        if ('frequency' in self.chart_parameters
                 and self.chart_parameters['frequency']):
             self.normalized = False
         self.kde = False
@@ -412,15 +413,15 @@ class NumericalAttributesDistributionChart(Chart):
                 and self.chart_parameters['kde']):
             self.kde = True
         self.points = False
-        if ('points' in self.chart_parameters 
+        if ('points' in self.chart_parameters
                 and self.chart_parameters['points']):
             self.points = True
 
-    def get_chart_data(self, dataset, attributes):  
+    def get_chart_data(self, dataset, attributes):
         chartdata = {}
         self.maxval = 0
         self.minval = 100000000
-        for attribute in attributes:  
+        for attribute in attributes:
             chartdata[attribute.name] = []
             # Until we have numerical attributes implemented, here's a hack
             # TODO(dan): fix this!
@@ -438,9 +439,9 @@ class NumericalAttributesDistributionChart(Chart):
         return chartdata
 
     def get_chart_image(self):
-      
+
         fig = pylab.figure()
-        
+
         for attribute in self.chartdata:
             if self.histogram:
                 try:
@@ -454,18 +455,18 @@ class NumericalAttributesDistributionChart(Chart):
                 try:
                     pylab.scatter(self.chartdata[attribute], zeros(len(self.chartdata[attribute])))
                 except:
-                    print("Warning: problem rendering attribute distribution scattar graph.")  
+                    print("Warning: problem rendering attribute distribution scattar graph.")
             if self.kde:
                 try:
                     x_axis = linspace(self.minval, self.maxval, 1000)
                     approx_dist = gaussian_kde(self.chartdata[attribute])
                     pylab.plot(x_axis, approx_dist(x_axis))
                 except:
-                    print("Warning: problem rendering attribute distribution kde graph.")  
+                    print("Warning: problem rendering attribute distribution kde graph.")
                     print("min: " + str(self.minval) + ", max: " + str(self.maxval))
                     print("linspace:" + x_axis)
 
-        chart_image = StringIO.StringIO() 
+        chart_image = StringIO.StringIO()
         fig.canvas.print_figure(chart_image, dpi=80)
         return chart_image.getvalue()
 
