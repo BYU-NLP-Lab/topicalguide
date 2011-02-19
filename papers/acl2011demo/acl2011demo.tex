@@ -37,18 +37,18 @@ these texts discoverable and thereby usable. In response to these twin needs, we
 present the \tool, an open-source web application for interactive, topic-centric
 exploration and visualization of topic model output. We explain why such a tool
 is warranted, what it is capable of, and how to use it to explore the corpus or
-topic model of your choice.
+topic model of your choice.%TODO Colloq?
 \end{abstract}
 
 \section{Introduction}
 Since its introduction, LDA-based topic modeling \cite{blei_latent_2003} has
-become standard fare for those wishing to automatically distill large text
+become standard fare for those wishing to automatically distill large text%TODO Colloq?
 collections into something more immediately useful to humans and computers
 alike. The usefulness of this sort of dimensionality reduction is widely
 acknowledged, and topic models continue to be extended into exciting new
 territory
 \cite{wang_continuous_2008,mimno_polylingual_2009,brody_unsupervised_2010}.
-However, in their most verbose realization, these models output a topic
+However, in their most verbose realization, these models output a topic%TODO Does this really account for the complexity of a fully-instantiated model?
 assignment per token, resulting in an output that is a corpus unto itself.
 Though the range of possible values is substantially reduced, output size
 remains on the same order as input size. Notwithstanding, papers introducing new
@@ -78,7 +78,7 @@ or nonexistent.
 In response, we present the \tool, an open-source\footnote{Licensed under the terms of the Affero
 General Public License, version 3.} web application for interactive,
 topic-aware exploration and visualization of both document collections and the
-topic models inferred on them.\comments{\footnote{Further information on the project, including %TODO De-anonymize after review process
+topic models inferred on them.\comments{\footnote{Further information on the project, including %TODO De-anonymize after review process %TODO ``on''?
 source code access and a live demonstration server, can be found
 at \texttt{\projecturl}.}} The \tool{} is an aid both to those who wish to
 browse through a corpus and for those who wish to analyze the topic model itself.
@@ -102,14 +102,14 @@ on corpora of hundreds of thousands of documents and millions of tokens.
  \label{fig:topic_word}
 \end{figure*}
 \section{Browsing}
-All entities explicitly modeled by a basic topic model---topics, documents,
+All entities explicitly modeled by a basic topic model---topics, documents, %TODO Does ``basic topic model'' make sense?
 and words---are first-class citizens in the \tool, meaning that the user
 interface provides specific views for each. The topic view
 is central to the user experience. A view of the ``programs federal'' topic is
 rendered in Figure \ref{fig:topic_page}. On the left is a navigation sidebar listing other topics,
 with tabs providing links to other views such as Attributes, Documents, and Plots.
 The remainder of the page shows statistics about the topic
-(\texttt{STATS}); chart, word-cloud, and key-word-in-context representations of top
+(\texttt{STATS}); chart, word-cloud, and key-word-in-context representations of top %TODO feels like 
 words (\texttt{TOP WORDS P(W|Z)} / \texttt{WORD CLOUD} / \texttt{TOP WORDS IN CONTEXT}); and
 both textual and graphical representations of similar topics (\texttt{SIMILAR
 TOPICS} / \texttt{TOPIC MAP}).
@@ -163,7 +163,7 @@ the edges of the graph used to generate topic maps (discussed further in Section
 
 Similar to topic metrics, document metrics can also be computed.
 Beyond simple metrics like token count in the document, these include
-metrics such as the entropy of the topic distribution of the document \cite{Misra2008}. As
+metrics such as the entropy of the topic distribution of the document \cite{Misra2008}. As %TODO? Cite Matt here?
 with topics, we make use of pairwise document metrics such as topic
 correlation \cite{Blei2009} to show similar documents.
 
@@ -228,7 +228,7 @@ the nodes so that, generally speaking, nodes joined by edges of higher weight
 are closer together, and nodes joined by edges of lower weight are further
 apart. (A similar approach focused on visualization of the document space is
 described in \newcite{Newman2010Maps}.) In the final rendering of the image, edges 
-are omitted to reduce visual complexity. However, the distances between nodes
+are omitted to reduce visual complexity. However, the distances between nodes %TODO imply that edges can be added back in?
 are still determined by the interaction of the layout algorithm and the edge
 weights.
 
