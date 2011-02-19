@@ -312,6 +312,7 @@ def add_top_values(request, analysis, topic, context):
     context['attributes'] = analysis.dataset.attribute_set.all()
     current_attribute = request.session.get('topic-attribute', None)
     if not current_attribute:
+        if len(context['attributes'])==0: return
         attribute = context['attributes'][0]
     else:
         attribute = analysis.dataset.attribute_set.get(name=current_attribute)
