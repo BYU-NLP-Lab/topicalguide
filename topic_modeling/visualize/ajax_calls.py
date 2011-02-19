@@ -25,9 +25,8 @@
 
 import random
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
-
 from topic_modeling.visualize.charts import TopicAttributeChart
 from topic_modeling.visualize.charts import TopicMetricChart
 from topic_modeling.visualize.common import get_word_list
@@ -38,7 +37,7 @@ from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word
-import urllib
+import copy
 
 # General ajax calls
 ####################
@@ -160,28 +159,68 @@ def update_word_page(request, dataset, analysis, word):
     request.session['word-find-base'] = word
     return get_word_page(request, dataset, analysis, 1)
 
-def add_favorite(request):
-    favorites = request.session.get('favorite-list', set())
+class Favorite:#TODO where does this class go?
 
-    if 'url' in request.GET:
-        url = request.GET['url']
-        favorites.add(url)
-        request.session['favorite-list'] = favorites
-        return HttpResponse('Url Added:' + url)
-    else:
-        return HttpResponse('No Url given in query')
+    def __init__(self, url, id, session, tab):
+        self.name = tab + ":" + url.split('/')[-1]
+        self.url = url
+        self.id = id
+        self.session_recall = {}
+        for key in session.keys():
+            if key.startswith(tab):
+                self.session_recall[key] = copy.deepcopy(session[key])
+        self.tab = tab
+
+    def __hash__(self):
+        return self.id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __cmp__(self, other):
+        return self.id - other.id
+
+def get_favorite_page(request, number):
+    ret_val = dict()
+    favorites = request.session.get('favorite-set', set())
+    ret_val['favorites'] = [{'id' : fav.id, 'name' : fav.name}
+                            for fav in favorites]
+    ret_val['num_pages'] = 1
+    ret_val['page'] = 1
+
+    return HttpResponse(simplejson.dumps(ret_val))
+
+def add_favorite(request, tab):
+    favorites = request.session.get('favorite-set', set())
+    id = request.session.get('last-favorite-id', 0)
+    url = request.GET['url']
+    favorite = Favorite(url, id, request.session, tab)
+    favorites.add(favorite)
+    request.session['last-favorite-id'] = favorite.id + 1
+    request.session['favorite-set'] = favorites
+    return HttpResponse('Favorite Added:' + favorite.url)
 
 def remove_all_favorites(request):
-    if 'favorite-list' in request.session:
+    if 'favorite-set' in request.session:
         request.session.remove('favorite-list')
     return HttpResponse('Favorites cleared')
 
 def remove_favorite(request, url):
-    favorites = request.session.get('favorite-list', set())
+    favorites = request.session.get('favorite-set', set())
     if url in favorites:
         favorites.remove(url)
-    request.session['favorite-list'] = favorites
+    request.session['favorite-set'] = favorites
     return HttpResponse('Url Removed:' + url)
+
+def recall_favorite(request, id):
+    favorites = request.session.get('favorite-set', set())
+    id = int(id)
+    for favorite in favorites:
+        if favorite.id == id:
+            for key in favorite.session_recall.keys():
+                request.session[key] = copy.deepcopy(favorite.session_recall[key])
+            return HttpResponseRedirect(favorite.url)
+    return HttpResponse('Unknown Favorite')
 
 def set_current_name_scheme(request, name_scheme):
     request.session['current_name_scheme_id'] = name_scheme

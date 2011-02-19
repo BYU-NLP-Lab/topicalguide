@@ -25,9 +25,14 @@
 
 from django.shortcuts import render_to_response
 
-from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.models import Dataset, Topic, Attribute, \
+    AttributeValue
 from topic_modeling.visualize.common import BreadCrumb, root_context
 from topic_modeling.visualize.common import paginate_list
+from random import randint
+
+def sample_list(list):
+    return list[randint(0, len(list) - 1)]
 
 def index(request, dataset="", analysis=""):
     page_vars = root_context(dataset, analysis)
@@ -68,7 +73,19 @@ def index(request, dataset="", analysis=""):
     if 'curanalysis' in page_vars:
         page_vars['breadcrumb'].analysis(page_vars['curanalysis'])
 
-    return render_to_response('datasets.html', page_vars)
+    topics = Topic.objects.filter(analysis=page_vars['curanalysis'])
+    topics = [sample_list(topics), sample_list(topics), sample_list(topics)]
+    topics = [topic.id for topic in topics]
+    page_vars['sample_topics'] = topics
 
+    attributes = Attribute.objects.filter(dataset=dataset)
+    attribute = sample_list(attributes)
+    page_vars['sample_attribute'] = attribute.id
+
+    attrvalues = AttributeValue.objects.filter(attribute=attribute)
+    attrvalues = [attrval.value.id for attrval in attrvalues]
+    page_vars['sample_attrvalues'] = attrvalues
+
+    return render_to_response('datasets.html', page_vars)
 
 # vim: et sw=4 sts=4

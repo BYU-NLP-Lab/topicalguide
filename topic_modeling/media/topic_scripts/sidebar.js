@@ -37,7 +37,18 @@ function redraw_topics(topics_list, page, num_pages) {
 		new_html += '/' + topics_list[i].number;
 		new_html += $.fn.topic_vars.post_link;
 		new_html += '">';
-		new_html += topics_list[i].name+'</a></li>';
+		new_html += topics_list[i].name;
+		      if (topics_list[i].topicgroup) {
+          new_html += ' - GROUP</a></li>';
+          for(var j = 0; j < topics_list[i].topicgroup.length; j++) {
+              new_html += '<li>';
+              new_html += topics_list[i].topicgroup[j];
+              new_html += '</li>';
+          }
+        }
+        else {
+          new_html += '</a></li>';
+        }
 	}
 	new_html += '</ul>';
 	

@@ -23,16 +23,45 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
+{% block scripts %}
+    <script charset="utf-8" type="text/javascript">
+    $.fn.attr_vars = function () {};
+    $.fn.attr_vars.curr_favorite = "{{ curr_favorite.id }}";
+    $.fn.attr_vars.dataset = "{{ dataset }}";
+    $.fn.attr_vars.analysis = "{{ analysis }}";
+    </script>
+    <script charset="utf-8" type="text/javascript">
+    function recall_favorite(){
+        var link = "/feeds/recall_favorite/id/{{ curr_favorite.id }}"
+        window.location = link
+    }
+    </script>
+{% endblock %}
+
 {% block sidebar %}
-	<ul id="favorites_list" class="inset list centered">
-		{% for favorite in favorites %}
-			<li class="list">
-				<a href={{ favorite }}>{{ favorite }}</a>
-			</li>
-		{% endfor %}
-	</ul>
+    <script charset="utf-8" type="text/javascript"
+        src="/site-media/common_scripts/sidebar.js">
+    </script>
+    <script charset="utf-8" type="text/javascript"
+        src="/site-media/favorite_scripts/sidebar.js">
+    </script>
+    <div id="favorites_list" class="inset"></div>
+    <script charset="utf=8" type="text/javascript">
+        $(document).ready(function () {
+            get_favorite_page({{ page_num }});
+        });
+    </script>
 {% endblock %}
 
 {% block presentation_area %}
-I'm not sure what to put here
+    {% if curr_favorite %}
+        <table>
+            <tr><td>Id: {{ curr_favorite.id }}</td></tr>
+            <tr><td>Tab: {{ curr_favorite.tab }}</td></tr>
+            <tr><td>Url: {{ curr_favorite.url }}</td></tr>
+            <tr><td>
+                <input type=button onclick="recall_favorite();" value='Recall Favorite'>
+            </td></tr>
+        </table>
+    {% endif %}
 {% endblock %}

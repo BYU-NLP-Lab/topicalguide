@@ -38,7 +38,7 @@ class Dataset(models.Model):
     files_dir = models.CharField(max_length=128, db_index=True)
     name = models.CharField(max_length=128, unique=True, db_index=True)
     description = models.TextField()
-    
+
     def __unicode__(self):
         return self.name
 
@@ -50,7 +50,7 @@ class Document(models.Model):
     words = models.ManyToManyField('Word', through='DocumentWord')
     attributes = models.ManyToManyField('Attribute',
             through='AttributeValueDocument')
-    
+
     def __unicode__(self):
         return unicode(self.filename)
 
@@ -59,7 +59,7 @@ class Document(models.Model):
         markup = cjson.decode(open(self.dataset.data_root + '/' +
                 markup_file.path).read())
         return markup
-    
+
     def get_context_for_word(self, word_to_find, analysis, topic=None):
         markup = self.get_markup(analysis)
         indices = []
@@ -112,16 +112,16 @@ class Document(models.Model):
         return text
 
     def text(self, kwic=None):
-        text = open(self.dataset.files_dir + "/" + 
+        text = open(self.dataset.files_dir + "/" +
                     self.filename, 'r').read().decode('utf-8')
         if kwic:
             beg_context, end_context = self.get_kwic_context_ends(kwic, text)
             if beg_context >= 0:
                 text = text[:beg_context] + \
                         '<span style=\"text-decoration: underline;\">' + \
-                        text[beg_context:end_context] + '</span>' +\
+                        text[beg_context:end_context] + '</span>' + \
                         text[end_context:]
-        
+
         text = unicode(text)
         text = text.replace(' ;', ';')
         text = text.replace(' .', '.')
@@ -130,34 +130,34 @@ class Document(models.Model):
         text = text.replace('( ', '(')
         text = text.replace(' !', '!')
         text = text.replace(' :', ':')
-        
-        text = text.splitlines()                        
+
+        text = text.splitlines()
         text = [line for line in text if line]
         return '<br><br>'.join(text)
 
     def get_text_for_kwic(self):
-        return open(self.dataset.data_root + "/" + 
+        return open(self.dataset.data_root + "/" +
             self.filename, 'r').read()
 
     def get_kwic_context_word(self, word, text=None):
         if text is None:
             text = self.get_text_for_kwic()
-        
+
         beg_word = text.lower().rfind(" " + word + " ")
         if beg_word >= 0:
             end_word = beg_word + len(word) + 1
             return beg_word, end_word
         else:
-            return -1, -1 
-    
+            return - 1, -1
+
     def get_kwic_context_ends(self, word, text=None):
         context_size = 50
-        
+
         if text is None:
             text = self.get_text_for_kwic()
-        
+
         beg_word, end_word = self.get_kwic_context_word(word, text)
-        
+
         if beg_word >= 0:
             beg_context = text.find(' ', beg_word - context_size) + 1
             beg_context = max(0, beg_context)
@@ -165,8 +165,8 @@ class Document(models.Model):
             end_context = min(len(text), end_context)
             return beg_context, end_context
         else:
-            return -1, -1
-    
+            return - 1, -1
+
     class Meta:
         ordering = ['dataset', 'filename']
 
@@ -178,10 +178,10 @@ class Attribute(models.Model):
             through='AttributeValueDocument')
     # or this?
     # analysis = models.ForeignKey(Analysis)
-    
+
     def __unicode__(self):
         return self.name
-    
+
     class Meta:
         ordering = ['name']
 
@@ -189,10 +189,10 @@ class Attribute(models.Model):
 class Value(models.Model):
     value = models.CharField(max_length=128, db_index=True)
     attribute = models.ForeignKey(Attribute)
-    
+
     def __unicode__(self):
         return self.value
-    
+
     class Meta:
         ordering = ['value']
 
@@ -202,10 +202,10 @@ class Word(models.Model):
     count = models.IntegerField(default=0)
     type = models.CharField(max_length=128, db_index=True)
     ngram = models.BooleanField(default=False)
-    
+
     class Meta:
         ordering = ['type']
-    
+
     def __unicode__(self):
         return self.type
 
@@ -217,7 +217,7 @@ class AttributeValueDocument(models.Model):
     document = models.ForeignKey(Document)
     attribute = models.ForeignKey(Attribute)
     value = models.ForeignKey(Value)
-    
+
     def __unicode__(self):
         return u'{a} is "{v}" for {d}'.format(a=self.attribute, v=self.value,
                 d=self.document)
@@ -254,7 +254,7 @@ class Analysis(models.Model):
     name = models.CharField(max_length=128, db_index=True)
     description = models.TextField()
     dataset = models.ForeignKey(Dataset)
-    
+
     def __unicode__(self):
         return self.dataset.name + '-' + self.name
 
@@ -273,18 +273,28 @@ class Topic(models.Model):
     documents = models.ManyToManyField(Document, through='DocumentTopic')
     metrics = models.ManyToManyField('TopicMetric', through='TopicMetricValue')
     words = models.ManyToManyField(Word, through='TopicWord')
-    
+
     def __unicode__(self):
         return '%d: %s' % (self.number, self.name)
-    
+
     class Meta:
         ordering = ['name']
 
+class TopicGroup(Topic):
+
+    @property
+    def subtopics(self):
+        return [topicgrouptopic.topic for topicgrouptopic
+                in TopicGroupTopic.objects.filter(group=self)]
+
+class TopicGroupTopic(models.Model):
+    topic = models.ForeignKey(Topic)
+    group = models.ForeignKey(TopicGroup, related_name='group')
 
 class TopicNameScheme(models.Model):
     analysis = models.ForeignKey(Analysis)
     name = models.CharField(max_length=128)
-    
+
     def __unicode__(self):
         return self.name
 
@@ -298,7 +308,7 @@ class TopicName(models.Model):
 class TopicMetric(models.Model):
     name = models.CharField(max_length=128)
     analysis = models.ForeignKey(Analysis)
-    
+
     def __unicode__(self):
         return self.name
 
@@ -306,7 +316,7 @@ class TopicMetric(models.Model):
 class PairwiseTopicMetric(models.Model):
     name = models.CharField(max_length=128)
     analysis = models.ForeignKey(Analysis)
-    
+
     def __unicode__(self):
         return self.name + ': ' + self.analysis.name
 
@@ -322,7 +332,7 @@ class ExtraTopicInformation(models.Model):
 class DocumentMetric(models.Model):
     name = models.CharField(max_length=128)
     analysis = models.ForeignKey(Analysis)
-    
+
     def __unicode__(self):
         return self.name
 
@@ -330,7 +340,7 @@ class DocumentMetric(models.Model):
 class PairwiseDocumentMetric(models.Model):
     name = models.CharField(max_length=128)
     analysis = models.ForeignKey(Analysis)
-    
+
     def __unicode__(self):
         return self.name + ': ' + self.analysis.name
 
@@ -377,7 +387,7 @@ class PairwiseTopicMetricValue(models.Model):
             related_name='pairwisetopicmetricvalue_ending')
     metric = models.ForeignKey(PairwiseTopicMetric)
     value = models.FloatField()
-    
+
     def __unicode__(self):
         return '%s(%s, %s) = %d' % (self.metric.name, self.topic1.name,
                 self.topic2.name, self.value)
@@ -396,7 +406,7 @@ class PairwiseDocumentMetricValue(models.Model):
             related_name='pairwisedocumentmetricvalue_ending')
     metric = models.ForeignKey(PairwiseDocumentMetric)
     value = models.FloatField()
-    
+
     def __unicode__(self):
         return '%s(%s, %s) = %d' % (self.metric.name, self.document1.name,
                 self.document2.name, self.value)

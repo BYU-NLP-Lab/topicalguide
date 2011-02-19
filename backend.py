@@ -49,7 +49,7 @@ from build.common.make_token_file import make_token_file
 import import_scripts.dataset_import
 import import_scripts.analysis_import
 from build.common.db_cleanup import remove_dataset, remove_analysis
-from topic_modeling.visualize.models import Analysis, Dataset, TopicMetric, PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric,\
+from topic_modeling.visualize.models import Analysis, Dataset, TopicMetric, PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric, \
     TopicNameScheme
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
@@ -58,7 +58,8 @@ from helper_scripts.name_schemes.top_n import TopNTopicNamer
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
 # cleaned up when we have time.
 
-build = "state_of_the_union"
+build = "twitter"
+#build = "state_of_the_union"
 #build = "kcna/kcna"
 #build = "congressional_record"
 
@@ -143,7 +144,7 @@ if 'pairwise_topic_metrics' not in locals():
 if 'document_metrics' not in locals():
     document_metrics = ['token count', 'type count', 'topic entropy']
 if 'pairwise_document_metrics' not in locals():
-    pairwise_document_metrics = ['word correlation','topic correlation']
+    pairwise_document_metrics = ['word correlation', 'topic correlation']
 if 'name_schemes' not in locals():
     name_schemes = [
                TopNTopicNamer(dataset_name, analysis_name, 2),
@@ -156,7 +157,7 @@ if 'java_base' not in locals():
 if 'java_bin' not in locals():
     java_bin = java_base + "/bin"
 if 'graph_builder_class' not in locals():
-    graph_builder_class="edu.byu.nlp.topicvis.TopicMapGraphBuilder"
+    graph_builder_class = "edu.byu.nlp.topicvis.TopicMapGraphBuilder"
 if 'graphs_min_value' not in locals():
     graphs_min_value = 1
 if 'graphs_pairwise_metric' not in locals():
@@ -205,10 +206,10 @@ if 'task_mallet_imported_data' not in locals():
         task['targets'] = [mallet_imported_data]
         cmd = '{0} import-file --input {1} --output {2} --keep-sequence --set-source-by-name --remove-stopwords'.format(mallet, mallet_input, mallet_imported_data)
         if token_regex is not None:
-            cmd += " --token-regex "+token_regex
+            cmd += " --token-regex " + token_regex
         task['actions'] = [cmd]
         task['file_dep'] = [mallet_input]
-        task['clean'] = ["rm -f "+mallet_imported_data]
+        task['clean'] = ["rm -f " + mallet_imported_data]
         return task
 
 if 'task_mallet_output_gz' not in locals():
@@ -218,17 +219,17 @@ if 'task_mallet_output_gz' not in locals():
         task['actions'] = ['{0} train-topics --input {1} --optimize-interval {2} --num-iterations {3} --num-topics {4} --output-state {5} --output-doc-topics {6}'
                    .format(mallet, mallet_imported_data, mallet_optimize_interval, mallet_num_iterations, num_topics, mallet_output_gz, mallet_doctopics_output)]
         task['file_dep'] = [mallet_imported_data]
-        task['clean'] = ["rm -f "+mallet_output_gz,
-                 "rm -f "+mallet_doctopics_output]
+        task['clean'] = ["rm -f " + mallet_output_gz,
+                 "rm -f " + mallet_doctopics_output]
         return task
 
 if 'task_mallet_output' not in locals():
     def task_mallet_output():
         task = dict()
         task['targets'] = [mallet_output]
-        task['actions'] = ["zcat {0} > {1}".format(mallet_output_gz,mallet_output)]
+        task['actions'] = ["zcat {0} > {1}".format(mallet_output_gz, mallet_output)]
         task['file_dep'] = [mallet_output_gz]
-        task['clean'] = ["rm -f "+mallet_output]
+        task['clean'] = ["rm -f " + mallet_output]
         return task
 
 if 'task_mallet' not in locals():
@@ -262,7 +263,7 @@ if 'task_analysis_import' not in locals():
                 d = Dataset.objects.get(name=dataset_name)
                 Analysis.objects.get(dataset=d, name=analysis_name)
                 return True
-            except (Dataset.DoesNotExist,Analysis.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
         task = dict()
         task['actions'] = [(import_scripts.analysis_import.main, [dataset_name, attributes_file, analysis_name, analysis_description, mallet_output, mallet_input, files_dir, token_regex])]
@@ -289,12 +290,12 @@ if 'task_name_schemes' not in locals():
             ns.name_all_topics()
         def clean_names(ns):
             ns.unname_all_topics()
-        
+
         print "Available topic name schemes: " + u', '.join([ns.scheme_name() for ns in name_schemes])
         for ns in name_schemes:
             task = dict()
             task['name'] = ns.scheme_name()
-            task['actions'] = [(generate_names,[ns])]
+            task['actions'] = [(generate_names, [ns])]
             task['task_dep'] = ['analysis_import']
             task['clean'] = [(clean_names,[ns])]
             task['uptodate'] = [scheme_in_database(ns)]
@@ -303,7 +304,7 @@ if 'task_name_schemes' not in locals():
 if 'task_topic_metrics' not in locals():
     def task_topic_metrics():
         from metric_scripts.topics import metrics
-        
+
         def metric_in_database(topic_metric):
             try:
                 dataset = Dataset.objects.get(name=dataset_name)
@@ -312,9 +313,9 @@ if 'task_topic_metrics' not in locals():
                 for name in names:
                     TopicMetric.objects.get(analysis=analysis, name=name)
                 return True
-            except (Dataset.DoesNotExist,Analysis.DoesNotExist,TopicMetric.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist, TopicMetric.DoesNotExist):
                 return False
-        
+
         def import_metric(topic_metric):
             start_time = datetime.now()
             print 'Adding %s...' % topic_metric,
@@ -330,7 +331,7 @@ if 'task_topic_metrics' not in locals():
             except RuntimeError as e:
                 print "\nThere was an error importing the specified metric:", e
                 sys.stdout.flush()
-        
+
         def clean_metric(topic_metric):
             print "Removing topic metric: " + topic_metric
             dataset = Dataset.objects.get(name=dataset_name)
@@ -338,21 +339,21 @@ if 'task_topic_metrics' not in locals():
             names = metrics[topic_metric].metric_names_generated(dataset_name, analysis_name)
             for topic_metric_name in names:
                 TopicMetric.objects.get(analysis=analysis, name=topic_metric_name).delete()
-        
+
         print "Available topic metrics: " + u', '.join(topic_metrics)
         for topic_metric in topic_metrics:
             task = dict()
-            task['name'] = topic_metric.replace(' ','_')
+            task['name'] = topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [topic_metric])]
             task['clean'] = ["ls", (clean_metric, [topic_metric])]
             task['task_dep'] = ['analysis_import']
             task['uptodate'] = [metric_in_database(topic_metric)]
             yield task
-    
+
 if 'task_pairwise_topic_metrics' not in locals():
     def task_pairwise_topic_metrics():
         from metric_scripts.topics import pairwise_metrics
-        
+
         def metric_in_database(metric):
             try:
                 dataset = Dataset.objects.get(name=dataset_name)
@@ -361,9 +362,9 @@ if 'task_pairwise_topic_metrics' not in locals():
                 for name in names:
                     PairwiseTopicMetric.objects.get(analysis=analysis, name=name)
                 return True
-            except (Dataset.DoesNotExist,Analysis.DoesNotExist,PairwiseTopicMetric.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist, PairwiseTopicMetric.DoesNotExist):
                 return False
-        
+
         def import_metric(metric):
             start_time = datetime.now()
             print 'Adding %s...' % metric,
@@ -379,7 +380,7 @@ if 'task_pairwise_topic_metrics' not in locals():
             except RuntimeError as e:
                 print "\nThere was an error importing the specified metric:", e
                 sys.stdout.flush()
-        
+
         def clean_metric(metric):
             print "Removing pairwise topic metric: " + metric
             dataset = Dataset.objects.get(name=dataset_name)
@@ -387,11 +388,11 @@ if 'task_pairwise_topic_metrics' not in locals():
             names = pairwise_metrics[metric].metric_names_generated(dataset_name, analysis_name)
             for metric_name in names:
                 PairwiseTopicMetric.objects.get(analysis=analysis, name=metric_name).delete()
-        
+
         print "Available pairwise topic metrics: " + u', '.join(pairwise_metrics)
         for pairwise_topic_metric in pairwise_metrics:
             task = dict()
-            task['name'] = pairwise_topic_metric.replace(' ','_')
+            task['name'] = pairwise_topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [pairwise_topic_metric])]
             task['clean'] = [(clean_metric, [pairwise_topic_metric])]
             task['task_dep'] = ['analysis_import']
@@ -401,7 +402,7 @@ if 'task_pairwise_topic_metrics' not in locals():
 if 'task_document_metrics' not in locals():
     def task_document_metrics():
         from metric_scripts.documents import metrics
-        
+
         def metric_in_database(metric):
             try:
                 dataset = Dataset.objects.get(name=dataset_name)
@@ -410,9 +411,9 @@ if 'task_document_metrics' not in locals():
                 for name in names:
                     DocumentMetric.objects.get(analysis=analysis, name=name)
                 return True
-            except (Dataset.DoesNotExist,Analysis.DoesNotExist,DocumentMetric.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist, DocumentMetric.DoesNotExist):
                 return False
-        
+
         def import_metric(metric):
             start_time = datetime.now()
             print 'Adding %s...' % metric,
@@ -428,7 +429,7 @@ if 'task_document_metrics' not in locals():
             except RuntimeError as e:
                 print "\nThere was an error importing the specified metric:", e
                 sys.stdout.flush()
-        
+
         def clean_metric(metric):
             print "Removing document metric: " + metric
             dataset = Dataset.objects.get(name=dataset_name)
@@ -436,11 +437,11 @@ if 'task_document_metrics' not in locals():
             names = metrics[metric].metric_names_generated(dataset_name, analysis_name)
             for metric_name in names:
                 metric = DocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
-        
+
         print "Available document metrics: " + u', '.join(metrics)
         for metric in metrics:
             task = dict()
-            task['name'] = metric.replace(' ','_')
+            task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]
             task['clean'] = ["ls", (clean_metric, [metric])]
             task['task_dep'] = ['analysis_import']
@@ -450,7 +451,7 @@ if 'task_document_metrics' not in locals():
 if 'task_pairwise_document_metrics' not in locals():
     def task_pairwise_document_metrics():
         from metric_scripts.documents import pairwise_metrics
-        
+
         def metric_in_database(metric):
             try:
                 dataset = Dataset.objects.get(name=dataset_name)
@@ -459,9 +460,9 @@ if 'task_pairwise_document_metrics' not in locals():
                 for name in names:
                     PairwiseDocumentMetric.objects.get(analysis=analysis, name=name)
                 return True
-            except (Dataset.DoesNotExist,Analysis.DoesNotExist,PairwiseDocumentMetric.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist, PairwiseDocumentMetric.DoesNotExist):
                 return False
-        
+
         def import_metric(metric):
             start_time = datetime.now()
             print 'Adding %s...' % metric,
@@ -477,7 +478,7 @@ if 'task_pairwise_document_metrics' not in locals():
             except RuntimeError as e:
                 print "\nThere was an error importing the specified metric:", e
                 sys.stdout.flush()
-        
+
         def clean_metric(metric):
             print "Removing pairwise document metric: " + metric
             dataset = Dataset.objects.get(name=dataset_name)
@@ -486,11 +487,11 @@ if 'task_pairwise_document_metrics' not in locals():
             if isinstance(names, basestring): names = [names]
             for metric_name in names:
                 PairwiseDocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
-        
+
         print "Available pairwise document metrics: " + u', '.join(pairwise_metrics)
         for metric in pairwise_metrics:
             task = dict()
-            task['name'] = metric.replace(' ','_')
+            task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]
             task['clean'] = [(clean_metric, [metric])]
             task['task_dep'] = ['analysis_import']
@@ -498,7 +499,7 @@ if 'task_pairwise_document_metrics' not in locals():
 
 if 'task_metrics' not in locals():
     def task_metrics():
-        return {'actions':None, 'task_dep': ['analysis_import', 'topic_metrics','pairwise_topic_metrics','document_metrics','pairwise_document_metrics']}
+        return {'actions':None, 'task_dep': ['analysis_import', 'topic_metrics', 'pairwise_topic_metrics', 'document_metrics', 'pairwise_document_metrics']}
 
 def task_hash_java():
     return {'actions': [(directory_recursive_hash, [java_base])]}
@@ -507,7 +508,7 @@ if 'task_compile_java' not in locals():
     def task_compile_java():
         actions = ["cd {0} && ant -lib lib".format(java_base)]
         result_deps = ['hash_java']
-        clean = ['rm -rf '+java_bin]
+        clean = ['rm -rf ' + java_bin]
         return {'actions':actions, 'result_dep':result_deps, 'clean':clean}
 
 if 'task_graphs' not in locals():

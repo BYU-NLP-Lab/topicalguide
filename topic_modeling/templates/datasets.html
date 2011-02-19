@@ -77,9 +77,44 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 					</table>
 				</td>
 			</tr>
+			
+            <tr>
+                <td><img name="plot_image" id="plot_image" src="/site-media/ajax-loader.gif"/></td>
+            </tr>
+			
 			{% endif %}
 		</table>
 		</td>
 	</tr>
 </table>
+
+<script charset="utf=8" type="text/javascript">
+    update_plot();
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script charset="utf=8" type="text/javascript">
+function update_plot() {
+    $("img#plot_image").attr("src", "/site-media/ajax-loader.gif");
+    var url_base = "/feeds/topic-attribute-plot/";
+
+    url_base += 'attributes/'+{{ sample_attribute }}+'/';
+    
+    var values = {{ sample_attrvalues }};
+    url_base += "values/" + values[0];
+    for (var i = 1; i < values.length; i++) {
+        url_base += "." + values[i];
+    }
+    
+    url_base += "/topics/";
+    var topics = {{ sample_topics }};
+    url_base += topics[0];
+    for (var i = 1; i < topics.length; i++) {
+        url_base += "." + topics[i];
+    }
+
+    $("img#plot_image").attr("src", url_base);
+}
+</script>
 {% endblock %}
