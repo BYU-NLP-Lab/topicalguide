@@ -58,18 +58,20 @@ from helper_scripts.name_schemes.top_n import TopNTopicNamer
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
 # cleaned up when we have time.
 
-build = "twitter"
-#build = "state_of_the_union"
+
+#build = "twitter"
+build = "state_of_the_union"
 #build = "kcna/kcna"
 #build = "congressional_record"
 
 if __name__ == "__main__":
+    if not os.path.exists(".dbs"): os.mkdir(".dbs")
     sys.path.append("tools/doit")
     from doit.doit_cmd import cmd_main
     path = os.path.abspath(sys.argv[0])
     
     #The database file where we'll store info about this build
-    db_name = ".{0}.db".format(build.replace('/','_'))
+    db_name = ".dbs/.{0}.db".format(build.replace('/','_'))
     
     args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
     sys.exit(cmd_main(args))
