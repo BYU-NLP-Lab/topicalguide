@@ -70,7 +70,7 @@ if __name__ == "__main__":
     path = os.path.abspath(sys.argv[0])
     
     #The database file where we'll store info about this build
-    db_name = ".dbs/.{0}.db".format(build.replace('/','_'))
+    db_name = ".dbs/{0}.db".format(build.replace('/','_'))
     
     args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
     sys.exit(cmd_main(args))
