@@ -59,11 +59,9 @@ django-admin needs to be installed for the django server to run.
 
 Quick Start:
 
-1) Run dodo.py as received in the code; it will run MALLET on a very small
+1) Run backend.py as received in the code; it will run MALLET on a very small
 example dataset that we distribute with the code, then load the results into
 the browser database.
-TODO(matt): pick a small example dataset (just a few documents) and make a
-simple script for it.
           
 2) Run the server with the following command:
 python topic_modeling/manage.py runserver
