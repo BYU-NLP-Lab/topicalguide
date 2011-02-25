@@ -189,7 +189,7 @@ def directory_recursive_hash(dir):
     if not os.path.exists(dir): return "0"
     return hash(cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir)))
 
-if not 'task_attributes' in locals():
+if not 'task_attributes' in locals() and not 'suppress_default_attributes_task' in locals():
     def make_attributes():
         attrs = open(attributes_file, "w")
         attrs.write('[')
