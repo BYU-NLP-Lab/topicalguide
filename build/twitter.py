@@ -136,4 +136,6 @@ def generate_attributes_file(data_file, output_file):
 #these metrics were taking 20 secs per document
 #too slow for 60k+ docs
 def task_pairwise_document_metrics():
-    pass
+    task = dict()
+    task['actions'] = None
+    return task
