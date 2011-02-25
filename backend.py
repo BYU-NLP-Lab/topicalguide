@@ -58,8 +58,8 @@ from helper_scripts.name_schemes.top_n import TopNTopicNamer
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
 # cleaned up when we have time.
 
-build = "twitter"
-#build = "state_of_the_union"
+#build = "twitter"
+build = "state_of_the_union"
 #build = "kcna/kcna"
 #build = "congressional_record"
 
@@ -187,6 +187,20 @@ def hash(txt):
 def directory_recursive_hash(dir):
     if not os.path.exists(dir): return "0"
     return hash(cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir)))
+
+if not 'task_attributes' in locals():
+    def make_attributes():
+        attrs = open(attributes_file, "w")
+        attrs.write('[')
+        for filename in os.listdir(files_dir):
+            attrs.write('{"attributes": {}, "path": "' + filename + '"}')
+        attrs.write(']')
+    
+    def task_attributes():
+        task = dict()
+        task['targets'] = [attributes_file]
+        task['actions'] = [(make_attributes)]
+        return task
 
 if 'task_mallet_input' not in locals():
     def task_mallet_input():
@@ -489,12 +503,13 @@ if 'task_pairwise_document_metrics' not in locals():
                 PairwiseDocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
 
         print "Available pairwise document metrics: " + u', '.join(pairwise_metrics)
-        for metric in pairwise_metrics:
+        for metric in pairwise_document_metrics:
             task = dict()
             task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]
             task['clean'] = [(clean_metric, [metric])]
             task['task_dep'] = ['analysis_import']
+            task['uptodate'] = [metric_in_database(metric)]
             yield task
 
 if 'task_metrics' not in locals():
