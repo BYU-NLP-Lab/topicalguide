@@ -79,12 +79,13 @@ def index(request, dataset="", analysis=""):
     page_vars['sample_topics'] = topics
 
     attributes = Attribute.objects.filter(dataset=dataset)
-    attribute = sample_list(attributes)
-    page_vars['sample_attribute'] = attribute.id
+    if len(attributes) > 0:
+        attribute = sample_list(attributes)
+        page_vars['sample_attribute'] = attribute.id
 
-    attrvalues = AttributeValue.objects.filter(attribute=attribute)
-    attrvalues = [attrval.value.id for attrval in attrvalues]
-    page_vars['sample_attrvalues'] = attrvalues
+        attrvalues = AttributeValue.objects.filter(attribute=attribute)
+        attrvalues = [attrval.value.id for attrval in attrvalues]
+        page_vars['sample_attrvalues'] = attrvalues
 
     return render_to_response('datasets.html', page_vars)
 
