@@ -70,8 +70,9 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     
     start = datetime.now()
     for i, doc1 in enumerate(documents):
-        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
-        print >> sys.stderr, 'Time for last document:', datetime.now() - start
+        sys.stdout.write('.')
+#        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
+#        print >> sys.stderr, 'Time for last document:', datetime.now() - start
         start = datetime.now()
         doc1_topic_vals = doctopicvectors[i]
         doc1_norm = vectornorms[i]
@@ -87,7 +88,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
             else:
                 pass
         transaction.commit()
-
+    sys.stdout.write('\n')
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]
