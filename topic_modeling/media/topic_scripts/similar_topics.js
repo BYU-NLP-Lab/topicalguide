@@ -28,9 +28,9 @@ function get_similar_topics()
 	var link = "/feeds/similar-topics/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
 	link += "/topics/" + $.fn.topic_vars.curtopic_number;
-	link += "/measures/" + $("#id_similarity_measure").val();
+	link += "/measures/" + $("#similarity-measure-select").val();
 	$.getJSON(link, {}, function(data) {
-		var base = $.fn.topic_vars.topics_url + "/";
+		var base = $.fn.topics_url + "/";
 		var topics = '';
 		for (var i = 0; i < data.topics.length; i++) {
 			topics += '<tr>';
@@ -39,7 +39,7 @@ function get_similar_topics()
 			topics += '<td>'+data.values[i].toFixed(2)+'</td>';
 			topics += '</tr>';
 		}
-		$("#id_similar_topics").html(topics);
+		$("#similar-topics-table").html(topics);
 		cursor_default();
 	});
 }
