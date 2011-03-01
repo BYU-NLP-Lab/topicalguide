@@ -189,7 +189,10 @@ def directory_recursive_hash(dir):
     if not os.path.exists(dir): return "0"
     return hash(cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir)))
 
-if not 'task_attributes' in locals():
+#If no existing attributes task exists, and if suppress_default_attributes_task is not set to True,
+#then define a default attributes task that generates an empty attributes file
+#TODO(josh): make the attributes file optional for the import scripts
+if not 'task_attributes' in locals() and not ('suppress_default_attributes_task' in locals() and locals()['suppress_default_attributes_task']):
     def make_attributes():
         attrs = open(attributes_file, "w")
         attrs.write('[')

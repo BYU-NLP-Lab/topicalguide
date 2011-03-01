@@ -34,7 +34,7 @@ govtrack_dir = data_dir + "/govtrack.us"
 rsync_dest_dir = govtrack_dir + "/111"
 cr_dir = rsync_dest_dir + "/cr"
 
-def task_attributes_file():
+def task_attributes():
     task = dict()
     task['targets'] = [attributes_file]
     task['actions'] = [(generate_attributes_file, [mallet_input, attributes_file])]
