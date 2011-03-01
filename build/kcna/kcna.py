@@ -27,6 +27,7 @@ dataset_description = "News releases/propaganda from North Korea's Korean Centra
 url = "http://kcna.co.jp/"
 data_dir = os.environ['HOME'] + "/Data"
 kcna_dir = data_dir + "/kcna.co.jp"
+suppress_default_attributes_task = True
 
 def task_download_kcna():
     task = dict()

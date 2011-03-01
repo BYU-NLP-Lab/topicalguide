@@ -9,7 +9,7 @@ mallet_num_iterations = 1000
 
 twitter_stream_file = 'twitter_stream.txt'
 
-def task_attributes_file():
+def task_attributes():
     task = dict()
     task['targets'] = [attributes_file]
     task['actions'] = [(generate_attributes_file,

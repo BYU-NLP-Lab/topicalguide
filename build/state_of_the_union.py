@@ -31,7 +31,7 @@ addresses_filename = 'state_of_the_union_addresses.txt'
 dataset_name = 'state_of_the_union'
 dataset_description = 'State of the Union Addresses 1790-2010'
 
-def task_attributes_file():
+def task_attributes():
     task = dict()
     task['targets'] = [attributes_file]
     task['actions'] = [(generate_attributes_file,
