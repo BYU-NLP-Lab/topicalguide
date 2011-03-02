@@ -39,6 +39,7 @@ from topic_modeling.visualize.models import Topic
 
 def base_context(request, dataset, analysis, document):
     context = root_context(dataset, analysis)
+    
     context['highlight'] = 'documents_tab'
     context['tab'] = 'document'
     dataset = Dataset.objects.get(name=dataset)
@@ -62,6 +63,8 @@ def base_context(request, dataset, analysis, document):
 
     if not document:
         document = context['documents'][0]
+    
+    context['document_url'] = context['documents_url'] + '/' + str(document.id)
     context['curdocument'] = document
     context['document_text'] = document.text()
     context['document_title'] = document.filename
