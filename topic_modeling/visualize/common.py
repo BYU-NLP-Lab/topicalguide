@@ -218,10 +218,4 @@ def get_word_list(request, dataset_name):
     words = filter(lambda w: w.type.startswith(word_base), words)
     return words
 
-# Miscellaneous
-############################
-
-def about(request):
-    return render_to_response('about.html', Context())
-
 # vim: et sw=4 sts=4
