@@ -25,23 +25,19 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <div class="widget">
 	<div>
 		<span class="widget-title">Similar Documents</span> by
-		<select id="id_similarity_measure" onChange="get_similar_documents()">
+		<select id="similarity-measure-select" onChange="get_similar_documents()">
 			{% for s in similarity_measures %}
-			<option value="{{ s.name }}"
-			{% ifequal similarity_measure s %}
-			selected
-			{% endifequal %}
-			>
+			<option value="{{ s.name }}" {% ifequal similarity_measure s %}selected{% endifequal %}>
 				{{ s.name }}
 			</option>
 			{% endfor %}
 		</select>
 	</div>
-	<ul class="widget-body list">
+	<table id="similar-documents-table" class="widget-body list full-width">
 		{% for d in similar_documents %}
-		<li><a href="{{ baseurl }}/{{ d.document2.id }}">{{ d.document2 }}</a><span class="value">{{ d.value|floatformat:"2" }}</span></li>
+		<tr><td><a href="{{ documents_url }}/{{ d.document2.id }}">{{ d.document2 }}</a></td><td class="value">{{ d.value|floatformat:"2" }}</td></tr>
 		{% endfor %}
-	</ul>
+	</table>
 </div>
 <script charset="utf-8" type="text/javascript"
 	src="/site-media/document_scripts/similar_documents.js">
