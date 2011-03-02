@@ -68,7 +68,6 @@ def base_page_vars(request, dataset, analysis, attribute, value):
     page_vars['values'] = [v.value for v in values]
 
     if value:
-        print attribute, value
         curvalue = get_object_or_404(Value, attribute=attribute, value=value)
     else:
         curvalue = values[0]
