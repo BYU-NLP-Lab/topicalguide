@@ -109,14 +109,19 @@ def similar_topics(request, dataset, analysis, topic, measure):
     request.session['topic-similarity-measure'] = measure
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     topic = analysis.topic_set.get(number=topic)
-    topic_name = get_topic_name(topic, name_scheme_id)
     measure = analysis.pairwisetopicmetric_set.get(name=measure)
     similar_topics = topic.pairwisetopicmetricvalue_originating.\
             select_related().filter(metric=measure).order_by('-value')[1:11]
-    topics = [t.topic2 for t in similar_topics]
-    values = [t.value for t in similar_topics]
+    
+    topics = []
+    values = []
+    for t in similar_topics:
+        values += [t.value]
+        similar_topic = t.topic2
+        topic_name = get_topic_name(similar_topic, name_scheme_id)
+        topics += [vars(AjaxTopic(similar_topic, topic_name))]
     ret_val['values'] = values
-    ret_val['topics'] = [vars(AjaxTopic(topic, topic_name)) for topic in topics]
+    ret_val['topics'] = topics
     return HttpResponse(simplejson.dumps(ret_val))
 
 
@@ -220,7 +225,7 @@ class AjaxTopic(object):
         self.name = topic_name
         self.number = topic.number
         try:
-            self.topicgroup = [topic.name for topic
+            self.topicgroup = [topic_.name for topic_
                                in topic.topicgroup.subtopics]
         except:
             self.topicgroup = False
