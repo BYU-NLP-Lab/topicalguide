@@ -1,7 +1,8 @@
 import os
 import sys
 
-path = '/home/www/topicalguide'
+#Prior to deployment, set path
+path = ''
 if path not in sys.path:
     sys.path.append(path)
 
