@@ -211,9 +211,6 @@ urlpatterns = patterns('',
     (r'^feeds/favorite-page/' + number + '$',
         'topic_modeling.visualize.ajax_calls.get_favorite_page'),
 
-# Miscellaneous
-    (r'^about/$', 'topic_modeling.visualize.common.about'),
-
 # URLS I wasn't sure quite what to do with
 ##########################################
 
