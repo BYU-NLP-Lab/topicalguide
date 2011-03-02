@@ -25,24 +25,22 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <div class="widget" id="top-documents">
 	{% load custom_filters %}
 	<div class="widget-title">Top Documents</div>
-	<div class="widget-body">
-		<table>
-			<thead>
-			<tr>
-				<th>Filename</th>
-				<th>Count</th>
-				<th>Percent in document</th>
-			</tr>
-			</thead>
-			<tbody>
-			{% for doc in top_docs %}
-			<tr>
-				<td><a href="{{ baseurl }}/{{ curtopic.number }}/documents/{{ doc.document.id }} ">{{ doc.document.filename }}</a></td>
-				<td>{{ doc.count }}</td>
-				<td>{{ doc.count|divide:doc.document.word_count }}</td>
-			</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-	</div>
+    <table class="widget-body list full-width">
+        <thead>
+        <tr>
+            <th>Filename</th>
+            <th>Count</th>
+            <th>Percent in document</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for doc in top_docs %}
+        <tr>
+            <td><a href="{{ baseurl }}/{{ curtopic.number }}/documents/{{ doc.document.id }} ">{{ doc.document.filename }}</a></td>
+            <td>{{ doc.count }}</td>
+            <td>{{ doc.count|divide:doc.document.word_count }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
