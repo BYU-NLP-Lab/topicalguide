@@ -34,11 +34,10 @@ from topic_modeling.visualize.models import TopicNameScheme
 
 def get_topic_name(topic, name_scheme_id):
     ns = TopicNameScheme.objects.get(id=name_scheme_id)
-    name = str(topic.number) + ": "
     try:
-        name += TopicName.objects.get(topic=topic, name_scheme=ns).name
+        name = TopicName.objects.get(topic=topic, name_scheme=ns).name
     except:
-        name += topic.name
+        name = topic.name
     return name
 
 def sort_topics(topics, sort_by, session):
