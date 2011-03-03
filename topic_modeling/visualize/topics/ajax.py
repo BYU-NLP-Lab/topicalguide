@@ -215,11 +215,13 @@ def update_topic_word_filter(request, dataset, analysis, topic, number, word):
     request.session.modified = True
     return filtered_topics_response(request, dataset, analysis)
 
+
 class AjaxTopic(object):
     def __init__(self, topic, topic_name):
-        self.name = topic_name
+        self.name = str(topic.number) + ": " + topic_name
         self.number = topic.number
         try:
+            # TODO(matt): This looks like it gets the wrong name
             self.topicgroup = [topic.name for topic
                                in topic.topicgroup.subtopics]
         except:
