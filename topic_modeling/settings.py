@@ -75,7 +75,8 @@ MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'lxmn5=5_++dn-k(ma!o*@ssjljtt%lh=fa!z2)_!*bpjp%w2vl'
+#TODO Set this before deploying a server
+SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -98,11 +99,11 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
     'topic_modeling.visualize',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
+#    'django.contrib.admin',
+#    'django.contrib.auth',
+#    'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
+#    'django.contrib.sites',
 )
 
 SESSION_SAVE_EVERY_REQUEST = True

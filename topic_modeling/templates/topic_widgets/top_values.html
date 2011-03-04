@@ -40,32 +40,30 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		onchange="get_top_attribute_values()"/>
 		By percent
 	</div>
-	<div class="widget-body">
-		<table>
-			<thead>
-				<tr>
-					<th>Value</th>
-					<th>Count</th>
-					<th>Percent in value</th>
-				</tr>
-			</thead>
-			<tbody id="attr_values_body">
-			{% for value in top_values %}
-			<tr>
-				<td>
-					<a href="/datasets/{{ dataset }}/analyses/{{ analysis }}/attributes/{{ attribute.name }}/values/{{ value.value }}">{{ value.value }}</a>
-				</td>
-				<td>
-					{{ value.count }}
-				</td>
-				<td>
-					{{ value.percent|floatformat:"2" }}
-				</td>
-			</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-	</div>
+    <table class="widget-body list full-width">
+        <thead>
+            <tr>
+                <th>Value</th>
+                <th>Count</th>
+                <th>Percent in value</th>
+            </tr>
+        </thead>
+        <tbody id="attr_values_body">
+        {% for value in top_values %}
+        <tr>
+            <td>
+                <a href="/datasets/{{ dataset }}/analyses/{{ analysis }}/attributes/{{ attribute.name }}/values/{{ value.value }}">{{ value.value }}</a>
+            </td>
+            <td>
+                {{ value.count }}
+            </td>
+            <td>
+                {{ value.percent|floatformat:"2" }}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 	<script charset="utf-8" type="text/javascript"
 		src="/site-media/topic_scripts/top_values.js">
 	</script>

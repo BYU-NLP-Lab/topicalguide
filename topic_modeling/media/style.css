@@ -67,10 +67,11 @@
     border: 0px;
 }
 .branding-title-text {
-	font-size: 30px;
+	font-size: 24px;
 	display:table-cell;
 	vertical-align: middle;
 	text-align: center;
+    padding-left: 5px;
 }
 
 #header {
