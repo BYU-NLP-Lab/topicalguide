@@ -28,7 +28,7 @@ function get_similar_documents()
 	var link = "/feeds/similar-documents/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
 	link += "/documents/" + $.fn.doc_vars.curdocument_id;
-	link += "/measures/" + $("#id_similarity_measure").val();
+	link += "/measures/" + $("#similarity-measure-select").val();
 	$.getJSON(link, {}, function(data) {
 		var base = $.fn.documents_url + "/";
 		var documents = '';
@@ -40,7 +40,7 @@ function get_similar_documents()
 			documents += '<td>'+data.values[i].toFixed(2)+'</td>';
 			documents += '</tr>';
 		}
-		$("#id_similar_documents").html(documents);
+		$("#similar-documents-table").html(documents);
 		cursor_default();
 	});
 }

@@ -148,7 +148,7 @@ if 'pairwise_document_metrics' not in locals():
     pairwise_document_metrics = ['word correlation', 'topic correlation']
 if 'name_schemes' not in locals():
     name_schemes = [
-               TopNTopicNamer(dataset_name, analysis_name, 2),
+               TopNTopicNamer(dataset_name, analysis_name, 3),
 #               TfitfTopicNamer(dataset_name, analysis_name, 5)
                ]
 
