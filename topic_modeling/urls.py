@@ -211,14 +211,14 @@ urlpatterns = patterns('',
     (r'^feeds/favorite-page/' + number + '$',
         'topic_modeling.visualize.ajax_calls.get_favorite_page'),
 
-# Miscellaneous
-    (r'^about/$', 'topic_modeling.visualize.common.about'),
-
 # URLS I wasn't sure quite what to do with
 ##########################################
 
 # Admin and Media Services
-    (r'^admin/', include(admin.site.urls)),
+#  Admin interface is disabled by default. If you wish to enable it, uncomment the following
+#  and also uncomment the disabled apps in the Django settings file
+#    (r'^admin/', include(admin.site.urls)),
+
     # TODO(dan): Is this OK for production?  Would it just be a matter of
     # making sure that document root was set correctly in Apache, or is there
     # more to it?
