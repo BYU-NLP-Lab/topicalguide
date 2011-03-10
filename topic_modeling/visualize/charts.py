@@ -95,7 +95,7 @@ def get_chart(words):
 
 def thin_labels(labels, interval):
     """ Reduce the number of labels for a plot axis when there are too many.
-    
+
     This is accomplished by "thinning" the labels, selecting every interval-th
     one and discarding all others.
     Args:
@@ -472,9 +472,10 @@ class NumericalAttributesDistributionChart(Chart):
 
 
 # This has to be down here, after everything has been defined
-plot_types = { 'Topics vs. Attributes': TopicAttributeChart,
+# The format is this: '[name of plot]': (class of plot, order in list)
+plot_types = { 'Topics vs. Attributes': (TopicAttributeChart, 1),
         #'NumericalAttribute-Distribution': NumericalAttributesDistributionChart,
-        'Topic Metric Comparison': TopicMetricChart,
+        'Topic Metric Comparison': (TopicMetricChart, 2),
         }
 
 
