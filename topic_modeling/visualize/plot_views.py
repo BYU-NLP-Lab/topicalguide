@@ -34,53 +34,53 @@ from topic_modeling.visualize.models import Dataset
 
 
 def index(request, dataset, analysis, plot):
+    plots = plot_types.keys()
+    plots.sort(key=lambda x: plot_types[x][1])
     if not plot:
-        plot = plot_types.keys()[0]
-    page_vars = root_context(dataset, analysis)
-    page_vars['highlight'] = 'plots_tab'
-    page_vars['tab'] = 'plot'
-    page_vars['plot'] = plot
+        plot = plots[0]
+    context = root_context(dataset, analysis)
+    context['highlight'] = 'plots_tab'
+    context['tab'] = 'plot'
+    context['plot'] = plot
 
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    page_vars['breadcrumb'] = BreadCrumb()
-    page_vars['breadcrumb'].dataset(dataset)
-    page_vars['breadcrumb'].analysis(analysis)
-    page_vars['breadcrumb'].plot()
+    context['breadcrumb'] = BreadCrumb()
+    context['breadcrumb'].dataset(dataset)
+    context['breadcrumb'].analysis(analysis)
+    context['breadcrumb'].plot()
 
-#    histogram = False
-#    frequency = False
     attributes = Attribute.objects.filter(dataset=dataset)
-    plot_form = plot_types[plot].form(dataset, analysis)
+    plot_form = plot_types[plot][0].form(dataset, analysis)
     topics = [analysis.topic_set.all()[0]]
     attribute = attributes[0]
     values = attributes[0].value_set.all()
-    
-    topic_links = [page_vars['topics_url'] + '/%s' % str(topic.number) 
+
+    topic_links = [context['topics_url'] + '/%s' % str(topic.number)
                    for topic in topics]
     topic_names = [topic.name for topic in topics]
-    page_vars['topic_links'] = zip(topic_links, topic_names)
-    
-    attr_links = [page_vars['attributes_url'] + '/%s/values/%s' % \
+    context['topic_links'] = zip(topic_links, topic_names)
+
+    attr_links = [context['attributes_url'] + '/%s/values/%s' % \
                   (str(attribute), str(value)) for value in values]
     attr_names = [value.value for value in values]
-    page_vars['attr_links'] = zip(attr_links, attr_names)
+    context['attr_links'] = zip(attr_links, attr_names)
 
 
 
-    page_vars['plots'] = plot_types.keys()
+    context['plots'] = plots
     # Needs to be fixed if we ever have lots of kinds of plots
-    page_vars['num_pages'] = 1
-    page_vars['page_num'] = 1
-    page_vars['update_function'] = plot_types[plot].update_function
+    context['num_pages'] = 1
+    context['page_num'] = 1
+    context['update_function'] = plot_types[plot][0].update_function
 
-    page_vars['curplot'] = plot
-                                                             
+    context['curplot'] = plot
+
     chart_address = '/site-media/ajax-loader.gif'
-    page_vars['chart_address'] = chart_address
-    page_vars['plot_form'] = plot_form
+    context['chart_address'] = chart_address
+    context['plot_form'] = plot_form
 
-    return render_to_response('plot.html', page_vars)
+    return render_to_response('plot.html', context)
 
 
 def create_plot_image(request, chart_type, dataset, analysis, attribute,
@@ -94,7 +94,7 @@ def create_plot_image(request, chart_type, dataset, analysis, attribute,
                         'analysis': analysis,
                         'attribute': attribute,
                         'topic': topic,
-                        'value': value} 
+                        'value': value}
     if request.GET.get('frequency', False):
         chart_parameters['frequency'] = 'True'
     if request.GET.get('histogram', False):
@@ -106,8 +106,8 @@ def create_plot_image(request, chart_type, dataset, analysis, attribute,
     if request.GET.get('points', False):
         chart_parameters['points'] = 'True'
 
-    chart = plot_types[chart_type](chart_parameters)
-    
+    chart = plot_types[chart_type][0](chart_parameters)
+
     return HttpResponse(chart.get_chart_image(), mimetype="image/png")
 
 
