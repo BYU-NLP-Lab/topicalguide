@@ -36,7 +36,7 @@ function get_similar_topics()
 			topics += '<tr>';
 			topics += '<td><a href="' + base + data.topics[i].number + '">';
 			topics += data.topics[i].name + '</a></td>';
-			topics += '<td>'+data.values[i].toFixed(2)+'</td>';
+			topics += '<td class="value">'+data.values[i].toFixed(2)+'</td>';
 			topics += '</tr>';
 		}
 		$("#similar-topics-table").html(topics);
