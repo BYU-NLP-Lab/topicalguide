@@ -125,21 +125,20 @@ if 'mallet_optimize_interval' not in locals():
 if 'mallet_num_iterations' not in locals():
     mallet_num_iterations = 1000
 
-#For dynamically generated attributes file, define task_attributes_file with targets [attributes_file]
+# For dynamically generated attributes file, define task_attributes_file with
+# targets [attributes_file]
 if 'attributes_file' not in locals():
     attributes_file = dataset_dir + "/attributes.json"
 if 'markup_dir' not in locals():
     markup_dir = "{0}/{1}-markup".format(dataset_dir, analysis_name)
 
-#Metrics
+# Metrics
 # TODO(matt): can we make this dynamic?
-# TODO(matt): look at metric_scripts/topics/__init__.py for the "all" list,
-# and for each metric target
-# TODO(matt): have a "minimal" or "default" target that is the default if the
-# dataset file doesn't specify one
-# Same thing with document metrics (and word metrics, when we add them)
+# See the documentation or look in metric_scripts for a complete list of
+# available metrics
 if 'topic_metrics' not in locals():
-    topic_metrics = ["token count", "type count", "document entropy", "word entropy"]
+    topic_metrics = ["token count", "type count", "document entropy",
+            "word entropy"]
 if 'pairwise_topic_metrics' not in locals():
     pairwise_topic_metrics = ["document correlation", "word correlation"]
 if 'document_metrics' not in locals():
@@ -152,7 +151,7 @@ if 'name_schemes' not in locals():
 #               TfitfTopicNamer(dataset_name, analysis_name, 5)
                ]
 
-#Graph-based Visualization
+# Graph-based Visualization
 if 'java_base' not in locals():
     java_base = base_dir + "/java"
 if 'java_bin' not in locals():
@@ -326,12 +325,15 @@ if 'task_topic_metrics' not in locals():
         def metric_in_database(topic_metric):
             try:
                 dataset = Dataset.objects.get(name=dataset_name)
-                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-                names = metrics[topic_metric].metric_names_generated(dataset_name, analysis_name)
+                analysis = Analysis.objects.get(dataset=dataset,
+                        name=analysis_name)
+                names = metrics[topic_metric].metric_names_generated(
+                        dataset_name, analysis_name)
                 for name in names:
                     TopicMetric.objects.get(analysis=analysis, name=name)
                 return True
-            except (Dataset.DoesNotExist, Analysis.DoesNotExist, TopicMetric.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist,
+                    TopicMetric.DoesNotExist):
                 return False
 
         def import_metric(topic_metric):
@@ -354,9 +356,11 @@ if 'task_topic_metrics' not in locals():
             print "Removing topic metric: " + topic_metric
             dataset = Dataset.objects.get(name=dataset_name)
             analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-            names = metrics[topic_metric].metric_names_generated(dataset_name, analysis_name)
+            names = metrics[topic_metric].metric_names_generated(dataset_name,
+                    analysis_name)
             for topic_metric_name in names:
-                TopicMetric.objects.get(analysis=analysis, name=topic_metric_name).delete()
+                TopicMetric.objects.get(analysis=analysis,
+                        name=topic_metric_name).delete()
 
         print "Available topic metrics: " + u', '.join(topic_metrics)
         for topic_metric in topic_metrics:

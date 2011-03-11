@@ -77,8 +77,10 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         tmv.save()
     transaction.commit()
 
+
 def metric_names_generated(dataset, analysis):
     return [metric_name]
+
 
 def compute_pmi(word1, word2, c, total_words, total_cooccurrences):
     w1_count = None

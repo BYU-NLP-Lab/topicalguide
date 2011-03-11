@@ -65,6 +65,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
                 tmv.save()
             transaction.commit()
 
+
 def metric_names_generated(dataset, analysis):
     names = []
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
@@ -72,6 +73,7 @@ def metric_names_generated(dataset, analysis):
         for val in attr.value_set.all():
             names += 'Token Count for %s: %s' % (attr.name, val.value)
     return names
+
 
 if __name__ == '__main__':
     parser = OptionParser()
