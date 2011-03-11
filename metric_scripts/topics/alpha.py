@@ -41,7 +41,7 @@ metric_name = 'Alpha'
 @transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    
+
     try:
         metric = TopicMetric.objects.get(name=metric_name, analysis=analysis)
         if not force_import:
