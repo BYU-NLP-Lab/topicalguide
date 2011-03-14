@@ -43,16 +43,26 @@
 
 import os, sys
 import hashlib
-from subprocess import Popen, PIPE
+
+from collections import defaultdict
 from datetime import datetime
-from build.common.make_token_file import make_token_file
+from subprocess import Popen, PIPE
+
 import import_scripts.dataset_import
 import import_scripts.analysis_import
-from build.common.db_cleanup import remove_dataset, remove_analysis
-from topic_modeling.visualize.models import Analysis, Dataset, TopicMetric, PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric, \
-    TopicNameScheme
+
+from build.common.make_token_file import make_token_file
+from build.common.db_cleanup import remove_analysis
+from build.common.db_cleanup import remove_dataset
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
+from topic_modeling.visualize.models import Analysis
+from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.models import TopicMetric
+from topic_modeling.visualize.models import PairwiseTopicMetric
+from topic_modeling.visualize.models import DocumentMetric
+from topic_modeling.visualize.models import PairwiseDocumentMetric
+from topic_modeling.visualize.models import TopicNameScheme
 
 #If this file is invoked directly, pass it in to the doit system for processing.
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
@@ -139,6 +149,16 @@ if 'markup_dir' not in locals():
 if 'topic_metrics' not in locals():
     topic_metrics = ["token count", "type count", "document entropy",
             "word entropy"]
+if 'topic_metric_args' in locals():
+    tmp_topic_metric_args = defaultdict(dict)
+    tmp_topic_metric_args.update(topic_metric_args)
+    topic_metric_args = tmp_topic_metric_args
+else:
+    topic_metric_args = defaultdict(dict)
+if 'cooccurrence_counts' in locals():
+    topic_metrics.append('coherence')
+    topic_metric_args['coherence'].update(
+            {'counts': cooccurrence_counts})
 if 'pairwise_topic_metrics' not in locals():
     pairwise_topic_metrics = ["document correlation", "word correlation"]
 if 'document_metrics' not in locals():
@@ -341,7 +361,8 @@ if 'task_topic_metrics' not in locals():
             print 'Adding %s...' % topic_metric,
             sys.stdout.flush()
             try:
-                metrics[topic_metric].add_metric(dataset_name, analysis_name)
+                metrics[topic_metric].add_metric(dataset_name, analysis_name,
+                        **topic_metric_args[topic_metric])
                 end_time = datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
