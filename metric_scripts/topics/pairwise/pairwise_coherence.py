@@ -32,16 +32,19 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
 from django.db import transaction
 
+import sqlite3
+
 from math import log
 from numpy import dot, zeros
 from numpy.linalg import norm
 from optparse import OptionParser
 
+from metric_scripts.topics.coherence import compute_pmi
 from topic_modeling.visualize.models import Analysis, Word, TopicWord
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
-metric_name = "Word Correlation"
+metric_name = "Pairwise Coherence"
 @transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
@@ -55,37 +58,60 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         metric = PairwiseTopicMetric(name=metric_name, analysis=analysis)
         metric.save()
 
-    num_words = Word.objects.order_by('-pk')[0].id + 1
+    conn = sqlite3.connect(kwargs['counts'])
+    c = conn.cursor()
+    c.execute('PRAGMA temp_store=MEMORY')
+    c.execute('PRAGMA synchronous=OFF')
+    c.execute('PRAGMA cache_size=2000000')
+    c.execute('PRAGMA journal_mode=OFF')
+    c.execute('PRAGMA locking_mode=EXCLUSIVE')
+    c.execute("select words from total_counts")
+    for row in c:
+        total_words = float(row[0])
+    c.execute("select cooccurrences from total_counts")
+    for row in c:
+        total_cooccurrences = float(row[0])
+
     topics = list(analysis.topic_set.all().order_by('number'))
 
-    topicwordvectors = []
+    num_words = 10
+    topicwords = []
+    wordset = set()
     for topic in topics:
-        topicwordvectors.append(topic_word_vector(topic, num_words))
+        words = topic_words(topic, num_words)
+        topicwords.append(words)
+        for w in words:
+            wordset.add(w)
 
     for i, topic1 in enumerate(topics):
-        topic1_word_vals = topicwordvectors[i]
+        print topic1
+        topic1_words = topicwords[i]
         for j, topic2 in enumerate(topics):
-            topic2_word_vals = topicwordvectors[j]
-            correlation_coeff = pmcc(topic1_word_vals, topic2_word_vals)
+            print ' ', topic2
+            topic2_words = topicwords[j]
+            coherence = pairwise_coherence(topic1_words, topic2_words, c,
+                    total_words, total_cooccurrences)
             PairwiseTopicMetricValue.objects.create(topic1=topic1,
-                    topic2=topic2, metric=metric, value=correlation_coeff)
+                    topic2=topic2, metric=metric, value=coherence)
     transaction.commit()
+
+
+def pairwise_coherence(words1, words2, c, total_words, total_cooccurrences):
+    total_pmi = 0
+    for w1 in words1:
+        for w2 in words2:
+            total_pmi += compute_pmi(w1, w2, c, total_words,
+                    total_cooccurrences)
+    return total_pmi / len(words1) / len(words2)
 
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]
 
 
-def pmcc(topic1_word_vals, topic2_word_vals):
-    return float(dot(topic1_word_vals, topic2_word_vals) /
-            (norm(topic1_word_vals) * norm(topic2_word_vals)))
-
-
-def topic_word_vector(topic, num_words):
-    topic_word_vals = zeros(num_words)
-    for topicword in topic.topicword_set.all():
-        topic_word_vals[topicword.word_id] = topicword.count
-    return topic_word_vals
+def topic_words(topic, num_words):
+    return list([tw.word.type for tw in
+        topic.topicword_set.order_by('-count')[:10]])
 
 
 if __name__ == '__main__':
@@ -104,10 +130,15 @@ if __name__ == '__main__':
             help='Force the import of this metric even if the script thinks the'
             ' metric is already in the database',
             )
+    parser.add_option('-c', '--counts',
+            dest='counts',
+            help='Path to the database containing counts for computing PMI',
+            )
     options, args = parser.parse_args()
     dataset = options.dataset_name
     analysis = options.analysis_name
     force_import = options.force_import
-    add_metric(dataset, analysis, force_import)
+    counts = options.counts
+    add_metric(dataset, analysis, force_import, counts=counts)
 
 # vim: et sw=4 sts=4

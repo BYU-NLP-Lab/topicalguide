@@ -37,6 +37,9 @@ from topic_modeling.visualize.common import get_word_cloud, root_context
 from topic_modeling.visualize.common import set_word_context
 from topic_modeling.visualize.common import BreadCrumb
 from topic_modeling.visualize.common import WordSummary
+from topic_modeling.visualize.documents.views import add_top_topics
+from topic_modeling.visualize.documents.views import add_similarity_measures as\
+        doc_add_similarity_measures
 from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
@@ -52,6 +55,8 @@ from topic_modeling.visualize.topics.common import top_values_for_attr_topic
 from topic_modeling.visualize.topics.filters import clean_topics_from_session
 from topic_modeling.visualize.topics.filters import TopicFilterByDocument
 from topic_modeling.visualize.topics.filters import TopicFilterByWord
+from topic_modeling.visualize.word_views import add_word_charts
+from topic_modeling.visualize.word_views import add_word_contexts
 
 # The context variables that all topic views need
 #################################################
@@ -102,8 +107,6 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
 
     context['metrics'] = topic.topicmetricvalue_set.all()
 
-#    topic_name = TopicName.objects.get(topic=topic,
-#            name_scheme=current_name_scheme).name
     topic_name = get_topic_name(topic, current_name_scheme.id)
 
     context['topic_name'] = topic_name
@@ -138,17 +141,16 @@ def index(request, dataset, analysis, topic):
     return render_to_response('topic.html', context)
 
 
-from topic_modeling.visualize.word_views import add_word_charts, add_word_contexts
 def word_index(request, dataset, analysis, topic, word):
     dataset_name = dataset
     dataset = Dataset.objects.get(name=dataset_name)
-    
+
     filter = TopicFilterByWord(Analysis.objects.get(dataset=dataset,
             name=analysis), 0)
     filter.current_word = word
 
-    context, analysis, topic = base_context(request, dataset_name, analysis, topic,
-            extra_filters=[filter])
+    context, analysis, topic = base_context(request, dataset_name, analysis,
+            topic, extra_filters=[filter])
 
     word = Word.objects.get(dataset=dataset, type=word)
     context['curword'] = word
@@ -167,27 +169,16 @@ def word_index(request, dataset, analysis, topic, word):
     context['documents'] = docs
     context['breadcrumb'].word(word)
     context['topic_post_link'] = '/words/%s' % word.type
-    
-    
+
+
     add_word_charts(dataset, analysis, context)
-    
+
     topicword = topic.topicword_set.get(word=word,word__ngram=False)
     word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
     add_word_contexts(topicword.word.type, word_url, context)
-    
-#    
-#    
-#    words = []
-#    for i in range(0,10):
-#        w = WordSummary(topicword.word.type, number=i)
-#        w.url = word_url + topicword.word.type
-#        words.append(w)
-#    
-#    context['word_contexts'] = words
-    
+
     return render_to_response('topic_word.html', context)
 
-from topic_modeling.visualize.documents.views import add_top_topics, add_similarity_measures as doc_add_similarity_measures
 def document_index(request, dataset, analysis, topic, document):
     filter = TopicFilterByDocument(Analysis.objects.get(dataset__name=dataset,
             name=analysis), 0)
@@ -198,7 +189,7 @@ def document_index(request, dataset, analysis, topic, document):
     document = Document.objects.get(dataset__name=dataset, id=document)
     text = document.get_highlighted_text([topic.number], analysis)
     context['metrics'] = document.documentmetricvalue_set.all()
-    
+
     add_top_topics(request, analysis, document, context)
     doc_add_similarity_measures(request, analysis, document, context)
 
@@ -254,20 +245,25 @@ def add_ngrams(topic, context):
     if ngrams:
         context['ngram_cloud'] = get_word_cloud(ngrams)
 
+
 def add_topic_map_url(topic, context):
-    path = str(topic.analysis.name) + '/' + context['currentnamescheme'].name + '/' + str(topic.number) + '.svg'
+    path = str(topic.analysis.name) + '/' + context['currentnamescheme'].name \
+            + '/' + str(topic.number) + '.svg'
     topic_map_local = context['topic_map_dir'] + '/' + path
     if os.path.exists(topic_map_local):
         context['topic_map_local_filename'] = topic_map_local
-        topic_map_url = '/datasets/' + str(topic.analysis.dataset.name) + '/analyses/' + str(topic.analysis.name) + \
-                        '/topics/' + str(topic.number) + '/maps/' + context['currentnamescheme'].name
+        topic_map_url = '/datasets/' + str(topic.analysis.dataset.name) + \
+                '/analyses/' + str(topic.analysis.name) + '/topics/' + \
+                str(topic.number) + '/maps/' + \
+                context['currentnamescheme'].name
         context['topic_map_url'] = topic_map_url
 
 
 def topic_map(request, dataset, analysis, topic, namescheme):
     context, analysis, topic = base_context(request, dataset, analysis, topic)
 
-    path = str(topic.analysis.name) + '/' + namescheme + '/' + str(topic.number) + '.svg'
+    path = str(topic.analysis.name) + '/' + namescheme + '/' + \
+            str(topic.number) + '.svg'
     topic_map_local = context['topic_map_dir'] + '/' + path
 
     if os.path.exists(topic_map_local):
@@ -276,15 +272,11 @@ def topic_map(request, dataset, analysis, topic, namescheme):
     else:
         return HttpResponseNotFound()
 
+
 def add_top_documents(topic, context):
     topicdocs = topic.documenttopic_set.order_by('-count')[:10]
     context['top_docs'] = topicdocs
 
-class TopicSimilarityEntry:
-    def __init__(self, name, number, value):
-        self.name = name
-        self.number = number
-        self.value = value
 
 def add_similarity_measures(request, analysis, topic, context):
     similarity_measures = analysis.pairwisetopicmetric_set.all()
@@ -303,7 +295,7 @@ def add_similarity_measures(request, analysis, topic, context):
         for t in similar_topics[1:11]:
             topic = t.topic2
             number = topic.number
-            name = str(number) + ": " + TopicName.objects.get(topic=topic, name_scheme=ns).name
+            name = str(number) + ': ' + get_topic_name(topic, name_scheme_id)
             entries.append(TopicSimilarityEntry(name, number, t.value))
         context['similar_topics'] = entries
         context['similarity_measures'] = similarity_measures
@@ -360,6 +352,16 @@ def add_turbo_topics(analysis, topic, context):
         context['extra_widgets'].append('topic_widgets/turbo_topics.html')
     except ExtraTopicInformation.DoesNotExist:
         pass
+
+
+# Classes
+#########
+
+class TopicSimilarityEntry:
+    def __init__(self, name, number, value):
+        self.name = name
+        self.number = number
+        self.value = value
 
 
 # vim: et sw=4 sts=4

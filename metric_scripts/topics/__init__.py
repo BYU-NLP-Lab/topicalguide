@@ -49,10 +49,12 @@ metrics['type count'] = type_count
 metrics['word entropy'] = word_entropy
 
 from pairwise import document_correlation
+from pairwise import pairwise_coherence
 from pairwise import word_correlation
 
 pairwise_metrics = MetricSet()
 pairwise_metrics['document correlation'] = document_correlation
+pairwise_metrics['pairwise coherence'] = pairwise_coherence
 pairwise_metrics['word correlation'] = word_correlation
 
 # vim: et sw=4 sts=4
