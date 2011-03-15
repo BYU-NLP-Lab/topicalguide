@@ -70,16 +70,16 @@ def main(state_file, name, attr_file, root, files_dir, description):
     cursor.execute('PRAGMA cache_size=2000000')
     cursor.execute('PRAGMA journal_mode=MEMORY')
     cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
-    
+
     created = create_dataset(name, root, files_dir, description)
     if created:
         docs, attrs, vals, attrvaldoc, attr_table = parse_attributes(attr_file)
-    
+
         doc_index = create_document_table(docs)
         attr_index = create_attribute_table(attrs)
         value_index = create_value_table(vals, attr_index)
         create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index)
-    
+
         # BAD!  We currently rely on a Mallet output file in order to give us
         # counts for the database.  This should be fixed somehow.  The problem
         # is that it depends on stopword lists and other kinds of formating.
@@ -90,7 +90,7 @@ def main(state_file, name, attr_file, root, files_dir, description):
         create_attrval_table(attrval, attr_index, value_index)
         create_attrvalword_table(attrvalword, attr_index, value_index,
                 word_index)
-    
+
         cursor.execute('PRAGMA journal_mode=DELETE')
         cursor.execute('PRAGMA locking_mode=NORMAL')
         end_time = datetime.now()
@@ -98,7 +98,7 @@ def main(state_file, name, attr_file, root, files_dir, description):
         print >> sys.stderr, 'It took', end_time - start_time,
         print >> sys.stderr, 'to import the dataset'
 
-    
+
 
 #############################################################################
 # Database creation code (in the order it's called in main)
@@ -349,7 +349,7 @@ def parse_attributes(attribute_file):
     """
     Parse the contents of the attributes file, which should
     consist of a JSON formatted text file with the following
-    format: [ {'path': <path>, 'attributes':{'attribute': 'value',...}}, ...] 
+    format: [ {'path': <path>, 'attributes':{'attribute': 'value',...}}, ...]
     """
     print >> sys.stderr, 'Parsing the JSON attributes file...  ',
     sys.stdout.flush()

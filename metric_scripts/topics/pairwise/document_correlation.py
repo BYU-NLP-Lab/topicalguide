@@ -24,10 +24,10 @@
 
 
 from __future__ import division
-from math import isnan
 
 from django.db import transaction
 
+from math import isnan
 from math import log
 from numpy import dot, zeros
 from numpy.linalg import norm
@@ -50,7 +50,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     except PairwiseTopicMetric.DoesNotExist:
         metric = PairwiseTopicMetric(name=metric_name, analysis=analysis)
         metric.save()
-    
+
     num_docs = Document.objects.filter(dataset=analysis.dataset).order_by(
             '-pk')[0].id + 1
     topics = list(analysis.topic_set.all().order_by('number'))
@@ -58,21 +58,24 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     doctopicvectors = []
     for topic in topics:
         doctopicvectors.append(document_topic_vector(topic, num_docs))
-    
+
     for i, topic1 in enumerate(topics):
         topic1_doc_vals = doctopicvectors[i]
         for j, topic2 in enumerate(topics):
             topic2_doc_vals = doctopicvectors[j]
             correlation_coeff = pmcc(topic1_doc_vals, topic2_doc_vals)
             if not isnan(correlation_coeff):
-                PairwiseTopicMetricValue.objects.create(topic1=topic1, 
+                PairwiseTopicMetricValue.objects.create(topic1=topic1,
                     topic2=topic2, metric=metric, value=correlation_coeff)
             else:
-                print "Error computing metric between {0} and {1}".format(topic1,topic2)
+                print "Error computing metric between {0} and {1}".format(
+                        topic1,topic2)
         transaction.commit()
+
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]
+
 
 def pmcc(topic1_doc_vals, topic2_doc_vals):
     return float(dot(topic1_doc_vals, topic2_doc_vals) / (norm(topic1_doc_vals)

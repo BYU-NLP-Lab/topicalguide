@@ -155,12 +155,21 @@ if 'topic_metric_args' in locals():
     topic_metric_args = tmp_topic_metric_args
 else:
     topic_metric_args = defaultdict(dict)
+if 'pairwise_topic_metrics' not in locals():
+    pairwise_topic_metrics = ["document correlation", "word correlation"]
+if 'pairwise_topic_metric_args' in locals():
+    tmp_pairwise_topic_metric_args = defaultdict(dict)
+    tmp_pairwise_topic_metric_args.update(pairwise_topic_metric_args)
+    pairwise_topic_metric_args = tmp_pairwise_topic_metric_args
+else:
+    pairwise_topic_metric_args = defaultdict(dict)
 if 'cooccurrence_counts' in locals():
     topic_metrics.append('coherence')
     topic_metric_args['coherence'].update(
             {'counts': cooccurrence_counts})
-if 'pairwise_topic_metrics' not in locals():
-    pairwise_topic_metrics = ["document correlation", "word correlation"]
+    pairwise_topic_metrics.append('pairwise coherence')
+    pairwise_topic_metric_args['pairwise coherence'].update(
+            {'counts': cooccurrence_counts})
 if 'document_metrics' not in locals():
     document_metrics = ['token count', 'type count', 'topic entropy']
 if 'pairwise_document_metrics' not in locals():
