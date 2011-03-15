@@ -82,26 +82,42 @@ def metric_names_generated(dataset, analysis):
     return [metric_name]
 
 
-def compute_pmi(word1, word2, c, total_words, total_cooccurrences):
+def compute_pmi(word1, word2, c, total_words, total_cooccurrences, seen_w={},
+        seen_c={}):
+    # We memoize here, because we do a lot of lookups.
+    pair = '%s,%s' % (word1, word2)
+    if pair in seen_c:
+        return seen_c[pair]
     w1_count = None
     w2_count = None
     cooccurrence_count = None
     if word2 < word1:
         word1, word2 = word2, word1
-    c.execute("select count from word_counts where word = '%s';" % word1)
-    for row in c:
-        w1_count = row[0]
-    c.execute("select count from word_counts where word = '%s';" % word2)
-    for row in c:
-        w2_count = row[0]
-    c.execute("select count from cooccurrence_counts where word_pair = '%s,%s';"
-            % (word1, word2))
+    if word1 in seen_w:
+        w1_count = seen_w[word1]
+    else:
+        c.execute("select count from word_counts where word = '%s';" % word1)
+        for row in c:
+            w1_count = row[0]
+        seen_w[word1] = w1_count
+    if word2 in seen_w:
+        w2_count = seen_w[word2]
+    else:
+        c.execute("select count from word_counts where word = '%s';" % word2)
+        for row in c:
+            w2_count = row[0]
+        seen_w[word2] = w2_count
+    c.execute("select count from cooccurrence_counts where word_pair = '%s';"
+            % pair)
     for row in c:
         cooccurrence_count = row[0]
     if not cooccurrence_count or not w1_count or not w2_count:
+        seen_c[pair] = 0
         return 0
-    return log(cooccurrence_count / total_cooccurrences * total_words *
+    pmi = log(cooccurrence_count / total_cooccurrences * total_words *
             total_words / w1_count / w2_count)
+    seen_c[pair] = pmi
+    return pmi
 
 
 if __name__ == '__main__':
