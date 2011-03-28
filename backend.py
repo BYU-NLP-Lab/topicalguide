@@ -78,10 +78,10 @@ if __name__ == "__main__":
     sys.path.append("tools/doit")
     from doit.doit_cmd import cmd_main
     path = os.path.abspath(sys.argv[0])
-    
+
     #The database file where we'll store info about this build
     db_name = ".dbs/{0}.db".format(build.replace('/','_'))
-    
+
     args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
     sys.exit(cmd_main(args))
 
@@ -143,7 +143,6 @@ if 'markup_dir' not in locals():
     markup_dir = "{0}/{1}-markup".format(dataset_dir, analysis_name)
 
 # Metrics
-# TODO(matt): can we make this dynamic?
 # See the documentation or look in metric_scripts for a complete list of
 # available metrics
 if 'topic_metrics' not in locals():
