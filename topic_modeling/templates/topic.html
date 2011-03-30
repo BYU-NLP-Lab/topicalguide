@@ -60,35 +60,55 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block presentation_area %}
-	<div id="presentation-area-main-column">
-		{% include "topic_widgets/topic_name.html" %}
-		{% if metrics %}
-		{% include "topic_widgets/stats.html" %}
-		{% endif %}
-		
-		{% if topic_map_url %}
-		{% include "topic_widgets/topic_map.html" %}
-		{% endif %}
-        
-		{% if ngram_cloud %}
-		{% include "topic_widgets/ngram_cloud.html" %}
-		{% endif %}
-		{% include "topic_widgets/words_in_context.html" %}
-		
-		{% for widget in extra_widgets %}
-		{% include widget %}
+	<div class="top-level-widget-list">
+		<ul>
+			{% for top_level_widget in top_level_widgets %}
+			<li>{{ top_level_widget.title }}</li>
+			{% endfor %}
+		</ul>
+	</div>
+	{% for top_level_widget in top_level_widgets %}
+	<div class="top-level-widget" title="{{ top_level_widget.title }}">
+		{% for widget in top_level_widget.widgets %}
+		<div class="lower-level-widget" title="{{ widget.title }}">
+			{% include widget.url %}
+			{% if ngram_cloud %}
+			{% include "topic_widgets/ngram_cloud.html" %}
+			{% endif %}
+		</div>
 		{% endfor %}
 	</div>
-	<div id="presentation-area-sidebar">
-		{% include "topic_widgets/word_chart.html" %}
+	{% endfor %}
+	<div class="top-level-widget hidden" title="Similar Topics">
 		{% if similar_topics %}
-		{% include "topic_widgets/similar_topics.html" %}
+		<div class="lower-level-widget" title="Lists">
+			{% include "topic_widgets/similar_topics.html" %}
+		</div>
 		{% endif %}
-		{% include "topic_widgets/word_cloud.html" %}
+		{% if topic_map_url %}
+		<div class="lower-level-widget" title="Topic Map">
+			{% include "topic_widgets/topic_map.html" %}
+		</div>
+		{% endif %}
 	</div>
-	<div id="presentation-area-footer">
-		{% include "topic_widgets/top_documents.html" %}
-		{% include "topic_widgets/top_values.html" %}
+	<div class="top-level-widget hidden" title="Extra Information">
+		<div class="lower-level-widget" title="Stats">
+			{% include "topic_widgets/stats.html" %}
+		</div>
+		<div class="lower-level-widget" title="Top Documents">
+			{% include "topic_widgets/top_documents.html" %}
+		</div>
+		<div class="lower-level-widget" title="Top Values">
+			{% include "topic_widgets/top_values.html" %}
+		</div>
+		{% for widget in extra_widgets %}
+		<div class="lower-level-widget" title="Extra">
+			{% include widget %}
+		</div>
+		{% endfor %}
 	</div>
+
+
+
 {% endblock %}
 
