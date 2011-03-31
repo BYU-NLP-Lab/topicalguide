@@ -224,14 +224,6 @@
 	width: 100%;
 }
 
-/***** Custom Style for Specific Widgets *****/
-#top-documents {
-	float: left;
-}
-#top-values {
-	float: left;
-}
-
 table.kwic {
 	width:100%;
 	table-layout:fixed;

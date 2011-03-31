@@ -51,6 +51,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	<script type="text/javascript"
 		src="/site-media/topic_scripts/sidebar.js">
 	</script>
+	<script type="text/javascript"
+		src="/site-media/topic_scripts/main.js">
+	</script>
 	<div id="topics_list" class="inset"></div>
 	<script type="text/javascript">
 		$(document).ready(function () {
@@ -68,9 +71,19 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		</ul>
 	</div>
 	{% for top_level_widget in top_level_widgets %}
-	<div class="top-level-widget" title="{{ top_level_widget.title }}">
+	<div class="top-level-widget
+			{% if top_level_widget.hidden %}hidden{% endif %}"
+			title="{{ top_level_widget.title }}">
+		<div class="lower-level-widget-list">
+			<ul>
+				{% for widget in top_level_widget.widgets %}
+				<li>{{ widget.title }}</li>
+				{% endfor %}
+			</ul>
+		</div>
 		{% for widget in top_level_widget.widgets %}
-		<div class="lower-level-widget" title="{{ widget.title }}">
+		<div class="lower-level-widget {% if widget.hidden %}hidden{% endif %}"
+				title="{{ widget.title }}">
 			{% include widget.url %}
 			{% if ngram_cloud %}
 			{% include "topic_widgets/ngram_cloud.html" %}
@@ -79,36 +92,5 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		{% endfor %}
 	</div>
 	{% endfor %}
-	<div class="top-level-widget hidden" title="Similar Topics">
-		{% if similar_topics %}
-		<div class="lower-level-widget" title="Lists">
-			{% include "topic_widgets/similar_topics.html" %}
-		</div>
-		{% endif %}
-		{% if topic_map_url %}
-		<div class="lower-level-widget" title="Topic Map">
-			{% include "topic_widgets/topic_map.html" %}
-		</div>
-		{% endif %}
-	</div>
-	<div class="top-level-widget hidden" title="Extra Information">
-		<div class="lower-level-widget" title="Stats">
-			{% include "topic_widgets/stats.html" %}
-		</div>
-		<div class="lower-level-widget" title="Top Documents">
-			{% include "topic_widgets/top_documents.html" %}
-		</div>
-		<div class="lower-level-widget" title="Top Values">
-			{% include "topic_widgets/top_values.html" %}
-		</div>
-		{% for widget in extra_widgets %}
-		<div class="lower-level-widget" title="Extra">
-			{% include widget %}
-		</div>
-		{% endfor %}
-	</div>
-
-
-
 {% endblock %}
 

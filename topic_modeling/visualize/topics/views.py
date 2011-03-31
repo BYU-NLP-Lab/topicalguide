@@ -129,11 +129,10 @@ def index(request, dataset, analysis, topic):
     top_level_widgets = []
     top_level_widgets.append(top_words_widgets(topic, context))
     top_level_widgets.append(similar_topics_widgets(request, analysis, topic,
-        context))
-    add_stats(topic, context)
-    add_ngrams(topic, context)
-    add_top_documents(topic, context)
-    add_top_values(request, analysis, topic, context)
+            context))
+    top_level_widgets.append(extra_information_widgets(request, analysis,
+            topic, context))
+    top_level_widgets[0].hidden = False
     add_turbo_topics(analysis, topic, context)
     context['top_level_widgets'] = top_level_widgets
 
@@ -245,6 +244,7 @@ def top_words_widgets(topic, context):
         w.url = word_url + topicword.word.type
         words.append(w)
 
+    # TODO(matt): put other word clouds in here (ngrams, turbo topics)
     top_level_widget.widgets.append(word_cloud_widget(words, context))
     top_level_widget.widgets.append(words_in_context_widget(words, context))
     top_level_widget.widgets.append(word_chart_widget(words, context))
@@ -269,6 +269,58 @@ def word_chart_widget(words, context):
     word_chart = Widget("Word Chart", "topic_widgets/word_chart.html")
     context['chart_address'] = get_chart(words)
     return word_chart
+
+
+def add_ngrams(topic, context):
+    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
+    topicngrams = topic.topicword_set.filter(
+            word__ngram=True).order_by('-count')
+    ngrams = []
+    for topicngram in topicngrams[:10]:
+        percent = float(topicngram.count) / topic.total_count
+        w = WordSummary(topicngram.word.type, percent)
+        w.url = word_url + topicngram.word.type
+        ngrams.append(w)
+    if ngrams:
+        context['ngram_cloud'] = get_word_cloud(ngrams)
+
+
+def add_turbo_topics(analysis, topic, context):
+    try:
+        turbo_topics = analysis.extratopicinformation_set.get(
+                name="Turbo Topics Cloud")
+        value = turbo_topics.extratopicinformationvalue_set.get(topic=topic)
+        text = value.value
+        words = []
+        total = 0
+        for line in text.split('\n')[:100]:
+            if line.isspace() or not line:
+                continue
+            fields = line.split()
+            type = '_'.join(fields[:-1])
+            count = float(fields[-1])
+            words.append((type, count))
+            total += count
+        summaries = []
+        for type, count in words:
+            w = WordSummary(type, count / total)
+            summaries.append(w)
+        context['turbo_topics_cloud'] = get_word_cloud(summaries, url=False)
+        context['extra_widgets'].append('topic_widgets/turbo_topics_cloud.html')
+    except ExtraTopicInformation.DoesNotExist:
+        pass
+    try:
+        turbo_topics = analysis.extratopicinformation_set.get(
+                name="Turbo Topics N-Grams")
+        value = turbo_topics.extratopicinformationvalue_set.get(topic=topic)
+        text = value.value
+        first_ten = text.split('\n')[:10]
+        rest = text.split('\n')[10:]
+        context['turbo_topics_less'] = '\n'.join(first_ten)
+        context['turbo_topics_more'] = '\n'.join(rest)
+        context['extra_widgets'].append('topic_widgets/turbo_topics.html')
+    except ExtraTopicInformation.DoesNotExist:
+        pass
 
 
 # Similar Topics Widgets
@@ -310,7 +362,7 @@ def similar_topic_list_widget(request, analysis, topic, context):
     return topic_list
 
 
-def add_topic_map_url(topic, context):
+def topic_map_widget(topic, context):
     topic_map = Widget("Map", "topic_widgets/topic_map.html")
     path = str(topic.analysis.name) + '/' + context['currentnamescheme'].name \
             + '/' + str(topic.number) + '.svg'
@@ -325,7 +377,23 @@ def add_topic_map_url(topic, context):
     return topic_map
 
 
-def add_stats(topic, context):
+# Extra Information Widgets
+###########################
+
+def extra_information_widgets(request, analysis, topic, context):
+    top_level_widget = TopLevelWidget("Extra Information")
+
+    top_level_widget.widgets.append(stats_widget(topic, context))
+    top_level_widget.widgets.append(top_documents_widget(topic, context))
+    top_level_widget.widgets.append(top_values_widget(request, analysis, topic,
+            context))
+    print top_level_widget.widgets
+    top_level_widget.widgets[0].hidden = False
+    return top_level_widget
+
+
+def stats_widget(topic, context):
+    stats = Widget('Stats', 'topic_widgets/stats.html')
     Metric = namedtuple('Metric', 'name value average')
     metrics = []
     for topicmetricvalue in topic.topicmetricvalue_set.select_related().all():
@@ -335,28 +403,18 @@ def add_stats(topic, context):
         average = metric.topicmetricvalue_set.aggregate(Avg('value'))
         metrics.append(Metric(name, value, average['value__avg']))
     context['metrics'] = metrics
+    return stats
 
 
-def add_ngrams(topic, context):
-    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
-    topicngrams = topic.topicword_set.filter(
-            word__ngram=True).order_by('-count')
-    ngrams = []
-    for topicngram in topicngrams[:10]:
-        percent = float(topicngram.count) / topic.total_count
-        w = WordSummary(topicngram.word.type, percent)
-        w.url = word_url + topicngram.word.type
-        ngrams.append(w)
-    if ngrams:
-        context['ngram_cloud'] = get_word_cloud(ngrams)
-
-
-def add_top_documents(topic, context):
+def top_documents_widget(topic, context):
+    top_documents = Widget('Top Documents', 'topic_widgets/top_documents.html')
     topicdocs = topic.documenttopic_set.order_by('-count')[:10]
     context['top_docs'] = topicdocs
+    return top_documents
 
 
-def add_top_values(request, analysis, topic, context):
+def top_values_widget(request, analysis, topic, context):
+    top_values_widget = Widget('Top Values', 'topic_widgets/top_values.html')
     context['attributes'] = analysis.dataset.attribute_set.all()
     current_attribute = request.session.get('topic-attribute', None)
     if not current_attribute:
@@ -368,44 +426,7 @@ def add_top_values(request, analysis, topic, context):
 
     context['attribute'] = attribute
     context['top_values'] = top_values
-
-
-def add_turbo_topics(analysis, topic, context):
-    try:
-        turbo_topics = analysis.extratopicinformation_set.get(
-                name="Turbo Topics Cloud")
-        value = turbo_topics.extratopicinformationvalue_set.get(topic=topic)
-        text = value.value
-        words = []
-        total = 0
-        for line in text.split('\n')[:100]:
-            if line.isspace() or not line:
-                continue
-            fields = line.split()
-            type = '_'.join(fields[:-1])
-            count = float(fields[-1])
-            words.append((type, count))
-            total += count
-        summaries = []
-        for type, count in words:
-            w = WordSummary(type, count / total)
-            summaries.append(w)
-        context['turbo_topics_cloud'] = get_word_cloud(summaries, url=False)
-        context['extra_widgets'].append('topic_widgets/turbo_topics_cloud.html')
-    except ExtraTopicInformation.DoesNotExist:
-        pass
-    try:
-        turbo_topics = analysis.extratopicinformation_set.get(
-                name="Turbo Topics N-Grams")
-        value = turbo_topics.extratopicinformationvalue_set.get(topic=topic)
-        text = value.value
-        first_ten = text.split('\n')[:10]
-        rest = text.split('\n')[10:]
-        context['turbo_topics_less'] = '\n'.join(first_ten)
-        context['turbo_topics_more'] = '\n'.join(rest)
-        context['extra_widgets'].append('topic_widgets/turbo_topics.html')
-    except ExtraTopicInformation.DoesNotExist:
-        pass
+    return top_values_widget
 
 
 # Classes
@@ -415,6 +436,7 @@ class TopLevelWidget(object):
     def __init__(self, title):
         self.title = title
         self.widgets = []
+        self.hidden = True
 
 
 class Widget(object):
