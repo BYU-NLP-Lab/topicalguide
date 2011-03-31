@@ -226,7 +226,7 @@ if not 'task_attributes' in locals() and not ('suppress_default_attributes_task'
         for filename in os.listdir(files_dir):
             attrs.write('{"attributes": {}, "path": "' + filename + '"}')
         attrs.write(']')
-    
+
     def task_attributes():
         task = dict()
         task['targets'] = [attributes_file]
@@ -408,12 +408,16 @@ if 'task_pairwise_topic_metrics' not in locals():
         def metric_in_database(metric):
             try:
                 dataset = Dataset.objects.get(name=dataset_name)
-                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-                names = pairwise_metrics[metric].metric_names_generated(dataset_name, analysis_name)
+                analysis = Analysis.objects.get(dataset=dataset,
+                        name=analysis_name)
+                names = pairwise_metrics[metric].metric_names_generated(
+                        dataset_name, analysis_name)
                 for name in names:
-                    PairwiseTopicMetric.objects.get(analysis=analysis, name=name)
+                    PairwiseTopicMetric.objects.get(analysis=analysis,
+                            name=name)
                 return True
-            except (Dataset.DoesNotExist, Analysis.DoesNotExist, PairwiseTopicMetric.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist,
+                    PairwiseTopicMetric.DoesNotExist):
                 return False
 
         def import_metric(metric):
@@ -436,12 +440,15 @@ if 'task_pairwise_topic_metrics' not in locals():
             print "Removing pairwise topic metric: " + metric
             dataset = Dataset.objects.get(name=dataset_name)
             analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-            names = pairwise_metrics[metric].metric_names_generated(dataset_name, analysis_name)
+            names = pairwise_metrics[metric].metric_names_generated(
+                    dataset_name, analysis_name)
             for metric_name in names:
-                PairwiseTopicMetric.objects.get(analysis=analysis, name=metric_name).delete()
+                PairwiseTopicMetric.objects.get(analysis=analysis,
+                        name=metric_name).delete()
 
-        print "Available pairwise topic metrics: " + u', '.join(pairwise_metrics)
-        for pairwise_topic_metric in pairwise_metrics:
+        print "Available pairwise topic metrics: " + u', '.join(
+                pairwise_topic_metrics)
+        for pairwise_topic_metric in pairwise_topic_metrics:
             task = dict()
             task['name'] = pairwise_topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [pairwise_topic_metric])]
