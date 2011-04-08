@@ -63,34 +63,29 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block presentation_area %}
-	<div class="top-level-widget-list">
+	<div id="tabs">
 		<ul>
 			{% for top_level_widget in top_level_widgets %}
-			<li>{{ top_level_widget.title }}</li>
+			<li class="top-level"><a href="#tabs-{{forloop.counter}}">
+				{{ top_level_widget.title }}</a></li>
 			{% endfor %}
 		</ul>
-	</div>
-	{% for top_level_widget in top_level_widgets %}
-	<div class="top-level-widget
-			{% if top_level_widget.hidden %}hidden{% endif %}"
-			title="{{ top_level_widget.title }}">
-		<div class="lower-level-widget-list">
-			<ul>
+		{% for top_level_widget in top_level_widgets %}
+		<div id="tabs-{{forloop.counter}}">
+			<div class="lower-tabs" id="{{top_level_widget.ref}}-tabs">
+				<ul>
+					{% for widget in top_level_widget.widgets %}
+					<li class="lower-level"><a href="#{{top_level_widget.ref}}-tabs-{{forloop.counter}}">{{ widget.title }}</a></li>
+					{% endfor %}
+				</ul>
 				{% for widget in top_level_widget.widgets %}
-				<li>{{ widget.title }}</li>
+				<div id="{{top_level_widget.ref}}-tabs-{{forloop.counter}}">
+					{% include widget.url %}
+				</div>
 				{% endfor %}
-			</ul>
-		</div>
-		{% for widget in top_level_widget.widgets %}
-		<div class="lower-level-widget {% if widget.hidden %}hidden{% endif %}"
-				title="{{ widget.title }}">
-			{% include widget.url %}
-			{% if ngram_cloud %}
-			{% include "topic_widgets/ngram_cloud.html" %}
-			{% endif %}
+			</div>
 		</div>
 		{% endfor %}
 	</div>
-	{% endfor %}
 {% endblock %}
 
