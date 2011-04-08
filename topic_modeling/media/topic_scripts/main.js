@@ -1,5 +1,8 @@
 $(document).ready(function () {
 
+$("#tabs").tabs();
+$("#tabs .lower-tabs").tabs();
+/*
 $("div.top-level-widget-list li").click(function() {
 	var title = $(this).text();
 	$("div.top-level-widget:not(.hidden)").addClass("hidden");
@@ -14,6 +17,7 @@ $("div.lower-level-widget-list li").click(function() {
 	var this_widget = $("div.lower-level-widget[title='"+title+"']", top_level);
 	this_widget.removeClass("hidden");
 });
+*/
 
 
 });

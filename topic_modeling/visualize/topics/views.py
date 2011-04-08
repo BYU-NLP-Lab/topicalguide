@@ -435,6 +435,7 @@ def top_values_widget(request, analysis, topic, context):
 class TopLevelWidget(object):
     def __init__(self, title):
         self.title = title
+        self.ref = title.lower().replace(' ', '-')
         self.widgets = []
         self.hidden = True
 
