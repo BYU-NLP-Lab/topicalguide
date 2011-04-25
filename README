@@ -1,26 +1,26 @@
-Last updated: 9 December 2010
+Last updated: 25 April 201l
 
 --------------------------------------------
-The Topic Browser
+The Topical Guide
 Copyright 2010-2011 Brigham Young University
 --------------------------------------------
 
-This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+This file is part of the Topical Guide <http://nlp.cs.byu.edu/topicalguide>.
 
-The Topic Browser is free software: you can redistribute it and/or modify it
+The Topical Guide is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by the
 Free Software Foundation, either version 3 of the License, or (at your option)
 any later version.
 
-The Topic Browser is distributed in the hope that it will be useful, but
+The Topical Guide is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
 for more details.
 
 You should have received a copy of the GNU Affero General Public License along
-with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+with the Topical Guide.  If not, see <http://www.gnu.org/licenses/>.
 
-If you have inquiries regarding any further use of the Topic Browser, please
+If you have inquiries regarding any further use of the Topical Guide, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
@@ -41,14 +41,14 @@ Canada.
 We welcome contributions to the code of this project.  At present the best way
 to contribute is to email a patch to textmining@cs.byu.edu (if that contact
 information goes out of date, the next place to look is at
-http://nlp.cs.byu.edu/topic_browser).  For licensing purposes we ask that you
+http://nlp.cs.byu.edu/topicalguide).  For licensing purposes we ask that you
 assign the copyright of any patch that you contribute to Brigham Young
 University.
 
 -------------------------------------------------------------------------------
 
 Further information, documentation, and a live demo of the code can be found at
-the project website: http://nlp.cs.byu.edu/topic_browser.  We choose not to
+the project website: http://nlp.cs.byu.edu/topicalguide.  We choose not to
 repeat most of the documentation in the code itself, though we give some simple
 instructions on how to run the code below.
 
