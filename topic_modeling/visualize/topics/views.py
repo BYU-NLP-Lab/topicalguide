@@ -126,14 +126,15 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
 def index(request, dataset, analysis, topic):
     context, analysis, topic = base_context(request, dataset, analysis, topic)
 
-    add_stats(topic, context)
-    add_word_widgets(topic, context)
-    add_ngrams(topic, context)
-    add_top_documents(topic, context)
-    add_top_values(request, analysis, topic, context)
-    add_similarity_measures(request, analysis, topic, context)
+    top_level_widgets = []
+    top_level_widgets.append(top_words_widgets(topic, context))
+    top_level_widgets.append(similar_topics_widgets(request, analysis, topic,
+            context))
+    top_level_widgets.append(extra_information_widgets(request, analysis,
+            topic, context))
+    top_level_widgets[0].hidden = False
     add_turbo_topics(analysis, topic, context)
-    add_topic_map_url(topic, context)
+    context['top_level_widgets'] = top_level_widgets
 
     rename_form = RenameForm(context['topic_name'])
     context['rename_form'] = rename_form
@@ -170,7 +171,6 @@ def word_index(request, dataset, analysis, topic, word):
     context['breadcrumb'].word(word)
     context['topic_post_link'] = '/words/%s' % word.type
 
-
     add_word_charts(dataset, analysis, context)
 
     topicword = topic.topicword_set.get(word=word,word__ngram=False)
@@ -178,6 +178,7 @@ def word_index(request, dataset, analysis, topic, word):
     add_word_contexts(topicword.word.type, word_url, context)
 
     return render_to_response('topic_word.html', context)
+
 
 def document_index(request, dataset, analysis, topic, document):
     filter = TopicFilterByDocument(Analysis.objects.get(dataset__name=dataset,
@@ -201,64 +202,8 @@ def document_index(request, dataset, analysis, topic, document):
     return render_to_response('topic_document.html', context)
 
 
-# Topic index widgets
-#####################
-
-def add_stats(topic, context):
-    Metric = namedtuple('Metric', 'name value average')
-    metrics = []
-    for topicmetricvalue in topic.topicmetricvalue_set.select_related().all():
-        metric = topicmetricvalue.metric
-        name = metric.name
-        value = topicmetricvalue.value
-        average = metric.topicmetricvalue_set.aggregate(Avg('value'))
-        metrics.append(Metric(name, value, average['value__avg']))
-    context['metrics'] = metrics
-
-
-
-def add_word_widgets(topic, context):
-    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
-    topicwords = topic.topicword_set.filter(
-            word__ngram=False).order_by('-count')
-    words = []
-    for topicword in topicwords[:100]:
-        percent = float(topicword.count) / topic.total_count
-        w = WordSummary(topicword.word.type, percent)
-        w.url = word_url + topicword.word.type
-        words.append(w)
-    context['words_in_context'] = words[:10]
-    context['chart_address'] = get_chart(words)
-    context['word_cloud'] = get_word_cloud(words)
-
-
-def add_ngrams(topic, context):
-    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
-    topicngrams = topic.topicword_set.filter(
-            word__ngram=True).order_by('-count')
-    ngrams = []
-    for topicngram in topicngrams[:10]:
-        percent = float(topicngram.count) / topic.total_count
-        w = WordSummary(topicngram.word.type, percent)
-        w.url = word_url + topicngram.word.type
-        ngrams.append(w)
-    if ngrams:
-        context['ngram_cloud'] = get_word_cloud(ngrams)
-
-
-def add_topic_map_url(topic, context):
-    path = str(topic.analysis.name) + '/' + context['currentnamescheme'].name \
-            + '/' + str(topic.number) + '.svg'
-    topic_map_local = context['topic_map_dir'] + '/' + path
-    if os.path.exists(topic_map_local):
-        context['topic_map_local_filename'] = topic_map_local
-        topic_map_url = '/datasets/' + str(topic.analysis.dataset.name) + \
-                '/analyses/' + str(topic.analysis.name) + '/topics/' + \
-                str(topic.number) + '/maps/' + \
-                context['currentnamescheme'].name
-        context['topic_map_url'] = topic_map_url
-
-
+# Not a top-level view, but it's a directly-responding method, so it goes
+# roughly in this category
 def topic_map(request, dataset, analysis, topic, namescheme):
     context, analysis, topic = base_context(request, dataset, analysis, topic)
 
@@ -273,47 +218,71 @@ def topic_map(request, dataset, analysis, topic, namescheme):
         return HttpResponseNotFound()
 
 
-def add_top_documents(topic, context):
-    topicdocs = topic.documenttopic_set.order_by('-count')[:10]
-    context['top_docs'] = topicdocs
+# Topic index widgets
+#####################
+
+# Top level widgets create groups of lower-level widgets.  Each lower level
+# widget must specify a url, a title, and whether or not it defaults to visible
+# (only one widget per top level widget should default to visible).
+#
+# The code that produces widgets also needs to set context variables for
+# whatever is needed by the url they specify.
+
+# Top Words widgets
+###################
+
+def top_words_widgets(topic, context):
+    top_level_widget = TopLevelWidget("Top Words")
+
+    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
+    topicwords = topic.topicword_set.filter(
+            word__ngram=False).order_by('-count')
+    words = []
+    for topicword in topicwords[:100]:
+        percent = float(topicword.count) / topic.total_count
+        w = WordSummary(topicword.word.type, percent)
+        w.url = word_url + topicword.word.type
+        words.append(w)
+
+    # TODO(matt): put other word clouds in here (ngrams, turbo topics)
+    top_level_widget.widgets.append(word_cloud_widget(words, context))
+    top_level_widget.widgets.append(words_in_context_widget(words, context))
+    top_level_widget.widgets.append(word_chart_widget(words, context))
+    top_level_widget.widgets[0].hidden = False
+    return top_level_widget
 
 
-def add_similarity_measures(request, analysis, topic, context):
-    similarity_measures = analysis.pairwisetopicmetric_set.all()
-    if similarity_measures:
-        name_scheme_id = request.session['current_name_scheme_id']
-        ns = TopicNameScheme.objects.get(id=name_scheme_id)
-        measure = request.session.get('topic-similarity-measure', None)
-        if measure:
-            measure = similarity_measures.get(name=measure)
-        else:
-            measure = similarity_measures[0]
-
-        similar_topics = topic.pairwisetopicmetricvalue_originating.\
-                select_related().filter(metric=measure).order_by('-value')
-        entries = []
-        for t in similar_topics[1:11]:
-            topic = t.topic2
-            number = topic.number
-            name = str(number) + ': ' + get_topic_name(topic, name_scheme_id)
-            entries.append(TopicSimilarityEntry(name, number, t.value))
-        context['similar_topics'] = entries
-        context['similarity_measures'] = similarity_measures
-        context['similarity_measure'] = measure
+def word_cloud_widget(words, context):
+    word_cloud = Widget("Word Cloud", "topic_widgets/word_cloud.html")
+    context['word_cloud'] = get_word_cloud(words)
+    return word_cloud
 
 
-def add_top_values(request, analysis, topic, context):
-    context['attributes'] = analysis.dataset.attribute_set.all()
-    current_attribute = request.session.get('topic-attribute', None)
-    if not current_attribute:
-        if len(context['attributes'])==0: return
-        attribute = context['attributes'][0]
-    else:
-        attribute = analysis.dataset.attribute_set.get(name=current_attribute)
-    top_values = top_values_for_attr_topic(analysis, topic, attribute)
+def words_in_context_widget(words, context):
+    words_in_context = Widget("Words in Context",
+            "topic_widgets/words_in_context.html")
+    context['words_in_context'] = words[:10]
+    return words_in_context
 
-    context['attribute'] = attribute
-    context['top_values'] = top_values
+
+def word_chart_widget(words, context):
+    word_chart = Widget("Word Chart", "topic_widgets/word_chart.html")
+    context['chart_address'] = get_chart(words)
+    return word_chart
+
+
+def add_ngrams(topic, context):
+    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
+    topicngrams = topic.topicword_set.filter(
+            word__ngram=True).order_by('-count')
+    ngrams = []
+    for topicngram in topicngrams[:10]:
+        percent = float(topicngram.count) / topic.total_count
+        w = WordSummary(topicngram.word.type, percent)
+        w.url = word_url + topicngram.word.type
+        ngrams.append(w)
+    if ngrams:
+        context['ngram_cloud'] = get_word_cloud(ngrams)
 
 
 def add_turbo_topics(analysis, topic, context):
@@ -354,10 +323,131 @@ def add_turbo_topics(analysis, topic, context):
         pass
 
 
+# Similar Topics Widgets
+########################
+
+def similar_topics_widgets(request, analysis, topic, context):
+    top_level_widget = TopLevelWidget("Similar Topics")
+
+    top_level_widget.widgets.append(similar_topic_list_widget(request,
+        analysis, topic, context))
+    top_level_widget.widgets.append(topic_map_widget(topic, context))
+    top_level_widget.widgets[0].hidden = False
+    return top_level_widget
+
+
+def similar_topic_list_widget(request, analysis, topic, context):
+    topic_list = Widget("Lists", "topic_widgets/similar_topics.html")
+    similarity_measures = analysis.pairwisetopicmetric_set.all()
+    if similarity_measures:
+        name_scheme_id = request.session['current_name_scheme_id']
+        ns = TopicNameScheme.objects.get(id=name_scheme_id)
+        measure = request.session.get('topic-similarity-measure', None)
+        if measure:
+            measure = similarity_measures.get(name=measure)
+        else:
+            measure = similarity_measures[0]
+
+        similar_topics = topic.pairwisetopicmetricvalue_originating.\
+                select_related().filter(metric=measure).order_by('-value')
+        entries = []
+        for t in similar_topics[1:11]:
+            topic = t.topic2
+            number = topic.number
+            name = str(number) + ': ' + get_topic_name(topic, name_scheme_id)
+            entries.append(TopicSimilarityEntry(name, number, t.value))
+        context['similar_topics'] = entries
+        context['similarity_measures'] = similarity_measures
+        context['similarity_measure'] = measure
+    return topic_list
+
+
+def topic_map_widget(topic, context):
+    topic_map = Widget("Map", "topic_widgets/topic_map.html")
+    path = str(topic.analysis.name) + '/' + context['currentnamescheme'].name \
+            + '/' + str(topic.number) + '.svg'
+    topic_map_local = context['topic_map_dir'] + '/' + path
+    if os.path.exists(topic_map_local):
+        context['topic_map_local_filename'] = topic_map_local
+        topic_map_url = '/datasets/' + str(topic.analysis.dataset.name) + \
+                '/analyses/' + str(topic.analysis.name) + '/topics/' + \
+                str(topic.number) + '/maps/' + \
+                context['currentnamescheme'].name
+        context['topic_map_url'] = topic_map_url
+    return topic_map
+
+
+# Extra Information Widgets
+###########################
+
+def extra_information_widgets(request, analysis, topic, context):
+    top_level_widget = TopLevelWidget("Extra Information")
+
+    top_level_widget.widgets.append(stats_widget(topic, context))
+    top_level_widget.widgets.append(top_documents_widget(topic, context))
+    top_level_widget.widgets.append(top_values_widget(request, analysis, topic,
+            context))
+    print top_level_widget.widgets
+    top_level_widget.widgets[0].hidden = False
+    return top_level_widget
+
+
+def stats_widget(topic, context):
+    stats = Widget('Stats', 'topic_widgets/stats.html')
+    Metric = namedtuple('Metric', 'name value average')
+    metrics = []
+    for topicmetricvalue in topic.topicmetricvalue_set.select_related().all():
+        metric = topicmetricvalue.metric
+        name = metric.name
+        value = topicmetricvalue.value
+        average = metric.topicmetricvalue_set.aggregate(Avg('value'))
+        metrics.append(Metric(name, value, average['value__avg']))
+    context['metrics'] = metrics
+    return stats
+
+
+def top_documents_widget(topic, context):
+    top_documents = Widget('Top Documents', 'topic_widgets/top_documents.html')
+    topicdocs = topic.documenttopic_set.order_by('-count')[:10]
+    context['top_docs'] = topicdocs
+    return top_documents
+
+
+def top_values_widget(request, analysis, topic, context):
+    top_values_widget = Widget('Top Values', 'topic_widgets/top_values.html')
+    context['attributes'] = analysis.dataset.attribute_set.all()
+    current_attribute = request.session.get('topic-attribute', None)
+    if not current_attribute:
+        if len(context['attributes'])==0: return
+        attribute = context['attributes'][0]
+    else:
+        attribute = analysis.dataset.attribute_set.get(name=current_attribute)
+    top_values = top_values_for_attr_topic(analysis, topic, attribute)
+
+    context['attribute'] = attribute
+    context['top_values'] = top_values
+    return top_values_widget
+
+
 # Classes
 #########
 
-class TopicSimilarityEntry:
+class TopLevelWidget(object):
+    def __init__(self, title):
+        self.title = title
+        self.ref = title.lower().replace(' ', '-')
+        self.widgets = []
+        self.hidden = True
+
+
+class Widget(object):
+    def __init__(self, title, url):
+        self.title = title
+        self.url = url
+        self.hidden = True
+
+
+class TopicSimilarityEntry(object):
     def __init__(self, name, number, value):
         self.name = name
         self.number = number

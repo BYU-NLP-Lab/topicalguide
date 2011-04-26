@@ -25,7 +25,8 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head><title>Topic Browser</title>
 		<link rel="shortcut icon" href="/site-media/byunlp-135px.png" />
-		<script type="text/javascript" src="/site-media/jquery-1.4.2.min.js"></script>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="/site-media/cursor.js"></script>
 		<script type="text/javascript" src="/site-media/name-scheme.js"></script>
         <script type="text/javascript">
@@ -43,18 +44,18 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             $.fn.analysis = "{{ analysis }}";
             $.fn.dataset_url = "{{ dataset_url }}";
             $.fn.analysis_url = "{{ analysis_url }}";
-            
             $.fn.attributes_url = "{{ attributes_url }}";
             $.fn.documents_url = "{{ documents_url }}";
             $.fn.plots_url = "{{ plots_url }}";
             $.fn.topics_url = "{{ topics_url }}";
             $.fn.words_url = "{{ words_url }}";
         </script>
-		<link rel="stylesheet" title="default" href="/site-media/style.css" type="text/css" />
-		
+		<link rel="stylesheet" href="/site-media/style.css" type="text/css" />
+		<link rel="stylesheet" href="/site-media/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" />
+
 		{% block scripts %}
 		{% endblock %}
-		
+
 		<script type="text/javascript">
 			function add_favorite(){
 				{% for item in breadcrumb %}

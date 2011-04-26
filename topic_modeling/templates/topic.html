@@ -51,6 +51,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	<script type="text/javascript"
 		src="/site-media/topic_scripts/sidebar.js">
 	</script>
+	<script type="text/javascript"
+		src="/site-media/topic_scripts/main.js">
+	</script>
 	<div id="topics_list" class="inset"></div>
 	<script type="text/javascript">
 		$(document).ready(function () {
@@ -60,35 +63,29 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block presentation_area %}
-	<div id="presentation-area-main-column">
-		{% include "topic_widgets/topic_name.html" %}
-		{% if metrics %}
-		{% include "topic_widgets/stats.html" %}
-		{% endif %}
-		
-		{% if topic_map_url %}
-		{% include "topic_widgets/topic_map.html" %}
-		{% endif %}
-        
-		{% if ngram_cloud %}
-		{% include "topic_widgets/ngram_cloud.html" %}
-		{% endif %}
-		{% include "topic_widgets/words_in_context.html" %}
-		
-		{% for widget in extra_widgets %}
-		{% include widget %}
+	<div id="tabs">
+		<ul>
+			{% for top_level_widget in top_level_widgets %}
+			<li class="top-level"><a href="#tabs-{{forloop.counter}}">
+				{{ top_level_widget.title }}</a></li>
+			{% endfor %}
+		</ul>
+		{% for top_level_widget in top_level_widgets %}
+		<div id="tabs-{{forloop.counter}}">
+			<div class="lower-tabs" id="{{top_level_widget.ref}}-tabs">
+				<ul>
+					{% for widget in top_level_widget.widgets %}
+					<li class="lower-level"><a href="#{{top_level_widget.ref}}-tabs-{{forloop.counter}}">{{ widget.title }}</a></li>
+					{% endfor %}
+				</ul>
+				{% for widget in top_level_widget.widgets %}
+				<div id="{{top_level_widget.ref}}-tabs-{{forloop.counter}}">
+					{% include widget.url %}
+				</div>
+				{% endfor %}
+			</div>
+		</div>
 		{% endfor %}
-	</div>
-	<div id="presentation-area-sidebar">
-		{% include "topic_widgets/word_chart.html" %}
-		{% if similar_topics %}
-		{% include "topic_widgets/similar_topics.html" %}
-		{% endif %}
-		{% include "topic_widgets/word_cloud.html" %}
-	</div>
-	<div id="presentation-area-footer">
-		{% include "topic_widgets/top_documents.html" %}
-		{% include "topic_widgets/top_values.html" %}
 	</div>
 {% endblock %}
 

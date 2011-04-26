@@ -22,8 +22,7 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
-<div class="widget full-width" id="similar-topics">
-	<div class="widget-title">Similar Topics</div>
+<div class="widget" id="similar-topics">
 	<div class="widget-header">
 		by
 		<select id="similarity-measure-select" onchange="get_similar_topics()">
@@ -34,7 +33,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 			{% endfor %}
 		</select>
 	</div>
-	<table class="widget-body list full-width" id="similar-topics-table">
+	<table class="widget-body list" id="similar-topics-table">
 		{% for t in similar_topics %}
 			<tr><td><a href="{{ topics_url }}/{{ t.number }}">{{ t.name }}</a></td><td class="value">{{ t.value|floatformat:"2" }}<td></td></tr>
 		{% endfor %}
