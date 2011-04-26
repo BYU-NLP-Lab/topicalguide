@@ -80,9 +80,9 @@ def gen_attr_file(src_dir, output_file):
             file_dicts[-1]['attributes']['calling'] = json['calling']
             file_dicts[-1]['attributes']['gender'] = json['gender']
             file_dicts[-1]['attributes']['speaker'] = json['speaker']
-            file_dicts[-1]['attributes']['year'] = json['year']
-            file_dicts[-1]['attributes']['month'] = json['month']
-            file_dicts[-1]['attributes']['day'] = json['day']
+            file_dicts[-1]['attributes']['year'] = str(json['year'])
+            file_dicts[-1]['attributes']['month'] = str(json['month'])
+            file_dicts[-1]['attributes']['day'] = str(json['day'])
     w = open(output_file, 'w')
     w.write(cjson.encode(file_dicts))
     w.close()
