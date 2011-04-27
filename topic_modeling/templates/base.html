@@ -70,19 +70,36 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	</head>
 	<body>
 		<div id="page">
-			<div id="banner"></div>
+			<div id="header">
+				<ul class="nav_menu">
+					<li id="branding-logo">
+						<a href="http://nlp.cs.byu.edu/" class="new-window">
+							<img src="/site-media/byunlp-35px.png" alt="BYU NLP Lab Logo"/>
+						</a>
+					</li>
+					<li id="branding-title-text">
+						<a href="http://nlp.cs.byu.edu/topicalguide" class="new-window">The Topical Guide</a>
+					</li>
+					{% for item in breadcrumb %}
+						<li><a href="{{ item.url }}">{{ item.text }}</a></li>
+					{% endfor %}
+					<li id="namescheme-dropdown">
+						Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
+						{% for namescheme in nameschemes %}
+						<option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
+						{% endfor %}
+						</select>
+					</li>
+					<li>
+						{% if breadcrumb %}
+							Favorites: 
+							<button type="button" onclick="add_favorite();">Add</button>
+						{% endif %}
+					</li>
+				</ul>
+			</div><!-- end div header -->
 			<div id="main">
 				<div id="sidebar">
-					<div id="branding">
-						<span class="branding-logo">
-							<a href="http://nlp.cs.byu.edu/" class="new-window">
-								<img src="/site-media/byunlp-135px.png" alt="BYU NLP Lab Logo"/>
-							</a>
-						</span>
-						<span class="branding-title-text">
-							<a href="https://facwiki.cs.byu.edu/nlp/index.php/Topical_Guide" class="new-window">The Topical Guide</a>
-						</span>
-					</div><!-- end div branding -->
 					<div id="tab_pane">
 						<div id="tab_row_1" class="tab_row">
 							<span id="datasets_tab_header" class="tab_header {% ifequal highlight "datasets_tab" %}fg{% else %}bg{% endifequal %}">
@@ -127,34 +144,18 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 						</div>
 					</div>
 				</div><!-- end div sidebar -->
-				<div id="information-area">
-					<div id="header">
-						<span id="breadcrumb">
-							{% for item in breadcrumb %}
-							<a href="{{ item.url }}">{{ item.text }}</a>
-							{% if not forloop.last %} / {% endif %}
-							{% endfor %}
-							{% if breadcrumb %}
-								<button type="button" onclick="add_favorite();">Add to Favorites</button>
-							{% endif %}
-						</span>
-						<span id="namescheme-dropdown">
-							Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
-							{% for namescheme in nameschemes %}
-							<option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
-							{% endfor %}
-							</select>
-						</span>
-					</div>
-					<div id="presentation-area">
-								{% block presentation_area %}
-								You should see something here.
-								{% endblock %}
-					</div>
-				</div><!-- end div information-area -->
+				<div id="presentation-area">
+					{% block presentation_area %}
+					You should see something here.
+					{% endblock %}
+				</div><!-- end div presentation-area -->
 			</div><!-- end div main -->
 			<div id="footer">
-				<a href="https://facwiki.cs.byu.edu/nlp/index.php/Topical_Guide" class="new-window">More about the Topical Guide</a>
+				<ul class="nav_menu">
+					<li><a href="http://nlp.cs.byu.edu/topicalguide" class="new-window">The Topical Guide</a></li>
+					<li>Copyright 2010-2011 <a href="http://www.byu.edu/" class="new-window">Brigham Young University</a></li>
+					<li>Developed by <a href="http://nlp.cs.byu.edu/" class="new-window">the BYU Natural Language Processing Lab</a></li>
+				</ul>
 			</div><!-- end div footer -->
 		</div><!-- end div page -->
 	</body>
