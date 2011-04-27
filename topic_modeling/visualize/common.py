@@ -34,8 +34,9 @@ def root_context(dataset, analysis):
     context['dataset'] = dataset
     context['analysis'] = analysis
     context['dataset_url'] = "/datasets/%s" % (dataset)
-    context['analysis_url'] = "%s/analyses/%s" % (context['dataset_url'], analysis)
-    
+    context['analysis_url'] = "%s/analyses/%s" % (context['dataset_url'],
+            analysis)
+
     context['attributes_url'] = context['analysis_url'] + "/attributes"
     context['documents_url'] = context['analysis_url'] + "/documents"
     context['plots_url'] = context['analysis_url'] + "/plots"
@@ -156,6 +157,27 @@ class WordFindForm(forms.Form):
         self.fields['find_word'] = forms.CharField(max_length=100,
                 initial=word)
         self.fields['find_word'].widget.attrs['onchange'] = 'find_word()'
+
+
+class TopLevelWidget(object):
+    def __init__(self, title):
+        self.title = title
+        self.ref = title.lower().replace(' ', '-')
+        self.widgets = []
+        self.hidden = True
+
+
+class Widget(object):
+    def __init__(self, title, url):
+        self.title = title
+        self.url = url
+        self.hidden = True
+
+
+class Cloud(object):
+    def __init__(self, name, html):
+        self.name = name
+        self.html = html
 
 
 ################################################################################

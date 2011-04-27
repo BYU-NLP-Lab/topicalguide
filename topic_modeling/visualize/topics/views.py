@@ -36,10 +36,10 @@ from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common import get_word_cloud, root_context
 from topic_modeling.visualize.common import set_word_context
 from topic_modeling.visualize.common import BreadCrumb
+from topic_modeling.visualize.common import Cloud
+from topic_modeling.visualize.common import TopLevelWidget
+from topic_modeling.visualize.common import Widget
 from topic_modeling.visualize.common import WordSummary
-from topic_modeling.visualize.documents.views import add_top_topics
-from topic_modeling.visualize.documents.views import add_similarity_measures as\
-        doc_add_similarity_measures
 from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
@@ -404,7 +404,6 @@ def extra_information_widgets(request, analysis, topic, context):
     top_level_widget.widgets.append(top_documents_widget(topic, context))
     top_level_widget.widgets.append(top_values_widget(request, analysis, topic,
             context))
-    print top_level_widget.widgets
     top_level_widget.widgets[0].hidden = False
     return top_level_widget
 
@@ -449,32 +448,11 @@ def top_values_widget(request, analysis, topic, context):
 # Classes
 #########
 
-class TopLevelWidget(object):
-    def __init__(self, title):
-        self.title = title
-        self.ref = title.lower().replace(' ', '-')
-        self.widgets = []
-        self.hidden = True
-
-
-class Widget(object):
-    def __init__(self, title, url):
-        self.title = title
-        self.url = url
-        self.hidden = True
-
-
 class TopicSimilarityEntry(object):
     def __init__(self, name, number, value):
         self.name = name
         self.number = number
         self.value = value
-
-
-class Cloud(object):
-    def __init__(self, name, html):
-        self.name = name
-        self.html = html
 
 
 # vim: et sw=4 sts=4

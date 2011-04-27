@@ -24,7 +24,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 {% load custom_filters %}
 <div class="widget" id="document_stats_widget">
-	<div class="widget-title">Stats</div>
 	<table class="widget-body">
 		{% for metric in metrics %}
 		<tr>
@@ -34,15 +33,3 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		{% endfor %}
 	</table>
 </div>
-<!--
-<td class="align-top">Stats
-	<table class="inset">
-		{% for metric in metrics %}
-		<tr>
-			<td>{{ metric.metric }}:</td>
-			<td>{{ metric.value|formatmetric:"2" }}</td>
-		</tr>
-		{% endfor %}
-	</table>
-</td>
--->
