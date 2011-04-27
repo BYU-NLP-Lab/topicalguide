@@ -23,5 +23,19 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
 <div class="widget" id="word-cloud">
-	<div class="widget-body">{{ word_cloud|safe }}</div>
+	<select id="id_cloud_type">
+		{% for cloud in word_clouds %}
+		<option value="{{ cloud.name }}" {% if forloop.first %}selected="selected"{% endif %}>
+		{{ cloud.name }}
+		</option>
+		{% endfor %}
+	</select>
+	{% for cloud in word_clouds %}
+	<div class="widget-body cloud" id="id_cloud_{{ cloud.name }}">
+		{{ cloud.html|safe }}
+	</div>
+	{% endfor %}
+	<script type="text/javascript"
+		src="/site-media/topic_scripts/word_clouds.js">
+	</script>
 </div>
