@@ -44,6 +44,7 @@ from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.models import ExtraTopicInformation
+from topic_modeling.visualize.models import ExtraTopicInformationValue
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word
 from topic_modeling.visualize.models import TopicName
@@ -133,7 +134,6 @@ def index(request, dataset, analysis, topic):
     top_level_widgets.append(extra_information_widgets(request, analysis,
             topic, context))
     top_level_widgets[0].hidden = False
-    add_turbo_topics(analysis, topic, context)
     context['top_level_widgets'] = top_level_widgets
 
     rename_form = RenameForm(context['topic_name'])
@@ -244,17 +244,24 @@ def top_words_widgets(topic, context):
         w.url = word_url + topicword.word.type
         words.append(w)
 
-    # TODO(matt): put other word clouds in here (ngrams, turbo topics)
-    top_level_widget.widgets.append(word_cloud_widget(words, context))
+    top_level_widget.widgets.append(word_clouds_widget(topic, words, context))
     top_level_widget.widgets.append(words_in_context_widget(words, context))
     top_level_widget.widgets.append(word_chart_widget(words, context))
     top_level_widget.widgets[0].hidden = False
     return top_level_widget
 
 
-def word_cloud_widget(words, context):
+def word_clouds_widget(topic, words, context):
     word_cloud = Widget("Word Cloud", "topic_widgets/word_cloud.html")
-    context['word_cloud'] = get_word_cloud(words)
+    context['word_clouds'] = []
+    # Name must not contain spaces!
+    context['word_clouds'].append(Cloud('Unigram', get_word_cloud(words)))
+    cloud = ngram_cloud(topic, context)
+    if cloud:
+        context['word_clouds'].append(cloud)
+    clouds = turbo_topics_cloud(topic.analysis, topic, context)
+    if clouds:
+        context['word_clouds'].extend(clouds)
     return word_cloud
 
 
@@ -271,7 +278,7 @@ def word_chart_widget(words, context):
     return word_chart
 
 
-def add_ngrams(topic, context):
+def ngram_cloud(topic, context):
     word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
     topicngrams = topic.topicword_set.filter(
             word__ngram=True).order_by('-count')
@@ -282,10 +289,13 @@ def add_ngrams(topic, context):
         w.url = word_url + topicngram.word.type
         ngrams.append(w)
     if ngrams:
-        context['ngram_cloud'] = get_word_cloud(ngrams)
+        # Name must not contain spaces!
+        return Cloud('N-grams', get_word_cloud(ngrams))
+    return None
 
 
-def add_turbo_topics(analysis, topic, context):
+def turbo_topics_cloud(analysis, topic, context):
+    clouds = []
     try:
         turbo_topics = analysis.extratopicinformation_set.get(
                 name="Turbo Topics Cloud")
@@ -305,9 +315,11 @@ def add_turbo_topics(analysis, topic, context):
         for type, count in words:
             w = WordSummary(type, count / total)
             summaries.append(w)
-        context['turbo_topics_cloud'] = get_word_cloud(summaries, url=False)
-        context['extra_widgets'].append('topic_widgets/turbo_topics_cloud.html')
-    except ExtraTopicInformation.DoesNotExist:
+        # Name must not contain spaces!
+        clouds.append(Cloud('Turbo_Topics', get_word_cloud(summaries,
+            url=False)))
+    except (ExtraTopicInformation.DoesNotExist,
+            ExtraTopicInformationValue.DoesNotExist):
         pass
     try:
         turbo_topics = analysis.extratopicinformation_set.get(
@@ -316,11 +328,16 @@ def add_turbo_topics(analysis, topic, context):
         text = value.value
         first_ten = text.split('\n')[:10]
         rest = text.split('\n')[10:]
-        context['turbo_topics_less'] = '\n'.join(first_ten)
-        context['turbo_topics_more'] = '\n'.join(rest)
-        context['extra_widgets'].append('topic_widgets/turbo_topics.html')
-    except ExtraTopicInformation.DoesNotExist:
+        # TODO(matt): make this into a cloud, called "Turbo Topics N-grams"
+        # if we want to keep it.  Otherwise, just get rid of the second try
+        # block.
+        #context['turbo_topics_less'] = '\n'.join(first_ten)
+        #context['turbo_topics_more'] = '\n'.join(rest)
+        #context['extra_widgets'].append('topic_widgets/turbo_topics.html')
+    except (ExtraTopicInformation.DoesNotExist,
+            ExtraTopicInformationValue.DoesNotExist):
         pass
+    return clouds
 
 
 # Similar Topics Widgets
@@ -452,6 +469,12 @@ class TopicSimilarityEntry(object):
         self.name = name
         self.number = number
         self.value = value
+
+
+class Cloud(object):
+    def __init__(self, name, html):
+        self.name = name
+        self.html = html
 
 
 # vim: et sw=4 sts=4
