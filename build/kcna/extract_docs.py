@@ -3,7 +3,7 @@ import os
 import subprocess as sub
 import re
 import codecs
-import json
+import common.anyjson as anyjson
 import sys
 
 old_date_regex = r'.+item/(?P<year>\d\d(?P<year_short>\d\d))/(?:(?P=year)|(?P=year_short))(?P<month>\d(?P<month_digit_two>\d))/news(?:(?P=month)|(?P=month_digit_two))/(?P<day>\d\d)\.htm'
@@ -63,8 +63,9 @@ def extract(src_dir, dest_dir, attributes_file):
                 doc = {'attributes':attrs, 'path':output_filename}
                 attributes += [doc]
         
-    json.dump(attributes, codecs.open(attributes_file, mode='w', encoding='utf-8'))
-
+    f = codecs.open(attributes_file, mode='w', encoding='utf-8')
+    f.write(anyjson.dumps(attributes))
+    f.close()
 
 
 

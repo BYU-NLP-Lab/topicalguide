@@ -47,7 +47,7 @@ from collections import defaultdict
 from datetime import datetime
 from optparse import OptionParser
 
-import cjson
+import common.anyjson as anyjson
 
 # A couple of global variables just to make life easier, so I don't have to
 # pass them around so much - they're created once and then never change
@@ -331,7 +331,7 @@ def create_attrvalword_table(attrvalword, attr_index, value_index, word_index):
 def parse_dataset_description(description_file):
     print >> sys.stderr, 'Reading dataset file...'
     f = open(description_file, 'r').read()
-    values_map = cjson.decode(f)
+    values_map = anyjson.deserialize(f)
     print >> sys.stderr, 'This is the information I found about the dataset.'
     print >> sys.stderr, 'Cancel this now and fix your description file if',
     print >> sys.stderr, 'this is wrong.\n'
@@ -355,7 +355,7 @@ def parse_attributes(attribute_file):
     sys.stdout.flush()
     start = datetime.now()
     file_data = open(attribute_file).read()
-    parsed_data = cjson.decode(file_data)
+    parsed_data = anyjson.deserialize(file_data)
     count = 0
     attribute_table = {}
     documents = set()

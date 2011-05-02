@@ -20,7 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-import cjson
+import common.anyjson as anyjson
 
 from build.common.cleaner import Cleaner
 from build.common.util import create_dirs_and_open
@@ -71,7 +71,7 @@ def gen_attr_file(src_dir, output_file):
         for f in files:
             in_path = '/'.join([src_dir, partial_root, f])
             print in_path
-            json = cjson.decode(open(in_path).read())
+            json = anyjson.deserialize(open(in_path).read())
             file_dicts.append({})
             file_dicts[-1]['path'] = '/'.join([partial_root, f])
             file_dicts[-1]['attributes'] = {}
@@ -84,7 +84,7 @@ def gen_attr_file(src_dir, output_file):
             file_dicts[-1]['attributes']['month'] = str(json['month'])
             file_dicts[-1]['attributes']['day'] = str(json['day'])
     w = open(output_file, 'w')
-    w.write(cjson.encode(file_dicts))
+    w.write(anyjson.serialize(file_dicts))
     w.close()
 
 
@@ -100,7 +100,7 @@ class GCCleaner(Cleaner):
                 in_path = '/'.join([self.input_dir, partial_root, f])
                 out_path = '/'.join([self.output_dir, partial_root, f])
 
-                json = cjson.decode(open(in_path).read())
+                json = anyjson.deserialize(open(in_path).read())
                 cleaned_text = json['text']
                 if cleaned_text:
                     f = create_dirs_and_open(out_path)

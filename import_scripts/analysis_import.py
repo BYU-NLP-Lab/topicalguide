@@ -47,8 +47,7 @@ from django.db import connection, transaction
 from collections import defaultdict
 from datetime import datetime
 
-import cjson
-import simplejson
+import common.anyjson as anyjson
 
 # A couple of global variables just to make life easier, so I don't have to
 # pass them around so much - they're created once and then never change
@@ -258,7 +257,7 @@ def create_attrvaltopic_table(attrvaltopic, attr_index, val_index, topic_index):
 def parse_analysis_description(description_file):
     print >> sys.stderr, 'Reading analysis file...'
     f = open(description_file).read()
-    vars = cjson.decode(f)
+    vars = anyjson.deserialize(f)
     print >> sys.stderr, 'This is the information I found about the analysis.'
     print >> sys.stderr, 'Cancel this now and fix your description file if',
     print >> sys.stderr, 'this is wrong.\n'
@@ -280,7 +279,7 @@ def parse_attributes(attribute_file):
     sys.stdout.flush()
     start = datetime.now()
     file_data = open(attribute_file).read()
-    parsed_data = cjson.decode(file_data)
+    parsed_data = anyjson.deserialize(file_data)
     del file_data
     count = 0
     attribute_table = {}
@@ -517,7 +516,7 @@ class MarkupState(object):
         markup_file_name = '%s-markup/' % analysis.name
         markup_file_name += self.path
         file = create_dirs_and_open(dataset.data_root + '/' + markup_file_name)
-        file.write(simplejson.dumps(self.markup, indent=2))
+        file.write(anyjson.serialize(self.markup))
         document = Document.objects.get(filename=self.path)
         markup_file = MarkupFile(document=document, analysis=analysis,
                 path=markup_file_name)
