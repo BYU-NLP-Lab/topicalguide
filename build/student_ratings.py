@@ -20,7 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-import cjson
+import common.anyjson as anyjson
 
 from build.common.cleaner import Cleaner
 from build.common.util import create_dirs_and_open
@@ -86,7 +86,7 @@ def gen_attr_file(src_dir, output_file):
             file_dicts[-1]['attributes']['course'] = course
             file_dicts[-1]['attributes']['section'] = section
     w = open(output_file, 'w')
-    w.write(cjson.encode(file_dicts))
+    w.write(anyjson.serialize(file_dicts))
     w.close()
 
 

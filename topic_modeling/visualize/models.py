@@ -23,7 +23,7 @@ from django.db import models
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 
-import cjson
+import common.anyjson as anyjson
 import random
 
 ##############################################################################
@@ -56,7 +56,7 @@ class Document(models.Model):
 
     def get_markup(self, analysis):
         markup_file = MarkupFile.objects.get(document=self, analysis=analysis)
-        markup = cjson.decode(open(self.dataset.data_root + '/' +
+        markup = anyjson.deserialize(open(self.dataset.data_root + '/' +
                 markup_file.path).read())
         return markup
 
