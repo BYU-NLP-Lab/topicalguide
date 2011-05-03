@@ -1,5 +1,3 @@
-from django.db import models
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -22,9 +20,9 @@ from django.db import models
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-
-import common.anyjson as anyjson
 import random
+from django.db import models
+from anyjson import deserialize
 
 ##############################################################################
 # Tables just to hold information about data and documents
@@ -56,7 +54,7 @@ class Document(models.Model):
 
     def get_markup(self, analysis):
         markup_file = MarkupFile.objects.get(document=self, analysis=analysis)
-        markup = anyjson.deserialize(open(self.dataset.data_root + '/' +
+        markup = deserialize(open(self.dataset.data_root + '/' +
                 markup_file.path).read())
         return markup
 
