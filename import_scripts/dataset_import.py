@@ -47,7 +47,7 @@ from collections import defaultdict
 from datetime import datetime
 from optparse import OptionParser
 
-import common.anyjson as anyjson
+import anyjson
 
 # A couple of global variables just to make life easier, so I don't have to
 # pass them around so much - they're created once and then never change

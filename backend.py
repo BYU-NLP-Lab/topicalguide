@@ -63,6 +63,7 @@ from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import DocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import TopicNameScheme
+from django.db.utils import DatabaseError
 
 #If this file is invoked directly, pass it in to the doit system for processing.
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
@@ -288,7 +289,7 @@ if 'task_dataset_import' not in locals():
                 Dataset.objects.get(name=dataset_name)
                 print 'dataset ' + dataset_name + ' in database'
                 return True
-            except Dataset.DoesNotExist:
+            except (Dataset.DoesNotExist,DatabaseError):
                 print 'dataset ' + dataset_name + ' NOT in database'
                 return False
         # TODO(matt): clean up and possibly rename dataset_import.py and
