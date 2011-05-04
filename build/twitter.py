@@ -1,5 +1,5 @@
 import os, codecs, re
-import anyjson
+import topic_modeling.anyjson as anyjson
 from build.nytimes_twitter.clean_tweets import TweetCleaner
 
 dataset_name = 'twitter_state_union'

@@ -20,7 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-import anyjson
+import topic_modeling.anyjson as anyjson
 
 from build.common.cleaner import Cleaner
 from build.common.util import create_dirs_and_open

@@ -3,7 +3,7 @@ import os
 import subprocess as sub
 import re
 import codecs
-import anyjson
+import topic_modeling.anyjson as anyjson
 import sys
 
 old_date_regex = r'.+item/(?P<year>\d\d(?P<year_short>\d\d))/(?:(?P=year)|(?P=year_short))(?P<month>\d(?P<month_digit_two>\d))/news(?:(?P=month)|(?P=month_digit_two))/(?P<day>\d\d)\.htm'

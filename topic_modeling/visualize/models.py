@@ -22,7 +22,7 @@
 
 import random
 from django.db import models
-from anyjson import deserialize
+from topic_modeling.anyjson import deserialize
 
 ##############################################################################
 # Tables just to hold information about data and documents

@@ -52,7 +52,7 @@ class _JsonImplementation(object):
 
     def __init__(self, modspec):
         modinfo = dict(zip(_fields, modspec))
-
+        
         if modinfo["modname"] == "cjson":
             import warnings
             warnings.warn("cjson is deprecated! See http://pypi.python.org/pypi/python-cjson/1.0.5", DeprecationWarning)
@@ -120,6 +120,7 @@ else:
     for modspec in _modules:
         try:
             implementation = _JsonImplementation(modspec)
+            print 'anyjson is wrapping ' + modspec[0]
             break
         except ImportError:
             pass
