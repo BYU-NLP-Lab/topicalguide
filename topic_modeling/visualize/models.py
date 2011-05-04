@@ -296,27 +296,109 @@ class TopicNameScheme(models.Model):
     def __unicode__(self):
         return self.name
 
-
 class TopicName(models.Model):
     topic = models.ForeignKey(Topic)
     name_scheme = models.ForeignKey(TopicNameScheme)
     name = models.CharField(max_length=128)
 
-
-class TopicMetric(models.Model):
+### Metrics ###
+class Metric(models.Model):
     name = models.CharField(max_length=128)
+    class Meta:
+        abstract = True
+
+class PairwiseMetric(Metric):
+    pass
+    class Meta:
+        abstract = True
+
+class MetricValue(models.Model):
+    value = models.FloatField()
+    class Meta:
+        abstract = True
+
+class DatasetMetric(Metric):
+    pass
+
+class DatasetMetricValue(MetricValue):
+    dataset = models.ForeignKey(Dataset)
+
+class AnalysisMetric(Metric):
+    pass
+
+class AnalysisMetricValue(MetricValue):
+    analysis = models.ForeignKey(Analysis)
+    metric = models.ForeignKey(AnalysisMetric)
+
+class TopicMetric(Metric):
     analysis = models.ForeignKey(Analysis)
 
     def __unicode__(self):
         return self.name
 
+class TopicMetricValue(MetricValue):
+    topic = models.ForeignKey(Topic)
+    metric = models.ForeignKey(TopicMetric)
 
-class PairwiseTopicMetric(models.Model):
-    name = models.CharField(max_length=128)
+class PairwiseTopicMetric(PairwiseMetric):
     analysis = models.ForeignKey(Analysis)
 
     def __unicode__(self):
         return self.name + ': ' + self.analysis.name
+
+class PairwiseTopicMetricValue(MetricValue):
+    topic1 = models.ForeignKey(Topic,
+            related_name='pairwisetopicmetricvalue_originating')
+    topic2 = models.ForeignKey(Topic,
+            related_name='pairwisetopicmetricvalue_ending')
+    metric = models.ForeignKey(PairwiseTopicMetric)
+
+    def __unicode__(self):
+        return '%s(%s, %s) = %d' % (self.metric.name, self.topic1.name,
+                self.topic2.name, self.value)
+
+# These could go under the dataset section, but there are some metrics that
+# only make sense with a corresponding Analysis, so we will just put them all
+# in the same class here, even if some of the metrics ignore the analysis.
+class DocumentMetric(Metric):
+    analysis = models.ForeignKey(Analysis)
+
+    def __unicode__(self):
+        return self.name
+
+class DocumentMetricValue(MetricValue):
+    document = models.ForeignKey(Document)
+    metric = models.ForeignKey(DocumentMetric)
+
+class PairwiseDocumentMetric(PairwiseMetric):
+    analysis = models.ForeignKey(Analysis)
+
+    def __unicode__(self):
+        return self.name + ': ' + self.analysis.name
+
+class PairwiseDocumentMetricValue(MetricValue):
+    document1 = models.ForeignKey(Document,
+            related_name='pairwisedocumentmetricvalue_originating')
+    document2 = models.ForeignKey(Document,
+            related_name='pairwisedocumentmetricvalue_ending')
+    metric = models.ForeignKey(PairwiseDocumentMetric)
+
+    def __unicode__(self):
+        return '%s(%s, %s) = %d' % (self.metric.name, self.document1.name,
+                self.document2.name, self.value)
+
+class WordMetric(Metric):
+    analysis = models.ForeignKey(Analysis)
+
+class WordMetricValue(MetricValue):
+    word = models.ForeignKey(Word)
+    metric = models.ForeignKey(WordMetric)
+
+
+
+
+
+
 
 
 class ExtraTopicInformation(models.Model):
@@ -324,23 +406,7 @@ class ExtraTopicInformation(models.Model):
     analysis = models.ForeignKey(Analysis)
 
 
-# These could go under the dataset section, but there are some metrics that
-# only make sense with a corresponding Analysis, so we will just put them all
-# in the same class here, even if some of the metrics ignore the analysis.
-class DocumentMetric(models.Model):
-    name = models.CharField(max_length=128)
-    analysis = models.ForeignKey(Analysis)
 
-    def __unicode__(self):
-        return self.name
-
-
-class PairwiseDocumentMetric(models.Model):
-    name = models.CharField(max_length=128)
-    analysis = models.ForeignKey(Analysis)
-
-    def __unicode__(self):
-        return self.name + ': ' + self.analysis.name
 
 
 # Links between the basic components of the analysis and with the raw data
@@ -370,45 +436,6 @@ class AttributeValueTopic(models.Model):
     value = models.ForeignKey(Value)
     topic = models.ForeignKey(Topic)
     count = models.IntegerField(default=0)
-
-
-class TopicMetricValue(models.Model):
-    topic = models.ForeignKey(Topic)
-    metric = models.ForeignKey(TopicMetric)
-    value = models.FloatField()
-
-
-class PairwiseTopicMetricValue(models.Model):
-    topic1 = models.ForeignKey(Topic,
-            related_name='pairwisetopicmetricvalue_originating')
-    topic2 = models.ForeignKey(Topic,
-            related_name='pairwisetopicmetricvalue_ending')
-    metric = models.ForeignKey(PairwiseTopicMetric)
-    value = models.FloatField()
-
-    def __unicode__(self):
-        return '%s(%s, %s) = %d' % (self.metric.name, self.topic1.name,
-                self.topic2.name, self.value)
-
-
-class DocumentMetricValue(models.Model):
-    document = models.ForeignKey(Document)
-    metric = models.ForeignKey(DocumentMetric)
-    value = models.FloatField()
-
-
-class PairwiseDocumentMetricValue(models.Model):
-    document1 = models.ForeignKey(Document,
-            related_name='pairwisedocumentmetricvalue_originating')
-    document2 = models.ForeignKey(Document,
-            related_name='pairwisedocumentmetricvalue_ending')
-    metric = models.ForeignKey(PairwiseDocumentMetric)
-    value = models.FloatField()
-
-    def __unicode__(self):
-        return '%s(%s, %s) = %d' % (self.metric.name, self.document1.name,
-                self.document2.name, self.value)
-
 
 class ExtraTopicInformationValue(models.Model):
     topic = models.ForeignKey(Topic)
