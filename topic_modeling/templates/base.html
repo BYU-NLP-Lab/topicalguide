@@ -24,7 +24,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head><title>Topical Guide{% if view_description %} &mdash; {{view_description}}{% endif %}</title>
-		<link rel="shortcut icon" href="/site-media/byunlp-135px.png" />
+		<link rel="shortcut icon" href="/site-media/byunlp-35px.png" />
+		<link rel="stylesheet" href="/site-media/style.css" type="text/css" />
+		<link rel="stylesheet" href="/site-media/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" />
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="/site-media/cursor.js"></script>
@@ -50,8 +52,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             $.fn.topics_url = "{{ topics_url }}";
             $.fn.words_url = "{{ words_url }}";
         </script>
-		<link rel="stylesheet" href="/site-media/style.css" type="text/css" />
-		<link rel="stylesheet" href="/site-media/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" />
+		
 
 		{% block scripts %}
 		{% endblock %}
@@ -82,12 +83,13 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 							<a href="/">The Topical Guide</a>
 						</li>
 						{% block header %}{% endblock %}
-						<li id="breadcrumb">
-							{% for item in breadcrumb %}
-								&gt;&gt; <a href="{{ item.url }}">{{ item.text }}</a>
-							{% endfor %}
-							&gt;&gt; {{view_description}}
-						</li>
+						
+						{% for item in breadcrumb %}
+							<li class="breadcrumb"><a href="{{item.url}}">{{item.text}}</a></li>
+							<li class="breadcrumb separator">&gt;&gt;</li>
+						{% endfor %}
+						<li id="view_description" class="breadcrumb">{{view_description}}</li>
+							
 						{% comment %}
 							
 							<li id="namescheme-dropdown">
