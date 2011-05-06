@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_with_sidebar.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -63,6 +63,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block presentation_area %}
+    {# <h1>Topic "{{topicname}}"</h1> #}
 	<div id="tabs">
 		<ul>
 			{% for top_level_widget in top_level_widgets %}

@@ -88,6 +88,9 @@ class BreadCrumb(object):
 
     def __iter__(self):
         return self.items.__iter__()
+    
+    def add(self, text, url):
+        self.items.append(BreadCrumbItem(text, url))
 
     def dataset(self, dataset):
         self._add_item('datasets', 'Dataset', dataset.name, dataset.name)

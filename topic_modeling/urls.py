@@ -50,15 +50,17 @@ id = r'id/(?P<id>[^/]*)'
 
 urlpatterns = patterns('',
 # Dataset View
-    # Blank URL takes you to dataset view
+    # Blank URL takes you to datasets view
     (r'^$',
         'topic_modeling.visualize.dataset_views.index'),
     (r'^' + dataset + '$',
         'topic_modeling.visualize.dataset_views.index'),
 
 # Analysis View
+#    (r'^' + dataset + '/' + analysis + '$',
+#        'topic_modeling.visualize.dataset_views.index'),
     (r'^' + dataset + '/' + analysis + '$',
-        'topic_modeling.visualize.dataset_views.index'),
+        'topic_modeling.visualize.topics.views.index'),
 
 # Topic Views
     (r'^' + dataset + '/' + analysis + '/' + topic + '$',

@@ -31,11 +31,22 @@ from topic_modeling.anyjson import deserialize
 # Basic things in the database
 ##############################
 
-class Dataset(models.Model):
-    data_root = models.CharField(max_length=128, db_index=True)
-    files_dir = models.CharField(max_length=128, db_index=True)
+class Describable(models.Model):
+    '''A unique identifier. For URLs.'''
     name = models.CharField(max_length=128, unique=True, db_index=True)
+    
+    '''A short, human-readable name'''
+    readable_name = models.TextField(max_length=128)
+    
+    '''A longer, human-readable description'''
     description = models.TextField()
+    
+    class Meta:
+        abstract = True
+
+class Dataset(Describable):
+    dataset_dir = models.CharField(max_length=128, db_index=True)
+    files_dir = models.CharField(max_length=128, db_index=True)
 
     def __unicode__(self):
         return self.name
@@ -54,7 +65,7 @@ class Document(models.Model):
 
     def get_markup(self, analysis):
         markup_file = MarkupFile.objects.get(document=self, analysis=analysis)
-        markup = deserialize(open(self.dataset.data_root + '/' +
+        markup = deserialize(open(self.dataset.dataset_dir + '/' +
                 markup_file.path).read())
         return markup
 
@@ -134,7 +145,7 @@ class Document(models.Model):
         return '<br><br>'.join(text)
 
     def get_text_for_kwic(self):
-        return open(self.dataset.data_root + "/" +
+        return open(self.dataset.dataset_dir + "/" +
             self.filename, 'r').read()
 
     def get_kwic_context_word(self, word, text=None):
@@ -248,9 +259,7 @@ class DocumentWord(models.Model):
 ##################################
 
 # This is assuming perhaps several different runs of different kinds of LDA
-class Analysis(models.Model):
-    name = models.CharField(max_length=128, db_index=True)
-    description = models.TextField()
+class Analysis(Describable):
     dataset = models.ForeignKey(Dataset)
 
     def __unicode__(self):

@@ -23,7 +23,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-	<head><title>Topic Browser</title>
+	<head><title>Topical Guide{% if view_description %} &mdash; {{view_description}}{% endif %}</title>
 		<link rel="shortcut icon" href="/site-media/byunlp-135px.png" />
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
@@ -72,89 +72,57 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		<div id="page">
 			<div id="header">
 				<ul class="nav_menu">
-					<li id="branding-logo">
-						<a href="http://nlp.cs.byu.edu/" class="new-window">
-							<img src="/site-media/byunlp-35px.png" alt="BYU NLP Lab Logo"/>
-						</a>
-					</li>
-					<li id="branding-title-text">
-						<a href="http://nlp.cs.byu.edu/topicalguide" class="new-window">The Topical Guide</a>
-					</li>
-					{% for item in breadcrumb %}
-						<li><a href="{{ item.url }}">{{ item.text }}</a></li>
-					{% endfor %}
-					<li id="namescheme-dropdown">
-						Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
-						{% for namescheme in nameschemes %}
-						<option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
-						{% endfor %}
-						</select>
-					</li>
-					<li>
-						{% if breadcrumb %}
-							Favorites: 
-							<button type="button" onclick="add_favorite();">Add</button>
-						{% endif %}
-					</li>
+					{% block header_all %}
+						<li id="branding-logo">
+							<a href="/">
+								<img src="/site-media/byunlp-35px.png" alt="BYU NLP Lab Logo"/>
+							</a>
+						</li>
+						<li id="branding-title-text">
+							<a href="/">The Topical Guide</a>
+						</li>
+						{% block header %}{% endblock %}
+						<li id="breadcrumb">
+							{% for item in breadcrumb %}
+								&gt;&gt; <a href="{{ item.url }}">{{ item.text }}</a>
+							{% endfor %}
+							&gt;&gt; {{view_description}}
+						</li>
+						{% comment %}
+							
+							<li id="namescheme-dropdown">
+								Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
+								{% for namescheme in nameschemes %}
+								<option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
+								{% endfor %}
+								</select>
+							</li>
+							<li>
+								{% if breadcrumb %}
+									Favorites: 
+									<button type="button" onclick="add_favorite();">Add</button>
+								{% endif %}
+							</li>
+						{% endcomment %}
+					{% endblock %}
 				</ul>
 			</div><!-- end div header -->
 			<div id="main">
-				<div id="sidebar">
-					<div id="tab_pane">
-						<div id="tab_row_1" class="tab_row">
-							<span id="datasets_tab_header" class="tab_header {% ifequal highlight "datasets_tab" %}fg{% else %}bg{% endifequal %}">
-								<a href="/datasets/{{ dataset }}/analyses/{{ analysis }}">Datasets</a>
-							</span>
-							<span id="attributes_tab_header" class="tab_header {% ifequal highlight "attributes_tab" %}fg{% else %}bg{% endifequal %}">
-								<a href="/datasets/{{ dataset }}/analyses/{{ analysis }}/attributes/">Attributes</a>
-							</span>
-							<span id="favorites_tab_header" class="tab_header {% ifequal highlight "favorite_tab" %}fg{% else %}bg{% endifequal %}">
-								<a href="/favorite/datasets/{{ dataset }}/analyses/{{ analysis }}/id/{{ favorite.id }}">Favorites</a>
-							</span>
-						</div>
-						<div id="tab_row_2" class="tab_row">
-							<span id="words_tab_header" class="tab_header {% ifequal highlight "words_tab" %}fg{% else %}bg{% endifequal %}">
-								<a href="/datasets/{{ dataset }}/analyses/{{ analysis }}/words/">Words</a>
-							</span>
-							<span id="topics_tab_header" class="tab_header {% ifequal highlight "topics_tab" %}fg{% else %}bg{% endifequal %}">
-								<a href="/datasets/{{ dataset }}/analyses/{{ analysis }}/topics/">Topics</a>
-							</span>
-							<span id="documents_tab_header" class="tab_header {% ifequal highlight "documents_tab" %}fg{% else %}bg{% endifequal %}">
-								<a href="/datasets/{{ dataset }}/analyses/{{ analysis }}/documents/">Documents</a>
-							</span>
-							
-							<span id="plots_tab_header" class="tab_header {% ifequal highlight "plots_tab" %}fg{% else %}bg{% endifequal %}">
-								<a href="/datasets/{{ dataset }}/analyses/{{ analysis }}/plots/">Plots</a>
-							</span>
-						</div>
-						<div id="tab_content_area" class="sidebar_base">
-							<div id="sidebar_tab_panel_header">
-								{% block above_sidebar%}
-								{% endblock %}
-								</div>
-								<div id="sidebar_tab_panel_body">
-								{% block sidebar %}
-									Options!
-								{% endblock %}
-								</div>
-								<div id="sidebar_tab_panel_footer">
-								{% block sidebar_tab_panel_footer%}
-								{% endblock %}
-							</div>
-						</div>
-					</div>
-				</div><!-- end div sidebar -->
+				{% block before_presentation_area %}{% endblock %}
 				<div id="presentation-area">
 					{% block presentation_area %}
 					You should see something here.
 					{% endblock %}
 				</div><!-- end div presentation-area -->
+				{% block after_presentation_area %}{% endblock %}
 			</div><!-- end div main -->
 			<div id="footer">
 				<ul class="nav_menu">
+					{% block footer %}
 					<li><a href="http://nlp.cs.byu.edu/topicalguide" class="new-window">The Topical Guide</a></li>
 					<li>Copyright 2010-2011 <a href="http://www.byu.edu/" class="new-window">Brigham Young University</a></li>
 					<li>Developed by <a href="http://nlp.cs.byu.edu/" class="new-window">the BYU Natural Language Processing Lab</a></li>
+					{% endblock %}
 				</ul>
 			</div><!-- end div footer -->
 		</div><!-- end div page -->

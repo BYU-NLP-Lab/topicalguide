@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -24,12 +22,14 @@
 
 import codecs, os, sys
 import re
+from collections import defaultdict
+from datetime import datetime
 
-sys.path.append(os.curdir)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+import topic_modeling.anyjson as anyjson
+from build.common.util import create_dirs_and_open
 
-from topic_modeling import settings
-settings.DEBUG = False
+from django.db import connection, transaction
+
 from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import AttributeValueTopic
 from topic_modeling.visualize.models import Dataset
@@ -39,15 +39,6 @@ from topic_modeling.visualize.models import DocumentTopicWord
 from topic_modeling.visualize.models import MarkupFile
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import TopicWord
-
-from build.common.util import create_dirs_and_open
-
-from django.db import connection, transaction
-
-from collections import defaultdict
-from datetime import datetime
-
-import topic_modeling.anyjson as anyjson
 
 # A couple of global variables just to make life easier, so I don't have to
 # pass them around so much - they're created once and then never change
@@ -59,12 +50,11 @@ NUM_DOTS = 100
 # This could maybe benefit from the use of a logger, but I didn't care enough
 # to put one in, so I just use print statements.
 
-#def main(options):
-def main(dataset_name, dataset_attr_file, analysis_name, analysis_description,
+def import_analysis(name, readable_name, description, dataset_name, dataset_attr_file,
         state_file, tokenized_file, files_dir, token_regex):
     print >> sys.stderr, "analysis_import({0}, {1}, {2}, {3}, {4}, {5}, {6})".\
-            format(dataset_name, dataset_attr_file, analysis_name,
-            analysis_description, state_file, tokenized_file, files_dir)
+            format(name, readable_name, description, dataset_name, dataset_attr_file,
+        state_file, tokenized_file, files_dir, token_regex)
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
     # These are some attempts to make the database access a little faster
@@ -77,7 +67,7 @@ def main(dataset_name, dataset_attr_file, analysis_name, analysis_description,
 
     global dataset
     dataset = Dataset.objects.get(name=dataset_name)
-    created = create_analysis(analysis_name, analysis_description)
+    created = create_analysis(name, readable_name, description)
 
     if created:
         doc_index, attr_index, value_index, attr_table = parse_attributes(
@@ -106,7 +96,7 @@ def main(dataset_name, dataset_attr_file, analysis_name, analysis_description,
 # Database creation code (in the order it's called in main)
 #############################################################################
 
-def create_analysis(name, description):
+def create_analysis(name, readable_name, description):
     """Create the Analysis database object.
     """
     
@@ -117,13 +107,14 @@ def create_analysis(name, description):
         print >> sys.stderr, 'Analysis {n} already exists! Doing nothing...'.\
                 format(n=name)
     except Analysis.DoesNotExist:
-        a = Analysis(name=name, description=description, dataset=dataset)
+        a = Analysis(name=name, readable_name=readable_name,
+                     description=description, dataset=dataset)
         a.save()
         result = True
         global analysis
         analysis = a
         try:
-            os.mkdir('%s/%s-markup' % (dataset.data_root, analysis.name))
+            os.mkdir('%s/%s-markup' % (dataset.dataset_dir, analysis.name))
         except OSError:
             print >> sys.stderr, 'The markup directory already exists.  ',
             print >> sys.stderr, 'Doing nothing...'
@@ -515,7 +506,7 @@ class MarkupState(object):
     def output_file(self):
         markup_file_name = '%s-markup/' % analysis.name
         markup_file_name += self.path
-        file = create_dirs_and_open(dataset.data_root + '/' + markup_file_name)
+        file = create_dirs_and_open(dataset.dataset_dir + '/' + markup_file_name)
         file.write(anyjson.serialize(self.markup))
         document = Document.objects.get(filename=self.path)
         markup_file = MarkupFile(document=document, analysis=analysis,

@@ -48,8 +48,8 @@ from collections import defaultdict
 from datetime import datetime
 from subprocess import Popen, PIPE
 
-import import_scripts.dataset_import
-import import_scripts.analysis_import
+from import_scripts.dataset_import import import_dataset
+from import_scripts.analysis_import import import_analysis
 
 from build.common.make_token_file import make_token_file
 from build.common.db_cleanup import remove_analysis
@@ -91,17 +91,24 @@ ast = compile(open(filename).read(), filename, 'exec')
 eval(ast, globals(), locals())
 # Variables and Paths
 
+os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+
 # This variable should be with Mallet, but it is needed to name the analysis,
 # so we have it up here.
 if 'num_topics' not in locals():
     num_topics = 20
 
 if 'dataset_name' not in locals():
-    dataset_name = "dummy"
+    dataset_name = None
+    raise "dataset_name must be defined"
+if 'dataset_readable_name' not in locals():
+    dataset_readable_name = dataset_name
 if 'dataset_description' not in locals():
-    dataset_description = "Dummy dataset"
+    dataset_description = ''
 if 'analysis_name' not in locals():
     analysis_name = "lda{0}topics".format(num_topics)
+if 'analysis_readable_name' not in locals():
+    analysis_readable_name = "LDA {0} Topics".format(num_topics)
 if 'analysis_description' not in locals():
     analysis_description = "Mallet LDA with {0} topics".format(num_topics)
 
@@ -134,7 +141,7 @@ if 'mallet_doctopics_output' not in locals():
 if 'mallet_optimize_interval' not in locals():
     mallet_optimize_interval = 10
 if 'mallet_num_iterations' not in locals():
-    mallet_num_iterations = 1000
+    mallet_num_iterations = 50
 
 # For dynamically generated attributes file, define task_attributes_file with
 # targets [attributes_file]
@@ -296,7 +303,7 @@ if 'task_dataset_import' not in locals():
         # analysis_import.py, now that we are using this build script - we don't
         #  need standalone scripts anymore for that stuff
         task = dict()
-        task['actions'] = [(import_scripts.dataset_import.main, [mallet_output, dataset_name, attributes_file, dataset_dir, files_dir, dataset_description])]
+        task['actions'] = [(import_dataset, [dataset_name, dataset_readable_name, dataset_description, mallet_output, attributes_file, dataset_dir, files_dir])]
         task['file_dep'] = [mallet_output, attributes_file, yamba_file]
         task['clean'] = [(remove_dataset, [dataset_name])]
         task['uptodate'] = [dataset_in_database()]
@@ -312,7 +319,7 @@ if 'task_analysis_import' not in locals():
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
         task = dict()
-        task['actions'] = [(import_scripts.analysis_import.main, [dataset_name, attributes_file, analysis_name, analysis_description, mallet_output, mallet_input, files_dir, token_regex])]
+        task['actions'] = [(import_analysis, [analysis_name, analysis_readable_name, analysis_description, dataset_name, attributes_file, mallet_output, mallet_input, files_dir, token_regex])]
         task['file_dep'] = [mallet_output, mallet_input, attributes_file]
         task['clean'] = [
             (remove_analysis, [dataset_name, analysis_name]),

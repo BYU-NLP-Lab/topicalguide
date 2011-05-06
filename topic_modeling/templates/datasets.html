@@ -23,98 +23,77 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
-{% block sidebar %}
-	<ul class="list centered">
-		{% for dset in datasets %}
-		<li class="list{% ifequal dset curdataset %} highlight{% endifequal %}">
-			<a href="/datasets/{{ dset.name }}">{{ dset.name }}</a>
-		</li>
-		{% endfor %}
-	</ul>
-{% endblock %}
+{% block scripts %}
+	<script charset="utf=8" type="text/javascript">
+	    $(function() {
+	        $( "#accordion" ).accordion();
+	    });
+	</script>{% comment %}
+	<script charset="utf=8" type="text/javascript">
+	function update_plot() {
+	    $("img#plot_image").attr("src", "/site-media/ajax-loader.gif");
+	    var url_base = "/feeds/topic-attribute-plot/";
+	
+	    url_base += 'attributes/'+{{ sample_attribute }}+'/';
+	    
+	    var values = {{ sample_attrvalues }};
+	    url_base += "values/" + values[0];
+	    for (var i = 1; i < values.length; i++) {
+	        url_base += "." + values[i];
+	    }
+	    
+	    url_base += "/topics/";
+	    var topics = {{ sample_topics }};
+	    url_base += topics[0];
+	    for (var i = 1; i < topics.length; i++) {
+	        url_base += "." + topics[i];
+	    }
+	
+	    $("img#plot_image").attr("src", url_base);
+	}
+	</script>
+{% endcomment %}{% endblock %}
 
-{% block presentation_area %}
-<table>
-		<tr>
-		<td class="align-top"  width="50%">
-		<table>
-			<tr>
-				<td class="align-top">Description
-					<table class="inset">
-						<tr>
-							<td>{{ curdataset.description|linebreaks }}</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td class="align-top">Analyses
-					<table class="inset">
-						{% if not analyses %}
-						<tr><td>There are not currently any analyses for this dataset</td><tr>
-						{% endif %}
-						{% for analysis in analyses %}
-						<tr>
-							{% ifequal analysis curanalysis%}
-							<td class="list highlight">
-							{% else %}
-							<td class="list">
-							{% endifequal %}
-								<a href="/datasets/{{ dataset }}/analyses/{{ analysis.name }}">{{ analysis.name }}</a>
-							</td>
-						</tr>
-						{% endfor %}
-					</table>
-				</td>
-			</tr>
-			{% if curanalysis %}
-			<tr>
-				<td class="align-top">Current Analysis Description
-					<table class="inset">
-						<tr>
-							<td>{{ curanalysis.description|linebreaks }}</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			
-            <tr>
-                <td><img name="plot_image" id="plot_image" src="/site-media/ajax-loader.gif"/></td>
-            </tr>
-			
-			{% endif %}
-		</table>
-		</td>
-	</tr>
-</table>
-
+{% comment %}
+<img name="plot_image" id="plot_image" src="/site-media/ajax-loader.gif"/>
 <script charset="utf=8" type="text/javascript">
     update_plot();
 </script>
+{% endcomment %}
+
+{% block current_view_desc %}Available Datasets{% endblock %}
+
+{% comment %}
+{% block before_presentation_area %}
+    <h1>Available Datasets</h1>
+{% endblock %}
+{% endcomment %}
+
+{% block presentation_area %}
+<div id="accordion">
+    {% for dataset in datasets %}
+    <div>
+        <span class="name">{{dataset.readable_name}}</span>
+        <!-- TODO: icon  -->
+    </div>
+    <div>
+        <p class="description">{{dataset.description|linebreaks}}</p>
+        Analyses
+        {% if dataset.analysis_set.all %}
+	        <ul class="analyses">
+	        {% for analysis in dataset.analysis_set.all %}
+	            <li{% ifequal analysis curanalysis %} class="current_analysis"{% endifequal %}>
+	                <a class="name" href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}">{{analysis.readable_name}}</a>
+	                <p class="description">{{analysis.description|linebreaks}}</p>
+	            </li>
+	        {% endfor %}
+	        </ul>
+        {% else %}
+            No analyses yet.
+        {% endif %}
+        
+    </div>
+    {% endfor %}
+</div>
 {% endblock %}
 
-{% block scripts %}
-<script charset="utf=8" type="text/javascript">
-function update_plot() {
-    $("img#plot_image").attr("src", "/site-media/ajax-loader.gif");
-    var url_base = "/feeds/topic-attribute-plot/";
-
-    url_base += 'attributes/'+{{ sample_attribute }}+'/';
-    
-    var values = {{ sample_attrvalues }};
-    url_base += "values/" + values[0];
-    for (var i = 1; i < values.length; i++) {
-        url_base += "." + values[i];
-    }
-    
-    url_base += "/topics/";
-    var topics = {{ sample_topics }};
-    url_base += topics[0];
-    for (var i = 1; i < topics.length; i++) {
-        url_base += "." + topics[i];
-    }
-
-    $("img#plot_image").attr("src", url_base);
-}
-</script>
-{% endblock %}

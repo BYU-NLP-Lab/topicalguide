@@ -81,6 +81,32 @@ ul.nav_menu li#branding-logo a img {
 	border: 0px;
 }
 
+ul.nav_menu li#current_view_desc {
+    font-size: medium;
+    font-family: 'Bookman Old Style', serif;
+    color: #000000;
+    text-align: justify;
+    font-style: italic;
+    font-variant: small-caps;
+}
+
+ul.analyses {
+	list-style-type: none;
+	display: table-row;
+	height: 140px;
+	border: 1px solid;
+	padding: 4px;
+}
+
+ul.analyses li {
+	margin: 4px;
+	border: 1px dashed;
+	float: left;
+	display: table-cell;
+}
+
+
+
 #main {
 	width: 100%;
 	clear: both;
