@@ -78,22 +78,24 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     </div>
     <div>
         <p class="description">{{dataset.description|linebreaks}}</p>
-        Analyses
+        
         {% if dataset.analysis_set.all %}
-	        <ul class="analyses">
-	        {% for analysis in dataset.analysis_set.all %}
-	            <li class="ui-widget{% ifequal analysis curanalysis %} current_analysis{% endifequal %}">
-	            	<div class="ui-widget-content ui-corner-all	">
-		                <div class="ui-widget-header ui-corner-all"><a class="name" href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}">{{analysis.readable_name}}</a></div>
-		                <div class="description">{{analysis.description|linebreaks}}</div>
-	                </div>
-	            </li>
-	        {% endfor %}
-	        </ul>
+	        <div>
+		        Analyses
+		        <ul class="analyses">
+		        {% for analysis in dataset.analysis_set.all %}
+		            <li class="ui-widget{% ifequal analysis curanalysis %} current_analysis{% endifequal %}">
+		            	<div class="ui-widget-content ui-corner-all	">
+			                <div class="ui-widget-header ui-corner-all"><a class="name" href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}">{{analysis.readable_name}}</a></div>
+			                <div class="description">{{analysis.description|linebreaks}}</div>
+		                </div>
+		            </li>
+		        {% endfor %}
+		        </ul>
+	        </div>
         {% else %}
             <div class="ui-state-highlight">No analyses yet.</div>
         {% endif %}
-        
     </div>
     {% endfor %}
 </div>
