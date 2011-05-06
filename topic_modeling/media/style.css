@@ -58,13 +58,13 @@ ul.nav_menu {
 	padding: 0px;
 	display: table-row;
 	/*left: 50%;*/
-	position: relative;
+	/*position: relative;*/
 }
 
 ul.nav_menu li {
 	height: 27px;
 	line-height: 27px;
-	float: left;
+	/*float: left;*/
 	padding-left: 10px;
 	padding-right: 10px;
 	border-right: 1px dashed gray;
@@ -81,7 +81,7 @@ ul.nav_menu li#branding-logo a img {
 	border: 0px;
 }
 
-ul.nav_menu li#current_view_desc {
+ul.nav_menu li#view_description {
     font-size: medium;
     font-family: 'Bookman Old Style', serif;
     color: #000000;
@@ -90,22 +90,24 @@ ul.nav_menu li#current_view_desc {
     font-variant: small-caps;
 }
 
+ul.nav_menu li.breadcrumb {
+	border: none;
+}
+
 ul.analyses {
 	list-style-type: none;
 	display: table-row;
 	height: 140px;
-	border: 1px solid;
+	/*border: 1px solid;*/
 	padding: 4px;
 }
 
 ul.analyses li {
 	margin: 4px;
-	border: 1px dashed;
+	/*border: 1px dashed;*/
 	float: left;
 	display: table-cell;
 }
-
-
 
 #main {
 	width: 100%;
