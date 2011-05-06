@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -36,56 +34,57 @@ def sample_list(list):
 
 def index(request, dataset="", analysis=""):
     page_vars = root_context(dataset, analysis)
-    page_vars['highlight'] = 'datasets_tab'
+    page_vars['view_description'] = 'Available Datasets'
+#    page_vars['highlight'] = 'datasets_tab'
 
-    datasets = Dataset.objects.all()
-    page_num = 1
-    datasets, num_pages, _ = paginate_list(datasets, page_num, 20)
+#    datasets = Dataset.objects.all()
+#    page_num = 1
+#    datasets, num_pages, _ = paginate_list(datasets, page_num, 20)
     page_vars['datasets'] = Dataset.objects.all()
-    page_vars['num_pages'] = num_pages
-    page_vars['page_num'] = page_num
+#    page_vars['num_pages'] = num_pages
+#    page_vars['page_num'] = page_num
 
-    if dataset:
-        page_vars['dataset'] = dataset
-        dataset = Dataset.objects.get(name=dataset)
-    else:
-        dataset = page_vars['datasets'][0]
-        page_vars['dataset'] = dataset.name
+#    if dataset:
+#        page_vars['dataset'] = dataset
+#        dataset = Dataset.objects.get(name=dataset)
+#    else:
+#        dataset = page_vars['datasets'][0]
+#        page_vars['dataset'] = dataset.name
 
     # This is probably not the right way to handle this, but it works for now.
     # The problem is that if we have filters up and switch analyses or datasets,
     # it breaks things.  TODO(matt): fix this sometime.
     request.session.clear()
 
-    page_vars['curdataset'] = dataset
+#    page_vars['curdataset'] = dataset
+#
+#    page_vars['analyses'] = dataset.analysis_set.all()
 
-    page_vars['analyses'] = dataset.analysis_set.all()
+#    if analysis:
+#        page_vars['curanalysis'] = dataset.analysis_set.get(name=analysis)
+#        page_vars['analysis'] = analysis
+#    elif page_vars['analyses']:
+#        page_vars['curanalysis'] = page_vars['analyses'][0]
+#        page_vars['analysis'] = page_vars['curanalysis'].name
 
-    if analysis:
-        page_vars['curanalysis'] = dataset.analysis_set.get(name=analysis)
-        page_vars['analysis'] = analysis
-    elif page_vars['analyses']:
-        page_vars['curanalysis'] = page_vars['analyses'][0]
-        page_vars['analysis'] = page_vars['curanalysis'].name
-
-    page_vars['breadcrumb'] = BreadCrumb()
-    page_vars['breadcrumb'].dataset(dataset)
-    if 'curanalysis' in page_vars:
-        page_vars['breadcrumb'].analysis(page_vars['curanalysis'])
-
-    topics = Topic.objects.filter(analysis=page_vars['curanalysis'])
-    topics = [sample_list(topics), sample_list(topics), sample_list(topics)]
-    topics = [topic.id for topic in topics]
-    page_vars['sample_topics'] = topics
-
-    attributes = Attribute.objects.filter(dataset=dataset)
-    if len(attributes) > 0:
-        attribute = sample_list(attributes)
-        page_vars['sample_attribute'] = attribute.id
-
-        attrvalues = AttributeValue.objects.filter(attribute=attribute)
-        attrvalues = [attrval.value.id for attrval in attrvalues]
-        page_vars['sample_attrvalues'] = attrvalues
+#    page_vars['breadcrumb'] = BreadCrumb()
+#    page_vars['breadcrumb'].dataset(dataset)
+#    if 'curanalysis' in page_vars:
+#        page_vars['breadcrumb'].analysis(page_vars['curanalysis'])
+#
+#    topics = Topic.objects.filter(analysis=page_vars['curanalysis'])
+#    topics = [sample_list(topics), sample_list(topics), sample_list(topics)]
+#    topics = [topic.id for topic in topics]
+#    page_vars['sample_topics'] = topics
+#
+#    attributes = Attribute.objects.filter(dataset=dataset)
+#    if len(attributes) > 0:
+#        attribute = sample_list(attributes)
+#        page_vars['sample_attribute'] = attribute.id
+#
+#        attrvalues = AttributeValue.objects.filter(attribute=attribute)
+#        attrvalues = [attrval.value.id for attrval in attrvalues]
+#        page_vars['sample_attrvalues'] = attrvalues
 
     return render_to_response('datasets.html', page_vars)
 

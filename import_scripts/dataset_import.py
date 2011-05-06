@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -58,9 +56,9 @@ NUM_DOTS = 100
 # This could maybe benefit from the use of a logger, but I didn't care enough
 # to put one in, so I just use print statements.
 
-def main(state_file, name, attr_file, root, files_dir, description):
-    print >> sys.stderr, "dataset_import({0}, {1}, {2}, {3}, {4}, {5})".format(
-            state_file, name, attr_file, root, files_dir, description)
+def import_dataset(name, readable_name, description, state_file, attr_file, dataset_dir, files_dir):
+    print >> sys.stderr, "dataset_import({0}, {1}, {2}, {3}, {4}, {5}, {6})".format(
+            name, readable_name, description, state_file, attr_file, dataset_dir, files_dir)
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
     # These are some attempts to make the database access a little faster
@@ -71,7 +69,7 @@ def main(state_file, name, attr_file, root, files_dir, description):
     cursor.execute('PRAGMA journal_mode=MEMORY')
     cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
 
-    created = create_dataset(name, root, files_dir, description)
+    created = create_dataset(name, readable_name, description, dataset_dir, files_dir)
     if created:
         docs, attrs, vals, attrvaldoc, attr_table = parse_attributes(attr_file)
 
@@ -104,7 +102,7 @@ def main(state_file, name, attr_file, root, files_dir, description):
 # Database creation code (in the order it's called in main)
 #############################################################################
 
-def create_dataset(name, path, files_dir, description):
+def create_dataset(name, readable_name, description, dataset_dir, files_dir):
     print >> sys.stderr, 'Creating the dataset...  ',
     try:
         Dataset.objects.get(name=name)
@@ -112,8 +110,8 @@ def create_dataset(name, path, files_dir, description):
                 format(n=name)
         return False
     except Dataset.DoesNotExist:
-        d = Dataset(name=name, data_root=path, files_dir=files_dir,
-                description=description)
+        d = Dataset(name=name, readable_name=readable_name, description=description,
+                    dataset_dir=dataset_dir, files_dir=files_dir)
         d.save()
         global dataset
         dataset = d

@@ -55,7 +55,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     # call stuff to classify documents and get sentiment information, as in
     # parse_dependencies.py
 
-    data_root = analysis.dataset.data_root
+    data_root = analysis.dataset.dataset_dir
     topics = analysis.topic_set.all()
     for topic in topics:
         positive = 0;

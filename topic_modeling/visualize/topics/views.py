@@ -65,12 +65,13 @@ from topic_modeling.visualize.word_views import add_word_contexts
 def base_context(request, dataset, analysis, topic, extra_filters=[]):
     # Basic page variables here
     context = root_context(dataset, analysis)
+    
     context['highlight'] = 'topics_tab'
     context['tab'] = 'topic'
     context['extra_widgets'] = []
 
     ds = Dataset.objects.get(name=dataset)
-    context['topic_map_dir'] = ds.data_root + '/topic_maps'
+    context['topic_map_dir'] = ds.dataset_dir + '/topic_maps'
 
     dataset = get_object_or_404(Dataset, name=dataset)
     analysis = get_object_or_404(Analysis, name=analysis, dataset=dataset)
@@ -114,17 +115,19 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
 
     # Build the bread crumb
     context['breadcrumb'] = BreadCrumb()
-    context['breadcrumb'].dataset(dataset)
-    context['breadcrumb'].analysis(analysis)
-    context['breadcrumb'].topic(topic.number, topic_name)
-
+    context['breadcrumb'].add(dataset.readable_name, '/datasets/'+dataset.name)
+    context['breadcrumb'].add(analysis.name, '/datasets/'+dataset.name +'/analyses/'+analysis.name)
+#    context['breadcrumb'].dataset(dataset)
+#    context['breadcrumb'].analysis(analysis)
+#    context['breadcrumb'].topic(topic.number, topic_name)
+    context['view_description'] = 'Topic "'+topic_name + '"'
     return context, analysis, topic
 
 
 # Top-level view methods
 ########################
 
-def index(request, dataset, analysis, topic):
+def index(request, dataset, analysis, topic=None):
     context, analysis, topic = base_context(request, dataset, analysis, topic)
 
     top_level_widgets = []

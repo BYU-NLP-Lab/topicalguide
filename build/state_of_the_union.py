@@ -29,7 +29,10 @@ num_topics = 100
 chron_list_filename = 'chronological_list.wiki'
 addresses_filename = 'state_of_the_union_addresses.txt'
 dataset_name = 'state_of_the_union'
-dataset_description = 'State of the Union Addresses 1790-2010'
+dataset_readable_name = 'State of the Union Addresses 1790-2010'
+dataset_description = \
+'''State of the Union Addresses taken from WikiSource by adding all
+ addresses to a "book" and downloading it. Created by Josh Hansen.'''
 suppress_default_attributes_task = True
 
 def task_attributes():
