@@ -73,25 +73,30 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		<div id="page">
 			<div id="header">
 				<ul class="nav_menu">
-					{% block header_all %}
-						<li id="branding-logo">
+					{% block nav_menu %}
+						{% block nav_menu_start %}{% endblock %}
+						
+						<li id="logo">
 							<a href="/">
 								<img src="/site-media/byunlp-35px.png" alt="BYU NLP Lab Logo"/>
 							</a>
 						</li>
-						<li id="branding-title-text">
+						
+						{% block nav_menu_after_log %}{% endblock %}
+						
+						<li id="title-text" class="breadcrumb">
 							<a href="/">The Topical Guide</a>
 						</li>
-						{% block header %}{% endblock %}
+						
+						{% block nav_menu_after_title %}{% endblock %}
 						
 						{% for item in breadcrumb %}
 							<li class="breadcrumb"><a href="{{item.url}}">{{item.text}}</a></li>
-							<li class="breadcrumb separator">&gt;&gt;</li>
 						{% endfor %}
-						<li id="view_description" class="breadcrumb">{{view_description}}</li>
-							
+						<li id="view_description" class="breadcrumb"><span>{{view_description}}</span></li>
+						{% block nav_menu_end %}{% endblock %}
+						
 						{% comment %}
-							
 							<li id="namescheme-dropdown">
 								Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
 								{% for namescheme in nameschemes %}
