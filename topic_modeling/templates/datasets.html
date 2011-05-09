@@ -62,6 +62,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
 {% block presentation_area %}
+{% if datasets %}
 <div id="accordion">
     {% for dataset in datasets %}
     <div>
@@ -93,5 +94,8 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     </div>
     {% endfor %}
 </div>
+{% else %}
+    <div class="ui-state-highlight">No datasets yet. Try importing one using backend.py.</div>
+{% endif %}
 {% endblock %}
 
