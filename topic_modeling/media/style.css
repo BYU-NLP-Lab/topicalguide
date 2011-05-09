@@ -169,7 +169,7 @@ ul.nav_menu li.breadcrumb > *:hover:after { border-left-color: hsla(210,85%,25%,
 #sidebar {
 	float: left;
 	height: 100%;
-	max-width: 28%;
+	max-width: 30%;
 }
 
 #presentation-area {
@@ -196,42 +196,15 @@ ul.analyses li {
 }
 
 /***** Tab Pane *****/
-#tab_pane {
+#tab_content_area {
 	/*empty-cells: show;
 	cellspacing:0px;
 	cellpadding:0px;*/
-	padding:0px;
-	margin:0px;
-	border-spacing:0px;
-}
-.tab_row {
-	margin-top:3px;
+	/*padding:0px 5px 0px 5px;*/
+	/*margin:0px;
+	border-spacing:0px;*/
 }
 
-#tab_row_1 {
-	padding-bottom:2px;
-}
-.tab_header {
-	background-color:#749BC2;
-	padding-left:5px;
-	padding-right:5px;
-	padding-top:5px;
-	padding-bottom:0px;
-	border-left:1px solid black;
-	border-right:1px solid black;
-	border-top:1px solid black;
-	-moz-border-radius-topright:5px;
-	-moz-border-radius-topleft:5px;
-}
-.tab_header:hover {
-	background-color:#99ccff;
-}
-.fg {
-	background-color:#99ccff;
-}
-.bg {
-	border-bottom:1px solid black;
-}
 
 /***** Presentation Area *****/
 #presentation-area-main-column {
