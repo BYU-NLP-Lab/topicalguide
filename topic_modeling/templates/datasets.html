@@ -61,14 +61,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 </script>
 {% endcomment %}
 
-{% block current_view_desc %}Available Datasets{% endblock %}
-
-{% comment %}
-{% block before_presentation_area %}
-    <h1>Available Datasets</h1>
-{% endblock %}
-{% endcomment %}
-
 {% block presentation_area %}
 <div id="accordion">
     {% for dataset in datasets %}
@@ -84,12 +76,14 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		        Analyses
 		        <ul class="analyses">
 		        {% for analysis in dataset.analysis_set.all %}
-		            <li class="ui-widget{% ifequal analysis curanalysis %} current_analysis{% endifequal %}">
-		            	<div class="ui-widget-content ui-corner-all	">
-			                <div class="ui-widget-header ui-corner-all"><a class="name" href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}">{{analysis.readable_name}}</a></div>
-			                <div class="description">{{analysis.description|linebreaks}}</div>
-		                </div>
-		            </li>
+			        <a class="name" href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}">
+			            <li class="ui-widget{% ifequal analysis curanalysis %} current_analysis{% endifequal %}">
+			            	<div class="ui-widget-content ui-corner-all	">
+				                <div class="ui-widget-header ui-corner-all">{{analysis.readable_name}}</div>
+				                <div class="description">{{analysis.description|linebreaks}}</div>
+			                </div>
+			            </li>
+		            </a>
 		        {% endfor %}
 		        </ul>
 	        </div>
