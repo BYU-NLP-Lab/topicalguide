@@ -25,12 +25,12 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head><title>Topical Guide{% if view_description %} &mdash; {{view_description}}{% endif %}</title>
 		<link rel="shortcut icon" href="/site-media/byunlp-35px.png" />
-		<link rel="stylesheet" href="/site-media/style.css" type="text/css" />
+		<link rel="stylesheet" href="/site-media/css/tg.css" type="text/css" />
 		<link rel="stylesheet" href="/site-media/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" />
+		{% block stylesheets %}{% endblock %}
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
-		<script type="text/javascript" src="/site-media/cursor.js"></script>
-		<script type="text/javascript" src="/site-media/name-scheme.js"></script>
+		<script type="text/javascript" src="/site-media/js/tg.js"></script>
         <script type="text/javascript">
             $("a.new-window[href]").live(
                 "click",

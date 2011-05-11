@@ -127,7 +127,7 @@ ul.nav_menu li.breadcrumb > *:after {
 	margin-top: 0px;
 	left: 100%;
 	z-index: 2;
-	background:url(imgs/rarrow.png) no-repeat right center;
+	background:url(../imgs/rarrow.png) no-repeat right center;
 }
 
 ul.nav_menu li.breadcrumb:first-child > * {

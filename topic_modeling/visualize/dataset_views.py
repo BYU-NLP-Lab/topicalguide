@@ -32,32 +32,21 @@ from random import randint
 def sample_list(list):
     return list[randint(0, len(list) - 1)]
 
-def index(request, dataset="", analysis=""):
-    page_vars = root_context(dataset, analysis)
+
+
+def index(request, dataset=""):
+    page_vars = root_context(dataset, '')
     page_vars['view_description'] = 'Available Datasets'
-#    page_vars['highlight'] = 'datasets_tab'
 
-#    datasets = Dataset.objects.all()
-#    page_num = 1
-#    datasets, num_pages, _ = paginate_list(datasets, page_num, 20)
     page_vars['datasets'] = Dataset.objects.all()
-#    page_vars['num_pages'] = num_pages
-#    page_vars['page_num'] = page_num
 
-#    if dataset:
-#        page_vars['dataset'] = dataset
-#        dataset = Dataset.objects.get(name=dataset)
-#    else:
-#        dataset = page_vars['datasets'][0]
-#        page_vars['dataset'] = dataset.name
-
-    # This is probably not the right way to handle this, but it works for now.
-    # The problem is that if we have filters up and switch analyses or datasets,
-    # it breaks things.  TODO(matt): fix this sometime.
-    request.session.clear()
-
-#    page_vars['curdataset'] = dataset
-#
+    if dataset:
+        page_vars['dataset'] = dataset
+        dataset = Dataset.objects.get(name=dataset)
+    else:
+        dataset = page_vars['datasets'][0]
+        page_vars['dataset'] = dataset.name
+    
 #    page_vars['analyses'] = dataset.analysis_set.all()
 
 #    if analysis:
@@ -71,21 +60,46 @@ def index(request, dataset="", analysis=""):
 #    page_vars['breadcrumb'].dataset(dataset)
 #    if 'curanalysis' in page_vars:
 #        page_vars['breadcrumb'].analysis(page_vars['curanalysis'])
-#
-#    topics = Topic.objects.filter(analysis=page_vars['curanalysis'])
-#    topics = [sample_list(topics), sample_list(topics), sample_list(topics)]
-#    topics = [topic.id for topic in topics]
-#    page_vars['sample_topics'] = topics
-#
-#    attributes = Attribute.objects.filter(dataset=dataset)
-#    if len(attributes) > 0:
-#        attribute = sample_list(attributes)
-#        page_vars['sample_attribute'] = attribute.id
-#
-#        attrvalues = AttributeValue.objects.filter(attribute=attribute)
-#        attrvalues = [attrval.value.id for attrval in attrvalues]
-#        page_vars['sample_attrvalues'] = attrvalues
 
+    # Randomly generate the parameters that will be used in generation of plots
+    # We do this for every analysis so that each analysis has its own plot
+#    page_vars['sample_attributes'] = dict()
+#    page_vars['sample_attrvalues'] = dict()
+#    page_vars['sample_topics'] = dict()
+    page_vars['plot_img_urls'] = dict()
+    
+    for dataset in page_vars['datasets']:
+        page_vars['plot_img_urls'][dataset] = dict()
+#        page_vars['sample_attributes'][dataset.name] = dict()
+#        page_vars['sample_attrvalues'][dataset.name] = dict()
+#        page_vars['sample_topics'][dataset.name] = dict()
+        
+        attributes = dataset.attribute_set.all()
+        
+        for analysis in dataset.analysis_set.all():
+            if len(attributes) > 0:
+                attribute = sample_list(attributes)
+#                page_vars['sample_attributes'][dataset.name][analysis.name] = attribute.id
+                attrvalues = attribute.attributevalue_set.all()
+                attrvalues = [attrval.value.id for attrval in attrvalues]
+#                page_vars['sample_attrvalues'][dataset.name][analysis.name] = attrvalues
+            
+                topics = analysis.topic_set.all()
+                topics = [sample_list(topics), sample_list(topics), sample_list(topics)]
+                topics = [topic.id for topic in topics]
+#                page_vars['sample_topics'][dataset.name][analysis.name] = topics
+                
+#                page_vars['plot_params'][dataset.name][analysis.name] = (attribute.id, attrvalues, topics)
+                plot_img_url = "/feeds/topic-attribute-plot/"
+                
+                plot_img_url += 'attributes/'+str(attribute.id)+'/'
+                
+                plot_img_url += "values/" + '.'.join([str(x) for x in attrvalues])
+                
+                plot_img_url += "/topics/"
+                plot_img_url += '.'.join([str(x) for x in topics])
+                page_vars['plot_img_urls'][dataset][analysis] = plot_img_url
+    
     return render_to_response('datasets.html', page_vars)
 
 # vim: et sw=4 sts=4
