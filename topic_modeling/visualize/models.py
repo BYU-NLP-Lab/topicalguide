@@ -331,6 +331,7 @@ class DatasetMetric(Metric):
 
 class DatasetMetricValue(MetricValue):
     dataset = models.ForeignKey(Dataset)
+    metric = models.ForeignKey(DatasetMetric)
 
 class AnalysisMetric(Metric):
     pass
