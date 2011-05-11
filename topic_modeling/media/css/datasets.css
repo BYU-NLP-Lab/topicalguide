@@ -1,0 +1,29 @@
+ul.analyses {
+    /*float: left;*/
+    list-style: none;
+    margin: 0; padding: 10px;
+    /*width: 360px;*/
+}
+
+ul.analyses li {
+    margin: 0; padding: 5px;
+    /*float: left;*/
+    position: relative;  /* Set the absolute positioning base coordinate */
+    /*width: 160px;*/
+    /*height: 160px;*/
+}
+
+ul.analyses li img {
+    width: 150px; height: 150px; /* Set the small thumbnail size */
+    -ms-interpolation-mode: bicubic; /* IE Fix for Bicubic Scaling */
+    border: 1px solid #ddd;
+    padding: 5px;
+    background: #f0f0f0;
+    position: relative;
+    left: 0; top: 0;
+}
+
+ul.analyses li img.hover {
+    background:url(thumb_bg.png) no-repeat center center;  /* Image used as background on hover effect */
+    /*border: none;*/ /* Get rid of border on hover */
+}
