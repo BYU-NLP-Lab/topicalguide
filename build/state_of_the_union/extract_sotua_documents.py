@@ -44,7 +44,6 @@ def extract_state_of_the_union(chron_list_filename, addresses_filename, dest_dir
                 lines = []
                 print 'Extracted "{0}"'.format(current_speech_title)
                 extracted_count += 1
-                if extracted_count > 50: break
             current_speech_title = line
         else:
             lines += [line]
