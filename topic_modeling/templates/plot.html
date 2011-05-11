@@ -23,6 +23,16 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
+{% block scripts %}
+    {{block.super}}
+	<script charset="utf=8" type="text/javascript" src="/site-media/scripts/plots.js"></script>
+	<script charset="utf-8" type="text/javascript">
+		function set_loading_image() {
+		    $("img#plot_image").attr("src", "/site-media/images/ajax-loader.gif");
+		}
+	</script>
+{% endblock %}
+
 {% block sidebar %}
 	<div id="plots_list" class="inset">
 		<ul class="list centered">
@@ -53,7 +63,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 					<td><img name="plot_image" id="plot_image" src="{{ chart_address }}"/></td>
 				</tr>
 			</table>
-			<!--  These currently don't work...
+			{%comment%} These currently don't work:
 			Topics
 			<table class="inset">
 				<tr>
@@ -70,114 +80,16 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 				{% endfor %}
 				</tr>
 			</table>			
-			-->
+			{% endcomment %}
 		</td>
 	</tr>
 </table>
 
 <script charset="utf=8" type="text/javascript">
-	{{ update_function }}
+    {# Weird method call using name of function from a context variable #}
+	{{update_function}}("{{dataset}}","{{analysis}}");
 </script>
 
 {% endblock %}
 
-{% block scripts %}
 
-<script charset="utf=8" type="text/javascript">
-function numerical_sort_function(a,b) {
-  return (a - b)
-}
-
-function set_loading_image() {
-	$("img#plot_image").attr("src", "{{ chart_address }}");
-}
-
-function highlight_all_topic_attribute_values(refresh) {
-	$("select#id_values").each(function() {
-		$("select#id_values option").attr("selected", true);
-		});
-	if(refresh) {
-		update_topic_attribute_plot()
-	}
-}
-function update_topic_attribute_plot() {
-	set_loading_image();
-	var url_base = "/feeds/topic-attribute-plot/";
-	attribute = $("select#id_attribute").val();
-	url_base += 'attributes/'+attribute+'/';
-	
-	if ($("select#id_topics").val() == null) {
-		$("select#id_topics option:first").attr("selected", true);
-	}
-	if ($("select#id_values").val() == null) {
-		highlight_all_topic_attribute_values(0);
-	}
-   
-    // Now get selected values and make a list of them 
-    var selected = $("select#id_values").val();
-	selected = selected.sort(numerical_sort_function);
-	url_base += "values/" + selected[0];
-	for (var i = 1; i < selected.length; i++) {
-		url_base += "." + selected[i];
-	}
-    url_base += "/topics";
-
-    // Now get selected topics and make a list of them 
-    var selected = $("select#id_topics").val()
-	url_base += '/';
-	selected = selected.sort(numerical_sort_function)
-	url_base += selected[0];
-	for (var i = 1; i < selected.length; i++) {
-		url_base += "." + selected[i];
-	}
-	var added_query = false;
-    if ($('#id_by_frequency:checked').val() != null) {
-		url_base += "?frequency=true";
-		added_query = true;
-    }
-    if ($('#id_histogram:checked').val() != null) {
-		if (!added_query) {
-			url_base += '?';
-		} else {
-			url_base += '&';
-		}
-		url_base += "histogram=true";
-    }
-    // When  the URL is ready, change the source of the
-    // image to point to the correct one
-    $("img#plot_image").attr("src", url_base);
-}
-
-function update_attribute_values(){
-	attribute = $("select#id_attribute").val();
-	$.getJSON("/feeds/attribute-values/datasets/{{ dataset }}/attributes/"
-			+ attribute, {}, function(j) {
-		var options = '';
-		for (var i = 0; i < j.length; i++) {
-			options += '<option value = "' + j[i][0] + '" selected="true">' +
-			j[i][1] + '</option>';
-		}
-		$("#id_values").html(options);
-		update_topic_attribute_plot();
-    })
-}
-
-function update_topic_metric_plot() {
-	set_loading_image();
-	var url_base = "/feeds/topic-metric-plot/datasets/{{ dataset }}/analyses/"+
-		"{{ analysis }}/metrics/";
-	first_metric = $("select#id_first_metric").val();
-	url_base += first_metric;
-	url_base += '.';
-	second_metric = $("select#id_second_metric").val();
-	url_base += second_metric;
-    if ($('#id_linear_fit:checked').val() != null) {
-		url_base += "?linear_fit=true";
-    }
-
-    // When  the URL is ready, change the source of the
-    // image to point to the correct one
-    $("img#plot_image").attr("src", url_base);
-}
-</script>
-{% endblock %}

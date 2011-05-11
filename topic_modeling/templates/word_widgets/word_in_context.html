@@ -32,13 +32,13 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             <col class="col4"/>
             <col class="col5"/>
             
-            {% comment %}These rows are placeholders for jQuery to insert row content into{% endcomment %}
+            {# These rows are placeholders for jQuery to insert row content into #}
             {% for word in word_contexts %}
             <tr id="id_{{ word.word }}_{{ word.number }}"><td></td><td></td><td></td><td></td><td></td></tr>
             {% endfor %}
         </table>
     </div>
-    <script type="text/javascript" src="/site-media/word_scripts/word_in_context.js">
+    <script type="text/javascript" src="/site-media/scripts/words/word_in_context.js">
     </script>
     <script type="text/javascript">
         $(document).ready(function () {

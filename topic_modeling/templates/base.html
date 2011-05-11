@@ -24,13 +24,17 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head><title>Topical Guide{% if view_description %} &mdash; {{view_description}}{% endif %}</title>
-		<link rel="shortcut icon" href="/site-media/byunlp-35px.png" />
-		<link rel="stylesheet" href="/site-media/css/tg.css" type="text/css" />
-		<link rel="stylesheet" href="/site-media/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" />
-		{% block stylesheets %}{% endblock %}
+		<link rel="shortcut icon" href="/site-media/images/byunlp-35px.png" />
+		
+		{% block stylesheets %}
+		<link rel="stylesheet" href="/site-media/styles/tg.css" type="text/css" />
+        <link rel="stylesheet" href="/site-media/styles/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" />
+		{% endblock %}
+		
+		{% block scripts %}
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
-		<script type="text/javascript" src="/site-media/js/tg.js"></script>
+		<script type="text/javascript" src="/site-media/scripts/tg.js"></script>
         <script type="text/javascript">
             $("a.new-window[href]").live(
                 "click",
@@ -52,11 +56,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             $.fn.topics_url = "{{ topics_url }}";
             $.fn.words_url = "{{ words_url }}";
         </script>
-		
-
-		{% block scripts %}
-		{% endblock %}
-
 		<script type="text/javascript">
 			function add_favorite(){
 				{% for item in breadcrumb %}
@@ -68,6 +67,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 				$.get(link);
 			}
 		</script>
+		{% endblock %}
 	</head>
 	<body>
 		<div id="page">
@@ -78,7 +78,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 						
 						<li id="logo">
 							<a href="/">
-								<img src="/site-media/byunlp-35px.png" alt="BYU NLP Lab Logo"/>
+								<img src="/site-media/images/byunlp-35px.png" alt="BYU NLP Lab Logo"/>
 							</a>
 						</li>
 						

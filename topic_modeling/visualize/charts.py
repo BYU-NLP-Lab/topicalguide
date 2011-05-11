@@ -190,7 +190,7 @@ class TopicAttributePlotForm(forms.Form):
 class TopicAttributeChart(object):
     """ A chart that plots nominally-valued attributes against topics"""
     form = TopicAttributePlotForm
-    update_function = "update_topic_attribute_plot()"
+    update_function = "update_topic_attribute_plot"
 
     def __init__(self, chart_parameters):
         """
@@ -320,7 +320,7 @@ class TopicMetricForm(forms.Form):
 class TopicMetricChart(object):
     """A chart that plots one TopicMetric vs. another TopicMetric"""
     form = TopicMetricForm
-    update_function = "update_topic_metric_plot()"
+    update_function = "update_topic_metric_plot"
 
     def __init__(self, chart_parameters):
         self.analysis = Analysis.objects.get(name=chart_parameters['analysis'],

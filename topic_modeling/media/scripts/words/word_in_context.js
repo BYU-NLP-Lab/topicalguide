@@ -22,41 +22,41 @@
  * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
  */
 
-function get_context_for_word(word)
+function get_context_for_word(word, num)
 {
 	cursor_wait();
 	var link = "/feeds/word-in-context/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+    if(typeof $.fn.topic_vars != "undefined") {
+        link += "/topics/" + $.fn.topic_vars.curtopic_number;
+    }
 	link += "/words/" + word;
 	$.getJSON(link, {}, function(word) {
 		new_html = '';
-		new_html += '<td class="doc-name"><a href="'+$.fn.topics_url+'/';
-		new_html += $.fn.topic_vars.curtopic_number + '/documents/';
+        new_html += '<td class="doc-name"><a href="' + $.fn.documents_url + '/';
 		new_html += word.doc_id;
 		new_html += '">'+word.doc_name;
 		new_html += '</a></td>';
 		new_html += '<td class="right-align">';
 		new_html += word.left_context;
 		new_html += '</td><td class="word">';
-		new_html += '<a href="'+$.fn.topics_url+'/';
-		new_html += $.fn.topic_vars.curtopic_number;
-		new_html += '/words/' + word.word;
+        new_html += '<a href="' + $.fn.words_url + '/';
+        new_html += word.word;
 		new_html += '">'+word.word+'</a></td>';
 		new_html += '<td class="left-align">';
 		new_html += word.right_context;
 		new_html += '</td>';
 		new_html += '<td id="id_new_context_';
-		new_html += word.word + '" class="clickable_text">';
-		new_html += '<img src="/site-media/stock_reload.png" border="0"/>';
+		new_html += word.word + "_" + num + '" class="clickable_text">';
+		new_html += '<img src="/site-media/images/stock_reload.png" border="0"/>';
 		new_html += '</td>';
-		$("#id_"+word.word).html(new_html);
+		$("#id_"+word.word+"_"+num).html(new_html);
 		cursor_default();
 	});
 }
 $(document).ready(function() {
 	$("[id*='id_new_context_']").live('click', function() {
-		var word = $(this).attr('id').substring(15);
-		get_context_for_word(word);
+		var parts = $(this).attr('id').substring(15).split("_");
+		get_context_for_word(parts[0], parts[1]);
 	});
 });

@@ -24,17 +24,24 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
 {% block scripts %}
-<script charset="utf-8" type="text/javascript">
-    $.fn.document_url = "{{ document_url }}";
-	$.fn.doc_vars = function () {};
-	$.fn.doc_vars.curdocument_id = {{ curdocument.id }};
-</script>
+    {{block.super}}
+	<script charset="utf-8" type="text/javascript">
+	    $.fn.document_url = "{{ document_url }}";
+		$.fn.doc_vars = function () {};
+		$.fn.doc_vars.curdocument_id = {{ curdocument.id }};
+	</script>
+	<script charset="utf-8" type="text/javascript"
+        src="/site-media/scripts/documents/sidebar.js">
+    </script>
+    <script charset="utf-8" type="text/javascript"
+        src="/site-media/scripts/documents/main.js">
+    </script>
+    <script charset="utf-8" type="text/javascript"
+        src="/site-media/scripts/documents/filters.js">
+    </script>
 {% endblock %}
 
 {% block above_sidebar %}
-	<script charset="utf-8" type="text/javascript"
-		src="/site-media/document_scripts/filters.js">
-	</script>
 	<table class="above_inset">
 		{{ sort_form }}
 		<tr><td>Filters</td><td colspan=4><hr></td></tr>
@@ -45,16 +52,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block sidebar %}
-	<script charset="utf-8" type="text/javascript"
-		src="/site-media/common_scripts/sidebar.js">
-	</script>
-	<script charset="utf-8" type="text/javascript"
-		src="/site-media/document_scripts/sidebar.js">
-	</script>
-	<script charset="utf-8" type="text/javascript"
-		src="/site-media/document_scripts/main.js">
-	</script>
-
 	<div id="documents_list" class="inset"></div>
 	<script charset="utf=8" type="text/javascript">
 		$(document).ready(function () {

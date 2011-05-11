@@ -24,10 +24,13 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
 {% block scripts %}
+    {{block.super}}
 	<script charset="utf-8" type="text/javascript">
 		$.fn.word_vars = function () {};
 		$.fn.word_vars.curword = "{{ curword.type }}";
 	</script>
+	<script charset="utf-8" type="text/javascript" src="/site-media/scripts/words/sidebar.js">
+    </script>
 {% endblock %}
 
 {% block above_sidebar %}
@@ -37,12 +40,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block sidebar %}
-	<script charset="utf-8" type="text/javascript"
-		src="/site-media/common_scripts/sidebar.js">
-	</script>
-	<script charset="utf-8" type="text/javascript"
-		src="/site-media/word_scripts/word_sidebar.js">
-	</script>
 	<div id="word_list" class="inset"></div>
 	<script charset="utf=8" type="text/javascript">
 		$(document).ready(function () {
@@ -61,5 +58,3 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		{% include "word_widgets/top_documents.html" %}
 	</div>
 {% endblock %}
-
-

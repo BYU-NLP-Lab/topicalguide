@@ -75,9 +75,7 @@ def index(request, dataset, analysis, plot):
     context['update_function'] = plot_types[plot][0].update_function
 
     context['curplot'] = plot
-
-    chart_address = '/site-media/ajax-loader.gif'
-    context['chart_address'] = chart_address
+    
     context['plot_form'] = plot_form
 
     return render_to_response('plot.html', context)
