@@ -24,27 +24,25 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
 {% block scripts %}
+    {{block.super}}
     <script charset="utf-8" type="text/javascript">
-    $.fn.attr_vars = function () {};
-    $.fn.attr_vars.curr_favorite = "{{ curr_favorite.id }}";
-    $.fn.attr_vars.dataset = "{{ dataset }}";
-    $.fn.attr_vars.analysis = "{{ analysis }}";
+	    $.fn.attr_vars = function () {};
+	    $.fn.attr_vars.curr_favorite = "{{ curr_favorite.id }}";
+	    $.fn.attr_vars.dataset = "{{ dataset }}";
+	    $.fn.attr_vars.analysis = "{{ analysis }}";
     </script>
     <script charset="utf-8" type="text/javascript">
-    function recall_favorite(){
-        var link = "/feeds/recall_favorite/id/{{ curr_favorite.id }}"
-        window.location = link
-    }
+	    function recall_favorite(){
+	        var link = "/feeds/recall_favorite/id/{{ curr_favorite.id }}"
+	        window.location = link
+	    }
+    </script>
+    <script charset="utf-8" type="text/javascript"
+        src="/site-media/scripts/favorites/sidebar.js">
     </script>
 {% endblock %}
 
 {% block sidebar %}
-    <script charset="utf-8" type="text/javascript"
-        src="/site-media/common_scripts/sidebar.js">
-    </script>
-    <script charset="utf-8" type="text/javascript"
-        src="/site-media/favorite_scripts/sidebar.js">
-    </script>
     <div id="favorites_list" class="inset"></div>
     <script charset="utf=8" type="text/javascript">
         $(document).ready(function () {
