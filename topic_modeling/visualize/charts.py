@@ -153,39 +153,49 @@ class TopicAttributePlotForm(forms.Form):
 
     def __init__(self, dataset, analysis, *args, **kwargs):
         super(TopicAttributePlotForm, self).__init__(*args, **kwargs)
-
+        
+        #The list of topics
         topics = analysis.topic_set.all()
         self.fields['topics'] = forms.ModelMultipleChoiceField(topics,
-                initial=[topics[0]])
+                initial=topics[0:3])
         self.fields['topics'].widget.attrs['onchange'] = \
                 'update_topic_attribute_plot()'
-
+        self.fields['topics'].widget.attrs['class'] = 'under-label'
+        
+        #Available attributes
         attributes = dataset.attribute_set.all()
         self.fields['attribute'] = forms.ModelChoiceField(attributes,
-                initial=attributes[0])
+                initial=attributes[0], widget=forms.Select())
         self.fields['attribute'].widget.attrs['onchange'] = \
                 'update_attribute_values()'
-
+        self.fields['attribute'].widget.attrs['class'] = 'under-label'
+        
+        #Frequency checkbox
         self.fields['by_frequency'] = forms.BooleanField(required=False)
         self.fields['by_frequency'].widget.attrs['onchange'] = \
                 'update_topic_attribute_plot()'
-
+        self.fields['by_frequency'].widget.attrs['class'] = 'beside-label'
+        
+        #Histogram checkbox
         self.fields['histogram'] = forms.BooleanField(required=False)
         self.fields['histogram'].widget.attrs['onchange'] = \
                 'update_topic_attribute_plot()'
-
+        self.fields['histogram'].widget.attrs['class'] = 'beside-label'
+        
+        #List of values the current attribute can take
         if attributes.count() != 0:
             attribute = attributes[0]
             values = attribute.value_set.all()
             self.fields['values'] = forms.ModelMultipleChoiceField(values,
-                    initial=[values[0]])
+                    initial=values)
             self.fields['values'].widget.attrs['onchange'] = \
                     'update_topic_attribute_plot()'
-
+            self.fields['values'].widget.attrs['class'] = 'under-label hideable'
+        
+        #The Select All button
         button = Button(onClick='highlight_all_topic_attribute_values(1)',
                         value='Select All')
-        self.fields['select-all'] = forms.Field(label='',
-                                                widget=button)
+        self.fields['select-all'] = forms.Field(label='', widget=button)
 
 class TopicAttributeChart(object):
     """ A chart that plots nominally-valued attributes against topics"""

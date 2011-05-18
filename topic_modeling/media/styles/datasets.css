@@ -1,3 +1,7 @@
+div#analysis-container {
+	margin-top: 10px;
+}
+
 ul.analyses {
     /*float: left;*/
     list-style: none;

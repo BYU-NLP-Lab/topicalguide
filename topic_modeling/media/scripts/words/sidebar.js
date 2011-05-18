@@ -26,7 +26,7 @@ function redraw_words(word_list, page, num_pages) {
     var curword = $.fn.word_vars.curword;
     var new_html = render_nav_arrows(page, num_pages, 'word');
     
-    new_html += '<ul class="list centered" id="word_list_body">';
+    new_html += '<ul class="list" id="word_list_body">';
     for (var i = 0; i < word_list.length; i++) {
         new_html += '<li';
         if (word_list[i].type == curword) {

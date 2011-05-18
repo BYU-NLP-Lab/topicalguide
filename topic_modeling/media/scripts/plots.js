@@ -91,3 +91,46 @@ function update_topic_metric_plot(dataset, analysis) {
     // image to point to the correct one
     $("img#plot_image").attr("src", url_base);
 }
+
+//From http://www.stainlessvision.com/collapsible-box-jquery
+function boxToggle(box) {
+	// Get the first and highest heading (prioritising highest over first)
+	var firstHeading = box.find("label")[0];
+	var firstHeadingJq = $(firstHeading);
+	
+	// Select the heading's ancestors
+	var headingAncestors = firstHeadingJq.parents();
+	// Add in the heading
+	var headingAncestors  = headingAncestors.add(firstHeading);
+	// Restrict the ancestors to the box
+	headingAncestors = headingAncestors.not(box.parents());
+	headingAncestors = headingAncestors.not(box);
+	// Get the siblings of ancestors (uncle, great uncle, ...)
+	var boxContents = headingAncestors.siblings();
+
+	// *** TOGGLE FUNCTIONS ***
+	var hideBox = function() {
+		firstHeadingJq.one("click", function(){
+			showBox();
+			return false;
+		})
+		//toggleLink.text("Show")
+		firstHeadingJq.attr("class", "box-toggle-show");
+
+		boxContents.attr("style", "display:none");
+	}
+
+	var showBox = function() {
+		firstHeadingJq.one("click", function(){
+			hideBox();
+			return false;
+		})
+		//toggleLink.text("Hide");
+		firstHeadingJq.attr("class", "box-toggle-hide");
+
+		boxContents.removeAttr("style");
+	}
+
+	// Initiate
+	hideBox();
+}

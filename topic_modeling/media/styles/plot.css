@@ -1,0 +1,17 @@
+#accordion div.ui-accordion-content li {
+	margin-bottom: 5px;
+}
+
+#accordion div.ui-accordion-content li label.under-label {
+	display: block;
+	clear: both;
+}
+
+
+#accordion div.ui-accordion-content li select {
+	width: 100%;
+}
+
+.ui-tabs .ui-tabs-panel {
+	padding: .8em .2em 0 .2em;
+}

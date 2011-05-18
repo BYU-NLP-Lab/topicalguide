@@ -26,7 +26,7 @@ function redraw_topics(topics_list, page, num_pages) {
 	var curtopic = $.fn.topic_vars.curtopic_number;
 	
 	var new_html = render_nav_arrows(page, num_pages, 'topic');
-	new_html += '<ul class="list centered" id="topic_list_body">';
+	new_html += '<ul class="list" id="topic_list_body">';
 	for (var i = 0; i < topics_list.length; i++) {
 		new_html += '<li';
 		if (topics_list[i].number == curtopic) {

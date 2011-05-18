@@ -25,32 +25,29 @@
 function render_nav_arrows(current_page, num_pages, list_name) {
     var new_html = '<div id="' + list_name + '_list_nav" class="list_nav">';
     
-    new_html += '<span id="' + list_name + '_list_nav_back_arrows" class="list_nav_back_arrows">&nbsp;'
+    new_html += '<span class="back_arrows">'
     if (current_page != 1) {
-        new_html += '<span id="' + list_name + '_list_nav_first_page_arrow" class="link nav_arrow" onclick="get_' + list_name + '_page(1)">'
-        new_html += '&lt;&lt;';
-        new_html += '</span>';
-        new_html += '<span id="' + list_name + '_list_nav_prev_page_arrow" class="link nav_arrow" onclick="get_' + list_name + '_page(';
+        new_html += '<a class="ui-icon ui-icon-seek-first" onclick="get_' + list_name + '_page(1)">'
+        new_html += '</a>';
+        new_html += '<a class="ui-icon ui-icon-seek-prev" onclick="get_' + list_name + '_page(';
         new_html += (current_page-1) + ')">';
-        new_html += '&lt;';
-        new_html += '</span>';
+        new_html += '</a>';
     }
     new_html += '</span>';
-    new_html += '<span id="' + list_name + '_list_nav_header" class="centered">';
+    new_html += '<span class="centered header">';
     new_html += 'Page ';
     new_html += current_page + ' of ' + num_pages;
     new_html += '</span>';
     
-    new_html += '<span id="' + list_name + '_list_nav_fwd_arrows" class="list_nav_fwd_arrows">&nbsp;'
+    new_html += '<span class="fwd_arrows">'
     if (current_page != num_pages) {
-        new_html += '<span id="' + list_name + '_list_nav_next_page_arrow" class="link nav_arrow" onclick="get_' + list_name + '_page(';
-        new_html += (current_page+1)+')">';
-        new_html += '&gt;';
-        new_html += '</span>';
-        new_html += '<span id="' + list_name + '_list_nav_last_page_arrow" class="link nav_arrow" onclick="get_' + list_name + '_page(';
+        
+        new_html += '<a class="ui-icon ui-icon-seek-end" onclick="get_' + list_name + '_page(';
         new_html += num_pages+')">';
-        new_html += '&gt;&gt;';
-        new_html += '</span>';
+        new_html += '</a>';
+        new_html += '<a class="ui-icon ui-icon-seek-next" onclick="get_' + list_name + '_page(';
+        new_html += (current_page+1)+')">';
+        new_html += '</a>';
     }
     new_html += '</span>';
     

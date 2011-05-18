@@ -31,37 +31,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block scripts %}
     {{block.super}}
     <script type="text/javascript" src="/site-media/scripts/datasets.js"></script>
-    {% comment %}
-	<script charset="utf=8" type="text/javascript">
-		function update_plots() {
-			{% for dataset,analyses in plot_params.items %}
-			    {% for analysis,params in analyses.items %}
-			        selector = "img#plot_{{dataset}}__{{analysis}}"
-				    //$(selector).attr("src", "/site-media/images/ajax-loader.gif");
-				    var url_base = "/feeds/topic-attribute-plot/";
-				
-				    url_base += 'attributes/'+{{params.0}}+'/';
-				    
-				    var values = {{params.1}};
-				    url_base += "values/" + values[0];
-				    for (var i = 1; i < values.length; i++) {
-				        url_base += "." + values[i];
-				    }
-				    
-				    url_base += "/topics/";
-				    var topics = {{params.2}};
-				    url_base += topics[0];
-				    for (var i = 1; i < topics.length; i++) {
-				        url_base += "." + topics[i];
-				    }
-				    $(selector).attr("src", url_base);
-				{% endfor %}
-			{% endfor %}
-		}
-	</script>
-	{% endcomment %}
 {% endblock %}
-
 
 {% block presentation_area %}
 {% if datasets %}
@@ -80,7 +50,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
                 {% for metricvalue in dataset.datasetmetricvalue_set.all %}
                 <tr>
                     <td>{{metricvalue.metric.name}}</td>
-                    <td>{{metricvalue.metric.value}}</td>
+                    <td>{{metricvalue.value}}</td>
                 </tr>
                 {% endfor %}
             </table>
@@ -88,16 +58,59 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             <div class="ui-state-highlight">No metrics were found for this dataset.</div>
         {% endif %}
         
+        {% if dataset.datasetmetainfovalue_set.all %}
+            <table class="metrics">
+                <tr><th>Field</th><th>Value</th></tr>
+                {% for metainfovalue in dataset.datasetmetainfovalue_set.all %}
+                <tr>
+                    <td>{{metainfovalue.info_type.name}}</td>
+                    <td>{{metainfovalue.value}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <div class="ui-state-highlight">No meta info found for this dataset.</div>
+        {% endif %}
+        
         
         {% if dataset.analysis_set.all %}
-	        <div>
+	        <div id="analysis-container">
 		        Analyses
 		        <ul class="analyses">
 		        {% for analysis,plot_img_url in analyses.items %}
-			        <a href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}">
+			        <a href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}" class="analysis-link">
 			            <li class="ui-widget{% ifequal analysis curanalysis %} current_analysis{% endifequal %}">
 			            	<div class="ui-widget-content ui-corner-all	">
 				                <div class="ui-widget-header ui-corner-all">{{analysis.readable_name}}</div>
+				                
+				                {% if analysis.analysismetricvalue_set.all %}
+						            <table class="metrics">
+						                <tr><th>Metric</th><th>Value</th></tr>
+						                {% for metricvalue in analysis.analysismetricvalue_set.all %}
+						                <tr>
+						                    <td>{{metricvalue.metric.name}}</td>
+						                    <td>{{metricvalue.value}}</td>
+						                </tr>
+						                {% endfor %}
+						            </table>
+						        {% else %}
+						            <div class="ui-state-highlight">No metrics were found for this analysis.</div>
+						        {% endif %}
+						        
+						        {% if analysis.analysismetainfovalue_set.all %}
+						            <table class="metrics">
+						                <tr><th>Field</th><th>Value</th></tr>
+						                {% for metainfovalue in analysis.analysismetainfovalue_set.all %}
+						                <tr>
+						                    <td>{{metainfovalue.info_type.name}}</td>
+						                    <td>{{metainfovalue.value}}</td>
+						                </tr>
+						                {% endfor %}
+						            </table>
+						        {% else %}
+						            <div class="ui-state-highlight">No meta info found for this analysis.</div>
+						        {% endif %}
+				                
 				                <div class="description">{{analysis.description|linebreaks}}</div>
 				                <img id="plot_{{dataset.name}}__{{analysis.name}}" src="{{plot_img_url}}"/>
 			                </div>
@@ -116,6 +129,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     {#update_plots();#}
     $( "#accordion" ).accordion();
     image_preview();
+    $(".analysis-link").click(function(){
+        $("html").hide("fade", {}, 250);
+    });
 </script>
 {% else %}
     <div class="ui-state-highlight">No datasets yet. Try importing one using backend.py.</div>
