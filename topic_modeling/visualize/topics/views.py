@@ -43,8 +43,8 @@ from topic_modeling.visualize.common import WordSummary
 from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
-from topic_modeling.visualize.models import ExtraTopicInformation
-from topic_modeling.visualize.models import ExtraTopicInformationValue
+from topic_modeling.visualize.models import TopicMetaInfo
+from topic_modeling.visualize.models import TopicMetaInfoValue
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word
 from topic_modeling.visualize.models import TopicName
@@ -300,10 +300,12 @@ def ngram_cloud(topic, context):
 def turbo_topics_cloud(analysis, topic, context):
     clouds = []
     try:
-        turbo_topics = analysis.extratopicinformation_set.get(
-                name="Turbo Topics Cloud")
-        value = turbo_topics.extratopicinformationvalue_set.get(topic=topic)
-        text = value.value
+        turbo_topics = TopicMetaInfo.objects.get(name="Turbo Topics Cloud")
+        value = turbo_topics.topicmetainfovalue_set.get(topic=topic)
+#        turbo_topics = analysis.extratopicinformation_set.get(
+#                name="Turbo Topics Cloud")
+#        value = turbo_topics.extratopicinformationvalue_set.get(topic=topic)
+        text = value.value()
         words = []
         total = 0
         for line in text.split('\n')[:100]:
@@ -321,13 +323,12 @@ def turbo_topics_cloud(analysis, topic, context):
         # Name must not contain spaces!
         clouds.append(Cloud('Turbo_Topics', get_word_cloud(summaries,
             url=False)))
-    except (ExtraTopicInformation.DoesNotExist,
-            ExtraTopicInformationValue.DoesNotExist):
+    except (TopicMetaInfo.DoesNotExist,
+            TopicMetaInfoValue.DoesNotExist):
         pass
     try:
-        turbo_topics = analysis.extratopicinformation_set.get(
-                name="Turbo Topics N-Grams")
-        value = turbo_topics.extratopicinformationvalue_set.get(topic=topic)
+        turbo_topics = TopicMetaInfo.objects.get(name="Turbo Topics N-Grams")
+        value = turbo_topics.topicmetainfovalue_set.get(topic=topic)
         text = value.value
         first_ten = text.split('\n')[:10]
         rest = text.split('\n')[10:]
@@ -337,8 +338,8 @@ def turbo_topics_cloud(analysis, topic, context):
         #context['turbo_topics_less'] = '\n'.join(first_ten)
         #context['turbo_topics_more'] = '\n'.join(rest)
         #context['extra_widgets'].append('topic_widgets/turbo_topics.html')
-    except (ExtraTopicInformation.DoesNotExist,
-            ExtraTopicInformationValue.DoesNotExist):
+    except (TopicMetaInfo.DoesNotExist,
+            TopicMetaInfoValue.DoesNotExist):
         pass
     return clouds
 

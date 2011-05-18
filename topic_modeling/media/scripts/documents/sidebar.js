@@ -27,7 +27,7 @@ function redraw_documents(documents_list, page, num_pages) {
 	
 	var new_html = render_nav_arrows(page, num_pages, 'document');
 	
-	new_html += '<ul class="list centered" id="document_list_body">';
+	new_html += '<ul class="list" id="document_list_body">';
 	for (var i = 0; i < documents_list.length; i++) {
 		new_html += '<li';
 		if (documents_list[i].id == curdoc) {

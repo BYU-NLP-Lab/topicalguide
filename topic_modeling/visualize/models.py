@@ -33,7 +33,7 @@ from topic_modeling.anyjson import deserialize
 
 class Describable(models.Model):
     '''A unique identifier. For URLs.'''
-    name = models.CharField(max_length=128, unique=True, db_index=True)
+    name = models.SlugField(unique=True)
     
     '''A short, human-readable name'''
     readable_name = models.TextField(max_length=128)
@@ -406,19 +406,6 @@ class WordMetricValue(MetricValue):
 
 
 
-
-
-
-
-
-class ExtraTopicInformation(models.Model):
-    name = models.CharField(max_length=128)
-    analysis = models.ForeignKey(Analysis)
-
-
-
-
-
 # Links between the basic components of the analysis and with the raw data
 ##########################################################################
 
@@ -447,10 +434,66 @@ class AttributeValueTopic(models.Model):
     topic = models.ForeignKey(Topic)
     count = models.IntegerField(default=0)
 
-class ExtraTopicInformationValue(models.Model):
-    topic = models.ForeignKey(Topic)
-    type = models.ForeignKey(ExtraTopicInformation)
-    value = models.TextField()
+# Metadata
+class MetaInfo(models.Model):
+    name = models.CharField(max_length=128, db_index=True)
+    
+    class Meta:
+        abstract = True
 
+class MetaInfoValue(models.Model):
+    bool_value = models.NullBooleanField(null=True)
+    float_value = models.FloatField(null=True)
+    int_value = models.IntegerField(null=True)
+    text_value = models.TextField(null=True)
+    
+    class Meta:
+        abstract = True
+    
+    def value(self):
+        if hasattr(self, 'float_value'):
+            return self.float_value
+        if hasattr(self, 'text_value'):
+            return self.text_value
+        if hasattr(self, 'int_value'):
+            return self.int_value
+        if hasattr(self, 'bool_value'):
+            return self.bool_value
+        return None
+
+class DatasetMetaInfo(MetaInfo):
+    pass
+
+class DatasetMetaInfoValue(MetaInfoValue):
+    info_type = models.ForeignKey(DatasetMetaInfo)
+    dataset = models.ForeignKey(Dataset)
+
+class AnalysisMetaInfo(MetaInfo):
+    pass
+
+class AnalysisMetaInfoValue(MetaInfoValue):
+    info_type = models.ForeignKey(AnalysisMetaInfo)
+    analysis = models.ForeignKey(Analysis)
+
+class TopicMetaInfo(MetaInfo):
+    pass
+
+class TopicMetaInfoValue(MetaInfoValue):
+    info_type = models.ForeignKey(TopicMetaInfo)
+    topic = models.ForeignKey(Topic)
+
+class DocumentMetaInfo(MetaInfo):
+    pass
+
+class DocumentMetaInfoValue(MetaInfoValue):
+    info_type = models.ForeignKey(DocumentMetaInfo)
+    document = models.ForeignKey(Document)
+
+class WordMetaInfo(MetaInfo):
+    pass
+
+class WordMetaInfoValue(MetaInfoValue):
+    info_type = models.ForeignKey(WordMetaInfo)
+    word = models.ForeignKey(Word)
 
 # vim: et sw=4 sts=4

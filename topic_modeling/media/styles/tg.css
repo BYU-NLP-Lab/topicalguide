@@ -30,6 +30,7 @@ body {
 
 #page {
 	width: 100%;
+	height: 100%;
 }
 
 #header {
@@ -39,7 +40,8 @@ body {
 }
 
 #footer {
-	padding-left: 40px;
+	position: absolute;
+	bottom: 0px;
 	width: 100%;
 	border-top: 1px solid gray;
 	margin-top: 10px;
@@ -48,7 +50,7 @@ body {
 }
 
 #header, #footer {
-	background-color:#99ccff;
+	background-color: hsla(210,85%,65%,1);
 }
 
 ul.nav_menu {
@@ -176,7 +178,6 @@ ul.nav_menu li.breadcrumb > *:hover:after { border-left-color: hsla(210,85%,25%,
 	margin-left: 15px;
 	float: left;
 	width: 70%;
-	-moz-border-radius:5px;
 }
 
 /***** Datasets Page *****/
@@ -225,19 +226,20 @@ ul.analyses li {
 	margin-bottom: 7px;
 }
 
-.list_nav_back_arrows {
+.list_nav span.back_arrows a {
 	float: left;
-	width: 100px;
-	text-align: left;
 }
 
-.list_nav_fwd_arrows {
+.list_nav span.fwd_arrows a {
 	float: right;
-	width: 100px;
-	text-align: right;
 }
 
-.nav_arrow {
+.list_nav span.back_arrows a:hover,
+.list_nav span.fwd_arrows a:hover {
+    background-color: #e3f1fa;
+}
+
+.list_nav span a.nav_arrow {
 	padding: 2px;
 }
 
@@ -401,7 +403,7 @@ td.align-top {
 .highlight {
 	-moz-border-radius:5px;
 	background-color:#FFCC00;
-	text-align:center;
+	/*text-align:center;*/
 }
 
 .list {

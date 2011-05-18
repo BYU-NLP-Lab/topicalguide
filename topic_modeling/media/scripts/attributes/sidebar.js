@@ -26,7 +26,7 @@ function redraw_values(values_list, page, num_pages) {
     var curvalue = $.fn.attr_vars.curvalue;
     var new_html = render_nav_arrows(page, num_pages, 'attribute');
     
-    new_html += '<ul class="list centered" id="attribute_list_body">';
+    new_html += '<ul class="list" id="attribute_list_body">';
     for (var i = 0; i < values_list.length; i++) {
         new_html += '<li';
         if (values_list[i].value == curvalue) {

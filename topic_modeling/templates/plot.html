@@ -23,6 +23,11 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
+{% block stylesheets %}
+    {{block.super}}
+    <link rel="stylesheet" href="/site-media/styles/plot.css" type="text/css" />
+{% endblock %}
+
 {% block scripts %}
     {{block.super}}
 	<script charset="utf=8" type="text/javascript" src="/site-media/scripts/plots.js"></script>
@@ -34,58 +39,46 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block sidebar %}
-	<div id="plots_list" class="inset">
-		<ul class="list centered">
-			{% for p in plots %}
-			<li class="list{% ifequal p plot %} highlight{% endifequal %}">
-				<a href="{{ plots_url }}/{{ p }}">{{ p }}</a>
-			</li>
-			{% endfor %}
-		</ul>
+	<div id="accordion">
+	   {% for plot_name,plot_form in plot_forms %}
+	       <div>{{plot_name}}</div>
+	       <div>{{plot_form.as_ul}}</div>
+	   {% endfor %}
 	</div>
 {% endblock %}
 
 {% block presentation_area %}
-<table>
-	<tr>
-		<td class="align-top">Specifications
-			<table class="inset">
-				<tr>
-					<td>
-						  {{ plot_form }}
-					</td>
-				</tr>
-			</table>
-		</td>
-		<td class="align-top">Plot
-			<table class="inset">
-				<tr>
-					<td><img name="plot_image" id="plot_image" src="{{ chart_address }}"/></td>
-				</tr>
-			</table>
-			{%comment%} These currently don't work:
-			Topics
-			<table class="inset">
-				<tr>
-				{% for link, name in topic_links %}
-					<tr><td><a href="{{ link }}">{{ name }}</a></td></tr>
-				{% endfor %}
-				</tr>
-			</table>
-			Attribute Values
-			<table class="inset">
-				<tr>
-				{% for link, name in attr_links %}
-					<tr><td><a href="{{ link }}">{{ name }}</a></td></tr>
-				{% endfor %}
-				</tr>
-			</table>			
-			{% endcomment %}
-		</td>
-	</tr>
-</table>
+<div class="ui-widget">
+    <div class="ui-widget-header ui-corner-all">Title</div>
+    <div class="ui-widget-content ui-corner-all">
+        <img name="plot_image" id="plot_image" src="{{ chart_address }}"/>
+    </div>
+</div>
 
 <script charset="utf=8" type="text/javascript">
+    $("#accordion").accordion({ collapsible: true })
+    
+    {% comment %}
+        Grab the class of the form controls and apply it to the labels. This
+        allows us to style things as we please. The class of the form control
+        elements is set within the form classes (e.g. TopicAttributePlotForm)
+    {% endcomment %}
+    $("#accordion div.ui-accordion-content li").each(function(){
+    	var li = $(this);
+    	li.addClass("ui-widget-content");
+    	var fields = li.find("select,input");
+    	
+    	fields.each(function(){
+	         var me = $(this)
+	         
+	         me.parent().children("label").each(function(){
+	             $(this).addClass(me.attr('class'));
+	         });
+         });
+    	
+    	if(fields.filter(".hideable").size() > 0) boxToggle(li);
+    });
+    
     {# Weird method call using name of function from a context variable #}
 	{{update_function}}("{{dataset}}","{{analysis}}");
 </script>

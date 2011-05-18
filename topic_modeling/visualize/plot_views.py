@@ -50,21 +50,23 @@ def index(request, dataset, analysis, plot):
     context['breadcrumb'].analysis(analysis)
     context['breadcrumb'].plot()
 
-    attributes = Attribute.objects.filter(dataset=dataset)
-    plot_form = plot_types[plot][0].form(dataset, analysis)
-    topics = [analysis.topic_set.all()[0]]
-    attribute = attributes[0]
-    values = attributes[0].value_set.all()
-
-    topic_links = [context['topics_url'] + '/%s' % str(topic.number)
-                   for topic in topics]
-    topic_names = [topic.name for topic in topics]
-    context['topic_links'] = zip(topic_links, topic_names)
-
-    attr_links = [context['attributes_url'] + '/%s/values/%s' % \
-                  (str(attribute), str(value)) for value in values]
-    attr_names = [value.value for value in values]
-    context['attr_links'] = zip(attr_links, attr_names)
+    #Dan's broken plots:
+    #--Attribute Values plot
+#    attributes = Attribute.objects.filter(dataset=dataset)
+#    
+#    topics = [analysis.topic_set.all()[0]]
+#    attribute = attributes[0]
+#    values = attributes[0].value_set.all()
+    #--Topics plot
+#    topic_links = [context['topics_url'] + '/%s' % str(topic.number)
+#                   for topic in topics]
+#    topic_names = [topic.name for topic in topics]
+#    context['topic_links'] = zip(topic_links, topic_names)
+#
+#    attr_links = [context['attributes_url'] + '/%s/values/%s' % \
+#                  (str(attribute), str(value)) for value in values]
+#    attr_names = [value.value for value in values]
+#    context['attr_links'] = zip(attr_links, attr_names)
 
 
 
@@ -76,7 +78,10 @@ def index(request, dataset, analysis, plot):
 
     context['curplot'] = plot
     
-    context['plot_form'] = plot_form
+    plot_forms = list()
+    for plot_name,plot_type in sorted(plot_types.items(), key=lambda x: x[1][1]):
+        plot_forms += [(plot_name, plot_type[0].form(dataset, analysis))]
+    context['plot_forms'] = plot_forms
 
     return render_to_response('plot.html', context)
 
