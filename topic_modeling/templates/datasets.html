@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "core/frame.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -23,6 +23,8 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
+{% block header %}{% endblock %}
+
 {% block stylesheets %}
     {{block.super}}
     <link rel="stylesheet" href="/site-media/styles/datasets.css" type="text/css" />
@@ -33,7 +35,12 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     <script type="text/javascript" src="/site-media/scripts/datasets.js"></script>
 {% endblock %}
 
-{% block presentation_area %}
+{% block body %}
+<header>
+	<h1>The Topical Guide</h1>
+	<h2>Available Datasets</h2>
+</header>
+
 {% if datasets %}
 <div id="accordion">
     {% for dataset,analyses in plot_img_urls.items %}
@@ -133,5 +140,5 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% else %}
     <div class="ui-state-highlight">No datasets yet. Try importing one using backend.py.</div>
 {% endif %}
-{% endblock %}
+{% endblock %}{# end block body #}
 

@@ -1,0 +1,117 @@
+{% extends "core/frame.html" %}
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+
+{% block stylesheets %}
+    {{block.super}}
+    <link rel="stylesheet" href="/site-media/styles/main_application.css" type="text/css" />
+{% endblock %}
+
+{% block scripts %}
+    {{block.super}}
+    <script type="text/javascript">
+        $("a.new-window[href]").live(
+            "click",
+            function(event)
+            {
+                window.open($(this).attr("href"));
+                event.preventDefault();
+            }
+        );
+    </script>
+    <script type="text/javascript">
+        $.fn.dataset = "{{ dataset }}";
+        $.fn.analysis = "{{ analysis }}";
+        $.fn.dataset_url = "{{ dataset_url }}";
+        $.fn.analysis_url = "{{ analysis_url }}";
+        $.fn.attributes_url = "{{ attributes_url }}";
+        $.fn.documents_url = "{{ documents_url }}";
+        $.fn.plots_url = "{{ plots_url }}";
+        $.fn.topics_url = "{{ topics_url }}";
+        $.fn.words_url = "{{ words_url }}";
+    </script>
+    <script type="text/javascript">
+        function add_favorite(){
+            {% for item in breadcrumb %}
+                {% if forloop.last %}
+                    var url = "{{ item.url }}";
+                {% endif %}
+            {% endfor %}
+            var link = "/feeds/add_favorite/tab/{{tab}}?url="+encodeURIComponent(url);
+            $.get(link);
+        }
+    </script>
+    <script type="text/javascript" src="/site-media/scripts/sidebar.js"></script>
+{% endblock %}
+
+{% block body %}
+<div id="main">
+	<div id="sidebar" class="ui-tabs ui-widget ui-widget-content ui-corner-all">
+	    <ul id="tabs" class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all">
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "topics_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/topics/">Topics</a>
+	        </li>
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "documents_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/documents/">Documents</a>
+	        </li>
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "words_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/words/">Words</a>
+	        </li>
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "attributes_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/attributes/">Attributes</a>
+	        </li>
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "plots_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/plots/">Plots</a>
+	        </li>
+	    </ul>
+	    <script type="text/javascript">
+		    $("#tabs li").mouseenter(function(){
+		    	$(this).addClass("ui-state-hover");
+		    });
+		    $("#tabs li").mouseleave(function(){
+	            $(this).removeClass("ui-state-hover");
+	        });
+	    </script>
+	    <div id="tab_content_area" class="ui-tabs-panel ui-widget-content ui-corner-bottom">
+	        <div id="sidebar_tab_panel_header">
+	            {% block above_sidebar%}
+	            {% endblock %}
+	        </div>
+	        <div id="sidebar_tab_panel_body">
+	            {% block sidebar %}
+	                Options!
+	            {% endblock %}
+	        </div>
+	        <div id="sidebar_tab_panel_footer">
+	            {% block sidebar_tab_panel_footer%}
+	            {% endblock %}
+	        </div>
+	    </div>
+	</div>{# end div sidebar #}
+
+	<div id="presentation-area">
+	    {% block presentation_area %}{% endblock %}
+	</div>
+</div>{# end div main #}
+{% endblock %}

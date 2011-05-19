@@ -1,3 +1,25 @@
+@font-face {
+  font-family: 'Caudex';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Caudex'), url('/site-media/fonts/caudex/Caudex-Regular.woff') format('woff');
+}
+
+h1 {
+	font-style: normal;
+	font-size: 50px;
+	font-family: 'Caudex', arial, serif;
+	font-weight: normal;
+	/*font-family: 'Quattrocento Sans', arial, serif;*/
+	/*font-family: 'Goudy Bookletter 1911', arial, serif;*/
+	/*font: 100px Helvetica, Arial, Sans-Serif;*/
+	/*letter-spacing: -5px;*/
+    text-align: center;
+    /*color: #A0A0A0;*/
+    /*text-shadow: 0px 2px 3px #2A2A2A;*/
+    margin: .05em 0em .6em 0em;
+}
+
 div#analysis-container {
 	margin-top: 10px;
 }
@@ -5,16 +27,27 @@ div#analysis-container {
 ul.analyses {
     /*float: left;*/
     list-style: none;
-    margin: 0; padding: 10px;
+    margin: 0;
+    padding: 10px;
     /*width: 360px;*/
+    list-style-type: none;
+    display: table-row;
+    height: 140px;
+    /*border: 1px solid;*/
+    padding: 4px;
 }
 
 ul.analyses li {
-    margin: 0; padding: 5px;
+    margin: 0;
+    padding: 5px;
     /*float: left;*/
     position: relative;  /* Set the absolute positioning base coordinate */
     /*width: 160px;*/
     /*height: 160px;*/
+    margin: 4px;
+    /*border: 1px dashed;*/
+    float: left;
+    display: table-cell;
 }
 
 ul.analyses li img {
