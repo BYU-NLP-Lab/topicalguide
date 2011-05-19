@@ -52,9 +52,9 @@ urlpatterns = patterns('',
 # Dataset View
     # Blank URL takes you to datasets view
     (r'^$',
-        'topic_modeling.visualize.dataset_views.index'),
+        'topic_modeling.visualize.dataset_views.render'),
     (r'^' + dataset + '$',
-        'topic_modeling.visualize.dataset_views.index'),
+        'topic_modeling.visualize.dataset_views.render'),
 
 # Analysis View
 #    (r'^' + dataset + '/' + analysis + '$',
