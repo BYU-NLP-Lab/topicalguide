@@ -38,7 +38,9 @@ def index(request, dataset, analysis, plot):
     plots.sort(key=lambda x: plot_types[x][1])
     if not plot:
         plot = plots[0]
+    
     context = root_context(dataset, analysis)
+    context['view_description'] = "Plots"
     context['highlight'] = 'plots_tab'
     context['tab'] = 'plot'
     context['plot'] = plot
@@ -48,7 +50,6 @@ def index(request, dataset, analysis, plot):
     context['breadcrumb'] = BreadCrumb()
     context['breadcrumb'].dataset(dataset)
     context['breadcrumb'].analysis(analysis)
-    context['breadcrumb'].plot()
 
     #Dan's broken plots:
     #--Attribute Values plot

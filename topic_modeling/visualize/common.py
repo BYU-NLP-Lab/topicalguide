@@ -27,7 +27,8 @@ from django import forms
 from django.core.paginator import Paginator
 from django.shortcuts import render_to_response
 from django.template.context import Context
-from topic_modeling.visualize.models import Word
+from topic_modeling.visualize.models import Word, Dataset, Analysis, Topic,\
+    Document, Attribute, Value
 
 def root_context(dataset, analysis):
     context = Context()
@@ -89,30 +90,63 @@ class BreadCrumb(object):
     def __iter__(self):
         return self.items.__iter__()
     
+    def item(self, obj):
+        if isinstance(obj, basestring):
+            self.text(obj)
+        if isinstance(obj, Dataset):
+            self.dataset(obj)
+        elif isinstance(obj, Analysis):
+            self.analysis(obj)
+        elif isinstance(obj, Topic):
+            self.topic(obj)
+        elif isinstance(obj, Word):
+            self.word(obj)
+        elif isinstance(obj, Document):
+            self.document(obj)
+        elif isinstance(obj, Attribute):
+            self.attribute(obj)
+        elif isinstance(obj, Value):
+            self.value(obj)
+        else:
+            raise("The breadcrumb doesn't know how to handle that type of object")
+        return self
+    
     def add(self, text, url):
         self.items.append(BreadCrumbItem(text, url))
-
+        return self
+    
+    def text(self, text):
+        self.items.append(BreadCrumbItem(text, None))
+    
     def dataset(self, dataset):
-        self._add_item('datasets', 'Dataset', dataset.name, dataset.name)
+        self.add(dataset.readable_name, '/datasets/'+dataset.name)
+        return self
 
     def analysis(self, analysis):
-        self._add_item('analyses', 'Analysis', analysis.name, analysis.name)
+        self.add(analysis.name, '/datasets/{0}/analyses/{1}'.format(analysis.dataset.name, analysis.name))
+        return self
 
     def topic(self, topic_number, topic_name):
         self._add_item('topics', 'Topic', topic_number, topic_name)
+        return self
 
     def word(self, word):
         self._add_item('words', 'Word', word.type, word.type)
+        return self
 
     def document(self, document):
+        self.add(document.filename, '/datasets/{0}/analyses/{1}/documents/{2}'.format(document.dataset.name, ))
         self._add_item('documents', 'Document', document.id, document.id)
+        return self
 
     def attribute(self, attribute):
         self._add_item('attributes', 'Attribute', attribute.name,
                 attribute.name)
+        return self
 
     def value(self, value):
-        self._add_item('values', 'Value', value.value, value.value)
+        self._add_item('values', value.value, value.value)
+        return self
 
     def plot(self):
         # This one is different because plots currently just use posts, not
@@ -120,17 +154,36 @@ class BreadCrumb(object):
         self.currenturl += '/plots'
         text = 'Plot'
         self.items.append(BreadCrumbItem(text, self.currenturl))
+        return self
 
-    def _add_item(self, url_word, text_word, item_url, item_text):
-        self.currenturl += '/%s/%s' % (url_word, item_url)
-        text = '%s: %s' % (text_word, item_text)
+    def _add_item(self, type, id, text, alt_text):
+        self.currenturl += '/%s/%s' % (type, id)
         self.items.append(BreadCrumbItem(text, self.currenturl))
-
+    
+    def to_ul(self):
+        html = ''
+        
+        for item in self.items[:-1]:
+            html += item.to_li()
+            html += '\n'
+        
+        html += self.items[-1:][0].to_li(last=True)
+        
+        return html
 
 class BreadCrumbItem(object):
     def __init__(self, text, url):
         self.text = text
         self.url = url
+    
+    def to_li(self, last=False):
+        html = '<li class="breadcrumb">'
+        if last:
+            html += '<span>{0}</span>'.format(self.text)
+        else:
+            html += '<a href="{0}">{1}</a></li>'.format(self.url, self.text)
+        html += '</li>'
+        return html
 
 
 # Other classes

@@ -42,6 +42,7 @@ from topic_modeling.visualize.models import Topic
 
 def base_context(request, dataset, analysis, document):
     context = root_context(dataset, analysis)
+    
 
     context['highlight'] = 'documents_tab'
     context['tab'] = 'document'
@@ -71,10 +72,9 @@ def base_context(request, dataset, analysis, document):
     context['curdocument'] = document
     context['document_title'] = document.filename
 
-    context['breadcrumb'] = BreadCrumb()
-    context['breadcrumb'].dataset(dataset)
-    context['breadcrumb'].analysis(analysis)
-    context['breadcrumb'].document(context['curdocument'])
+    context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(document)
+    
+    context['view_description'] = document.filename
 
     return context, analysis, document
 
