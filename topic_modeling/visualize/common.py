@@ -93,12 +93,12 @@ class BreadCrumb(object):
     def item(self, obj):
         if isinstance(obj, basestring):
             self.text(obj)
-        if isinstance(obj, Dataset):
+        elif isinstance(obj, Dataset):
             self.dataset(obj)
         elif isinstance(obj, Analysis):
             self.analysis(obj)
-        elif isinstance(obj, Topic):
-            self.topic(obj)
+#        elif isinstance(obj, Topic):
+#            self.topic(obj)
         elif isinstance(obj, Word):
             self.word(obj)
         elif isinstance(obj, Document):
@@ -108,57 +108,58 @@ class BreadCrumb(object):
         elif isinstance(obj, Value):
             self.value(obj)
         else:
-            raise("The breadcrumb doesn't know how to handle that type of object")
-        return self
-    
-    def add(self, text, url):
-        self.items.append(BreadCrumbItem(text, url))
+            raise Exception("The breadcrumb doesn't know how to handle that type of object")
         return self
     
     def text(self, text):
         self.items.append(BreadCrumbItem(text, None))
     
     def dataset(self, dataset):
-        self.add(dataset.readable_name, '/datasets/'+dataset.name)
+        url = '/datasets/'+dataset.name
+        text = dataset.readable_name
+        tooltip = "Dataset '{0}' (id={1})".format(dataset.readable_name, dataset.id)
+        self._add_item(url, text, tooltip)
         return self
 
     def analysis(self, analysis):
-        self.add(analysis.name, '/datasets/{0}/analyses/{1}'.format(analysis.dataset.name, analysis.name))
+        tooltip = "Analysis '{0}' (id={1})".format(analysis.readable_name, analysis.id)
+        self._add_item('/analyses/' + analysis.name, analysis.readable_name, tooltip)
         return self
 
     def topic(self, topic_number, topic_name):
-        self._add_item('topics', 'Topic', topic_number, topic_name)
+        text = "Topic '{0}'".format(topic_name)
+        tooltip = text + " (number={0})".format(topic_number)
+        self._add_item('/topics/' + str(topic_number), text, tooltip)
         return self
 
     def word(self, word):
-        self._add_item('words', 'Word', word.type, word.type)
+        self._add_item('/words/'+word.type, 'Word "'+word.type+'"', 'Word: '+word.type)
         return self
 
     def document(self, document):
-        self.add(document.filename, '/datasets/{0}/analyses/{1}/documents/{2}'.format(document.dataset.name, ))
-        self._add_item('documents', 'Document', document.id, document.id)
+        self._add_item('/documents/' + document.dataset.name, document.filename, 'Document '+document.filename+', id='+ str(document.id))
         return self
 
     def attribute(self, attribute):
-        self._add_item('attributes', 'Attribute', attribute.name,
-                attribute.name)
+        self._add_item('/attributes/'+attribute.name, 'Attribute "'+attribute.name+'"', 'Attribute: '+attribute.name)
         return self
 
     def value(self, value):
-        self._add_item('values', value.value, value.value)
+        self._add_item('/values/'+value.value, value.value, 'Value: '+value.value)
         return self
 
     def plot(self):
-        # This one is different because plots currently just use posts, not
-        # urls, to change
-        self.currenturl += '/plots'
-        text = 'Plot'
-        self.items.append(BreadCrumbItem(text, self.currenturl))
+        self._add_item('/plots', 'Plots', 'Plots')
+#        # This one is different because plots currently just use posts, not
+#        # urls, to change
+#        self.currenturl += '/plots'
+#        text = 'Plot'
+#        self.items.append(BreadCrumbItem(text, self.currenturl))
         return self
 
-    def _add_item(self, type, id, text, alt_text):
-        self.currenturl += '/%s/%s' % (type, id)
-        self.items.append(BreadCrumbItem(text, self.currenturl))
+    def _add_item(self, url_component, text, tooltip):
+        self.currenturl += url_component
+        self.items.append(BreadCrumbItem(self.currenturl, text, tooltip))
     
     def to_ul(self):
         html = ''
@@ -172,16 +173,17 @@ class BreadCrumb(object):
         return html
 
 class BreadCrumbItem(object):
-    def __init__(self, text, url):
-        self.text = text
+    def __init__(self, url, text, tooltip):
         self.url = url
+        self.text = text
+        self.tooltip = tooltip
     
     def to_li(self, last=False):
         html = '<li class="breadcrumb">'
         if last:
-            html += '<span>{0}</span>'.format(self.text)
+            html += '<span title="{0}">{1}</span>'.format(self.tooltip, self.text)
         else:
-            html += '<a href="{0}">{1}</a></li>'.format(self.url, self.text)
+            html += '<a href="{0}" title="{1}">{2}</a></li>'.format(self.url, self.tooltip, self.text)
         html += '</li>'
         return html
 
