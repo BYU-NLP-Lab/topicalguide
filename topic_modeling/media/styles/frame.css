@@ -1,0 +1,147 @@
+/*
+ * The Topic Browser
+ * Copyright 2010-2011 Brigham Young University
+ *
+ * This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+ *
+ * The Topic Browser is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * The Topic Browser is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have inquiries regarding any further use of the Topic Browser, please
+ * contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+ * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+ */
+ 
+#header {
+    width: 100%;
+    margin-bottom: 10px;
+    clear: both;
+}
+
+#footer {
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    border-top: 1px solid gray;
+    margin-top: 10px;
+    clear: both;
+    text-align: center;
+}
+
+#header, #footer {
+    background-color: hsla(210,85%,65%,1);
+}
+
+ul.nav_menu {
+    width: 100%;
+    height: 26px;
+    list-style-type: none;
+    padding: 0px;
+    display: table-row;
+    /*left: 50%;*/
+    /*position: relative;*/
+    overflow: hidden;
+}
+
+ul.nav_menu li {
+    height: 26px;
+    line-height: 26px;
+    float: left;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-right: 1px dashed gray;
+    display: table-cell;
+}
+
+
+
+ul.nav_menu li#logo {
+    height: 26px;
+    padding-left: 2px;
+    padding-right: 2px;
+    background: hsla(210,85%,35%,1);
+    border: none;
+}
+
+ul.nav_menu li#branding a {
+    height: 26px;
+}
+
+ul.nav_menu li#logo a img {
+    height: 26px;
+    border: 0px;
+}
+
+/*
+    Thanks to http://css-tricks.com/triangle-breadcrumbs/ for the breadcrumb
+    stuff
+*/
+
+ul.nav_menu li.breadcrumb {
+    padding: 0px;
+}
+
+ul.nav_menu li.breadcrumb > * {
+    color: white;
+    text-decoration: none;
+    padding-left: 20px;
+    padding-right: 3px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    background: blue;                   /* fallback color */
+    background: hsla(210,85%,35%,1);
+    position: relative;
+    display: block;
+    float: left;
+}
+
+ul.nav_menu li.breadcrumb > *:after {
+    content: " ";
+    display: block;
+    width: 0;
+    height: 0;
+    border-top: 13px solid transparent;
+    border-bottom: 13px solid transparent;
+    border-left: 13px solid hsla(210,85%,35%,1);
+    position: absolute;
+    top: 0%;
+    margin-top: 0px;
+    left: 100%;
+    z-index: 2;
+    background:url(../images/rarrow.png) no-repeat right center;
+}
+
+ul.nav_menu li.breadcrumb:first-child > * {
+    padding-left: 10px;
+}
+ul.nav_menu li.breadcrumb:nth-child(2) > *       { background:        hsla(210,85%,35%,1); padding-left: 10px;}
+ul.nav_menu li.breadcrumb:nth-child(2) > *:after { border-left-color: hsla(210,85%,35%,1); }
+ul.nav_menu li.breadcrumb:nth-child(3) > *       { background:        hsla(210,85%,45%,1); }
+ul.nav_menu li.breadcrumb:nth-child(3) > *:after { border-left-color: hsla(210,85%,45%,1); }
+ul.nav_menu li.breadcrumb:nth-child(4) > *       { background:        hsla(210,85%,55%,1); }
+ul.nav_menu li.breadcrumb:nth-child(4) > *:after { border-left-color: hsla(210,85%,55%,1); }
+ul.nav_menu li.breadcrumb:nth-child(5) > *       { background:        hsla(210,85%,65%,1); }
+ul.nav_menu li.breadcrumb:nth-child(5) > *:after { border-left-color: hsla(210,85%,65%,1); }
+ul.nav_menu li.breadcrumb:last-child > * {
+    background: transparent !important;
+    color: #000000;
+    font-variant: small-caps;
+    border: 0px;
+}
+ul.nav_menu li.breadcrumb:last-child > *:after {
+    background: transparent !important;
+    border: 0px;
+}
+
+ul.nav_menu li.breadcrumb > *:hover { background: hsla(210,85%,25%,1); }
+ul.nav_menu li.breadcrumb > *:hover:after { border-left-color: hsla(210,85%,25%,1) !important; }

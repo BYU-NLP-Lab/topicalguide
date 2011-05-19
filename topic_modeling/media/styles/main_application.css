@@ -1,0 +1,267 @@
+/*
+ * The Topic Browser
+ * Copyright 2010-2011 Brigham Young University
+ *
+ * This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+ *
+ * The Topic Browser is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * The Topic Browser is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have inquiries regarding any further use of the Topic Browser, please
+ * contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+ * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+ */
+
+/***** Presentation Area *****/
+#presentation-area-main-column {
+    float: left;
+    width: 60%;
+}
+
+#presentation-area-sidebar {
+    margin-left: 30px;
+    margin-right: 30px;
+    float: left;
+    width: 30%;
+}
+
+/***** List Navigation *****/
+.list_nav {
+    text-align:center;
+    margin-bottom: 7px;
+}
+
+.list_nav span.back_arrows a {
+    float: left;
+}
+
+.list_nav span.fwd_arrows a {
+    float: right;
+}
+
+.list_nav span.back_arrows a:hover,
+.list_nav span.fwd_arrows a:hover {
+    background-color: #e3f1fa;
+}
+
+.list_nav span a.nav_arrow {
+    padding: 2px;
+}
+
+#main {
+    width: 100%;
+    clear: both;
+}
+
+#sidebar {
+    float: left;
+    height: 100%;
+    max-width: 30%;
+}
+
+#presentation-area {
+    margin-left: 15px;
+    float: left;
+    width: 70%;
+}
+
+/***** Widgets *****/
+.top-level-widget {
+    margin: 12px;
+    padding: 2px;
+    border: 1px solid #4C3C1B;
+    background-color: #99ccff;
+}
+
+.hidden{
+    display: none;
+}
+
+.widget {
+    /*display:table;*/
+    /*width: inherit;*/
+    padding: 2px;
+    border: 1px solid #4C3C1B;
+    background-color: #99ccff;
+    margin: 12px;
+}
+
+.widget-header {
+    text-align: center;
+}
+
+.widget-body {
+    /*width: inherit;*/
+    margin:2px;
+    -moz-border-radius:5px;
+    background-color:#ffffee;
+}
+
+.widget-body p {
+    margin: 0px;
+}
+
+.barchart {
+    /*width: 210px;*/
+}
+
+.barchart img {
+    margin: 2px;
+    border: 1px solid #4C3C1B;
+}
+
+.inherit {
+    width: inherit;
+}
+
+.full-width {
+    width: 100%;
+}
+
+table.kwic {
+    width:100%;
+    table-layout:fixed;
+    /*Make cell borders run together instead of having gaps:*/
+    border-collapse: collapse;
+}
+
+
+table.kwic .col1 {
+    width: 25%;
+}
+table.kwic .col2 {
+    width: 23%;
+}
+table.kwic .col3 {
+    width: 23%;
+}
+table.kwic .col4 {
+    width: 22%;
+}
+table.kwic .col5 {
+    width: 5%;
+}
+
+table.kwic tr td {
+    border-bottom: 1px solid #C1DAD7;
+    padding-left: 10px;
+    padding-right: 0px;
+}
+
+table.kwic tr td.doc-name {
+    word-wrap:break-word;
+}
+
+/***** General *****/
+table.above_inset th {
+    font-weight:normal;
+}
+
+td.remove:hover, .link:hover, .clickable_text:hover {
+    cursor:pointer;
+}
+
+.sidebar_base {
+    padding:10px;
+    background-color:#99ccff;
+    border-left:1px solid black;
+    border-right:1px solid black;
+    border-bottom:1px solid black;
+    -moz-border-radius-bottomright:5px;
+    -moz-border-radius-bottomleft:5px;
+}
+
+.inset {
+    width:100%;
+    padding:2px;
+    -moz-border-radius:5px;
+    background-color:#ffffee;
+}
+
+table.inset-small {
+    padding:2px;
+    -moz-border-radius:5px;
+    background-color:#ffffee;
+}
+
+table.above_inset {
+    width:100%;
+    padding:2px;
+    -moz-border-radius:5px;
+}
+
+td.align-top {
+    vertical-align:top;
+}
+
+
+/***** Lists *****/
+.highlight {
+    -moz-border-radius:5px;
+    background-color:#FFCC00;
+    /*text-align:center;*/
+}
+
+.list {
+    -moz-border-radius:5px;
+    padding-left: 0;
+    margin-left: 0;
+}
+
+.list .header {
+    font-weight: bold;
+}
+
+.list li {
+    list-style: none;
+    margin: 0;
+    padding: 0.25em;
+    word-wrap:break-word;
+}
+
+.list li a {
+	text-decoration: none;
+}
+
+.list li .value {
+    float: right;
+    margin-left: 20px;
+}
+
+.list li .header {
+    font-weight: bold;
+}
+
+td.word {
+    font-size:larger;
+    text-align:center;
+    font-weight:bold;
+}
+.right-align {
+    text-align:right;
+}
+.left-align {
+    text-align:left;
+}
+.centered {
+    text-align: center;
+}
+.float-left {
+    float: left;
+}
+.float-right {
+    float: right;
+}
+label {
+    font-weight:normal;
+}
