@@ -47,9 +47,7 @@ def index(request, dataset, analysis, plot):
 
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    context['breadcrumb'] = BreadCrumb()
-    context['breadcrumb'].dataset(dataset)
-    context['breadcrumb'].analysis(analysis)
+    context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).plots()
 
     #Dan's broken plots:
     #--Attribute Values plot

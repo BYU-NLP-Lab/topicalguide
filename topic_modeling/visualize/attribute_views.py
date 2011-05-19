@@ -72,11 +72,8 @@ def base_page_vars(request, dataset, analysis, attribute, value):
     else:
         curvalue = values[0]
 
-    page_vars['breadcrumb'] = BreadCrumb()
-    page_vars['breadcrumb'].dataset(dataset)
-    page_vars['breadcrumb'].analysis(analysis)
-    page_vars['breadcrumb'].attribute(attribute)
-    page_vars['breadcrumb'].value(curvalue)
+    page_vars['breadcrumb'] = \
+        BreadCrumb().item(dataset).item(analysis).item(attribute).item(curvalue)
     
     page_vars['curvalue'] = curvalue
     return page_vars, attribute, curvalue

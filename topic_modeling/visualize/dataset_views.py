@@ -57,11 +57,6 @@ def index(request, dataset=""):
 #        page_vars['curanalysis'] = page_vars['analyses'][0]
 #        page_vars['analysis'] = page_vars['curanalysis'].name
 
-#    page_vars['breadcrumb'] = BreadCrumb()
-#    page_vars['breadcrumb'].dataset(dataset)
-#    if 'curanalysis' in page_vars:
-#        page_vars['breadcrumb'].analysis(page_vars['curanalysis'])
-
     # Randomly generate the parameters that will be used in generation of plots
     # We do this for every analysis so that each analysis has its own plot
     page_vars['plot_img_urls'] = dict()
