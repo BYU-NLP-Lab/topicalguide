@@ -55,10 +55,8 @@ def index(request, dataset, analysis, word):
     else:
         context['curword'] = context['words'][0]
 
-    context['breadcrumb'] = BreadCrumb()
-    context['breadcrumb'].dataset(dataset)
-    context['breadcrumb'].analysis(analysis)
-    context['breadcrumb'].word(context['curword'])
+    context['breadcrumb'] = BreadCrumb() \
+        .item(dataset).item(analysis).item(context['curword'])
     
     add_word_charts(dataset, analysis, context)
     

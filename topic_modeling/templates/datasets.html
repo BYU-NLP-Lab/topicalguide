@@ -37,10 +37,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% if datasets %}
 <div id="accordion">
     {% for dataset,analyses in plot_img_urls.items %}
-    <div>
-        <span class="name">{{dataset.readable_name}}</span>
-        {# TODO: icon? #}
-    </div>
+    <div><a>{{dataset.readable_name}}</a></div>
     <div>
         <p class="description">{{dataset.description|linebreaks}}</p>
         

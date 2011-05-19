@@ -112,7 +112,7 @@ class BreadCrumb(object):
         return self
     
     def text(self, text):
-        self.items.append(BreadCrumbItem(text, None))
+        self.items.append(BreadCrumbItem(None, text, text))
     
     def dataset(self, dataset):
         url = '/datasets/'+dataset.name
@@ -122,18 +122,24 @@ class BreadCrumb(object):
         return self
 
     def analysis(self, analysis):
+        url = '/analyses/' + analysis.name
+        text = analysis.readable_name
         tooltip = "Analysis '{0}' (id={1})".format(analysis.readable_name, analysis.id)
-        self._add_item('/analyses/' + analysis.name, analysis.readable_name, tooltip)
+        self._add_item(url, text, tooltip)
         return self
 
     def topic(self, topic_number, topic_name):
+        url = '/topics/' + str(topic_number)
         text = "Topic '{0}'".format(topic_name)
         tooltip = text + " (number={0})".format(topic_number)
-        self._add_item('/topics/' + str(topic_number), text, tooltip)
+        self._add_item(url, text, tooltip)
         return self
 
     def word(self, word):
-        self._add_item('/words/'+word.type, 'Word "'+word.type+'"', 'Word: '+word.type)
+        url = '/words/' + word.type
+        text = "Word '"+word.type+"'"
+        tooltip = text + " (id={0})".format(word.id)
+        self._add_item(url, text, tooltip)
         return self
 
     def document(self, document):
@@ -148,7 +154,7 @@ class BreadCrumb(object):
         self._add_item('/values/'+value.value, value.value, 'Value: '+value.value)
         return self
 
-    def plot(self):
+    def plots(self):
         self._add_item('/plots', 'Plots', 'Plots')
 #        # This one is different because plots currently just use posts, not
 #        # urls, to change
