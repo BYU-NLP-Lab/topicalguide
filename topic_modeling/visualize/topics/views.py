@@ -114,12 +114,7 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
     context['topic_name'] = topic_name
 
     # Build the bread crumb
-    context['breadcrumb'] = BreadCrumb()
-    context['breadcrumb'].add(dataset.readable_name, '/datasets/'+dataset.name)
-    context['breadcrumb'].add(analysis.name, '/datasets/'+dataset.name +'/analyses/'+analysis.name)
-#    context['breadcrumb'].dataset(dataset)
-#    context['breadcrumb'].analysis(analysis)
-#    context['breadcrumb'].topic(topic.number, topic_name)
+    context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).topic(topic.number, topic_name)
     context['view_description'] = 'Topic "'+topic_name + '"'
     return context, analysis, topic
 

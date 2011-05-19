@@ -91,10 +91,8 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 						
 						{% block nav_menu_after_title %}{% endblock %}
 						
-						{% for item in breadcrumb %}
-							<li class="breadcrumb"><a href="{{item.url}}">{{item.text}}</a></li>
-						{% endfor %}
-						<li id="view_description" class="breadcrumb"><span>{{view_description}}</span></li>
+						{{breadcrumb.to_ul|safe}}
+						
 						{% block nav_menu_end %}{% endblock %}
 						
 						{% comment %}
@@ -114,16 +112,16 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 						{% endcomment %}
 					{% endblock %}
 				</ul>
-			</div><!-- end div header -->
+			</div>{# end div header #}
 			<div id="main">
 				{% block before_presentation_area %}{% endblock %}
 				<div id="presentation-area">
 					{% block presentation_area %}
 					You should see something here.
 					{% endblock %}
-				</div><!-- end div presentation-area -->
+				</div>
 				{% block after_presentation_area %}{% endblock %}
-			</div><!-- end div main -->
+			</div>{# end div main #}
 			<div id="footer">
 				<ul class="nav_menu">
 					{% block footer %}
@@ -132,7 +130,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 					<li>Developed by <a href="http://nlp.cs.byu.edu/" class="new-window">the BYU Natural Language Processing Lab</a></li>
 					{% endblock %}
 				</ul>
-			</div><!-- end div footer -->
-		</div><!-- end div page -->
+			</div>{# end div footer #}
+		</div>{# end div page #}
 	</body>
 </html>

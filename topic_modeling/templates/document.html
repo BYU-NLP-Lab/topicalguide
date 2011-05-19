@@ -23,6 +23,11 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
+{% block stylesheets %}
+    {{block.super}}
+    <link rel="stylesheet" href="/site-media/styles/document.css" type="text/css" />
+{% endblock %}
+
 {% block scripts %}
     {{block.super}}
 	<script charset="utf-8" type="text/javascript">

@@ -37,6 +37,7 @@ def sample_list(list):
 def index(request, dataset=""):
     page_vars = root_context(dataset, '')
     page_vars['view_description'] = 'Available Datasets'
+    page_vars['breadcrumb'] = BreadCrumb().item('Available Datasets')
 
     page_vars['datasets'] = Dataset.objects.all()
 
@@ -63,41 +64,29 @@ def index(request, dataset=""):
 
     # Randomly generate the parameters that will be used in generation of plots
     # We do this for every analysis so that each analysis has its own plot
-#    page_vars['sample_attributes'] = dict()
-#    page_vars['sample_attrvalues'] = dict()
-#    page_vars['sample_topics'] = dict()
     page_vars['plot_img_urls'] = dict()
     
     for dataset in page_vars['datasets']:
         page_vars['plot_img_urls'][dataset] = dict()
-#        page_vars['sample_attributes'][dataset.name] = dict()
-#        page_vars['sample_attrvalues'][dataset.name] = dict()
-#        page_vars['sample_topics'][dataset.name] = dict()
         
         attributes = dataset.attribute_set.all()
         
         for analysis in dataset.analysis_set.all():
             if len(attributes) > 0:
                 attribute = sample_list(attributes)
-#                page_vars['sample_attributes'][dataset.name][analysis.name] = attribute.id
                 attrvalues = attribute.attributevalue_set.all()
                 attrvalues = [attrval.value.id for attrval in attrvalues]
-#                page_vars['sample_attrvalues'][dataset.name][analysis.name] = attrvalues
             
                 topics = analysis.topic_set.all()
                 topics = [sample_list(topics), sample_list(topics), sample_list(topics)]
                 topics = [topic.id for topic in topics]
-#                page_vars['sample_topics'][dataset.name][analysis.name] = topics
                 
-#                page_vars['plot_params'][dataset.name][analysis.name] = (attribute.id, attrvalues, topics)
                 plot_img_url = "/feeds/topic-attribute-plot/"
-                
                 plot_img_url += 'attributes/'+str(attribute.id)+'/'
-                
                 plot_img_url += "values/" + '.'.join([str(x) for x in attrvalues])
-                
                 plot_img_url += "/topics/"
                 plot_img_url += '.'.join([str(x) for x in topics])
+                
                 page_vars['plot_img_urls'][dataset][analysis] = plot_img_url
     
     return render_to_response('datasets.html', page_vars)
