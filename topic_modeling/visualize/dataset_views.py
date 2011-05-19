@@ -20,21 +20,16 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-
-from django.shortcuts import render_to_response
-
-from topic_modeling.visualize.models import Dataset, Topic, Attribute, \
-    AttributeValue
-from topic_modeling.visualize.common import BreadCrumb, root_context
-from topic_modeling.visualize.common import paginate_list
 from random import randint
+from django.shortcuts import render_to_response
+from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.common import BreadCrumb, root_context
+
 
 def sample_list(list):
     return list[randint(0, len(list) - 1)]
 
-
-
-def index(request, dataset=""):
+def render(request, dataset=""):
     page_vars = root_context(dataset, '')
     page_vars['view_description'] = 'Available Datasets'
     page_vars['breadcrumb'] = BreadCrumb().item('Available Datasets')
