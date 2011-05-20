@@ -22,23 +22,24 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
-<div class="widget">
-	<div>
-		by
-		<select id="similarity-measure-select" onChange="get_similar_documents()">
-			{% for s in similarity_measures %}
-			<option value="{{ s.name }}" {% ifequal similarity_measure s %}selected{% endifequal %}>
-				{{ s.name }}
-			</option>
-			{% endfor %}
-		</select>
-	</div>
-	<table id="similar-documents-table" class="widget-body list">
-		{% for d in similar_documents %}
-		<tr><td><a href="{{ documents_url }}/{{ d.document2.id }}">{{ d.document2 }}</a></td><td class="value">{{ d.value|floatformat:"2" }}</td></tr>
-		{% endfor %}
-	</table>
+<div>
+	<table id="similar_documents" class="jtable"></table>{# Placeholder for the JavaScript #}
+	<div >
+        by
+        <select id="similarity_measure" onChange="get_similar_documents()">
+            {% for s in similarity_measures %}
+            <option value="{{ s.name }}" {% ifequal similarity_measure s %}selected{% endifequal %}>
+                {{ s.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
 </div>
 <script charset="utf-8" type="text/javascript"
 	src="/site-media/scripts/documents/similar_documents.js">
+</script>
+<script charset="utf-8" type="text/javascript">
+    $().ready(function() {
+    	get_similar_documents();
+    });
 </script>

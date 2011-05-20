@@ -28,19 +28,41 @@ function get_similar_documents()
 	var link = "/feeds/similar-documents/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
 	link += "/documents/" + $.fn.doc_vars.curdocument_id;
-	link += "/measures/" + $("#similarity-measure-select").val();
+	link += "/measures/" + $("select#similarity_measure").val();
 	$.getJSON(link, {}, function(data) {
 		var base = $.fn.documents_url + "/";
-		var documents = '';
+		var documents = '<tr><th>Document</th><th>Similarity</th></tr>\n';
 		for (var i = 0; i < data.documents.length; i++) {
 			documents += '<tr>';
 			documents += '<td><a href="' + base;
 			documents += data.documents[i].id + '">';
 			documents += data.documents[i].name + '</a></td>';
 			documents += '<td>'+data.values[i].toFixed(2)+'</td>';
-			documents += '</tr>';
+			documents += '</tr>\n';
 		}
-		$("#similar-documents-table").html(documents);
+		$("table#similar_documents").html(documents);
+		style_table();
 		cursor_default();
+	});
+}
+
+function style_table() {
+	$(".jtable th").each(function(){
+		$(this).addClass("ui-state-default");
+	});
+	
+	$(".jtable td").each(function(){
+	    $(this).addClass("ui-widget-content");
+	});
+	
+	$(".jtable tr").hover(function() {
+	    $(this).children("td").addClass("ui-state-hover");
+	},
+	function() {
+	    $(this).children("td").removeClass("ui-state-hover");
+	});
+	
+	$(".jtable tr").click(function(){
+	    $(this).children("td").toggleClass("ui-state-highlight");
 	});
 }

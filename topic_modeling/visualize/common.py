@@ -229,6 +229,7 @@ class TopLevelWidget(object):
         self.ref = title.lower().replace(' ', '-')
         self.widgets = []
         self.hidden = True
+        self.top_level = True
 
 
 class Widget(object):
@@ -236,6 +237,7 @@ class Widget(object):
         self.title = title
         self.url = url
         self.hidden = True
+        self.top_level = False
 
 
 class Cloud(object):

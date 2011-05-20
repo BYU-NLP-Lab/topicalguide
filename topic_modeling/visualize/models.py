@@ -394,8 +394,8 @@ class PairwiseDocumentMetricValue(MetricValue):
     metric = models.ForeignKey(PairwiseDocumentMetric)
 
     def __unicode__(self):
-        return '%s(%s, %s) = %d' % (self.metric.name, self.document1.name,
-                self.document2.name, self.value)
+        return '%s(%s, %s) = %d' % (self.metric.name, self.document1.filename,
+                self.document2.filename, self.value)
 
 class WordMetric(Metric):
     analysis = models.ForeignKey(Analysis)
