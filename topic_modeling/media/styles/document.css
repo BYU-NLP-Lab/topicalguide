@@ -26,6 +26,12 @@ h1.document-title {
     text-align: center;
 }
 
-#document_text_widget {
-	height: 100%;
+#document_text {
+	height: inherit;
+	/*height: 100%;*/
+	overflow-y: scroll;
+}
+
+table#similar_documents td {
+	font-weight: bold;
 }

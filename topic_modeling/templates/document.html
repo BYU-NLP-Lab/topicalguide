@@ -69,25 +69,32 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	<div id="tabs">
 		<ul>
 			{% for top_level_widget in top_level_widgets %}
-			<li class="top-level"><a href="#tabs-{{forloop.counter}}">
-				{{ top_level_widget.title }}</a></li>
+			<li class="top-level">
+			    <a href="#tabs-{{forloop.counter}}">
+				{{ top_level_widget.title }}
+				</a>
+			</li>
 			{% endfor %}
 		</ul>
 		{% for top_level_widget in top_level_widgets %}
-		<div id="tabs-{{forloop.counter}}">
-			<div class="lower-tabs" id="{{top_level_widget.ref}}-tabs">
-				<ul>
+		    <div id="tabs-{{forloop.counter}}">
+			{% if top_level_widget.top_level %}
+				<div class="lower-tabs" id="{{top_level_widget.ref}}-tabs">
+					<ul>
+						{% for widget in top_level_widget.widgets %}
+						<li class="lower-level"><a href="#{{top_level_widget.ref}}-tabs-{{forloop.counter}}">{{ widget.title }}</a></li>
+						{% endfor %}
+					</ul>
 					{% for widget in top_level_widget.widgets %}
-					<li class="lower-level"><a href="#{{top_level_widget.ref}}-tabs-{{forloop.counter}}">{{ widget.title }}</a></li>
+					<div id="{{top_level_widget.ref}}-tabs-{{forloop.counter}}">
+						{% include widget.url %}
+					</div>
 					{% endfor %}
-				</ul>
-				{% for widget in top_level_widget.widgets %}
-				<div id="{{top_level_widget.ref}}-tabs-{{forloop.counter}}">
-					{% include widget.url %}
 				</div>
-				{% endfor %}
+			{% else %}
+			    {% include top_level_widget.url %}
+			{% endif %}
 			</div>
-		</div>
 		{% endfor %}
 	</div>
 {% endblock %}

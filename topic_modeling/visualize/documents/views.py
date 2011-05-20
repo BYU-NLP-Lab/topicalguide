@@ -112,9 +112,10 @@ def index(request, dataset, analysis, document=""):
 # We only have one...  Maybe this should be formatted differently, I suppose
 
 def text_widgets(document, context):
-    top_level_widget = TopLevelWidget("Text")
-    top_level_widget.widgets.append(plain_text_widget(document, context))
-    return top_level_widget
+    return plain_text_widget(document, context)
+#    top_level_widget = TopLevelWidget("Text")
+#    top_level_widget.widgets.append(plain_text_widget(document, context))
+#    return top_level_widget
 
 
 def plain_text_widget(document, context):
@@ -138,8 +139,6 @@ def extra_information_widgets(analysis, document, context):
 
 def stats_widget(document, context):
     stats = Widget('Stats', 'document_widgets/stats.html')
-    Metric = namedtuple('Metric', 'name value average')
-    metrics = []
     context['metrics'] = document.documentmetricvalue_set.all()
     return stats
 
@@ -165,17 +164,18 @@ def top_topics_widget(analysis, document, context):
 # Again we only have one, though there is room for change here
 
 def similar_documents_widgets(request, analysis, document, context):
-    top_level_widget = TopLevelWidget("Similar Documents")
-    top_level_widget.widgets.append(similar_documents_widget(request, analysis,
-            document, context))
-    return top_level_widget
+    return similar_documents_widget(request, analysis, document, context)
+#    top_level_widget = TopLevelWidget("Similar Documents")
+#    top_level_widget.widgets.append(similar_documents_widget(request, analysis,
+#            document, context))
+#    return top_level_widget
 
 
 def similar_documents_widget(request, analysis, document, context):
-    document_list = Widget("Lists", "document_widgets/similar_documents.html")
+    document_list = Widget("Similar Documents", "document_widgets/similar_documents.html")
     similarity_measures = analysis.pairwisedocumentmetric_set.all()
     if similarity_measures:
-        measure = request.session.get('document-similarity-measure', None)
+        measure = request.session.get('similarity_measure', None)
         if measure:
             measure = similarity_measures.get(name=measure)
         else:
