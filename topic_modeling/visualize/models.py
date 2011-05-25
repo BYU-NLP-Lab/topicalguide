@@ -452,20 +452,28 @@ class MetaInfoValue(models.Model):
     float_value = models.FloatField(null=True)
     int_value = models.IntegerField(null=True)
     text_value = models.TextField(null=True)
+    datetime_value = models.DateTimeField(null=True)
     
     class Meta:
         abstract = True
     
     def value(self):
-        if hasattr(self, 'float_value'):
-            return self.float_value
-        if hasattr(self, 'text_value'):
-            return self.text_value
-        if hasattr(self, 'int_value'):
-            return self.int_value
-        if hasattr(self, 'bool_value'):
-            return self.bool_value
-        return None
+        result = None
+        if self.float_value:
+            result = self.float_value
+        if self.text_value:
+            if result: raise Exception("MetaInfoValues cannot be of more than one type.")
+            result = self.text_value
+        if self.int_value:
+            if result: raise Exception("MetaInfoValues cannot be of more than one type.")
+            result = self.int_value
+        if self.bool_value:
+            if result: raise Exception("MetaInfoValues cannot be of more than one type.")
+            result = self.bool_value
+        if self.datetime_value:
+            if result: raise Exception("MetaInfoValues cannot be of more than one type.")
+            result = self.datetime_value
+        return result
 
 class DatasetMetaInfo(MetaInfo):
     pass
