@@ -37,7 +37,24 @@ h1 {
 	font-family: 'Caudex', arial, serif;
 	font-weight: normal;
     text-align: center;
-    margin: .05em 0em .6em 0em;
+    margin: .2em 0em .6em 0em;
+}
+
+h2 {
+	font-family: 'Caudex', arial, serif;
+    font-weight: normal;
+	text-align: center;
+}
+
+img#lab-logo-invisible {
+	float: left;
+	margin-left: 10px;
+	visibility: hidden;
+}
+
+img#lab-logo {
+    float: right;
+    margin-right: 10px
 }
 
 div#analysis-container {
@@ -75,9 +92,4 @@ ul.analyses li img {
 ul.analyses li img.hover {
     background:url(thumb_bg.png) no-repeat center center;  /* Image used as background on hover effect */
     /*border: none;*/ /* Get rid of border on hover */
-}
-
-img#lab-logo {
-	float: right;
-	margin-right: 10px
 }
