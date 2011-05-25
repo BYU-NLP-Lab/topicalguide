@@ -43,6 +43,10 @@ def root_context(dataset, analysis):
     context['plots_url'] = context['analysis_url'] + "/plots"
     context['topics_url'] = context['analysis_url'] + "/topics"
     context['words_url'] = context['analysis_url'] + "/words"
+    
+    context['topical_guide_project_url'] = "http://nlp.cs.byu.edu/topicalguide"
+    context['nlp_lab_url'] = "http://nlp.cs.byu.edu"
+    context['nlp_lab_logo_url'] = "/site-media/images/byunlp-135px.png"
     return context
 
 ################################################################################

@@ -36,9 +36,10 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block body %}
-<img id="lab-logo" src="/site-media/images/byunlp-135px.png"/>
+<img id="lab-logo-invisible" src="{{nlp_lab_logo_url|safe}}"/>
+<a href="{{nlp_lab_url|safe}}"><img id="lab-logo" src="{{nlp_lab_logo_url|safe}}"/></a>
 <header>
-	<h1>The Topical Guide</h1>
+	<h1><a href="{{topical_guide_project_url|safe}}">The Topical Guide</a></h1>
 	<h2>Available Datasets</h2>
 	
 </header>
