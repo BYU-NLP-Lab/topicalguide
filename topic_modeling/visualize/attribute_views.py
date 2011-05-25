@@ -76,6 +76,8 @@ def base_page_vars(request, dataset, analysis, attribute, value):
         BreadCrumb().item(dataset).item(analysis).item(attribute).item(curvalue)
     
     page_vars['curvalue'] = curvalue
+    
+    page_vars['view_description'] = "Attribute '{0}'".format(attribute.name)
     return page_vars, attribute, curvalue
 
 
