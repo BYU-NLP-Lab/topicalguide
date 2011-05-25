@@ -35,7 +35,7 @@ from topic_modeling.visualize.common import Widget
 from topic_modeling.visualize.common import WordSummary
 from topic_modeling.visualize.documents.common import SortDocumentForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
-from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.models import Dataset, AttributeValueDocument
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.models import Topic
 
@@ -70,11 +70,16 @@ def base_context(request, dataset, analysis, document):
 
     context['document_url'] = context['documents_url'] + '/' + str(document.id)
     context['curdocument'] = document
-    context['document_title'] = document.filename
+    
+    try:
+        context['title'] = document.attributevaluedocument_set.get(attribute__name='title').value
+    except AttributeValueDocument.DoesNotExist:
+        context['title'] = document.filename
+    context['view_description'] = context['title']
 
     context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(document)
     
-    context['view_description'] = document.filename
+    
 
     return context, analysis, document
 
