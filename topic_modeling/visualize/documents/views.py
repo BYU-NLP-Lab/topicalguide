@@ -71,10 +71,7 @@ def base_context(request, dataset, analysis, document):
     context['document_url'] = context['documents_url'] + '/' + str(document.id)
     context['curdocument'] = document
     
-    try:
-        context['title'] = document.attributevaluedocument_set.get(attribute__name='title').value
-    except AttributeValueDocument.DoesNotExist:
-        context['title'] = document.filename
+    context['title'] = document.get_title()
     context['view_description'] = context['title']
 
     context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(document)

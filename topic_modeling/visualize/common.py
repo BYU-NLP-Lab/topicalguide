@@ -143,7 +143,7 @@ class BreadCrumb(object):
         return self
 
     def document(self, document):
-        self._add_item('/documents/' + document.dataset.name, document.filename, 'Document '+document.filename+', id='+ str(document.id))
+        self._add_item('/documents/' + document.dataset.name, document.get_title(), "Document '"+document.filename+"', id="+ str(document.id))
         return self
 
     def attribute(self, attribute):
