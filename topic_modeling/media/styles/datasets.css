@@ -76,3 +76,8 @@ ul.analyses li img.hover {
     background:url(thumb_bg.png) no-repeat center center;  /* Image used as background on hover effect */
     /*border: none;*/ /* Get rid of border on hover */
 }
+
+img#lab-logo {
+	float: right;
+	margin-right: 10px
+}
