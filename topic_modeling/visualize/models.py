@@ -175,6 +175,12 @@ class Document(models.Model):
             return beg_context, end_context
         else:
             return - 1, -1
+    
+    def get_title(self):
+        try:
+            return self.attributevaluedocument_set.get(attribute__name='title').value
+        except AttributeValueDocument.DoesNotExist:
+            return self.filename
 
     class Meta:
         ordering = ['dataset', 'filename']

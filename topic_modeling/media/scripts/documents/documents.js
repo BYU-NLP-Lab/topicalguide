@@ -8,8 +8,8 @@ function tabify() {
 
 $(document).ready(function () {
 	fix_tab_height();
+	tabify();
 	$(window).resize(function(){
         fix_tab_height();
     });
-	tabify();
 });
