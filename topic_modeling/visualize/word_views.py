@@ -72,7 +72,9 @@ def index(request, dataset, analysis, word):
 #        words.append(w)
 #    
 #    context['word_contexts'] = words
-        
+    
+    context['view_description'] = "Word '{0}'".format(context['curword'].type)
+    
     return render_to_response('words.html', context)
 
 def add_word_charts(dataset, analysis, context):
