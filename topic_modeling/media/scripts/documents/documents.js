@@ -1,5 +1,15 @@
+function fix_tab_height() {
+	$("#document_text").css('height', $(window).height()-160);
+}
+
+function tabify() {
+	$("div#presentation-area div.tabs, div#presentation-area div.tabs .lower-tabs").tabs();
+}
+
 $(document).ready(function () {
-
-$("#tabs, #tabs .lower-tabs").tabs();
-
+	fix_tab_height();
+	$(window).resize(function(){
+        fix_tab_height();
+    });
+	tabify();
 });
