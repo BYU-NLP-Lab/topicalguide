@@ -73,7 +73,7 @@ def index(request, dataset, analysis, word):
 #    
 #    context['word_contexts'] = words
         
-    return render_to_response('word.html', context)
+    return render_to_response('words.html', context)
 
 def add_word_charts(dataset, analysis, context):
     topicwords = context['curword'].topicword_set.filter(

@@ -82,7 +82,7 @@ def index(request, dataset, analysis, plot):
         plot_forms += [(plot_name, plot_type[0].form(dataset, analysis))]
     context['plot_forms'] = plot_forms
 
-    return render_to_response('plot.html', context)
+    return render_to_response('plots.html', context)
 
 
 def create_plot_image(request, chart_type, dataset, analysis, attribute,

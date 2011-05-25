@@ -137,7 +137,7 @@ def index(request, dataset, analysis, topic=None):
     rename_form = RenameForm(context['topic_name'])
     context['rename_form'] = rename_form
 
-    return render_to_response('topic.html', context)
+    return render_to_response('topics.html', context)
 
 
 def word_index(request, dataset, analysis, topic, word):

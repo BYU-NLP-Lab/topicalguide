@@ -98,7 +98,7 @@ def index(request, dataset, analysis, document=""):
 
     context['top_level_widgets'] = top_level_widgets
 
-    return render_to_response('document.html', context)
+    return render_to_response('documents.html', context)
 
 
 # Document Widgets

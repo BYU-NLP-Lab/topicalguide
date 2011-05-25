@@ -132,7 +132,7 @@ def index(request, dataset, analysis, attribute, value=''):
     
     page_vars['chart_address'] = get_chart(words)
     
-    return render_to_response('attribute.html', page_vars)
+    return render_to_response('attributes.html', page_vars)
 
 
 def word_index(request, dataset, analysis, attribute, value, word):
