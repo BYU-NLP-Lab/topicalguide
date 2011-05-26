@@ -242,25 +242,34 @@ def top_words_widgets(topic, context):
         w.url = word_url + topicword.word.type
         words.append(w)
 
-    top_level_widget.widgets.append(word_clouds_widget(topic, words, context))
-    top_level_widget.widgets.append(words_in_context_widget(words, context))
-    top_level_widget.widgets.append(word_chart_widget(words, context))
+#    top_level_widget.widgets.append(word_clouds_widget(topic, words, context))
+    top_level_widget.add(Widget('Word Cloud',html=unigram_cloud(words)))
+    
+    ttcloud = turbo_topics_cloud(topic.analysis, topic, context)
+    if ttcloud: top_level_widget.add(Widget('Turbo Topics', html=ttcloud))
+    
+    ngcloud = ngram_cloud(topic, context)
+    if ngcloud: top_level_widget.add(Widget('N-grams', html=ngcloud))
+    
+    top_level_widget.add(words_in_context_widget(words, context))
+    top_level_widget.add(word_chart_widget(words, context))
     top_level_widget.widgets[0].hidden = False
     return top_level_widget
 
 
-def word_clouds_widget(topic, words, context):
-    word_cloud = Widget("Word Cloud", "topic_widgets/word_cloud.html")
-    context['word_clouds'] = []
-    # Name must not contain spaces!
-    context['word_clouds'].append(Cloud('Unigram', get_word_cloud(words)))
-    cloud = ngram_cloud(topic, context)
-    if cloud:
-        context['word_clouds'].append(cloud)
-    clouds = turbo_topics_cloud(topic.analysis, topic, context)
-    if clouds:
-        context['word_clouds'].extend(clouds)
-    return word_cloud
+#def word_clouds_widget(topic, words, context):
+#    word_cloud = Widget("Word Cloud", "topic_widgets/word_cloud.html")
+#    context['word_clouds'] = []
+#    # Name must not contain spaces!
+#    context['word_clouds'].append(Cloud('Unigram', get_word_cloud(words)))
+#    cloud = ngram_cloud(topic, context)
+#    if cloud:
+#        context['word_clouds'].append(cloud)
+#    clouds = turbo_topics_cloud(topic.analysis, topic, context)
+#    if clouds:
+#        context['word_clouds'].extend(clouds)
+#    return word_cloud
+
 
 
 def words_in_context_widget(words, context):
@@ -275,6 +284,8 @@ def word_chart_widget(words, context):
     context['chart_address'] = get_chart(words)
     return word_chart
 
+def unigram_cloud(words):
+    return get_word_cloud(words)
 
 def ngram_cloud(topic, context):
     word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
@@ -288,12 +299,11 @@ def ngram_cloud(topic, context):
         ngrams.append(w)
     if ngrams:
         # Name must not contain spaces!
-        return Cloud('N-grams', get_word_cloud(ngrams))
+        return get_word_cloud(ngrams)
     return None
 
 
 def turbo_topics_cloud(analysis, topic, context):
-    clouds = []
     try:
         turbo_topics = TopicMetaInfo.objects.get(name="Turbo Topics Cloud")
         value = turbo_topics.topicmetainfovalue_set.get(topic=topic)
@@ -316,8 +326,7 @@ def turbo_topics_cloud(analysis, topic, context):
             w = WordSummary(type, count / total)
             summaries.append(w)
         # Name must not contain spaces!
-        clouds.append(Cloud('Turbo_Topics', get_word_cloud(summaries,
-            url=False)))
+        return get_word_cloud(summaries, url=False)
     except (TopicMetaInfo.DoesNotExist,
             TopicMetaInfoValue.DoesNotExist):
         pass
@@ -336,7 +345,7 @@ def turbo_topics_cloud(analysis, topic, context):
     except (TopicMetaInfo.DoesNotExist,
             TopicMetaInfoValue.DoesNotExist):
         pass
-    return clouds
+    return None
 
 
 # Similar Topics Widgets
@@ -408,7 +417,7 @@ def extra_information_widgets(request, analysis, topic, context):
 
 
 def stats_widget(topic, context):
-    stats = Widget('Stats', 'topic_widgets/stats.html')
+    stats = Widget('Metrics', 'topic_widgets/metrics.html')
     Metric = namedtuple('Metric', 'name value average')
     metrics = []
     for topicmetricvalue in topic.topicmetricvalue_set.select_related().all():

@@ -474,6 +474,24 @@ class MetaInfoValue(models.Model):
             if result: raise Exception("MetaInfoValues cannot be of more than one type.")
             result = self.datetime_value
         return result
+    
+    def type(self):
+        type = None
+        if self.float_value:
+            type = 'float'
+        if self.text_value:
+            if type: raise Exception("MetaInfoValues cannot be of more than one type.")
+            type = 'text'
+        if self.int_value:
+            if type: raise Exception("MetaInfoValues cannot be of more than one type.")
+            type = 'int'
+        if self.bool_value:
+            if type: raise Exception("MetaInfoValues cannot be of more than one type.")
+            type = 'bool'
+        if self.datetime_value:
+            if type: raise Exception("MetaInfoValues cannot be of more than one type.")
+            type = 'datetime'
+        return type
 
 class DatasetMetaInfo(MetaInfo):
     pass

@@ -69,7 +69,7 @@ def base_context(request, dataset, analysis, document):
         document = context['documents'][0]
 
     context['document_url'] = context['documents_url'] + '/' + str(document.id)
-    context['curdocument'] = document
+    context['document'] = document
     
     context['title'] = document.get_title()
     context['view_description'] = context['title']
@@ -135,15 +135,18 @@ def extra_information_widgets(analysis, document, context):
     top_level_widget.widgets.append(stats_widget(document, context))
     top_level_widget.widgets.append(top_topics_widget(analysis, document,
             context))
+    top_level_widget.widgets.append(attributes_widget(context))
     top_level_widget.widgets[0].hidden = False
     return top_level_widget
 
 
 def stats_widget(document, context):
-    stats = Widget('Stats', 'document_widgets/stats.html')
+    stats = Widget('Stats', 'document_widgets/metrics.html')
     context['metrics'] = document.documentmetricvalue_set.all()
     return stats
 
+def attributes_widget(_context):
+    return Widget('Attributes', 'document_widgets/attributes.html')
 
 def top_topics_widget(analysis, document, context):
     top_topics = Widget('Top Topics', 'document_widgets/top_topics.html')

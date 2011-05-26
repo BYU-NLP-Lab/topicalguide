@@ -87,28 +87,21 @@
     display: none;
 }
 
-.widget {
-    /*display:table;*/
-    /*width: inherit;*/
+.ui-widget.full {
     padding: 2px;
     border: 1px solid #4C3C1B;
-    background-color: #99ccff;
     margin: 12px;
 }
 
-.widget-header {
+.ui-widget.full .ui-widget-header {
     text-align: center;
 }
 
-.widget-body {
-    /*width: inherit;*/
+.ui-widget.full .ui-widget-content {
     margin:2px;
     -moz-border-radius:5px;
-    background-color:#ffffee;
-}
-
-.widget-body p {
-    margin: 0px;
+    background:#ffffee;
+    
 }
 
 .barchart {
@@ -131,24 +124,21 @@
 table.kwic {
     width:100%;
     table-layout:fixed;
-    /*Make cell borders run together instead of having gaps:*/
-    border-collapse: collapse;
 }
 
-
-table.kwic .col1 {
+table.kwic col.filename {
     width: 25%;
 }
-table.kwic .col2 {
+table.kwic col.lcontext {
     width: 23%;
 }
-table.kwic .col3 {
+table.kwic col.word {
     width: 23%;
 }
-table.kwic .col4 {
+table.kwic col.rcontext {
     width: 22%;
 }
-table.kwic .col5 {
+table.kwic col.reload {
     width: 5%;
 }
 

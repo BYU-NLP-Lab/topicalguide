@@ -23,7 +23,7 @@
  */
 
 function redraw_documents(documents_list, page, num_pages) {
-	var curdoc = $.fn.doc_vars.curdocument_id;
+	var curdoc = $.fn.doc_vars.document_id;
 	
 	var new_html = render_nav_arrows(page, num_pages, 'document');
 	
@@ -46,7 +46,7 @@ function get_document_page(page) {
 	cursor_wait();
 	var link = "/feeds/document-page/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.curdocument_id;
+	link += "/documents/" + $.fn.doc_vars.document_id;
 	link += "/number/" + page;
 	$.getJSON(link, {}, function(data) {
 		redraw_documents(data.documents, data.page, data.num_pages);

@@ -41,3 +41,36 @@ a:hover {
 a:hover span {
     color:#0033D5;
 }
+
+/***** Tables *****/
+table {
+	/*Make cell borders run together instead of having gaps:*/
+	border-collapse: collapse;
+	border-spacing: 10px;
+}
+
+table th {
+	font-size: 14px;
+	/*color: #039;*/
+	padding: 10px 8px;
+}
+
+table th, table td {
+	padding: 5px;
+	
+}
+
+table td.key {
+}
+
+table td.value {
+	padding-left: 20px;
+}
+
+table tr:nth-child(odd) {
+	background-color: #ffffff;
+	/*background-color: #fff6d0;*/
+}
+table tr:nth-child(even) {
+	background-color: #fffcef
+}
