@@ -22,8 +22,8 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
-<div class="widget" id="top-values">
-	<div class="widget-header">
+<div class="ui-widget" id="top-values">
+	<div class="ui-widget-content">
 		for Attribute 
 		<select id="id_attribute" onchange="get_top_attribute_values()">
 			{% for a in attributes %}
@@ -39,24 +39,24 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		onchange="get_top_attribute_values()"/>
 		By percent
 	</div>
-    <table class="widget-body list">
+    <table class="ui-widget-content ui-widget">
         <thead>
-            <tr>
+            <tr class="ui-widget-header">
                 <th>Value</th>
                 <th>Count</th>
                 <th>Percent in value</th>
             </tr>
         </thead>
-        <tbody id="attr_values_body">
+        <tbody id="attr_values_body" class="ui-widget-content">
         {% for value in top_values %}
         <tr>
-            <td>
-                <a href="/datasets/{{ dataset }}/analyses/{{ analysis }}/attributes/{{ attribute.name }}/values/{{ value.value }}">{{ value.value }}</a>
+            <td class="key">
+                <a href="{{attributes_url}}/{{ attribute.name }}/values/{{ value.value }}">{{ value.value }}</a>
             </td>
-            <td>
+            <td class="value">
                 {{ value.count }}
             </td>
-            <td>
+            <td class="value">
                 {{ value.percent|floatformat:"2" }}
             </td>
         </tr>

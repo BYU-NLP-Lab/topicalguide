@@ -27,7 +27,7 @@ function add_new_filter()
 	cursor_wait();
 	var link = "/feeds/new-document-filter/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.curdocument_id;
+	link += "/documents/" + $.fn.doc_vars.document_id;
 	link += "/name/" + $("#id_filter").val();
 	$.get(link, {}, function(filter) {
 		$("#id_filter_form").html(filter);
@@ -40,7 +40,7 @@ function remove_filter(id)
 	var link = "/feeds/remove-document-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.curdocument_id;
+	link += "/documents/" + $.fn.doc_vars.document_id;
 	link += "/number/" + id;
 	$.getJSON(link, {}, function(data) {
 		$("#id_filter_form").html(data.filter_form);
@@ -54,7 +54,7 @@ function update_attr_filter_attribute(id)
 	var link = "/feeds/update-document-attribute-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.curdocument_id;
+	link += "/documents/" + $.fn.doc_vars.document_id;
 	link += "/number/" + id;
 	link += "/attributes/" + $("#id_attribute_filter_"+id).val();
 	$.getJSON(link, {}, function(data) {
@@ -69,7 +69,7 @@ function update_attr_filter_value(id)
 	var link = "/feeds/update-document-attribute-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.curdocument_id;
+	link += "/documents/" + $.fn.doc_vars.document_id;
 	link += "/number/" + id;
 	link += "/attributes/" + $("#id_attribute_filter_"+id).val();
 	link += "/values/" + $("#id_attribute_filter_value_"+id).val();
@@ -85,7 +85,7 @@ function update_metric_filter_metric(id)
 	var link = "/feeds/update-document-metric-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.curdocument_id;
+	link += "/documents/" + $.fn.doc_vars.document_id;
 	link += "/number/" + id;
 	link += "/metrics/" + $("#id_metric_filter_"+id).val();
 	$.getJSON(link, {}, function(data) {
@@ -100,7 +100,7 @@ function update_metric_filter(id)
 	var link = "/feeds/update-document-metric-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.curdocument_id;
+	link += "/documents/" + $.fn.doc_vars.document_id;
 	link += "/number/" + id;
 	link += "/metrics/" + $("#id_metric_filter_"+id).val();
 	link += "/comps/" + $("#id_metric_filter_comp_"+id).val();
@@ -117,7 +117,7 @@ function update_topic_filter(id)
 	var link = "/feeds/update-document-topic-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.curdocument_id;
+	link += "/documents/" + $.fn.doc_vars.document_id;
 	link += "/number/" + id;
 	link += "/topics/" + $("#id_topic_filter_"+id).val();
 	$.getJSON(link, {}, function(data) {

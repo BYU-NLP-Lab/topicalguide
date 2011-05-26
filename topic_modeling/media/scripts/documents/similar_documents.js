@@ -22,47 +22,24 @@
  * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
  */
 
-function get_similar_documents()
-{
+function get_similar_documents() {
 	cursor_wait();
 	var link = "/feeds/similar-documents/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.curdocument_id;
+	link += "/documents/" + $.fn.doc_vars.document_id;
 	link += "/measures/" + $("select#similarity_measure").val();
 	$.getJSON(link, {}, function(data) {
 		var base = $.fn.documents_url + "/";
-		var documents = '<tr><th>Document</th><th>Similarity</th></tr>\n';
+		var documents = '';
 		for (var i = 0; i < data.documents.length; i++) {
 			documents += '<tr>';
-			documents += '<td><a href="' + base;
+			documents += '<td class="key"><a href="' + base;
 			documents += data.documents[i].id + '">';
 			documents += data.documents[i].name + '</a></td>';
-			documents += '<td>'+data.values[i].toFixed(2)+'</td>';
+			documents += '<td class="value">'+data.values[i].toFixed(2)+'</td>';
 			documents += '</tr>\n';
 		}
-		$("table#similar_documents").html(documents);
-		style_table();
+		$("table#similar-documents > tbody").html(documents);
 		cursor_default();
-	});
-}
-
-function style_table() {
-	$(".jtable th").each(function(){
-		$(this).addClass("ui-state-default");
-	});
-	
-	$(".jtable td").each(function(){
-	    $(this).addClass("ui-widget-content");
-	});
-	
-	$(".jtable tr").hover(function() {
-	    $(this).children("td").addClass("ui-state-hover");
-	},
-	function() {
-	    $(this).children("td").removeClass("ui-state-hover");
-	});
-	
-	$(".jtable tr").click(function(){
-	    $(this).children("td").toggleClass("ui-state-highlight");
 	});
 }

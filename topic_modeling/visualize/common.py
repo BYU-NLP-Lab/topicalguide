@@ -234,12 +234,16 @@ class TopLevelWidget(object):
         self.widgets = []
         self.hidden = True
         self.top_level = True
+    
+    def add(self, widget):
+        self.widgets.append(widget)
 
 
 class Widget(object):
-    def __init__(self, title, url):
+    def __init__(self, title, url=None, html=None):
         self.title = title
         self.url = url
+        self.html = html
         self.hidden = True
         self.top_level = False
 

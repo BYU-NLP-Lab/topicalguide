@@ -22,22 +22,27 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
-<div class="widget full-width" id="word-in-context">
-    <div class="widget-title">Word in Context</div>
-    <div class="widget-body">
-        <table id="word_in_context_table" class="kwic">
-            <col class="col1"/>
-            <col class="col2"/>
-            <col class="col3"/>
-            <col class="col4"/>
-            <col class="col5"/>
-            
-            {# These rows are placeholders for jQuery to insert row content into #}
-            {% for word in word_contexts %}
-            <tr id="id_{{ word.word }}_{{ word.number }}"><td></td><td></td><td></td><td></td><td></td></tr>
-            {% endfor %}
-        </table>
-    </div>
+<div class="ui-widget full" id="word-in-context">
+    <div class="ui-widget-header">Word in Context</div>
+    <table class="ui-widget-content ui-widget kwic">
+        <col class="filename"/>
+	    <col class="lcontext"/>
+	    <col class="word"/>
+	    <col class="rcontext"/>
+	    <col class="reload"/>
+	    <tr class="ui-widget-header">
+	        <th>Filename</th>
+	        <th>L. Context</th>
+	        <th>Word</th>
+	        <th>R. Context</th><th></th>
+	    </tr>
+        <tbody class="ui-widget-content">
+        {# These rows are placeholders for jQuery to insert row content into #}
+        {% for word in word_contexts %}
+        <tr id="id_{{ word.word }}_{{ word.number }}"><td></td><td></td><td></td><td></td><td></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
     <script type="text/javascript" src="/site-media/scripts/words/word_in_context.js">
     </script>
     <script type="text/javascript">

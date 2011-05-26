@@ -21,27 +21,15 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-
-{% load custom_filters %}
-<div class="widget" id="stats">
-	<table class="widget-body centered">
-		<tr>
-			<th>
-				Metric Name
-			</th>
-			<th>
-				Value
-			</th>
-			<th>
-				Average (across topics)
-			</th>
-		</tr>
-		{% for metric in metrics %}
-		<tr>
-			<td>{{ metric.name }}</td>
-			<td>{{ metric.value|formatmetric:"2" }}</td>
-			<td>{{ metric.average|formatmetric:"2" }}</td>
-		</tr>
-		{% endfor %}
-	</table>
+{# TODO: Generalize to use AttributeMetrics #}
+<div class="ui-widget full" id="attribute-metrics">
+    <div class="ui-widget-header">Metrics</div>
+    <table class="ui-widget-content ui-widget full-width">
+        <thead><tr class="ui-widget-header"><th>Metric</th><th>Value</th></tr></thead>
+        <tbody class="ui-widget-content">
+            <tr><td class="key">Number of tokens</td><td class="value">{{ num_tokens }}</td></tr>
+            <tr><td class="key">Number of types</td><td class="value">{{ num_types }}</td></tr>
+            <tr><td class="key">Number of documents</td><td class="value">{{ num_docs }}</td></tr>
+        </tbody>
+    </table>
 </div>

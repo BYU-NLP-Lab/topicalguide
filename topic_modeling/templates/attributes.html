@@ -34,75 +34,38 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     <script charset="utf=8" type="text/javascript">
 		$(document).ready(function () {
 		    get_attribute_page({{ page_num }});
+		    $(".iact").draggable().resizable();
 		});
     </script>
 {% endblock %}
 
 {% block above_sidebar %}
-	<table class="above_inset">
-		<tr><th><label>Attribute Name:</label></th>
-		<td>
-			<select id="id_attribute" OnChange="location.href=document.getElementById('id_attribute').options[selectedIndex].value">
-				{% for a in attributes %}
-				<option value="{{ attributes_url }}/{{ a.name }}" {% ifequal attribute a %}selected{% endifequal %}>{{ a.name }}</option>
-				{% endfor %}
-			</select>
-		</td>
-	</table>
+	<label>Attribute Name:</label>
+	<select id="id_attribute" OnChange="location.href=document.getElementById('id_attribute').options[selectedIndex].value">
+		{% for a in attributes %}
+		<option value="{{ attributes_url }}/{{ a.name }}" {% ifequal attribute a %}selected{% endifequal %}>{{ a.name }}</option>
+		{% endfor %}
+	</select>
 {% endblock %}
 
 {% block sidebar %}
 	<div id="attributes_list" class="inset"></div>
-	
 {% endblock %}
 
 {% block presentation_area %}
 	<div id="presentation-area-sidebar">
-		<div class="widget" id="attribute_stats_widget">
-
-			<div class="widget-title">Stats</div>
-			<div class="widget-body">
-			<ul class="list">
-				<li>Number of tokens: <span class="value">{{ num_tokens }}</span></li>
-				<li>Number of types: <span class="value">{{ num_types }}</span></li>
-				<li>Number of documents: <span class="value">{{ num_docs }}</span></li>
-			</ul>{% comment %}
-				<table>
-					<tr>
-						<td>Number of tokens: </td>
-						<td class="left-align">{{ num_tokens }}</td>
-					</tr>
-					<tr>
-						<td>Number of types: </td>
-						<td class="left-align">{{ num_types }}</td>
-					</tr>
-					<tr>
-						<td>Number of documents: </td>
-						<td class="left-align">{{ num_docs }}</td>
-					</tr>
-				</table>{% endcomment %}
-			</div>
-		</div>
-		<div class="widget" id="top_words_widget">
-			<div class="widget-title">Top Words p(w|attribute)</div>
-			<img class="widget-body" src="{{ chart_address }}"/>
-		</div>
+		{% include "attribute_widgets/metrics.html" %}
+		{% include "attribute_widgets/top_words.html" %}
 	</div>
 	<div id="presentation-area-main-column">
-		<div class="widget" id="word_cloud_widget">
-			<div class="widget-title">Word Cloud</div>
-			<div class="widget-body">{{ word_cloud|safe }}</div>
+		<div class="ui-widget full" id="word-cloud">
+			<div class="ui-widget-header">Word Cloud</div>
+			<div class="ui-widget-content">{{ word_cloud|safe }}</div>
 		</div>
 		{% if ngram_cloud %}
-		<div class="widget" id="ngram_word_cloud_widget">
-			<div class="widget-title">N-Gram Word Cloud</div>
-			<div class="widget-body">{{ ngram_cloud|safe }}</div>
-		</div>
+		    {% include "attribute_widgets/ngram_cloud.html" %}
 		{% endif %}
 
-		<div class="widget" id="topic_cloud_widget">
-			<div class="widget-title">Topic Cloud</div>
-			<div class="widget-body">{{ topic_cloud|safe }}</div>
-		</div>
+		{% include "attribute_widgets/topic_cloud.html" %}
 	</div>
 {% endblock %}
