@@ -22,11 +22,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from collections import namedtuple
-
-from django import forms
 from django.shortcuts import render_to_response
-from django.template import Context
 
 from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common import BreadCrumb, root_context
@@ -35,9 +31,8 @@ from topic_modeling.visualize.common import Widget
 from topic_modeling.visualize.common import WordSummary
 from topic_modeling.visualize.documents.common import SortDocumentForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
-from topic_modeling.visualize.models import Dataset, AttributeValueDocument
+from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
-from topic_modeling.visualize.models import Topic
 
 
 def base_context(request, dataset, analysis, document):
@@ -111,13 +106,8 @@ def index(request, dataset, analysis, document=""):
 # Text widgets
 ##############
 
-# We only have one...  Maybe this should be formatted differently, I suppose
-
 def text_widgets(document, context):
     return plain_text_widget(document, context)
-#    top_level_widget = TopLevelWidget("Text")
-#    top_level_widget.widgets.append(plain_text_widget(document, context))
-#    return top_level_widget
 
 
 def plain_text_widget(document, context):
@@ -132,21 +122,24 @@ def plain_text_widget(document, context):
 def extra_information_widgets(analysis, document, context):
     top_level_widget = TopLevelWidget("Extra Information")
 
-    top_level_widget.widgets.append(stats_widget(document, context))
-    top_level_widget.widgets.append(top_topics_widget(analysis, document,
-            context))
-    top_level_widget.widgets.append(attributes_widget(context))
+    top_level_widget.add(metrics_widget(document, context))
+    top_level_widget.add(metadata_widget(document, context))
+    top_level_widget.add(top_topics_widget(analysis, document, context))
+    
+    
     top_level_widget.widgets[0].hidden = False
     return top_level_widget
 
 
-def stats_widget(document, context):
-    stats = Widget('Stats', 'document_widgets/metrics.html')
+def metrics_widget(document, context):
+    stats = Widget('Metrics', 'document_widgets/metrics.html')
     context['metrics'] = document.documentmetricvalue_set.all()
     return stats
 
-def attributes_widget(_context):
-    return Widget('Attributes', 'document_widgets/attributes.html')
+def metadata_widget(document, context):
+    context['docattrval_mgr'] = document.attributevaluedocument_set
+    context['metadataval_mgr'] = document.documentmetainfovalue_set
+    return Widget('Metadata', 'document_widgets/metadata_backcompat.html')
 
 def top_topics_widget(analysis, document, context):
     top_topics = Widget('Top Topics', 'document_widgets/top_topics.html')
