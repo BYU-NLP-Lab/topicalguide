@@ -33,6 +33,15 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block scripts %}
     {{block.super}}
     <script type="text/javascript" src="/site-media/scripts/datasets.js"></script>
+    <script charset="utf=8" type="text/javascript">
+        $(document).ready(function() {
+            $("#accordion").accordion();
+            image_preview();
+            $(".analysis-link").click(function(){
+                $("html").hide("fade", {}, 250);
+            });
+        });
+	</script>
 {% endblock %}
 
 {% block body %}
@@ -41,7 +50,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <header>
 	<h1><a href="{{topical_guide_project_url|safe}}">The Topical Guide</a></h1>
 	<h2>Available Datasets</h2>
-	
 </header>
 
 {% if datasets %}
@@ -50,37 +58,52 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     <div><a>{{dataset.readable_name}}</a></div>
     <div>
         <p class="description">{{dataset.description|linebreaks}}</p>
+        {% with dataset.datasetmetricvalue_set as metricval_mgr %}
+	        {% if metricval_mgr.count > 0 %}
+	            <table class="ui-widget metrics">
+	                <thead>
+	                    <tr class="ui-widget-header">
+	                        <th>Metric</th><th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody class="ui-widget-content">
+		                {% for metricvalue in metricval_mgr.all %}
+		                <tr>
+		                    <td class="key">{{metricvalue.metric.name}}</td>
+		                    <td class="value">{{metricvalue.value}}</td>
+		                </tr>
+		                {% endfor %}
+	                </tbody>
+	            </table>
+	        {% else %}
+	            <div class="ui-state-highlight">No metrics were found for this dataset.</div>
+	        {% endif %}
+        {% endwith %}
         
-        {% if dataset.datasetmetricvalue_set.all %}
-            <table class="metrics">
-                <tr><th>Metric</th><th>Value</th></tr>
-                {% for metricvalue in dataset.datasetmetricvalue_set.all %}
-                <tr>
-                    <td>{{metricvalue.metric.name}}</td>
-                    <td>{{metricvalue.value}}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        {% else %}
-            <div class="ui-state-highlight">No metrics were found for this dataset.</div>
-        {% endif %}
+        {% with dataset.datasetmetainfovalue_set as metadataval_mgr %}
+	        {% if metadataval_mgr.count > 0 %}
+	            <table class="ui-widget metadata">
+	                <thead>
+	                    <tr="ui-widget-header">
+	                        <th>Key</th><th>Value</th><th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody class="ui-widget-content">
+		                {% for metadatavalue in metadataval_mgr.all %}
+		                <tr>
+		                    <td class="key">{{metadatavalue.info_type.name}}</td>
+		                    <td class="value">{{metadatavalue.value}}</td>
+		                    <td class="value">{{metadatavalue.type}}</td>
+		                </tr>
+		                {% endfor %}
+	                </tbody>
+	            </table>
+	        {% else %}
+	            <div class="ui-state-highlight">No metadata found for this dataset.</div>
+	        {% endif %}
+        {% endwith %}
         
-        {% if dataset.datasetmetainfovalue_set.all %}
-            <table class="metrics">
-                <tr><th>Field</th><th>Value</th></tr>
-                {% for metainfovalue in dataset.datasetmetainfovalue_set.all %}
-                <tr>
-                    <td>{{metainfovalue.info_type.name}}</td>
-                    <td>{{metainfovalue.value}}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        {% else %}
-            <div class="ui-state-highlight">No meta info found for this dataset.</div>
-        {% endif %}
-        
-        
-        {% if dataset.analysis_set.all %}
+        {% if dataset.analysis_set.count > 0 %}
 	        <div id="analysis-container">
 		        Analyses
 		        <ul class="analyses">
@@ -90,58 +113,65 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 			            	<div class="ui-widget-content ui-corner-all	">
 				                <div class="ui-widget-header ui-corner-all">{{analysis.readable_name}}</div>
 				                
-				                {% if analysis.analysismetricvalue_set.all %}
-						            <table class="metrics">
-						                <tr><th>Metric</th><th>Value</th></tr>
-						                {% for metricvalue in analysis.analysismetricvalue_set.all %}
-						                <tr>
-						                    <td>{{metricvalue.metric.name}}</td>
-						                    <td>{{metricvalue.value}}</td>
-						                </tr>
-						                {% endfor %}
-						            </table>
-						        {% else %}
-						            <div class="ui-state-highlight">No metrics were found for this analysis.</div>
-						        {% endif %}
+				                {% with analysis.analysismetricvalue_set as metricval_mgr %}
+					                {% if metricval_mgr.count > 0 %}
+							            <table class="ui-widget metrics">
+							                <thead>
+							                    <tr class="ui-widget-header">
+							                        <th>Metric</th><th>Value</th>
+					                            </tr>
+				                            </thead>
+				                            <tbody class="ui-widget-content">
+								                {% for metricvalue in analysis.analysismetricvalue_set.all %}
+								                <tr>
+								                    <td class="key">{{metricvalue.metric.name}}</td>
+								                    <td class="value">{{metricvalue.value}}</td>
+								                </tr>
+								                {% endfor %}
+							                </tbody>
+							            </table>
+							        {% else %}
+							            <div class="ui-state-highlight">No metrics were found for this analysis.</div>
+							        {% endif %}
+						        {% endwith %}{# end with metricval_mgr #}
 						        
-						        {% if analysis.analysismetainfovalue_set.all %}
-						            <table class="metrics">
-						                <tr><th>Field</th><th>Value</th></tr>
-						                {% for metainfovalue in analysis.analysismetainfovalue_set.all %}
-						                <tr>
-						                    <td>{{metainfovalue.info_type.name}}</td>
-						                    <td>{{metainfovalue.value}}</td>
-						                </tr>
-						                {% endfor %}
-						            </table>
-						        {% else %}
-						            <div class="ui-state-highlight">No meta info found for this analysis.</div>
-						        {% endif %}
-				                
+						        {% with analysis.analysismetainfovalue_set as metadataval_mgr %}
+							        {% if metadataval_mgr.count > 0 %}
+							            <table class="ui-widget metrics">
+							                <thead>
+							                    <tr class="ui-widget-header">
+							                        <th>Key</th><th>Value</th><th>Type</th>
+							                    </tr>
+							                </thead>
+							                <tbody class="ui-widget-content">
+							                {% for metadatavalue in metadataval_mgr.all %}
+								                <tr>
+								                    <td class="key">{{metadatavalue.info_type.name}}</td>
+								                    <td class="value">{{metadatavalue.value}}</td>
+								                    <td class="value">{{metadatavalue.type}}</td>
+								                </tr>
+								                {% endfor %}
+							                </tbody>
+							            </table>
+							        {% else %}
+							            <div class="ui-state-highlight">No metadata found for this analysis.</div>
+							        {% endif %}
+				                {% endwith %}{# end with metadataval_mgr #}
 				                <div class="description">{{analysis.description|linebreaks}}</div>
 				                <img id="plot_{{dataset.name}}__{{analysis.name}}" src="{{plot_img_url}}"/>
 			                </div>
-			            </li>
-		            </a>
+			            </li>{# end analysis list item #}
+		            </a>{# end a.analysis-link #}
 		        {% endfor %}
-		        </ul>
-	        </div>
+		        </ul>{# end ul.analyses #}
+	        </div>{# end div.analysis-container #}
         {% else %}
             <div class="ui-state-highlight">No analyses yet.</div>
         {% endif %}
-    </div>
+    </div>{# end accordion item content div #}
     {% endfor %}
-</div>
-<script charset="utf=8" type="text/javascript">
-    {#update_plots();#}
-    $( "#accordion" ).accordion();
-    image_preview();
-    $(".analysis-link").click(function(){
-        $("html").hide("fade", {}, 250);
-    });
-</script>
+</div>{# end div#accordion #}
 {% else %}
     <div class="ui-state-highlight">No datasets yet. Try importing one using backend.py.</div>
 {% endif %}
 {% endblock %}{# end block body #}
-
