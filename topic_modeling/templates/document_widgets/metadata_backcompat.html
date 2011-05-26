@@ -21,11 +21,26 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-<table class="ui-widget">
-    <tr class="ui-widget-header"><th>Attribute</th><th>Value</th></tr>
-    <tbody class="ui-widget-content">
-    {% for attrvaldoc in document.attributevaluedocument_set.all %}
-        <tr><td class="key">{{attrvaldoc.attribute.name}}</td><td class="value">{{attrvaldoc.value.value}}</td></tr>
-    {% endfor %}
-    </tbody>
-</table>
+{% if metadataval_mgr.count > 0 or docattrval_mgr.count > 0 %}
+    <table class="ui-widget">
+        <tr class="ui-widget-header"><th>Key</th><th>Value</th><th>Type</th></tr>
+        <tbody class="ui-widget-content">
+        {% for docattrval in docattrval_mgr.all %}
+            <tr>
+                <td class="key">{{docattrval.attribute.name}}</td>
+                <td class="value">{{docattrval.value.value}}</td>
+                <td class="value">text</td>
+            </tr>
+        {% endfor %}
+        {% for metadatavalue in metainfoval_mgr.all %}
+            <tr>
+                <td class="key">{{metadatavalue.info_type.name}}</td>
+                <td class="value">{{metadatavalue.value}}</td>
+                <td class="value">{{metadatavalue.type}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <div class="ui-state-highlight">No metadata found.</div>
+{% endif %}

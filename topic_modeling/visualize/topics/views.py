@@ -242,7 +242,6 @@ def top_words_widgets(topic, context):
         w.url = word_url + topicword.word.type
         words.append(w)
 
-#    top_level_widget.widgets.append(word_clouds_widget(topic, words, context))
     top_level_widget.add(Widget('Word Cloud',html=unigram_cloud(words)))
     
     ttcloud = turbo_topics_cloud(topic.analysis, topic, context)
@@ -256,28 +255,11 @@ def top_words_widgets(topic, context):
     top_level_widget.widgets[0].hidden = False
     return top_level_widget
 
-
-#def word_clouds_widget(topic, words, context):
-#    word_cloud = Widget("Word Cloud", "topic_widgets/word_cloud.html")
-#    context['word_clouds'] = []
-#    # Name must not contain spaces!
-#    context['word_clouds'].append(Cloud('Unigram', get_word_cloud(words)))
-#    cloud = ngram_cloud(topic, context)
-#    if cloud:
-#        context['word_clouds'].append(cloud)
-#    clouds = turbo_topics_cloud(topic.analysis, topic, context)
-#    if clouds:
-#        context['word_clouds'].extend(clouds)
-#    return word_cloud
-
-
-
 def words_in_context_widget(words, context):
     words_in_context = Widget("Words in Context",
             "topic_widgets/words_in_context.html")
     context['words_in_context'] = words[:10]
     return words_in_context
-
 
 def word_chart_widget(words, context):
     word_chart = Widget("Word Chart", "topic_widgets/word_chart.html")
@@ -408,15 +390,14 @@ def topic_map_widget(topic, context):
 def extra_information_widgets(request, analysis, topic, context):
     top_level_widget = TopLevelWidget("Extra Information")
 
-    top_level_widget.widgets.append(stats_widget(topic, context))
-    top_level_widget.widgets.append(top_documents_widget(topic, context))
-    top_level_widget.widgets.append(top_values_widget(request, analysis, topic,
-            context))
+    top_level_widget.add(metrics_widget(topic, context))
+    top_level_widget.add(metadata_widget(topic, context))
+    top_level_widget.add(top_documents_widget(topic, context))
+    top_level_widget.add(top_values_widget(request, analysis, topic, context))
     top_level_widget.widgets[0].hidden = False
     return top_level_widget
 
-
-def stats_widget(topic, context):
+def metrics_widget(topic, context):
     stats = Widget('Metrics', 'topic_widgets/metrics.html')
     Metric = namedtuple('Metric', 'name value average')
     metrics = []
@@ -429,6 +410,9 @@ def stats_widget(topic, context):
     context['metrics'] = metrics
     return stats
 
+def metadata_widget(topic, context):
+    context['metadataval_mgr'] = topic.topicmetainfovalue_set
+    return Widget('Metadata', 'widgets/common/metadata.html')
 
 def top_documents_widget(topic, context):
     top_documents = Widget('Top Documents', 'topic_widgets/top_documents.html')
