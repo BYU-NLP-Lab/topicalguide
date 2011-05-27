@@ -82,17 +82,17 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	            $(this).removeClass("ui-state-hover");
 	        });
 	    </script>
-	    <div id="tab_content_area" class="ui-tabs-panel ui-widget-content ui-corner-bottom">
-	        <div id="sidebar_tab_panel_header">
+	    <div id="tab-content" class="ui-tabs-panel ui-widget-content ui-corner-bottom">
+	        <div class="header">
 	            {% block above_sidebar%}
 	            {% endblock %}
 	        </div>
-	        <div id="sidebar_tab_panel_body">
+	        <div class="body">
 	            {% block sidebar %}
 	                Options!
 	            {% endblock %}
 	        </div>
-	        <div id="sidebar_tab_panel_footer">
+	        <div class="footer">
 	            {% block sidebar_tab_panel_footer%}
 	            {% endblock %}
 	        </div>

@@ -40,12 +40,14 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block above_sidebar %}
-	<label>Attribute Name:</label>
-	<select id="id_attribute" OnChange="location.href=document.getElementById('id_attribute').options[selectedIndex].value">
-		{% for a in attributes %}
-		<option value="{{ attributes_url }}/{{ a.name }}" {% ifequal attribute a %}selected{% endifequal %}>{{ a.name }}</option>
-		{% endfor %}
-	</select>
+    <p>
+		<label for="id_attribute">Attribute Name:</label>
+		<select id="id_attribute" OnChange="location.href=document.getElementById('id_attribute').options[selectedIndex].value">
+			{% for a in attributes %}
+			<option value="{{ attributes_url }}/{{ a.name }}" {% ifequal attribute a %}selected{% endifequal %}>{{ a.name }}</option>
+			{% endfor %}
+		</select>
+	</p>
 {% endblock %}
 
 {% block sidebar %}
