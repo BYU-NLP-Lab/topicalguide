@@ -51,6 +51,7 @@ ul.nav_menu {
     /*left: 50%;*/
     /*position: relative;*/
     overflow: hidden;
+    background: none;
 }
 
 ul.nav_menu li {

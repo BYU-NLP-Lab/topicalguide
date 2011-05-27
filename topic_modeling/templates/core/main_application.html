@@ -89,12 +89,22 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	        </div>
 	        <div class="body">
 	            {% block sidebar %}
-	                Options!
+	                <div id="list-nav">
+                        <span id="back-arrows" class="arrows">
+                            <a id="first" class="ui-icon ui-icon-seek-first" title="First"></a>
+                            <a id="prev" class="ui-icon ui-icon-seek-prev" title="Previous"></a>
+					    </span>
+					    <span id="page-situation">Page <span id="current-page"></span> of <span id="page-count"></span>
+					    </span>
+					    <span id="fwd-arrows" class="arrows">
+					        <a id="last" class="ui-icon ui-icon-seek-end" title="Last"></a>
+					        <a id="next" class="ui-icon ui-icon-seek-next" title="Next"></a>
+					    </span>
+				    </div>
 	            {% endblock %}
 	        </div>
 	        <div class="footer">
-	            {% block sidebar_tab_panel_footer%}
-	            {% endblock %}
+	            {% block sidebar_tab_panel_footer%}{% endblock %}
 	        </div>
 	    </div>
 	</div>{# end div sidebar #}

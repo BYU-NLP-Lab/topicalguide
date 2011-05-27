@@ -34,6 +34,10 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		$.fn.topic_vars = function () {};
 		$.fn.topic_vars.curtopic_number = {{ curtopic.number }};
 		$.fn.topic_vars.post_link = "{{ topic_post_link }}";
+		
+		$(document).ready(function () {
+            get_page({{ page_num }});
+        });
 	</script>
 	<script type="text/javascript" src="/site-media/scripts/topics/filters.js">
     </script>
@@ -54,12 +58,8 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block sidebar %}
-	<div id="topics_list" class="inset"></div>
-	<script type="text/javascript">
-		$(document).ready(function () {
-			get_topic_page({{ page_num }});
-		});
-	</script>
+    {{block.super}}
+	<ul id="topics-list"></ul>
 {% endblock %}
 
 {% block presentation_area %}

@@ -25,24 +25,24 @@
 function redraw_documents(documents_list, page, num_pages) {
 	var curdoc = $.fn.doc_vars.document_id;
 	
-	var new_html = render_nav_arrows(page, num_pages, 'document');
+	set_nav_arrows(page, num_pages);
 	
-	new_html += '<ul class="list" id="document_list_body">';
+	var new_html = '';
 	for (var i = 0; i < documents_list.length; i++) {
 		new_html += '<li';
 		if (documents_list[i].id == curdoc) {
-			new_html += ' class="highlight"';
+			new_html += ' class="selected"';
 		}
 		new_html += '>';
 		new_html += '<a href="' + $.fn.documents_url + '/';
 		new_html += documents_list[i].id + '">';
 		new_html += documents_list[i].name + '</a></li>';
 	}
-	new_html += '</ul>';
 	
-	$("#documents_list").html(new_html);
+	$("ul#documents-list").html(new_html);
 }
-function get_document_page(page) {
+
+function get_page(page) {
 	cursor_wait();
 	var link = "/feeds/document-page/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;

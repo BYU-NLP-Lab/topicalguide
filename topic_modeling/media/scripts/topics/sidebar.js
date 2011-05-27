@@ -25,12 +25,13 @@
 function redraw_topics(topics_list, page, num_pages) {
 	var curtopic = $.fn.topic_vars.curtopic_number;
 	
-	var new_html = render_nav_arrows(page, num_pages, 'topic');
-	new_html += '<ul class="list" id="topic_list_body">';
+	set_nav_arrows(page, num_pages);
+	
+	var new_html = '';
 	for (var i = 0; i < topics_list.length; i++) {
 		new_html += '<li';
 		if (topics_list[i].number == curtopic) {
-			new_html += ' class="highlight"';
+			new_html += ' class="selected"';
 		}
 		new_html += '>';
 		new_html += '<a href="' + $.fn.topics_url;
@@ -38,23 +39,21 @@ function redraw_topics(topics_list, page, num_pages) {
 		new_html += $.fn.topic_vars.post_link;
 		new_html += '">';
 		new_html += topics_list[i].name;
-		      if (topics_list[i].topicgroup) {
+        if (topics_list[i].topicgroup) {
           new_html += ' - GROUP</a></li>';
           for(var j = 0; j < topics_list[i].topicgroup.length; j++) {
               new_html += '<li>';
               new_html += topics_list[i].topicgroup[j];
               new_html += '</li>';
           }
-        }
-        else {
+        } else {
           new_html += '</a></li>';
         }
 	}
-	new_html += '</ul>';
 	
-	$("#topics_list").html(new_html);
+	$("ul#topics-list").html(new_html);
 }
-function get_topic_page(page) {
+function get_page(page) {
 	cursor_wait();
 	var link = "/feeds/topic-page/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;

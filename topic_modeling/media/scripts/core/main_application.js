@@ -31,38 +31,30 @@ $("a.new-window[href]").live(
     }
 );
 
-function render_nav_arrows(current_page, num_pages, list_name) {
-    var new_html = '<div id="' + list_name + '_list_nav" class="list_nav">';
-    
-    new_html += '<span class="back_arrows">'
-    if (current_page != 1) {
-        new_html += '<a class="ui-icon ui-icon-seek-first" onclick="get_' + list_name + '_page(1)">'
-        new_html += '</a>';
-        new_html += '<a class="ui-icon ui-icon-seek-prev" onclick="get_' + list_name + '_page(';
-        new_html += (current_page-1) + ')">';
-        new_html += '</a>';
-    }
-    new_html += '</span>';
-    new_html += '<span class="centered header">';
-    new_html += 'Page ';
-    new_html += current_page + ' of ' + num_pages;
-    new_html += '</span>';
-    
-    new_html += '<span class="fwd_arrows">'
-    if (current_page != num_pages) {
-        
-        new_html += '<a class="ui-icon ui-icon-seek-end" onclick="get_' + list_name + '_page(';
-        new_html += num_pages+')">';
-        new_html += '</a>';
-        new_html += '<a class="ui-icon ui-icon-seek-next" onclick="get_' + list_name + '_page(';
-        new_html += (current_page+1)+')">';
-        new_html += '</a>';
-    }
-    new_html += '</span>';
-    
-    new_html += '</div>';
-    
-    return new_html;
+function set_nav_arrows(current_page, num_pages) {
+	$("div#list-nav > span#page-situation > span#current-page").html(current_page);
+	$("div#list-nav > span#page-situation > span#page-count").html(num_pages);
+	
+	$("div#list-nav > span#back-arrows > a#first").unbind('click').click(function() {
+		get_page(1);
+	});
+	$("div#list-nav > span#back-arrows > a#prev").unbind('click').click(function() {
+		get_page(current_page-1);
+	});
+	$("div#list-nav > span#fwd-arrows > a#last").unbind('click').click(function() {
+		get_page(num_pages);
+	});
+	$("div#list-nav > span#fwd-arrows > a#next").unbind('click').click(function() {
+		get_page(current_page+1);
+	});
+	
+	if (current_page == 1)
+		$("div#list-nav > span#back-arrows").hide();
+	else
+		$("div#list-nav > span#back-arrows").show();
+	
+	if(current_page == num_pages)
+		$("div#list-nav > span#fwd-arrows").hide();
+	else
+		$("div#list-nav > span#fwd-arrows").show();
 }
-
-
