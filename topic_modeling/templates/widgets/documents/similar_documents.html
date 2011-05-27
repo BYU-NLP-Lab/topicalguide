@@ -22,25 +22,27 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
-<div class="widget" id="turbo-topics-ngrams">
-	<div class="widget-body">
-		<table>
-			<tr>
-				<td>
-					<div class="clickable_text" id="id_turbo_topics_more">
-						More
-					</div>
-					<div class="turbo_topics_less">
-						{{ turbo_topics_less|linebreaks }}
-					</div>
-					<div class="turbo_topics_more" style="display:none">
-						{{ turbo_topics_more|linebreaks }}
-					</div>
-				</td>
-			</tr>
-		</table>
-	</div>
-	<script charset="utf-8" type="text/javascript"
-		src="/site-media/scripts/topics/turbo_topics.js">
-	</script>
+<div>
+	<table id="similar-documents" class="ui-widget">
+	    <thead><tr class="ui-widget-header"><th>Document</th><th>Similarity</th></tr></thead>
+	    <tbody class="ui-widget-content">{# Placeholder for the JavaScript #}</tbody>
+	</table>
+	<div>
+        by
+        <select id="similarity_measure" onChange="get_similar_documents()">
+            {% for s in similarity_measures %}
+            <option value="{{ s.name }}" {% ifequal similarity_measure s %}selected{% endifequal %}>
+                {{ s.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
 </div>
+<script charset="utf-8" type="text/javascript"
+	src="/site-media/scripts/widgets/documents/similar_documents.js">
+</script>
+<script charset="utf-8" type="text/javascript">
+    $().ready(function() {
+    	get_similar_documents();
+    });
+</script>

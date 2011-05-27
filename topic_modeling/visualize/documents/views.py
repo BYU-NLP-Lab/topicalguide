@@ -111,7 +111,7 @@ def text_widgets(document, context):
 
 
 def plain_text_widget(document, context):
-    text = Widget("Text", "document_widgets/document_text.html")
+    text = Widget("Text", "widgets/documents/document_text.html")
     context['document_text'] = document.text()
     return text
 
@@ -132,17 +132,17 @@ def extra_information_widgets(analysis, document, context):
 
 
 def metrics_widget(document, context):
-    stats = Widget('Metrics', 'document_widgets/metrics.html')
+    stats = Widget('Metrics', 'widgets/documents/metrics.html')
     context['metrics'] = document.documentmetricvalue_set.all()
     return stats
 
 def metadata_widget(document, context):
     context['docattrval_mgr'] = document.attributevaluedocument_set
     context['metadataval_mgr'] = document.documentmetainfovalue_set
-    return Widget('Metadata', 'document_widgets/metadata_backcompat.html')
+    return Widget('Metadata', 'widgets/documents/metadata_backcompat.html')
 
 def top_topics_widget(analysis, document, context):
-    top_topics = Widget('Top Topics', 'document_widgets/top_topics.html')
+    top_topics = Widget('Top Topics', 'widgets/documents/top_topics.html')
     topicdocs = document.documenttopic_set.filter(topic__analysis=analysis)
     total = 0
     topics = []
@@ -170,7 +170,7 @@ def similar_documents_widgets(request, analysis, document, context):
 
 
 def similar_documents_widget(request, analysis, document, context):
-    document_list = Widget("Similar Documents", "document_widgets/similar_documents.html")
+    document_list = Widget("Similar Documents", "widgets/documents/similar_documents.html")
     similarity_measures = analysis.pairwisedocumentmetric_set.all()
     if similarity_measures:
         measure = request.session.get('similarity_measure', None)

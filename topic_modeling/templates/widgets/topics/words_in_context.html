@@ -22,21 +22,36 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
-<div class="widget" id="similar-topics">
-	by
-	<select id="similarity-measure-select" onchange="get_similar_topics()">
-		{% for s in similarity_measures %}
-		<option value="{{ s.name }}"{% ifequal similarity_measure s %} selected="selected"{% endifequal %}>
-			{{ s.name }}
-		</option>
-		{% endfor %}
-	</select>
-	<table class="widget-body list" id="similar-topics-table">
-		{% for t in similar_topics %}
-			<tr><td><a href="{{ topics_url }}/{{ t.number }}">{{ t.name }}</a></td><td class="value">{{ t.value|floatformat:"2" }}<td></td></tr>
-		{% endfor %}
-	</table>
-	<script charset="utf-8" type="text/javascript"
-		src="/site-media/scripts/topics/similar_topics.js">
-	</script>
-</div>
+<table id="top-words-in-context" class="ui-widget kwic">
+	<col class="filename"/>
+	<col class="lcontext"/>
+	<col class="word"/>
+	<col class="rcontext"/>
+	<col class="reload"/>
+	<tr class="ui-widget-header">
+	    <th>Filename</th>
+	    <th>L. Context</th>
+	    <th>Word</th>
+	    <th>R. Context</th><th></th>
+	</tr>
+       <tbody class="ui-widget-content">
+	{# These rows are placeholders for jQuery to insert row content into #}
+	{% for word in words_in_context %}
+	<tr id="id_{{ word.word }}"><td></td><td></td><td></td><td></td><td></td></tr>
+	{% endfor %}
+	</tbody>
+</table>
+<script type="text/javascript">
+    $.fn.doc_base_url = "{{ doc_base_url }}";
+    $.fn.word_base_url = "{{ word_base_url }}";
+</script>
+<script type="text/javascript"
+	src="/site-media/scripts/widgets/topics/words_in_context.js">
+</script>
+<script type="text/javascript">
+	$(document).ready(function () {
+	{% for word in words_in_context %}
+		get_context_for_word("{{ word.word }}");
+	{% endfor %}
+	});
+</script>

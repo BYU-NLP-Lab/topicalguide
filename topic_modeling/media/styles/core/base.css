@@ -76,7 +76,7 @@ table tr:nth-child(even) {
 }
 
 /***** Unordered Lists *****/
-ul {
+ul.vertical {
     border-radius:5px;
     border-width: 1px;
     border-style: solid;
@@ -85,18 +85,18 @@ ul {
     background-color:#ffffee;
 }
 
-ul > li {
+ul.vertical > li {
 	list-style: none;
 	word-wrap: break-word;
 	padding: 0.25em 1em 0.25em 1em;
 }
 
-ul > li.selected, ul > li.selected:hover {
+ul.vertical > li.selected, ul > li.selected:hover {
 	border-radius: 5px;
 	background-color:#FFCC00;
 }
 
-ul > li:hover {
+ul.vertical > li:hover {
 	background-color: rgba(255,204,0,0.1);
 	transition: background 300ms ease;
 	-webkit-transition: background 300ms ease;
