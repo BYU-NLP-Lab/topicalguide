@@ -152,6 +152,17 @@ table.kwic tr td.doc-name {
     word-wrap:break-word;
 }
 
+/***** Sidebar *****/
+#sidebar > #tab-content h1 {
+	font-size: 20px;
+	text-align: center;
+}
+
+table.filters tr {
+	background: none;
+}
+
+
 /***** General *****/
 table.above_inset th {
     font-weight:normal;
@@ -159,16 +170,6 @@ table.above_inset th {
 
 td.remove:hover, .link:hover, .clickable_text:hover {
     cursor:pointer;
-}
-
-.sidebar_base {
-    padding:10px;
-    background-color:#99ccff;
-    border-left:1px solid black;
-    border-right:1px solid black;
-    border-bottom:1px solid black;
-    -moz-border-radius-bottomright:5px;
-    -moz-border-radius-bottomleft:5px;
 }
 
 .inset {
