@@ -257,12 +257,12 @@ def top_words_widgets(topic, context):
 
 def words_in_context_widget(words, context):
     words_in_context = Widget("Words in Context",
-            "topic_widgets/words_in_context.html")
+            "widgets/topics/words_in_context.html")
     context['words_in_context'] = words[:10]
     return words_in_context
 
 def word_chart_widget(words, context):
-    word_chart = Widget("Word Chart", "topic_widgets/word_chart.html")
+    word_chart = Widget("Word Chart", "widgets/topics/word_chart.html")
     context['chart_address'] = get_chart(words)
     return word_chart
 
@@ -323,7 +323,7 @@ def turbo_topics_cloud(analysis, topic, context):
         # block.
         #context['turbo_topics_less'] = '\n'.join(first_ten)
         #context['turbo_topics_more'] = '\n'.join(rest)
-        #context['extra_widgets'].append('topic_widgets/turbo_topics.html')
+        #context['extra_widgets'].append('widgets/topics/turbo_topics.html')
     except (TopicMetaInfo.DoesNotExist,
             TopicMetaInfoValue.DoesNotExist):
         pass
@@ -344,7 +344,7 @@ def similar_topics_widgets(request, analysis, topic, context):
 
 
 def similar_topic_list_widget(request, analysis, topic, context):
-    topic_list = Widget("Lists", "topic_widgets/similar_topics.html")
+    topic_list = Widget("Lists", "widgets/topics/similar_topics.html")
     similarity_measures = analysis.pairwisetopicmetric_set.all()
     if similarity_measures:
         name_scheme_id = request.session['current_name_scheme_id']
@@ -370,7 +370,7 @@ def similar_topic_list_widget(request, analysis, topic, context):
 
 
 def topic_map_widget(topic, context):
-    topic_map = Widget("Map", "topic_widgets/topic_map.html")
+    topic_map = Widget("Map", "widgets/topics/topic_map.html")
     path = str(topic.analysis.name) + '/' + context['currentnamescheme'].name \
             + '/' + str(topic.number) + '.svg'
     topic_map_local = context['topic_map_dir'] + '/' + path
@@ -398,7 +398,7 @@ def extra_information_widgets(request, analysis, topic, context):
     return top_level_widget
 
 def metrics_widget(topic, context):
-    stats = Widget('Metrics', 'topic_widgets/metrics.html')
+    stats = Widget('Metrics', 'widgets/topics/metrics.html')
     Metric = namedtuple('Metric', 'name value average')
     metrics = []
     for topicmetricvalue in topic.topicmetricvalue_set.select_related().all():
@@ -415,14 +415,14 @@ def metadata_widget(topic, context):
     return Widget('Metadata', 'widgets/common/metadata.html')
 
 def top_documents_widget(topic, context):
-    top_documents = Widget('Top Documents', 'topic_widgets/top_documents.html')
+    top_documents = Widget('Top Documents', 'widgets/topics/top_documents.html')
     topicdocs = topic.documenttopic_set.order_by('-count')[:10]
     context['top_docs'] = topicdocs
     return top_documents
 
 
 def top_values_widget(request, analysis, topic, context):
-    top_values_widget = Widget('Top Values', 'topic_widgets/top_values.html')
+    top_values_widget = Widget('Top Values', 'widgets/topics/top_values.html')
     context['attributes'] = analysis.dataset.attribute_set.all()
     current_attribute = request.session.get('topic-attribute', None)
     if not current_attribute:

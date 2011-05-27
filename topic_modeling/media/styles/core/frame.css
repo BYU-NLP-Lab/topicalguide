@@ -42,7 +42,7 @@
     background-color: hsla(210,85%,65%,1);
 }
 
-ul.nav_menu {
+ul.nav-menu {
     width: 100%;
     height: 26px;
     list-style-type: none;
@@ -54,7 +54,7 @@ ul.nav_menu {
     background: none;
 }
 
-ul.nav_menu li {
+ul.nav-menu li {
     height: 26px;
     line-height: 26px;
     float: left;
@@ -66,7 +66,7 @@ ul.nav_menu li {
 
 
 
-ul.nav_menu li#logo {
+ul.nav-menu li#logo {
     height: 26px;
     padding-left: 2px;
     padding-right: 2px;
@@ -74,11 +74,11 @@ ul.nav_menu li#logo {
     border: none;
 }
 
-ul.nav_menu li#branding a {
+ul.nav-menu li#branding a {
     height: 26px;
 }
 
-ul.nav_menu li#logo a img {
+ul.nav-menu li#logo a img {
     height: 26px;
     border: 0px;
 }
@@ -88,11 +88,11 @@ ul.nav_menu li#logo a img {
     stuff
 */
 
-ul.nav_menu li.breadcrumb {
+ul.nav-menu li.breadcrumb {
     padding: 0px;
 }
 
-ul.nav_menu li.breadcrumb > * {
+ul.nav-menu li.breadcrumb > * {
     color: white;
     text-decoration: none;
     padding-left: 20px;
@@ -106,7 +106,7 @@ ul.nav_menu li.breadcrumb > * {
     float: left;
 }
 
-ul.nav_menu li.breadcrumb > *:after {
+ul.nav-menu li.breadcrumb > *:after {
     content: " ";
     display: block;
     width: 0;
@@ -122,27 +122,27 @@ ul.nav_menu li.breadcrumb > *:after {
     background:url("/site-media/images/rarrow.png") no-repeat right center;
 }
 
-ul.nav_menu li.breadcrumb:first-child > * {
+ul.nav-menu li.breadcrumb:first-child > * {
     padding-left: 10px;
 }
-ul.nav_menu li.breadcrumb:nth-child(2) > *       { background:        hsla(210,85%,35%,1); padding-left: 10px;}
-ul.nav_menu li.breadcrumb:nth-child(2) > *:after { border-left-color: hsla(210,85%,35%,1); }
-ul.nav_menu li.breadcrumb:nth-child(3) > *       { background:        hsla(210,85%,45%,1); }
-ul.nav_menu li.breadcrumb:nth-child(3) > *:after { border-left-color: hsla(210,85%,45%,1); }
-ul.nav_menu li.breadcrumb:nth-child(4) > *       { background:        hsla(210,85%,55%,1); }
-ul.nav_menu li.breadcrumb:nth-child(4) > *:after { border-left-color: hsla(210,85%,55%,1); }
-ul.nav_menu li.breadcrumb:nth-child(5) > *       { background:        hsla(210,85%,65%,1); }
-ul.nav_menu li.breadcrumb:nth-child(5) > *:after { border-left-color: hsla(210,85%,65%,1); }
-ul.nav_menu li.breadcrumb:last-child > * {
+ul.nav-menu li.breadcrumb:nth-child(2) > *       { background:        hsla(210,85%,35%,1); padding-left: 10px;}
+ul.nav-menu li.breadcrumb:nth-child(2) > *:after { border-left-color: hsla(210,85%,35%,1); }
+ul.nav-menu li.breadcrumb:nth-child(3) > *       { background:        hsla(210,85%,45%,1); }
+ul.nav-menu li.breadcrumb:nth-child(3) > *:after { border-left-color: hsla(210,85%,45%,1); }
+ul.nav-menu li.breadcrumb:nth-child(4) > *       { background:        hsla(210,85%,55%,1); }
+ul.nav-menu li.breadcrumb:nth-child(4) > *:after { border-left-color: hsla(210,85%,55%,1); }
+ul.nav-menu li.breadcrumb:nth-child(5) > *       { background:        hsla(210,85%,65%,1); }
+ul.nav-menu li.breadcrumb:nth-child(5) > *:after { border-left-color: hsla(210,85%,65%,1); }
+ul.nav-menu li.breadcrumb:last-child > * {
     background: transparent !important;
     color: #000000;
     font-variant: small-caps;
     border: 0px;
 }
-ul.nav_menu li.breadcrumb:last-child > *:after {
+ul.nav-menu li.breadcrumb:last-child > *:after {
     background: transparent !important;
     border: 0px;
 }
 
-ul.nav_menu li.breadcrumb > *:hover { background: hsla(210,85%,25%,1); }
-ul.nav_menu li.breadcrumb > *:hover:after { border-left-color: hsla(210,85%,25%,1) !important; }
+ul.nav-menu li.breadcrumb > *:hover { background: hsla(210,85%,25%,1); }
+ul.nav-menu li.breadcrumb > *:hover:after { border-left-color: hsla(210,85%,25%,1) !important; }

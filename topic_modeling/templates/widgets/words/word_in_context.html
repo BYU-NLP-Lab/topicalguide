@@ -30,12 +30,14 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	    <col class="word"/>
 	    <col class="rcontext"/>
 	    <col class="reload"/>
-	    <tr class="ui-widget-header">
-	        <th>Filename</th>
-	        <th>L. Context</th>
-	        <th>Word</th>
-	        <th>R. Context</th><th></th>
-	    </tr>
+	    <thead>
+		    <tr class="ui-widget-header">
+		        <th>Filename</th>
+		        <th>L. Context</th>
+		        <th>Word</th>
+		        <th>R. Context</th><th></th>
+		    </tr>
+	    </thead>
         <tbody class="ui-widget-content">
         {# These rows are placeholders for jQuery to insert row content into #}
         {% for word in word_contexts %}
@@ -43,7 +45,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         {% endfor %}
         </tbody>
     </table>
-    <script type="text/javascript" src="/site-media/scripts/words/word_in_context.js">
+    <script type="text/javascript" src="/site-media/scripts/widgets/words/word_in_context.js">
     </script>
     <script type="text/javascript">
         $(document).ready(function () {

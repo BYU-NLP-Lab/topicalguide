@@ -22,42 +22,42 @@
  * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
  */
 
-function redraw_words(word_list, page, num_pages) {
+function update_list_contents(word_list) {
     var curword = $.fn.word_vars.curword;
-    var new_html = render_nav_arrows(page, num_pages, 'word');
-    
-    new_html += '<ul class="list" id="word_list_body">';
+    var new_html = '';
     for (var i = 0; i < word_list.length; i++) {
         new_html += '<li';
         if (word_list[i].type == curword) {
-            new_html += ' class="highlight"';
+            new_html += ' class="selected"';
         }
         new_html += '>';
         new_html += '<a href="' + $.fn.words_url;
         new_html += '/' + word_list[i].type + '">';
         new_html += word_list[i].type + '</a></li>';
     }
-    new_html += '</ul>';
-    $("#word_list").html(new_html);
+    $("ul#words-list").html(new_html);
 }
-function get_word_page(page) {
+
+function redraw_list_control(json_link) {
+	$.getJSON(json_link, {}, function(data) {
+		set_nav_arrows(data.page, data.num_pages);
+		update_list_contents(data.words);
+		cursor_default();
+	});
+}
+
+function get_page(page) {
     cursor_wait();
-    $.getJSON('/feeds/word-page/datasets/' + $.fn.dataset
+    var link = '/feeds/word-page/datasets/' + $.fn.dataset
             + '/analyses/' + $.fn.analysis
-            + '/number/' + page,
-            {}, function(data) {
-            redraw_words(data.words, data.page, data.num_pages);
-            cursor_default();
-    });
+            + '/number/' + page;
+    redraw_list_control(link);
 }
 function find_word() {
     cursor_wait();
-    word_base = document.getElementById("id_find_word").value;
-    $.getJSON('/feeds/word-page-find/datasets/' + $.fn.dataset
+    var word_base = $("#id_find_word").val();
+    var link = '/feeds/word-page-find/datasets/' + $.fn.dataset
             + '/analyses/' + $.fn.analysis
-            + '/words/' + word_base,
-            {}, function(data) {
-            redraw_words(data.words, data.page, data.num_pages);
-            cursor_default();
-    }); 
+            + '/words/' + word_base;
+    redraw_list_control(link);
 }

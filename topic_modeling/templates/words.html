@@ -28,8 +28,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	<script charset="utf-8" type="text/javascript">
 		$.fn.word_vars = function () {};
 		$.fn.word_vars.curword = "{{ curword.type }}";
+		$(document).ready(function () {
+            get_page({{ page_num }});
+        });
 	</script>
-	<script charset="utf-8" type="text/javascript" src="/site-media/scripts/words/words.js">
+	<script charset="utf-8" type="text/javascript" src="/site-media/scripts/words.js">
     </script>
 {% endblock %}
 
@@ -38,21 +41,17 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block sidebar %}
-	<div id="word_list" class="inset"></div>
-	<script charset="utf=8" type="text/javascript">
-		$(document).ready(function () {
-			get_word_page({{ page_num }});
-		});
-	</script>
+    {{block.super}}
+	<ul id="words-list" class="vertical"></ul>
 {% endblock %}
 
 {% block presentation_area %}
 	<div id="presentation-area-main-column">
-		{% include "word_widgets/word_in_context.html" %}
+		{% include "widgets/words/word_in_context.html" %}
 	</div>
 	<div id="presentation-area-sidebar">
-		{% include "word_widgets/total_count.html" %}
-		{% include "word_widgets/top_topics.html" %}
-		{% include "word_widgets/top_documents.html" %}
+		{% include "widgets/words/total_count.html" %}
+		{% include "widgets/words/top_topics.html" %}
+		{% include "widgets/words/top_documents.html" %}
 	</div>
 {% endblock %}
