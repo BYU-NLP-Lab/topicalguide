@@ -74,3 +74,36 @@ table tr:nth-child(odd) {
 table tr:nth-child(even) {
 	background-color: #fffcef
 }
+
+/***** Unordered Lists *****/
+ul {
+    border-radius:5px;
+    border-width: 1px;
+    border-style: solid;
+    padding: 0;
+    margin: 0;
+    background-color:#ffffee;
+}
+
+ul > li {
+	list-style: none;
+	word-wrap: break-word;
+	padding: 0.25em 1em 0.25em 1em;
+}
+
+ul > li.selected, ul > li.selected:hover {
+	border-radius: 5px;
+	background-color:#FFCC00;
+}
+
+ul > li:hover {
+	background-color: rgba(255,204,0,0.1);
+	transition: background 300ms ease;
+	-webkit-transition: background 300ms ease;
+    -moz-transition: background 300ms ease;
+}
+
+/***** Other Elements *****/
+label {
+    font-weight:normal;
+}
