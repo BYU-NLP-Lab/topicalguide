@@ -78,12 +78,22 @@ class PmiDb(object):
         d.execute(sql)
         for row in d:
             yield row[0]
+            
+    def words_as_sql_list(self, words):
+        if isinstance(words,list):
+            words = set(words)
+        else:
+            words = set([words])
+        return "('{0}')".format("','".join(words))
     
-    def word_pairs(self, contains, min_count=None):
-        sql = 'select word1,word2,count from cocounts where word1="%s" or word2="%s"' % (contains,contains)
+    def word_pairs(self, required_words, min_count=None):
+        required_words_list = self.words_as_sql_list(required_words)
+        
+        sql = 'select word1,word2,count from cocounts where word1 in %s or word2 in %s' % (required_words_list,required_words_list)
         if min_count:
             sql += ' and count >= '+str(min_count)
         sql += ';'
+        print sql
         z  = self.conn.cursor().execute(sql)
         
         def gen():
@@ -96,8 +106,12 @@ class PmiDb(object):
         
         return gen()
     
-    def word_pair_count(self, contains):
-        sql = 'select count(*) from cocounts where word1="%s" or word2="%s";' % (contains, contains)
+    def word_pair_count(self, required_words, min_count=None):
+        required_words_list = self.words_as_sql_list(required_words)
+        sql = 'select count(*) from cocounts where word1 in %s or word2 in %s' % (required_words_list,required_words_list)
+        if min_count:
+            sql += ' and count >= ' + str(min_count)
+        sql += ';'
         z = self.conn.cursor().execute(sql)
         return z.next()[0]
     
