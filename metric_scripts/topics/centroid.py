@@ -14,6 +14,33 @@ from helper_scripts.pmidb import PmiDb
 from topic_modeling.visualize.models import Analysis
 
 environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+class AbstractCentroidFinder(object):
+    def __init__(self, countsfile):
+        self.db = PmiDb(countsfile, isolation_level="DEFERRED")
+
+    def topic_summary(self, topic):
+        s = 'Topic ' + str(topic.number)
+        for tw in sorted(topic.topicword_set.all(),key=lambda x:x.count,reverse=True)[0:20]:
+            s += "\t"+tw.word.type + ": " + str(tw.count)
+        return s
+
+
+    def save(self, topic, weighted_sums):
+        best = sorted(weighted_sums.items(), key=lambda x:x[1], reverse=True)
+        print str(best[0:n])
+        print
+
+        f = open(environ['HOME'] + '/Projects/topicalguide/output/centroids/{0}_{1}_{2}.txt'.format(topic.analysis.dataset.name,topic.analysis.name,topic.number), 'w')
+        f.write(self.topic_summary(topic))
+        f.write('\n')
+        for word in best:
+            count = weighted_sum[word]
+            f.write(word)
+            f.write(',')
+            f.write(str(count))
+            f.write('\n')
+        f.close()
+
 
 class BestValues:
     def __init__(self, n, type='max', key=lambda x:x):
@@ -76,10 +103,7 @@ class CentroidFinder:
                 sum += p_word2*pmi
         return sum
 
-class CentroidFinder2:
-    def __init__(self, countsfile):
-        self.db = PmiDb(countsfile, isolation_level="DEFERRED")
-    
+class CentroidFinder2(AbstractCentroidFinder):
     def centroids(self, topic, n=20, min_word_count=1.0, min_cocount=3.0):
         topic_words = topic.topicword_set.select_related().order_by('-count')
         weighted_sums = dict()
@@ -130,22 +154,10 @@ class CentroidFinder2:
             print
             print 'Pairs skipped for lack of word counts: ' + str(skipped_words)
             print 'Pairs skipped for lack of cocounts: ' + str(skipped_cocounts)
-            best = sorted(weighted_sums.items(), key=lambda x:x[1], reverse=True)
-            print str(best[0:n])
-            print
-        f = open(environ['HOME'] + '/Projects/topicalguide/output/centroids/{0}_{1}_{2}.txt'.format(topic.analysis.dataset.name,topic.analysis.name,topic.number), 'w')
-        for word,count in best.items():
-            f.write(word)
-            f.write(',')
-            f.write(str(count))
-            f.write('\n')
-        f.close()
+            self.save(topic, weighted_sums)
         print
 
-class CentroidFinder3:
-    def __init__(self, countsfile):
-        self.db = PmiDb(countsfile, isolation_level="DEFERRED")
-    
+class CentroidFinder3(AbstractCentroidFinder):
     def centroids(self, topic, n=20, min_word_count=1.0, min_cocount=3.0):
         total_counts = self.db.total_counts()
         total_cocounts = self.db.total_cocounts()
@@ -188,10 +200,10 @@ class CentroidFinder3:
                     skipped_cocounts += 1
                 else:
                     p_joint = cocount / total_cocounts
-                    if i % 1000 == 0:
-                        print '({0},{1})'.format(word1,word2)
+                    if i % 10000 == 0:
+                        print '({0},{1})'.format(word1,word2),
                         sys.stdout.flush()
-                        if i % 20000 == 0: print
+                        if i % 100000 == 0: print
                     c_word1 = float(self.db.count(word1))
                     if c_word1 < min_word_count:
                         skipped_words += 1
@@ -207,17 +219,7 @@ class CentroidFinder3:
         print
         print 'Pairs skipped for lack of word counts: ' + str(skipped_words)
         print 'Pairs skipped for lack of cocounts: ' + str(skipped_cocounts)
-        best = sorted(weighted_sums.items(), key=lambda x:x[1], reverse=True)
-        print str(best[0:n])
-        print
-        
-        f = open(environ['HOME'] + '/Projects/topicalguide/output/centroids/{0}_{1}_{2}.txt'.format(topic.analysis.dataset.name,topic.analysis.name,topic.number), 'w')
-        for word,count in best.items():
-            f.write(word)
-            f.write(',')
-            f.write(str(count))
-            f.write('\n')
-        f.close()
+        self.save(topic, weighted_sums)
         print
 
 if __name__ == '__main__':
