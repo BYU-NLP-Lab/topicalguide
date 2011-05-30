@@ -221,7 +221,7 @@ class CentroidFinder3:
         print
 
 if __name__ == '__main__':
-    cf = CentroidFinder2(environ['HOME']+'/Data/wikipedia.org/wikipedia_counts4.sqlite3')
+    cf = CentroidFinder3(environ['HOME']+'/Data/wikipedia.org/wikipedia_counts4.sqlite3')
     
     a = Analysis.objects.get(name='lda100topics', dataset__name='state_of_the_union')
     topics = [x for x in a.topic_set.all()]#.order_by('number')
