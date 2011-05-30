@@ -98,10 +98,7 @@ class CentroidFinder2:
             for i,(word1,word2,cocount) in enumerate(self.db.word_pairs(type,min_count=min_cocount)):
                 cocount = float(cocount)
                 if word1 != word2:
-                    if cocount==0:
-                        sys.stderr.write('.')
-                        skipped_cocounts += 1
-                    elif cocount < min_cocount:
+                    if cocount < min_cocount:
                         skipped_cocounts += 1
                     else:
                         p_joint = cocount / total_cocounts
@@ -120,7 +117,6 @@ class CentroidFinder2:
                             if c_word2 < min_word_count:
                                 skipped_words += 1
                             else:
-                                #total_qualifying_words += 1.0
                                 p_word2 = c_word2 / total_counts
                                 
                                 pmi = log(p_joint) - log(p_word1) - log(p_word2)
@@ -137,7 +133,7 @@ class CentroidFinder2:
             best = sorted(weighted_sums.items(), key=lambda x:x[1], reverse=True)
             print str(best[0:n])
             print
-        f = open(environ['HOME'] + '/Projects/topicalguide/output/centroids/' + topic.dataset.name + '_' + str(topic.number) + '.txt', 'w')
+        f = open(environ['HOME'] + '/Projects/topicalguide/output/centroids/{0}_{1}_{2}.txt'.format(topic.analysis.dataset.name,topic.analysis.name,topic.number), 'w')
         for word,count in best.items():
             f.write(word)
             f.write(',')
@@ -188,10 +184,7 @@ class CentroidFinder3:
         for i,(word1,word2,cocount) in enumerate(self.db.word_pairs(topic_word_types,min_count=min_cocount)):
             cocount = float(cocount)
             if word1 != word2:
-                if cocount==0:
-                    sys.stderr.write('.')
-                    skipped_cocounts += 1
-                elif cocount < min_cocount:
+                if cocount < min_cocount:
                     skipped_cocounts += 1
                 else:
                     p_joint = cocount / total_cocounts
@@ -218,7 +211,7 @@ class CentroidFinder3:
         print str(best[0:n])
         print
         
-        f = open(environ['HOME'] + '/Projects/topicalguide/output/centroids/' + topic.dataset.name + '_' + str(topic.number) + '.txt', 'w')
+        f = open(environ['HOME'] + '/Projects/topicalguide/output/centroids/{0}_{1}_{2}.txt'.format(topic.analysis.dataset.name,topic.analysis.name,topic.number), 'w')
         for word,count in best.items():
             f.write(word)
             f.write(',')
@@ -228,7 +221,7 @@ class CentroidFinder3:
         print
 
 if __name__ == '__main__':
-    cf = CentroidFinder3(environ['HOME']+'/Data/wikipedia.org/wikipedia_counts4.sqlite3')
+    cf = CentroidFinder2(environ['HOME']+'/Data/wikipedia.org/wikipedia_counts4.sqlite3')
     
     a = Analysis.objects.get(name='lda100topics', dataset__name='state_of_the_union')
     topics = [x for x in a.topic_set.all()]#.order_by('number')
