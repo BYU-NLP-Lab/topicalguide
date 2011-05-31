@@ -15,8 +15,9 @@ from topic_modeling.visualize.models import Analysis
 
 environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 class AbstractCentroidFinder(object):
-    def __init__(self, countsfile):
+    def __init__(self, countsfile, n=20):
         self.db = PmiDb(countsfile, isolation_level="DEFERRED")
+        self.n = n
 
     def topic_summary(self, topic):
         s = 'Topic ' + str(topic.number)
@@ -26,15 +27,15 @@ class AbstractCentroidFinder(object):
 
 
     def save(self, topic, weighted_sums):
+        
         best = sorted(weighted_sums.items(), key=lambda x:x[1], reverse=True)
-        print str(best[0:n])
+        print str(best[0:self.n])
         print
 
         f = open(environ['HOME'] + '/Projects/topicalguide/output/centroids/{0}_{1}_{2}.txt'.format(topic.analysis.dataset.name,topic.analysis.name,topic.number), 'w')
         f.write(self.topic_summary(topic))
         f.write('\n')
-        for word in best:
-            count = weighted_sum[word]
+        for word,count in best:
             f.write(word)
             f.write(',')
             f.write(str(count))
@@ -104,7 +105,7 @@ class CentroidFinder:
         return sum
 
 class CentroidFinder2(AbstractCentroidFinder):
-    def centroids(self, topic, n=20, min_word_count=1.0, min_cocount=3.0):
+    def centroids(self, topic, min_word_count=1.0, min_cocount=3.0):
         topic_words = topic.topicword_set.select_related().order_by('-count')
         weighted_sums = dict()
         
@@ -158,7 +159,7 @@ class CentroidFinder2(AbstractCentroidFinder):
         print
 
 class CentroidFinder3(AbstractCentroidFinder):
-    def centroids(self, topic, n=20, min_word_count=1.0, min_cocount=3.0):
+    def centroids(self, topic, min_word_count=1.0, min_cocount=3.0):
         total_counts = self.db.total_counts()
         total_cocounts = self.db.total_cocounts()
         
@@ -223,7 +224,7 @@ class CentroidFinder3(AbstractCentroidFinder):
         print
 
 if __name__ == '__main__':
-    cf = CentroidFinder3(environ['HOME']+'/Data/wikipedia.org/wikipedia_counts4.sqlite3')
+    cf = CentroidFinder2(environ['HOME']+'/Data/wikipedia.org/wikipedia_counts4.sqlite3')
     
     a = Analysis.objects.get(name='lda100topics', dataset__name='state_of_the_union')
     topics = [x for x in a.topic_set.all()]#.order_by('number')
