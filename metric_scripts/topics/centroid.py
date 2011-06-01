@@ -128,7 +128,7 @@ class UnifiedPassCentroidFinder(AbstractCentroidFinder):
             if word2 in topic_word_types:
                 increment(word2, word1, word2count)
         
-        print 'Relevant pairs: {0}'.format(self.db.word_pair_count(topic_word_types,min_count=min_cocount))
+#        print 'Relevant pairs: {0}'.format(self.db.word_pair_count(topic_word_types,min_count=min_cocount))
             
         skipped_words = 0
         skipped_cocounts = 0
@@ -142,7 +142,9 @@ class UnifiedPassCentroidFinder(AbstractCentroidFinder):
                     if i % 10000 == 0:
                         print '({0},{1})'.format(word1,word2),
                         sys.stdout.flush()
-                        if i % 100000 == 0: print
+                        if i % 100000 == 0:
+                            print i
+                            self.print_status(weighted_sums)
                     c_word1 = float(self.db.count(word1))
                     if c_word1 < min_word_count:
                         skipped_words += 1
