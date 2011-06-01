@@ -25,18 +25,18 @@ class AbstractCentroidFinder(object):
             s += "\t"+tw.word.type + ": " + str(tw.count)
         return s
 
-    def print_status(self, weighted_sums):
-        self._print_status(self._best(weighted_sums))
+    def print_status(self, weighted_sums, n=None):
+        self._print_status(self._best(weighted_sums), n if n else self.n)
     
     def _best(self, weighted_sums):
         return sorted(weighted_sums.items(), key=lambda x:x[1], reverse=True)
     
-    def _print_status(self, best):
-        print str(best[0:self.n])
+    def _print_status(self, best, n):
+        print str(best[0:n])
 
     def save(self, topic, weighted_sums):
         best = self._best(weighted_sums)
-        self._print_status(best)
+        self._print_status(best, self.n)
         print
         
         f = open(environ['HOME'] + '/Projects/topicalguide/output/centroids/{0}_{1}_{2}.txt'.format(topic.analysis.dataset.name,topic.analysis.name,topic.number), 'w')
@@ -75,7 +75,7 @@ class CentroidFinder(AbstractCentroidFinder):
                     if i % 1000 == 0:
                         print word,
                         sys.stdout.flush()
-                        if i % 5000 == 0: print i,
+                        if i % 5000 == 0 and i > 0: print i,
                     
                     c_word1 = float(self.db.count(word1))
                     if c_word1 < min_word_count:
@@ -110,11 +110,14 @@ class UnifiedPassCentroidFinder(AbstractCentroidFinder):
         total_cocounts = self.db.total_cocounts()
         
         topic_words = topic.topicword_set.select_related().order_by('-count')
-        topic_word_types = [tw.word.type for tw in topic_words]
+        topic_word_weights = dict()
+        for tw in topic_words:
+            topic_word_weights[tw.word.type] = tw.count
+        topic_word_types = topic_word_weights.keys()
         
         weighted_sums = dict()
-        def increment(topic_word, other_word, topic_word_weight):
-            weighted_pmi = topic_word_weight * pmi
+        def increment(topic_word, other_word):
+            weighted_pmi = topic_word_weights[topic_word] * pmi
             
             try:
                 previous_sum = weighted_sums[other_word]
@@ -122,11 +125,11 @@ class UnifiedPassCentroidFinder(AbstractCentroidFinder):
                 previous_sum = 0.0
             weighted_sums[other_word] = previous_sum + weighted_pmi
         
-        def count_pair(word1, word2, word1count, word2count, pmi):
+        def count_pair(word1, word2, pmi):
             if word1 in topic_word_types:
-                increment(word1, word2, word1count)
+                increment(word1, word2)
             if word2 in topic_word_types:
-                increment(word2, word1, word2count)
+                increment(word2, word1)
         
 #        print 'Relevant pairs: {0}'.format(self.db.word_pair_count(topic_word_types,min_count=min_cocount))
             
@@ -142,9 +145,9 @@ class UnifiedPassCentroidFinder(AbstractCentroidFinder):
                     if i % 10000 == 0:
                         print '({0},{1})'.format(word1,word2),
                         sys.stdout.flush()
-                        if i % 100000 == 0:
-                            print i
-                            self.print_status(weighted_sums)
+                        if i % 100000 == 0 and i > 0:
+                            print '\n{0}',
+                            self.print_status(weighted_sums,n=5)
                     c_word1 = float(self.db.count(word1))
                     if c_word1 < min_word_count:
                         skipped_words += 1
@@ -156,7 +159,7 @@ class UnifiedPassCentroidFinder(AbstractCentroidFinder):
                         else:
                             p_word2 = c_word2 / total_counts
                             pmi = log(p_joint) - log(p_word1) - log(p_word2)
-                            count_pair(word1, word2, c_word1, c_word2, pmi)
+                            count_pair(word1, word2, pmi)
         print
         print 'Pairs skipped for lack of word counts: ' + str(skipped_words)
         print 'Pairs skipped for lack of cocounts: ' + str(skipped_cocounts)
