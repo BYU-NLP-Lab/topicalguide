@@ -70,15 +70,15 @@ class PmiDb(object):
         return log(cocounts) - log(self.count(word1)) - log(self.count(word2))
     
     def words(self, min_count=None):
-        d = self.conn.cursor()
         sql = 'select word from word_counts'
         if min_count:
             sql += ' where count >= '+str(min_count)
         sql += ';'
-        d.execute(sql)
-        for row in d:
+        print sql
+        z = self.conn.cursor().execute(sql)
+        for row in z:
             yield row[0]
-            
+    
     def words_as_sql_list(self, words):
         if isinstance(words,list):
             words = set(words)
@@ -86,39 +86,31 @@ class PmiDb(object):
             words = set([words])
         return "('{0}')".format("','".join(words))
     
-    def word_pairs(self, required_words, min_count=None):
-        required_words_list = self.words_as_sql_list(required_words)
-        
-        sql = 'select word1,word2,count from cocounts where word1 in %s or word2 in %s' % (required_words_list,required_words_list)
-        if min_count:
-            sql += ' and count >= '+str(min_count)
-        sql += ';'
+    def _word_pair_from_sql(self, required_words, min_count=None, notequal=None):
+        if isinstance(required_words, list):
+            condition = " in ('{0}')".format("','".join(required_words))
+        else:
+            condition = "='{0}'".format(required_words)
+        count_sql = ' and count >= {0}'.format(min_count) if min_count else ''
+        noteq_sql = ' and word1 != word2' if notequal else ''
+        return 'from cocounts where (word1{condition} or word2{condition}){count}{noteq};' \
+               .format(condition=condition, count=count_sql, noteq=noteq_sql)
+    
+    def word_pairs(self, required_words, min_count=None, notequal=None):
+        sql = 'select word1,word2,count '+self._word_pair_from_sql(required_words, min_count=min_count, notequal=notequal)
         print sql
         z  = self.conn.cursor().execute(sql)
-        
-        def gen():
-            ended = False
-            while not ended:
-                try:
-                    yield z.next()[0:3]
-                except:
-                    ended = True
-        
-        return gen()
+        for row in z:
+            yield row[0:3]
     
-    def word_pair_count(self, required_words, min_count=None):
-        required_words_list = self.words_as_sql_list(required_words)
-        sql = 'select count(*) from cocounts where word1 in %s or word2 in %s' % (required_words_list,required_words_list)
-        if min_count:
-            sql += ' and count >= ' + str(min_count)
-        sql += ';'
+    def word_pair_count(self, required_words, min_count=None, notequal=None):
+        sql = 'select count(*) '+self._word_pair_from_sql(required_words, min_count=min_count, notequal=notequal)
+        print sql
         z = self.conn.cursor().execute(sql)
         return z.next()[0]
     
     def set_count(self, word, count):
-#        print "c("+word+")="+str(count)
         self.c.execute('''insert into word_counts (word,count) values("%s",%s);''' % (word,count))
     
     def set_cocount(self, word1, word2, count):
-#        print "c("+word1+","+word2+")="+str(count)
         self.c.execute('''insert into cocounts (word1,word2,count) values("%s","%s",%s);''' % (word1,word2,count))
