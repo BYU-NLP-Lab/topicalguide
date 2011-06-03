@@ -245,21 +245,6 @@ def create_attrvaltopic_table(attrvaltopic, attr_index, val_index, topic_index):
 # Parsing and other intermediate code (not directly modifying the database)
 #############################################################################
 
-def parse_analysis_description(description_file):
-    print >> sys.stderr, 'Reading analysis file...'
-    f = open(description_file).read()
-    vars = anyjson.deserialize(f)
-    print >> sys.stderr, 'This is the information I found about the analysis.'
-    print >> sys.stderr, 'Cancel this now and fix your description file if',
-    print >> sys.stderr, 'this is wrong.\n'
-    print >> sys.stderr, 'Name:', vars['name']
-    print >> sys.stderr, 'State File:', vars['state_file']
-    print >> sys.stderr, 'Description:'
-    print >> sys.stderr, vars['description']
-    print >> sys.stderr
-    return vars
-
-
 def parse_attributes(attribute_file):
     """
     Parse the contents of the attributes file, which should
