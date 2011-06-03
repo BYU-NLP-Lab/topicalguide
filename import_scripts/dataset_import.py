@@ -326,23 +326,6 @@ def create_attrvalword_table(attrvalword, attr_index, value_index, word_index):
 # Parsing and other intermediate code (not directly modifying the database)
 #############################################################################
 
-def parse_dataset_description(description_file):
-    print >> sys.stderr, 'Reading dataset file...'
-    f = open(description_file, 'r').read()
-    values_map = anyjson.deserialize(f)
-    print >> sys.stderr, 'This is the information I found about the dataset.'
-    print >> sys.stderr, 'Cancel this now and fix your description file if',
-    print >> sys.stderr, 'this is wrong.\n'
-    print >> sys.stderr, 'Name:', values_map['name']
-    print >> sys.stderr, 'Attribute File:', values_map['attribute_file']
-    print >> sys.stderr, 'Data Root:', values_map['data_root']
-    print >> sys.stderr, 'Description:'
-    print >> sys.stderr, values_map['description']
-    print >> sys.stderr
-    return (values_map['name'], values_map['attribute_file'],
-            values_map['data_root'], values_map['description'])
-
-
 def parse_attributes(attribute_file):
     """
     Parse the contents of the attributes file, which should
