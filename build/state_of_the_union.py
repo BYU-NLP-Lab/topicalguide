@@ -33,14 +33,14 @@ dataset_readable_name = 'State of the Union Addresses 1790-2010'
 dataset_description = \
 '''State of the Union Addresses taken from WikiSource by adding all
  addresses to a "book" and downloading it. Created by Josh Hansen.'''
-suppress_default_attributes_task = True
+suppress_default_document_metadata_task = True
 
-def task_attributes():
+def task_document_metadata():
     task = dict()
-    task['targets'] = [attributes_file]
+    task['targets'] = [metadata_filenames['documents']]
     task['actions'] = [(generate_attributes_file,
-                [dataset_dir+'/'+chron_list_filename, attributes_file])]
-    task['clean'] = ['rm -f '+attributes_file]
+                [dataset_dir+'/'+chron_list_filename, metadata_filenames['documents']])]
+    task['clean'] = ['rm -f '+metadata_filenames['documents']]
     return task
 
 def task_extract_data():

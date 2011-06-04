@@ -47,11 +47,8 @@ analysis = None
 
 NUM_DOTS = 100
 
-# This could maybe benefit from the use of a logger, but I didn't care enough
-# to put one in, so I just use print statements.
-
 def import_analysis(name, readable_name, description, dataset_name, dataset_attr_file,
-        state_file, tokenized_file, files_dir, token_regex):
+        analysis_metadata_file, state_file, tokenized_file, files_dir, token_regex):
     print >> sys.stderr, "analysis_import({0}, {1}, {2}, {3}, {4}, {5}, {6})".\
             format(name, readable_name, description, dataset_name, dataset_attr_file,
         state_file, tokenized_file, files_dir, token_regex)

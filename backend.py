@@ -143,10 +143,14 @@ if 'mallet_optimize_interval' not in locals():
 if 'mallet_num_iterations' not in locals():
     mallet_num_iterations = 50
 
-# For dynamically generated attributes file, define task_attributes_file with
-# targets [attributes_file]
-if 'attributes_file' not in locals():
-    attributes_file = dataset_dir + "/attributes.json"
+# For dynamically generated metadata file, define task_attributes_file with
+# targets [$ENTITYTYPE$_metadata_file]
+if 'metadata_filenames' not in locals():
+    metadata_filenames = dict()
+for entity_type in ('datasets','documents','words','analyses'):
+    if entity_type not in metadata_filenames:
+        metadata_filenames[entity_type] = '{0}/metadata/{1}.json'.format(dataset_dir, entity_type)
+
 if 'markup_dir' not in locals():
     markup_dir = "{0}/{1}-markup".format(dataset_dir, analysis_name)
 
@@ -227,18 +231,18 @@ def directory_recursive_hash(dir):
 #If no existing attributes task exists, and if suppress_default_attributes_task is not set to True,
 #then define a default attributes task that generates an empty attributes file
 #TODO(josh): make the attributes file optional for the import scripts
-if not 'task_attributes' in locals() and not ('suppress_default_attributes_task' in locals() and locals()['suppress_default_attributes_task']):
-    def make_attributes():
-        attrs = open(attributes_file, "w")
-        attrs.write('[')
+if not 'task_document_metadata' in locals() and not ('suppress_default_document_metadata_task' in locals() and locals()['suppress_default_document_metadata_task']):
+    def make_document_metadata():
+        attrs = open(metadata_filenames['documents'], "w")
+        attrs.write('{\n')
         for filename in os.listdir(files_dir):
-            attrs.write('{"attributes": {}, "path": "' + filename + '"}')
-        attrs.write(']')
+            attrs.write('\t"{0}": {}\n'.format(filename))
+        attrs.write('}')
 
-    def task_attributes():
+    def task_document_metadata():
         task = dict()
-        task['targets'] = [attributes_file]
-        task['actions'] = [(make_attributes)]
+        task['targets'] = [metadata_filenames['documents']]
+        task['actions'] = [(make_document_metadata)]
         return task
 
 if 'task_mallet_input' not in locals():
@@ -303,8 +307,8 @@ if 'task_dataset_import' not in locals():
         # analysis_import.py, now that we are using this build script - we don't
         #  need standalone scripts anymore for that stuff
         task = dict()
-        task['actions'] = [(import_dataset, [dataset_name, dataset_readable_name, dataset_description, mallet_output, attributes_file, dataset_dir, files_dir])]
-        task['file_dep'] = [mallet_output, attributes_file, yamba_file]
+        task['actions'] = [(import_dataset, [dataset_name, dataset_readable_name, dataset_description, mallet_output, metadata_filenames, dataset_dir, files_dir])]
+        task['file_dep'] = [mallet_output, metadata_filenames['documents'], yamba_file]
         task['clean'] = [(remove_dataset, [dataset_name])]
         task['uptodate'] = [dataset_in_database()]
         return task
@@ -319,8 +323,8 @@ if 'task_analysis_import' not in locals():
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
         task = dict()
-        task['actions'] = [(import_analysis, [analysis_name, analysis_readable_name, analysis_description, dataset_name, attributes_file, mallet_output, mallet_input, files_dir, token_regex])]
-        task['file_dep'] = [mallet_output, mallet_input, attributes_file]
+        task['actions'] = [(import_analysis, [analysis_name, analysis_readable_name, analysis_description, dataset_name, metadata_filenames, mallet_output, mallet_input, files_dir, token_regex])]
+        task['file_dep'] = [mallet_output, mallet_input, metadata_filenames['documents']]
         task['clean'] = [
             (remove_analysis, [dataset_name, analysis_name]),
             "rm -rf {0}".format(markup_dir)
