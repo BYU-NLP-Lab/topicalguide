@@ -22,6 +22,7 @@
 
 
 import os, sys
+import time
 
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
@@ -29,7 +30,9 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 from topic_modeling import settings
 settings.DEBUG = False
 
-from topic_modeling.visualize.models import Attribute
+
+from topic_modeling.visualize.models import Attribute, DatasetMetaInfo,\
+    DatasetMetaInfoValue
 from topic_modeling.visualize.models import AttributeValue
 from topic_modeling.visualize.models import AttributeValueDocument
 from topic_modeling.visualize.models import AttributeValueWord
@@ -43,7 +46,6 @@ from django.db import connection, transaction
 
 from collections import defaultdict
 from datetime import datetime
-from optparse import OptionParser
 
 import topic_modeling.anyjson as anyjson
 
@@ -53,12 +55,15 @@ dataset = None
 
 NUM_DOTS = 100
 
-# This could maybe benefit from the use of a logger, but I didn't care enough
-# to put one in, so I just use print statements.
-
-def import_dataset(name, readable_name, description, state_file, attr_file, dataset_dir, files_dir):
-    print >> sys.stderr, "dataset_import({0}, {1}, {2}, {3}, {4}, {5}, {6})".format(
-            name, readable_name, description, state_file, attr_file, dataset_dir, files_dir)
+def import_dataset(name, readable_name, description, state_file,
+        metadata_filenames,
+        dataset_dir, files_dir):
+    
+    print >> sys.stderr, "dataset_import({0})".format(
+        ', '.join([name, readable_name, description, state_file,
+        metadata_filenames['datasets'], metadata_filenames['documents'], metadata_filenames['words'],
+        dataset_dir, files_dir]))
+    
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
     # These are some attempts to make the database access a little faster
@@ -71,7 +76,16 @@ def import_dataset(name, readable_name, description, state_file, attr_file, data
 
     created = create_dataset(name, readable_name, description, dataset_dir, files_dir)
     if created:
-        docs, attrs, vals, attrvaldoc, attr_table = parse_attributes(attr_file)
+        dataset_metadata = Metadata(metadata_filenames['datasets'])
+        _import_dataset_metadata(dataset_metadata)
+        
+        document_metadata = Metadata(metadata_filenames['documents'])
+        _import_document_metadata(document_metadata)
+        
+        word_metadata = Metadata(metadata_filenames['words'])
+        _import_word_metadata(word_metadata)
+        
+        docs, attrs, vals, attrvaldoc = _import_document_attributes(document_metadata)
 
         doc_index = create_document_table(docs)
         attr_index = create_attribute_table(attrs)
@@ -82,7 +96,7 @@ def import_dataset(name, readable_name, description, state_file, attr_file, data
         # counts for the database.  This should be fixed somehow.  The problem
         # is that it depends on stopword lists and other kinds of formating.
         words, docword, attrval, attrvalword = parse_mallet_file(state_file,
-                attr_table)
+                document_metadata)
         word_index = create_word_table(words)
         create_docword_table(docword, doc_index, word_index)
         create_attrval_table(attrval, attr_index, value_index)
@@ -326,50 +340,48 @@ def create_attrvalword_table(attrvalword, attr_index, value_index, word_index):
 # Parsing and other intermediate code (not directly modifying the database)
 #############################################################################
 
-def parse_attributes(attribute_file):
+def _import_document_attributes(document_metadata):
     """
     Parse the contents of the attributes file, which should
     consist of a JSON formatted text file with the following
     format: [ {'path': <path>, 'attributes':{'attribute': 'value',...}}, ...]
     """
-    print >> sys.stderr, 'Parsing the JSON attributes file...  ',
+    print >> sys.stderr, 'Importing document attributes (old-style metadata)...  ',
     sys.stdout.flush()
     start = datetime.now()
-    file_data = open(attribute_file).read()
-    parsed_data = anyjson.deserialize(file_data)
     count = 0
-    attribute_table = {}
+#    attribute_table = {}
     documents = set()
     attributes = set()
     values = defaultdict(set)
     attrvaldoc = set()
-    for document in parsed_data:
+    for document_name, metadata in document_metadata.items():
         count += 1
         if count % 50000 == 0:
             print >> sys.stderr, count
             sys.stdout.flush()
-        attribute_values = document['attributes']
-        filename = document['path']
-        documents.add(filename)
-        attribute_table[filename] = attribute_values
-        for attribute in attribute_values:
+#        attribute_values = document['attributes']
+#        filename = document['path']
+        documents.add(document_name)
+#        attribute_table[document_name] = attribute_values
+        for attribute,value in metadata.items():
+            value = str(value)#Because Attribute only handles string types
             attributes.add(attribute)
-            value = attribute_values[attribute]
             if isinstance(value, basestring):
                 values_set = [value]
             else:
                 values_set = value
             for value in values_set:
                 values[attribute].add(value)
-                attrvaldoc.add((attribute, value, filename))
+                attrvaldoc.add((attribute, value, document_name))
     print >> sys.stderr, 'Done'
     end = datetime.now()
     print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
-    return documents, attributes, values, attrvaldoc, attribute_table
+    return documents, attributes, values, attrvaldoc
 
 
-def parse_mallet_file(state_file, attribute_table):
+def parse_mallet_file(state_file, document_metadata):
     """ Parses the state output file from mallet
 
     That file lists individual tokens one per line in the following format:
@@ -398,8 +410,8 @@ def parse_mallet_file(state_file, attribute_table):
             _, docpath, __, ___, word, ____ = line.split()
             words[word] += 1
             docword[(docpath, word)] += 1
-            for attr in attribute_table[docpath]:
-                value = attribute_table[docpath][attr]
+            for attr,value in document_metadata[docpath].items():
+                value = str(value)#FIXME This conversion is for backwards compatibility with Attribute
                 if isinstance(value, basestring):
                     values_set = [value]
                 else:
@@ -413,5 +425,101 @@ def parse_mallet_file(state_file, attribute_table):
     print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
     return words, docword, attrvalue, attrvalueword
+
+#def _load_metadata(entity_type, attribute_types, filenames):
+#    return Metadata(attribute_types[entity_type], filenames[entity_type])
+
+def _import_dataset_metadata(dataset_metadata):
+    print >> sys.stderr, 'Importing dataset metadata...  ',
+    sys.stdout.flush()
+    start = datetime.now()
+    
+    for dataset_name, metadata in dataset_metadata.items():
+        dataset, _ = Dataset.objects.get_or_create(name=dataset_name)
+        for attribute, value in metadata.items():
+            mi,__ = DatasetMetaInfo.objects.get_or_create(name=attribute)
+            miv, ___ = DatasetMetaInfoValue.objects.get_or_create(info_type=mi, dataset=dataset)
+            miv.set(value)
+            miv.save()
+    end = datetime.now()
+    print >> sys.stderr, '  Done', end - start
+
+def _import_document_metadata(document_metadata):
+    print >> sys.stderr, 'Importing document metadata...  ',
+    sys.stdout.flush()
+    start = datetime.now()
+    
+    for dataset_name, metadata in dataset_metadata.items():
+        dataset, _ = Dataset.objects.get_or_create(name=dataset_name)
+        for attribute, value in metadata.items():
+            mi,__ = DatasetMetaInfo.objects.get_or_create(name=attribute)
+            miv, ___ = DatasetMetaInfoValue.objects.get_or_create(info_type=mi, dataset=dataset)
+            miv.set(value)
+            miv.save()
+    end = datetime.now()
+    print >> sys.stderr, '  Done', end - start
+
+def _import_word_metadata(word_metadata):
+    print >> sys.stderr, 'Importing word metadata...  ',
+    sys.stdout.flush()
+    start = datetime.now()
+    
+    for dataset_name, metadata in dataset_metadata.items():
+        dataset, _ = Dataset.objects.get_or_create(name=dataset_name)
+        for attribute, value in metadata.items():
+            mi,__ = DatasetMetaInfo.objects.get_or_create(name=attribute)
+            miv, ___ = DatasetMetaInfoValue.objects.get_or_create(info_type=mi, dataset=dataset)
+            miv.set(value)
+            miv.save()
+    end = datetime.now()
+    print >> sys.stderr, '  Done', end - start
+
+class MetadataWrapper(dict):
+    def __init__(self, types, copy=None):
+        self.types = types
+        if copy:
+            self.update(copy)
+    
+    def _get_super_item(self, key):
+        return super(MetadataWrapper, self).__getitem__(key)
+    
+    def __getitem__(self, key):
+        value = self._get_super_item(key)
+        if isinstance(value, MetadataWrapper):
+            return value
+        elif isinstance(value, dict):
+            value = MetadataWrapper(self.types, copy=value)
+            self[key] = value
+            return value
+        return self._parse_type(self.types[key], value)
+    
+    def _parse_type(self, type, value):
+        if type=='float':
+            return float(value)
+        elif type=='text':
+            return str(value)
+        elif type=='int':
+            return int(value)
+        elif type=='bool':
+            return bool(value)
+        elif type=='datetime':
+            #Example: "2004-06-03T00:44:35"
+            return time.strptime(str(value), "%Y-%m-%dT%H:%M:%S")
+        else:
+            raise Exception("Type '{0}' is not recognized.".format(type))
+    
+    def items(self):
+        for key in self:
+            value = self[key]
+            yield key, value
+
+class Metadata(MetadataWrapper):
+    def __init__(self, filename):
+        if not os.path.exists(filename):
+            self.types = {}
+        else:
+            json_obj = anyjson.deserialize(open(filename).read())
+            self.types = json_obj['types']
+            self.update(json_obj['data'])
 
 # vim: et sw=4 sts=4

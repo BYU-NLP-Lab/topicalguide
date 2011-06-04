@@ -23,6 +23,7 @@
 import random
 from django.db import models
 from topic_modeling.anyjson import deserialize
+import datetime
 
 ##############################################################################
 # Tables just to hold information about data and documents
@@ -456,6 +457,20 @@ class MetaInfoValue(models.Model):
     
     class Meta:
         abstract = True
+    
+    def set(self, value):
+        if isinstance(value, float):
+            self.float_value = value
+        elif isinstance(value, basestring):
+            self.text_value = value
+        elif isinstance(value, int):
+            self.int_value = value
+        elif isinstance(value, bool):
+            self.bool_value = value
+        elif isinstance(value, datetime):
+            self.datetime_value = value
+        else:
+            raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(type(value)))
     
     def value(self):
         result = None

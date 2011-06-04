@@ -22,28 +22,44 @@
 
 from extract_sotua_documents import metadata,filename
 
+head = '''{
+    "types": {
+        "address_number": "int",
+        "title": "text",
+        "author_name": "text",
+        "month": "text",
+        "president_name": "text",
+        "year": "int",
+        "day": "int"
+    },
+    "data": {'''
+
+tail = '''\t}
+}'''
+
+address_nums = {'First':1, 'Second':2, 'Third':3, 'Fourth':4, 'Fifth':5,
+    'Sixth':6, 'Seventh':7, 'Eighth':8, 'Ninth':9, 'Tenth':10, 'Eleventh':11,
+    'Twelfth':12}
+
 def generate_attributes_file(chron_list_file, output_file):
     print "Building attributes file {0} using {1}".format(output_file, chron_list_file)
     
     meta = metadata(chron_list_file)
     w = open(output_file, 'w')
     
-    w.write('[\n')
+    w.write(head)
+    w.write('\n')
     for i,m in enumerate(meta):
-        #[(?P<title>(?P<president_name>.+)'s? .*State of the Union Address)\|(?P<address_number>\w+) State of the Union Address\]\] - \[\[author:(?P<author_name>.+)\|.+\]\], \((?P<day>\d+) (?P<month>\w+) \[\[w:(?P<year>\d+)\|(?P=year)\]\]\)"
-        w.write('\t{\n')
-        w.write('\t\t"attributes": {\n')
+        w.write('\t\t"%s": {\n' % filename(m))
         
         attr_entries = []
         for attr,val in m.groupdict().items():
+            if attr=="address_number": val=address_nums[val]
             attr_entries += ['\t\t\t"{0}": "{1}"'.format(attr,val)]
         w.write(',\n'.join(attr_entries))
-        w.write('\n\t\t},\n')
-        w.write('\t\t"path": "{0}"\n'.format(filename(m)))
-        
-        w.write('\t}')
+        w.write('\n\t\t}')
         
         if i < len(meta)-1: w.write(',')
         
         w.write('\n')
-    w.write(']')
+    w.write(tail)
