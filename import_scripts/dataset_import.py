@@ -22,11 +22,13 @@
 
 
 import os, sys
-from import_scripts.metadata import Metadata, import_document_metadata,\
-    import_dataset_metadata, import_word_metadata
+
 
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+
+from import_scripts.metadata import Metadata, import_document_metadata,\
+    import_dataset_metadata, import_word_metadata
 
 from topic_modeling import settings
 settings.DEBUG = False
