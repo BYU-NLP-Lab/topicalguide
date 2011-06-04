@@ -20,8 +20,11 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-import codecs, os, sys
+import codecs
+import os
 import re
+import sys
+
 from collections import defaultdict
 from datetime import datetime
 
@@ -30,28 +33,24 @@ from build.common.util import create_dirs_and_open
 
 from django.db import connection, transaction
 
-from topic_modeling.visualize.models import Analysis
+from topic_modeling.visualize.models import Analysis, Dataset
 from topic_modeling.visualize.models import AttributeValueTopic
-from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.models import DocumentTopic
 from topic_modeling.visualize.models import DocumentTopicWord
 from topic_modeling.visualize.models import MarkupFile
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import TopicWord
-
-# A couple of global variables just to make life easier, so I don't have to
-# pass them around so much - they're created once and then never change
-dataset = None
-analysis = None
+from import_scripts.metadata import Metadata, import_topic_metadata,\
+    import_analysis_metadata
 
 NUM_DOTS = 100
 
-def import_analysis(name, readable_name, description, dataset_name, dataset_attr_file,
-        analysis_metadata_file, state_file, tokenized_file, files_dir, token_regex):
-    print >> sys.stderr, "analysis_import({0}, {1}, {2}, {3}, {4}, {5}, {6})".\
-            format(name, readable_name, description, dataset_name, dataset_attr_file,
-        state_file, tokenized_file, files_dir, token_regex)
+def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysis_description,
+       markup_dir, state_file, tokenized_file, metadata_filenames, token_regex):
+    print >> sys.stderr, "analysis_import({0})".\
+            format(', '.join([dataset_name, analysis_name, analysis_readable_name, analysis_description,
+       markup_dir, state_file, tokenized_file, str(metadata_filenames), token_regex]))
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
     # These are some attempts to make the database access a little faster
@@ -61,24 +60,42 @@ def import_analysis(name, readable_name, description, dataset_name, dataset_attr
     cursor.execute('PRAGMA cache_size=2000000')
     cursor.execute('PRAGMA journal_mode=MEMORY')
     cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
-
-    global dataset
-    dataset = Dataset.objects.get(name=dataset_name)
-    created = create_analysis(name, readable_name, description)
-
+    
+    dataset, _ = Dataset.objects.get_or_create(name=dataset_name)
+    analysis, created = _create_analysis(dataset, analysis_name, analysis_readable_name, analysis_description)
+    dataset = analysis.dataset
+    
+    if not os.path.exists(markup_dir):
+        print >> sys.stderr, 'Creating markup directory ' + markup_dir
+        os.mkdir(markup_dir)
+    
     if created:
-        doc_index, attr_index, value_index, attr_table = parse_attributes(
-                dataset_attr_file)
-        dt, tw, dtw, avt, topics, word_index = parse_mallet_file(state_file,
-                attr_table, tokenized_file, files_dir, token_regex)
+        doc_index = _doc_index(dataset)
+        document_metadata = Metadata(metadata_filenames['documents'])
+        
+#        attr_table = _parse_document_attributes(dataset, metadata_filenames['datasets'])
+        doc_topic_counts, \
+        topic_word_counts, \
+        doc_topic_word_counts, \
+        attr_val_topic_counts, \
+        topic_counts, \
+        word_index = _parse_mallet_file(analysis, state_file, document_metadata, tokenized_file, token_regex)
 
-        topicinfo = create_topic_info(tw)
-        topic_index = create_topic_table(topics, topicinfo)
+        topic_names = _default_topic_names(topic_word_counts)
+        topic_index = _create_topic_table(analysis, topic_counts, topic_names)
 
-        create_doctopic_table(dt, doc_index, topic_index)
-        create_topicword_table(tw, topic_index, word_index)
-        create_doctopicword_table(dtw, doc_index, topic_index, word_index)
-        create_attrvaltopic_table(avt, attr_index, value_index, topic_index)
+        _create_doctopic_table(doc_topic_counts, doc_index, topic_index)
+        _create_topicword_table(topic_word_counts, topic_index, word_index)
+        _create_doctopicword_table(doc_topic_word_counts, doc_index, topic_index, word_index)
+        _create_attrvaltopic_table(dataset, attr_val_topic_counts, topic_index)
+        
+        
+        # --- Import Metadata ---
+        analysis_metadata = Metadata(metadata_filenames['analyses'])
+        import_analysis_metadata(analysis, analysis_metadata)
+        
+        topic_metadata = Metadata(metadata_filenames['topics'])
+        import_topic_metadata(analysis, topic_metadata)
 
         end_time = datetime.now()
         print >> sys.stderr, 'Finishing time:', end_time
@@ -93,48 +110,33 @@ def import_analysis(name, readable_name, description, dataset_name, dataset_attr
 # Database creation code (in the order it's called in main)
 #############################################################################
 
-def create_analysis(name, readable_name, description):
+def _create_analysis(dataset, analysis_name, analysis_readable_name, analysis_description):
     """Create the Analysis database object.
     """
-    
-    result = False
     print >> sys.stderr, 'Creating the analysis...  ',
-    try:
-        Analysis.objects.get(name=name, dataset=dataset)
-        print >> sys.stderr, 'Analysis {n} already exists! Doing nothing...'.\
-                format(n=name)
-    except Analysis.DoesNotExist:
-        a = Analysis(name=name, readable_name=readable_name,
-                     description=description, dataset=dataset)
-        a.save()
-        result = True
-        global analysis
-        analysis = a
-        try:
-            os.mkdir('%s/%s-markup' % (dataset.dataset_dir, analysis.name))
-        except OSError:
-            print >> sys.stderr, 'The markup directory already exists.  ',
-            print >> sys.stderr, 'Doing nothing...'
+    analysis, created = Analysis.objects.get_or_create(dataset=dataset, name=analysis_name,
+                       readable_name=analysis_readable_name, description=analysis_description)
     print >> sys.stderr, 'Done'
-    return result
+    return analysis, created
 
 
 @transaction.commit_manually
-def create_topic_table(topics, topicinfo):
-    num_per_dot = max(1, int(len(topics)/NUM_DOTS))
+def _create_topic_table(analysis, topic_counts, topic_names):
+    num_per_dot = max(1, int(len(topic_counts)/NUM_DOTS))
     print >> sys.stderr, 'Creating the Topic Table (%d topics per dot)' % (
             num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
     topic_index = dict()
-    for topic in topics:
+    for topic,count in topic_counts.items():
+        name = topic_names[topic]
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
             print >> sys.stderr, '.',
             sys.stdout.flush()
-        t = Topic(number=topic, analysis=analysis, name=topicinfo[topic][1],
-                total_count=topicinfo[topic][0])
+        t = Topic(number=topic, analysis=analysis, name=name,
+                total_count=count)
         t.save()
         topic_index[topic] = t
     transaction.commit()
@@ -144,7 +146,7 @@ def create_topic_table(topics, topicinfo):
 
 
 @transaction.commit_manually
-def create_doctopic_table(doctopic, doc_index, topic_index):
+def _create_doctopic_table(doctopic, doc_index, topic_index):
     num_per_dot = max(1, int(len(doctopic)/NUM_DOTS))
     print >> sys.stderr, 'Creating the DocumentTopic table',
     print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
@@ -167,7 +169,7 @@ def create_doctopic_table(doctopic, doc_index, topic_index):
 
 
 @transaction.commit_manually
-def create_topicword_table(topicword, topic_index, word_index):
+def _create_topicword_table(topicword, topic_index, word_index):
     num_per_dot = max(1, int(len(topicword)/NUM_DOTS))
     print >> sys.stderr, 'Creating the TopicWord table (%d entries per dot)' % (
             num_per_dot),
@@ -190,7 +192,7 @@ def create_topicword_table(topicword, topic_index, word_index):
 
 
 @transaction.commit_manually
-def create_doctopicword_table(doctopicword, doc_index, topic_index, word_index):
+def _create_doctopicword_table(doctopicword, doc_index, topic_index, word_index):
     num_per_dot = max(1, int(len(doctopicword)/NUM_DOTS))
     print >> sys.stderr, 'Creating the DocumentTopicWord table',
     print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
@@ -214,22 +216,24 @@ def create_doctopicword_table(doctopicword, doc_index, topic_index, word_index):
 
 
 @transaction.commit_manually
-def create_attrvaltopic_table(attrvaltopic, attr_index, val_index, topic_index):
+def _create_attrvaltopic_table(dataset, attrvaltopic, topic_index):
+    attr_index = _attribute_index(dataset)
+    val_index = _value_index(dataset)
+    
     num_per_dot = max(1, int(len(attrvaltopic)/NUM_DOTS))
     print >> sys.stderr, 'Creating the AttributeValueTopic Table',
     print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
     num_so_far = 0
-    for attribute, value, topic in attrvaltopic:
+    for (attribute, value, topic),count in attrvaltopic.items():
         num_so_far += 1
         if num_so_far % num_per_dot == 0:
             print >> sys.stderr, '.',
             sys.stdout.flush()
         attr = attr_index[attribute]
-        val = val_index[(value, attribute)]
+        val = val_index[(str(value), attribute)] #FIXME? Is there a better way than this str() call?
         t = topic_index[topic]
-        count = attrvaltopic[(attribute, value, topic)]
         avt = AttributeValueTopic(attribute=attr, value=val, topic=t,
                 count=count)
         avt.save()
@@ -242,62 +246,27 @@ def create_attrvaltopic_table(attrvaltopic, attr_index, val_index, topic_index):
 # Parsing and other intermediate code (not directly modifying the database)
 #############################################################################
 
-def parse_attributes(attribute_file):
-    """
-    Parse the contents of the attributes file, which should
-    consist of a JSON formatted text file with the following
-    format: [ {'path': <path>, 'attributes':{'attribute': 'value',...}}, ...] 
-    """
-    print >> sys.stderr, 'Parsing the JSON attributes file...',
-    sys.stdout.flush()
-    start = datetime.now()
-    file_data = open(attribute_file).read()
-    parsed_data = anyjson.deserialize(file_data)
-    del file_data
-    count = 0
-    attribute_table = {}
-    documents = set()
-    attributes = set()
-    values = defaultdict(set)
-    for document in parsed_data:
-        count += 1
-        if count % 50000 == 0:
-            print >> sys.stderr, count
-            sys.stdout.flush()
-        attribute_values = document['attributes']
-        filename = document['path']
-        documents.add(filename)
-        attribute_table[filename] = attribute_values
-        for attribute in attribute_values:
-            attributes.add(attribute)
-            value = attribute_values[attribute]
-            if isinstance(value, basestring):
-                values_set = [value]
-            else:
-                values_set = value
-            for value in values_set:
-                values[attribute].add(value)
-    end = datetime.now()
-    print >> sys.stderr, '  Done', end - start
-    print >> sys.stderr, 'Populating the indexes for faster lookups...',
-    start = datetime.now()
-    sys.stdout.flush()
+def _doc_index(dataset):
     doc_index = dict()
-    attr_index = dict()
-    value_index = dict()
     for doc in dataset.document_set.all():
         doc_index[doc.filename] = doc
+    return doc_index
+
+def _attribute_index(dataset):
+    attr_index = dict()
     for attr in dataset.attribute_set.all():
         attr_index[attr.name] = attr
+    return attr_index
+
+def _value_index(dataset):
+    value_index = dict()
+    for attr in dataset.attribute_set.all():
         for val in attr.value_set.all():
             value_index[(val.value, attr.name)] = val
-    end = datetime.now()
-    print >> sys.stderr, '  Done', end - start
-    return doc_index, attr_index, value_index, attribute_table
-
+    return value_index
 
 @transaction.commit_manually
-def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, token_regex):
+def _parse_mallet_file(analysis, state_file, document_metadata, tokenized_file, token_regex):
     """ Parses the state output file from mallet
 
     That file lists individual tokens one per line in the following format:
@@ -320,7 +289,7 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, to
     topicword = defaultdict(int)
     doctopicword = defaultdict(int)
     attrvaltopic = defaultdict(int)
-    topics = set()
+    topic_counts = defaultdict(int)
     words = set()
 
     f = codecs.open(state_file, 'r', 'utf-8')
@@ -337,26 +306,25 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, to
             if docpath != markup_state.path:
                 if markup_state.initialized:
                     markup_state.markup_stop_words()
-                    markup_state.output_file()
-                markup_state.initialize(files_dir, docpath)
+                    markup_state.output_file(analysis)
+                markup_state.initialize(analysis.dataset.files_dir, docpath)
             markup_state.markup_stop_words(word)
             markup_state.markup_word(word, topic)
             # Now other database stuff
-            topics.add(topic)
+            topic_counts[topic] += 1
             words.add(word)
             doctopic[(docpath, topic)] += 1
             topicword[(topic, word)] += 1
             doctopicword[(docpath, topic, word)] += 1
-            for attr in attribute_table[docpath]:
-                value = attribute_table[docpath][attr]
-                if isinstance(value, basestring):
-                    values_set = [value]
-                else:
+            for attr,value in document_metadata[docpath].items():
+                if isinstance(value, list):
                     values_set = value
+                else:
+                    values_set = [value]
                 for value in values_set:
                     attrvaltopic[(attr, value, topic)] += 1
     markup_state.markup_stop_words()
-    markup_state.output_file()
+    markup_state.output_file(analysis)
     f.close()
     transaction.commit()
 
@@ -366,40 +334,27 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, to
     start = datetime.now()
     sys.stdout.flush()
     word_index = dict()
-    for word in dataset.word_set.all():
+    for word in analysis.dataset.word_set.all():
         word_index[word.type] = word
     end = datetime.now()
     print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
-    return doctopic, topicword, doctopicword, attrvaltopic, topics, word_index
+    return doctopic, topicword, doctopicword, attrvaltopic, topic_counts, word_index
 
 
-def create_topic_info(topicword):
-    """Create a mapping from topic to total count and name using topicword
+def _default_topic_names(topic_word_counts):
+    indexed_topic_word_counts = defaultdict(list)
 
-    Total count is the total number of tokens in the entire analysis that had
-    that topic.  The name is generated however you wish.  We currently just
-    take the top two words and separate them by a space.
-    """
+    for (topic, word), count in topic_word_counts.items():
+        indexed_topic_word_counts[topic].append((count, word))
 
-    totalcounts = defaultdict(int)
-    wordcounts = defaultdict(list)
-
-    for topic, word in topicword:
-        count = topicword[(topic, word)]
-        totalcounts[topic] += count
-        wordcounts[topic].append((count, word))
-
-    topicinfo = dict()
-    for topic in totalcounts:
-        top_words = wordcounts[topic]
+    topic_names = dict()
+    for topic, top_words in indexed_topic_word_counts.items():
         top_words.sort()
         top_words.reverse()
         name = ' '.join([x[1] for x in top_words][:2])
-        topicinfo[topic] = (totalcounts[topic], name)
-
-    return topicinfo
-
+        topic_names[topic] = name
+    return topic_names
 
 #############################################################################
 # Markup file code
@@ -485,10 +440,10 @@ class MarkupState(object):
         self.doc_index = start_index + 1
         self.token_index += 1
 
-    def output_file(self):
+    def output_file(self, analysis):
         markup_file_name = '%s-markup/' % analysis.name
         markup_file_name += self.path
-        file = create_dirs_and_open(dataset.dataset_dir + '/' + markup_file_name)
+        file = create_dirs_and_open(analysis.dataset.dataset_dir + '/' + markup_file_name)
         file.write(anyjson.serialize(self.markup))
         document = Document.objects.get(filename=self.path)
         markup_file = MarkupFile(document=document, analysis=analysis,

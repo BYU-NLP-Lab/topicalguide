@@ -147,7 +147,7 @@ if 'mallet_num_iterations' not in locals():
 # targets [$ENTITYTYPE$_metadata_file]
 if 'metadata_filenames' not in locals():
     metadata_filenames = dict()
-for entity_type in ('datasets','documents','words','analyses'):
+for entity_type in ('datasets','documents','words','analyses','topics'):
     if entity_type not in metadata_filenames:
         metadata_filenames[entity_type] = '{0}/metadata/{1}.json'.format(dataset_dir, entity_type)
 
@@ -323,7 +323,8 @@ if 'task_analysis_import' not in locals():
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
         task = dict()
-        task['actions'] = [(import_analysis, [analysis_name, analysis_readable_name, analysis_description, dataset_name, metadata_filenames, mallet_output, mallet_input, files_dir, token_regex])]
+        task['actions'] = [(import_analysis, [dataset_name, analysis_name, analysis_readable_name, analysis_description,
+                          markup_dir, mallet_output, mallet_input, metadata_filenames, token_regex])]
         task['file_dep'] = [mallet_output, mallet_input, metadata_filenames['documents']]
         task['clean'] = [
             (remove_analysis, [dataset_name, analysis_name]),
