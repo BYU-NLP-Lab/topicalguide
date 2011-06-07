@@ -263,9 +263,8 @@ class Cloud(object):
 ##########################
 
 def set_word_context(word, document, analysis, topic=None):
-    right, left = document.get_context_for_word(word.word, analysis, topic)
-    word.left_context = left
-    word.right_context = right
+    word.left_context, word.word, word.right_context \
+        = document.get_context_for_word(word.word, analysis, topic)
 
 
 def paginate_list(list, page, num_per_page, object=None):

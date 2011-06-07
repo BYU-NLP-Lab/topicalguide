@@ -53,6 +53,8 @@ class Dataset(Describable):
         return self.name
 
 
+LEFT_CONTEXT_SIZE = 40
+RIGHT_CONTEXT_SIZE = 40
 class Document(models.Model):
     filename = models.CharField(max_length=128, db_index=True)
     dataset = models.ForeignKey(Dataset)
@@ -82,25 +84,31 @@ class Document(models.Model):
         text = open(self.dataset.files_dir + '/' +
                 self.filename).read().decode('utf-8', 'replace')
         text = text.replace(u'\uFFFD', ' ')
-        # Get right context
-        start_index = word_to_use['start'] + len(word_to_find)
-        end_index = start_index
-        current_index = word_index
-        while (current_index < len(markup) and end_index - start_index < 50):
-            word = markup[current_index]
-            end_index = word['start'] + len(word['word'])
-            current_index += 1
-        right_context = text[start_index:end_index]
-        # Get left context
-        end_index = word_to_use['start']
-        start_index = end_index
-        current_index = word_index
-        while (current_index >= 0 and
-                end_index - markup[current_index]['start'] < 50):
-            start_index = markup[current_index]['start']
-            current_index -= 1
-        left_context = text[start_index:end_index]
-        return right_context, left_context
+        raw_word = text[word_to_use['start']:word_to_use['start']+len(word_to_find)]
+        
+        #Right Context
+        right_start_position = word_to_use['start'] + len(word_to_find)
+        right_end_position = right_start_position
+        for word in markup[word_index+1:]:
+            new_position = word['start'] + len(word['word'])
+            length = new_position - right_start_position
+            if length > RIGHT_CONTEXT_SIZE:
+                break
+            right_end_position = new_position
+        right_context = text[right_start_position:right_end_position]
+        
+        #Left Context
+        left_start_position = word_to_use['start']
+        left_end_position = left_start_position
+        for word in reversed(markup[:word_index]):
+            new_position = word['start']
+            length = left_start_position - new_position
+            if length > LEFT_CONTEXT_SIZE:
+                break
+            left_end_position = new_position
+        left_context = text[left_end_position:left_start_position]
+        
+        return left_context, raw_word, right_context
 
     def get_highlighted_text(self, topics, analysis):
         markup = self.get_markup(analysis)

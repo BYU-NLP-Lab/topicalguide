@@ -30,6 +30,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	    <col class="word"/>
 	    <col class="rcontext"/>
 	    <col class="reload"/>
+	    {% comment %}
 	    <thead>
 		    <tr class="ui-widget-header">
 		        <th>Filename</th>
@@ -38,6 +39,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		        <th>R. Context</th><th></th>
 		    </tr>
 	    </thead>
+	    {% endcomment %}
         <tbody class="ui-widget-content">
         {# These rows are placeholders for jQuery to insert row content into #}
         {% for word in word_contexts %}

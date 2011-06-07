@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -22,11 +20,12 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-
+import copy
 import random
 
 from django.http import HttpResponse, HttpResponseRedirect
-from django.utils import simplejson
+
+from topic_modeling import anyjson
 from topic_modeling.visualize.charts import TopicAttributeChart
 from topic_modeling.visualize.charts import TopicMetricChart
 from topic_modeling.visualize.common import get_word_list
@@ -37,34 +36,32 @@ from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word
-import copy
+
+
 
 # General ajax calls
 ####################
 
 def word_in_context(request, dataset, analysis, word, topic=None):
     analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)
-    analysis_num = analysis.id
     w = Word.objects.get(dataset__name=dataset, type=word)
-    word = WordSummary(word)
+    word_context = WordSummary(word)
     
     if topic is None:
         docset = w.documentword_set.all()
-#        docset = DocumentWord.objects.filter(word=word)
     else:
         topic = Topic.objects.get(analysis=analysis, number=topic)
         docset = topic.documenttopicword_set.filter(word=w)
     
-    
     num_docs = len(docset)
     d = docset[random.randint(0, num_docs - 1)]
-    if topic is None:
-        set_word_context(word, d.document, analysis_num)
-    else:
-        set_word_context(word, d.document, analysis_num, topic.number)
-    word.doc_name = d.document.filename
-    word.doc_id = d.document.id
-    return HttpResponse(simplejson.dumps(vars(word)))
+    
+    word_context.left_context, word_context.word, word_context.right_context \
+        = d.document.get_context_for_word(word, analysis, topic.number if topic else None)
+    
+    word_context.doc_name = d.document.filename
+    word_context.doc_id = d.document.id
+    return HttpResponse(anyjson.dumps(vars(word_context)))
 
 
 # Plots tab ajax calls
@@ -79,7 +76,7 @@ def attribute_values(request, dataset, attribute):
     attribute = Attribute.objects.get(pk=attribute)
     values = [av.value for av in attribute.attributevalue_set.select_related().order_by('value__value')]
     #values = attribute.value_set.all()
-    return HttpResponse(simplejson.dumps([(v.id, v.value) for v in values]))
+    return HttpResponse(anyjson.dumps([(v.id, v.value) for v in values]))
 
 
 def topic_attribute_plot(request, attribute, topic, value):
@@ -123,7 +120,7 @@ def get_attribute_page(request, dataset, analysis, attribute, number):
     ret_val['values'] = [vars(AjaxValue(val.value)) for val in values]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
-    return HttpResponse(simplejson.dumps(ret_val))
+    return HttpResponse(anyjson.dumps(ret_val))
 
 
 class AjaxValue(object):
@@ -152,7 +149,7 @@ def get_word_page(request, dataset, analysis, number):
     ret_val['words'] = [vars(AjaxWord(word.type)) for word in words]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
-    return HttpResponse(simplejson.dumps(ret_val))
+    return HttpResponse(anyjson.dumps(ret_val))
 
 
 def update_word_page(request, dataset, analysis, word):
@@ -188,7 +185,7 @@ def get_favorite_page(request, number):
     ret_val['num_pages'] = 1
     ret_val['page'] = 1
 
-    return HttpResponse(simplejson.dumps(ret_val))
+    return HttpResponse(anyjson.dumps(ret_val))
 
 def add_favorite(request, tab):
     favorites = request.session.get('favorite-set', set())
