@@ -32,6 +32,13 @@ from topic_modeling.visualize.models import Word, Dataset, Analysis, Topic,\
 
 def root_context(dataset, analysis):
     context = Context()
+    
+    STATIC = '/site-media'
+    context['SCRIPTS'] = STATIC + '/scripts'
+    context['STYLES'] = STATIC + '/styles'
+    context['IMAGES'] = STATIC + '/images'
+    context['FONTS'] = STATIC + '/fonts'
+    
     context['dataset'] = dataset
     context['analysis'] = analysis
     context['dataset_url'] = "/datasets/%s" % (dataset)
@@ -46,7 +53,11 @@ def root_context(dataset, analysis):
     
     context['topical_guide_project_url'] = "http://nlp.cs.byu.edu/topicalguide"
     context['nlp_lab_url'] = "http://nlp.cs.byu.edu"
-    context['nlp_lab_logo_url'] = "/site-media/images/byunlp-135px.png"
+    context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
+    context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
+    
+    
+    
     return context
 
 ################################################################################

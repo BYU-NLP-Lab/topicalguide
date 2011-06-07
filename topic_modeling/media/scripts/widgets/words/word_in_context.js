@@ -36,7 +36,7 @@ function get_context_for_word(word, num)
 		new_html = '';
         new_html += '<td class="document"><a href="' + $.fn.documents_url + '/';
 		new_html += word.doc_id;
-		new_html += '"><img src="/site-media/images/text-x-generic_tango_22x22.png" title="';
+		new_html += '"><img src="/site-media/images/tango/22x22/mimetypes/text-x-generic.png" title="';
 		new_html += word.doc_name;
 		new_html += '"/></a></td>';
 		new_html += '<td class="lcontext">';
@@ -50,7 +50,7 @@ function get_context_for_word(word, num)
 		new_html += '</td>';
 		new_html += '<td id="id_new_context_';
 		new_html += lc_word + "_" + num + '" class="reload">';
-		new_html += '<img src="/site-media/images/stock_reload.png" border="0"/>';
+		new_html += '<img src="/site-media/images/tango/22x22/actions/view-refresh.png" border="0"/>';
 		new_html += '</td>';
 		$("#id_"+lc_word+"_"+num).html(new_html);
 		cursor_default();

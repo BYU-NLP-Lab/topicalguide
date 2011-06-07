@@ -25,12 +25,12 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 {% block stylesheets %}
     {{block.super}}
-    <link rel="stylesheet" href="/site-media/styles/core/main_application.css" type="text/css" />
+    <link rel="stylesheet" href="{{STYLES}}/core/main_application.css" type="text/css" />
 {% endblock %}
 
 {% block scripts %}
     {{block.super}}
-    <script type="text/javascript" src="/site-media/scripts/core/main_application.js"></script>
+    <script type="text/javascript" src="{{SCRIPTS}}/core/main_application.js"></script>
     <script type="text/javascript">
         $.fn.dataset = "{{ dataset }}";
         $.fn.analysis = "{{ analysis }}";
@@ -90,15 +90,15 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	        <div class="body">
 	            {% block sidebar %}
 	                <div id="list-nav">
-                        <span id="back-arrows" class="arrows">
-                            <a id="first" class="ui-icon ui-icon-seek-first" title="First"></a>
-                            <a id="prev" class="ui-icon ui-icon-seek-prev" title="Previous"></a>
+                        <span id="back-arrows" class="arrows" style="visibility:hidden;">
+                            <a id="first" title="First"><img src="{{IMAGES}}/tango/22x22/actions/go-first.png"/></a>
+                            <a id="prev" title="Previous"><img src="{{IMAGES}}/tango/22x22/actions/go-previous.png"/></a>
 					    </span>
 					    <span id="page-situation">Page <span id="current-page"></span> of <span id="page-count"></span>
 					    </span>
-					    <span id="fwd-arrows" class="arrows">
-					        <a id="last" class="ui-icon ui-icon-seek-end" title="Last"></a>
-					        <a id="next" class="ui-icon ui-icon-seek-next" title="Next"></a>
+					    <span id="fwd-arrows" class="arrows" style="visibility:hidden;">
+					        <a id="last" title="Last"><img src="{{IMAGES}}/tango/22x22/actions/go-last.png"/></a>
+					        <a id="next" title="Next"><img src="{{IMAGES}}/tango/22x22/actions/go-next.png"/></a>
 					    </span>
 				    </div>
 	            {% endblock %}

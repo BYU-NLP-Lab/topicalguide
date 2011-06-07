@@ -49,12 +49,12 @@ function set_nav_arrows(current_page, num_pages) {
 	});
 	
 	if (current_page == 1)
-		$("div#list-nav > span#back-arrows").hide();
+		$("div#list-nav > span#back-arrows").css("visibility", "hidden");
 	else
-		$("div#list-nav > span#back-arrows").show();
+		$("div#list-nav > span#back-arrows").css("visibility", "visible");
 	
 	if(current_page == num_pages)
-		$("div#list-nav > span#fwd-arrows").hide();
+		$("div#list-nav > span#fwd-arrows").css("visibility", "hidden");
 	else
-		$("div#list-nav > span#fwd-arrows").show();
+		$("div#list-nav > span#fwd-arrows").css("visibility", "visible");
 }
