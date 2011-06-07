@@ -26,18 +26,18 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     <head>
         <title>Topical Guide{% if view_description %} &mdash; {{view_description}}{% endif %}</title>
         
-        <link rel="shortcut icon" href="/site-media/images/byunlp-35px.png" />
+        <link rel="shortcut icon" href="{{nlp_lab_small_logo_url}}" />
         
         {% block stylesheets %}
-        <link rel="stylesheet" href="/site-media/styles/core/base.css" type="text/css" />
-        <link rel="stylesheet" href="/site-media/styles/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" />
-        <link rel="stylesheet" href="/site-media/styles/cupertino-tweaks.css" type="text/css" />
+        <link rel="stylesheet" href="{{STYLES}}/core/base.css" type="text/css" />
+        <link rel="stylesheet" href="{{STYLES}}/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" />
+        <link rel="stylesheet" href="{{STYLES}}/cupertino-tweaks.css" type="text/css" />
         {% endblock %}
         
         {% block scripts %}
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="/site-media/scripts/core/base.js"></script>
+        <script type="text/javascript" src="{{SCRIPTS}}/core/base.js"></script>
         {% endblock %}
     </head>
     <body>
