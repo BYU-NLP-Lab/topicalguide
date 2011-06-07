@@ -28,12 +28,14 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	<col class="word"/>
 	<col class="rcontext"/>
 	<col class="reload"/>
+	{% comment %}
 	<tr class="ui-widget-header">
 	    <th>Filename</th>
 	    <th>L. Context</th>
 	    <th>Word</th>
 	    <th>R. Context</th><th></th>
 	</tr>
+	{% endcomment %}
        <tbody class="ui-widget-content">
 	{# These rows are placeholders for jQuery to insert row content into #}
 	{% for word in words_in_context %}

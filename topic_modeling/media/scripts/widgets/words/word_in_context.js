@@ -32,25 +32,27 @@ function get_context_for_word(word, num)
     }
 	link += "/words/" + word;
 	$.getJSON(link, {}, function(word) {
+		var lc_word = word.word.toLowerCase();
 		new_html = '';
-        new_html += '<td class="doc-name"><a href="' + $.fn.documents_url + '/';
+        new_html += '<td class="document"><a href="' + $.fn.documents_url + '/';
 		new_html += word.doc_id;
-		new_html += '">'+word.doc_name;
-		new_html += '</a></td>';
-		new_html += '<td class="right-align">';
+		new_html += '"><img src="/site-media/images/text-x-generic_tango_22x22.png" title="';
+		new_html += word.doc_name;
+		new_html += '"/></a></td>';
+		new_html += '<td class="lcontext">';
 		new_html += word.left_context;
 		new_html += '</td><td class="word">';
         new_html += '<a href="' + $.fn.words_url + '/';
-        new_html += word.word;
+        new_html += lc_word;
 		new_html += '">'+word.word+'</a></td>';
-		new_html += '<td class="left-align">';
+		new_html += '<td class="rcontext">';
 		new_html += word.right_context;
 		new_html += '</td>';
 		new_html += '<td id="id_new_context_';
-		new_html += word.word + "_" + num + '" class="clickable_text">';
+		new_html += lc_word + "_" + num + '" class="reload">';
 		new_html += '<img src="/site-media/images/stock_reload.png" border="0"/>';
 		new_html += '</td>';
-		$("#id_"+word.word+"_"+num).html(new_html);
+		$("#id_"+lc_word+"_"+num).html(new_html);
 		cursor_default();
 	});
 }

@@ -96,7 +96,7 @@ def add_word_charts(dataset, analysis, context):
 def add_word_contexts(word, base_url, context):
     word_url = base_url + word
     words = []
-    for i in range(0,10):
+    for i in range(0,5):
         w = WordSummary(word, number=i)
         w.url = word_url
         words.append(w)
