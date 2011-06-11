@@ -25,10 +25,11 @@
 
 from django import forms
 from django.core.paginator import Paginator
-from django.shortcuts import render_to_response
 from django.template.context import Context
-from topic_modeling.visualize.models import Word, Dataset, Analysis, Topic,\
+
+from topic_modeling.visualize.models import Word, Dataset, Analysis, \
     Document, Attribute, Value
+
 
 def root_context(dataset, analysis):
     context = Context()

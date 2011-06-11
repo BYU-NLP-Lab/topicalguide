@@ -1,3 +1,4 @@
+{% extends "widgets/base_widget.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -21,7 +22,7 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-
+{% block widget %}
 <div class="ui-widget full" id="word-in-context">
     <div class="ui-widget-header">Word in Context</div>
     <table class="ui-widget-content ui-widget kwic">
@@ -47,8 +48,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         {% endfor %}
         </tbody>
     </table>
-    <script type="text/javascript" src="{{SCRIPTS}}/widgets/words/word_in_context.js">
-    </script>
     <script type="text/javascript">
         $(document).ready(function () {
         {% for word in word_contexts %}
@@ -57,3 +56,4 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         });
     </script>
 </div>
+{% endblock %}
