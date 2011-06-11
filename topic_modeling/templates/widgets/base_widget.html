@@ -1,4 +1,3 @@
-{% extends "core/main_application.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -22,35 +21,8 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-
-{% block scripts %}
-    {{block.super}}
-	<script charset="utf-8" type="text/javascript">
-		$.fn.word_vars = function () {};
-		$.fn.word_vars.curword = "{{ curword.type }}";
-		$(document).ready(function () {
-            get_page({{ page_num }});
-        });
-	</script>
-	<script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/words.js">
-    </script>
-{% endblock %}
-
-{% block above_sidebar %}
-	{{ word_find_form.as_p }}
-{% endblock %}
-
-{% block sidebar %}
-    {{block.super}}
-	<ul id="words-list" class="vertical"></ul>
-{% endblock %}
-
-{% block presentation_area %}
-    {% load widget %}
-    {% widget "words/total_count" %}
-    {% widget "words/word_in_context" %}
-    <div id="presentation-area-main-column">
-        {% widget "words/top_topics" %}
-        {% widget "words/top_documents" %}
-    </div>
-{% endblock %}
+<div class="widget-container">
+    {% if widget_script_path %}<script>{% include widget_script_path %}</script>{% endif %}
+    {% if widget_style_path %}<style scoped>{% include widget_style_path %}</style>{% endif %}{# Valid in HTML5 #}
+    {% block widget %}{% endblock %}
+</div>

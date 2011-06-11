@@ -22,6 +22,8 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
+import os
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -58,7 +60,8 @@ SITE_ID = 1
 USE_I18N = True
 
 # Path to the directory containing statically served files
-STATICFILES_ROOT = 'topic_modeling/media'
+STATICFILES_ROOT = os.getcwd()+'/topic_modeling/media'
+ALLOWED_INCLUDE_ROOTS = (STATICFILES_ROOT + '/scripts', STATICFILES_ROOT + '/styles')
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -95,6 +98,8 @@ ROOT_URLCONF = 'topic_modeling.urls'
 
 TEMPLATE_DIRS = (
    "topic_modeling/templates/",
+   "topic_modeling/media/scripts",
+   "topic_modeling/media/styles"
 )
 
 INSTALLED_APPS = (
