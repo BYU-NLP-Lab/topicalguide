@@ -238,7 +238,7 @@ class WordFindForm(forms.Form):
         super(WordFindForm, self).__init__(*args, **kwargs)
         self.fields['find_word'] = forms.CharField(max_length=100,
                 initial=word)
-        self.fields['find_word'].widget.attrs['onchange'] = 'find_word()'
+        self.fields['find_word'].widget.attrs['onchange'] = 'find_word("'+word+'")'
 
 class Tab(object):
     def __init__(self, title, widgets=None):

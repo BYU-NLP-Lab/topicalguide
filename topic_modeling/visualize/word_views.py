@@ -22,11 +22,10 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 from django.shortcuts import render_to_response
-from django.template import Context
 
 from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common import BreadCrumb, paginate_list, \
-    WordSummary, WordFindForm, get_word_list, root_context
+    WordSummary, WordFindForm, get_word_list, root_context, Tab, Widget
 from topic_modeling.visualize.models import Dataset, Word
 
 def index(request, dataset, analysis, word):
@@ -35,10 +34,6 @@ def index(request, dataset, analysis, word):
     context['tab'] = 'word'
     dataset = Dataset.objects.get(name=dataset)
     analysis = dataset.analysis_set.get(name=analysis)
-    
-    #Used by word_in_context.html
-    context['doc_base_url'] = context['documents_url']
-    context['word_base_url'] = context['words_url']
     
     words = get_word_list(request, dataset.name)
     
@@ -51,54 +46,66 @@ def index(request, dataset, analysis, word):
     context['page_num'] = page_num
     
     if word:
-        context['curword'] = Word.objects.get(dataset=dataset, type=word)
+        word = Word.objects.get(dataset=dataset, type=word)
     else:
-        context['curword'] = context['words'][0]
+        word = context['words'][0]
 
-    context['breadcrumb'] = BreadCrumb() \
-        .item(dataset).item(analysis).item(context['curword'])
+    context['word'] = word
+    context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(word)
     
-    add_word_charts(dataset, analysis, context)
-    
+    word_url = context['words_url'] + '/' + word.type
     word_base = request.session.get('word-find-base', '')
     context['word_find_form'] = WordFindForm(word_base)
-        
-    add_word_contexts(context['curword'].type, context['words_url'], context)
-#    word = context['curword'].type
-#    words = []
-#    for i in range(0,10):
-#        w = WordSummary(word, number=i)
-#        w.url = context['words_url'] + word
-#        words.append(w)
-#    
-#    context['word_contexts'] = words
     
-    context['view_description'] = "Word '{0}'".format(context['curword'].type)
+    context['view_description'] = "Word '{0}'".format(word.type)
+    
+    context['tabs'] = [words_tab(analysis, word, word_url)]
     
     return render_to_response('words.html', context)
 
-def add_word_charts(dataset, analysis, context):
-    topicwords = context['curword'].topicword_set.filter(
+def words_tab(analysis, word, word_url):
+    tab = Tab('Word Information')
+    
+    tab.add(top_documents_widget(analysis.dataset, word))
+    tab.add(top_topics_widget(analysis, word))
+    tab.add(total_count_widget(word))
+    tab.add(word_in_context_widget(word, word_url))
+    
+    return tab
+
+def top_documents_widget(dataset, word):
+    w = Widget('Top Documents', 'words/top_documents')
+    docwords = word.documentword_set.filter(
+            document__dataset=dataset)
+    total = reduce(lambda x, dw: x + dw.count, docwords, 0)
+    docs = sorted([WordSummary(dw.document.filename, float(dw.count) / total)
+                   for dw in docwords])
+    w['chart_url'] = get_chart(docs)
+    return w
+
+def top_topics_widget(analysis, word):
+    w = Widget('Top Topics', 'words/top_topics')
+    topicwords = word.topicword_set.filter(
             topic__analysis=analysis)
     total = reduce(lambda x, tw: x + tw.count, topicwords, 0)
     topics = sorted([WordSummary(tw.topic.name, float(tw.count) / total)
             for tw in topicwords])
     topics.sort()
-    context['topic_chart_address'] = get_chart(topics)
-    
-    docwords = context['curword'].documentword_set.filter(
-            document__dataset=dataset)
-    total = reduce(lambda x, dw: x + dw.count, docwords, 0)
-    docs = sorted([WordSummary(dw.document.filename, float(dw.count) / total)
-                   for dw in docwords])
-    context['doc_chart_address'] = get_chart(docs)
+    w['chart_url'] = get_chart(topics)
+    return w
 
-def add_word_contexts(word, base_url, context):
-    word_url = base_url + word
+def total_count_widget(word):
+    w = Widget('Total Count', 'words/total_count')
+    w['word'] = word
+    return w
+
+def word_in_context_widget(word, word_url):
+    w = Widget('Word In Context', 'words/word_in_context')
     words = []
     for i in range(0,5):
-        w = WordSummary(word, number=i)
-        w.url = word_url
-        words.append(w)
+        ws = WordSummary(word.type, number=i)
+        ws.url = word_url
+        words.append(ws)
     
-    context['word_contexts'] = words
+    w['word_contexts'] = words
+    return w
