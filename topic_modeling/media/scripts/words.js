@@ -22,12 +22,11 @@
  * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
  */
 
-function update_list_contents(word_list) {
-    var curword = $.fn.word_vars.curword;
+function update_list_contents(word_list, word) {
     var new_html = '';
     for (var i = 0; i < word_list.length; i++) {
         new_html += '<li';
-        if (word_list[i].type == curword) {
+        if (word_list[i].type == word) {
             new_html += ' class="selected"';
         }
         new_html += '>';
@@ -38,26 +37,26 @@ function update_list_contents(word_list) {
     $("ul#words-list").html(new_html);
 }
 
-function redraw_list_control(json_link) {
+function redraw_list_control(json_link, word) {
 	$.getJSON(json_link, {}, function(data) {
 		set_nav_arrows(data.page, data.num_pages);
-		update_list_contents(data.words);
+		update_list_contents(data.words, word);
 		cursor_default();
 	});
 }
 
-function get_page(page) {
+function get_page(page, current_word) {
     cursor_wait();
     var link = '/feeds/word-page/datasets/' + $.fn.dataset
             + '/analyses/' + $.fn.analysis
             + '/number/' + page;
-    redraw_list_control(link);
+    redraw_list_control(link, current_word);
 }
-function find_word() {
+function find_word(current_word) {
     cursor_wait();
     var word_base = $("#id_find_word").val();
     var link = '/feeds/word-page-find/datasets/' + $.fn.dataset
             + '/analyses/' + $.fn.analysis
             + '/words/' + word_base;
-    redraw_list_control(link);
+    redraw_list_control(link, current_word);
 }
