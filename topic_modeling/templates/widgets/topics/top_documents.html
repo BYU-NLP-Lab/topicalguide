@@ -1,3 +1,4 @@
+{% extends "widgets/base_widget.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -21,7 +22,7 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-
+{% block widget %}
 {% load custom_filters %}
 <table id="top-documents" class="ui-widget">
     <tr class="ui-widget-header">
@@ -32,10 +33,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     <tbody class="ui-widget-content">
 	    {% for doc in top_docs %}
 	    <tr>
-	        <td class="key"><a href="{{ baseurl }}/{{ curtopic.number }}/documents/{{ doc.document.id }} ">{{ doc.document.filename }}</a></td>
+	        <td class="key"><a href="{{topic_url}}/documents/{{ doc.document.id }} ">{{ doc.document.filename }}</a></td>
 	        <td class="value">{{ doc.count }}</td>
 	        <td class="value">{{ doc.count|divide:doc.document.word_count }}</td>
 	    </tr>
 	    {% endfor %}
     </tbody>
 </table>
+{% endblock %}

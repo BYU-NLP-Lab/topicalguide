@@ -10,6 +10,7 @@ from copy import copy
 from django import template
 
 from topic_modeling import settings
+from topic_modeling.visualize.common import Widget
 
 register = template.Library()
 quotes = ('"',"'")
@@ -25,32 +26,25 @@ def compile_widget_tag(parser, token):
         raise template.TemplateSyntaxError("%r tag's argument is quoted improperly" % tag_name)
     
     if widget_name[0] in quotes:
-        return WidgetNode(widget_name[1:-1])
+        return Widget(widget_name=widget_name[1:-1])
     else:
-        return WidgetNode(widget_name)
+        return Widget(widget_name=widget_name)
 
-class WidgetNode(template.Node):
-    def __init__(self, widget_name):
-        self.widget_name = widget_name
-    
-    def _template_path(self):
-        return 'widgets/%s.html' % self.widget_name
-    
-    def _script_path(self):
-        return 'widgets/%s.js' % (self.widget_name)
-    
-    def _style_path(self):
-        return '%s/styles/widgets/%s.css' % (settings.STATICFILES_ROOT, self.widget_name)
-    
-    def render(self, context):
-        ctxt = copy(context)
-        script_path = self._script_path()
-        if os.path.exists('%s/scripts/%s' % (settings.STATICFILES_ROOT, script_path)):
-            ctxt['widget_script_path'] = script_path
-        
-        style_path = self._style_path()
-        if os.path.exists('%s/styles/%s' % (settings.STATICFILES_ROOT, style_path)):
-            ctxt['widget_style_path'] = style_path
-        
-        t = template.loader.get_template(self._template_path())
-        return t.render(ctxt)
+#class WidgetNode(template.Node):
+#    def __init__(self, widget_name):
+#        self.widget_name = widget_name
+#    
+#
+#    
+#    def render(self, context):
+#        ctxt = copy(context)
+#        script_path = self._script_path()
+#        if os.path.exists('%s/scripts/%s' % (settings.STATICFILES_ROOT, script_path)):
+#            ctxt['widget_script_path'] = script_path
+#        
+#        style_path = self._style_path()
+#        if os.path.exists(style_path):
+#            ctxt['widget_style_url'] = self._style_url()
+#        
+#        t = template.loader.get_template(self._template_path())
+#        return t.render(ctxt)

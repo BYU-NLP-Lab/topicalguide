@@ -21,8 +21,20 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-<div class="widget-container">
-    {% if widget_script_path %}<script>{% include widget_script_path %}</script>{% endif %}
-    {% if widget_style_path %}<style scoped>{% include widget_style_path %}</style>{% endif %}{# Valid in HTML5 #}
+<div id="widget_{{widget.widget_name|slugify}}" class="ui-widget">
+    {% if widget.title %}<div class="ui-widget-header">{{widget.title}}</div>{% endif %}
+    {% block widget_local_style %}{% endblock %}
     {% block widget %}{% endblock %}
+    {% if widget.script_path or widget.style_url %}
+    <script>
+        $(document).ready(function() {
+            {% block widget_ready_script %}{% endblock %}
+            {% if widget.style_url %}
+                $("head").append("<link href='{{widget.style_url}}' type='text/css' rel='stylesheet' />");
+            {% endif %}
+        });
+        {% if widget.script_path %}{% include widget.script_path %}{% endif %}
+        {% block widget_script %}{% endblock %}
+    </script>
+    {% endif %}
 </div>

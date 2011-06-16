@@ -41,15 +41,15 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         $.fn.document_url = "{{ document_url }}";
         $.fn.doc_vars = function () {};
         $.fn.doc_vars.document_id = {{ document.id }};
-        
-        $(document).ready(function () {
-            get_page({{ page_num }});
-        });
     </script>
 {% endblock %}
 
+{% block document_ready_script %}
+    {{block.super}}
+    get_page({{ page_num }});
+{% endblock %}
+
 {% block above_sidebar %}
-    
     <h1>Filters</h1>
 	<table class="filters">
 		<tbody>
@@ -63,38 +63,4 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block sidebar %}
     {{block.super}}
 	<ul id="documents-list" class="vertical"></ul>
-{% endblock %}
-
-{% block presentation_area %}
-	<div class="tabs">
-		<ul>
-			{% for top_level_widget in top_level_widgets %}
-			<li class="top-level">
-			    <a href="#tabs-{{forloop.counter}}">
-				{{ top_level_widget.title }}
-				</a>
-			</li>
-			{% endfor %}
-		</ul>
-		{% for top_level_widget in top_level_widgets %}
-		    <div id="tabs-{{forloop.counter}}">
-			{% if top_level_widget.top_level %}
-				<div class="lower-tabs" id="{{top_level_widget.ref}}-tabs">
-					<ul>
-						{% for widget in top_level_widget.widgets %}
-						<li class="lower-level"><a href="#{{top_level_widget.ref}}-tabs-{{forloop.counter}}">{{ widget.title }}</a></li>
-						{% endfor %}
-					</ul>
-					{% for widget in top_level_widget.widgets %}
-					<div id="{{top_level_widget.ref}}-tabs-{{forloop.counter}}">
-						{% include widget.url %}
-					</div>
-					{% endfor %}
-				</div>
-			{% else %}
-			    {% include top_level_widget.url %}
-			{% endif %}
-			</div>
-		{% endfor %}
-	</div>
 {% endblock %}

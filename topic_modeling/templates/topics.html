@@ -38,12 +38,12 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         $.fn.topic_vars = function () {};
         $.fn.topic_vars.curtopic_number = {{ curtopic.number }};
         $.fn.topic_vars.post_link = "{{ topic_post_link }}";
-        
-        $(document).ready(function () {
-            get_page({{ page_num }});
-            $("#tabs, #tabs .lower-tabs").tabs();
-        });
     </script>
+{% endblock %}
+
+{% block document_ready_script %}
+    {{block.super}}
+    get_page({{ page_num }});
 {% endblock %}
 
 {% block above_sidebar %}
@@ -59,37 +59,5 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block sidebar %}
     {{block.super}}
 	<ul id="topics-list" class="vertical"></ul>
-{% endblock %}
-
-{% block presentation_area %}
-    {# <h1>Topic "{{topicname}}"</h1> #}
-	<div id="tabs">
-		<ul>
-			{% for top_level_widget in top_level_widgets %}
-			<li class="top-level"><a href="#tabs-{{forloop.counter}}">
-				{{ top_level_widget.title }}</a></li>
-			{% endfor %}
-		</ul>
-		{% for top_level_widget in top_level_widgets %}
-		<div id="tabs-{{forloop.counter}}">
-			<div class="lower-tabs" id="{{top_level_widget.ref}}-tabs">
-				<ul>
-					{% for widget in top_level_widget.widgets %}
-					<li class="lower-level"><a href="#{{top_level_widget.ref}}-tabs-{{forloop.counter}}">{{ widget.title }}</a></li>
-					{% endfor %}
-				</ul>
-				{% for widget in top_level_widget.widgets %}
-				<div id="{{top_level_widget.ref}}-tabs-{{forloop.counter}}">
-				    {% if widget.html %}
-				        {{widget.html|safe}}
-				    {% else %}
-					   {% include widget.url %}
-					{% endif %}
-				</div>
-				{% endfor %}
-			</div>
-		</div>
-		{% endfor %}
-	</div>
 {% endblock %}
 

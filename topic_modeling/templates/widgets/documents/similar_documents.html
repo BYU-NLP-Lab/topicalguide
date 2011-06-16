@@ -1,3 +1,4 @@
+{% extends "widgets/base_widget.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -21,7 +22,7 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-
+{% block widget %}
 <div>
 	<table id="similar-documents" class="ui-widget">
 	    <thead><tr class="ui-widget-header"><th>Document</th><th>Similarity</th></tr></thead>
@@ -38,11 +39,8 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         </select>
     </div>
 </div>
-<script charset="utf-8" type="text/javascript"
-	src="{{SCRIPTS}}/widgets/documents/similar_documents.js">
-</script>
-<script charset="utf-8" type="text/javascript">
-    $().ready(function() {
-    	get_similar_documents();
-    });
-</script>
+{% endblock %}
+
+{% block widget_ready_script %}
+    get_similar_documents();
+{% endblock %}

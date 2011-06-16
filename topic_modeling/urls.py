@@ -21,11 +21,27 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns
 from django.conf import settings
 
 from django.contrib import admin
 admin.autodiscover()
+
+from topic_modeling.cssmin import cssmin
+from django.http import HttpResponse
+
+def render_style(request, style_path):
+    css = open(settings.STYLES_ROOT + '/' + style_path).read() 
+    css = cssmin(css)
+    
+    if style_path.endswith(".css"):
+        mimetype = "text/css"
+    elif style_path.endswith(".png"):
+        mimetype = "image/png"
+    else:
+        mimetype = None
+    
+    return HttpResponse(css, mimetype=mimetype)
 
 dataset = r'datasets/(?P<dataset>[^/]*)'
 analysis = r'analyses/(?P<analysis>[^/]*)'
@@ -60,13 +76,13 @@ urlpatterns = patterns('',
 #    (r'^' + dataset + '/' + analysis + '$',
 #        'topic_modeling.visualize.dataset_views.index'),
     (r'^' + dataset + '/' + analysis + '$',
-        'topic_modeling.visualize.topics.views.index'),
+        'topic_modeling.visualize.topics.views.render'),
 
 # Topic Views
     (r'^' + dataset + '/' + analysis + '/' + topic + '$',
-        'topic_modeling.visualize.topics.views.index'),
+        'topic_modeling.visualize.topics.views.render'),
     (r'^' + dataset + '/' + analysis + '/' + topic + '/' + map + '$',
-        'topic_modeling.visualize.topics.views.topic_map'),
+        'topic_modeling.visualize.topics.views.render_topic_map'),
     (r'^' + dataset + '/' + analysis + '/' + topic + '/' + document + '$',
         'topic_modeling.visualize.topics.views.document_index'),
     (r'^' + dataset + '/' + analysis + '/' + topic + '/' + word + '$',
@@ -212,6 +228,9 @@ urlpatterns = patterns('',
         'topic_modeling.visualize.ajax_calls.remove_all_favorites'),
     (r'^feeds/favorite-page/' + number + '$',
         'topic_modeling.visualize.ajax_calls.get_favorite_page'),
+
+#Styles
+    (r'^styles/(?P<style_path>.+)$', render_style),
 
 # URLS I wasn't sure quite what to do with
 ##########################################

@@ -28,16 +28,13 @@ from collections import namedtuple
 
 from django.db.models import Avg
 from django.shortcuts import render_to_response, get_object_or_404
-from django.template import Context
 from django.http import HttpResponse
 from django.http import HttpResponseNotFound
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import get_word_cloud, root_context
+from topic_modeling.visualize.common import get_word_cloud, root_context, Tab
 from topic_modeling.visualize.common import set_word_context
 from topic_modeling.visualize.common import BreadCrumb
-from topic_modeling.visualize.common import Cloud
-from topic_modeling.visualize.common import TopLevelWidget
 from topic_modeling.visualize.common import Widget
 from topic_modeling.visualize.common import WordSummary
 from topic_modeling.visualize.models import Analysis
@@ -47,7 +44,6 @@ from topic_modeling.visualize.models import TopicMetaInfo
 from topic_modeling.visualize.models import TopicMetaInfoValue
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word
-from topic_modeling.visualize.models import TopicName
 from topic_modeling.visualize.models import TopicNameScheme
 from topic_modeling.visualize.topics.common import RenameForm
 from topic_modeling.visualize.topics.common import  get_topic_name
@@ -62,19 +58,25 @@ from topic_modeling.visualize.word_views import add_word_contexts
 # The context variables that all topic views need
 #################################################
 
+def get_from_db(dataset_name, analysis_name):
+    dataset = get_object_or_404(Dataset, name=dataset_name)
+    analysis = get_object_or_404(Analysis, name=analysis_name, dataset=dataset)
+    return dataset, analysis
+
 def base_context(request, dataset, analysis, topic, extra_filters=[]):
     # Basic page variables here
     context = root_context(dataset, analysis)
+    
+    #TODO: clean up this context by moving widget-specific entries into widget contexts
+    
     
     context['highlight'] = 'topics_tab'
     context['tab'] = 'topic'
     context['extra_widgets'] = []
 
-    ds = Dataset.objects.get(name=dataset)
-    context['topic_map_dir'] = ds.dataset_dir + '/topic_maps'
+    dataset, analysis = get_from_db(dataset, analysis)
 
-    dataset = get_object_or_404(Dataset, name=dataset)
-    analysis = get_object_or_404(Analysis, name=analysis, dataset=dataset)
+    
 
     context['sort_form'] = SortTopicForm(analysis)
 
@@ -106,6 +108,8 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
     if not topic:
         topic = context['topics'][0]
     context['curtopic'] = topic
+    
+    context['topic_url'] = context['topics_url'] + '/' + str(topic.number)
 
     context['metrics'] = topic.topicmetricvalue_set.all()
 
@@ -118,24 +122,22 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
     context['view_description'] = 'Topic "'+topic_name + '"'
     return context, analysis, topic
 
+def tabs(request, topic, topic_url, name_scheme_name):
+    tabs = []
+    tabs.append(top_words_tab(topic, topic_url))
+    tabs.append(similar_topics_tab(request, topic, name_scheme_name))
+    tabs.append(extra_information_tab(request, topic, topic_url))
+#    tabs[0].hidden = False
+    return tabs
 
 # Top-level view methods
 ########################
 
-def index(request, dataset, analysis, topic=None):
+def render(request, dataset, analysis, topic=None):
     context, analysis, topic = base_context(request, dataset, analysis, topic)
-
-    top_level_widgets = []
-    top_level_widgets.append(top_words_widgets(topic, context))
-    top_level_widgets.append(similar_topics_widgets(request, analysis, topic,
-            context))
-    top_level_widgets.append(extra_information_widgets(request, analysis,
-            topic, context))
-    top_level_widgets[0].hidden = False
-    context['top_level_widgets'] = top_level_widgets
-
-    rename_form = RenameForm(context['topic_name'])
-    context['rename_form'] = rename_form
+    
+    context['tabs'] = tabs(request, topic, context['topic_url'], \
+       context['currentnamescheme'].name)
 
     return render_to_response('topics.html', context)
 
@@ -200,22 +202,6 @@ def document_index(request, dataset, analysis, topic, document):
     return render_to_response('topic_document.html', context)
 
 
-# Not a top-level view, but it's a directly-responding method, so it goes
-# roughly in this category
-def topic_map(request, dataset, analysis, topic, namescheme):
-    context, analysis, topic = base_context(request, dataset, analysis, topic)
-
-    path = str(topic.analysis.name) + '/' + namescheme + '/' + \
-            str(topic.number) + '.svg'
-    topic_map_local = context['topic_map_dir'] + '/' + path
-
-    if os.path.exists(topic_map_local):
-        image = open(topic_map_local, 'r').read()
-        return HttpResponse(image, mimetype="image/svg+xml")
-    else:
-        return HttpResponseNotFound()
-
-
 # Topic index widgets
 #####################
 
@@ -226,13 +212,19 @@ def topic_map(request, dataset, analysis, topic, namescheme):
 # The code that produces widgets also needs to set context variables for
 # whatever is needed by the url they specify.
 
+#NOTE: this is not currently being used
+def topic_name_widget(topic_name):
+    w = Widget('Topic Name', 'topics/topic_name')
+    w['rename_form'] = RenameForm(topic_name)
+    return w
+
 # Top Words widgets
 ###################
 
-def top_words_widgets(topic, context):
-    top_level_widget = TopLevelWidget("Top Words")
+def top_words_tab(topic, topic_url):
+    tab = Tab("Top Words")
 
-    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
+    word_url = '%s/words/' % topic_url
     topicwords = topic.topicword_set.filter(
             word__ngram=False).order_by('-count')
     words = []
@@ -242,35 +234,33 @@ def top_words_widgets(topic, context):
         w.url = word_url + topicword.word.type
         words.append(w)
 
-    top_level_widget.add(Widget('Word Cloud',html=unigram_cloud(words)))
+    tab.add(Widget('Word Cloud',content_html=unigram_cloud(words)))
     
-    ttcloud = turbo_topics_cloud(topic.analysis, topic, context)
-    if ttcloud: top_level_widget.add(Widget('Turbo Topics', html=ttcloud))
+    ttcloud = turbo_topics_cloud(topic)
+    if ttcloud: tab.add(Widget('Turbo Topics', content_html=ttcloud))
     
-    ngcloud = ngram_cloud(topic, context)
-    if ngcloud: top_level_widget.add(Widget('N-grams', html=ngcloud))
+    ngcloud = ngram_cloud(topic, word_url)
+    if ngcloud: tab.add(Widget('N-grams', content_html=ngcloud))
     
-    top_level_widget.add(words_in_context_widget(words, context))
-    top_level_widget.add(word_chart_widget(words, context))
-    top_level_widget.widgets[0].hidden = False
-    return top_level_widget
+    tab.add(words_in_context_widget(words))
+    tab.add(word_chart_widget(words))
+    tab.widgets[0].hidden = False
+    return tab
 
-def words_in_context_widget(words, context):
-    words_in_context = Widget("Words in Context",
-            "widgets/topics/words_in_context.html")
-    context['words_in_context'] = words[:10]
-    return words_in_context
+def words_in_context_widget(words):
+    w = Widget("Words in Context", "topics/words_in_context")
+    w['words_in_context'] = words[:10]
+    return w
 
-def word_chart_widget(words, context):
-    word_chart = Widget("Word Chart", "widgets/topics/word_chart.html")
-    context['chart_address'] = get_chart(words)
-    return word_chart
+def word_chart_widget(words):
+    w = Widget("Word Chart", 'topics/word_chart')
+    w['chart_address'] = get_chart(words)
+    return w
 
 def unigram_cloud(words):
     return get_word_cloud(words)
 
-def ngram_cloud(topic, context):
-    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
+def ngram_cloud(topic, word_url):
     topicngrams = topic.topicword_set.filter(
             word__ngram=True).order_by('-count')
     ngrams = []
@@ -285,7 +275,7 @@ def ngram_cloud(topic, context):
     return None
 
 
-def turbo_topics_cloud(analysis, topic, context):
+def turbo_topics_cloud(topic):
     try:
         turbo_topics = TopicMetaInfo.objects.get(name="Turbo Topics Cloud")
         value = turbo_topics.topicmetainfovalue_set.get(topic=topic)
@@ -333,22 +323,21 @@ def turbo_topics_cloud(analysis, topic, context):
 # Similar Topics Widgets
 ########################
 
-def similar_topics_widgets(request, analysis, topic, context):
-    top_level_widget = TopLevelWidget("Similar Topics")
+def similar_topics_tab(request, topic, name_scheme_name):
+    tab = Tab("Similar Topics")
 
-    top_level_widget.widgets.append(similar_topic_list_widget(request,
-        analysis, topic, context))
-    top_level_widget.widgets.append(topic_map_widget(topic, context))
-    top_level_widget.widgets[0].hidden = False
-    return top_level_widget
+    tab.add(similar_topic_list_widget(request, topic))
+    tab.add(topic_map_widget(topic, name_scheme_name))
+#    tab.widgets[0].hidden = False
+    return tab
 
 
-def similar_topic_list_widget(request, analysis, topic, context):
-    topic_list = Widget("Lists", "widgets/topics/similar_topics.html")
-    similarity_measures = analysis.pairwisetopicmetric_set.all()
+def similar_topic_list_widget(request, topic):
+    w = Widget("Lists", widget_name="topics/similar_topics")
+    similarity_measures = topic.analysis.pairwisetopicmetric_set.all()
     if similarity_measures:
         name_scheme_id = request.session['current_name_scheme_id']
-        ns = TopicNameScheme.objects.get(id=name_scheme_id)
+#        ns = TopicNameScheme.objects.get(id=name_scheme_id)
         measure = request.session.get('topic-similarity-measure', None)
         if measure:
             measure = similarity_measures.get(name=measure)
@@ -363,42 +352,48 @@ def similar_topic_list_widget(request, analysis, topic, context):
             number = topic.number
             name = str(number) + ': ' + get_topic_name(topic, name_scheme_id)
             entries.append(TopicSimilarityEntry(name, number, t.value))
-        context['similar_topics'] = entries
-        context['similarity_measures'] = similarity_measures
-        context['similarity_measure'] = measure
-    return topic_list
+        w['similar_topics'] = entries
+        w['similarity_measures'] = similarity_measures
+        w['similarity_measure'] = measure
+    
+    return w
 
+def topic_map_dir(dataset):
+    return dataset.dataset_dir + '/topic_maps'
 
-def topic_map_widget(topic, context):
-    topic_map = Widget("Map", "widgets/topics/topic_map.html")
-    path = str(topic.analysis.name) + '/' + context['currentnamescheme'].name \
-            + '/' + str(topic.number) + '.svg'
-    topic_map_local = context['topic_map_dir'] + '/' + path
-    if os.path.exists(topic_map_local):
-        context['topic_map_local_filename'] = topic_map_local
-        topic_map_url = '/datasets/' + str(topic.analysis.dataset.name) + \
-                '/analyses/' + str(topic.analysis.name) + '/topics/' + \
-                str(topic.number) + '/maps/' + \
-                context['currentnamescheme'].name
-        context['topic_map_url'] = topic_map_url
-    return topic_map
+def render_topic_map(request, dataset, analysis, topic_num, name_scheme_name):
+    dataset, analysis = get_from_db(dataset, analysis)
+    path = '%s/%s/%s/%s.svg' % (topic_map_dir(dataset), analysis.name, name_scheme_name, topic_num)
+    if os.path.exists(path):
+        image = open(path, 'r').read()
+        return HttpResponse(image, mimetype="image/svg+xml")
+    else:
+        return HttpResponseNotFound()
+
+def topic_map_widget(topic, name_scheme_name):
+    analysis = topic.analysis
+    dataset = analysis.dataset
+    w = Widget("Map", widget_name="topics/topic_map")
+    w['topic_map_url'] = '/datasets/%s/analysis/%s/topics/%d/maps/%s' \
+        % (dataset.name, analysis.name, topic.number, name_scheme_name)
+    return w
 
 
 # Extra Information Widgets
 ###########################
 
-def extra_information_widgets(request, analysis, topic, context):
-    top_level_widget = TopLevelWidget("Extra Information")
+def extra_information_tab(request, topic, topic_url):
+    tab = Tab("Extra Information")
 
-    top_level_widget.add(metrics_widget(topic, context))
-    top_level_widget.add(metadata_widget(topic, context))
-    top_level_widget.add(top_documents_widget(topic, context))
-    top_level_widget.add(top_values_widget(request, analysis, topic, context))
-    top_level_widget.widgets[0].hidden = False
-    return top_level_widget
+    tab.add(metrics_widget(topic))
+    tab.add(metadata_widget(topic))
+    tab.add(top_documents_widget(topic, topic_url))
+    tab.add(top_values_widget(request, topic))
+#    top_level_widget.widgets[0].hidden = False
+    return tab
 
-def metrics_widget(topic, context):
-    stats = Widget('Metrics', 'widgets/topics/metrics.html')
+def metrics_widget(topic):
+    w = Widget('Metrics', widget_name='topics/metrics')
     Metric = namedtuple('Metric', 'name value average')
     metrics = []
     for topicmetricvalue in topic.topicmetricvalue_set.select_related().all():
@@ -407,34 +402,37 @@ def metrics_widget(topic, context):
         value = topicmetricvalue.value
         average = metric.topicmetricvalue_set.aggregate(Avg('value'))
         metrics.append(Metric(name, value, average['value__avg']))
-    context['metrics'] = metrics
-    return stats
+    w['metrics'] = metrics
+    return w
 
-def metadata_widget(topic, context):
-    context['metadataval_mgr'] = topic.topicmetainfovalue_set
-    return Widget('Metadata', 'widgets/common/metadata.html')
+def metadata_widget(topic):
+    w = Widget('Metadata', widget_name='common/metadata')
+    w['metadataval_mgr'] = topic.topicmetainfovalue_set
+    return w
 
-def top_documents_widget(topic, context):
-    top_documents = Widget('Top Documents', 'widgets/topics/top_documents.html')
+def top_documents_widget(topic, topic_url):
+    w = Widget('Top Documents', widget_name='topics/top_documents')
     topicdocs = topic.documenttopic_set.order_by('-count')[:10]
-    context['top_docs'] = topicdocs
-    return top_documents
+    w['top_docs'] = topicdocs
+    w['topic_url'] = topic_url
+    return w
 
 
-def top_values_widget(request, analysis, topic, context):
-    top_values_widget = Widget('Top Values', 'widgets/topics/top_values.html')
-    context['attributes'] = analysis.dataset.attribute_set.all()
+def top_values_widget(request, topic):
+    w = Widget('Top Values', widget_name='topics/top_values')
+    attributes = topic.analysis.dataset.attribute_set.all()
     current_attribute = request.session.get('topic-attribute', None)
     if not current_attribute:
-        if len(context['attributes'])==0: return
-        attribute = context['attributes'][0]
+        if len(attributes)==0: return
+        attribute = attributes[0]
     else:
-        attribute = analysis.dataset.attribute_set.get(name=current_attribute)
-    top_values = top_values_for_attr_topic(analysis, topic, attribute)
-
-    context['attribute'] = attribute
-    context['top_values'] = top_values
-    return top_values_widget
+        attribute = topic.analysis.dataset.attribute_set.get(name=current_attribute)
+    top_values = top_values_for_attr_topic(topic, attribute)
+    
+    w['attributes'] = attributes
+    w['attribute'] = attribute
+    w['top_values'] = top_values
+    return w
 
 
 # Classes

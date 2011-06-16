@@ -11,7 +11,8 @@ function fix_tab_height() {
 }
 
 function tabify() {
-	$("div#presentation-area div.tabs, div#presentation-area div.tabs .lower-tabs").tabs();
+//	$("div#presentation-area div.tabs, div#presentation-area div.tabs .lower-tabs").tabs();
+	$("div#tabs").tabs();
 }
 
 /***** Sidebar *****/
