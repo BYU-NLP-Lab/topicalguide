@@ -26,7 +26,7 @@ from django.shortcuts import render_to_response
 
 from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common import BreadCrumb, root_context
-from topic_modeling.visualize.common import TopLevelWidget
+from topic_modeling.visualize.common import Tab
 from topic_modeling.visualize.common import Widget
 from topic_modeling.visualize.common import WordSummary
 from topic_modeling.visualize.documents.common import SortDocumentForm
@@ -37,7 +37,6 @@ from topic_modeling.visualize.models import Document
 
 def base_context(request, dataset, analysis, document):
     context = root_context(dataset, analysis)
-    
 
     context['highlight'] = 'documents_tab'
     context['tab'] = 'document'
@@ -66,12 +65,8 @@ def base_context(request, dataset, analysis, document):
     context['document_url'] = context['documents_url'] + '/' + str(document.id)
     context['document'] = document
     
-    context['title'] = document.get_title()
-    context['view_description'] = context['title']
-
+    context['view_description'] = document.get_title()
     context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(document)
-    
-    
 
     return context, analysis, document
 
@@ -80,15 +75,13 @@ def index(request, dataset, analysis, document=""):
     context, analysis, document = base_context(request, dataset, analysis,
             document)
 
-    top_level_widgets = []
-    top_level_widgets.append(text_widgets(document, context))
-    top_level_widgets.append(similar_documents_widgets(request, analysis,
-            document, context))
-    top_level_widgets.append(extra_information_widgets(analysis, document,
-            context))
-    top_level_widgets[0].hidden = False
+    tabs = []
+    tabs.append(text_tab(document))
+    tabs.append(similar_documents_tab(request, analysis, document))
+    tabs.append(extra_information_tab(analysis, document))
+#    tabs[0].hidden = False
 
-    context['top_level_widgets'] = top_level_widgets
+    context['tabs'] = tabs
 
     return render_to_response('documents.html', context)
 
@@ -96,9 +89,9 @@ def index(request, dataset, analysis, document=""):
 # Document Widgets
 ##################
 
-# Top level widgets create groups of lower-level widgets.  Each lower level
-# widget must specify a url, a title, and whether or not it defaults to visible
-# (only one widget per top level widget should default to visible).
+# Tabs create groups of widgets.  Each widget must specify a url, a title,
+# and whether or not it defaults to visible (only one widget per tab should
+# default to visible).
 #
 # The code that produces widgets also needs to set context variables for
 # whatever is needed by the url they specify.
@@ -106,43 +99,43 @@ def index(request, dataset, analysis, document=""):
 # Text widgets
 ##############
 
-def text_widgets(document, context):
-    return plain_text_widget(document, context)
+def text_tab(document):
+    tab = Tab('Text')
+    tab.add(plain_text_widget(document))
+    return tab
 
 
-def plain_text_widget(document, context):
-    text = Widget("Text", "widgets/documents/document_text.html")
-    context['document_text'] = document.text()
-    return text
+def plain_text_widget(document):
+    w = Widget("Text", "documents/document_text")
+    w['title'] = document.get_title()
+    w['document_text'] = document.text()
+    return w
 
 
 # Extra Information Widgets
 ###########################
 
-def extra_information_widgets(analysis, document, context):
-    top_level_widget = TopLevelWidget("Extra Information")
+def extra_information_tab(analysis, document):
+    tab = Tab("Extra Information")
+    tab.add(metrics_widget(document))
+    tab.add(metadata_widget(document))
+    tab.add(top_topics_widget(analysis, document))
+#    tab.widgets[0].hidden = False
+    return tab
 
-    top_level_widget.add(metrics_widget(document, context))
-    top_level_widget.add(metadata_widget(document, context))
-    top_level_widget.add(top_topics_widget(analysis, document, context))
-    
-    
-    top_level_widget.widgets[0].hidden = False
-    return top_level_widget
+def metrics_widget(document):
+    w = Widget('Metrics', 'documents/metrics')
+    w['metrics'] = document.documentmetricvalue_set.all()
+    return w
 
+def metadata_widget(document):
+    w = Widget('Metadata', 'documents/metadata_backcompat')
+    w['docattrval_mgr'] = document.attributevaluedocument_set
+    w['metadataval_mgr'] = document.documentmetainfovalue_set
+    return w
 
-def metrics_widget(document, context):
-    stats = Widget('Metrics', 'widgets/documents/metrics.html')
-    context['metrics'] = document.documentmetricvalue_set.all()
-    return stats
-
-def metadata_widget(document, context):
-    context['docattrval_mgr'] = document.attributevaluedocument_set
-    context['metadataval_mgr'] = document.documentmetainfovalue_set
-    return Widget('Metadata', 'widgets/documents/metadata_backcompat.html')
-
-def top_topics_widget(analysis, document, context):
-    top_topics = Widget('Top Topics', 'widgets/documents/top_topics.html')
+def top_topics_widget(analysis, document):
+    w = Widget('Top Topics', 'documents/top_topics')
     topicdocs = document.documenttopic_set.filter(topic__analysis=analysis)
     total = 0
     topics = []
@@ -152,25 +145,21 @@ def top_topics_widget(analysis, document, context):
         t = WordSummary(topicdoc.topic.name, float(topicdoc.count) / total)
         topics.append(t)
     topics.sort()
-    context['chart_address'] = get_chart(topics)
-    return top_topics
+    w['chart_address'] = get_chart(topics)
+    return w
 
 
 # Similar Documents Widgets
 ###########################
-
-# Again we only have one, though there is room for change here
-
-def similar_documents_widgets(request, analysis, document, context):
-    return similar_documents_widget(request, analysis, document, context)
-#    top_level_widget = TopLevelWidget("Similar Documents")
-#    top_level_widget.widgets.append(similar_documents_widget(request, analysis,
-#            document, context))
-#    return top_level_widget
+def similar_documents_tab(request, analysis, document):
+#    return similar_documents_widget(request, analysis, document)
+    tab = Tab("Similar Documents")
+    tab.add(similar_documents_widget(request, analysis, document))
+    return tab
 
 
-def similar_documents_widget(request, analysis, document, context):
-    document_list = Widget("Similar Documents", "widgets/documents/similar_documents.html")
+def similar_documents_widget(request, analysis, document):
+    w = Widget("Similar Documents", "documents/similar_documents")
     similarity_measures = analysis.pairwisedocumentmetric_set.all()
     if similarity_measures:
         measure = request.session.get('similarity_measure', None)
@@ -180,10 +169,10 @@ def similar_documents_widget(request, analysis, document, context):
             measure = similarity_measures[0]
         similar_documents = document.pairwisedocumentmetricvalue_originating.\
                 select_related().filter(metric=measure).order_by('-value')
-        context['similar_documents'] = similar_documents[1:11]
-        context['similarity_measures'] = similarity_measures
-        context['similarity_measure'] = measure
-    return document_list
+        w['similar_documents'] = similar_documents[1:11]
+        w['similarity_measures'] = similarity_measures
+        w['similarity_measure'] = measure
+    return w
 
 
 # vim: et sw=4 sts=4

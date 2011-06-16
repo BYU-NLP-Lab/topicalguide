@@ -1,3 +1,4 @@
+{% extends "widgets/base_widget.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -22,6 +23,7 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
+{% block widget %}
 {% load custom_filters %}
 <table id="topic-metrics" class="ui-widget">
 	<tr class="ui-widget-header">
@@ -45,3 +47,4 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		{% endfor %}
 	</tbody>
 </table>
+{% endblock %}

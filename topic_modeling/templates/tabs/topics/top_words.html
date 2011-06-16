@@ -1,3 +1,4 @@
+{% extends "tabs/base_tab.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -21,3 +22,13 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
+
+{% load widget %}
+
+{% block tab_title %}Top Words{% endblock %}
+
+{% block tab_body %}
+    {% widget "topics/word_cloud" %}
+    {% widget "topics/words_in_context" %}
+    {% widget "topics/word_chart" %}
+{% endblock %}

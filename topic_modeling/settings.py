@@ -61,7 +61,9 @@ USE_I18N = True
 
 # Path to the directory containing statically served files
 STATICFILES_ROOT = os.getcwd()+'/topic_modeling/media'
-ALLOWED_INCLUDE_ROOTS = (STATICFILES_ROOT + '/scripts', STATICFILES_ROOT + '/styles')
+SCRIPTS_ROOT = STATICFILES_ROOT + '/scripts'
+STYLES_ROOT = STATICFILES_ROOT + '/styles'
+ALLOWED_INCLUDE_ROOTS = (SCRIPTS_ROOT, STYLES_ROOT)
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -96,10 +98,12 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'topic_modeling.urls'
 
+
+
 TEMPLATE_DIRS = (
    "topic_modeling/templates/",
    "topic_modeling/media/scripts",
-   "topic_modeling/media/styles"
+   "topic_modeling/media/styles/"
 )
 
 INSTALLED_APPS = (

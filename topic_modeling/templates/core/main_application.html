@@ -51,6 +51,12 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             var link = "/feeds/add_favorite/tab/{{tab}}?url="+encodeURIComponent(url);
             $.get(link);
         }
+        
+        $(document).ready(function() {
+            {% block document_ready_script %}
+                $("div#presentation-area div#tabs").tabs();
+            {% endblock %}
+        });
     </script>
 {% endblock %}
 
@@ -110,7 +116,22 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	</div>{# end div sidebar #}
 
 	<div id="presentation-area">
-	    {% block presentation_area %}{% endblock %}
+	    {% block presentation_area %}
+	    <div id="tabs">
+	        <ul>
+	            {% for tab in tabs %}
+	            <li><a href="#tab-{{tab.title|slugify}}">{{tab.title}}</a></li>
+	            {% endfor %}
+	        </ul>
+	        {% for tab in tabs %}
+	        <div id="tab-{{tab.title|slugify}}">
+	            {% for widget in tab.widgets %}
+	                {{widget|safe}}
+	            {% endfor %}
+	        </div>
+	        {% endfor %}
+	    </div>
+	    {% endblock %}
 	</div>
 </div>{# end div main #}
 {% endblock %}
