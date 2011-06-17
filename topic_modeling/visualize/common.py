@@ -32,6 +32,7 @@ from topic_modeling.visualize.models import Word, Dataset, Analysis, \
 from django.template.defaultfilters import slugify
 import os
 from topic_modeling import settings
+from django.shortcuts import get_object_or_404
 
 def root_context(dataset, analysis):
     context = Context()
@@ -62,6 +63,11 @@ def root_context(dataset, analysis):
     
     
     return context
+
+def get_dataset_and_analysis(dataset_name, analysis_name):
+    dataset = get_object_or_404(Dataset, name=dataset_name)
+    analysis = get_object_or_404(Analysis, name=analysis_name, dataset=dataset)
+    return dataset, analysis
 
 ################################################################################
 # Classes

@@ -32,7 +32,8 @@ from django.http import HttpResponse
 from django.http import HttpResponseNotFound
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import get_word_cloud, root_context, Tab
+from topic_modeling.visualize.common import get_word_cloud, root_context, Tab,\
+    get_dataset_and_analysis
 from topic_modeling.visualize.common import set_word_context
 from topic_modeling.visualize.common import BreadCrumb
 from topic_modeling.visualize.common import Widget
@@ -58,10 +59,7 @@ from topic_modeling.visualize.word_views import add_word_contexts
 # The context variables that all topic views need
 #################################################
 
-def get_from_db(dataset_name, analysis_name):
-    dataset = get_object_or_404(Dataset, name=dataset_name)
-    analysis = get_object_or_404(Analysis, name=analysis_name, dataset=dataset)
-    return dataset, analysis
+
 
 def base_context(request, dataset, analysis, topic, extra_filters=[]):
     # Basic page variables here
@@ -74,7 +72,7 @@ def base_context(request, dataset, analysis, topic, extra_filters=[]):
     context['tab'] = 'topic'
     context['extra_widgets'] = []
 
-    dataset, analysis = get_from_db(dataset, analysis)
+    dataset, analysis = get_dataset_and_analysis(dataset, analysis)
 
     
 
@@ -362,7 +360,7 @@ def topic_map_dir(dataset):
     return dataset.dataset_dir + '/topic_maps'
 
 def render_topic_map(request, dataset, analysis, topic_num, name_scheme_name):
-    dataset, analysis = get_from_db(dataset, analysis)
+    dataset, analysis = get_dataset_and_analysis(dataset, analysis)
     path = '%s/%s/%s/%s.svg' % (topic_map_dir(dataset), analysis.name, name_scheme_name, topic_num)
     if os.path.exists(path):
         image = open(path, 'r').read()

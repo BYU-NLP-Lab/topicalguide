@@ -25,13 +25,13 @@
 from django.shortcuts import render_to_response
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import BreadCrumb, root_context
+from topic_modeling.visualize.common import BreadCrumb, root_context,\
+    get_dataset_and_analysis
 from topic_modeling.visualize.common import Tab
 from topic_modeling.visualize.common import Widget
 from topic_modeling.visualize.common import WordSummary
 from topic_modeling.visualize.documents.common import SortDocumentForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
-from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
 
 
@@ -40,8 +40,7 @@ def base_context(request, dataset, analysis, document):
 
     context['highlight'] = 'documents_tab'
     context['tab'] = 'document'
-    dataset = Dataset.objects.get(name=dataset)
-    analysis = dataset.analysis_set.get(name=analysis)
+    dataset, analysis = get_dataset_and_analysis(dataset, analysis)
 
     context['sort_form'] = SortDocumentForm(analysis)
 
