@@ -26,47 +26,28 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block scripts %}
     {{block.super}}
     <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/attributes.js"></script>
-	<script charset="utf-8" type="text/javascript">
-		$.fn.attr_vars = function () {};
-		$.fn.attr_vars.curvalue = "{{ curvalue.value }}";
-		$.fn.attr_vars.curattr = "{{ attribute.name }}";
-		
-		$(document).ready(function () {
-		    get_page({{ page_num }});
-		    $("select#attribute").change(function(){
-	            window.location.href = $("option:selected").val();
-	        });
-		});
-    </script>
+{% endblock %}
+
+{% block document_ready_script %}
+    {{block.super}}
+    get_page({{page_num}}, "{{attribute.name}}", "{{value.value}}");
+    $("select#attribute").change(function(){
+        window.location.href = $("option:selected").val();
+    });
 {% endblock %}
 
 {% block above_sidebar %}
     <p>
-		<label for="attribute">Attribute Name:</label>
-		<select id="attribute">
-			{% for a in attributes %}
-			<option value="{{ attributes_url }}/{{ a.name }}" {% ifequal attribute a %}selected{% endifequal %}>{{ a.name }}</option>
-			{% endfor %}
-		</select>
-	</p>
+        <label for="attribute">Attribute Name:</label>
+        <select id="attribute">
+            {% for a in attributes %}
+            <option value="{{ attributes_url }}/{{ a.name }}" {% ifequal attribute a %}selected{% endifequal %}>{{ a.name }}</option>
+            {% endfor %}
+        </select>
+    </p>
 {% endblock %}
 
 {% block sidebar %}
     {{block.super}}
-	<ul id="attributes-list" class="vertical"></ul>
-{% endblock %}
-
-{% block presentation_area %}
-	<div id="presentation-area-sidebar">
-		{% include "widgets/attributes/metrics.html" %}
-		{% include "widgets/attributes/top_words.html" %}
-	</div>
-	<div id="presentation-area-main-column">
-		{% include "widgets/attributes/word_cloud.html" %}
-		{% if ngram_cloud %}
-		    {% include "widgets/attributes/ngram_cloud.html" %}
-		{% endif %}
-
-		{% include "widgets/attributes/topic_cloud.html" %}
-	</div>
+    <ul id="attributes-list" class="vertical"></ul>
 {% endblock %}

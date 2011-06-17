@@ -90,9 +90,9 @@ urlpatterns = patterns('',
 
 # Attribute Views
     (r'^' + dataset + '/' + analysis + '/' + attribute + '$',
-        'topic_modeling.visualize.attribute_views.index'),
+        'topic_modeling.visualize.attribute_views.render'),
     (r'^' + dataset + '/' + analysis + '/' + attribute + '/' + value + '$',
-        'topic_modeling.visualize.attribute_views.index'),
+        'topic_modeling.visualize.attribute_views.render'),
     (r'^' + dataset + '/' + analysis + '/' + attribute + '/' + value + '/' + word + '$',
         'topic_modeling.visualize.attribute_views.word_index'),
     (r'^' + dataset + '/' + analysis + '/' + attribute + '/' + value + '/' + document + '$',
