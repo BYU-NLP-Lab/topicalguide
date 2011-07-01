@@ -23,11 +23,11 @@
  */
 
 function update_list_contents(topics_list) {
-	var curtopic = $.fn.topic_vars.curtopic_number;
+	var topic = $.fn.topic_vars.topic_number;
 	var new_html = '';
 	for (var i = 0; i < topics_list.length; i++) {
 		new_html += '<li';
-		if (topics_list[i].number == curtopic) {
+		if (topics_list[i].number == topic) {
 			new_html += ' class="selected"';
 		}
 		new_html += '>';
@@ -62,7 +62,6 @@ function get_page(page) {
 	cursor_wait();
 	var link = "/feeds/topic-page/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	/*link += "/topics/" + $.fn.topic_vars.curtopic_number;*/
 	link += "/number/" + page;
 	redraw_list_control(link);
 }

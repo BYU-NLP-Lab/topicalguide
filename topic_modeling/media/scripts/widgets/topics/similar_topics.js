@@ -27,7 +27,7 @@ function get_similar_topics()
 	cursor_wait();
 	var link = "/feeds/similar-topics/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/measures/" + $("#similarity-measure-select").val();
 	$.getJSON(link, {}, function(data) {
 		var base = $.fn.topics_url + "/";

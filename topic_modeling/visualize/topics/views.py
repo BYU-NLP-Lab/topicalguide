@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -27,19 +25,18 @@ import os
 from collections import namedtuple
 
 from django.db.models import Avg
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.http import HttpResponseNotFound
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import get_word_cloud, root_context, Tab,\
-    get_dataset_and_analysis
+from topic_modeling.visualize.common import get_word_cloud, Tab,\
+    get_dataset_and_analysis, AnalysisBaseView
 from topic_modeling.visualize.common import set_word_context
 from topic_modeling.visualize.common import BreadCrumb
 from topic_modeling.visualize.common import Widget
 from topic_modeling.visualize.common import WordSummary
 from topic_modeling.visualize.models import Analysis
-from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.models import TopicMetaInfo
 from topic_modeling.visualize.models import TopicMetaInfoValue
@@ -53,151 +50,159 @@ from topic_modeling.visualize.topics.common import top_values_for_attr_topic
 from topic_modeling.visualize.topics.filters import clean_topics_from_session
 from topic_modeling.visualize.topics.filters import TopicFilterByDocument
 from topic_modeling.visualize.topics.filters import TopicFilterByWord
-from topic_modeling.visualize.word_views import add_word_charts
-from topic_modeling.visualize.word_views import add_word_contexts
+from topic_modeling.visualize.word_views import words_tab
+from topic_modeling.visualize.documents.views import tabs as doc_tabs
 
-# The context variables that all topic views need
-#################################################
-
-
-
-def base_context(request, dataset, analysis, topic, extra_filters=[]):
-    # Basic page variables here
-    context = root_context(dataset, analysis)
+class TopicView(AnalysisBaseView):
+    template_name = "topics.html"
     
-    #TODO: clean up this context by moving widget-specific entries into widget contexts
+    def get_context_data(self, request, **kwargs):
+        context = super(TopicView, self).get_context_data(request, **kwargs)
+        
+        dataset = context['dataset']
+        analysis = context['analysis']
+        topic = kwargs['topic'] if 'topic' in kwargs else None
+        extra_filters = kwargs['extra_filters'] if 'extra_filters' in kwargs else []
+        
+        #TODO: clean up this context by moving widget-specific entries into widget contexts
+        
+        
+        context['highlight'] = 'topics_tab'
+        context['tab'] = 'topic'
+        context['extra_widgets'] = []
     
+        context['sort_form'] = SortTopicForm(analysis)
     
-    context['highlight'] = 'topics_tab'
-    context['tab'] = 'topic'
-    context['extra_widgets'] = []
-
-    dataset, analysis = get_dataset_and_analysis(dataset, analysis)
-
+        sort_by = request.session.get('topic-sort', 'name')
+        context['sort_form'].fields['sort'].initial = sort_by
     
-
-    context['sort_form'] = SortTopicForm(analysis)
-
-    sort_by = request.session.get('topic-sort', 'name')
-    context['sort_form'].fields['sort'].initial = sort_by
-
-    # Get the name scheme stuff ready
-    name_schemes = TopicNameScheme.objects.filter(
-            analysis=analysis).order_by('name')
-    context['nameschemes'] = name_schemes
-    if 'current_name_scheme_id' not in request.session:
-        request.session['current_name_scheme_id'] = name_schemes[0].id
-
-    current_name_scheme_id = request.session['current_name_scheme_id']
-    current_name_scheme = TopicNameScheme.objects.get(id=current_name_scheme_id)
-    context['currentnamescheme'] = current_name_scheme
-
-    # Filter, sort, and paginate the topics
-    if topic:
-        topic = get_object_or_404(Topic, number=topic, analysis=analysis)
-    topics = analysis.topic_set
-    topics, filter_form, num_pages = clean_topics_from_session(topics,
-            request.session, extra_filters, topic)
-    page_num = request.session.get('topic-page', 1)
-    context['topics'] = topics
-    context['filter'] = filter_form
-    context['num_pages'] = num_pages
-    context['page_num'] = page_num
-    if not topic:
-        topic = context['topics'][0]
-    context['curtopic'] = topic
+        # Get the name scheme stuff ready
+        name_schemes = TopicNameScheme.objects.filter(
+                analysis=analysis).order_by('name')
+        context['nameschemes'] = name_schemes
+        if 'current_name_scheme_id' not in request.session:
+            request.session['current_name_scheme_id'] = name_schemes[0].id
     
-    context['topic_url'] = context['topics_url'] + '/' + str(topic.number)
-
-    context['metrics'] = topic.topicmetricvalue_set.all()
-
-    topic_name = get_topic_name(topic, current_name_scheme.id)
-
-    context['topic_name'] = topic_name
-
-    # Build the bread crumb
-    context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).topic(topic.number, topic_name)
-    context['view_description'] = 'Topic "'+topic_name + '"'
-    return context, analysis, topic
-
-def tabs(request, topic, topic_url, name_scheme_name):
-    tabs = []
-    tabs.append(top_words_tab(topic, topic_url))
-    tabs.append(similar_topics_tab(request, topic, name_scheme_name))
-    tabs.append(extra_information_tab(request, topic, topic_url))
-#    tabs[0].hidden = False
-    return tabs
-
-# Top-level view methods
-########################
-
-def render(request, dataset, analysis, topic=None):
-    context, analysis, topic = base_context(request, dataset, analysis, topic)
+        current_name_scheme_id = request.session['current_name_scheme_id']
+        current_name_scheme = TopicNameScheme.objects.get(id=current_name_scheme_id)
+        context['currentnamescheme'] = current_name_scheme
     
-    context['tabs'] = tabs(request, topic, context['topic_url'], \
-       context['currentnamescheme'].name)
+        # Filter, sort, and paginate the topics
+        if topic:
+            topic = get_object_or_404(Topic, number=topic, analysis=analysis)
+        topics = analysis.topic_set
+        topics, filter_form, num_pages = clean_topics_from_session(topics,
+                request.session, extra_filters, topic)
+        page_num = request.session.get('topic-page', 1)
+        context['topics'] = topics
+        context['filter'] = filter_form
+        context['num_pages'] = num_pages
+        context['page_num'] = page_num
+        if not topic:
+            topic = context['topics'][0]
+        context['topic'] = topic
+        
+        context['topic_url'] = context['topics_url'] + '/' + str(topic.number)
+    
+        context['metrics'] = topic.topicmetricvalue_set.all()
+    
+        topic_name = get_topic_name(topic, current_name_scheme.id)
+    
+        context['topic_name'] = topic_name
+    
+        # Build the bread crumb
+        context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).topic(topic.number, topic_name)
+        context['view_description'] = 'Topic "'+topic_name + '"'
+        
+        context['tabs'] = tabs(request, topic, context['topic_url'], \
+                               context['currentnamescheme'].name)
+        
+        return context
 
-    return render_to_response('topics.html', context)
+class TopicWordView(TopicView):
+    template_name = 'topics.html'
+    def get_context_data(self, request, **kwargs):
+        dataset_name = kwargs['dataset']
+        analysis_name = kwargs['analysis']
+        word = Word.objects.get(dataset__name=dataset_name, type=kwargs['word'])
+        
+        filter = TopicFilterByWord(Analysis.objects.get(dataset__name=dataset_name,
+                name=analysis_name), 0)
+        filter.current_word = word
+        
+        context = super(TopicWordView, self).get_context_data(request, extra_filters=[filter], **kwargs)
+        analysis = context['analysis']
+        topic = context['topic']
+        context['word'] = word
+        documents = word.documenttopicword_set.filter(topic=topic).order_by(
+                'document__filename')
+        docs = []
+        for dtw in documents:
+            d = dtw.document
+            w = WordSummary(word.type)
+            set_word_context(w, d, analysis, topic.number)
+            docs.append(w)
+            w.url = "%s/%d/documents/%d?kwic=%s" % (context['topics_url'],
+                    topic.number, d.id, word.type)
+            w.doc_name = d.filename
+            w.doc_id = d.id
+        context['documents'] = docs
+        context['breadcrumb'].word(word)
+        context['topic_post_link'] = '/words/%s' % word.type
+        
+        word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
+        context['tabs'] = [self._topic_word_tab(analysis, word, word_url)]
+        
+        return context
+    
+    def _topic_word_tab(self, analysis, word, word_url):
+        tab = words_tab(analysis, word, word_url)
+        tab.title = "Topic Word"
+        return tab
+    
+    def _total_count_widget(self, word):
+        w = Widget('Total Count', 'words/total_count')
+        w['word_count'] = word.count
+        return w
+    
+    def _word_in_context_widget(self, word):
+        w = Widget('Word In Context', 'words/word_in_context')
+        w['word'] = word
+        return w
+    
+    def _top_topics_widget(self):
+        pass
+    
+    def _top_documents_widget(self):
+        pass
 
-
-def word_index(request, dataset, analysis, topic, word):
-    dataset_name = dataset
-    dataset = Dataset.objects.get(name=dataset_name)
-
-    filter = TopicFilterByWord(Analysis.objects.get(dataset=dataset,
-            name=analysis), 0)
-    filter.current_word = word
-
-    context, analysis, topic = base_context(request, dataset_name, analysis,
-            topic, extra_filters=[filter])
-
-    word = Word.objects.get(dataset=dataset, type=word)
-    context['curword'] = word
-    documents = word.documenttopicword_set.filter(topic=topic).order_by(
-            'document__filename')
-    docs = []
-    for dtw in documents:
-        d = dtw.document
-        w = WordSummary(word.type)
-        set_word_context(w, d, analysis, topic.number)
-        docs.append(w)
-        w.url = "%s/%d/documents/%d?kwic=%s" % (context['topics_url'],
-                topic.number, d.id, word.type)
-        w.doc_name = d.filename
-        w.doc_id = d.id
-    context['documents'] = docs
-    context['breadcrumb'].word(word)
-    context['topic_post_link'] = '/words/%s' % word.type
-
-    add_word_charts(dataset, analysis, context)
-
-    topicword = topic.topicword_set.get(word=word,word__ngram=False)
-    word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
-    add_word_contexts(topicword.word.type, word_url, context)
-
-    return render_to_response('topic_word.html', context)
-
-
-def document_index(request, dataset, analysis, topic, document):
-    filter = TopicFilterByDocument(Analysis.objects.get(dataset__name=dataset,
-            name=analysis), 0)
-    filter.current_document_id = document
-    context, analysis, topic = base_context(request, dataset, analysis, topic,
-            extra_filters=[filter])
-
-    document = Document.objects.get(dataset__name=dataset, id=document)
-    text = document.get_highlighted_text([topic.number], analysis)
-    context['metrics'] = document.documentmetricvalue_set.all()
-
-    add_top_topics(request, analysis, document, context)
-    doc_add_similarity_measures(request, analysis, document, context)
-
-    context['document_title'] = document.filename
-    context['document_text'] = text
-    context['breadcrumb'].document(document)
-    context['topic_post_link'] = '/documents/%s' % document.id
-
-    return render_to_response('topic_document.html', context)
+class TopicDocumentView(TopicView):
+    template_name = 'topics.html'
+    
+    def get_context_data(self, request, **kwargs):
+        dataset_name = kwargs['dataset']
+        analysis_name = kwargs['analysis']
+        document_id = kwargs['document']
+        filter = TopicFilterByDocument(Analysis.objects.get(dataset__name=dataset_name,
+                name=analysis_name), 0)
+        filter.current_document_id = kwargs['document']
+        context = super(TopicDocumentView, self).get_context_data(request, extra_filters=[filter], **kwargs)
+        
+        dataset = context['dataset']
+        analysis = context['analysis']
+        topic = context['topic']
+        
+        document = Document.objects.get(dataset=dataset, id=document_id)
+        text = document.get_highlighted_text([topic.number], analysis)
+        context['metrics'] = document.documentmetricvalue_set.all()
+        context['document_title'] = document.filename
+        context['document_text'] = text
+        context['breadcrumb'].document(document)
+        context['topic_post_link'] = '/documents/%s' % document.id
+    
+        context['tabs'] = doc_tabs(request, analysis, document)
+        
+        return context
 
 
 # Topic index widgets
@@ -209,6 +214,13 @@ def document_index(request, dataset, analysis, topic, document):
 #
 # The code that produces widgets also needs to set context variables for
 # whatever is needed by the url they specify.
+
+def tabs(request, topic, topic_url, name_scheme_name):
+    tabs = []
+    tabs.append(top_words_tab(topic, topic_url))
+    tabs.append(similar_topics_tab(request, topic, name_scheme_name))
+    tabs.append(extra_information_tab(request, topic, topic_url))
+    return tabs
 
 #NOTE: this is not currently being used
 def topic_name_widget(topic_name):
@@ -323,10 +335,8 @@ def turbo_topics_cloud(topic):
 
 def similar_topics_tab(request, topic, name_scheme_name):
     tab = Tab("Similar Topics")
-
     tab.add(similar_topic_list_widget(request, topic))
     tab.add(topic_map_widget(topic, name_scheme_name))
-#    tab.widgets[0].hidden = False
     return tab
 
 
@@ -335,7 +345,6 @@ def similar_topic_list_widget(request, topic):
     similarity_measures = topic.analysis.pairwisetopicmetric_set.all()
     if similarity_measures:
         name_scheme_id = request.session['current_name_scheme_id']
-#        ns = TopicNameScheme.objects.get(id=name_scheme_id)
         measure = request.session.get('topic-similarity-measure', None)
         if measure:
             measure = similarity_measures.get(name=measure)
@@ -382,12 +391,10 @@ def topic_map_widget(topic, name_scheme_name):
 
 def extra_information_tab(request, topic, topic_url):
     tab = Tab("Extra Information")
-
     tab.add(metrics_widget(topic))
     tab.add(metadata_widget(topic))
     tab.add(top_documents_widget(topic, topic_url))
     tab.add(top_values_widget(request, topic))
-#    top_level_widget.widgets[0].hidden = False
     return tab
 
 def metrics_widget(topic):

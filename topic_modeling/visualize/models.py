@@ -278,7 +278,7 @@ class Analysis(Describable):
     dataset = models.ForeignKey(Dataset)
 
     def __unicode__(self):
-        return self.dataset.name + '-' + self.name
+        return self.name
 
 
 class MarkupFile(models.Model):

@@ -27,7 +27,7 @@ function rename_topic()
 	cursor_wait();
 	var link = "/feeds/rename-topic/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/name/" + $("#id_topic_name").val();
 	$.get(link, {}, function(name) {
 		alert("Changed current topic name to:" + name);

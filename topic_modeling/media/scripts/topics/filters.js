@@ -27,7 +27,7 @@ function add_new_filter()
 	cursor_wait();
 	var link = "/feeds/new-topic-filter/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/name/" + $("#id_filter").val();
 	$.get(link, {}, function(filter) {
 		$("#id_filter_form").html(filter);
@@ -39,7 +39,7 @@ function remove_filter(id)
 	cursor_wait();
 	var link = "/feeds/remove-topic-filter/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/number/" + id;
 	$.getJSON(link, {}, function(data) {
 		$("#id_filter_form").html(data.filter_form);
@@ -53,7 +53,7 @@ function update_attr_filter_attribute(id)
 	var link = "/feeds/update-topic-attribute-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/number/" + id;
 	link += "/attributes/" + $("#id_attribute_filter_"+id).val();
 	$.getJSON(link, {}, function(data) {
@@ -68,7 +68,7 @@ function update_attr_filter_value(id)
 	var link = "/feeds/update-topic-attribute-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/number/" + id;
 	link += "/attributes/" + $("#id_attribute_filter_"+id).val();
 	link += "/values/" + $("#id_attribute_filter_value_"+id).val();
@@ -84,7 +84,7 @@ function update_metric_filter_metric(id)
 	var link = "/feeds/update-topic-metric-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/number/" + id;
 	link += "/metrics/" + $("#id_metric_filter_"+id).val();
 	$.getJSON(link, {}, function(data) {
@@ -99,7 +99,7 @@ function update_metric_filter(id)
 	var link = "/feeds/update-topic-metric-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/number/" + id;
 	link += "/metrics/" + $("#id_metric_filter_"+id).val();
 	link += "/comps/" + $("#id_metric_filter_comp_"+id).val();
@@ -116,7 +116,7 @@ function update_document_filter_document(id)
 	var link = "/feeds/update-topic-document-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/number/" + id;
 	link += "/documents/" + $("#id_document_filter_"+id).val();
 	$.getJSON(link, {}, function(data) {
@@ -131,7 +131,7 @@ function update_word_filter_word(id)
 	var link = "/feeds/update-topic-word-filter/datasets/";
 	link += $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/number/" + id;
 	link += "/words/" + $("#id_word_filter_"+id).val();
 	$.getJSON(link, {}, function(data) {

@@ -27,7 +27,7 @@ function get_top_attribute_values()
 	cursor_wait();
 	var link = "/feeds/attrvaltopic/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/attributes/" + $("#id_attribute").val();
 	link += "/order-by/" + $("input:radio[name=ordering]:checked").val();
 	$.getJSON(link, {}, function(data) {

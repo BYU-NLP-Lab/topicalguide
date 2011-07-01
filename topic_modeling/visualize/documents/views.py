@@ -22,11 +22,8 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.shortcuts import render_to_response
-
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import BreadCrumb, root_context,\
-    get_dataset_and_analysis
+from topic_modeling.visualize.common import BreadCrumb, AnalysisBaseView
 from topic_modeling.visualize.common import Tab
 from topic_modeling.visualize.common import Widget
 from topic_modeling.visualize.common import WordSummary
@@ -34,55 +31,47 @@ from topic_modeling.visualize.documents.common import SortDocumentForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
 from topic_modeling.visualize.models import Document
 
-
-def base_context(request, dataset, analysis, document):
-    context = root_context(dataset, analysis)
-
-    context['highlight'] = 'documents_tab'
-    context['tab'] = 'document'
-    dataset, analysis = get_dataset_and_analysis(dataset, analysis)
-
-    context['sort_form'] = SortDocumentForm(analysis)
-
-    sort_by = request.session.get('document-sort', 'filename')
-    context['sort_form'].fields['sort'].initial = sort_by
-
-    if document:
-        document = Document.objects.get(pk=document)
-    documents = dataset.document_set
-    documents, filter_form, num_pages = clean_docs_from_session(documents,
-            request.session, document)
-    page_num = request.session.get('document-page', 1)
-    context['documents'] = documents
-    context['filter'] = filter_form
-    context['num_pages'] = num_pages
-    context['page_num'] = page_num
-
-    if not document:
-        document = context['documents'][0]
-
-    context['document_url'] = context['documents_url'] + '/' + str(document.id)
-    context['document'] = document
+class DocumentView(AnalysisBaseView):
+    template_name = 'documents.html'
     
-    context['view_description'] = document.get_title()
-    context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(document)
-
-    return context, analysis, document
-
-
-def index(request, dataset, analysis, document=""):
-    context, analysis, document = base_context(request, dataset, analysis,
-            document)
-
-    tabs = []
-    tabs.append(text_tab(document))
-    tabs.append(similar_documents_tab(request, analysis, document))
-    tabs.append(extra_information_tab(analysis, document))
-#    tabs[0].hidden = False
-
-    context['tabs'] = tabs
-
-    return render_to_response('documents.html', context)
+    def get_context_data(self, request, **kwargs):
+        context = super(DocumentView, self).get_context_data(request, **kwargs)
+        if 'document' in kwargs:
+            document_num = kwargs['document']
+        
+        context['highlight'] = 'documents_tab'
+        context['tab'] = 'document'
+        dataset, analysis = context['dataset'], context['analysis']
+    
+        context['sort_form'] = SortDocumentForm(analysis)
+    
+        sort_by = request.session.get('document-sort', 'filename')
+        context['sort_form'].fields['sort'].initial = sort_by
+    
+        if document_num:
+            document = Document.objects.get(pk=document_num)
+        documents = dataset.document_set
+        documents, filter_form, num_pages = clean_docs_from_session(documents,
+                request.session, document)
+        page_num = request.session.get('document-page', 1)
+        context['documents'] = documents
+        context['filter'] = filter_form
+        context['num_pages'] = num_pages
+        context['page_num'] = page_num
+    
+        if not document:
+            document = context['documents'][0]
+    
+        context['document_url'] = context['documents_url'] + '/' + str(document.id)
+        context['document'] = document
+        
+        context['view_description'] = document.get_title()
+        context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(document)
+        
+        context['tabs'] = tabs(request, analysis, document)
+        
+        return context
+    
 
 
 # Document Widgets
@@ -97,6 +86,13 @@ def index(request, dataset, analysis, document=""):
 
 # Text widgets
 ##############
+
+def tabs(request, analysis, document):
+    tabs = []
+    tabs.append(text_tab(document))
+    tabs.append(similar_documents_tab(request, analysis, document))
+    tabs.append(extra_information_tab(analysis, document))
+    return tabs
 
 def text_tab(document):
     tab = Tab('Text')

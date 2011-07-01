@@ -28,7 +28,7 @@ function get_context_for_word(word, num)
 	var link = "/feeds/word-in-context/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
     if(typeof $.fn.topic_vars != "undefined") {
-        link += "/topics/" + $.fn.topic_vars.curtopic_number;
+        link += "/topics/" + $.fn.topic_vars.topic_number;
     }
 	link += "/words/" + word;
 	$.getJSON(link, {}, function(word) {

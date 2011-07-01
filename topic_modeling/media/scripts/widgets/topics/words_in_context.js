@@ -27,13 +27,13 @@ function get_context_for_word(word)
 	cursor_wait();
 	var link = "/feeds/word-in-context/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.curtopic_number;
+	link += "/topics/" + $.fn.topic_vars.topic_number;
 	link += "/words/" + word;
 	$.getJSON(link, {}, function(word) {
 		var lc_word = word.word.toLowerCase();
 		new_html = '';
 		new_html += '<td class="document"><a href="'+$.fn.topics_url+'/';
-		new_html += $.fn.topic_vars.curtopic_number + '/documents/';
+		new_html += $.fn.topic_vars.topic_number + '/documents/';
 		new_html += word.doc_id;
 		new_html += '"><img src="/site-media/images/tango/22x22/mimetypes/text-x-generic.png" title="Source Document: ';
 		new_html += word.doc_name;
@@ -42,7 +42,7 @@ function get_context_for_word(word)
 		new_html += word.left_context;
 		new_html += '</td><td class="word">';
 		new_html += '<a href="'+$.fn.topics_url+'/';
-		new_html += $.fn.topic_vars.curtopic_number;
+		new_html += $.fn.topic_vars.topic_number;
 		new_html += '/words/' + lc_word;
 		new_html += '">'+word.word+'</a></td>';
 		new_html += '<td class="rcontext">';
