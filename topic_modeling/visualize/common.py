@@ -33,36 +33,62 @@ from django.template.defaultfilters import slugify
 import os
 from topic_modeling import settings
 from django.shortcuts import get_object_or_404
+from django.views.generic.base import TemplateResponseMixin, View
 
-def root_context(dataset, analysis):
-    context = Context()
+'''
+Like TemplateView, but better
+'''
+class RootView(TemplateResponseMixin, View):
+    def get_context_data(self, request, **kwargs):
+        context = Context()
+        
+        STATIC = '/site-media'
+        context['SCRIPTS'] = STATIC + '/scripts'
+        context['STYLES'] = '/styles'
+        context['IMAGES'] = STATIC + '/images'
+        context['FONTS'] = STATIC + '/fonts'
+        
+        context['topical_guide_project_url'] = "http://nlp.cs.byu.edu/topicalguide"
+        context['nlp_lab_url'] = "http://nlp.cs.byu.edu"
+        context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
+        context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
+        
+        return context
     
-    STATIC = '/site-media'
-    context['SCRIPTS'] = STATIC + '/scripts'
-    context['STYLES'] = '/styles'
-    context['IMAGES'] = STATIC + '/images'
-    context['FONTS'] = STATIC + '/fonts'
-    
-    context['dataset'] = dataset
-    context['analysis'] = analysis
-    context['dataset_url'] = "/datasets/%s" % (dataset)
-    context['analysis_url'] = "%s/analyses/%s" % (context['dataset_url'],
-            analysis)
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(request, **kwargs)
+        return self.render_to_response(context)
 
-    context['attributes_url'] = context['analysis_url'] + "/attributes"
-    context['documents_url'] = context['analysis_url'] + "/documents"
-    context['plots_url'] = context['analysis_url'] + "/plots"
-    context['topics_url'] = context['analysis_url'] + "/topics"
-    context['words_url'] = context['analysis_url'] + "/words"
+class DatasetBaseView(RootView):
+    def get_context_data(self, request, **kwargs):
+        context = super(DatasetBaseView, self).get_context_data(request, **kwargs)
+        context['datasets'] = Dataset.objects.all()
+        try:
+            dataset = get_object_or_404(Dataset, name=kwargs['dataset'])
+        except KeyError:
+            dataset = context['datasets'][0]
+        
+        context['dataset'] = dataset
+        context['dataset_url'] = "/datasets/%s" % (dataset)
+        
+        return context
+
+class AnalysisBaseView(DatasetBaseView):
+    def get_context_data(self, request, **kwargs):
+        context = super(AnalysisBaseView, self).get_context_data(request, **kwargs)
+        
+        analysis = get_object_or_404(Analysis, name=kwargs['analysis'], dataset=context['dataset'])
+        context['analysis'] = analysis
+        context['analysis_url'] = "%s/analyses/%s" % (context['dataset_url'],
+                analysis.name)
     
-    context['topical_guide_project_url'] = "http://nlp.cs.byu.edu/topicalguide"
-    context['nlp_lab_url'] = "http://nlp.cs.byu.edu"
-    context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
-    context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
-    
-    
-    
-    return context
+        context['attributes_url'] = context['analysis_url'] + "/attributes"
+        context['documents_url'] = context['analysis_url'] + "/documents"
+        context['plots_url'] = context['analysis_url'] + "/plots"
+        context['topics_url'] = context['analysis_url'] + "/topics"
+        context['words_url'] = context['analysis_url'] + "/words"
+        
+        return context
 
 def get_dataset_and_analysis(dataset_name, analysis_name):
     dataset = get_object_or_404(Dataset, name=dataset_name)

@@ -22,67 +22,67 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-
-from django.shortcuts import render_to_response
 from django.http import HttpResponse
 
 from topic_modeling.visualize.charts import plot_types
-from topic_modeling.visualize.common import BreadCrumb, root_context
-from topic_modeling.visualize.models import Analysis
-from topic_modeling.visualize.models import Attribute
-from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.common import BreadCrumb, AnalysisBaseView
 
-
-def index(request, dataset, analysis, plot):
-    plots = plot_types.keys()
-    plots.sort(key=lambda x: plot_types[x][1])
-    if not plot:
-        plot = plots[0]
+class PlotView(AnalysisBaseView):
+    template_name = "plots.html"
     
-    context = root_context(dataset, analysis)
-    context['view_description'] = "Plots"
-    context['highlight'] = 'plots_tab'
-    context['tab'] = 'plot'
-    context['plot'] = plot
-
-    dataset = Dataset.objects.get(name=dataset)
-    analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).plots()
-
-    #Dan's broken plots:
-    #--Attribute Values plot
-#    attributes = Attribute.objects.filter(dataset=dataset)
-#    
-#    topics = [analysis.topic_set.all()[0]]
-#    attribute = attributes[0]
-#    values = attributes[0].value_set.all()
-    #--Topics plot
-#    topic_links = [context['topics_url'] + '/%s' % str(topic.number)
-#                   for topic in topics]
-#    topic_names = [topic.name for topic in topics]
-#    context['topic_links'] = zip(topic_links, topic_names)
-#
-#    attr_links = [context['attributes_url'] + '/%s/values/%s' % \
-#                  (str(attribute), str(value)) for value in values]
-#    attr_names = [value.value for value in values]
-#    context['attr_links'] = zip(attr_links, attr_names)
-
-
-
-    context['plots'] = plots
-    # Needs to be fixed if we ever have lots of kinds of plots
-    context['num_pages'] = 1
-    context['page_num'] = 1
-    context['update_function'] = plot_types[plot][0].update_function
-
-    context['curplot'] = plot
+    def get_context_data(self, request, **kwargs):
+        context = super(PlotView, self).get_context_data(request, **kwargs)
+        
+        dataset = context['dataset']
+        analysis = context['analysis']
+        plot = kwargs['plot']
+        
+        plots = plot_types.keys()
+        plots.sort(key=lambda x: plot_types[x][1])
+        if not plot:
+            plot = plots[0]
+        
+        context['view_description'] = "Plots"
+        context['highlight'] = 'plots_tab'
+        context['tab'] = 'plot'
+        context['plot'] = plot
     
-    plot_forms = list()
-    for plot_name,plot_type in sorted(plot_types.items(), key=lambda x: x[1][1]):
-        plot_forms += [(plot_name, plot_type[0].form(dataset, analysis))]
-    context['plot_forms'] = plot_forms
-
-    return render_to_response('plots.html', context)
+        context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).plots()
+    
+        #Dan's broken plots:
+        #--Attribute Values plot
+    #    attributes = Attribute.objects.filter(dataset=dataset)
+    #    
+    #    topics = [analysis.topic_set.all()[0]]
+    #    attribute = attributes[0]
+    #    values = attributes[0].value_set.all()
+        #--Topics plot
+    #    topic_links = [context['topics_url'] + '/%s' % str(topic.number)
+    #                   for topic in topics]
+    #    topic_names = [topic.name for topic in topics]
+    #    context['topic_links'] = zip(topic_links, topic_names)
+    #
+    #    attr_links = [context['attributes_url'] + '/%s/values/%s' % \
+    #                  (str(attribute), str(value)) for value in values]
+    #    attr_names = [value.value for value in values]
+    #    context['attr_links'] = zip(attr_links, attr_names)
+    
+    
+    
+        context['plots'] = plots
+        # Needs to be fixed if we ever have lots of kinds of plots
+        context['num_pages'] = 1
+        context['page_num'] = 1
+        context['update_function'] = plot_types[plot][0].update_function
+    
+        context['curplot'] = plot
+        
+        plot_forms = list()
+        for plot_name,plot_type in sorted(plot_types.items(), key=lambda x: x[1][1]):
+            plot_forms += [(plot_name, plot_type[0].form(dataset, analysis))]
+        context['plot_forms'] = plot_forms
+    
+        return context
 
 
 def create_plot_image(request, chart_type, dataset, analysis, attribute,

@@ -1,4 +1,3 @@
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -21,47 +20,50 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.shortcuts import render_to_response
-
 from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common import BreadCrumb, paginate_list, \
-    WordSummary, WordFindForm, get_word_list, root_context, Tab, Widget
-from topic_modeling.visualize.models import Dataset, Word
+    WordSummary, WordFindForm, get_word_list, Tab, Widget, AnalysisBaseView
+from topic_modeling.visualize.models import Word
 
-def index(request, dataset, analysis, word):
-    context = root_context(dataset, analysis)
-    context['highlight'] = 'words_tab'
-    context['tab'] = 'word'
-    dataset = Dataset.objects.get(name=dataset)
-    analysis = dataset.analysis_set.get(name=analysis)
-    
-    words = get_word_list(request, dataset.name)
-    
-    num_per_page = request.session.get('words-per-page', 30)
-    page_num = request.session.get('word-page', 1)
-    words, num_pages, _ = paginate_list(words, page_num, num_per_page)
+
+class WordView(AnalysisBaseView):
+    template_name = 'words.html'
+    def get_context_data(self, request, **kwargs):
+        context = super(WordView, self).get_context_data(request, **kwargs)
+        dataset = context['dataset']
+        analysis = context['analysis']
+        word = kwargs['word']
         
-    context['words'] = words
-    context['num_pages'] = num_pages
-    context['page_num'] = page_num
+        context['highlight'] = 'words_tab'
+        context['tab'] = 'word'
+        
+        words = get_word_list(request, dataset.name)
+        
+        num_per_page = request.session.get('words-per-page', 30)
+        page_num = request.session.get('word-page', 1)
+        words, num_pages, _ = paginate_list(words, page_num, num_per_page)
+            
+        context['words'] = words
+        context['num_pages'] = num_pages
+        context['page_num'] = page_num
+        
+        if word:
+            word = Word.objects.get(dataset=dataset, type=word)
+        else:
+            word = context['words'][0]
     
-    if word:
-        word = Word.objects.get(dataset=dataset, type=word)
-    else:
-        word = context['words'][0]
-
-    context['word'] = word
-    context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(word)
-    
-    word_url = context['words_url'] + '/' + word.type
-    word_base = request.session.get('word-find-base', '')
-    context['word_find_form'] = WordFindForm(word_base)
-    
-    context['view_description'] = "Word '{0}'".format(word.type)
-    
-    context['tabs'] = [words_tab(analysis, word, word_url)]
-    
-    return render_to_response('words.html', context)
+        context['word'] = word
+        context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(word)
+        
+        word_url = context['words_url'] + '/' + word.type
+        word_base = request.session.get('word-find-base', '')
+        context['word_find_form'] = WordFindForm(word_base)
+        
+        context['view_description'] = "Word '{0}'".format(word.type)
+        
+        context['tabs'] = [words_tab(analysis, word, word_url)]
+        
+        return context
 
 def words_tab(analysis, word, word_url):
     tab = Tab('Word Information')

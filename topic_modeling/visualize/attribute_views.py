@@ -23,65 +23,114 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import BreadCrumb, root_context, Tab,\
-    Widget, get_dataset_and_analysis
+from topic_modeling.visualize.common import BreadCrumb, Tab,\
+    Widget, AnalysisBaseView
 from topic_modeling.visualize.common import get_word_cloud
 from topic_modeling.visualize.common import paginate_list
 from topic_modeling.visualize.common import set_word_context
 from topic_modeling.visualize.common import WordSummary
-from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.models import Value
 from topic_modeling.visualize.models import Word
 
-def render(request, dataset, analysis, attribute, value=''):
-    context, _attribute, _value = page_context(request, dataset, analysis, attribute, value)
-    return render_to_response('attributes.html', context)
-
-def page_context(request, dataset, analysis, attribute, value):
-    context = root_context(dataset, analysis)
-    dataset, analysis = get_dataset_and_analysis(dataset, analysis)
+class AttributeView(AnalysisBaseView):
+    template_name = "attributes.html"
     
-    context['highlight'] = 'attributes_tab'
-    context['tab'] = 'attribute'
-    context['attributes'] = dataset.attribute_set.all()
-    if attribute:
-        attribute = get_object_or_404(Attribute, dataset=dataset,
-                name=attribute)
-        prev_attribute = request.session.get('attribute-name', '')
-        if prev_attribute != attribute.name:
-            request.session['attribute-name'] = attribute.name
+    def get_context_data(self, request, **kwargs):
+        context = super(AttributeView, self).get_context_data(request, **kwargs)
+        
+        dataset = context['dataset']
+        analysis = context['analysis']
+        attribute = kwargs['attribute']
+        try:
+            value = kwargs['value']
+        except KeyError:
+            value = ''
+        
+        context['highlight'] = 'attributes_tab'
+        context['tab'] = 'attribute'
+        context['attributes'] = dataset.attribute_set.all()
+        if attribute:
+            attribute = get_object_or_404(Attribute, dataset=dataset,
+                    name=attribute)
+            prev_attribute = request.session.get('attribute-name', '')
+            if prev_attribute != attribute.name:
+                request.session['attribute-name'] = attribute.name
+                request.session['attribute-page'] = 1
+        else:
             request.session['attribute-page'] = 1
-    else:
-        request.session['attribute-page'] = 1
-        attribute = context['attributes'][0]
-
-    context['attribute'] = attribute
-
-    values = attribute.value_set.all()
-    page_num = request.session.get('attribute-page', 1)
-    num_per_page = request.session.get('attributes-per-page', 20)
-    values, num_pages, _ = paginate_list(values, page_num, num_per_page)
-    context['num_pages'] = num_pages
-    context['page_num'] = page_num
-    context['values'] = [v.value for v in values]
-
-    if value:
-        value = get_object_or_404(Value, attribute=attribute, value=value)
-    else:
-        value = values[0]
-    context['value'] = value
+            attribute = context['attributes'][0]
     
-    context['view_description'] = "Attribute '{0}'".format(attribute.name)
-    context['tabs'] = [attribute_info_tab(analysis, attribute, value, context['analysis_url'], context['attributes_url'])]
-    context['breadcrumb'] = \
-        BreadCrumb().item(dataset).item(analysis).item(attribute).item(value)
+        context['attribute'] = attribute
     
-    return context, attribute, value
+        values = attribute.value_set.all()
+        page_num = request.session.get('attribute-page', 1)
+        num_per_page = request.session.get('attributes-per-page', 20)
+        values, num_pages, _ = paginate_list(values, page_num, num_per_page)
+        context['num_pages'] = num_pages
+        context['page_num'] = page_num
+        context['values'] = [v.value for v in values]
+    
+        if value:
+            value = get_object_or_404(Value, attribute=attribute, value=value)
+        else:
+            value = values[0]
+        context['value'] = value
+        
+        context['view_description'] = "Attribute '{0}'".format(attribute.name)
+        context['tabs'] = [attribute_info_tab(analysis, attribute, value, context['analysis_url'], context['attributes_url'])]
+        context['breadcrumb'] = \
+            BreadCrumb().item(dataset).item(analysis).item(attribute).item(value)
+        
+        return context
+
+
+class AttributeWordView(AttributeView):
+    template_name = "attribute_word.html"
+    
+    def get_context_data(self, request, **kwargs):
+        context = super(AttributeWordView, self).get_context_data(request, **kwargs)
+        dataset = context['dataset']
+        analysis = context['analysis']
+        attribute = context['attribute']
+        value = context['value']
+        word = Word.objects.get(dataset=dataset, type=kwargs['word'])
+        documents = word.document_set.filter(attribute=attribute,
+                attributevaluedocument__value=value)
+        words = []
+        for document in documents:
+            w = WordSummary(word.type)
+            set_word_context(w, document, analysis)
+            words.append(w)
+            w.url = '%s/%s/values/%s/documents/%d?kwic=%s' \
+                % (context['attributes_url'], attribute.name, value.value,
+                   document.id, word.type)
+            w.doc_name = document.filename
+            w.doc_id = document.id
+    
+        context['words'] = words
+        context['breadcrumb'].word(word)
+        context['attribute_post_link'] = '/words/%s' % word.type
+    
+        return context
+
+class AttributeDocumentView(AttributeView):
+    template_name = "attribute_document.html"
+    
+    def get_context_data(self, request, **kwargs):
+        context = super(AttributeDocumentView, self).get_context_data(request, **kwargs)
+        document = Document.objects.get(dataset=context['dataset'], id=kwargs['document'])
+        if request.GET and request.GET['kwic']:
+            context['text'] = document.text(request.GET['kwic'])
+        else:
+            context['text'] = document.text()
+        context['breadcrumb'].document(document)
+        return context
+
 
 def attribute_info_tab(analysis, attribute, value, analysis_url, attributes_url):
     tab = Tab('Attribute Info')
@@ -175,42 +224,5 @@ def topic_cloud_widget(analysis, attribute, value, analysis_url, token_count):
     topics = get_topics(analysis, attribute, value, analysis_url, token_count)
     w['topic_cloud'] = get_word_cloud(topics, '[', ']')
     return w
-
-def word_index(request, dataset, analysis, attribute, value, word):
-    page_vars, attribute, value = page_context(request, dataset, analysis,
-            attribute, value)
-    word = Word.objects.get(dataset__name=dataset, type=word)
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-
-    documents = word.document_set.filter(attribute=attribute,
-            attributevaluedocument__value=value)
-    words = []
-    for document in documents:
-        w = WordSummary(word.type)
-        set_word_context(w, document, analysis)
-        words.append(w)
-        w.url = '%s/%s/values/%s/documents/%d?kwic=%s' \
-            % (page_vars['attributes_url'], attribute.name, value.value,
-               document.id, word.type)
-        w.doc_name = document.filename
-        w.doc_id = document.id
-
-    page_vars['words'] = words
-    page_vars['breadcrumb'].word(word)
-    page_vars['attribute_post_link'] = '/words/%s' % word.type
-
-    return render_to_response('attribute_word.html', page_vars)
-
-def document_index(request, dataset, analysis, attribute, value,
-        document):
-    page_vars, attribute, value = page_context(request, dataset, analysis,
-            attribute, value)
-    document = Document.objects.get(dataset__name=dataset, id=document)
-    if request.GET and request.GET['kwic']:
-        page_vars['text'] = document.text(request.GET['kwic'])
-    else:
-        page_vars['text'] = document.text()
-    page_vars['breadcrumb'].document(document)
-    return render_to_response('attribute_document.html', page_vars)
 
 # vim: et sw=4 sts=4

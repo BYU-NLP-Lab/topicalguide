@@ -32,8 +32,8 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     {{block.super}}
     <script type="text/javascript" src="{{SCRIPTS}}/core/main_application.js"></script>
     <script type="text/javascript">
-        $.fn.dataset = "{{ dataset }}";
-        $.fn.analysis = "{{ analysis }}";
+        $.fn.dataset = "{{ dataset.name }}";
+        $.fn.analysis = "{{ analysis.name }}";
         $.fn.dataset_url = "{{ dataset_url }}";
         $.fn.analysis_url = "{{ analysis_url }}";
         $.fn.attributes_url = "{{ attributes_url }}";
