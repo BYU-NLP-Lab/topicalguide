@@ -43,7 +43,7 @@ class RootView(TemplateResponseMixin, View):
         context = Context()
         
         STATIC = '/site-media'
-        context['SCRIPTS'] = STATIC + '/scripts'
+        context['SCRIPTS'] = '/scripts'
         context['STYLES'] = '/styles'
         context['IMAGES'] = STATIC + '/images'
         context['FONTS'] = STATIC + '/fonts'
@@ -273,44 +273,68 @@ class WordFindForm(forms.Form):
         self.fields['find_word'].widget.attrs['onchange'] = 'find_word("'+word+'")'
 
 class Tab(object):
-    def __init__(self, title, widgets=None):
-        self.title = title
-        self.widgets = widgets if widgets else list()
-    
-    def add(self, widget):
-        self.widgets.append(widget)
-        return self
-
-class Widget(object):
-    def __init__(self, title=None, widget_name=None, html=None, context=None, content_html=None):
-        if title and not widget_name:
-            self.widget_name = slugify(title)
-        else:
-            self.widget_name = widget_name
+    def __init__(self, title, path=None, tab_name=None, widgets=None):
         self.title = title
         
+        if path:
+            _style_path = '%s/tabs/%s.css' % (settings.STYLES_ROOT, path)
+            if os.path.exists(_style_path):
+                self.style_url = '/styles/tabs/%s.css' % path
+            
+            _template_path = 'tabs/%s.html' % path
+            if os.path.exists('%s/%s' % (settings.TEMPLATES_ROOT, _template_path)):
+                self.template_path = _template_path
+            else:
+                self.template_path = None
+                
+            _script_path = '%s/tabs/%s.js' % (settings.SCRIPTS_ROOT, path)
+            if os.path.exists(_script_path):
+                self.script_url = '/scripts/tabs/%s.js' % path
+        
+        self.widgets = widgets if widgets else dict()
+    
+    def add(self, widget):
+        self.widgets[slugify(widget.title).replace('-','_')] = widget
+        return self
+    
+    def __unicode__(self):
+        if self.template_path:
+            t = template.loader.get_template(self.template_path)
+            ctxt = Context()
+            ctxt['tab'] = self
+            ctxt['widgets'] = self.widgets
+            return t.render(ctxt)
+        else:
+            return '\n'.join([w.__unicode__() for w in self.widgets.values()])
+
+class Widget(object):
+    def __init__(self, title, path, html=None, context=None, content_html=None):
+        self.title = title
+        self.path = path
+        self.short_path = path.split('/')[-1:]
+        
+        self.template_path = 'widgets/%s.html' % path
+        
+        _script_path = '%s/widgets/%s.js' % (settings.SCRIPTS_ROOT, path)
+        self.script_path = _script_path
+        if os.path.exists(_script_path):
+            self.script_url = '/scripts/widgets/%s.js' % path
+        
+        _style_path = '%s/widgets/%s.css' % (settings.STYLES_ROOT, path)
+        if os.path.exists(_style_path):
+            self.style_url = '/styles/widgets/%s.css' % path
+        
         if content_html and not html:
-            html = ''
+            html = '<div id="widget-'+slugify(self.short_path)+'" class="ui-widget">\n'
             if title:
                 html += '<div class="ui-widget-header">%s</div>' % title
             html += '<div class="ui-widget-content">%s</div>' % content_html
+            html += '</div>'
         self.html = html
         
         self.context = context if context else Context()
-        
         self.context['widget'] = self
         
-        self.template_path = 'widgets/%s.html' % self.widget_name
-        
-        
-        
-        _script_path = '%s/widgets/%s.js' % (settings.SCRIPTS_ROOT, self.widget_name)
-        if os.path.exists(_script_path):
-            self.script_path = _script_path
-        
-        _style_path = '%s/widgets/%s.css' % (settings.STYLES_ROOT, self.widget_name)
-        if os.path.exists(_style_path):
-            self.style_url = '/styles/widgets/%s.css' % self.widget_name
     
     def __unicode__(self):
         return self.render(None)
@@ -327,26 +351,6 @@ class Widget(object):
     
     def __setitem__(self, key, value):
         self.context[key] = value
-
-#class TopLevelWidget(object):
-#    def __init__(self, title):
-#        self.title = title
-#        self.ref = title.lower().replace(' ', '-')
-#        self.widgets = []
-#        self.hidden = True
-#        self.top_level = True
-#    
-#    def add(self, widget):
-#        self.widgets.append(widget)
-
-
-#class Widget(object):
-#    def __init__(self, title, url=None, html=None):
-#        self.title = title
-#        self.url = url
-#        self.html = html
-#        self.hidden = True
-#        self.top_level = False
 
 class Cloud(object):
     def __init__(self, name, html):
@@ -403,6 +407,25 @@ def get_word_cloud(words, open='', close='', url=True):
             cloud += '</a>'
     return cloud
 
+def word_cloud_widget(words, title='Word Cloud', open=None, close=None, url=True):
+    w = Widget(title, 'common/word_cloud')
+    
+    if open: w['open_text'] = open
+    if close: w['close_text'] = close
+    
+    #note that this only works if words is presorted by percent
+    if len(words) > 3: scale = words[3].percent
+    elif len(words) == 0: scale = 1.0
+    else: scale = words[-1:].percent
+
+    words = sorted(words, cmp=lambda x,y: cmp(x.word.lower(), y.word.lower()))
+    
+    for word in words:
+        word.size = word.percent / scale * 100 + 50
+    
+    w['words'] = words
+    
+    return w
 
 # Word tab helper functions (maybe these should be moved to a new file)
 ############################

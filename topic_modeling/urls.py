@@ -48,6 +48,10 @@ def render_style(request, style_path):
     
     return HttpResponse(css, mimetype=mimetype)
 
+def render_script(request, script_path):
+    script = open('%s/%s' % (settings.SCRIPTS_ROOT, script_path)).read()
+    return HttpResponse(script, mimetype="text/javascript")
+
 dataset = r'datasets/(?P<dataset>[^/]*)'
 analysis = r'analyses/(?P<analysis>[^/]*)'
 topic = r'topics/(?P<topic>[^/]*)'
@@ -228,6 +232,8 @@ urlpatterns = patterns('',
 
 #Styles
     (r'^styles/(?P<style_path>.+)$', render_style),
+#Scripts
+    (r'^scripts/(?P<script_path>.+)$', render_script),
 
 #General Static Files
     # TODO(dan): Is this OK for production?  Would it just be a matter of

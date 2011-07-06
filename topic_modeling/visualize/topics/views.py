@@ -31,7 +31,7 @@ from django.http import HttpResponseNotFound
 
 from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common import get_word_cloud, Tab,\
-    get_dataset_and_analysis, AnalysisBaseView
+    get_dataset_and_analysis, AnalysisBaseView, word_cloud_widget
 from topic_modeling.visualize.common import set_word_context
 from topic_modeling.visualize.common import BreadCrumb
 from topic_modeling.visualize.common import Widget
@@ -232,8 +232,8 @@ def topic_name_widget(topic_name):
 ###################
 
 def top_words_tab(topic, topic_url):
-    tab = Tab("Top Words")
-
+    tab = Tab("Top Words", path='topics/top_words')
+    
     word_url = '%s/words/' % topic_url
     topicwords = topic.topicword_set.filter(
             word__ngram=False).order_by('-count')
@@ -243,18 +243,20 @@ def top_words_tab(topic, topic_url):
         w = WordSummary(topicword.word.type, percent)
         w.url = word_url + topicword.word.type
         words.append(w)
-
-    tab.add(Widget('Word Cloud',content_html=unigram_cloud(words)))
     
-    ttcloud = turbo_topics_cloud(topic)
-    if ttcloud: tab.add(Widget('Turbo Topics', content_html=ttcloud))
+    tab.add(word_chart_widget(words))
     
-    ngcloud = ngram_cloud(topic, word_url)
-    if ngcloud: tab.add(Widget('N-grams', content_html=ngcloud))
+#    tab.add(Widget('Word Cloud',content_html=unigram_cloud(words)))
+    tab.add(word_cloud_widget(words, title='Word Cloud'))
+    
+    ttcloud = turbo_topics_cloud_widget(topic)
+    if ttcloud: tab.add(ttcloud)
+    
+    ngcloud = ngram_cloud_widget(topic, word_url)
+    if ngcloud: tab.add(ngcloud)
     
     tab.add(words_in_context_widget(words))
-    tab.add(word_chart_widget(words))
-    tab.widgets[0].hidden = False
+    
     return tab
 
 def words_in_context_widget(words):
@@ -270,7 +272,7 @@ def word_chart_widget(words):
 def unigram_cloud(words):
     return get_word_cloud(words)
 
-def ngram_cloud(topic, word_url):
+def ngram_cloud_widget(topic, word_url):
     topicngrams = topic.topicword_set.filter(
             word__ngram=True).order_by('-count')
     ngrams = []
@@ -281,11 +283,11 @@ def ngram_cloud(topic, word_url):
         ngrams.append(w)
     if ngrams:
         # Name must not contain spaces!
-        return get_word_cloud(ngrams)
+        return word_cloud_widget(ngrams, title='N-grams')
     return None
 
 
-def turbo_topics_cloud(topic):
+def turbo_topics_cloud_widget(topic):
     try:
         turbo_topics = TopicMetaInfo.objects.get(name="Turbo Topics Cloud")
         value = turbo_topics.topicmetainfovalue_set.get(topic=topic)
@@ -308,7 +310,7 @@ def turbo_topics_cloud(topic):
             w = WordSummary(type, count / total)
             summaries.append(w)
         # Name must not contain spaces!
-        return get_word_cloud(summaries, url=False)
+        return word_cloud_widget(summaries, url=False)
     except (TopicMetaInfo.DoesNotExist,
             TopicMetaInfoValue.DoesNotExist):
         pass
@@ -334,14 +336,14 @@ def turbo_topics_cloud(topic):
 ########################
 
 def similar_topics_tab(request, topic, name_scheme_name):
-    tab = Tab("Similar Topics")
+    tab = Tab("Similar Topics", 'topics/similar_topics')
     tab.add(similar_topic_list_widget(request, topic))
     tab.add(topic_map_widget(topic, name_scheme_name))
     return tab
 
 
 def similar_topic_list_widget(request, topic):
-    w = Widget("Lists", widget_name="topics/similar_topics")
+    w = Widget("Lists", "topics/similar_topics")
     similarity_measures = topic.analysis.pairwisetopicmetric_set.all()
     if similarity_measures:
         name_scheme_id = request.session['current_name_scheme_id']
@@ -380,7 +382,7 @@ def render_topic_map(request, dataset, analysis, topic_num, name_scheme_name):
 def topic_map_widget(topic, name_scheme_name):
     analysis = topic.analysis
     dataset = analysis.dataset
-    w = Widget("Map", widget_name="topics/topic_map")
+    w = Widget("Map", "topics/topic_map")
     w['topic_map_url'] = '/datasets/%s/analysis/%s/topics/%d/maps/%s' \
         % (dataset.name, analysis.name, topic.number, name_scheme_name)
     return w
@@ -390,7 +392,7 @@ def topic_map_widget(topic, name_scheme_name):
 ###########################
 
 def extra_information_tab(request, topic, topic_url):
-    tab = Tab("Extra Information")
+    tab = Tab("Extra Information", 'topics/extra_information')
     tab.add(metrics_widget(topic))
     tab.add(metadata_widget(topic))
     tab.add(top_documents_widget(topic, topic_url))
@@ -398,7 +400,7 @@ def extra_information_tab(request, topic, topic_url):
     return tab
 
 def metrics_widget(topic):
-    w = Widget('Metrics', widget_name='topics/metrics')
+    w = Widget('Metrics', 'topics/metrics')
     Metric = namedtuple('Metric', 'name value average')
     metrics = []
     for topicmetricvalue in topic.topicmetricvalue_set.select_related().all():
@@ -411,12 +413,12 @@ def metrics_widget(topic):
     return w
 
 def metadata_widget(topic):
-    w = Widget('Metadata', widget_name='common/metadata')
+    w = Widget('Metadata', 'common/metadata')
     w['metadataval_mgr'] = topic.topicmetainfovalue_set
     return w
 
 def top_documents_widget(topic, topic_url):
-    w = Widget('Top Documents', widget_name='topics/top_documents')
+    w = Widget('Top Documents', 'topics/top_documents')
     topicdocs = topic.documenttopic_set.order_by('-count')[:10]
     w['top_docs'] = topicdocs
     w['topic_url'] = topic_url
@@ -424,7 +426,7 @@ def top_documents_widget(topic, topic_url):
 
 
 def top_values_widget(request, topic):
-    w = Widget('Top Values', widget_name='topics/top_values')
+    w = Widget('Top Values', 'topics/top_values')
     attributes = topic.analysis.dataset.attribute_set.all()
     current_attribute = request.session.get('topic-attribute', None)
     if not current_attribute:

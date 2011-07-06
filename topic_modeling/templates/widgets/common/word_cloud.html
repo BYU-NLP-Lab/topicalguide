@@ -22,21 +22,11 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
+
 {% block widget %}
-{% if metadataval_mgr.count > 0 %}
-	<table class="ui-widget">
-	    <tr class="ui-widget-header"><th>Key</th><th>Value</th><th>Type</th></tr>
-	    <tbody class="ui-widget-content">
-	    {% for metadatavalue in metadataval_mgr.all %}
-	        <tr>
-	            <td class="key">{{metadatavalue.info_type.name}}</td>
-	            <td class="value">{{metadatavalue.value}}</td>
-	            <td class="value">{{metadatavalue.type}}</td>
-	        </tr>
-	    {% endfor %}
-	    </tbody>
-	</table>
-{% else %}
-    <div class="ui-state-highlight">No metadata found.</div>
-{% endif %}
+    {% for word in words %}
+        {% if word.url %}<a href="{{word.url}}">{% endif %}
+        <span style="font-size:{{word.size}}%">{{open_text}}{{word.word}}{{close_text}}</span>
+        {% if word.url %}</a>{% endif %}
+    {% endfor %}
 {% endblock %}

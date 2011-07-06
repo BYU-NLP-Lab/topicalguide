@@ -60,6 +60,7 @@ SITE_ID = 1
 USE_I18N = True
 
 # Path to the directory containing statically served files
+TEMPLATES_ROOT = os.getcwd() + '/topic_modeling/templates'
 STATICFILES_ROOT = os.getcwd()+'/topic_modeling/media'
 SCRIPTS_ROOT = STATICFILES_ROOT + '/scripts'
 STYLES_ROOT = STATICFILES_ROOT + '/styles'
@@ -100,11 +101,7 @@ ROOT_URLCONF = 'topic_modeling.urls'
 
 
 
-TEMPLATE_DIRS = (
-   "topic_modeling/templates/",
-   "topic_modeling/media/scripts",
-   "topic_modeling/media/styles/"
-)
+TEMPLATE_DIRS = ('topic_modeling/templates')
 
 INSTALLED_APPS = (
     'topic_modeling.visualize',

@@ -66,7 +66,7 @@ class WordView(AnalysisBaseView):
         return context
 
 def words_tab(analysis, word, word_url):
-    tab = Tab('Word Information')
+    tab = Tab('Word Information', 'words/word_information')
     
     tab.add(top_documents_widget(analysis.dataset, word))
     tab.add(top_topics_widget(analysis, word))

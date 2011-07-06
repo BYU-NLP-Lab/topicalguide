@@ -133,7 +133,7 @@ class AttributeDocumentView(AttributeView):
 
 
 def attribute_info_tab(analysis, attribute, value, analysis_url, attributes_url):
-    tab = Tab('Attribute Info')
+    tab = Tab('Attribute Info', 'attributes/attribute_info')
     
     token_count = attribute.attributevalue_set.get(value=value).token_count
     words = get_words(attribute, value, attributes_url, token_count)
