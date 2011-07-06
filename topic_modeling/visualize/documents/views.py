@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -50,6 +48,8 @@ class DocumentView(AnalysisBaseView):
     
         if document_num:
             document = Document.objects.get(pk=document_num)
+        else:
+            document = None
         documents = dataset.document_set
         documents, filter_form, num_pages = clean_docs_from_session(documents,
                 request.session, document)
@@ -95,7 +95,7 @@ def tabs(request, analysis, document):
     return tabs
 
 def text_tab(document):
-    tab = Tab('Text')
+    tab = Tab('Text', 'documents/text')
     tab.add(plain_text_widget(document))
     return tab
 
@@ -111,7 +111,7 @@ def plain_text_widget(document):
 ###########################
 
 def extra_information_tab(analysis, document):
-    tab = Tab("Extra Information")
+    tab = Tab("Extra Information", 'documents/extra_information')
     tab.add(metrics_widget(document))
     tab.add(metadata_widget(document))
     tab.add(top_topics_widget(analysis, document))
@@ -147,8 +147,7 @@ def top_topics_widget(analysis, document):
 # Similar Documents Widgets
 ###########################
 def similar_documents_tab(request, analysis, document):
-#    return similar_documents_widget(request, analysis, document)
-    tab = Tab("Similar Documents")
+    tab = Tab("Similar Documents", 'documents/similar_documents')
     tab.add(similar_documents_widget(request, analysis, document))
     return tab
 
