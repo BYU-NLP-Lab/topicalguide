@@ -107,3 +107,25 @@ ul.vertical > li:hover {
 label {
     font-weight:normal;
 }
+
+/***** Cupertino Tweaks *****/
+.ui-widget {
+    /*font-size: .8em !important;*/
+}
+
+.ui-tabs, .ui-tabs-nav {
+    padding: 0px !important;
+}
+
+.ui-tabs .ui-tabs-nav li a {
+    padding: 0px     !important;
+    /*padding: 0.25em 0.5em 0.25em 0.5em !important;*/
+}
+/*
+.ui-icon {
+    background-size: contain;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+}
+*/
