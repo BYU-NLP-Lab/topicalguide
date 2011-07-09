@@ -97,7 +97,7 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
     attribute = Attribute.objects.get(dataset__name=dataset, name=attribute)
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     topic = analysis.topic_set.get(number=topic)
-    top_values = top_values_for_attr_topic(analysis, topic, attribute, order_by)
+    top_values = top_values_for_attr_topic(topic=topic, attribute=attribute, order_by=order_by)
     ret_val['attribute'] = attribute.name
     ret_val['values'] = [vars(v) for v in top_values]
     return HttpResponse(simplejson.dumps(ret_val))

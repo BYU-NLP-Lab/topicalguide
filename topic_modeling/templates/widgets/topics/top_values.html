@@ -22,17 +22,19 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
+{% block title %}{{block.super}} for Attribute
+    <select id="id_attribute" onchange="get_top_attribute_values()">
+        {% for a in attributes %}
+        <option value="{{ a.name }}"{% ifequal attribute a %} selected="selected"{% endifequal %}>
+            {{ a.name }}
+        </option>
+        {% endfor %}
+    </select>
+{% endblock %}
+
 {% block widget %}
 <div class="ui-widget" id="top-values">
 	<div class="ui-widget-content">
-		for Attribute 
-		<select id="id_attribute" onchange="get_top_attribute_values()">
-			{% for a in attributes %}
-			<option value="{{ a.name }}"{% ifequal attribute a %} selected="selected"{% endifequal %}>
-				{{ a.name }}
-			</option>
-			{% endfor %}
-		</select>
 		<input type="radio" name="ordering" value="count" id="id_order_by_count"
 		checked="checked" onchange="get_top_attribute_values()"/>
 		By count
@@ -43,9 +45,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     <table class="ui-widget-content ui-widget">
         <thead>
             <tr class="ui-widget-header">
-                <th>Value</th>
-                <th>Count</th>
-                <th>Percent in value</th>
+                <th class="key">Value</th>
+                <th class="value">Count</th>
+                <th class="value">Percent in value</th>
             </tr>
         </thead>
         <tbody id="attr_values_body" class="ui-widget-content">

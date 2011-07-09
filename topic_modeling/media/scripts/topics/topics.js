@@ -23,7 +23,7 @@
  */
 
 function update_list_contents(topics_list) {
-	var topic = $.fn.topic_vars.topic_number;
+	var topic = $.fn.topic.number;
 	var new_html = '';
 	for (var i = 0; i < topics_list.length; i++) {
 		new_html += '<li';
@@ -33,7 +33,7 @@ function update_list_contents(topics_list) {
 		new_html += '>';
 		new_html += '<a href="' + $.fn.topics_url;
 		new_html += '/' + topics_list[i].number;
-		new_html += $.fn.topic_vars.post_link;
+		new_html += $.fn.topic.post_link;
 		new_html += '">';
 		new_html += topics_list[i].name;
         if (topics_list[i].topicgroup) {

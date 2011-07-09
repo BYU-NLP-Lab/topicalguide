@@ -76,6 +76,7 @@ div#list-nav span.arrows a {
 }
 
 /***** Widgets *****/
+/*
 .top-level-widget {
     margin: 12px;
     padding: 2px;
@@ -123,7 +124,7 @@ div#list-nav span.arrows a {
 
 .full-width {
     width: 100%;
-}
+}*/
 
 table.kwic {
     width:100%;
@@ -234,4 +235,20 @@ td.remove:hover, .link:hover, .clickable_text:hover {
     padding:2px;
     -moz-border-radius:5px;
     background-color:#ffffee;
+}
+
+/***** Application-Area Tabs *****/
+/* Space things out a little */
+div#presentation-area div#tabs > div > *,
+.tr > div {
+	padding-right: 10px;
+    padding-bottom: 10px;
+}
+
+.tr {
+    display: table-row;
+}
+
+.tr > div {
+    display: table-cell;
 }

@@ -7,7 +7,7 @@ $(document).ready(function () {
 });
 
 function fix_tab_height() {
-	$("#document_text").css('height', $(window).height()-160);
+	$("div#widget-document_text > div").css('height', $(window).height()-220);
 }
 
 function tabify() {
@@ -17,7 +17,7 @@ function tabify() {
 
 /***** Sidebar *****/
 function update_list_contents(documents_list) {
-	var curdoc = $.fn.doc_vars.document_id;
+	var curdoc = $.fn.doc.id;
 	var new_html = '';
 	for (var i = 0; i < documents_list.length; i++) {
 		new_html += '<li';
@@ -45,7 +45,7 @@ function get_page(page) {
 	cursor_wait();
 	var link = "/feeds/document-page/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.document_id;
+	link += "/documents/" + $.fn.doc.id;
 	link += "/number/" + page;
 	redraw_list_control(link);
 }

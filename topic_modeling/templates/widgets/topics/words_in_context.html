@@ -34,23 +34,32 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	    <th>Filename</th>
 	    <th>L. Context</th>
 	    <th>Word</th>
-	    <th>R. Context</th><th></th>
+	    <th>R. Context</th>
+	    <th></th>
 	</tr>
 	{% endcomment %}
        <tbody class="ui-widget-content">
 	{# These rows are placeholders for jQuery to insert row content into #}
-	{% for word in words_in_context %}
-	<tr id="id_{{ word.word }}"><td></td><td></td><td></td><td></td><td></td></tr>
+	{% for word in words %}
+	<tr word="{{word.word}}" position="{{forloop.counter0}}">
+	    <td class="document"><a><img src="{{IMAGES}}/tango/22x22/mimetypes/text-x-generic.png" title="Source Document"/></a></td>
+	    <td class="lcontext"></td>
+	    <td class="word"><a></a></td>
+	    <td class="rcontext"></td>
+	    <td class="reload"><img src="{{IMAGES}}/tango/22x22/actions/view-refresh.png" title="Load New Context" border="0"/></td>
+	</tr>
 	{% endfor %}
 	</tbody>
 </table>
-{% endblock %}
-{% block widget_ready_script %}
-    {% for word in words_in_context %}
-        get_context_for_word("{{ word.word }}");
-    {% endfor %}
-{% endblock %}
-{% block widget_script %}
-    $.fn.doc_base_url = "{{ doc_base_url }}";
-    $.fn.word_base_url = "{{ word_base_url }}";
+<script>
+	$(document).ready(function() {
+	    $("td.reload").live('click', function() {
+	        var word = $(this).parent().attr('word');
+	        update_word_context(word);
+	    });
+		{% for word in words %}
+	    update_word_context("{{word.word}}");
+		{% endfor %}
+	});
+</script>
 {% endblock %}

@@ -22,20 +22,27 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
+
+{% block title %}{{block.super}} by
+    <select id="similarity-measure-select" onchange="get_similar_topics()">
+        {% for s in similarity_measures %}
+        <option value="{{ s.name }}"{% ifequal similarity_measure s %} selected="selected"{% endifequal %}>
+            {{ s.name }}
+        </option>
+        {% endfor %}
+    </select>
+{% endblock %}
+
 {% block widget %}
-<div class="widget" id="similar-topics">
-	by
-	<select id="similarity-measure-select" onchange="get_similar_topics()">
-		{% for s in similarity_measures %}
-		<option value="{{ s.name }}"{% ifequal similarity_measure s %} selected="selected"{% endifequal %}>
-			{{ s.name }}
-		</option>
-		{% endfor %}
-	</select>
-	<table class="widget-body list" id="similar-topics-table">
-		{% for t in similar_topics %}
-			<tr><td><a href="{{ topics_url }}/{{ t.number }}">{{ t.name }}</a></td><td class="value">{{ t.value|floatformat:"2" }}<td></td></tr>
-		{% endfor %}
-	</table>
-</div>
+<table class="ui-widget-content ui-widget">
+    <thead><tr class="ui-widget-header"><th class="key">Topic</th><th class="value">Similarity</th></tr></thead>
+    <tbody class="ui-widget-content">
+	{% for t in similar_topics %}
+		<tr>
+		    <td class="key"><a href="{{ topics_url }}/{{ t.number }}">{{ t.name }}</a></td>
+		    <td class="value">{{ t.value|floatformat:"2" }}</td>
+	    </tr>
+	{% endfor %}
+	</tbody>
+</table>
 {% endblock %}

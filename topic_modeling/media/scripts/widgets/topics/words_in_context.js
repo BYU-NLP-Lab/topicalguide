@@ -22,43 +22,33 @@
  * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
  */
 
-function get_context_for_word(word)
-{
-	cursor_wait();
+function update_word_context(word) {
+	var lc_word = word.toLowerCase();
 	var link = "/feeds/word-in-context/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/topics/" + $.fn.topic_vars.topic_number;
+	link += "/topics/" + $.fn.topic.number;
 	link += "/words/" + word;
 	$.getJSON(link, {}, function(word) {
-		var lc_word = word.word.toLowerCase();
-		new_html = '';
-		new_html += '<td class="document"><a href="'+$.fn.topics_url+'/';
-		new_html += $.fn.topic_vars.topic_number + '/documents/';
-		new_html += word.doc_id;
-		new_html += '"><img src="/site-media/images/tango/22x22/mimetypes/text-x-generic.png" title="Source Document: ';
-		new_html += word.doc_name;
-		new_html += '"/></a></td>';
-		new_html += '<td class="lcontext">';
-		new_html += word.left_context;
-		new_html += '</td><td class="word">';
-		new_html += '<a href="'+$.fn.topics_url+'/';
-		new_html += $.fn.topic_vars.topic_number;
-		new_html += '/words/' + lc_word;
-		new_html += '">'+word.word+'</a></td>';
-		new_html += '<td class="rcontext">';
-		new_html += word.right_context;
-		new_html += '</td>';
-		new_html += '<td id="id_new_context_';
-		new_html += lc_word + '" class="reload">';
-		new_html += '<img src="/site-media/images/tango/22x22/actions/view-refresh.png" title="Load New Context" border="0"/>';
-		new_html += '</td>';
-		$("#id_"+lc_word).html(new_html);
-		cursor_default();
+		var row = $("tr[word="+lc_word+"]");
+		var docTd = $('td.document', row);
+		var docLink = $('a', docTd);
+		var href = $.fn.topics_url + '/' + $.fn.topic.number + '/documents/' + word.doc_id;
+		docLink.attr("href", href);
+		
+		var docImg = $('img', docTd);
+		var title = "Source Document: " + word.doc_name;
+		docImg.attr("title", title);
+		
+		var lcontextTd = $("td.lcontext", row);
+		lcontextTd.text(word.left_context);
+		
+		var wordTd = $("td.word", row);
+		var wordLink = $("a", wordTd);
+		var wordHref = $.fn.topics_url + '/' + $.fn.topic.number + '/words/' + lc_word;
+		wordLink.attr("href", wordHref);
+		wordLink.text(word.word);
+		
+		var rcontextTd = $("td.rcontext", row);
+		rcontextTd.text(word.right_context);
 	});
 }
-$(document).ready(function() {
-	$("[id*='id_new_context_']").live('click', function() {
-		var word = $(this).attr('id').substring(15);
-		get_context_for_word(word);
-	});
-});

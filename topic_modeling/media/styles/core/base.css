@@ -47,6 +47,15 @@ table {
 	/*Make cell borders run together instead of having gaps:*/
 	border-collapse: collapse;
 	border-spacing: 10px;
+	width: 100%;
+}
+
+td.key {
+	text-align: left;
+}
+
+th.value, td.value {
+	text-align: right;
 }
 
 table th {

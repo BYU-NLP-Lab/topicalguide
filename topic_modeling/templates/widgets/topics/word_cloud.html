@@ -1,3 +1,4 @@
+{% extends "widgets/base_widget.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -21,8 +22,7 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-
-<div class="widget" id="word-cloud">
+{% block widget %}
 	<select id="id_cloud_type">
 		{% for cloud in word_clouds %}
 		<option value="{{ cloud.name }}" {% if forloop.first %}selected="selected"{% endif %}>
@@ -31,11 +31,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		{% endfor %}
 	</select>
 	{% for cloud in word_clouds %}
-	<div class="widget-body cloud" id="id_cloud_{{ cloud.name }}">
+	<div class="ui-widget-content" id="id_cloud_{{ cloud.name }}">
 		{{ cloud.html|safe }}
 	</div>
 	{% endfor %}
 	<script type="text/javascript"
 		src="{{SCRIPTS}}/widgets/topics/word_cloud.js">
 	</script>
-</div>
+{% endblock %}

@@ -42,16 +42,22 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	    {% endcomment %}
         <tbody class="ui-widget-content">
         {# These rows are placeholders for jQuery to insert row content into #}
-        {% for word in word_contexts %}
-        <tr id="id_{{ word.word }}_{{ word.number }}"><td></td><td></td><td></td><td></td><td></td></tr>
+        {% for word in words %}
+            <tr word="{{word.word}}" position="{{forloop.counter0}}">
+                <td class="document"><a><img src="{{IMAGES}}/tango/22x22/mimetypes/text-x-generic.png" title="Source Document"/></a></td>
+		        <td class="lcontext"></td>
+		        <td class="word"><a></a></td>
+		        <td class="rcontext"></td>
+		        <td class="reload"><img src="{{IMAGES}}/tango/22x22/actions/view-refresh.png" title="Load New Context" border="0"/></td>
+            </tr>
         {% endfor %}
         </tbody>
     </table>
 </div>
-{% endblock %}
-
-{% block widget_ready_script %}
-    {% for word in word_contexts %}
-        get_context_for_word("{{ word.word }}", {{ word.number }});
+<script>$(document).ready(function() {
+	{% for word in words %}
+    get_context_for_word("{{ word.word }}", {{ word.number }});
     {% endfor %}
+});
+</script>
 {% endblock %}
