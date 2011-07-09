@@ -115,7 +115,7 @@ class TopicView(AnalysisBaseView):
         context['view_description'] = 'Topic "'+topic_name + '"'
         
         context['tabs'] = tabs(request, topic, context['topic_url'], \
-                               context['currentnamescheme'].name)
+                               context['IMAGES'], context['currentnamescheme'].name)
         
         return context
 
@@ -151,12 +151,12 @@ class TopicWordView(TopicView):
         context['topic_post_link'] = '/words/%s' % word.type
         
         word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
-        context['tabs'] = [self._topic_word_tab(analysis, word, word_url)]
+        context['tabs'] = [self._topic_word_tab(analysis, word, word_url, context['IMAGES'])]
         
         return context
     
-    def _topic_word_tab(self, analysis, word, word_url):
-        tab = words_tab(analysis, word, word_url)
+    def _topic_word_tab(self, analysis, word, word_url, images_url):
+        tab = words_tab(analysis, word, word_url, images_url)
         tab.title = "Topic Word"
         return tab
     
@@ -193,6 +193,7 @@ class TopicDocumentView(TopicView):
         topic = context['topic']
         
         document = Document.objects.get(dataset=dataset, id=document_id)
+        context['document'] = document
         text = document.get_highlighted_text([topic.number], analysis)
         context['metrics'] = document.documentmetricvalue_set.all()
         context['document_title'] = document.filename
@@ -215,9 +216,9 @@ class TopicDocumentView(TopicView):
 # The code that produces widgets also needs to set context variables for
 # whatever is needed by the url they specify.
 
-def tabs(request, topic, topic_url, name_scheme_name):
+def tabs(request, topic, topic_url, images_url, name_scheme_name):
     tabs = []
-    tabs.append(top_words_tab(topic, topic_url))
+    tabs.append(top_words_tab(topic, topic_url, images_url))
     tabs.append(similar_topics_tab(request, topic, name_scheme_name))
     tabs.append(extra_information_tab(request, topic, topic_url))
     return tabs
@@ -231,7 +232,7 @@ def topic_name_widget(topic_name):
 # Top Words widgets
 ###################
 
-def top_words_tab(topic, topic_url):
+def top_words_tab(topic, topic_url, images_url):
     tab = Tab("Top Words", path='topics/top_words')
     
     word_url = '%s/words/' % topic_url
@@ -255,13 +256,14 @@ def top_words_tab(topic, topic_url):
     ngcloud = ngram_cloud_widget(topic, word_url)
     if ngcloud: tab.add(ngcloud)
     
-    tab.add(words_in_context_widget(words))
+    tab.add(words_in_context_widget(images_url, words))
     
     return tab
 
-def words_in_context_widget(words):
+def words_in_context_widget(images_url, words):
     w = Widget("Words in Context", "topics/words_in_context")
-    w['words_in_context'] = words[:10]
+    w['IMAGES'] = images_url
+    w['words'] = words[:5]
     return w
 
 def word_chart_widget(words):
@@ -343,7 +345,7 @@ def similar_topics_tab(request, topic, name_scheme_name):
 
 
 def similar_topic_list_widget(request, topic):
-    w = Widget("Lists", "topics/similar_topics")
+    w = Widget("Most Similar Topics", "topics/similar_topics")
     similarity_measures = topic.analysis.pairwisetopicmetric_set.all()
     if similarity_measures:
         name_scheme_id = request.session['current_name_scheme_id']
@@ -367,12 +369,21 @@ def similar_topic_list_widget(request, topic):
     
     return w
 
+#def topic_map_widget(topic, name_scheme_name):
+#    analysis = topic.analysis
+#    dataset = analysis.dataset
+#    path = '%s/%s/%s/%s.svg' % (topic_map_dir(dataset), analysis.name, name_scheme_name, topic.number)
+#    
+#    w = Widget("Map", "topics/topic_map")
+#    w['topic_map'] = open(path).read()
+#    return w
+
 def topic_map_dir(dataset):
     return dataset.dataset_dir + '/topic_maps'
 
-def render_topic_map(request, dataset, analysis, topic_num, name_scheme_name):
+def render_topic_map(request, dataset, analysis, topic, namescheme):
     dataset, analysis = get_dataset_and_analysis(dataset, analysis)
-    path = '%s/%s/%s/%s.svg' % (topic_map_dir(dataset), analysis.name, name_scheme_name, topic_num)
+    path = '%s/%s/%s/%s.svg' % (topic_map_dir(dataset), analysis.name, namescheme, topic)
     if os.path.exists(path):
         image = open(path, 'r').read()
         return HttpResponse(image, mimetype="image/svg+xml")
@@ -383,7 +394,7 @@ def topic_map_widget(topic, name_scheme_name):
     analysis = topic.analysis
     dataset = analysis.dataset
     w = Widget("Map", "topics/topic_map")
-    w['topic_map_url'] = '/datasets/%s/analysis/%s/topics/%d/maps/%s' \
+    w['topic_map_url'] = '/datasets/%s/analyses/%s/topics/%d/maps/%s' \
         % (dataset.name, analysis.name, topic.number, name_scheme_name)
     return w
 

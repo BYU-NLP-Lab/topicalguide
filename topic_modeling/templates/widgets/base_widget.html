@@ -20,17 +20,7 @@ with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
 If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
-{% endcomment %}
-<div id="widget-{{widget.short_path|slugify}}" class="ui-widget">
-    {% if widget.title %}<div class="ui-widget-header">{{widget.title}}</div>{% endif %}
-    {% block widget_local_style %}{% endblock %}
+{% endcomment %}{% block widget_tag %}<div id="widget-{{widget.short_path|slugify}}" class="ui-widget">
+    {% block title_tag %}{% if widget.title %}<div class="ui-widget-header">{% block title %}{{widget.title}}{% endblock %}</div>{% endif %}{% endblock %}
     {% block widget %}{% endblock %}
-    {% if widget.script_path or widget.style_url %}
-    <script>
-        $(document).ready(function() {
-            {% block widget_ready_script %}{% endblock %}
-        });
-        {% block widget_script %}{% endblock %}
-    </script>
-    {% endif %}
-</div>
+</div>{% endblock %}

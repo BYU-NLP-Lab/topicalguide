@@ -22,9 +22,9 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
+
+{% block title_tag %}<h1>{{title}}</h1>{% endblock %}
+
 {% block widget %}
-<div id="document_text">
-    <h1>{{title}}</h1>
-    <div>{{ document_text|safe }}</div>
-</div>
+<div class="ui-widget-content">{{ document_text|safe }}</div>
 {% endblock %}

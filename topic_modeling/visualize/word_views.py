@@ -61,17 +61,17 @@ class WordView(AnalysisBaseView):
         
         context['view_description'] = "Word '{0}'".format(word.type)
         
-        context['tabs'] = [words_tab(analysis, word, word_url)]
+        context['tabs'] = [words_tab(analysis, word, word_url, context['IMAGES'])]
         
         return context
 
-def words_tab(analysis, word, word_url):
+def words_tab(analysis, word, word_url, images_url):
     tab = Tab('Word Information', 'words/word_information')
     
     tab.add(top_documents_widget(analysis.dataset, word))
     tab.add(top_topics_widget(analysis, word))
     tab.add(total_count_widget(word))
-    tab.add(word_in_context_widget(word, word_url))
+    tab.add(word_in_context_widget(word, word_url, images_url))
     
     return tab
 
@@ -101,13 +101,13 @@ def total_count_widget(word):
     w['word'] = word
     return w
 
-def word_in_context_widget(word, word_url):
+def word_in_context_widget(word, word_url, images_url):
     w = Widget('Word In Context', 'words/word_in_context')
     words = []
     for i in range(0,5):
         ws = WordSummary(word.type, number=i)
         ws.url = word_url
         words.append(ws)
-    
-    w['word_contexts'] = words
+    w['IMAGES'] = images_url
+    w['words'] = words
     return w

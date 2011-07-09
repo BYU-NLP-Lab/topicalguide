@@ -1,3 +1,4 @@
+{% extends "widgets/base_widget.html" %}
 {% comment %}
 The Topic Browser
 Copyright 2010-2011 Brigham Young University
@@ -21,26 +22,23 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-
-<div class="widget" id="turbo-topics-ngrams">
-	<div class="widget-body">
-		<table>
-			<tr>
-				<td>
-					<div class="clickable_text" id="id_turbo_topics_more">
-						More
-					</div>
-					<div class="turbo_topics_less">
-						{{ turbo_topics_less|linebreaks }}
-					</div>
-					<div class="turbo_topics_more" style="display:none">
-						{{ turbo_topics_more|linebreaks }}
-					</div>
-				</td>
-			</tr>
-		</table>
-	</div>
+{% block widget %}
+	<table class="ui-widget-content ui-widget">
+		<tr>
+			<td>
+				<div class="clickable_text" id="id_turbo_topics_more">
+					More
+				</div>
+				<div class="turbo_topics_less">
+					{{ turbo_topics_less|linebreaks }}
+				</div>
+				<div class="turbo_topics_more" style="display:none">
+					{{ turbo_topics_more|linebreaks }}
+				</div>
+			</td>
+		</tr>
+	</table>
 	<script charset="utf-8" type="text/javascript"
-		src="{{SCRIPTS}}/widgets/topics/turbo_topics.js">
-	</script>
-</div>
+        src="{{SCRIPTS}}/widgets/topics/turbo_topics.js">
+    </script>
+{% endblock %}

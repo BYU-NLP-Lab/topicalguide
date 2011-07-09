@@ -23,15 +23,17 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 {% block widget %}
-<div class="ui-widget full" id="attribute-metrics">
-    <div class="ui-widget-header">Metrics</div>
-    <table class="ui-widget-content ui-widget full-width">
-        <thead><tr class="ui-widget-header"><th>Metric</th><th>Value</th></tr></thead>
-        <tbody class="ui-widget-content">
-            <tr><td class="key">Number of tokens</td><td class="value">{{ num_tokens }}</td></tr>
-            <tr><td class="key">Number of types</td><td class="value">{{ num_types }}</td></tr>
-            <tr><td class="key">Number of documents</td><td class="value">{{ num_docs }}</td></tr>
-        </tbody>
-    </table>
-</div>
+<table class="ui-widget-content ui-widget full-width">
+    <thead>
+        <tr class="ui-widget-header">
+            <th class="key">Metric</th>
+            <th class="value">Value</th>
+        </tr>
+    </thead>
+    <tbody class="ui-widget-content">
+        <tr><td class="key">Number of tokens</td><td class="value">{{ num_tokens }}</td></tr>
+        <tr><td class="key">Number of types</td><td class="value">{{ num_types }}</td></tr>
+        <tr><td class="key">Number of documents</td><td class="value">{{ num_docs }}</td></tr>
+    </tbody>
+</table>
 {% endblock %}

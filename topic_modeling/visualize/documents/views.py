@@ -115,7 +115,6 @@ def extra_information_tab(analysis, document):
     tab.add(metrics_widget(document))
     tab.add(metadata_widget(document))
     tab.add(top_topics_widget(analysis, document))
-#    tab.widgets[0].hidden = False
     return tab
 
 def metrics_widget(document):

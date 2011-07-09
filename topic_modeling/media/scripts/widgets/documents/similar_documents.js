@@ -26,7 +26,7 @@ function get_similar_documents() {
 	cursor_wait();
 	var link = "/feeds/similar-documents/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-	link += "/documents/" + $.fn.doc_vars.document_id;
+	link += "/documents/" + $.fn.doc.id;
 	link += "/measures/" + $("select#similarity_measure").val();
 	$.getJSON(link, {}, function(data) {
 		var base = $.fn.documents_url + "/";

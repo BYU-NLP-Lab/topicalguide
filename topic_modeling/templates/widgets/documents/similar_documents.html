@@ -22,25 +22,24 @@ If you have inquiries regarding any further use of the Topic Browser, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
-{% block widget %}
-<div>
-	<table id="similar-documents" class="ui-widget">
-	    <thead><tr class="ui-widget-header"><th>Document</th><th>Similarity</th></tr></thead>
-	    <tbody class="ui-widget-content">{# Placeholder for the JavaScript #}</tbody>
-	</table>
-	<div>
-        by
-        <select id="similarity_measure" onChange="get_similar_documents()">
+
+{% block title %}{{block.super}} by <select id="similarity_measure" onChange="get_similar_documents()">
             {% for s in similarity_measures %}
             <option value="{{ s.name }}" {% ifequal similarity_measure s %}selected{% endifequal %}>
                 {{ s.name }}
             </option>
             {% endfor %}
         </select>
-    </div>
-</div>
 {% endblock %}
 
-{% block widget_ready_script %}
-    get_similar_documents();
+{% block widget %}
+	<table id="similar-documents" class="ui-widget">
+	    <thead><tr class="ui-widget-header"><th class="key">Document</th><th class="value">Similarity</th></tr></thead>
+	    <tbody class="ui-widget-content">{# Placeholder for the JavaScript #}</tbody>
+	</table>
+    <script>
+    $(document).ready(function() {
+        get_similar_documents();
+    });
+    </script>
 {% endblock %}

@@ -1,4 +1,4 @@
-{% comment %}
+/*
  * The Topic Browser
  * Copyright 2010-2011 Brigham Young University
  * 
@@ -20,15 +20,15 @@
  * If you have inquiries regarding any further use of the Topic Browser, please
  * contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
  * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
-{% endcomment %}
+ */
 
 function get_context_for_word(word, num)
 {
 	cursor_wait();
 	var link = "/feeds/word-in-context/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
-    if(typeof $.fn.topic_vars != "undefined") {
-        link += "/topics/" + $.fn.topic_vars.topic_number;
+    if(typeof $.fn.topic != "undefined") {
+        link += "/topics/" + $.fn.topic.number;
     }
 	link += "/words/" + word;
 	$.getJSON(link, {}, function(word) {
@@ -52,13 +52,47 @@ function get_context_for_word(word, num)
 		new_html += lc_word + "_" + num + '" class="reload">';
 		new_html += '<img src="/site-media/images/tango/22x22/actions/view-refresh.png" title="Load New Context" border="0"/>';
 		new_html += '</td>';
-		$("#id_"+lc_word+"_"+num).html(new_html);
+		$('tr[word="'+lc_word+'"][position='+num+']').html(new_html);
 		cursor_default();
 	});
 }
+
+function update_word_context(word, position) {
+	var lc_word = word.toLowerCase();
+	var link = "/feeds/word-in-context/datasets/" + $.fn.dataset;
+	link += "/analyses/" + $.fn.analysis;
+	link += "/topics/" + $.fn.topic.number;
+	link += "/words/" + word;
+	$.getJSON(link, {}, function(word) {
+		var row = $('tr[word="'+lc_word+'"][position='+position+']');
+		var docTd = $('td.document', row);
+		var docLink = $('a', docTd);
+		var docHref = $.fn.documents_url + '/' + word.doc_id;
+		docLink.attr("href", docHref);
+		
+		var docImg = $('img', docTd);
+		var title = "Source Document: " + word.doc_name;
+		docImg.attr("title", title);
+		
+		var lcontextTd = $("td.lcontext", row);
+		lcontextTd.text(word.left_context);
+		
+		var wordTd = $("td.word", row);
+		var wordLink = $("a", wordTd);
+		var wordHref = $.fn.words_url + '/' + lc_word;
+		wordLink.attr("href", wordHref);
+		wordLink.text(word.word);
+		
+		var rcontextTd = $("td.rcontext", row);
+		rcontextTd.text(word.right_context);
+	});
+}
+
 $(document).ready(function() {
-	$("[id*='id_new_context_']").live('click', function() {
-		var parts = $(this).attr('id').substring(15).split("_");
-		get_context_for_word(parts[0], parts[1]);
+	$("td.reload").live('click', function() {
+		var row = $(this).parent();
+		var word = row.attr("word");
+		var position = row.attr("position");
+		update_word_context(word, position);
 	});
 });

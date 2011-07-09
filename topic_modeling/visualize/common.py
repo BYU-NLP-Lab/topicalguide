@@ -294,15 +294,16 @@ class Tab(object):
         self.widgets = widgets if widgets else dict()
     
     def add(self, widget):
-        self.widgets[slugify(widget.title).replace('-','_')] = widget
+        self.widgets[widget.short_path.replace('-','_')] = widget
         return self
     
     def __unicode__(self):
         if self.template_path:
             t = template.loader.get_template(self.template_path)
             ctxt = Context()
-            ctxt['tab'] = self
-            ctxt['widgets'] = self.widgets
+            ctxt['_tab'] = self
+            ctxt['_widgets'] = self.widgets
+            ctxt.update(self.widgets)
             return t.render(ctxt)
         else:
             return '\n'.join([w.__unicode__() for w in self.widgets.values()])
@@ -311,7 +312,7 @@ class Widget(object):
     def __init__(self, title, path, html=None, context=None, content_html=None):
         self.title = title
         self.path = path
-        self.short_path = path.split('/')[-1:]
+        self.short_path = path.split('/')[-1:][0]
         
         self.template_path = 'widgets/%s.html' % path
         
