@@ -326,7 +326,6 @@ def _parse_mallet_file(analysis, state_file, document_metadata, tokenized_file, 
     markup_state.markup_stop_words()
     markup_state.output_file(analysis)
     f.close()
-    transaction.commit()
 
     end = datetime.now()
     print >> sys.stderr, '  Done', end - start
@@ -339,6 +338,7 @@ def _parse_mallet_file(analysis, state_file, document_metadata, tokenized_file, 
     end = datetime.now()
     print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
+    transaction.commit()
     return doctopic, topicword, doctopicword, attrvaltopic, topic_counts, word_index
 
 
