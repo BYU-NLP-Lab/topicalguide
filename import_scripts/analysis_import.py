@@ -386,7 +386,6 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, to
     markup_state.markup_stop_words()
     markup_state.output_file()
     f.close()
-    transaction.commit()
 
     end = datetime.now()
     print >> sys.stderr, '  Done', end - start
@@ -397,6 +396,7 @@ def parse_mallet_file(state_file, attribute_table, tokenized_file, files_dir, to
     for word in dataset.word_set.all():
         word_index[word.type] = word
     end = datetime.now()
+    transaction.commit()
     print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
     return doctopic, topicword, doctopicword, attrvaltopic, topics, word_index
