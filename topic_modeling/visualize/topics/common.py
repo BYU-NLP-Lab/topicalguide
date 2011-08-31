@@ -34,11 +34,10 @@ from topic_modeling.visualize.models import TopicNameScheme
 
 def get_topic_name(topic, name_scheme_id):
     ns = TopicNameScheme.objects.get(id=name_scheme_id)
-    name = str(topic.number) + ": "
     try:
-        name += TopicName.objects.get(topic=topic, name_scheme=ns).name
+        name = TopicName.objects.get(topic=topic, name_scheme=ns).name
     except:
-        name += topic.name
+        name = topic.name
     return name
 
 def sort_topics(topics, sort_by, session):
@@ -65,10 +64,8 @@ def sort_topics(topics, sort_by, session):
         raise ValueError("We don't current support ordering by %s" % sort_by)
 
 
-def top_values_for_attr_topic(analysis, topic, attribute, order_by='count',
-        number=10):
-    attrvaltopics = attribute.attributevaluetopic_set.filter(
-            topic__analysis=analysis, topic=topic).order_by('-count')
+def top_values_for_attr_topic(topic, attribute, order_by='count', number=10):
+    attrvaltopics = attribute.attributevaluetopic_set.filter(topic=topic).order_by('-count')
     values = []
     if order_by == 'count':
         attrvaltopics = attrvaltopics[:number]

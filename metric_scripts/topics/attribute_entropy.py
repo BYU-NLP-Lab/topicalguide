@@ -60,12 +60,14 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
             tmv.save()
         transaction.commit()
 
+
 def metric_names_generated(dataset, analysis):
     names = []
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     for attr in analysis.dataset.attribute_set.all():
         names += 'Value Entropy for Attribute %s' % attr.name
     return names
+
 
 if __name__ == '__main__':
     parser = OptionParser()

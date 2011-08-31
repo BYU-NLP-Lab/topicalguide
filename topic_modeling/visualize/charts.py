@@ -33,6 +33,10 @@ from topic_modeling.visualize.models import Analysis, Attribute, AttributeValue,
     AttributeValueTopic, Dataset, Topic, TopicMetric, Value
 import StringIO
 import math
+
+import matplotlib
+#Avoid using X windows by setting a backend that doesn't use it. This is necessary for headless setups
+matplotlib.use("Cairo")
 import pylab
 
 # General python imports
@@ -95,7 +99,7 @@ def get_chart(words):
 
 def thin_labels(labels, interval):
     """ Reduce the number of labels for a plot axis when there are too many.
-    
+
     This is accomplished by "thinning" the labels, selecting every interval-th
     one and discarding all others.
     Args:
@@ -149,44 +153,54 @@ class TopicAttributePlotForm(forms.Form):
 
     def __init__(self, dataset, analysis, *args, **kwargs):
         super(TopicAttributePlotForm, self).__init__(*args, **kwargs)
-
+        
+        #The list of topics
         topics = analysis.topic_set.all()
         self.fields['topics'] = forms.ModelMultipleChoiceField(topics,
-                initial=[topics[0]])
+                initial=topics[0:3])
         self.fields['topics'].widget.attrs['onchange'] = \
                 'update_topic_attribute_plot()'
-
+        self.fields['topics'].widget.attrs['class'] = 'under-label'
+        
+        #Available attributes
         attributes = dataset.attribute_set.all()
         self.fields['attribute'] = forms.ModelChoiceField(attributes,
-                initial=attributes[0])
+                initial=attributes[0], widget=forms.Select())
         self.fields['attribute'].widget.attrs['onchange'] = \
                 'update_attribute_values()'
-
+        self.fields['attribute'].widget.attrs['class'] = 'under-label'
+        
+        #Frequency checkbox
         self.fields['by_frequency'] = forms.BooleanField(required=False)
         self.fields['by_frequency'].widget.attrs['onchange'] = \
                 'update_topic_attribute_plot()'
-
+        self.fields['by_frequency'].widget.attrs['class'] = 'beside-label'
+        
+        #Histogram checkbox
         self.fields['histogram'] = forms.BooleanField(required=False)
         self.fields['histogram'].widget.attrs['onchange'] = \
                 'update_topic_attribute_plot()'
-
+        self.fields['histogram'].widget.attrs['class'] = 'beside-label'
+        
+        #List of values the current attribute can take
         if attributes.count() != 0:
             attribute = attributes[0]
             values = attribute.value_set.all()
             self.fields['values'] = forms.ModelMultipleChoiceField(values,
-                    initial=[values[0]])
+                    initial=values)
             self.fields['values'].widget.attrs['onchange'] = \
                     'update_topic_attribute_plot()'
-
+            self.fields['values'].widget.attrs['class'] = 'under-label hideable'
+        
+        #The Select All button
         button = Button(onClick='highlight_all_topic_attribute_values(1)',
                         value='Select All')
-        self.fields['select-all'] = forms.Field(label='',
-                                                widget=button)
+        self.fields['select-all'] = forms.Field(label='', widget=button)
 
 class TopicAttributeChart(object):
     """ A chart that plots nominally-valued attributes against topics"""
     form = TopicAttributePlotForm
-    update_function = "update_topic_attribute_plot()"
+    update_function = "update_topic_attribute_plot"
 
     def __init__(self, chart_parameters):
         """
@@ -316,7 +330,7 @@ class TopicMetricForm(forms.Form):
 class TopicMetricChart(object):
     """A chart that plots one TopicMetric vs. another TopicMetric"""
     form = TopicMetricForm
-    update_function = "update_topic_metric_plot()"
+    update_function = "update_topic_metric_plot"
 
     def __init__(self, chart_parameters):
         self.analysis = Analysis.objects.get(name=chart_parameters['analysis'],
@@ -472,9 +486,10 @@ class NumericalAttributesDistributionChart(Chart):
 
 
 # This has to be down here, after everything has been defined
-plot_types = { 'Topics vs. Attributes': TopicAttributeChart,
+# The format is this: '[name of plot]': (class of plot, order in list)
+plot_types = { 'Topics vs. Attributes': (TopicAttributeChart, 1),
         #'NumericalAttribute-Distribution': NumericalAttributesDistributionChart,
-        'Topic Metric Comparison': TopicMetricChart,
+        'Topic Metric Comparison': (TopicMetricChart, 2),
         }
 
 

@@ -1,0 +1,86 @@
+{% extends "core/main_application.html" %}
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+
+{% block stylesheets %}
+    {{block.super}}
+    <link rel="stylesheet" href="{{STYLES}}/plot.css" type="text/css" />
+{% endblock %}
+
+{% block scripts %}
+    {{block.super}}
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/plots.js"></script>
+	<script charset="utf-8" type="text/javascript">
+		function set_loading_image() {
+		    $("img#plot_image").attr("src", "{{IMAGES}}/ajax-loader.gif");
+		}
+	</script>
+{% endblock %}
+
+{% block sidebar %}
+	<div id="accordion">
+	   {% for plot_name,plot_form in plot_forms %}
+	       <div><a>{{plot_name}}</a></div>
+	       <div>{{plot_form.as_ul}}</div>
+	   {% endfor %}
+	</div>
+{% endblock %}
+
+{% block presentation_area %}
+<div class="ui-widget">
+    <div class="ui-widget-header ui-corner-all">Title</div>
+    <div class="ui-widget-content ui-corner-all">
+        <img name="plot_image" id="plot_image" src="{{ chart_address }}"/>
+    </div>
+</div>
+
+<script charset="utf=8" type="text/javascript">
+    $("#accordion").accordion({ collapsible: true })
+    
+    {% comment %}
+        Grab the class of the form controls and apply it to the labels. This
+        allows us to style things as we please. The class of the form control
+        elements is set within the form classes (e.g. TopicAttributePlotForm)
+    {% endcomment %}
+    $("#accordion div.ui-accordion-content li").each(function(){
+    	var li = $(this);
+    	li.addClass("ui-widget-content");
+    	var fields = li.find("select,input");
+    	
+    	fields.each(function(){
+	         var me = $(this)
+	         
+	         me.parent().children("label").each(function(){
+	             $(this).addClass(me.attr('class'));
+	         });
+         });
+    	
+    	if(fields.filter(".hideable").size() > 0) boxToggle(li);
+    });
+    
+    {# Weird method call using name of function from a context variable #}
+	{{update_function}}("{{dataset}}","{{analysis}}");
+</script>
+
+{% endblock %}

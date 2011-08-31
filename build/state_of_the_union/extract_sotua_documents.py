@@ -31,6 +31,7 @@ def extract_state_of_the_union(chron_list_filename, addresses_filename, dest_dir
     extracted_count = 0
     if not os.path.exists(dest_dir): os.mkdir(dest_dir)
     
+    
     current_speech_title = None
     lines = []
     for line in codecs.open(addresses_filename,'r','utf-8'):

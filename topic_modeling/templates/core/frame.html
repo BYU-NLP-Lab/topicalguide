@@ -1,0 +1,85 @@
+{% extends "core/base.html" %}
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+
+{% block stylesheets %}
+    {{block.super}}
+    <link rel="stylesheet" href="{{STYLES}}/core/frame.css" type="text/css" />
+{% endblock %}
+
+{% block header %}
+<div id="header">
+	<ul class="nav-menu">
+		{% block nav_menu %}
+			{% block nav_menu_start %}{% endblock %}
+			
+			<li id="logo">
+				<a href="/">
+					<img src="{{nlp_lab_small_logo_url}}" alt="BYU NLP Lab Logo"/>
+				</a>
+			</li>
+			
+			{% block nav_menu_after_log %}{% endblock %}
+			
+			<li id="title-text" class="breadcrumb" title="Go Home">
+				<a href="/">The Topical Guide</a>
+			</li>
+			
+			{% block nav_menu_after_title %}{% endblock %}
+			
+			{{breadcrumb.to_ul|safe}}
+			
+			{% block nav_menu_end %}{% endblock %}
+			
+			{% comment %}
+				<li id="namescheme-dropdown">
+					Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
+					{% for namescheme in nameschemes %}
+					<option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
+					{% endfor %}
+					</select>
+				</li>
+				<li>
+					{% if breadcrumb %}
+						Favorites: 
+						<button type="button" onclick="add_favorite();">Add</button>
+					{% endif %}
+				</li>
+			{% endcomment %}
+		{% endblock %}
+	</ul>
+</div>
+{% endblock %}{# end block header #}
+
+{% block footer %}
+<div id="footer">
+	<ul class="nav-menu">
+		{% block footer_items %}
+		<li><a href="{{topical_guide_project_url|safe}}" class="new-window">The Topical Guide</a></li>
+		<li>Copyright 2010-2011 <a href="http://www.byu.edu/" class="new-window">Brigham Young University</a></li>
+		<li>Developed by <a href="{{nlp_lab_url|safe}}" class="new-window">the BYU Natural Language Processing Lab</a></li>
+		{% endblock %}
+	</ul>
+</div>
+{% endblock %}

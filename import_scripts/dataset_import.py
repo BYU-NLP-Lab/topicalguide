@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -25,11 +23,16 @@
 
 import os, sys
 
+
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
+from import_scripts.metadata import Metadata, import_document_metadata,\
+    import_dataset_metadata, import_word_metadata
+
 from topic_modeling import settings
 settings.DEBUG = False
+
 
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import AttributeValue
@@ -45,22 +48,17 @@ from django.db import connection, transaction
 
 from collections import defaultdict
 from datetime import datetime
-from optparse import OptionParser
-
-import cjson
-
-# A couple of global variables just to make life easier, so I don't have to
-# pass them around so much - they're created once and then never change
-dataset = None
 
 NUM_DOTS = 100
 
-# This could maybe benefit from the use of a logger, but I didn't care enough
-# to put one in, so I just use print statements.
-
-def main(state_file, name, attr_file, root, files_dir, description):
-    print >> sys.stderr, "dataset_import({0}, {1}, {2}, {3}, {4}, {5})".format(
-            state_file, name, attr_file, root, files_dir, description)
+def import_dataset(name, readable_name, description, state_file, metadata_filenames,
+                   dataset_dir, files_dir):
+    
+    print >> sys.stderr, "dataset_import({0})".format(
+        ', '.join([name, readable_name, description, state_file,
+        metadata_filenames['datasets'], metadata_filenames['documents'], metadata_filenames['words'],
+        dataset_dir, files_dir]))
+    
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
     # These are some attempts to make the database access a little faster
@@ -70,27 +68,37 @@ def main(state_file, name, attr_file, root, files_dir, description):
     cursor.execute('PRAGMA cache_size=2000000')
     cursor.execute('PRAGMA journal_mode=MEMORY')
     cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
-    
-    created = create_dataset(name, root, files_dir, description)
+
+    dataset, created = _create_dataset(name, readable_name, description, dataset_dir, files_dir)
     if created:
-        docs, attrs, vals, attrvaldoc, attr_table = parse_attributes(attr_file)
-    
-        doc_index = create_document_table(docs)
-        attr_index = create_attribute_table(attrs)
-        value_index = create_value_table(vals, attr_index)
-        create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index)
-    
+        document_metadata = Metadata(metadata_filenames['documents'])
+        docs, attrs, vals, attrvaldoc = _import_document_attributes(document_metadata)
+
+        doc_index = _create_document_table(dataset, docs)
+        attr_index = _create_attribute_table(dataset, attrs)
+        value_index = _create_value_table(vals, attr_index)
+        _create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index)
+
         # BAD!  We currently rely on a Mallet output file in order to give us
         # counts for the database.  This should be fixed somehow.  The problem
         # is that it depends on stopword lists and other kinds of formating.
-        words, docword, attrval, attrvalword = parse_mallet_file(state_file,
-                attr_table)
-        word_index = create_word_table(words)
-        create_docword_table(docword, doc_index, word_index)
-        create_attrval_table(attrval, attr_index, value_index)
-        create_attrvalword_table(attrvalword, attr_index, value_index,
+        words, docword, attrval, attrvalword = _parse_mallet_file(state_file,
+                document_metadata)
+        word_index = _create_word_table(dataset, words)
+        _create_docword_table(docword, doc_index, word_index)
+        _create_attrval_table(attrval, attr_index, value_index)
+        _create_attrvalword_table(attrvalword, attr_index, value_index,
                 word_index)
-    
+        
+        # --- Import Metadata ---
+        import_document_metadata(dataset, document_metadata)
+        
+        dataset_metadata = Metadata(metadata_filenames['datasets'])
+        import_dataset_metadata(dataset, dataset_metadata)
+        
+        word_metadata = Metadata(metadata_filenames['words'])
+        import_word_metadata(dataset, word_metadata)
+
         cursor.execute('PRAGMA journal_mode=DELETE')
         cursor.execute('PRAGMA locking_mode=NORMAL')
         end_time = datetime.now()
@@ -98,31 +106,21 @@ def main(state_file, name, attr_file, root, files_dir, description):
         print >> sys.stderr, 'It took', end_time - start_time,
         print >> sys.stderr, 'to import the dataset'
 
-    
+
 
 #############################################################################
 # Database creation code (in the order it's called in main)
 #############################################################################
 
-def create_dataset(name, path, files_dir, description):
+def _create_dataset(name, readable_name, description, dataset_dir, files_dir):
     print >> sys.stderr, 'Creating the dataset...  ',
-    try:
-        Dataset.objects.get(name=name)
-        print >> sys.stderr, 'Dataset {n} already exists!  Doing nothing...'.\
-                format(n=name)
-        return False
-    except Dataset.DoesNotExist:
-        d = Dataset(name=name, data_root=path, files_dir=files_dir,
-                description=description)
-        d.save()
-        global dataset
-        dataset = d
+    dataset,created = Dataset.objects.get_or_create(name=name, readable_name=readable_name, description=description,
+                    dataset_dir=dataset_dir, files_dir=files_dir)
     print >> sys.stderr, 'Done'
-    return True
-
+    return dataset,created
 
 @transaction.commit_manually
-def create_document_table(filenames):
+def _create_document_table(dataset, filenames):
     num_per_dot = max(1, int(len(filenames)/NUM_DOTS))
     print >> sys.stderr, 'Creating the Document Table',
     print >> sys.stderr, '(%d documents per dot)' % (num_per_dot),
@@ -145,7 +143,7 @@ def create_document_table(filenames):
 
 
 @transaction.commit_manually
-def create_attribute_table(attributes):
+def _create_attribute_table(dataset, attributes):
     num_per_dot = max(1, int(len(attributes)/NUM_DOTS))
     print >> sys.stderr, 'Creating the Attribute Table',
     print >> sys.stderr, '(%d attributes per dot)' % (num_per_dot),
@@ -168,7 +166,7 @@ def create_attribute_table(attributes):
 
 
 @transaction.commit_manually
-def create_value_table(values, attr_index):
+def _create_value_table(values, attr_index):
     entries = []
     for attribute in values:
         entries.extend(values[attribute])
@@ -195,7 +193,7 @@ def create_value_table(values, attr_index):
 
 
 @transaction.commit_manually
-def create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index):
+def _create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index):
     num_per_dot = max(1, int(len(attrvaldoc)/NUM_DOTS))
     print >> sys.stderr, 'Creating the AttributeValueDocument Table',
     print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
@@ -219,7 +217,7 @@ def create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index):
 
 
 @transaction.commit_manually
-def create_word_table(words):
+def _create_word_table(dataset, words):
     num_per_dot = max(1, int(len(words)/NUM_DOTS))
     print >> sys.stderr, 'Creating the Word Table',
     print >> sys.stderr, '(%d words per dot)' % (num_per_dot),
@@ -233,10 +231,7 @@ def create_word_table(words):
             print >> sys.stderr, '.',
             sys.stdout.flush()
         count = words[word]
-        if '_' in word:
-            w = Word(dataset=dataset, type=word, ngram=True, count=count)
-        else:
-            w = Word(dataset=dataset, type=word, count=count)
+        w = Word(dataset=dataset, type=word, count=count, ngram=('_' in word))
         w.save()
         word_index[word] = w
     transaction.commit()
@@ -246,7 +241,7 @@ def create_word_table(words):
 
 
 @transaction.commit_manually
-def create_docword_table(docword, doc_index, word_index):
+def _create_docword_table(docword, doc_index, word_index):
     num_per_dot = max(1, int(len(docword)/NUM_DOTS))
     print >> sys.stderr, 'Creating the DocumentWord table',
     print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
@@ -278,7 +273,7 @@ def create_docword_table(docword, doc_index, word_index):
 
 
 @transaction.commit_manually
-def create_attrval_table(attrval, attr_index, value_index):
+def _create_attrval_table(attrval, attr_index, value_index):
     num_per_dot = max(1, int(len(attrval)/NUM_DOTS))
     print >> sys.stderr, 'Creating the AttributeValue Table',
     print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
@@ -301,7 +296,7 @@ def create_attrval_table(attrval, attr_index, value_index):
 
 
 @transaction.commit_manually
-def create_attrvalword_table(attrvalword, attr_index, value_index, word_index):
+def _create_attrvalword_table(attrvalword, attr_index, value_index, word_index):
     num_per_dot = max(1, int(len(attrvalword)/NUM_DOTS))
     print >> sys.stderr, 'Creating the AttributeValueWord Table',
     print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
@@ -328,67 +323,43 @@ def create_attrvalword_table(attrvalword, attr_index, value_index, word_index):
 # Parsing and other intermediate code (not directly modifying the database)
 #############################################################################
 
-def parse_dataset_description(description_file):
-    print >> sys.stderr, 'Reading dataset file...'
-    f = open(description_file, 'r').read()
-    values_map = cjson.decode(f)
-    print >> sys.stderr, 'This is the information I found about the dataset.'
-    print >> sys.stderr, 'Cancel this now and fix your description file if',
-    print >> sys.stderr, 'this is wrong.\n'
-    print >> sys.stderr, 'Name:', values_map['name']
-    print >> sys.stderr, 'Attribute File:', values_map['attribute_file']
-    print >> sys.stderr, 'Data Root:', values_map['data_root']
-    print >> sys.stderr, 'Description:'
-    print >> sys.stderr, values_map['description']
-    print >> sys.stderr
-    return (values_map['name'], values_map['attribute_file'],
-            values_map['data_root'], values_map['description'])
-
-
-def parse_attributes(attribute_file):
+def _import_document_attributes(document_metadata):
     """
     Parse the contents of the attributes file, which should
     consist of a JSON formatted text file with the following
-    format: [ {'path': <path>, 'attributes':{'attribute': 'value',...}}, ...] 
+    format: { 'filename1': {'attribute1': 'value',...}, 'filename2': {'attribute4': 'value'}}
     """
-    print >> sys.stderr, 'Parsing the JSON attributes file...  ',
+    print >> sys.stderr, 'Importing document attributes (old-style metadata)...  ',
     sys.stdout.flush()
     start = datetime.now()
-    file_data = open(attribute_file).read()
-    parsed_data = cjson.decode(file_data)
     count = 0
-    attribute_table = {}
     documents = set()
     attributes = set()
     values = defaultdict(set)
     attrvaldoc = set()
-    for document in parsed_data:
+    for document_name, metadata in document_metadata.items():
         count += 1
         if count % 50000 == 0:
             print >> sys.stderr, count
             sys.stdout.flush()
-        attribute_values = document['attributes']
-        filename = document['path']
-        documents.add(filename)
-        attribute_table[filename] = attribute_values
-        for attribute in attribute_values:
+        documents.add(document_name)
+        for attribute,value in metadata.items():
+            value = str(value)#Because Attribute only handles string types
             attributes.add(attribute)
-            value = attribute_values[attribute]
             if isinstance(value, basestring):
                 values_set = [value]
             else:
                 values_set = value
             for value in values_set:
                 values[attribute].add(value)
-                attrvaldoc.add((attribute, value, filename))
-    print >> sys.stderr, 'Done'
+                attrvaldoc.add((attribute, value, document_name))
     end = datetime.now()
     print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
-    return documents, attributes, values, attrvaldoc, attribute_table
+    return documents, attributes, values, attrvaldoc
 
 
-def parse_mallet_file(state_file, attribute_table):
+def _parse_mallet_file(state_file, document_metadata):
     """ Parses the state output file from mallet
 
     That file lists individual tokens one per line in the following format:
@@ -417,8 +388,8 @@ def parse_mallet_file(state_file, attribute_table):
             _, docpath, __, ___, word, ____ = line.split()
             words[word] += 1
             docword[(docpath, word)] += 1
-            for attr in attribute_table[docpath]:
-                value = attribute_table[docpath][attr]
+            for attr,value in document_metadata[docpath].items():
+                value = str(value)#FIXME This conversion is for backwards compatibility with Attribute
                 if isinstance(value, basestring):
                     values_set = [value]
                 else:

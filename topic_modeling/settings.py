@@ -22,6 +22,8 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
+import os
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -58,7 +60,11 @@ SITE_ID = 1
 USE_I18N = True
 
 # Path to the directory containing statically served files
-STATICFILES_ROOT = 'topic_modeling/media'
+TEMPLATES_ROOT = os.getcwd() + '/topic_modeling/templates'
+STATICFILES_ROOT = os.getcwd()+'/topic_modeling/media'
+SCRIPTS_ROOT = STATICFILES_ROOT + '/scripts'
+STYLES_ROOT = STATICFILES_ROOT + '/styles'
+ALLOWED_INCLUDE_ROOTS = (SCRIPTS_ROOT, STYLES_ROOT)
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -75,7 +81,8 @@ MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'lxmn5=5_++dn-k(ma!o*@ssjljtt%lh=fa!z2)_!*bpjp%w2vl'
+#TODO Set this before deploying a server
+SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -92,17 +99,17 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'topic_modeling.urls'
 
-TEMPLATE_DIRS = (
-   "topic_modeling/templates/",
-)
+
+
+TEMPLATE_DIRS = ('topic_modeling/templates')
 
 INSTALLED_APPS = (
     'topic_modeling.visualize',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
+#    'django.contrib.admin',
+#    'django.contrib.auth',
+#    'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
+#    'django.contrib.sites',
 )
 
 SESSION_SAVE_EVERY_REQUEST = True

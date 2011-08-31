@@ -38,7 +38,7 @@ from subprocess import Popen, PIPE
 from topic_modeling.visualize.models import Analysis, TopicMetric
 from topic_modeling.visualize.models import TopicMetricValue
 
-#@transaction.commit_manually
+@transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     try:
@@ -55,7 +55,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     # call stuff to classify documents and get sentiment information, as in
     # parse_dependencies.py
 
-    data_root = analysis.dataset.data_root
+    data_root = analysis.dataset.dataset_dir
     topics = analysis.topic_set.all()
     for topic in topics:
         positive = 0;
@@ -69,11 +69,10 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
                 positive += docTopic.count
             print '%d/%d' % (positive, topic.total_count)
         # compute aggregate information for topic
-        # sentiment = that stuff
         topicSentiment = float(positive)/float(topic.total_count)
         tmv = TopicMetricValue(topic=topic, metric=metric, value=topicSentiment)
         tmv.save()
-    #transaction.commit()
+    transaction.commit()
 
 
 def sentiment_document(filename):

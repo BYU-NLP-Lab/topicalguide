@@ -22,65 +22,67 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-
-from django.shortcuts import render_to_response
 from django.http import HttpResponse
 
 from topic_modeling.visualize.charts import plot_types
-from topic_modeling.visualize.common import BreadCrumb, root_context
-from topic_modeling.visualize.models import Analysis
-from topic_modeling.visualize.models import Attribute
-from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.common import BreadCrumb, AnalysisBaseView
 
-
-def index(request, dataset, analysis, plot):
-    if not plot:
-        plot = plot_types.keys()[0]
-    page_vars = root_context(dataset, analysis)
-    page_vars['highlight'] = 'plots_tab'
-    page_vars['tab'] = 'plot'
-    page_vars['plot'] = plot
-
-    dataset = Dataset.objects.get(name=dataset)
-    analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    page_vars['breadcrumb'] = BreadCrumb()
-    page_vars['breadcrumb'].dataset(dataset)
-    page_vars['breadcrumb'].analysis(analysis)
-    page_vars['breadcrumb'].plot()
-
-#    histogram = False
-#    frequency = False
-    attributes = Attribute.objects.filter(dataset=dataset)
-    plot_form = plot_types[plot].form(dataset, analysis)
-    topics = [analysis.topic_set.all()[0]]
-    attribute = attributes[0]
-    values = attributes[0].value_set.all()
+class PlotView(AnalysisBaseView):
+    template_name = "plots.html"
     
-    topic_links = [page_vars['topics_url'] + '/%s' % str(topic.number) 
-                   for topic in topics]
-    topic_names = [topic.name for topic in topics]
-    page_vars['topic_links'] = zip(topic_links, topic_names)
+    def get_context_data(self, request, **kwargs):
+        context = super(PlotView, self).get_context_data(request, **kwargs)
+        
+        dataset = context['dataset']
+        analysis = context['analysis']
+        plot = kwargs['plot']
+        
+        plots = plot_types.keys()
+        plots.sort(key=lambda x: plot_types[x][1])
+        if not plot:
+            plot = plots[0]
+        
+        context['view_description'] = "Plots"
+        context['highlight'] = 'plots_tab'
+        context['tab'] = 'plot'
+        context['plot'] = plot
     
-    attr_links = [page_vars['attributes_url'] + '/%s/values/%s' % \
-                  (str(attribute), str(value)) for value in values]
-    attr_names = [value.value for value in values]
-    page_vars['attr_links'] = zip(attr_links, attr_names)
-
-
-
-    page_vars['plots'] = plot_types.keys()
-    # Needs to be fixed if we ever have lots of kinds of plots
-    page_vars['num_pages'] = 1
-    page_vars['page_num'] = 1
-    page_vars['update_function'] = plot_types[plot].update_function
-
-    page_vars['curplot'] = plot
-                                                             
-    chart_address = '/site-media/ajax-loader.gif'
-    page_vars['chart_address'] = chart_address
-    page_vars['plot_form'] = plot_form
-
-    return render_to_response('plot.html', page_vars)
+        context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).plots()
+    
+        #Dan's broken plots:
+        #--Attribute Values plot
+    #    attributes = Attribute.objects.filter(dataset=dataset)
+    #    
+    #    topics = [analysis.topic_set.all()[0]]
+    #    attribute = attributes[0]
+    #    values = attributes[0].value_set.all()
+        #--Topics plot
+    #    topic_links = [context['topics_url'] + '/%s' % str(topic.number)
+    #                   for topic in topics]
+    #    topic_names = [topic.name for topic in topics]
+    #    context['topic_links'] = zip(topic_links, topic_names)
+    #
+    #    attr_links = [context['attributes_url'] + '/%s/values/%s' % \
+    #                  (str(attribute), str(value)) for value in values]
+    #    attr_names = [value.value for value in values]
+    #    context['attr_links'] = zip(attr_links, attr_names)
+    
+    
+    
+        context['plots'] = plots
+        # Needs to be fixed if we ever have lots of kinds of plots
+        context['num_pages'] = 1
+        context['page_num'] = 1
+        context['update_function'] = plot_types[plot][0].update_function
+    
+        context['curplot'] = plot
+        
+        plot_forms = list()
+        for plot_name,plot_type in sorted(plot_types.items(), key=lambda x: x[1][1]):
+            plot_forms += [(plot_name, plot_type[0].form(dataset, analysis))]
+        context['plot_forms'] = plot_forms
+    
+        return context
 
 
 def create_plot_image(request, chart_type, dataset, analysis, attribute,
@@ -94,7 +96,7 @@ def create_plot_image(request, chart_type, dataset, analysis, attribute,
                         'analysis': analysis,
                         'attribute': attribute,
                         'topic': topic,
-                        'value': value} 
+                        'value': value}
     if request.GET.get('frequency', False):
         chart_parameters['frequency'] = 'True'
     if request.GET.get('histogram', False):
@@ -106,8 +108,8 @@ def create_plot_image(request, chart_type, dataset, analysis, attribute,
     if request.GET.get('points', False):
         chart_parameters['points'] = 'True'
 
-    chart = plot_types[chart_type](chart_parameters)
-    
+    chart = plot_types[chart_type][0](chart_parameters)
+
     return HttpResponse(chart.get_chart_image(), mimetype="image/png")
 
 

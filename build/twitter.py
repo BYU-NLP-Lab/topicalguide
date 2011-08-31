@@ -1,4 +1,5 @@
-import os, json, codecs, re
+import os, codecs, re
+import topic_modeling.anyjson as anyjson
 from build.nytimes_twitter.clean_tweets import TweetCleaner
 
 dataset_name = 'twitter_state_union'
@@ -47,12 +48,11 @@ def valid_tweet(tweet):
 
 def extract_twitter_data(data_file, dest_dir):
     data_file = codecs.open(data_file, encoding='utf-8', mode='r')
-    decoder = json.JSONDecoder()
     if not os.path.exists(dest_dir): os.mkdir(dest_dir)
     cleaner = TweetCleaner('', '')
 
     for line in data_file:
-        tweet = decoder.decode(line)
+        tweet = anyjson.deserialize(line)
         if not valid_tweet(tweet):
             continue
         text = cleaner.cleaned_text(tweet['text'].lower())
@@ -101,12 +101,11 @@ def bin_tweet_name(name, count):
 
 def generate_attributes_file(data_file, output_file):
     out = codecs.open(output_file, encoding='utf-8', mode='w')
-    decoder = json.JSONDecoder()
     data = codecs.open(data_file, encoding='utf-8', mode='r')
 
     out.write('[\n')
     for line in data:
-        tweet = decoder.decode(line)
+        tweet = anyjson.deserialize(line)
         if not valid_tweet(tweet):
             continue
 
