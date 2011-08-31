@@ -1,0 +1,155 @@
+{% extends "core/frame.html" %}
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+
+{% block stylesheets %}
+    {{block.super}}
+    <link rel="stylesheet" href="{{STYLES}}/core/main_application.css" type="text/css" />
+    {% for tab in tabs %}
+        {% if tab.style_url %}
+        <link href="{{tab.style_url}}" type="text/css" rel="stylesheet" />
+        {% endif %}
+        {% for widget in tab.widgets.values %}
+            {% if widget.style_url %}
+            <link href="{{widget.style_url}}" type="text/css" rel="stylesheet"/>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+{% endblock %}
+
+{% block scripts %}
+    {{block.super}}
+    <script type="text/javascript" src="{{SCRIPTS}}/core/main_application.js"></script>
+    <script type="text/javascript">
+        $.fn.dataset = "{{ dataset.name }}";
+        $.fn.analysis = "{{ analysis.name }}";
+        $.fn.dataset_url = "{{ dataset_url }}";
+        $.fn.analysis_url = "{{ analysis_url }}";
+        $.fn.attributes_url = "{{ attributes_url }}";
+        $.fn.documents_url = "{{ documents_url }}";
+        $.fn.plots_url = "{{ plots_url }}";
+        $.fn.topics_url = "{{ topics_url }}";
+        $.fn.words_url = "{{ words_url }}";
+        
+        function add_favorite() {
+            {% for item in breadcrumb %}
+                {% if forloop.last %}
+                    var url = "{{ item.url }}";
+                {% endif %}
+            {% endfor %}
+            var link = "/feeds/add_favorite/tab/{{tab}}?url="+encodeURIComponent(url);
+            $.get(link);
+        }
+        
+        $(document).ready(function() {
+            {% block document_ready_script %}
+                $("div#presentation-area div#tabs").tabs();
+            {% endblock %}
+        });
+    </script>
+    {% for tab in tabs %}
+        {% if tab.script_url %}
+        <script type="text/javascript" src="{{tab.script_url}}"></script>
+        {% endif %}
+        {% for widget in tab.widgets.values %}
+            {% if widget.script_url %}
+            <script type="text/javascript" src="{{widget.script_url}}"></script>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+{% endblock %}
+
+{% block body %}
+<div id="main">
+	<div id="sidebar" class="ui-tabs ui-widget ui-widget-content ui-corner-all">
+	    <ul id="tabs" class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all">
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "topics_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/topics/">Topics</a>
+	        </li>
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "documents_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/documents/">Documents</a>
+	        </li>
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "words_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/words/">Words</a>
+	        </li>
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "attributes_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/attributes/">Attributes</a>
+	        </li>
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "plots_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/plots/">Plots</a>
+	        </li>
+	    </ul>
+	    <script type="text/javascript">
+		    $("#tabs li").mouseenter(function(){
+		    	$(this).addClass("ui-state-hover");
+		    });
+		    $("#tabs li").mouseleave(function(){
+	            $(this).removeClass("ui-state-hover");
+	        });
+	    </script>
+	    <div id="tab-content" class="ui-tabs-panel ui-widget-content ui-corner-bottom">
+	        <div class="header">
+	            {% block above_sidebar%}
+	            {% endblock %}
+	        </div>
+	        <div class="body">
+	            {% block sidebar %}
+	                <div id="list-nav">
+                        <span id="back-arrows" class="arrows" style="visibility:hidden;">
+                            <a id="first" title="First"><img src="{{IMAGES}}/tango/22x22/actions/go-first.png"/></a>
+                            <a id="prev" title="Previous"><img src="{{IMAGES}}/tango/22x22/actions/go-previous.png"/></a>
+					    </span>
+					    <span id="page-situation">Page <span id="current-page"></span> of <span id="page-count"></span>
+					    </span>
+					    <span id="fwd-arrows" class="arrows" style="visibility:hidden;">
+					        <a id="last" title="Last"><img src="{{IMAGES}}/tango/22x22/actions/go-last.png"/></a>
+					        <a id="next" title="Next"><img src="{{IMAGES}}/tango/22x22/actions/go-next.png"/></a>
+					    </span>
+				    </div>
+	            {% endblock %}
+	        </div>
+	        <div class="footer">
+	            {% block sidebar_tab_panel_footer%}{% endblock %}
+	        </div>
+	    </div>
+	</div>{# end div sidebar #}
+
+	<div id="presentation-area">
+	    {% block presentation_area %}
+	    <div id="tabs">
+	        <ul>
+	            {% for tab in tabs %}
+	            <li><a href="#tab-{{tab.title|slugify}}">{{tab.title}}</a></li>
+	            {% endfor %}
+	        </ul>
+	        {% for tab in tabs %}
+	           <div id="tab-{{tab.title|slugify}}">
+	           {{tab|safe}}
+	           </div>
+	        {% endfor %}
+	    </div>
+	    {% endblock %}
+	</div>
+</div>{# end div main #}
+{% endblock %}

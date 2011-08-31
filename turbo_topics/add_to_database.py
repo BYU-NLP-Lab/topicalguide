@@ -31,8 +31,8 @@ from django.db import transaction
 from math import log
 from optparse import OptionParser
 
-from topic_modeling.visualize.models import Analysis, ExtraTopicInformation
-from topic_modeling.visualize.models import ExtraTopicInformationValue
+from topic_modeling.visualize.models import Analysis, TopicMetaInfo
+from topic_modeling.visualize.models import TopicMetaInfoValue
 
 @transaction.commit_manually
 def add_information(dataset, analysis, force_import=False, *args, **kwargs):
@@ -46,13 +46,12 @@ def add_information(dataset, analysis, force_import=False, *args, **kwargs):
     else:
         info_name = "Turbo Topics Cloud"
     try:
-        info = ExtraTopicInformation.objects.get(name=info_name,
-                analysis=analysis)
+        info = TopicMetaInfo.objects.get(name=info_name)
         if not force_import:
             raise RuntimeError('%s is already in the database '
                     'for this analysis!' % info_name)
-    except ExtraTopicInformation.DoesNotExist:
-        info = ExtraTopicInformation(name=info_name, analysis=analysis)
+    except TopicMetaInfo.DoesNotExist:
+        info = TopicMetaInfo(name=info_name)
         info.save()
 
     for root, dirs, files in os.walk(kwargs['output_dir']):
@@ -69,8 +68,8 @@ def add_information(dataset, analysis, force_import=False, *args, **kwargs):
                     output += line
             topic_num = int(file.split('.')[0][5:])
             topic = analysis.topic_set.get(number=topic_num)
-            eti_value = ExtraTopicInformationValue(topic=topic, type=info,
-                    value=output)
+            eti_value = TopicMetaInfoValue(topic=topic, info_type=info,
+                    text_value=output)
             eti_value.save()
     transaction.commit()
 

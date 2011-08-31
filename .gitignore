@@ -1,8 +1,11 @@
+.settings
+.project
 *.pyc
 *.swp
 java/bin
-.doit.db
+.dbs
 yamba
 *.nfs*
 *~
 *.backup
+*.directory

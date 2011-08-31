@@ -6,13 +6,18 @@ http://www.cs.princeton.edu/~blei/topicmodeling.html
 
 We include only the files that we need.  In particular, the files
 turbotopics.py, lda_topics.py, and turbotopics-readme.txt (renamed) are from
-David Blei's code.  All other files in this directory are part of the Topic
-Browser, released under the conditions specified at
-http://nlp.cs.byu.edu/topic_browser
+David Blei's code (we slightly modified lda_topics.py from Blei's version).
+All other files in this directory are part of the Topical Guide, released under
+the conditions specified at http://nlp.cs.byu.edu/topical_guide
 
 --------------------------------------------------------------------------
 
 USAGE INFO:
+
+Just use backend.py to import turbo topics.  See the documentation at
+http://nlps.cs.byu.edu/topical_guide for information on how to use backend.py
+to run turbo topics.  That's the best way to get this to work.  If you don't
+want to do that, follow the instructions below.
 
 In order to add turbo topics information to the visualizer, you need two
 things: a corpus file, and a mallet state file (unless you already know how to

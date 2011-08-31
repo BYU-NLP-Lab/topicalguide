@@ -1,4 +1,3 @@
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -21,11 +20,37 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns
 from django.conf import settings
 
-from django.contrib import admin
-admin.autodiscover()
+from topic_modeling.visualize.topics.views import TopicView, TopicWordView,\
+    TopicDocumentView
+from topic_modeling.visualize.documents.views import DocumentView
+from topic_modeling.visualize.dataset_views import DatasetView
+from topic_modeling.visualize.word_views import WordView
+from topic_modeling.visualize.attribute_views import AttributeDocumentView,\
+    AttributeWordView, AttributeView
+
+from topic_modeling.cssmin import cssmin
+from django.http import HttpResponse
+from topic_modeling.visualize.plot_views import PlotView
+
+def render_style(request, style_path):
+    css = open(settings.STYLES_ROOT + '/' + style_path).read() 
+    css = cssmin(css)
+    
+    if style_path.endswith(".css"):
+        mimetype = "text/css"
+    elif style_path.endswith(".png"):
+        mimetype = "image/png"
+    else:
+        mimetype = None
+    
+    return HttpResponse(css, mimetype=mimetype)
+
+def render_script(request, script_path):
+    script = open('%s/%s' % (settings.SCRIPTS_ROOT, script_path)).read()
+    return HttpResponse(script, mimetype="text/javascript")
 
 dataset = r'datasets/(?P<dataset>[^/]*)'
 analysis = r'analyses/(?P<analysis>[^/]*)'
@@ -50,44 +75,38 @@ id = r'id/(?P<id>[^/]*)'
 
 urlpatterns = patterns('',
 # Dataset View
-    # Blank URL takes you to dataset view
-    (r'^$',
-        'topic_modeling.visualize.dataset_views.index'),
-    (r'^' + dataset + '$',
-        'topic_modeling.visualize.dataset_views.index'),
+    (r'^$', DatasetView.as_view()),
+    (r'^' + dataset + '$', DatasetView.as_view()),
 
 # Analysis View
-    (r'^' + dataset + '/' + analysis + '$',
-        'topic_modeling.visualize.dataset_views.index'),
+#    (r'^' + dataset + '/' + analysis + '$',
+#        'topic_modeling.visualize.dataset_views.index'),
+    (r'^' + dataset + '/' + analysis + '$', TopicView.as_view()),
 
 # Topic Views
-    (r'^' + dataset + '/' + analysis + '/' + topic + '$',
-        'topic_modeling.visualize.topics.views.index'),
+    (r'^' + dataset + '/' + analysis + '/' + topic + '$', TopicView.as_view()),
     (r'^' + dataset + '/' + analysis + '/' + topic + '/' + map + '$',
-        'topic_modeling.visualize.topics.views.topic_map'),
+        'topic_modeling.visualize.topics.views.render_topic_map'),
     (r'^' + dataset + '/' + analysis + '/' + topic + '/' + document + '$',
-        'topic_modeling.visualize.topics.views.document_index'),
+        TopicDocumentView.as_view()),
     (r'^' + dataset + '/' + analysis + '/' + topic + '/' + word + '$',
-        'topic_modeling.visualize.topics.views.word_index'),
+        TopicWordView.as_view()),
 
 # Attribute Views
     (r'^' + dataset + '/' + analysis + '/' + attribute + '$',
-        'topic_modeling.visualize.attribute_views.index'),
+        AttributeView.as_view()),
     (r'^' + dataset + '/' + analysis + '/' + attribute + '/' + value + '$',
-        'topic_modeling.visualize.attribute_views.index'),
+        AttributeView.as_view()),
     (r'^' + dataset + '/' + analysis + '/' + attribute + '/' + value + '/' + word + '$',
-        'topic_modeling.visualize.attribute_views.word_index'),
+        AttributeWordView.as_view()),
     (r'^' + dataset + '/' + analysis + '/' + attribute + '/' + value + '/' + document + '$',
-        'topic_modeling.visualize.attribute_views.document_index'),
+        AttributeDocumentView.as_view()),
 
 # Word Views
-    # This view does not exist at the moment, but would be nice to have
-    (r'^' + dataset + '/' + analysis + '/' + word + '$',
-        'topic_modeling.visualize.word_views.index'),
+    (r'^' + dataset + '/' + analysis + '/' + word + '$', WordView.as_view()),
 
 # Document Views
-    (r'^' + dataset + '/' + analysis + '/' + document + '$',
-        'topic_modeling.visualize.documents.views.index'),
+    (r'^' + dataset + '/' + analysis + '/' + document + '$', DocumentView.as_view()),
 
 # Favorite Views
     (r'^favorite/' + dataset + '/' + analysis + '/' + id + '$',
@@ -95,7 +114,7 @@ urlpatterns = patterns('',
 
 # Plot View
     (r'^' + dataset + '/' + analysis + '/' + plot + '$',
-        'topic_modeling.visualize.plot_views.index'),
+        PlotView.as_view()),
 
 # AJAX Calls
     (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + word + '$',
@@ -211,14 +230,12 @@ urlpatterns = patterns('',
     (r'^feeds/favorite-page/' + number + '$',
         'topic_modeling.visualize.ajax_calls.get_favorite_page'),
 
-# Miscellaneous
-    (r'^about/$', 'topic_modeling.visualize.common.about'),
+#Styles
+    (r'^styles/(?P<style_path>.+)$', render_style),
+#Scripts
+    (r'^scripts/(?P<script_path>.+)$', render_script),
 
-# URLS I wasn't sure quite what to do with
-##########################################
-
-# Admin and Media Services
-    (r'^admin/', include(admin.site.urls)),
+#General Static Files
     # TODO(dan): Is this OK for production?  Would it just be a matter of
     # making sure that document root was set correctly in Apache, or is there
     # more to it?

@@ -1,4 +1,3 @@
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -21,84 +20,94 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.shortcuts import render_to_response
-from django.template import Context
-
 from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common import BreadCrumb, paginate_list, \
-    WordSummary, WordFindForm, get_word_list, root_context
-from topic_modeling.visualize.models import Dataset, Word
+    WordSummary, WordFindForm, get_word_list, Tab, Widget, AnalysisBaseView
+from topic_modeling.visualize.models import Word
 
-def index(request, dataset, analysis, word):
-    context = root_context(dataset, analysis)
-    context['highlight'] = 'words_tab'
-    context['tab'] = 'word'
-    dataset = Dataset.objects.get(name=dataset)
-    analysis = dataset.analysis_set.get(name=analysis)
-    
-    #Used by word_in_context.html
-    context['doc_base_url'] = context['documents_url']
-    context['word_base_url'] = context['words_url']
-    
-    words = get_word_list(request, dataset.name)
-    
-    num_per_page = request.session.get('words-per-page', 30)
-    page_num = request.session.get('word-page', 1)
-    words, num_pages, _ = paginate_list(words, page_num, num_per_page)
-        
-    context['words'] = words
-    context['num_pages'] = num_pages
-    context['page_num'] = page_num
-    
-    if word:
-        context['curword'] = Word.objects.get(dataset=dataset, type=word)
-    else:
-        context['curword'] = context['words'][0]
 
-    context['breadcrumb'] = BreadCrumb()
-    context['breadcrumb'].dataset(dataset)
-    context['breadcrumb'].analysis(analysis)
-    context['breadcrumb'].word(context['curword'])
-    
-    add_word_charts(dataset, analysis, context)
-    
-    word_base = request.session.get('word-find-base', '')
-    context['word_find_form'] = WordFindForm(word_base)
+class WordView(AnalysisBaseView):
+    template_name = 'words.html'
+    def get_context_data(self, request, **kwargs):
+        context = super(WordView, self).get_context_data(request, **kwargs)
+        dataset = context['dataset']
+        analysis = context['analysis']
+        word = kwargs['word']
         
-    add_word_contexts(context['curword'].type, context['words_url'], context)
-#    word = context['curword'].type
-#    words = []
-#    for i in range(0,10):
-#        w = WordSummary(word, number=i)
-#        w.url = context['words_url'] + word
-#        words.append(w)
-#    
-#    context['word_contexts'] = words
+        context['highlight'] = 'words_tab'
+        context['tab'] = 'word'
         
-    return render_to_response('word.html', context)
+        words = get_word_list(request, dataset.name)
+        
+        num_per_page = request.session.get('words-per-page', 30)
+        page_num = request.session.get('word-page', 1)
+        words, num_pages, _ = paginate_list(words, page_num, num_per_page)
+            
+        context['words'] = words
+        context['num_pages'] = num_pages
+        context['page_num'] = page_num
+        
+        if word:
+            word = Word.objects.get(dataset=dataset, type=word)
+        else:
+            word = context['words'][0]
+    
+        context['word'] = word
+        context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(word)
+        
+        word_url = context['words_url'] + '/' + word.type
+        word_base = request.session.get('word-find-base', '')
+        context['word_find_form'] = WordFindForm(word_base)
+        
+        context['view_description'] = "Word '{0}'".format(word.type)
+        
+        context['tabs'] = [words_tab(analysis, word, word_url, context['IMAGES'])]
+        
+        return context
 
-def add_word_charts(dataset, analysis, context):
-    topicwords = context['curword'].topicword_set.filter(
+def words_tab(analysis, word, word_url, images_url):
+    tab = Tab('Word Information', 'words/word_information')
+    
+    tab.add(top_documents_widget(analysis.dataset, word))
+    tab.add(top_topics_widget(analysis, word))
+    tab.add(total_count_widget(word))
+    tab.add(word_in_context_widget(word, word_url, images_url))
+    
+    return tab
+
+def top_documents_widget(dataset, word):
+    w = Widget('Top Documents', 'words/top_documents')
+    docwords = word.documentword_set.filter(
+            document__dataset=dataset)
+    total = reduce(lambda x, dw: x + dw.count, docwords, 0)
+    docs = sorted([WordSummary(dw.document.filename, float(dw.count) / total)
+                   for dw in docwords])
+    w['chart_url'] = get_chart(docs)
+    return w
+
+def top_topics_widget(analysis, word):
+    w = Widget('Top Topics', 'words/top_topics')
+    topicwords = word.topicword_set.filter(
             topic__analysis=analysis)
     total = reduce(lambda x, tw: x + tw.count, topicwords, 0)
     topics = sorted([WordSummary(tw.topic.name, float(tw.count) / total)
             for tw in topicwords])
     topics.sort()
-    context['topic_chart_address'] = get_chart(topics)
-    
-    docwords = context['curword'].documentword_set.filter(
-            document__dataset=dataset)
-    total = reduce(lambda x, dw: x + dw.count, docwords, 0)
-    docs = sorted([WordSummary(dw.document.filename, float(dw.count) / total)
-                   for dw in docwords])
-    context['doc_chart_address'] = get_chart(docs)
+    w['chart_url'] = get_chart(topics)
+    return w
 
-def add_word_contexts(word, base_url, context):
-    word_url = base_url + word
+def total_count_widget(word):
+    w = Widget('Total Count', 'words/total_count')
+    w['word'] = word
+    return w
+
+def word_in_context_widget(word, word_url, images_url):
+    w = Widget('Word In Context', 'words/word_in_context')
     words = []
-    for i in range(0,10):
-        w = WordSummary(word, number=i)
-        w.url = word_url
-        words.append(w)
-    
-    context['word_contexts'] = words
+    for i in range(0,5):
+        ws = WordSummary(word.type, number=i)
+        ws.url = word_url
+        words.append(ws)
+    w['IMAGES'] = images_url
+    w['words'] = words
+    return w

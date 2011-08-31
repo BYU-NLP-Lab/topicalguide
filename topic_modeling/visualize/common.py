@@ -23,25 +23,77 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 
-from django import forms
+from django import forms, template
 from django.core.paginator import Paginator
-from django.shortcuts import render_to_response
 from django.template.context import Context
-from topic_modeling.visualize.models import Word
 
-def root_context(dataset, analysis):
-    context = Context()
-    context['dataset'] = dataset
-    context['analysis'] = analysis
-    context['dataset_url'] = "/datasets/%s" % (dataset)
-    context['analysis_url'] = "%s/analyses/%s" % (context['dataset_url'], analysis)
+from topic_modeling.visualize.models import Word, Dataset, Analysis, \
+    Document, Attribute, Value
+from django.template.defaultfilters import slugify
+import os
+from topic_modeling import settings
+from django.shortcuts import get_object_or_404
+from django.views.generic.base import TemplateResponseMixin, View
+
+'''
+Like TemplateView, but better
+'''
+class RootView(TemplateResponseMixin, View):
+    def get_context_data(self, request, **kwargs):
+        context = Context()
+        
+        STATIC = '/site-media'
+        context['SCRIPTS'] = '/scripts'
+        context['STYLES'] = '/styles'
+        context['IMAGES'] = STATIC + '/images'
+        context['FONTS'] = STATIC + '/fonts'
+        
+        context['topical_guide_project_url'] = "http://nlp.cs.byu.edu/topicalguide"
+        context['nlp_lab_url'] = "http://nlp.cs.byu.edu"
+        context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
+        context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
+        
+        return context
     
-    context['attributes_url'] = context['analysis_url'] + "/attributes"
-    context['documents_url'] = context['analysis_url'] + "/documents"
-    context['plots_url'] = context['analysis_url'] + "/plots"
-    context['topics_url'] = context['analysis_url'] + "/topics"
-    context['words_url'] = context['analysis_url'] + "/words"
-    return context
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(request, **kwargs)
+        return self.render_to_response(context)
+
+class DatasetBaseView(RootView):
+    def get_context_data(self, request, **kwargs):
+        context = super(DatasetBaseView, self).get_context_data(request, **kwargs)
+        context['datasets'] = Dataset.objects.all()
+        try:
+            dataset = get_object_or_404(Dataset, name=kwargs['dataset'])
+        except KeyError:
+            dataset = context['datasets'][0]
+        
+        context['dataset'] = dataset
+        context['dataset_url'] = "/datasets/%s" % (dataset)
+        
+        return context
+
+class AnalysisBaseView(DatasetBaseView):
+    def get_context_data(self, request, **kwargs):
+        context = super(AnalysisBaseView, self).get_context_data(request, **kwargs)
+        
+        analysis = get_object_or_404(Analysis, name=kwargs['analysis'], dataset=context['dataset'])
+        context['analysis'] = analysis
+        context['analysis_url'] = "%s/analyses/%s" % (context['dataset_url'],
+                analysis.name)
+    
+        context['attributes_url'] = context['analysis_url'] + "/attributes"
+        context['documents_url'] = context['analysis_url'] + "/documents"
+        context['plots_url'] = context['analysis_url'] + "/plots"
+        context['topics_url'] = context['analysis_url'] + "/topics"
+        context['words_url'] = context['analysis_url'] + "/words"
+        
+        return context
+
+def get_dataset_and_analysis(dataset_name, analysis_name):
+    dataset = get_object_or_404(Dataset, name=dataset_name)
+    analysis = get_object_or_404(Analysis, name=analysis_name, dataset=dataset)
+    return dataset, analysis
 
 ################################################################################
 # Classes
@@ -87,46 +139,109 @@ class BreadCrumb(object):
 
     def __iter__(self):
         return self.items.__iter__()
-
+    
+    def item(self, obj):
+        if isinstance(obj, basestring):
+            self.text(obj)
+        elif isinstance(obj, Dataset):
+            self.dataset(obj)
+        elif isinstance(obj, Analysis):
+            self.analysis(obj)
+#        elif isinstance(obj, Topic):
+#            self.topic(obj)
+        elif isinstance(obj, Word):
+            self.word(obj)
+        elif isinstance(obj, Document):
+            self.document(obj)
+        elif isinstance(obj, Attribute):
+            self.attribute(obj)
+        elif isinstance(obj, Value):
+            self.value(obj)
+        else:
+            raise Exception("The breadcrumb doesn't know how to handle that type of object")
+        return self
+    
+    def text(self, text):
+        self.items.append(BreadCrumbItem(None, text, text))
+    
     def dataset(self, dataset):
-        self._add_item('datasets', 'Dataset', dataset.name, dataset.name)
+        url = '/datasets/'+dataset.name
+        text = dataset.readable_name
+        tooltip = "Dataset '{0}' (id={1})".format(dataset.readable_name, dataset.id)
+        self._add_item(url, text, tooltip)
+        return self
 
     def analysis(self, analysis):
-        self._add_item('analyses', 'Analysis', analysis.name, analysis.name)
+        url = '/analyses/' + analysis.name
+        text = analysis.readable_name
+        tooltip = "Analysis '{0}' (id={1})".format(analysis.readable_name, analysis.id)
+        self._add_item(url, text, tooltip)
+        return self
 
     def topic(self, topic_number, topic_name):
-        self._add_item('topics', 'Topic', topic_number, topic_name)
+        url = '/topics/' + str(topic_number)
+        text = "Topic '{0}'".format(topic_name)
+        tooltip = text + " (number={0})".format(topic_number)
+        self._add_item(url, text, tooltip)
+        return self
 
     def word(self, word):
-        self._add_item('words', 'Word', word.type, word.type)
+        url = '/words/' + word.type
+        text = "Word '"+word.type+"'"
+        tooltip = text + " (id={0})".format(word.id)
+        self._add_item(url, text, tooltip)
+        return self
 
     def document(self, document):
-        self._add_item('documents', 'Document', document.id, document.id)
+        self._add_item('/documents/' + document.dataset.name, document.get_title(), "Document '"+document.filename+"', id="+ str(document.id))
+        return self
 
     def attribute(self, attribute):
-        self._add_item('attributes', 'Attribute', attribute.name,
-                attribute.name)
+        self._add_item('/attributes/'+attribute.name, 'Attribute "'+attribute.name+'"', 'Attribute: '+attribute.name)
+        return self
 
     def value(self, value):
-        self._add_item('values', 'Value', value.value, value.value)
+        self._add_item('/values/'+value.value, value.value, 'Value: '+value.value)
+        return self
 
-    def plot(self):
-        # This one is different because plots currently just use posts, not
-        # urls, to change
-        self.currenturl += '/plots'
-        text = 'Plot'
-        self.items.append(BreadCrumbItem(text, self.currenturl))
+    def plots(self):
+        self._add_item('/plots', 'Plots', 'Plots')
+#        # This one is different because plots currently just use posts, not
+#        # urls, to change
+#        self.currenturl += '/plots'
+#        text = 'Plot'
+#        self.items.append(BreadCrumbItem(text, self.currenturl))
+        return self
 
-    def _add_item(self, url_word, text_word, item_url, item_text):
-        self.currenturl += '/%s/%s' % (url_word, item_url)
-        text = '%s: %s' % (text_word, item_text)
-        self.items.append(BreadCrumbItem(text, self.currenturl))
-
+    def _add_item(self, url_component, text, tooltip):
+        self.currenturl += url_component
+        self.items.append(BreadCrumbItem(self.currenturl, text, tooltip))
+    
+    def to_ul(self):
+        html = ''
+        
+        for item in self.items[:-1]:
+            html += item.to_li()
+            html += '\n'
+        
+        html += self.items[-1:][0].to_li(last=True)
+        
+        return html
 
 class BreadCrumbItem(object):
-    def __init__(self, text, url):
-        self.text = text
+    def __init__(self, url, text, tooltip):
         self.url = url
+        self.text = text
+        self.tooltip = tooltip
+    
+    def to_li(self, last=False):
+        html = '<li class="breadcrumb">'
+        if last:
+            html += '<span title="{0}">{1}</span>'.format(self.tooltip, self.text)
+        else:
+            html += '<a href="{0}" title="{1}">{2}</a></li>'.format(self.url, self.tooltip, self.text)
+        html += '</li>'
+        return html
 
 
 # Other classes
@@ -155,7 +270,93 @@ class WordFindForm(forms.Form):
         super(WordFindForm, self).__init__(*args, **kwargs)
         self.fields['find_word'] = forms.CharField(max_length=100,
                 initial=word)
-        self.fields['find_word'].widget.attrs['onchange'] = 'find_word()'
+        self.fields['find_word'].widget.attrs['onchange'] = 'find_word("'+word+'")'
+
+class Tab(object):
+    def __init__(self, title, path=None, tab_name=None, widgets=None):
+        self.title = title
+        
+        if path:
+            _style_path = '%s/tabs/%s.css' % (settings.STYLES_ROOT, path)
+            if os.path.exists(_style_path):
+                self.style_url = '/styles/tabs/%s.css' % path
+            
+            _template_path = 'tabs/%s.html' % path
+            if os.path.exists('%s/%s' % (settings.TEMPLATES_ROOT, _template_path)):
+                self.template_path = _template_path
+            else:
+                self.template_path = None
+                
+            _script_path = '%s/tabs/%s.js' % (settings.SCRIPTS_ROOT, path)
+            if os.path.exists(_script_path):
+                self.script_url = '/scripts/tabs/%s.js' % path
+        
+        self.widgets = widgets if widgets else dict()
+    
+    def add(self, widget):
+        self.widgets[widget.short_path.replace('-','_')] = widget
+        return self
+    
+    def __unicode__(self):
+        if self.template_path:
+            t = template.loader.get_template(self.template_path)
+            ctxt = Context()
+            ctxt['_tab'] = self
+            ctxt['_widgets'] = self.widgets
+            ctxt.update(self.widgets)
+            return t.render(ctxt)
+        else:
+            return '\n'.join([w.__unicode__() for w in self.widgets.values()])
+
+class Widget(object):
+    def __init__(self, title, path, html=None, context=None, content_html=None):
+        self.title = title
+        self.path = path
+        self.short_path = path.split('/')[-1:][0]
+        
+        self.template_path = 'widgets/%s.html' % path
+        
+        _script_path = '%s/widgets/%s.js' % (settings.SCRIPTS_ROOT, path)
+        self.script_path = _script_path
+        if os.path.exists(_script_path):
+            self.script_url = '/scripts/widgets/%s.js' % path
+        
+        _style_path = '%s/widgets/%s.css' % (settings.STYLES_ROOT, path)
+        if os.path.exists(_style_path):
+            self.style_url = '/styles/widgets/%s.css' % path
+        
+        if content_html and not html:
+            html = '<div id="widget-'+slugify(self.short_path)+'" class="ui-widget">\n'
+            if title:
+                html += '<div class="ui-widget-header">%s</div>' % title
+            html += '<div class="ui-widget-content">%s</div>' % content_html
+            html += '</div>'
+        self.html = html
+        
+        self.context = context if context else Context()
+        self.context['widget'] = self
+        
+    
+    def __unicode__(self):
+        return self.render(None)
+    
+    def render(self, _context):
+        if self.html:
+            return self.html
+        else:
+            t = template.loader.get_template(self.template_path)
+            return t.render(self.context)
+    
+    def __getitem__(self, key):
+        return self.context[key]
+    
+    def __setitem__(self, key, value):
+        self.context[key] = value
+
+class Cloud(object):
+    def __init__(self, name, html):
+        self.name = name
+        self.html = html
 
 
 ################################################################################
@@ -167,9 +368,8 @@ class WordFindForm(forms.Form):
 ##########################
 
 def set_word_context(word, document, analysis, topic=None):
-    right, left = document.get_context_for_word(word.word, analysis, topic)
-    word.left_context = left
-    word.right_context = right
+    word.left_context, word.word, word.right_context \
+        = document.get_context_for_word(word.word, analysis, topic)
 
 
 def paginate_list(list, page, num_per_page, object=None):
@@ -197,7 +397,7 @@ def get_word_cloud(words, open='', close='', url=True):
 #        return cmp(str(x.word).lower(), str(y.word).lower())
     words = sorted(words, cmpWord)
 
-    cloud = ""
+    cloud = ''
     for word in words:
         if url:
             cloud += '<a href="%s">' % word.url
@@ -208,6 +408,25 @@ def get_word_cloud(words, open='', close='', url=True):
             cloud += '</a>'
     return cloud
 
+def word_cloud_widget(words, title='Word Cloud', open=None, close=None, url=True):
+    w = Widget(title, 'common/word_cloud')
+    
+    if open: w['open_text'] = open
+    if close: w['close_text'] = close
+    
+    #note that this only works if words is presorted by percent
+    if len(words) > 3: scale = words[3].percent
+    elif len(words) == 0: scale = 1.0
+    else: scale = words[-1:].percent
+
+    words = sorted(words, cmp=lambda x,y: cmp(x.word.lower(), y.word.lower()))
+    
+    for word in words:
+        word.size = word.percent / scale * 100 + 50
+    
+    w['words'] = words
+    
+    return w
 
 # Word tab helper functions (maybe these should be moved to a new file)
 ############################
@@ -217,11 +436,5 @@ def get_word_list(request, dataset_name):
     word_base = request.session.get('word-find-base', '')
     words = filter(lambda w: w.type.startswith(word_base), words)
     return words
-
-# Miscellaneous
-############################
-
-def about(request):
-    return render_to_response('about.html', Context())
 
 # vim: et sw=4 sts=4

@@ -43,16 +43,27 @@
 
 import os, sys
 import hashlib
-from subprocess import Popen, PIPE
+
+from collections import defaultdict
 from datetime import datetime
+from subprocess import Popen, PIPE
+
+from import_scripts.dataset_import import import_dataset
+from import_scripts.analysis_import import import_analysis
+
 from build.common.make_token_file import make_token_file
-import import_scripts.dataset_import
-import import_scripts.analysis_import
-from build.common.db_cleanup import remove_dataset, remove_analysis
-from topic_modeling.visualize.models import Analysis, Dataset, TopicMetric, PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric, \
-    TopicNameScheme
+from build.common.db_cleanup import remove_analysis
+from build.common.db_cleanup import remove_dataset
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
+from topic_modeling.visualize.models import Analysis
+from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.models import TopicMetric
+from topic_modeling.visualize.models import PairwiseTopicMetric
+from topic_modeling.visualize.models import DocumentMetric
+from topic_modeling.visualize.models import PairwiseDocumentMetric
+from topic_modeling.visualize.models import TopicNameScheme
+from django.db.utils import DatabaseError
 
 #If this file is invoked directly, pass it in to the doit system for processing.
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
@@ -68,10 +79,10 @@ if __name__ == "__main__":
     sys.path.append("tools/doit")
     from doit.doit_cmd import cmd_main
     path = os.path.abspath(sys.argv[0])
-    
+
     #The database file where we'll store info about this build
-    db_name = ".dbs/.{0}.db".format(build.replace('/','_'))
-    
+    db_name = ".dbs/{0}.db".format(build.replace('/','_'))
+
     args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
     sys.exit(cmd_main(args))
 
@@ -80,17 +91,24 @@ ast = compile(open(filename).read(), filename, 'exec')
 eval(ast, globals(), locals())
 # Variables and Paths
 
+os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+
 # This variable should be with Mallet, but it is needed to name the analysis,
 # so we have it up here.
 if 'num_topics' not in locals():
     num_topics = 20
 
 if 'dataset_name' not in locals():
-    dataset_name = "dummy"
+    dataset_name = None
+    raise "dataset_name must be defined"
+if 'dataset_readable_name' not in locals():
+    dataset_readable_name = dataset_name
 if 'dataset_description' not in locals():
-    dataset_description = "Dummy dataset"
+    dataset_description = ''
 if 'analysis_name' not in locals():
     analysis_name = "lda{0}topics".format(num_topics)
+if 'analysis_readable_name' not in locals():
+    analysis_readable_name = "LDA {0} Topics".format(num_topics)
 if 'analysis_description' not in locals():
     analysis_description = "Mallet LDA with {0} topics".format(num_topics)
 
@@ -123,36 +141,57 @@ if 'mallet_doctopics_output' not in locals():
 if 'mallet_optimize_interval' not in locals():
     mallet_optimize_interval = 10
 if 'mallet_num_iterations' not in locals():
-    mallet_num_iterations = 1000
+    mallet_num_iterations = 50
 
-#For dynamically generated attributes file, define task_attributes_file with targets [attributes_file]
-if 'attributes_file' not in locals():
-    attributes_file = dataset_dir + "/attributes.json"
+# For dynamically generated metadata file, define task_attributes_file with
+# targets [$ENTITYTYPE$_metadata_file]
+if 'metadata_filenames' not in locals():
+    metadata_filenames = dict()
+for entity_type in ('datasets','documents','words','analyses','topics'):
+    if entity_type not in metadata_filenames:
+        metadata_filenames[entity_type] = '{0}/metadata/{1}.json'.format(dataset_dir, entity_type)
+
 if 'markup_dir' not in locals():
     markup_dir = "{0}/{1}-markup".format(dataset_dir, analysis_name)
 
-#Metrics
-# TODO(matt): can we make this dynamic?
-# TODO(matt): look at metric_scripts/topics/__init__.py for the "all" list,
-# and for each metric target
-# TODO(matt): have a "minimal" or "default" target that is the default if the
-# dataset file doesn't specify one
-# Same thing with document metrics (and word metrics, when we add them)
+# Metrics
+# See the documentation or look in metric_scripts for a complete list of
+# available metrics
 if 'topic_metrics' not in locals():
-    topic_metrics = ["token count", "type count", "document entropy", "word entropy"]
+    topic_metrics = ["token count", "type count", "document entropy",
+            "word entropy"]
+if 'topic_metric_args' in locals():
+    tmp_topic_metric_args = defaultdict(dict)
+    tmp_topic_metric_args.update(topic_metric_args)
+    topic_metric_args = tmp_topic_metric_args
+else:
+    topic_metric_args = defaultdict(dict)
 if 'pairwise_topic_metrics' not in locals():
     pairwise_topic_metrics = ["document correlation", "word correlation"]
+if 'pairwise_topic_metric_args' in locals():
+    tmp_pairwise_topic_metric_args = defaultdict(dict)
+    tmp_pairwise_topic_metric_args.update(pairwise_topic_metric_args)
+    pairwise_topic_metric_args = tmp_pairwise_topic_metric_args
+else:
+    pairwise_topic_metric_args = defaultdict(dict)
+if 'cooccurrence_counts' in locals():
+    topic_metrics.append('coherence')
+    topic_metric_args['coherence'].update(
+            {'counts': cooccurrence_counts})
+    pairwise_topic_metrics.append('pairwise coherence')
+    pairwise_topic_metric_args['pairwise coherence'].update(
+            {'counts': cooccurrence_counts})
 if 'document_metrics' not in locals():
     document_metrics = ['token count', 'type count', 'topic entropy']
 if 'pairwise_document_metrics' not in locals():
     pairwise_document_metrics = ['word correlation', 'topic correlation']
 if 'name_schemes' not in locals():
     name_schemes = [
-               TopNTopicNamer(dataset_name, analysis_name, 2),
+               TopNTopicNamer(dataset_name, analysis_name, 3),
 #               TfitfTopicNamer(dataset_name, analysis_name, 5)
                ]
 
-#Graph-based Visualization
+# Graph-based Visualization
 if 'java_base' not in locals():
     java_base = base_dir + "/java"
 if 'java_bin' not in locals():
@@ -192,18 +231,18 @@ def directory_recursive_hash(dir):
 #If no existing attributes task exists, and if suppress_default_attributes_task is not set to True,
 #then define a default attributes task that generates an empty attributes file
 #TODO(josh): make the attributes file optional for the import scripts
-if not 'task_attributes' in locals() and not ('suppress_default_attributes_task' in locals() and locals()['suppress_default_attributes_task']):
-    def make_attributes():
-        attrs = open(attributes_file, "w")
-        attrs.write('[')
+if not 'task_document_metadata' in locals() and not ('suppress_default_document_metadata_task' in locals() and locals()['suppress_default_document_metadata_task']):
+    def make_document_metadata():
+        attrs = open(metadata_filenames['documents'], "w")
+        attrs.write('{\n')
         for filename in os.listdir(files_dir):
-            attrs.write('{"attributes": {}, "path": "' + filename + '"}')
-        attrs.write(']')
-    
-    def task_attributes():
+            attrs.write('\t"{0}": {}\n'.format(filename))
+        attrs.write('}')
+
+    def task_document_metadata():
         task = dict()
-        task['targets'] = [attributes_file]
-        task['actions'] = [(make_attributes)]
+        task['targets'] = [metadata_filenames['documents']]
+        task['actions'] = [(make_document_metadata)]
         return task
 
 if 'task_mallet_input' not in locals():
@@ -261,15 +300,15 @@ if 'task_dataset_import' not in locals():
                 Dataset.objects.get(name=dataset_name)
                 print 'dataset ' + dataset_name + ' in database'
                 return True
-            except Dataset.DoesNotExist:
+            except (Dataset.DoesNotExist,DatabaseError):
                 print 'dataset ' + dataset_name + ' NOT in database'
                 return False
         # TODO(matt): clean up and possibly rename dataset_import.py and
         # analysis_import.py, now that we are using this build script - we don't
         #  need standalone scripts anymore for that stuff
         task = dict()
-        task['actions'] = [(import_scripts.dataset_import.main, [mallet_output, dataset_name, attributes_file, dataset_dir, files_dir, dataset_description])]
-        task['file_dep'] = [mallet_output, attributes_file, yamba_file]
+        task['actions'] = [(import_dataset, [dataset_name, dataset_readable_name, dataset_description, mallet_output, metadata_filenames, dataset_dir, files_dir])]
+        task['file_dep'] = [mallet_output, metadata_filenames['documents'], yamba_file]
         task['clean'] = [(remove_dataset, [dataset_name])]
         task['uptodate'] = [dataset_in_database()]
         return task
@@ -284,8 +323,9 @@ if 'task_analysis_import' not in locals():
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
         task = dict()
-        task['actions'] = [(import_scripts.analysis_import.main, [dataset_name, attributes_file, analysis_name, analysis_description, mallet_output, mallet_input, files_dir, token_regex])]
-        task['file_dep'] = [mallet_output, mallet_input, attributes_file]
+        task['actions'] = [(import_analysis, [dataset_name, analysis_name, analysis_readable_name, analysis_description,
+                          markup_dir, mallet_output, mallet_input, metadata_filenames, token_regex])]
+        task['file_dep'] = [mallet_output, mallet_input, metadata_filenames['documents']]
         task['clean'] = [
             (remove_analysis, [dataset_name, analysis_name]),
             "rm -rf {0}".format(markup_dir)
@@ -326,12 +366,15 @@ if 'task_topic_metrics' not in locals():
         def metric_in_database(topic_metric):
             try:
                 dataset = Dataset.objects.get(name=dataset_name)
-                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-                names = metrics[topic_metric].metric_names_generated(dataset_name, analysis_name)
+                analysis = Analysis.objects.get(dataset=dataset,
+                        name=analysis_name)
+                names = metrics[topic_metric].metric_names_generated(
+                        dataset_name, analysis_name)
                 for name in names:
                     TopicMetric.objects.get(analysis=analysis, name=name)
                 return True
-            except (Dataset.DoesNotExist, Analysis.DoesNotExist, TopicMetric.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist,
+                    TopicMetric.DoesNotExist):
                 return False
 
         def import_metric(topic_metric):
@@ -339,7 +382,8 @@ if 'task_topic_metrics' not in locals():
             print 'Adding %s...' % topic_metric,
             sys.stdout.flush()
             try:
-                metrics[topic_metric].add_metric(dataset_name, analysis_name)
+                metrics[topic_metric].add_metric(dataset_name, analysis_name,
+                        **topic_metric_args[topic_metric])
                 end_time = datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
@@ -354,9 +398,11 @@ if 'task_topic_metrics' not in locals():
             print "Removing topic metric: " + topic_metric
             dataset = Dataset.objects.get(name=dataset_name)
             analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-            names = metrics[topic_metric].metric_names_generated(dataset_name, analysis_name)
+            names = metrics[topic_metric].metric_names_generated(dataset_name,
+                    analysis_name)
             for topic_metric_name in names:
-                TopicMetric.objects.get(analysis=analysis, name=topic_metric_name).delete()
+                TopicMetric.objects.get(analysis=analysis,
+                        name=topic_metric_name).delete()
 
         print "Available topic metrics: " + u', '.join(topic_metrics)
         for topic_metric in topic_metrics:
@@ -375,12 +421,16 @@ if 'task_pairwise_topic_metrics' not in locals():
         def metric_in_database(metric):
             try:
                 dataset = Dataset.objects.get(name=dataset_name)
-                analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-                names = pairwise_metrics[metric].metric_names_generated(dataset_name, analysis_name)
+                analysis = Analysis.objects.get(dataset=dataset,
+                        name=analysis_name)
+                names = pairwise_metrics[metric].metric_names_generated(
+                        dataset_name, analysis_name)
                 for name in names:
-                    PairwiseTopicMetric.objects.get(analysis=analysis, name=name)
+                    PairwiseTopicMetric.objects.get(analysis=analysis,
+                            name=name)
                 return True
-            except (Dataset.DoesNotExist, Analysis.DoesNotExist, PairwiseTopicMetric.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist,
+                    PairwiseTopicMetric.DoesNotExist):
                 return False
 
         def import_metric(metric):
@@ -403,12 +453,15 @@ if 'task_pairwise_topic_metrics' not in locals():
             print "Removing pairwise topic metric: " + metric
             dataset = Dataset.objects.get(name=dataset_name)
             analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
-            names = pairwise_metrics[metric].metric_names_generated(dataset_name, analysis_name)
+            names = pairwise_metrics[metric].metric_names_generated(
+                    dataset_name, analysis_name)
             for metric_name in names:
-                PairwiseTopicMetric.objects.get(analysis=analysis, name=metric_name).delete()
+                PairwiseTopicMetric.objects.get(analysis=analysis,
+                        name=metric_name).delete()
 
-        print "Available pairwise topic metrics: " + u', '.join(pairwise_metrics)
-        for pairwise_topic_metric in pairwise_metrics:
+        print "Available pairwise topic metrics: " + u', '.join(
+                pairwise_topic_metrics)
+        for pairwise_topic_metric in pairwise_topic_metrics:
             task = dict()
             task['name'] = pairwise_topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [pairwise_topic_metric])]

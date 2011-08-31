@@ -97,7 +97,7 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
     attribute = Attribute.objects.get(dataset__name=dataset, name=attribute)
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     topic = analysis.topic_set.get(number=topic)
-    top_values = top_values_for_attr_topic(analysis, topic, attribute, order_by)
+    top_values = top_values_for_attr_topic(topic=topic, attribute=attribute, order_by=order_by)
     ret_val['attribute'] = attribute.name
     ret_val['values'] = [vars(v) for v in top_values]
     return HttpResponse(simplejson.dumps(ret_val))
@@ -109,14 +109,19 @@ def similar_topics(request, dataset, analysis, topic, measure):
     request.session['topic-similarity-measure'] = measure
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     topic = analysis.topic_set.get(number=topic)
-    topic_name = get_topic_name(topic, name_scheme_id)
     measure = analysis.pairwisetopicmetric_set.get(name=measure)
     similar_topics = topic.pairwisetopicmetricvalue_originating.\
             select_related().filter(metric=measure).order_by('-value')[1:11]
-    topics = [t.topic2 for t in similar_topics]
-    values = [t.value for t in similar_topics]
+    
+    topics = []
+    values = []
+    for t in similar_topics:
+        values += [t.value]
+        similar_topic = t.topic2
+        topic_name = get_topic_name(similar_topic, name_scheme_id)
+        topics += [vars(AjaxTopic(similar_topic, topic_name))]
     ret_val['values'] = values
-    ret_val['topics'] = [vars(AjaxTopic(topic, topic_name)) for topic in topics]
+    ret_val['topics'] = topics
     return HttpResponse(simplejson.dumps(ret_val))
 
 
@@ -215,11 +220,13 @@ def update_topic_word_filter(request, dataset, analysis, topic, number, word):
     request.session.modified = True
     return filtered_topics_response(request, dataset, analysis)
 
+
 class AjaxTopic(object):
     def __init__(self, topic, topic_name):
-        self.name = topic_name
+        self.name = str(topic.number) + ": " + topic_name
         self.number = topic.number
         try:
+            # TODO(matt): This looks like it gets the wrong name
             self.topicgroup = [topic.name for topic
                                in topic.topicgroup.subtopics]
         except:

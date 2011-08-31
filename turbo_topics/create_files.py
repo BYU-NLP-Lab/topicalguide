@@ -26,13 +26,21 @@ from __future__ import division
 from collections import defaultdict
 from optparse import OptionParser
 
-def main(options):
-    words = get_word_list(options.state_file)
-    f = open('words.txt', 'w')
+def main(state_file, base=''):
+    words = get_word_list(state_file)
+    if base:
+        filename = base + '/words.txt'
+    else:
+        filename = 'words.txt'
+    f = open(filename, 'w')
     f.write('\n'.join(words))
     word_index = make_word_dictionary(words)
-    assignments = get_topic_word_assignments(options.state_file, word_index)
-    f = open('assignments.txt', 'w')
+    assignments = get_topic_word_assignments(state_file, word_index)
+    if base:
+        filename = base + '/assignments.txt'
+    else:
+        filename = 'assignments.txt'
+    f = open(filename, 'w')
     f.write('\n'.join(assignments))
 
 

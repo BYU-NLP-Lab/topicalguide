@@ -77,7 +77,23 @@ def turbo_topic(corpus, assigns, topic, use_perm=False, pvalue=0.1, min=25):
     return(cnts)
 
 
-if (__name__ == "__main__"):
+def main(vocab_file, assign_file, corpus_file, ntopics, out, use_perm=True,
+        min_count=25, pvalue=.001):
+    vocab = read_vocab(vocab_file)
+    assigns = parse_word_assignments(assign_file, vocab)
+    corpus = file(corpus_file).readlines()
+
+    for topic in range(ntopics):
+        sys.stdout.write('writing topic %d\n' % topic)
+        sig_bigrams = turbo_topic(corpus, assigns, topic,
+                                  use_perm=use_perm,
+                                  min=min_count,
+                                  pvalue=pvalue)
+        tt.write_vocab(sig_bigrams.marg,
+                       '%stopic%04d.txt' % (out, topic), incl_stop=True)
+
+
+if __name__ == "__main__":
 
     from optparse import *
 
@@ -93,19 +109,7 @@ if (__name__ == "__main__"):
     parser.set_defaults(min_count=25, use_perm=False, pvalue=0.001)
 
     (opt, args) = parser.parse_args()
-
-    vocab = read_vocab(opt.vocab)
-    assigns = parse_word_assignments(opt.assignments, vocab)
-    corpus = file(opt.corpus).readlines()
-
-    for topic in range(opt.ntopics):
-        sys.stdout.write('writing topic %d\n' % topic)
-        sig_bigrams = turbo_topic(corpus, assigns, topic,
-                                  use_perm=opt.use_perm,
-                                  min=opt.min_count,
-                                  pvalue=opt.pvalue)
-        tt.write_vocab(sig_bigrams.marg,
-                       '%stopic%04d.txt' % (opt.out, topic), incl_stop=True)
-
+    main(opt.vocab, opt.assignments, opt.corpus, opt.ntopics, opt.out,
+            opt.use_perm, opt.min_count, opt.pvalue)
 
 # python lda_topics.py --assign=word-assignments.dat --corpus=corpus.txt --vocab=vocab.dat --out=tt --pval=0.001 --min-count=25 --perm

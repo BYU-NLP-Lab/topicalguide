@@ -1,0 +1,70 @@
+{% extends "widgets/base_widget.html" %}
+{% comment %}
+The Topic Browser
+Copyright 2010-2011 Brigham Young University
+
+This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+
+The Topic Browser is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topic Browser is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+
+If you have inquiries regarding any further use of the Topic Browser, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+{% block title %}{{block.super}} for Attribute
+    <select id="id_attribute" onchange="get_top_attribute_values()">
+        {% for a in attributes %}
+        <option value="{{ a.name }}"{% ifequal attribute a %} selected="selected"{% endifequal %}>
+            {{ a.name }}
+        </option>
+        {% endfor %}
+    </select>
+{% endblock %}
+
+{% block widget %}
+<div class="ui-widget" id="top-values">
+	<div class="ui-widget-content">
+		<input type="radio" name="ordering" value="count" id="id_order_by_count"
+		checked="checked" onchange="get_top_attribute_values()"/>
+		By count
+		<input type="radio" name="ordering" value="percent" id="id_order_by_percent"
+		onchange="get_top_attribute_values()"/>
+		By percent
+	</div>
+    <table class="ui-widget-content ui-widget">
+        <thead>
+            <tr class="ui-widget-header">
+                <th class="key">Value</th>
+                <th class="value">Count</th>
+                <th class="value">Percent in value</th>
+            </tr>
+        </thead>
+        <tbody id="attr_values_body" class="ui-widget-content">
+        {% for value in top_values %}
+        <tr>
+            <td class="key">
+                <a href="{{attributes_url}}/{{ attribute.name }}/values/{{ value.value }}">{{ value.value }}</a>
+            </td>
+            <td class="value">
+                {{ value.count }}
+            </td>
+            <td class="value">
+                {{ value.percent|floatformat:"2" }}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

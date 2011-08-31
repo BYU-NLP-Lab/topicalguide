@@ -25,6 +25,11 @@
 
 from __future__ import division
 
+import os, sys
+
+sys.path.append(os.curdir)
+os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+
 from django.db import transaction
 
 from math import log
@@ -49,25 +54,27 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     except PairwiseTopicMetric.DoesNotExist:
         metric = PairwiseTopicMetric(name=metric_name, analysis=analysis)
         metric.save()
-    
+
     num_words = Word.objects.order_by('-pk')[0].id + 1
     topics = list(analysis.topic_set.all().order_by('number'))
 
     topicwordvectors = []
     for topic in topics:
         topicwordvectors.append(topic_word_vector(topic, num_words))
-    
+
     for i, topic1 in enumerate(topics):
         topic1_word_vals = topicwordvectors[i]
         for j, topic2 in enumerate(topics):
             topic2_word_vals = topicwordvectors[j]
             correlation_coeff = pmcc(topic1_word_vals, topic2_word_vals)
-            PairwiseTopicMetricValue.objects.create(topic1=topic1, 
+            PairwiseTopicMetricValue.objects.create(topic1=topic1,
                     topic2=topic2, metric=metric, value=correlation_coeff)
     transaction.commit()
 
+
 def metric_names_generated(dataset, analysis):
     return [metric_name]
+
 
 def pmcc(topic1_word_vals, topic2_word_vals):
     return float(dot(topic1_word_vals, topic2_word_vals) /

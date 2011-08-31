@@ -1,0 +1,140 @@
+/*
+ * The Topic Browser
+ * Copyright 2010-2011 Brigham Young University
+ *
+ * This file is part of the Topic Browser <http://nlp.cs.byu.edu/topic_browser>.
+ *
+ * The Topic Browser is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * The Topic Browser is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with the Topic Browser.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have inquiries regarding any further use of the Topic Browser, please
+ * contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+ * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+ */
+ 
+/* Style needed by every page */
+
+/***** General Page Structure *****/
+body {
+	padding: 0px;
+	margin: 0px;
+}
+
+a:link, a:visited, td.remove, .link, .clickable_text {
+    color:#000F3E;
+    text-decoration:none;
+}
+
+a:hover {
+    color:#0033D5;
+}
+a:hover span {
+    color:#0033D5;
+}
+
+/***** Tables *****/
+table {
+	/*Make cell borders run together instead of having gaps:*/
+	border-collapse: collapse;
+	border-spacing: 10px;
+	width: 100%;
+}
+
+td.key {
+	text-align: left;
+}
+
+th.value, td.value {
+	text-align: right;
+}
+
+table th {
+	font-size: 14px;
+	/*color: #039;*/
+	padding: 10px 8px;
+}
+
+table th, table td {
+	padding: 5px;
+	
+}
+
+table td.key {
+}
+
+table td.value {
+	padding-left: 20px;
+}
+
+table tr:nth-child(odd) {
+	background-color: #ffffff;
+	/*background-color: #fff6d0;*/
+}
+table tr:nth-child(even) {
+	background-color: #fffcef
+}
+
+/***** Unordered Lists *****/
+ul.vertical {
+    border-radius:5px;
+    border-width: 1px;
+    border-style: solid;
+    padding: 0;
+    margin: 0;
+    background-color:#ffffee;
+}
+
+ul.vertical > li {
+	list-style: none;
+	word-wrap: break-word;
+	padding: 0.25em 1em 0.25em 1em;
+}
+
+ul.vertical > li.selected, ul > li.selected:hover {
+	border-radius: 5px;
+	background-color:#FFCC00;
+}
+
+ul.vertical > li:hover {
+	background-color: rgba(255,204,0,0.1);
+	transition: background 300ms ease;
+	-webkit-transition: background 300ms ease;
+    -moz-transition: background 300ms ease;
+}
+
+/***** Other Elements *****/
+label {
+    font-weight:normal;
+}
+
+/***** Cupertino Tweaks *****/
+.ui-widget {
+    /*font-size: .8em !important;*/
+}
+
+.ui-tabs, .ui-tabs-nav {
+    padding: 0px !important;
+}
+
+.ui-tabs .ui-tabs-nav li a {
+    padding: 0px     !important;
+    /*padding: 0.25em 0.5em 0.25em 0.5em !important;*/
+}
+/*
+.ui-icon {
+    background-size: contain;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+}
+*/

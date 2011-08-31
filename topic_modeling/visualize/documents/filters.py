@@ -36,10 +36,10 @@ from topic_modeling.visualize.documents.common import sort_documents
 # Filtering/sorting methods
 
 def possible_document_filters():
-    possible_filters = [('None', '-------')]
-    possible_filters.append(('topic', 'Topic'))
-    possible_filters.append(('attribute', 'Attribute'))
-    possible_filters.append(('metric', 'Metric'))
+    possible_filters = [('None', 'Filter by...'),
+                        ('topic', '...Topic'),
+                        ('attribute', '...Attribute'),
+                        ('metric', '...Metric')]
     return possible_filters
 
 

@@ -20,57 +20,34 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-import cjson
+import topic_modeling.anyjson as anyjson
 
 from build.common.cleaner import Cleaner
 from build.common.util import create_dirs_and_open
 
 data_dir = '/aml/data/mjg82/student_ratings/comments'
 
-def get_dataset_name(locals):
-    return "ratings-bio100"
+dataset_name = "ratings-music101"
+dataset_description = "Student Ratings"
+
+mallet_num_iterations = 300
+
+def task_attributes():
+    task = dict()
+    task['targets'] = [attributes_file]
+    task['actions'] = [(gen_attr_file, [data_dir, attributes_file])]
+    task['clean'] = ["rm -f " + attributes_file]
+    task['uptodate'] = [os.path.exists(attributes_file)]
+    return task
 
 
-def get_dataset_description(locals):
-    return "Student Ratings"
-
-
-def get_copy_dataset(locals):
-    return True
-
-
-def get_mallet_token_regex(locals):
-    return r"[a-zA-Z]+"
-
-
-def get_attributes_file(locals):
-    return "{0}/attributes.json".format(locals['dataset_dir'])
-
-
-def get_files_dir(locals):
-    return locals['dataset_dir'] + "/files"
-
-
-def task_attributes_file():
-    targets = [attributes_file]
-    actions = [(gen_attr_file, [data_dir, attributes_file])]
-    clean = ["rm -f " + attributes_file]
-    return {'targets': targets, 'actions': actions, 'clean': clean}
-
-
-def task_dir_timestamp():
-    return {'actions': [(directory_timestamp, [files_dir])]}
-
-
-def task_copy_and_transform_dataset():
-    actions = [
-        (clean_ratings, [data_dir, files_dir])
-    ]
-    clean = [
-        'rm -rf '+files_dir
-    ]
-    result_deps = ['dir_timestamp']
-    return {'actions': actions, 'clean': clean, 'result_dep':result_deps}
+def task_extract_data():
+    task = dict()
+    task['targets'] = [files_dir]
+    task['actions'] = [(clean_ratings, [data_dir, files_dir])]
+    task['clean'] = ['rm -rf '+files_dir]
+    task['uptodate'] = [os.path.exists(files_dir)]
+    return task
 
 
 def clean_ratings(src_dir, dest_dir):
@@ -79,7 +56,7 @@ def clean_ratings(src_dir, dest_dir):
 
 
 def skipping_condition(path):
-    if 'BIO_100' not in path:
+    if 'MUSIC_101/002' not in path:
         return True
     if '20095' not in path:
         return True
@@ -109,7 +86,7 @@ def gen_attr_file(src_dir, output_file):
             file_dicts[-1]['attributes']['course'] = course
             file_dicts[-1]['attributes']['section'] = section
     w = open(output_file, 'w')
-    w.write(cjson.encode(file_dicts))
+    w.write(anyjson.serialize(file_dicts))
     w.close()
 
 
