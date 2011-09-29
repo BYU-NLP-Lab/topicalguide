@@ -53,6 +53,13 @@ class RootView(TemplateResponseMixin, View):
         context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
         context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
         
+        try:
+            favorites = request.session['favorites']
+        except KeyError:
+            favorites = dict()
+            request.session['favorites'] = favorites
+        context['favorites'] = favorites
+        
         return context
     
     def get(self, request, *args, **kwargs):
@@ -71,6 +78,9 @@ class DatasetBaseView(RootView):
         context['dataset'] = dataset
         context['dataset_url'] = "/datasets/%s" % (dataset)
         
+        if 'datasets' not in context['favorites']:
+            context['favorites']['datasets'] = dict()
+        
         return context
 
 class AnalysisBaseView(DatasetBaseView):
@@ -87,6 +97,9 @@ class AnalysisBaseView(DatasetBaseView):
         context['plots_url'] = context['analysis_url'] + "/plots"
         context['topics_url'] = context['analysis_url'] + "/topics"
         context['words_url'] = context['analysis_url'] + "/words"
+        
+        if 'analyses' not in context['favorites']:
+            context['favorites']['analyses'] = {'lda100topics':'/datasets/state_of_the_union/analyses/lda100topics'}
         
         return context
 
