@@ -95,9 +95,15 @@ ul.vertical {
 }
 
 ul.vertical > li {
+	/*height: .1em;*/
 	list-style: none;
+	
 	word-wrap: break-word;
-	padding: 0.25em 1em 0.25em 1em;
+	/*padding: 0.25em 1em 0.25em 1em;*/
+}
+
+ul.vertical > li > a {
+	vertical-align: middle;
 }
 
 ul.vertical > li.selected, ul > li.selected:hover {
