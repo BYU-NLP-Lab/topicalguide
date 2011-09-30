@@ -36,7 +36,7 @@ function update_list_contents(values_list, attribute, value) {
         new_html += values_list[i].value + '</a></li>';
     }
     
-    $("ul#attributes-list").html(new_html);
+    $("ul#sidebar-list").html(new_html);
 }
 
 function redraw_list_control(json_link, attribute, value) {

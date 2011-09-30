@@ -47,7 +47,7 @@ function update_list_contents(topics_list) {
           new_html += '</a></li>';
         }
 	}
-	$("ul#topics-list").html(new_html);
+	$("ul#sidebar-list").html(new_html);
 }
 
 function redraw_list_control(json_link) {
