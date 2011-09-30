@@ -118,7 +118,6 @@ ul.nav-menu > li.breadcrumb > * {
     background: hsla(210,85%,35%,1);
     position: relative;
     display: block;
-    /*float: left;*/
 }
 
 ul.nav-menu > li.breadcrumb > *:after {
@@ -209,8 +208,28 @@ nav#header li#favorites li.favorite > a {
 	*/
 }
 
+#sidebar-list > li::before,
 nav#header li#favorites li.favorite > a::before {
-	content: url("/site-media/images/openclipart/Star-349834968906.png");/*"Outlined_star-45623.png");*/
+	/*content: url("/site-media/images/openclipart/Star-349834968906.png");*/
+	/*content: url("/site-media/images/openclipart/Outlined_star-45623.png");*/
+	content: " ";
+	display: inline-block;
+	height: .1em;
+	width: .1em;
+	
+	background-repeat: no-repeat;
+	background-position: center right;
+	background-origin: padding-box;
+	/*margin-right: 0.5em;*/
+	/*padding-left: 0.4em;
+	padding-top: 0.3em;*/
+	padding: 1em;
 }
 
+#sidebar-list > li::before {
+	background-image: url("/site-media/images/openclipart/Outlined_star-45623.png");
+}
 
+nav#header li#favorites li.favorite > a::before {
+	background-image: url("/site-media/images/openclipart/Star-349834968906.png");
+}
