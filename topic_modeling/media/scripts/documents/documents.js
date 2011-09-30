@@ -30,7 +30,7 @@ function update_list_contents(documents_list) {
 		new_html += documents_list[i].name + '</a></li>';
 	}
 	
-	$("ul#documents-list").html(new_html);
+	$("ul#sidebar-list").html(new_html);
 }
 
 function redraw_list_control(json_link) {

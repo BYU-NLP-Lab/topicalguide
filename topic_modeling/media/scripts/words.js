@@ -34,7 +34,7 @@ function update_list_contents(word_list, word) {
         new_html += '/' + word_list[i].type + '">';
         new_html += word_list[i].type + '</a></li>';
     }
-    $("ul#words-list").html(new_html);
+    $("ul#sidebar-list").html(new_html);
 }
 
 function redraw_list_control(json_link, word) {
