@@ -1,3 +1,4 @@
+.pydevproject
 .settings
 .project
 *.pyc
@@ -9,3 +10,4 @@ yamba
 *~
 *.backup
 *.directory
+*.kilepr
