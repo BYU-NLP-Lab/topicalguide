@@ -46,19 +46,19 @@ def word_in_context(request, dataset, analysis, word, topic=None):
     analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)
     w = Word.objects.get(dataset__name=dataset, type=word)
     word_context = WordSummary(word)
-    
+
     if topic is None:
         docset = w.documentword_set.all()
     else:
         topic = Topic.objects.get(analysis=analysis, number=topic)
         docset = topic.documenttopicword_set.filter(word=w)
-    
+
     num_docs = len(docset)
     d = docset[random.randint(0, num_docs - 1)]
-    
+
     word_context.left_context, word_context.word, word_context.right_context \
-        = d.document.get_context_for_word(word, analysis, topic.number if topic else None)
-    
+ = d.document.get_context_for_word(word, analysis, topic.number if topic else None)
+
     word_context.doc_name = d.document.filename
     word_context.doc_id = d.document.id
     return HttpResponse(anyjson.dumps(vars(word_context)))
@@ -78,16 +78,21 @@ def attribute_values(request, dataset, attribute):
     #values = attribute.value_set.all()
     return HttpResponse(anyjson.dumps([(v.id, v.value) for v in values]))
 
-
-def topic_attribute_plot(request, attribute, topic, value):
+def _get_topic_attr_chart(request, attribute, topic, value):
     chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
     if request.GET.get('frequency', False):
         chart_parameters['frequency'] = 'True'
     if request.GET.get('histogram', False):
         chart_parameters['histogram'] = 'True'
-    chart = TopicAttributeChart(chart_parameters)
+    return TopicAttributeChart(chart_parameters)
 
+def topic_attribute_plot(request, attribute, topic, value):
+    chart = _get_topic_attr_chart(request, attribute, topic, value)
     return HttpResponse(chart.get_chart_image(), mimetype="image/png")
+
+def topic_attribute_csv(request, attribute, topic, value):
+    chart = _get_topic_attr_chart(request, attribute, topic, value)
+    return HttpResponse(chart.get_csv_file(), mimetype="text/csv")
 
 
 def topic_metric_plot(request, dataset, analysis, metric):
