@@ -126,6 +126,8 @@ urlpatterns = patterns('',
 # Topic-Attribute Plots
     (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '$',
         'topic_modeling.visualize.ajax_calls.topic_attribute_plot'),
+    (r'^feeds/topic-attribute-csv/' + attribute + '/' + value + '/' + topic + '$',
+        'topic_modeling.visualize.ajax_calls.topic_attribute_csv'),
     (r'^feeds/attribute-values/' + dataset + '/' + attribute + '$',
         'topic_modeling.visualize.ajax_calls.attribute_values'),
 # Topic-Metric Plots
