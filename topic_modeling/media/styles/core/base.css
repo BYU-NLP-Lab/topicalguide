@@ -142,3 +142,14 @@ label {
     -o-background-size: cover;
 }
 */
+
+/***** Favorites *****/
+img.star {
+    min-height: 1em;
+    min-width: 1em;
+    content: url("/site-media/images/openclipart/Outlined_star-45623.png");
+}
+
+img.star.fav {
+    content: url("/site-media/images/openclipart/Star-349834968906.png") !important;
+}

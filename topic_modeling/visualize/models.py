@@ -553,15 +553,29 @@ class WordMetaInfoValue(MetaInfoValue):
     info_type = models.ForeignKey(WordMetaInfo)
     word = models.ForeignKey(Word)
 
-# Favorites
+## Favorites
+#class Favorite(models.Model):
+#    sessions = models.ManyToManyField(Session, related_name='session_set')
+#    timestamp = models.DateTimeField(default=datetime.datetime.now)
+#    
+#    class Meta:
+#        abstract = True
+#
+#class DatasetFavorite(Favorite):
+#    dataset = models.ForeignKey(Dataset)
+
 class Favorite(models.Model):
-    sessions = models.ManyToManyField(Session)
-    timestamp = models.DateTimeField()
+#    session = models.ForeignKey(Session)
+    session_key = models.CharField(max_length=40, db_index=True)
+    timestamp = models.DateTimeField(default=datetime.datetime.now)
     
     class Meta:
         abstract = True
-
+    
 class DatasetFavorite(Favorite):
     dataset = models.ForeignKey(Dataset)
+
+class AnalysisFavorite(Favorite):
+    analysis = models.ForeignKey(Analysis)
 
 # vim: et sw=4 sts=4

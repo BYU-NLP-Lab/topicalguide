@@ -107,7 +107,7 @@ class AnalysisBaseView(DatasetBaseView):
         context['words_url'] = context['analysis_url'] + "/words"
         
         if 'analyses' not in context['favorites']:
-            context['favorites']['analyses'] = {'lda100topics':'/datasets/state_of_the_union/analyses/lda100topics'}
+            context['favorites']['analyses'] = dict()
         
         return context
 
