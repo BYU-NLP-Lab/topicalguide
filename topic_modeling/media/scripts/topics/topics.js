@@ -31,6 +31,9 @@ function update_list_contents(topics_list) {
 			new_html += ' class="selected"';
 		}
 		new_html += '>';
+		
+		new_html += '<img class="fav" type="topic" itemid="' + topics_list[i].number + '"/>';
+		
 		new_html += '<a href="' + $.fn.topics_url;
 		new_html += '/' + topics_list[i].number;
 		new_html += $.fn.topic.post_link;
@@ -48,6 +51,7 @@ function update_list_contents(topics_list) {
         }
 	}
 	$("ul#sidebar-list").html(new_html);
+	bind_favorites();
 }
 
 function redraw_list_control(json_link) {

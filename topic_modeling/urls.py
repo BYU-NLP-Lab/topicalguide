@@ -73,163 +73,201 @@ comp = r'comps/(?P<comp>[^/]*)'
 tab = r'tab/(?P<tab>[^/]*)'
 id = r'id/(?P<id>[^/]*)'
 
+prefix = 'topic_modeling.visualize'
+
+datasets_base = r'^datasets'
+dataset_base = r'^' + dataset
+analyses_base = dataset_base + '/analyses'
+analysis_base = dataset_base + '/' + analysis
+
 urlpatterns = patterns('',
 # Dataset View
     (r'^$', DatasetView.as_view()),
     (r'^' + dataset + '$', DatasetView.as_view()),
 
 # Analysis View
-#    (r'^' + dataset + '/' + analysis + '$',
-#        'topic_modeling.visualize.dataset_views.index'),
-    (r'^' + dataset + '/' + analysis + '$', TopicView.as_view()),
+    (analysis_base + '$', TopicView.as_view()),
 
 # Topic Views
-    (r'^' + dataset + '/' + analysis + '/' + topic + '$', TopicView.as_view()),
-    (r'^' + dataset + '/' + analysis + '/' + topic + '/' + map + '$',
+    (analysis_base + '/' + topic + '$', TopicView.as_view()),
+    (analysis_base + '/' + topic + '/' + map + '$',
         'topic_modeling.visualize.topics.views.render_topic_map'),
-    (r'^' + dataset + '/' + analysis + '/' + topic + '/' + document + '$',
+    (analysis_base + '/' + topic + '/' + document + '$',
         TopicDocumentView.as_view()),
-    (r'^' + dataset + '/' + analysis + '/' + topic + '/' + word + '$',
+    (analysis_base + '/' + topic + '/' + word + '$',
         TopicWordView.as_view()),
 
 # Attribute Views
-    (r'^' + dataset + '/' + analysis + '/' + attribute + '$',
+    (analysis_base + '/' + attribute + '$',
         AttributeView.as_view()),
-    (r'^' + dataset + '/' + analysis + '/' + attribute + '/' + value + '$',
+    (analysis_base + '/' + attribute + '/' + value + '$',
         AttributeView.as_view()),
-    (r'^' + dataset + '/' + analysis + '/' + attribute + '/' + value + '/' + word + '$',
+    (analysis_base + '/' + attribute + '/' + value + '/' + word + '$',
         AttributeWordView.as_view()),
-    (r'^' + dataset + '/' + analysis + '/' + attribute + '/' + value + '/' + document + '$',
+    (analysis_base + '/' + attribute + '/' + value + '/' + document + '$',
         AttributeDocumentView.as_view()),
 
 # Word Views
-    (r'^' + dataset + '/' + analysis + '/' + word + '$', WordView.as_view()),
+    (analysis_base + '/' + word + '$', WordView.as_view()),
 
 # Document Views
-    (r'^' + dataset + '/' + analysis + '/' + document + '$', DocumentView.as_view()),
+    (analysis_base + '/' + document + '$', DocumentView.as_view()),
 
-# Favorite Views
-    (r'^favorite/' + dataset + '/' + analysis + '/' + id + '$',
-     'topic_modeling.visualize.favorite.index'),
+## Favorite Views
+#    (r'^favorite/' + dataset + '/' + analysis + '/' + id + '$',
+#     'topic_modeling.visualize.favorite.index'),
 
 # Plot View
-    (r'^' + dataset + '/' + analysis + '/' + plot + '$',
-        PlotView.as_view()),
+    (analysis_base + '/' + plot + '$',
+        PlotView.as_view())
+)
 
+feeds_base = 'feeds'
+
+urlpatterns += patterns(prefix+'.ajax_calls',
 # AJAX Calls
     (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + word + '$',
-        'topic_modeling.visualize.ajax_calls.word_in_context'),
+        'word_in_context'),
     (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + topic + '/' + word + '$',
-        'topic_modeling.visualize.ajax_calls.word_in_context'),
+        'word_in_context'),
     (r'^feeds/set-current-name-scheme/(?P<name_scheme>[^/]*)$',
-        'topic_modeling.visualize.ajax_calls.set_current_name_scheme'),
+        'set_current_name_scheme'),
 # Topic-Attribute Plots
     (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '$',
-        'topic_modeling.visualize.ajax_calls.topic_attribute_plot'),
+        'topic_attribute_plot'),
     (r'^feeds/attribute-values/' + dataset + '/' + attribute + '$',
-        'topic_modeling.visualize.ajax_calls.attribute_values'),
+        'attribute_values'),
 # Topic-Metric Plots
     (r'^feeds/topic-metric-plot/' + dataset + '/' + analysis + '/' + metric + '$',
-        'topic_modeling.visualize.ajax_calls.topic_metric_plot'),
-# Topics
-    (r'^feeds/topic-ordering/' + dataset + '/' + analysis + '/' + order_by + '$',
-        'topic_modeling.visualize.topics.ajax.topic_ordering'),
-    (r'^feeds/attrvaltopic/' + dataset + '/' + analysis + '/' + topic + '/' + attribute + \
-            '/' + order_by + '$',
-        'topic_modeling.visualize.topics.ajax.top_attrvaltopic'),
-    (r'^feeds/topic-page/' + dataset + '/' + analysis + '/' + number + '$',
-        'topic_modeling.visualize.topics.ajax.get_topic_page'),
-    (r'^feeds/similar-topics/' + dataset + '/' + analysis + '/' + topic + '/' + measure + '$',
-        'topic_modeling.visualize.topics.ajax.similar_topics'),
-    (r'^feeds/rename-topic/' + dataset + '/' + analysis + '/' + topic + '/' + name + '$',
-        'topic_modeling.visualize.topics.ajax.rename_topic'),
-# Topic Groups
-    (r'^feeds/create_topic_group/' + dataset + '/' + analysis + '/' + name + '$',
-        'topic_modeling.visualize.topics.ajax.create_topic_group'),
-    (r'^feeds/remove_topic_group/' + number + '$',
-        'topic_modeling.visualize.topics.ajax.remove_topic_group'),
-    (r'^feeds/add_topic_to_group/' + dataset + '/' + analysis + '/' + \
-        number + '/' + addnumber + '$',
-        'topic_modeling.visualize.topics.ajax.add_topic_to_group'),
-    (r'^feeds/remove_topic_from_group/' + dataset + '/' + analysis + '/' + \
-        number + '/' + addnumber + '$',
-        'topic_modeling.visualize.topics.ajax.remove_topic_from_group'),
-# Topic Filters
-    (r'^feeds/new-topic-filter/' + dataset + '/' + analysis + '/' + topic + '/' + name + '$',
-        'topic_modeling.visualize.topics.ajax.new_topic_filter'),
-    (r'^feeds/remove-topic-filter/' + dataset + '/' + analysis + '/' + topic + '/'\
-          + number + '$',
-        'topic_modeling.visualize.topics.ajax.remove_topic_filter'),
-    (r'^feeds/update-topic-attribute-filter/' + dataset + '/' + analysis + '/' + topic + \
-            '/' + number + '/' + attribute + '$',
-        'topic_modeling.visualize.topics.ajax.update_topic_attribute_filter'),
-    (r'^feeds/update-topic-attribute-filter/' + dataset + '/' + analysis + '/' + topic + \
-            '/' + number + '/' + attribute + '/' + value + '$',
-        'topic_modeling.visualize.topics.ajax.update_topic_attribute_filter'),
-    (r'^feeds/update-topic-metric-filter/' + dataset + '/' + analysis + '/' + topic + \
-            '/' + number + '/' + metric + '$',
-        'topic_modeling.visualize.topics.ajax.update_topic_metric_filter'),
-    (r'^feeds/update-topic-metric-filter/' + dataset + '/' + analysis + '/' + topic + \
-            '/' + number + '/' + metric + '/' + comp + '/' + value + '$',
-        'topic_modeling.visualize.topics.ajax.update_topic_metric_filter'),
-    (r'^feeds/update-topic-document-filter/' + dataset + '/' + analysis + '/' + topic + \
-            '/' + number + '/' + document + '$',
-        'topic_modeling.visualize.topics.ajax.update_topic_document_filter'),
-    (r'^feeds/update-topic-word-filter/' + dataset + '/' + analysis + '/' + topic + \
-            '/' + number + '/' + word + '$',
-        'topic_modeling.visualize.topics.ajax.update_topic_word_filter'),
+        'topic_metric_plot'),
 # Words
     (r'^feeds/word-page/' + dataset + '/' + analysis + '/' + number + '$',
-        'topic_modeling.visualize.ajax_calls.get_word_page'),
+        'get_word_page'),
     (r'^feeds/word-page-find/' + dataset + '/' + analysis + '/' + word + '$',
-        'topic_modeling.visualize.ajax_calls.update_word_page'),
-# Documents
-    (r'^feeds/document-ordering/' + dataset + '/' + analysis + '/' + order_by + '$',
-        'topic_modeling.visualize.documents.ajax.document_ordering'),
-    (r'^feeds/document-page/' + dataset + '/' + analysis + '/' + document + '/' + number + '$',
-        'topic_modeling.visualize.documents.ajax.get_document_page'),
-    (r'^feeds/similar-documents/' + dataset + '/' + analysis + '/' + document + '/' + \
-            measure + '$',
-        'topic_modeling.visualize.documents.ajax.similar_documents'),
-    (r'^feeds/new-document-filter/' + dataset + '/' + analysis + '/' + document + '/' + \
-            name + '$',
-        'topic_modeling.visualize.documents.ajax.new_document_filter'),
-    (r'^feeds/remove-document-filter/' + dataset + '/' + analysis + '/' + document + '/'\
-          + number + '$',
-        'topic_modeling.visualize.documents.ajax.remove_document_filter'),
-    (r'^feeds/update-document-topic-filter/' + dataset + '/' + analysis + '/' + document + \
-            '/' + number + '/' + topic + '$',
-        'topic_modeling.visualize.documents.ajax.update_document_topic_filter'),
-    (r'^feeds/update-document-attribute-filter/' + dataset + '/' + analysis + '/' + \
-            document + '/' + number + '/' + attribute + '$',
-        'topic_modeling.visualize.documents.ajax.'
-        'update_document_attribute_filter'),
-    (r'^feeds/update-document-attribute-filter/' + dataset + '/' + analysis + '/' + \
-            document + '/' + number + '/' + attribute + '/' + value + '$',
-        'topic_modeling.visualize.documents.ajax.'
-        'update_document_attribute_filter'),
-    (r'^feeds/update-document-metric-filter/' + dataset + '/' + analysis + '/' + \
-            document + '/' + number + '/' + metric + '/' + '$',
-        'topic_modeling.visualize.documents.ajax.'
-        'update_document_metric_filter'),
-    (r'^feeds/update-document-metric-filter/' + dataset + '/' + analysis + '/' + \
-            document + '/' + number + '/' + metric + '/' + comp + '/' + value + '$',
-        'topic_modeling.visualize.documents.ajax.'
-        'update_document_metric_filter'),
+        'update_word_page'),
 # Attributes
     (r'^feeds/attribute-page/' + dataset + '/' + analysis + '/' + attribute + '/'\
            + number + '$',
-        'topic_modeling.visualize.ajax_calls.get_attribute_page'),
-# Favorites
-    (r'^feeds/add_favorite/' + tab + '$', #?url=<escaped url to save>
-        'topic_modeling.visualize.ajax_calls.add_favorite'),
-    (r'^feeds/recall_favorite/' + id + '$',
-        'topic_modeling.visualize.ajax_calls.recall_favorite'),
-    (r'^feeds/clear_favorite$',
-        'topic_modeling.visualize.ajax_calls.remove_all_favorites'),
-    (r'^feeds/favorite-page/' + number + '$',
-        'topic_modeling.visualize.ajax_calls.get_favorite_page'),
+        'get_attribute_page')
+)
 
+urlpatterns += patterns(prefix+'.topics.ajax',
+# Topics
+    (r'^feeds/topic-ordering/' + dataset + '/' + analysis + '/' + order_by + '$',
+        'topic_ordering'),
+    (r'^feeds/attrvaltopic/' + dataset + '/' + analysis + '/' + topic + '/' + attribute + \
+            '/' + order_by + '$',
+        'top_attrvaltopic'),
+    (r'^feeds/topic-page/' + dataset + '/' + analysis + '/' + number + '$',
+        'get_topic_page'),
+    (r'^feeds/similar-topics/' + dataset + '/' + analysis + '/' + topic + '/' + measure + '$',
+        'similar_topics'),
+    (r'^feeds/rename-topic/' + dataset + '/' + analysis + '/' + topic + '/' + name + '$',
+        'rename_topic'),
+# Topic Groups
+    (r'^feeds/create_topic_group/' + dataset + '/' + analysis + '/' + name + '$',
+        'create_topic_group'),
+    (r'^feeds/remove_topic_group/' + number + '$',
+        'remove_topic_group'),
+    (r'^feeds/add_topic_to_group/' + dataset + '/' + analysis + '/' + \
+        number + '/' + addnumber + '$',
+        'add_topic_to_group'),
+    (r'^feeds/remove_topic_from_group/' + dataset + '/' + analysis + '/' + \
+        number + '/' + addnumber + '$',
+        'remove_topic_from_group'),
+# Topic Filters
+    (r'^feeds/new-topic-filter/' + dataset + '/' + analysis + '/' + topic + '/' + name + '$',
+        'new_topic_filter'),
+    (r'^feeds/remove-topic-filter/' + dataset + '/' + analysis + '/' + topic + '/'\
+          + number + '$',
+        'remove_topic_filter'),
+    (r'^feeds/update-topic-attribute-filter/' + dataset + '/' + analysis + '/' + topic + \
+            '/' + number + '/' + attribute + '$',
+        'update_topic_attribute_filter'),
+    (r'^feeds/update-topic-attribute-filter/' + dataset + '/' + analysis + '/' + topic + \
+            '/' + number + '/' + attribute + '/' + value + '$',
+        'update_topic_attribute_filter'),
+    (r'^feeds/update-topic-metric-filter/' + dataset + '/' + analysis + '/' + topic + \
+            '/' + number + '/' + metric + '$',
+        'update_topic_metric_filter'),
+    (r'^feeds/update-topic-metric-filter/' + dataset + '/' + analysis + '/' + topic + \
+            '/' + number + '/' + metric + '/' + comp + '/' + value + '$',
+        'update_topic_metric_filter'),
+    (r'^feeds/update-topic-document-filter/' + dataset + '/' + analysis + '/' + topic + \
+            '/' + number + '/' + document + '$',
+        'update_topic_document_filter'),
+    (r'^feeds/update-topic-word-filter/' + dataset + '/' + analysis + '/' + topic + \
+            '/' + number + '/' + word + '$',
+        'update_topic_word_filter'),
+)
+
+# Documents
+urlpatterns += patterns(prefix+'.documents.ajax',
+    (r'^feeds/document-ordering/' + dataset + '/' + analysis + '/' + order_by + '$',
+        'document_ordering'),
+    (r'^feeds/document-page/' + dataset + '/' + analysis + '/' + document + '/' + number + '$',
+        'get_document_page'),
+    (r'^feeds/similar-documents/' + dataset + '/' + analysis + '/' + document + '/' + \
+            measure + '$',
+        'similar_documents'),
+    (r'^feeds/new-document-filter/' + dataset + '/' + analysis + '/' + document + '/' + \
+            name + '$',
+        'new_document_filter'),
+    (r'^feeds/remove-document-filter/' + dataset + '/' + analysis + '/' + document + '/'\
+          + number + '$',
+        'remove_document_filter'),
+    (r'^feeds/update-document-topic-filter/' + dataset + '/' + analysis + '/' + document + \
+            '/' + number + '/' + topic + '$',
+        'update_document_topic_filter'),
+    (r'^feeds/update-document-attribute-filter/' + dataset + '/' + analysis + '/' + \
+            document + '/' + number + '/' + attribute + '$',
+        'update_document_attribute_filter'),
+    (r'^feeds/update-document-attribute-filter/' + dataset + '/' + analysis + '/' + \
+            document + '/' + number + '/' + attribute + '/' + value + '$',
+        'update_document_attribute_filter'),
+    (r'^feeds/update-document-metric-filter/' + dataset + '/' + analysis + '/' + \
+            document + '/' + number + '/' + metric + '/' + '$',
+        'update_document_metric_filter'),
+    (r'^feeds/update-document-metric-filter/' + dataset + '/' + analysis + '/' + \
+            document + '/' + number + '/' + metric + '/' + comp + '/' + value + '$',
+        'update_document_metric_filter'),
+
+)
+
+# Favorites
+#favs_base = '^favorites'
+favs_prefix = 'topic_modeling.visualize.favorites'
+#entity_type = r'/(?P<entity_type>[^/]+)'
+item_id = r'/(?P<item_id>[^/]+)'
+#
+#urlpatterns += patterns(
+#    favs_prefix,
+#    (favs_base, 'all'),
+#    (favs_base + entity_type, 'by_entity_type'),
+#    (favs_base + entity_type + item_id, 'favorite')
+#)
+
+urlpatterns += patterns(favs_prefix,
+    ('favs', 'all'),
+    ('datasets.favs', 'datasets'),
+    (dataset + '/fav', 'dataset'),
+    (dataset + '/analyses/favs', 'analyses'),
+    (dataset + '/' + analysis + '/fav', 'analysis'),
+    (dataset + '/' + analysis + '/topics/favs', 'topics'),
+    (dataset + '/' + analysis + '/' + topic + '/fav', 'topic')
+)
+
+
+#    (r'^feeds/add_favorite/' + tab + '$', #?url=<escaped url to save>
+#        'topic_modeling.visualize.ajax_calls.add_favorite'),
+#    (r'^feeds/recall_favorite/' + id + '$',
+#        'topic_modeling.visualize.ajax_calls.recall_favorite'),
+#    (r'^feeds/clear_favorite$',
+#        'topic_modeling.visualize.ajax_calls.remove_all_favorites'),
+#    (r'^feeds/favorite-page/' + number + '$',
+#        'topic_modeling.visualize.ajax_calls.get_favorite_page'),
+
+urlpatterns += patterns('',
 #Styles
     (r'^styles/(?P<style_path>.+)$', render_style),
 #Scripts

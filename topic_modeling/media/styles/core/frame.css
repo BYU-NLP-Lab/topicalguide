@@ -25,17 +25,17 @@
 nav#header {
 	position: fixed;
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: 1em;
     clear: both;
     z-index: 10;
 }
 
 footer {
     position: fixed;
-    bottom: 0px;
+    bottom: 0;
     width: 100%;
     border-top: 1px solid gray;
-    margin-top: 10px;
+    margin-top: 1em;
     clear: both;
     text-align: center;
     z-index: 5;
@@ -49,9 +49,9 @@ nav#header, footer {
 
 ul.nav-menu {
     width: 100%;
-    height: 26px;
+    height: 2em;
     list-style-type: none;
-    padding: 0px;
+    padding: 0;
     display: table-row;
     background: none;
 }
@@ -65,10 +65,10 @@ ul.nav-menu.right {
 
 ul.nav-menu > li {
 	display: inline-block;
-    height: 26px;
-    line-height: 26px;
-    padding-left: 10px;
-    padding-right: 10px;
+    height: 2em;
+    line-height: 2em;
+    padding-left: 0.9em;
+    padding-right: 0.9em;
     border-right: 1px dashed gray;
     display: table-cell;
 }
@@ -83,19 +83,19 @@ ul.nav-menu > li > ul {
 
 
 nav#header li#logo {
-    padding-left: 2px;
-    padding-right: 2px;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
     background: hsla(210,85%,35%,1);
     border: none;
 }
 
 nav#header li#branding a {
-    height: 26px;
+    height: 2em;
 }
 
 nav#header li#logo a img {
-    height: 26px;
-    border: 0px;
+    height: 2em;
+    border: 0;
 }
 
 /*
@@ -104,16 +104,16 @@ nav#header li#logo a img {
 */
 
 ul.nav-menu > li.breadcrumb {
-    padding: 0px;
+    padding: 0;
 }
 
 ul.nav-menu > li.breadcrumb > * {
     color: white;
     text-decoration: none;
-    padding-left: 20px;
-    padding-right: 3px;
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-left: 2em;
+    padding-right: 0.2em;
+    padding-top: 0;
+    padding-bottom: 0;
     background: blue;                   /* fallback color */
     background: hsla(210,85%,35%,1);
     position: relative;
@@ -125,19 +125,19 @@ ul.nav-menu > li.breadcrumb > *:after {
     display: inline-block;
     width: 0;
     height: 0;
-    border-top: 13px solid transparent;
-    border-bottom: 13px solid transparent;
-    border-left: 13px solid hsla(210,85%,35%,1);
+    border-top: 1em solid transparent;
+    border-bottom: 1em solid transparent;
+    border-left: 1em solid hsla(210,85%,35%,1);
     position: absolute;
     top: 0%;
-    margin-top: 0px;
+    margin-top: 0;
     left: 100%;
     z-index: 2;
     background:url("/site-media/images/rarrow.png") no-repeat right center;
 }
 
 ul.nav-menu > li.breadcrumb:first-child > * {
-    padding-left: 10px;
+    padding-left: 0.9em;
 }
 ul.nav-menu > li.breadcrumb:nth-child(2) > *       { background:        hsla(210,85%,35%,1); padding-left: 10px;}
 ul.nav-menu > li.breadcrumb:nth-child(2) > *:after { border-left-color: hsla(210,85%,35%,1); }
@@ -151,11 +151,11 @@ ul.nav-menu > li.breadcrumb:last-child > * {
     background: transparent !important;
     color: #000000;
     font-variant: small-caps;
-    border: 0px;
+    border: 0;
 }
 ul.nav-menu > li.breadcrumb:last-child > *:after {
     background: transparent !important;
-    border: 0px;
+    border: 0;
 }
 
 ul.nav-menu > li.breadcrumb > *:hover { background: hsla(210,85%,25%,1); }
@@ -170,14 +170,14 @@ nav#header li#favorites {
 /* The "Favorites" button */
 nav#header li#favorites > span {
     display: inline-block;
-    height: 26px;
-    line-height: 26px;
-    padding: 0 10px 0 10px;
+    height: 2em;
+    line-height: 2em;
+    padding: 0 0.9em 0 0.9em;
 }
 
 nav#header li#favorites > span.active {
 	background-color: white;
-	border-left-width: 2px;
+	border-left-width: 0.2em;
 	border-left-color: gray;
 }
 
@@ -187,16 +187,16 @@ nav#header li#favorites > ul {
 	visibility: hidden;
 	background: white;
 	text-align: left;
-	box-shadow: 5px 2px 5px #ccc;
+	box-shadow: 0.5em 0.2em 0.5em #ccc;
 }
 
 nav#header li#favorites ul {
 	list-style-type: none;
-	padding: 0 8px 8px 8px;
+	padding: 0 0.7em 0.7em 0.7em;
 }
 
 nav#header li#favorites li.entity:not(:last-child) {
-	margin-bottom: 20px;
+	margin-bottom: 2em;
 }
 
 nav#header li#favorites li.favorite > a {
@@ -207,11 +207,9 @@ nav#header li#favorites li.favorite > a {
 	vertical-align: middle;
 	*/
 }
-
+/*
 #sidebar-list > li::before,
 nav#header li#favorites li.favorite > a::before {
-	/*content: url("/site-media/images/openclipart/Star-349834968906.png");*/
-	/*content: url("/site-media/images/openclipart/Outlined_star-45623.png");*/
 	content: " ";
 	display: inline-block;
 	height: .1em;
@@ -220,15 +218,18 @@ nav#header li#favorites li.favorite > a::before {
 	background-repeat: no-repeat;
 	background-position: center right;
 	background-origin: padding-box;
-	/*margin-right: 0.5em;*/
-	/*padding-left: 0.4em;
-	padding-top: 0.3em;*/
 	padding: 1em;
-}
+}*/
 
+
+
+
+
+/*
 #sidebar-list > li::before {
 	background-image: url("/site-media/images/openclipart/Outlined_star-45623.png");
 }
+*/
 
 nav#header li#favorites li.favorite > a::before {
 	background-image: url("/site-media/images/openclipart/Star-349834968906.png");

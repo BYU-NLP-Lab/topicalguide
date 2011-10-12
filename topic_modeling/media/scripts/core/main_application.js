@@ -31,6 +31,26 @@ $("a.new-window[href]").live(
     }
 );
 
+function bind_favorites() {
+	/*
+    $("#sidebar-list > li").each(function(idx) {
+    	var li = $(this);
+    	$("img.star", this).click(function(){
+    		alert("abc" + li.attr("item"));
+    	});
+    });
+    */
+	$("img.fav").click(function() {
+		toggle_favorite($(this));
+	});
+}
+
+function toggle_favorite(fav) {
+	var type = fav.attr("type");
+	var itemid = fav.attr("itemid");
+	alert("toggle "+type+"->"+itemid);
+}
+
 function set_nav_arrows(current_page, num_pages) {
 	$("div#list-nav > span#page-situation > span#current-page").html(current_page);
 	$("div#list-nav > span#page-situation > span#page-count").html(num_pages);
