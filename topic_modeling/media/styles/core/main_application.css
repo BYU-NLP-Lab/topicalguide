@@ -26,7 +26,7 @@
 #main {
 	z-index: 0;
 	position: relative;
-	padding-top: 2em;
+	padding-top: 2.2em;
 }
 
 #sidebar {
@@ -38,14 +38,14 @@
 #presentation-area {
 	display: inline-block;
 	vertical-align: top;
-    padding-left: 15px;
+    padding-left: 1em;
     width: 73%;
 }
 
 /***** List Navigation *****/
 div#list-nav {
     text-align:center;
-    margin-bottom: 14px;
+    margin-bottom: 1.1em;
 }
 
 div#list-nav span#back-arrows a {
@@ -62,7 +62,23 @@ div#list-nav span#fwd-arrows a:hover {
 }
 
 div#list-nav span.arrows a {
-    padding: 2px;
+    padding: 0.2em;
+}
+
+/***** Favorites *****/
+img.star {
+	min-height: 1em;
+    min-width: 1em;
+    content: url("/site-media/images/openclipart/Outlined_star-45623.png");
+}
+
+img.star.fav {
+    content: url("/site-media/images/openclipart/Star-349834968906.png") !important;
+}
+#sidebar-list > li > img.fav {
+    padding-top: 0.05em;
+    margin-left: 0.1em;
+    margin-right: 0.1em;
 }
 
 /***** Widgets *****/
@@ -142,8 +158,8 @@ table.kwic tr td {
 }
 
 table.kwic tr td img {
-	border-radius: 5px;
-	padding: 5px;
+	border-radius: 0.5em;
+	padding: 0.5em;
 	cursor: pointer;
 }
 
@@ -152,8 +168,8 @@ table.kwic tr td img:hover {
 }
 
 table.kwic tr td.word a {
-	border-radius: 5px;
-	padding: 3px 7px 3px 7px;
+	border-radius: 0.5em;
+	padding: 0.25em 0.6em 0.25em 0.6em;
 }
 
 table.kwic tr td.word a:hover {
@@ -184,7 +200,7 @@ table.kwic tr td.lcontext, table.kwic tr td.rcontext {
 }
 
 #sidebar > #tab-content h1 {
-	font-size: 20px;
+	font-size: 1.6em;
 	text-align: center;
 }
 
@@ -193,15 +209,15 @@ table.filters tr {
 }
 
 table.inset-small {
-    padding:2px;
-    -moz-border-radius:5px;
+    padding:0.2em;
+    -moz-border-radius:0.5em;
     background-color:#ffffee;
 }
 
 table.above_inset {
     width:100%;
-    padding:2px;
-    -moz-border-radius:5px;
+    padding:0.2em;
+    -moz-border-radius:0.5em;
 }
 
 td.align-top {
@@ -222,8 +238,8 @@ td.remove:hover, .link:hover, .clickable_text:hover {
 
 .inset {
     width:100%;
-    padding:2px;
-    -moz-border-radius:5px;
+    padding:0.2em;
+    -moz-border-radius:0.5em;
     background-color:#ffffee;
 }
 
@@ -231,8 +247,8 @@ td.remove:hover, .link:hover, .clickable_text:hover {
 /* Space things out a little */
 div#presentation-area div#tabs > div > *,
 .tr > div {
-	padding-right: 10px;
-    padding-bottom: 10px;
+	padding-right: 0.9em;
+    padding-bottom: 0.9em;
 }
 
 .tr {

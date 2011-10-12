@@ -62,10 +62,19 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             $.get(link);
         }
         
+        bind_favorites();
+        
         $(document).ready(function() {
             {% block document_ready_script %}
                 $("div#presentation-area div#tabs").tabs();
             {% endblock %}
+        });
+        
+        $("#tabs li").mouseenter(function(){
+            $(this).addClass("ui-state-hover");
+        });
+        $("#tabs li").mouseleave(function(){
+            $(this).removeClass("ui-state-hover");
         });
     </script>
     {% for tab in tabs %}
@@ -100,14 +109,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	            <a href="/datasets/{{dataset}}/analyses/{{analysis}}/plots/">Plots</a>
 	        </li>
 	    </ul>
-	    <script type="text/javascript">
-		    $("#tabs li").mouseenter(function(){
-		    	$(this).addClass("ui-state-hover");
-		    });
-		    $("#tabs li").mouseleave(function(){
-	            $(this).removeClass("ui-state-hover");
-	        });
-	    </script>
 	    <div id="tab-content" class="ui-tabs-panel ui-widget-content ui-corner-bottom">
 	        <div class="header">
 	            {% block above_sidebar%}

@@ -25,6 +25,8 @@ from django.db import models
 from topic_modeling.anyjson import deserialize
 import datetime
 
+from django.contrib.sessions.models import Session
+
 ##############################################################################
 # Tables just to hold information about data and documents
 ##############################################################################
@@ -550,5 +552,16 @@ class WordMetaInfo(MetaInfo):
 class WordMetaInfoValue(MetaInfoValue):
     info_type = models.ForeignKey(WordMetaInfo)
     word = models.ForeignKey(Word)
+
+# Favorites
+class Favorite(models.Model):
+    sessions = models.ManyToManyField(Session)
+    timestamp = models.DateTimeField()
+    
+    class Meta:
+        abstract = True
+
+class DatasetFavorite(Favorite):
+    dataset = models.ForeignKey(Dataset)
 
 # vim: et sw=4 sts=4

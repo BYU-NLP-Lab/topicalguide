@@ -34,12 +34,20 @@ import os
 from topic_modeling import settings
 from django.shortcuts import get_object_or_404
 from django.views.generic.base import TemplateResponseMixin, View
+from datetime import timedelta
 
 '''
 Like TemplateView, but better
 '''
 class RootView(TemplateResponseMixin, View):
     def get_context_data(self, request, **kwargs):
+        # Favorites Stuff
+        # Do what's necessary to keep the session from ever expiring (assuming the user checks in every 100 years or so
+        if request.session.get_expiry_age() < 3153600000: # If the session is expiring sometime in the next 100 years,
+            request.session.set_expiry(timedelta(365000)) # then reset the expiration to 1,000 years from now
+#        if 'favorites' not in request.session:
+#            request.session['favorites'] = dict()
+        
         context = Context()
         
         STATIC = '/site-media'
