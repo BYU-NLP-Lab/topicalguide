@@ -248,13 +248,13 @@ item_id = r'/(?P<item_id>[^/]+)'
 #)
 
 urlpatterns += patterns(favs_prefix,
-    ('favs', 'all'),
-    ('datasets.favs', 'datasets'),
-    (dataset + '/fav', 'dataset'),
-    (dataset + '/analyses/favs', 'analyses'),
-    (dataset + '/' + analysis + '/fav', 'analysis'),
-    (dataset + '/' + analysis + '/topics/favs', 'topics'),
-    (dataset + '/' + analysis + '/' + topic + '/fav', 'topic')
+#    ('^favs$', 'all'),
+    ('^datasets.favs$', 'datasets'),
+    (r'^'+dataset + '/fav$', 'dataset'),
+    (r'^'+dataset + '/analyses.favs$', 'analyses'),
+    (r'^'+dataset + '/' + analysis + '/fav$', 'analysis'),
+    (r'^'+dataset + '/' + analysis + '/topics/favs$', 'topics'),
+    (r'^'+dataset + '/' + analysis + '/' + topic + '/fav$', 'topic')
 )
 
 

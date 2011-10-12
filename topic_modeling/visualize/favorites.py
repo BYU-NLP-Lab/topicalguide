@@ -20,67 +20,89 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.shortcuts import render_to_response
 from topic_modeling import anyjson
-from django.http import HttpResponse, HttpResponseRedirect
-import copy
+from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods, require_GET
-from topic_modeling.visualize.models import DatasetFavorite
-#    (favs_base, 'all'),
-#    (favs_base + entity_type, 'by_entity_type'),
-#    (favs_base + entity_type + item_id, 'favorite')
+from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis,\
+    AnalysisFavorite
+from django.core import serializers
 
-# Favorite format: (ENTITY_TYPE, ITEM_ID)
+class SerializerResponse(HttpResponse):
+    def __init__(self, obj, fmt='json', *args, **kwargs):
+        super(SerializerResponse, self).__init__(content=serializers.serialize(fmt, obj))
 
 class JsonResponse(HttpResponse):
     def __init__(self, obj, *args, **kwargs):
         super(JsonResponse, self).__init__(anyjson.dumps(obj))
 
-# GET->list of all favorites
-def all(request):
-    return HttpResponse()
-
-
-# GET->list of all favorites with type entity_type
-def by_entity_type(request, entity_type):
-    pass
+def _dataset_favorites(request):
+    return DatasetFavorite.objects.filter(session_key=request.session.session_key)
 
 @require_GET
 def datasets(request):
-    return JsonResponse(DatasetFavorite.objects.all().values())
+    return SerializerResponse(_dataset_favorites(request))
 
 @require_http_methods(['GET', 'PUT', 'DELETE'])
-def favorite(request, entity_type, item_id):
-    favorites = request.session['favorites']
+def dataset(request, dataset):
+    dataset = Dataset.objects.get(name=dataset)
+    
+    def get():
+        try:
+            return DatasetFavorite.objects.get(dataset=dataset, session_key=request.session.session_key)
+        except DatasetFavorite.DoesNotExist:
+            return None
+    
+    def create():
+        DatasetFavorite.objects.create(dataset=dataset, session_key=request.session.session_key)
+    
+    return _favorites_ajax_handler(request, get, create)
+
+def _analysis_favorites(request, dataset=None):
+    if dataset:
+        return AnalysisFavorite.objects.filter(session_key=request.session.session_key, analysis__dataset__name=dataset)
+    else:
+        return AnalysisFavorite.objects.filter(session_key=request.session.session_key)
+
+@require_GET
+def analyses(request, **kwargs):
+    if 'dataset' in kwargs:
+        return SerializerResponse(_analysis_favorites(request, dataset=kwargs['dataset']))
+    else:
+        return SerializerResponse(_analysis_favorites(request))
+
+@require_http_methods(['GET', 'PUT', 'DELETE'])
+def analysis(request, dataset, analysis):
+    analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)
+    
+    def get():
+        try:
+            return AnalysisFavorite.objects.get(analysis=analysis, session_key=request.session.session_key)
+        except AnalysisFavorite.DoesNotExist:
+            return None
+    
+    def create():
+        AnalysisFavorite.objects.create(analysis=analysis, session_key=request.session.session_key)
+    
+    return _favorites_ajax_handler(request, get, create)
+
+
+'''
+    {get} should return None if the favorite doesn't exist
+'''
+def _favorites_ajax_handler(request, get, create):
+    fav = get()
     
     if request.method=='GET':
-        fav_exists = entity_type in favorites and item_id in favorites[entity_type]
-        return HttpResponse(str(fav_exists))
-    
-    elif request.method=='PUT': # Returns True if favorite already exists; else False
-        try:
-            entity_favs = favorites[entity_type]
-        except KeyError:
-            entity_favs = set()
-            favorites[entity_type] = entity_favs
-        
-        if item_id in entity_favs:
-            return HttpResponse(anyjson.dumps(True))
-        entity_favs.add(item_id)
-        return HttpResponse(anyjson.dumps(False))
-    
-    elif request.method=='DELETE': # Returns True if favorite existed; else False
-        try:
-            entity_favs = favorites[entity_type]
-        except KeyError:
-            entity_favs = set()
-            favorites[entity_type] = entity_favs
-        
-        if item_id in entity_favs:
-            entity_favs.remove(item_id)
-            return HttpResponse(anyjson.dumps(True))
-        return HttpResponse(anyjson.dumps(False))
-    
+        fav_exists = fav is not None
+        return JsonResponse(fav_exists)
+    elif request.method=='PUT':
+        if not fav:
+            create()
+        return JsonResponse(True)
+    elif request.method=='DELETE':
+        if fav:
+            fav.delete()
+        return JsonResponse(True)
     else:
         raise Exception("Unsupported HTTP method '" + request.method + "'")
 

@@ -55,10 +55,10 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% if datasets %}
 <div id="accordion">
     {% for dataset,analyses in plot_img_urls.items %}
-    <div><a>{{dataset.readable_name}}</a></div>
+    <div><a>{{dataset.readable_name}}<img class="star{% if dataset in favorites.datasets %} fav{% endif %}" favurl="datasets/{{dataset.name}}/fav" /></a></div>
     <div>
     
-    <img class="star{% if dataset.id in favorites.datasets %} fav{% endif %}"/>
+        
         <p class="description">{{dataset.description|linebreaks}}</p>
         {% with dataset.datasetmetricvalue_set as metricval_mgr %}
 	        {% if metricval_mgr.count > 0 %}
@@ -110,57 +110,61 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		        Analyses
 		        <ul class="analyses">
 		        {% for analysis,plot_img_url in analyses.items %}
-			        <a href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}" class="analysis-link">
+			        
 			            <li class="ui-widget{% ifequal analysis curanalysis %} current_analysis{% endifequal %}">
 			            	<div class="ui-widget-content ui-corner-all	">
-				                <div class="ui-widget-header ui-corner-all">{{analysis.readable_name}}</div>
-				                
-				                {% with analysis.analysismetricvalue_set as metricval_mgr %}
-					                {% if metricval_mgr.count > 0 %}
-							            <table class="ui-widget metrics">
-							                <thead>
-							                    <tr class="ui-widget-header">
-							                        <th>Metric</th><th>Value</th>
-					                            </tr>
-				                            </thead>
-				                            <tbody class="ui-widget-content">
-								                {% for metricvalue in analysis.analysismetricvalue_set.all %}
-								                <tr>
-								                    <td class="key">{{metricvalue.metric.name}}</td>
-								                    <td class="value">{{metricvalue.value}}</td>
-								                </tr>
-								                {% endfor %}
-							                </tbody>
-							            </table>
-							        {% else %}
-							            <div class="ui-state-highlight">No metrics were found for this analysis.</div>
-							        {% endif %}
-						        {% endwith %}{# end with metricval_mgr #}
-						        
-						        {% with analysis.analysismetainfovalue_set as metadataval_mgr %}
-							        {% if metadataval_mgr.count > 0 %}
-							            <table class="ui-widget metrics">
-							                <thead>
-							                    <tr class="ui-widget-header">
-							                        <th>Key</th><th>Value</th><th>Type</th>
-							                    </tr>
-							                </thead>
-							                <tbody class="ui-widget-content">
-							                {% for metadatavalue in metadataval_mgr.all %}
-								                <tr>
-								                    <td class="key">{{metadatavalue.info_type.name}}</td>
-								                    <td class="value">{{metadatavalue.value}}</td>
-								                    <td class="value">{{metadatavalue.type}}</td>
-								                </tr>
-								                {% endfor %}
-							                </tbody>
-							            </table>
-							        {% else %}
-							            <div class="ui-state-highlight">No metadata found for this analysis.</div>
-							        {% endif %}
-				                {% endwith %}{# end with metadataval_mgr #}
-				                <div class="description">{{analysis.description|linebreaks}}</div>
-				                <img id="plot_{{dataset.name}}__{{analysis.name}}" src="{{plot_img_url}}"/>
+				                <div class="ui-widget-header ui-corner-all">
+				                    <a href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}" class="analysis-link">{{analysis.readable_name}}</a>
+				                    <img class="star{% if analysis in favorites.analyses %} fav{% endif %}" favurl="datasets/{{dataset.name}}/analyses/{{analysis.name}}/fav" />
+			                    </div>
+				                <a href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}" class="analysis-link">
+					                {% with analysis.analysismetricvalue_set as metricval_mgr %}
+						                {% if metricval_mgr.count > 0 %}
+								            <table class="ui-widget metrics">
+								                <thead>
+								                    <tr class="ui-widget-header">
+								                        <th>Metric</th><th>Value</th>
+						                            </tr>
+					                            </thead>
+					                            <tbody class="ui-widget-content">
+									                {% for metricvalue in analysis.analysismetricvalue_set.all %}
+									                <tr>
+									                    <td class="key">{{metricvalue.metric.name}}</td>
+									                    <td class="value">{{metricvalue.value}}</td>
+									                </tr>
+									                {% endfor %}
+								                </tbody>
+								            </table>
+								        {% else %}
+								            <div class="ui-state-highlight">No metrics were found for this analysis.</div>
+								        {% endif %}
+							        {% endwith %}{# end with metricval_mgr #}
+							        
+							        {% with analysis.analysismetainfovalue_set as metadataval_mgr %}
+								        {% if metadataval_mgr.count > 0 %}
+								            <table class="ui-widget metrics">
+								                <thead>
+								                    <tr class="ui-widget-header">
+								                        <th>Key</th><th>Value</th><th>Type</th>
+								                    </tr>
+								                </thead>
+								                <tbody class="ui-widget-content">
+								                {% for metadatavalue in metadataval_mgr.all %}
+									                <tr>
+									                    <td class="key">{{metadatavalue.info_type.name}}</td>
+									                    <td class="value">{{metadatavalue.value}}</td>
+									                    <td class="value">{{metadatavalue.type}}</td>
+									                </tr>
+									                {% endfor %}
+								                </tbody>
+								            </table>
+								        {% else %}
+								            <div class="ui-state-highlight">No metadata found for this analysis.</div>
+								        {% endif %}
+					                {% endwith %}{# end with metadataval_mgr #}
+					                <div class="description">{{analysis.description|linebreaks}}</div>
+					                <img id="plot_{{dataset.name}}__{{analysis.name}}" class="plot" src="{{plot_img_url}}"/>
+				                </a>
 			                </div>
 			            </li>{# end analysis list item #}
 		            </a>{# end a.analysis-link #}

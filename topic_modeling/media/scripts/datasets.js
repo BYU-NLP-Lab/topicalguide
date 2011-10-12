@@ -1,6 +1,6 @@
 /* From http://www.sohtanaka.com/web-design/fancy-thumbnail-hover-effect-w-jquery/ */
 function image_preview() {
-	$("ul.analyses li img").hover(function() {
+	$("ul.analyses li img.plot").hover(function() {
 		$(this).css({'z-index' : '10'}); /*Add a higher z-index value so this image stays on top*/ 
 		$(this).addClass("hover").stop() /* Add class of "hover", then stop animation queue buildup*/
 			.animate({

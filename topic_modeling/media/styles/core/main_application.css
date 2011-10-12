@@ -65,16 +65,7 @@ div#list-nav span.arrows a {
     padding: 0.2em;
 }
 
-/***** Favorites *****/
-img.star {
-	min-height: 1em;
-    min-width: 1em;
-    content: url("/site-media/images/openclipart/Outlined_star-45623.png");
-}
 
-img.star.fav {
-    content: url("/site-media/images/openclipart/Star-349834968906.png") !important;
-}
 #sidebar-list > li > img.fav {
     padding-top: 0.05em;
     margin-left: 0.1em;

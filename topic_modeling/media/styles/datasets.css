@@ -79,7 +79,7 @@ ul.analyses li {
     margin: 4px;
 }
 
-ul.analyses li img {
+ul.analyses li img.plot {
     width: 150px; height: 150px; /* Set the small thumbnail size */
     -ms-interpolation-mode: bicubic; /* IE Fix for Bicubic Scaling */
     border: 1px solid #ddd;
@@ -89,7 +89,7 @@ ul.analyses li img {
     left: 0; top: 0;
 }
 
-ul.analyses li img.hover {
+ul.analyses li img.plot.hover {
     background:url(thumb_bg.png) no-repeat center center;  /* Image used as background on hover effect */
     /*border: none;*/ /* Get rid of border on hover */
 }
