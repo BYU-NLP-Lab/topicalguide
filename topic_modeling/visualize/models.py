@@ -578,4 +578,7 @@ class DatasetFavorite(Favorite):
 class AnalysisFavorite(Favorite):
     analysis = models.ForeignKey(Analysis)
 
+class TopicFavorite(Favorite):
+    topic = models.ForeignKey(Topic)
+
 # vim: et sw=4 sts=4

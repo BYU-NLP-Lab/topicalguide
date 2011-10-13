@@ -20,7 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.conf.urls.defaults import patterns
+from django.conf.urls.defaults import patterns, url
 from django.conf import settings
 
 from topic_modeling.visualize.topics.views import TopicView, TopicWordView,\
@@ -82,44 +82,44 @@ analysis_base = dataset_base + '/' + analysis
 
 urlpatterns = patterns('',
 # Dataset View
-    (r'^$', DatasetView.as_view()),
-    (r'^' + dataset + '$', DatasetView.as_view()),
+    url(r'^$', DatasetView.as_view(),                name='tg-datasets'),
+    url(r'^' + dataset + '$', DatasetView.as_view(), name='tg-dataset'),
 
 # Analysis View
-    (analysis_base + '$', TopicView.as_view()),
+    url(analysis_base + '$', TopicView.as_view(),    name='tg-analysis'),
 
 # Topic Views
-    (analysis_base + '/' + topic + '$', TopicView.as_view()),
-    (analysis_base + '/' + topic + '/' + map + '$',
-        'topic_modeling.visualize.topics.views.render_topic_map'),
-    (analysis_base + '/' + topic + '/' + document + '$',
-        TopicDocumentView.as_view()),
-    (analysis_base + '/' + topic + '/' + word + '$',
-        TopicWordView.as_view()),
+    url(analysis_base + '/' + topic + '$', TopicView.as_view(), name='tg-topic'),
+    url(analysis_base + '/' + topic + '/' + map + '$',
+        'topic_modeling.visualize.topics.views.render_topic_map', name='tg-topic-map'),
+    url(analysis_base + '/' + topic + '/' + document + '$',
+        TopicDocumentView.as_view(), name='tg-topic-doc'),
+    url(analysis_base + '/' + topic + '/' + word + '$',
+        TopicWordView.as_view(), name='tg-topic-word'),
 
 # Attribute Views
-    (analysis_base + '/' + attribute + '$',
-        AttributeView.as_view()),
-    (analysis_base + '/' + attribute + '/' + value + '$',
-        AttributeView.as_view()),
-    (analysis_base + '/' + attribute + '/' + value + '/' + word + '$',
-        AttributeWordView.as_view()),
-    (analysis_base + '/' + attribute + '/' + value + '/' + document + '$',
-        AttributeDocumentView.as_view()),
+    url(analysis_base + '/' + attribute + '$',
+        AttributeView.as_view(), name='tg-attr'),
+    url(analysis_base + '/' + attribute + '/' + value + '$',
+        AttributeView.as_view(), name='tg-attr-val'),
+    url(analysis_base + '/' + attribute + '/' + value + '/' + word + '$',
+        AttributeWordView.as_view(), name='tg-attr-val-word'),
+    url(analysis_base + '/' + attribute + '/' + value + '/' + document + '$',
+        AttributeDocumentView.as_view(), name='tg-attr-val-doc'),
 
 # Word Views
-    (analysis_base + '/' + word + '$', WordView.as_view()),
+    url(analysis_base + '/' + word + '$', WordView.as_view(), name='tg-word'),
 
 # Document Views
-    (analysis_base + '/' + document + '$', DocumentView.as_view()),
+    url(analysis_base + '/' + document + '$', DocumentView.as_view(), name='tg-doc'),
 
 ## Favorite Views
 #    (r'^favorite/' + dataset + '/' + analysis + '/' + id + '$',
 #     'topic_modeling.visualize.favorite.index'),
 
 # Plot View
-    (analysis_base + '/' + plot + '$',
-        PlotView.as_view())
+    url(analysis_base + '/' + plot + '$',
+        PlotView.as_view(), name='tg-plot')
 )
 
 feeds_base = 'feeds'
@@ -239,22 +239,17 @@ urlpatterns += patterns(prefix+'.documents.ajax',
 favs_prefix = 'topic_modeling.visualize.favorites'
 #entity_type = r'/(?P<entity_type>[^/]+)'
 item_id = r'/(?P<item_id>[^/]+)'
-#
-#urlpatterns += patterns(
-#    favs_prefix,
-#    (favs_base, 'all'),
-#    (favs_base + entity_type, 'by_entity_type'),
-#    (favs_base + entity_type + item_id, 'favorite')
-#)
 
 urlpatterns += patterns(favs_prefix,
-#    ('^favs$', 'all'),
-    ('^datasets.favs$', 'datasets'),
-    (r'^'+dataset + '/fav$', 'dataset'),
-    (r'^'+dataset + '/analyses.favs$', 'analyses'),
-    (r'^'+dataset + '/' + analysis + '/fav$', 'analysis'),
-    (r'^'+dataset + '/' + analysis + '/topics/favs$', 'topics'),
-    (r'^'+dataset + '/' + analysis + '/' + topic + '/fav$', 'topic')
+    url('^datasets.favs$', 'datasets', name='tg-favs-datasets'),
+    url(r'^'+dataset + '/fav$', 'dataset', name='tg-favs-dataset'),
+    url(r'^'+dataset + '/analyses.favs$', 'analyses', name='tg-favs-analyses'),
+    url(r'^'+dataset + '/' + analysis + '/fav$', 'analysis', name='tg-favs-analysis'),
+    url(r'^'+dataset + '/' + analysis + '/topics.favs$', 'topics', name='tg-favs-topics'),
+    url(r'^'+dataset + '/' + analysis + '/' + topic + '/fav$', 'topic', name='tg-favs-topic'),
+    url(r'^favs$', 'views', name='tg-favs-views'),
+    url(r'^favs/(?P<viewid>[^/]+)', 'view', name='tg-favs-view')
+    
 )
 
 

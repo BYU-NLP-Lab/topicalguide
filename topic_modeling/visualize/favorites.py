@@ -24,8 +24,9 @@ from topic_modeling import anyjson
 from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods, require_GET
 from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis,\
-    AnalysisFavorite
+    AnalysisFavorite, TopicFavorite, Topic
 from django.core import serializers
+from django.core.urlresolvers import reverse
 
 class SerializerResponse(HttpResponse):
     def __init__(self, obj, fmt='json', *args, **kwargs):
@@ -35,12 +36,18 @@ class JsonResponse(HttpResponse):
     def __init__(self, obj, *args, **kwargs):
         super(JsonResponse, self).__init__(anyjson.dumps(obj))
 
+@require_GET
+def datasets(request):
+    return JsonResponse([fav.dataset.id for fav in _dataset_favorites(request)])
+
 def _dataset_favorites(request):
     return DatasetFavorite.objects.filter(session_key=request.session.session_key)
 
-@require_GET
-def datasets(request):
-    return SerializerResponse(_dataset_favorites(request))
+def dataset_favorite_entries(request):
+    return [{'text':fav.dataset.readable_name,
+             'url': reverse('tg-dataset', kwargs={'dataset':fav.dataset.name}),
+             'favurl':reverse('tg-favs-dataset', kwargs={'dataset':fav.dataset.name}),
+             'fav':fav} for fav in _dataset_favorites(request)]
 
 @require_http_methods(['GET', 'PUT', 'DELETE'])
 def dataset(request, dataset):
@@ -57,18 +64,25 @@ def dataset(request, dataset):
     
     return _favorites_ajax_handler(request, get, create)
 
+@require_GET
+def analyses(request, **kwargs):
+    if 'dataset' in kwargs:
+        return JsonResponse([fav.analysis.id for fav in _analysis_favorites(request, dataset=kwargs['dataset'])])
+    else:
+        return JsonResponse([fav.analysis.id for fav in _analysis_favorites(request)])
+
 def _analysis_favorites(request, dataset=None):
     if dataset:
         return AnalysisFavorite.objects.filter(session_key=request.session.session_key, analysis__dataset__name=dataset)
     else:
         return AnalysisFavorite.objects.filter(session_key=request.session.session_key)
 
-@require_GET
-def analyses(request, **kwargs):
-    if 'dataset' in kwargs:
-        return SerializerResponse(_analysis_favorites(request, dataset=kwargs['dataset']))
-    else:
-        return SerializerResponse(_analysis_favorites(request))
+def analysis_favorite_entries(request):
+    return [{
+        'text': fav.analysis.dataset.readable_name + ': ' + fav.analysis.name,
+        'url': reverse('tg-analysis', kwargs={'dataset':fav.analysis.dataset.name, 'analysis':fav.analysis.name}),
+        'favurl': reverse('tg-favs-analysis', kwargs={'dataset':fav.analysis.dataset.name, 'analysis':fav.analysis.name}),
+        'fav': fav} for fav in _analysis_favorites(request)]
 
 @require_http_methods(['GET', 'PUT', 'DELETE'])
 def analysis(request, dataset, analysis):
@@ -85,6 +99,27 @@ def analysis(request, dataset, analysis):
     
     return _favorites_ajax_handler(request, get, create)
 
+@require_GET
+def topics(request, dataset, analysis):
+    return JsonResponse(_topic_favorites(request, dataset, analysis))
+
+def _topic_favorites(request, dataset, analysis):
+    return [fav.topic.number for fav in TopicFavorite.objects.filter(topic__analysis__dataset__name=dataset, topic__analysis__name=analysis, session_key=request.session.session_key)]
+
+@require_http_methods(['GET', 'PUT', 'DELETE'])
+def topic(request, dataset, analysis, topic):
+    topic = Topic.objects.get(analysis__dataset__name=dataset, analysis__name=analysis, number=int(topic))
+    
+    def get():
+        try:
+            return TopicFavorite.objects.get(topic=topic, session_key=request.session.session_key)
+        except TopicFavorite.DoesNotExist:
+            return None
+    
+    def create():
+        TopicFavorite.objects.create(topic=topic, session_key=request.session.session_key)
+    
+    return _favorites_ajax_handler(request, get, create)
 
 '''
     {get} should return None if the favorite doesn't exist
@@ -105,6 +140,14 @@ def _favorites_ajax_handler(request, get, create):
         return JsonResponse(True)
     else:
         raise Exception("Unsupported HTTP method '" + request.method + "'")
+
+@require_GET
+def views(request):
+    pass
+
+@require_http_methods(['GET', 'PUT', 'DELETE'])
+def view(request, viewid):
+    pass
 
 #def index(request, dataset, analysis, id):
 #    page_vars = dict()

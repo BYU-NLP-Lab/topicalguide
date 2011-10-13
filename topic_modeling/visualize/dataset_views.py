@@ -22,7 +22,6 @@
 
 from random import randint
 from topic_modeling.visualize.common import DatasetBaseView, BreadCrumb
-from topic_modeling.visualize import favorites
 
 class DatasetView(DatasetBaseView):
     template_name = "datasets.html"
@@ -32,13 +31,6 @@ class DatasetView(DatasetBaseView):
         
         context['view_description'] = 'Available Datasets'
         context['breadcrumb'] = BreadCrumb().item('Available Datasets')
-        
-        context['favorites']['datasets'] = [fav.dataset for fav in favorites._dataset_favorites(request)]
-        
-        context['favorites']['analyses'] = [fav.analysis for fav in favorites._analysis_favorites(request)]
-        
-#        for dataset in context['favorites']['datasets']:
-#            context['favorites']['analyses'][dataset.name] = favorites._analysis_favorites(request, dataset=dataset.name)
         
         # Randomly generate the parameters that will be used in generation of plots
         # We do this for every analysis so that each analysis has its own plot
