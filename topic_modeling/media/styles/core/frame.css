@@ -172,6 +172,7 @@ nav#header li#favorites > span {
     height: 2em;
     line-height: 2em;
     padding: 0 0.9em 0 0.9em;
+    margin-right: 0.5em;
 }
 
 nav#header li#favorites > span.active {
@@ -187,6 +188,7 @@ nav#header li#favorites > ul {
 	background: white;
 	text-align: left;
 	box-shadow: 0.5em 0.2em 0.5em #ccc;
+	margin-right: 0.5em;
 }
 
 nav#header li#favorites ul {

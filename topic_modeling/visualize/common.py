@@ -35,19 +35,13 @@ from topic_modeling import settings
 from django.shortcuts import get_object_or_404
 from django.views.generic.base import TemplateResponseMixin, View
 from datetime import timedelta
+from topic_modeling.visualize import favorites
 
 '''
 Like TemplateView, but better
 '''
 class RootView(TemplateResponseMixin, View):
     def get_context_data(self, request, **kwargs):
-        # Favorites Stuff
-        # Do what's necessary to keep the session from ever expiring (assuming the user checks in every 100 years or so
-        if request.session.get_expiry_age() < 3153600000: # If the session is expiring sometime in the next 100 years,
-            request.session.set_expiry(timedelta(365000)) # then reset the expiration to 1,000 years from now
-#        if 'favorites' not in request.session:
-#            request.session['favorites'] = dict()
-        
         context = Context()
         
         STATIC = '/site-media'
@@ -61,12 +55,22 @@ class RootView(TemplateResponseMixin, View):
         context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
         context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
         
-        try:
-            favorites = request.session['favorites']
-        except KeyError:
-            favorites = dict()
-            request.session['favorites'] = favorites
-        context['favorites'] = favorites
+        # Favorites Stuff
+        # Do what's necessary to keep the session from ever expiring (assuming the user checks in every 100 years or so
+        if request.session.get_expiry_age() < 3153600000: # If the session is expiring sometime in the next 100 years,
+            request.session.set_expiry(timedelta(365000)) # then reset the expiration to 1,000 years from now
+        
+        # Preload lists of favorites
+        context['favorites'] = {
+            'datasets': favorites.dataset_favorite_entries(request),
+            'analyses': favorites.analysis_favorite_entries(request)
+        }
+        
+        context['favids'] = {
+            'datasets': [fav['fav'].dataset.id for fav in context['favorites']['datasets']],
+            'analyses': [fav['fav'].analysis.id for fav in context['favorites']['analyses']]
+        }
+
         
         return context
     
@@ -86,9 +90,6 @@ class DatasetBaseView(RootView):
         context['dataset'] = dataset
         context['dataset_url'] = "/datasets/%s" % (dataset)
         
-        if 'datasets' not in context['favorites']:
-            context['favorites']['datasets'] = dict()
-        
         return context
 
 class AnalysisBaseView(DatasetBaseView):
@@ -106,8 +107,7 @@ class AnalysisBaseView(DatasetBaseView):
         context['topics_url'] = context['analysis_url'] + "/topics"
         context['words_url'] = context['analysis_url'] + "/words"
         
-        if 'analyses' not in context['favorites']:
-            context['favorites']['analyses'] = dict()
+        context['favorites']['topics'] = favorites._topic_favorites(request, context['dataset'], analysis.name)
         
         return context
 
