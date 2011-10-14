@@ -37,12 +37,12 @@ from topic_modeling.visualize.models import TopicWord
 from topic_modeling.visualize.models import DocumentTopic
 from topic_modeling.visualize.models import AttributeValueTopic
 from topic_modeling.visualize.topics.common import top_values_for_attr_topic
-from topic_modeling.visualize.topics.common import get_topic_name
 from topic_modeling.visualize.topics.filters import clean_topics_from_session
 from topic_modeling.visualize.topics.filters import get_topic_filter_by_name
 from topic_modeling.visualize.topics.filters import possible_topic_filters
-import sys
 from django.db import transaction
+from topic_modeling.visualize.topics.names import current_name_scheme,\
+    topic_name_with_ns
 
 # General and Sidebar stuff
 ###########################
@@ -59,13 +59,12 @@ def rename_topic(request, dataset, analysis, topic, name):
 def topic_ordering(request, dataset, analysis, order_by):
     request.session['topic-sort'] = order_by
     request.session['topic-page'] = 1
-    name_scheme_id = request.session['current_name_scheme_id']
+    ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
     topics = Topic.objects.filter(analysis__name=analysis,
             analysis__dataset__name=dataset)
     topics, _, num_pages = clean_topics_from_session(topics, request.session)
-    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic,
-        name_scheme_id))) for topic in topics]
+    ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = 1
     return HttpResponse(simplejson.dumps(ret_val))
@@ -73,7 +72,7 @@ def topic_ordering(request, dataset, analysis, order_by):
 
 def get_topic_page(request, dataset, analysis, number):
     request.session['topic-page'] = int(number)
-    name_scheme_id = request.session['current_name_scheme_id']
+    ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
     topics = request.session.get('topics-list', None)
     if not topics:
@@ -82,7 +81,7 @@ def get_topic_page(request, dataset, analysis, number):
     num_per_page = request.session.get('topics-per-page', 20)
     page = int(number)
     topics, num_pages, _ = paginate_list(topics, page, num_per_page)
-    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic, name_scheme_id))) for topic in topics]
+    ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
     return HttpResponse(simplejson.dumps(ret_val))
@@ -104,7 +103,7 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
 
 
 def similar_topics(request, dataset, analysis, topic, measure):
-    name_scheme_id = request.session['current_name_scheme_id']
+    ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
     request.session['topic-similarity-measure'] = measure
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
@@ -118,7 +117,7 @@ def similar_topics(request, dataset, analysis, topic, measure):
     for t in similar_topics:
         values += [t.value]
         similar_topic = t.topic2
-        topic_name = get_topic_name(similar_topic, name_scheme_id)
+        topic_name = topic_name_with_ns(similar_topic, ns)
         topics += [vars(AjaxTopic(similar_topic, topic_name))]
     ret_val['values'] = values
     ret_val['topics'] = topics
@@ -151,7 +150,7 @@ def remove_topic_filter(request, dataset, analysis, topic, number):
 
 
 def filtered_topics_response(request, dataset, analysis):
-    name_scheme_id = request.session['current_name_scheme_id']
+    ns = current_name_scheme(request.session, analysis)
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     topics = analysis.topic_set
     request.session['topic-page'] = 1
@@ -159,8 +158,7 @@ def filtered_topics_response(request, dataset, analysis):
             request.session)
     ret_val = dict()
     ret_val['filter_form'] = filter_form.__unicode__()
-    ret_val['topics'] = [vars(AjaxTopic(topic, get_topic_name(topic,
-        name_scheme_id))) for topic in topics]
+    ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = request.session.get('topic-page', 1)
     return HttpResponse(simplejson.dumps(ret_val))

@@ -21,37 +21,27 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 
-import os
 from collections import namedtuple
-
 from django.db.models import Avg
+from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
-from django.http import HttpResponseNotFound
-
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import get_word_cloud, Tab,\
-    get_dataset_and_analysis, AnalysisBaseView, word_cloud_widget
-from topic_modeling.visualize.common import set_word_context
-from topic_modeling.visualize.common import BreadCrumb
-from topic_modeling.visualize.common import Widget
-from topic_modeling.visualize.common import WordSummary
-from topic_modeling.visualize.models import Analysis
-from topic_modeling.visualize.models import Document
-from topic_modeling.visualize.models import TopicMetaInfo
-from topic_modeling.visualize.models import TopicMetaInfoValue
-from topic_modeling.visualize.models import Topic
-from topic_modeling.visualize.models import Word
-from topic_modeling.visualize.models import TopicNameScheme
-from topic_modeling.visualize.topics.common import RenameForm
-from topic_modeling.visualize.topics.common import  get_topic_name
-from topic_modeling.visualize.topics.common import SortTopicForm
-from topic_modeling.visualize.topics.common import top_values_for_attr_topic
-from topic_modeling.visualize.topics.filters import clean_topics_from_session
-from topic_modeling.visualize.topics.filters import TopicFilterByDocument
-from topic_modeling.visualize.topics.filters import TopicFilterByWord
-from topic_modeling.visualize.word_views import words_tab
+from topic_modeling.visualize.common import BreadCrumb, Widget, WordSummary, \
+    get_word_cloud, Tab, get_dataset_and_analysis, AnalysisBaseView, \
+    word_cloud_widget, set_word_context
 from topic_modeling.visualize.documents.views import tabs as doc_tabs
+from topic_modeling.visualize.models import Analysis, Document, Topic, \
+    TopicMetaInfo, TopicMetaInfoValue, Word
+from topic_modeling.visualize.topics.common import RenameForm, SortTopicForm, \
+    top_values_for_attr_topic
+from topic_modeling.visualize.topics.filters import TopicFilterByDocument, \
+    TopicFilterByWord, clean_topics_from_session
+from topic_modeling.visualize.topics.names import name_schemes, \
+    current_name_scheme, topic_name_with_ns
+from topic_modeling.visualize.word_views import words_tab
+import os
+
+
 
 class TopicView(AnalysisBaseView):
     template_name = "topics.html"
@@ -76,16 +66,9 @@ class TopicView(AnalysisBaseView):
         sort_by = request.session.get('topic-sort', 'name')
         context['sort_form'].fields['sort'].initial = sort_by
     
-        # Get the name scheme stuff ready
-        name_schemes = TopicNameScheme.objects.filter(
-                analysis=analysis).order_by('name')
-        context['nameschemes'] = name_schemes
-        if 'current_name_scheme_id' not in request.session:
-            request.session['current_name_scheme_id'] = name_schemes[0].id
     
-        current_name_scheme_id = request.session['current_name_scheme_id']
-        current_name_scheme = TopicNameScheme.objects.get(id=current_name_scheme_id)
-        context['currentnamescheme'] = current_name_scheme
+        context['nameschemes'] = name_schemes(analysis)
+        context['currentnamescheme'] = current_name_scheme(request.session, analysis)
     
         # Filter, sort, and paginate the topics
         if topic:
@@ -106,7 +89,7 @@ class TopicView(AnalysisBaseView):
     
         context['metrics'] = topic.topicmetricvalue_set.all()
     
-        topic_name = get_topic_name(topic, current_name_scheme.id)
+        topic_name = topic_name_with_ns(topic, context['currentnamescheme'])
     
         context['topic_name'] = topic_name
     
@@ -348,7 +331,7 @@ def similar_topic_list_widget(request, topic):
     w = Widget("Most Similar Topics", "topics/similar_topics")
     similarity_measures = topic.analysis.pairwisetopicmetric_set.all()
     if similarity_measures:
-        name_scheme_id = request.session['current_name_scheme_id']
+        ns = current_name_scheme(request.session, topic.analysis)
         measure = request.session.get('topic-similarity-measure', None)
         if measure:
             measure = similarity_measures.get(name=measure)
@@ -361,7 +344,7 @@ def similar_topic_list_widget(request, topic):
         for t in similar_topics[1:11]:
             topic = t.topic2
             number = topic.number
-            name = str(number) + ': ' + get_topic_name(topic, name_scheme_id)
+            name = str(number) + ': ' + topic_name_with_ns(topic, ns)
             entries.append(TopicSimilarityEntry(name, number, t.value))
         w['similar_topics'] = entries
         w['similarity_measures'] = similarity_measures
