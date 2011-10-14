@@ -26,8 +26,8 @@ from django.http import HttpResponse
 from django.utils import simplejson
 from django.db.models.aggregates import Min
 
-from topic_modeling.visualize.common import FilterForm
-from topic_modeling.visualize.common import paginate_list
+from topic_modeling.visualize.common.ui import FilterForm
+from topic_modeling.visualize.common.helpers import paginate_list
 from topic_modeling.visualize.models import Analysis, DocumentTopicWord
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic

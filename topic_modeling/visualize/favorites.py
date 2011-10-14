@@ -20,23 +20,13 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from topic_modeling import anyjson
-from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods, require_GET
 from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis,\
     AnalysisFavorite, TopicFavorite, Topic
-from django.core import serializers
 from django.core.urlresolvers import reverse
 from topic_modeling.visualize.topics.names import current_name_scheme,\
     topic_name_with_ns
-
-class SerializerResponse(HttpResponse):
-    def __init__(self, obj, fmt='json', *args, **kwargs):
-        super(SerializerResponse, self).__init__(content=serializers.serialize(fmt, obj))
-
-class JsonResponse(HttpResponse):
-    def __init__(self, obj, *args, **kwargs):
-        super(JsonResponse, self).__init__(anyjson.dumps(obj))
+from topic_modeling.visualize.common.http_responses import JsonResponse
 
 @require_GET
 def datasets(request):

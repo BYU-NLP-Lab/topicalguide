@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -26,8 +24,8 @@
 from django import forms
 from django.db.models import Min, Max
 
-from topic_modeling.visualize.common import FilterForm
-from topic_modeling.visualize.common import paginate_list
+from topic_modeling.visualize.common.ui import FilterForm
+from topic_modeling.visualize.common.helpers import paginate_list
 from topic_modeling.visualize.documents.common import sort_documents
 
 # Methods

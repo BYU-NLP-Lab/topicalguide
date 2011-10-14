@@ -21,10 +21,11 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import BreadCrumb, AnalysisBaseView
-from topic_modeling.visualize.common import Tab
-from topic_modeling.visualize.common import Widget
-from topic_modeling.visualize.common import WordSummary
+from topic_modeling.visualize.common.ui import BreadCrumb
+from topic_modeling.visualize.common.views import AnalysisBaseView
+from topic_modeling.visualize.common.ui import Tab
+from topic_modeling.visualize.common.ui import Widget
+from topic_modeling.visualize.common.ui import WordSummary
 from topic_modeling.visualize.documents.common import SortDocumentForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
 from topic_modeling.visualize.models import Document

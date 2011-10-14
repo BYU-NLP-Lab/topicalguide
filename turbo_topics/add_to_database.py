@@ -28,7 +28,6 @@ sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
 from django.db import transaction
-from math import log
 from optparse import OptionParser
 
 from topic_modeling.visualize.models import Analysis, TopicMetaInfo
@@ -54,7 +53,7 @@ def add_information(dataset, analysis, force_import=False, *args, **kwargs):
         info = TopicMetaInfo(name=info_name)
         info.save()
 
-    for root, dirs, files in os.walk(kwargs['output_dir']):
+    for root, _dirs, files in os.walk(kwargs['output_dir']):
         for file in files:
             f = open(root+'/'+file)
             output = ''
