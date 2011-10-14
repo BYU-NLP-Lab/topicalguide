@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -25,14 +23,13 @@
 
 from django.http import HttpResponse
 
-from topic_modeling.visualize.common import FilterForm
+from topic_modeling.visualize.common.ui import FilterForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
 from topic_modeling.visualize.documents.filters import get_doc_filter_by_name
 from topic_modeling.visualize.documents.filters import possible_document_filters
 from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
-from topic_modeling.profiler import profile
 
 import simplejson
 
@@ -46,7 +43,7 @@ def get_document_page(request, dataset, analysis, document, number):
     if not documents:
         documents = Document.objects.filter(dataset__name=dataset)
     page = int(number)
-    documents, filter_form, num_pages = clean_docs_from_session(documents,
+    documents, _filter_form, num_pages = clean_docs_from_session(documents,
             request.session)
     ret_val['documents'] = [vars(AjaxDocument(doc)) for doc in documents]
     ret_val['num_pages'] = num_pages

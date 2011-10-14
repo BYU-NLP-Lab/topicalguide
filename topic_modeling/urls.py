@@ -53,6 +53,7 @@ def render_script(request, script_path):
     return HttpResponse(script, mimetype="text/javascript")
 
 dataset = r'datasets/(?P<dataset>[^/]*)'
+dataset_nc = r'datasets/[^/]*'
 analysis = r'analyses/(?P<analysis>[^/]*)'
 topic = r'topics/(?P<topic>[^/]*)'
 word = r'words/(?P<word>[^/]*)'
@@ -135,7 +136,7 @@ urlpatterns += patterns(prefix+'.ajax_calls',
 # Topic-Attribute Plots
     (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '$',
         'topic_attribute_plot'),
-    (r'^feeds/attribute-values/' + dataset + '/' + attribute + '$',
+    (r'^feeds/attribute-values/' + dataset_nc + '/' + attribute + '$',
         'attribute_values'),
 # Topic-Metric Plots
     (r'^feeds/topic-metric-plot/' + dataset + '/' + analysis + '/' + metric + '$',
@@ -235,9 +236,7 @@ urlpatterns += patterns(prefix+'.documents.ajax',
 )
 
 # Favorites
-#favs_base = '^favorites'
 favs_prefix = 'topic_modeling.visualize.favorites'
-#entity_type = r'/(?P<entity_type>[^/]+)'
 item_id = r'/(?P<item_id>[^/]+)'
 
 urlpatterns += patterns(favs_prefix,
@@ -249,18 +248,7 @@ urlpatterns += patterns(favs_prefix,
     url(r'^'+dataset + '/' + analysis + '/' + topic + '/fav$', 'topic', name='tg-favs-topic'),
     url(r'^favs$', 'views', name='tg-favs-views'),
     url(r'^favs/(?P<viewid>[^/]+)', 'view', name='tg-favs-view')
-    
 )
-
-
-#    (r'^feeds/add_favorite/' + tab + '$', #?url=<escaped url to save>
-#        'topic_modeling.visualize.ajax_calls.add_favorite'),
-#    (r'^feeds/recall_favorite/' + id + '$',
-#        'topic_modeling.visualize.ajax_calls.recall_favorite'),
-#    (r'^feeds/clear_favorite$',
-#        'topic_modeling.visualize.ajax_calls.remove_all_favorites'),
-#    (r'^feeds/favorite-page/' + number + '$',
-#        'topic_modeling.visualize.ajax_calls.get_favorite_page'),
 
 urlpatterns += patterns('',
 #Styles

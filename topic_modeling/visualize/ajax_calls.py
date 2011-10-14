@@ -20,18 +20,16 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-import copy
 import random
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 
 from topic_modeling import anyjson
 from topic_modeling.visualize.charts import TopicAttributeChart
 from topic_modeling.visualize.charts import TopicMetricChart
-from topic_modeling.visualize.common import get_word_list
-from topic_modeling.visualize.common import paginate_list
-from topic_modeling.visualize.common import set_word_context
-from topic_modeling.visualize.common import WordSummary
+from topic_modeling.visualize.common.helpers import get_word_list
+from topic_modeling.visualize.common.helpers import paginate_list
+from topic_modeling.visualize.common.ui import WordSummary
 from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
@@ -67,7 +65,7 @@ def word_in_context(request, dataset, analysis, word, topic=None):
 # Plots tab ajax calls
 ######################
 
-def attribute_values(request, dataset, attribute):
+def attribute_values(request, attribute):
     """
     This is for AJAX calls from the user client to update the list of available
     sub-attributes as the user selects attributes.

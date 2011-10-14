@@ -26,9 +26,13 @@ from django.db.models import Avg
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import BreadCrumb, Widget, WordSummary, \
-    get_word_cloud, Tab, get_dataset_and_analysis, AnalysisBaseView, \
-    word_cloud_widget, set_word_context
+
+from topic_modeling.visualize.common.ui import BreadCrumb, Widget, WordSummary,\
+     Tab
+from topic_modeling.visualize.common.views import AnalysisBaseView
+from topic_modeling.visualize.common.helpers import word_cloud_widget, \
+    set_word_context, get_word_cloud, get_dataset_and_analysis
+
 from topic_modeling.visualize.documents.views import tabs as doc_tabs
 from topic_modeling.visualize.models import Analysis, Document, Topic, \
     TopicMetaInfo, TopicMetaInfoValue, Word

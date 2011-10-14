@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -22,108 +20,17 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
+# Common User Interface Elements
+
+import os
 
 from django import forms, template
-from django.core.paginator import Paginator
 from django.template.context import Context
-
-from topic_modeling.visualize.models import Word, Dataset, Analysis, \
-    Document, Attribute, Value
 from django.template.defaultfilters import slugify
-import os
+
+from topic_modeling.visualize.models import Dataset, Analysis, Word, Document,\
+    Attribute, Value
 from topic_modeling import settings
-from django.shortcuts import get_object_or_404
-from django.views.generic.base import TemplateResponseMixin, View
-from datetime import timedelta
-from topic_modeling.visualize import favorites
-
-'''
-Like TemplateView, but better
-'''
-class RootView(TemplateResponseMixin, View):
-    def get_context_data(self, request, **kwargs):
-        context = Context()
-        
-        STATIC = '/site-media'
-        context['SCRIPTS'] = '/scripts'
-        context['STYLES'] = '/styles'
-        context['IMAGES'] = STATIC + '/images'
-        context['FONTS'] = STATIC + '/fonts'
-        
-        context['topical_guide_project_url'] = "http://nlp.cs.byu.edu/topicalguide"
-        context['nlp_lab_url'] = "http://nlp.cs.byu.edu"
-        context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
-        context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
-        
-        # Favorites Stuff
-        # Do what's necessary to keep the session from ever expiring (assuming the user checks in every 100 years or so
-        if request.session.get_expiry_age() < 3153600000: # If the session is expiring sometime in the next 100 years,
-            request.session.set_expiry(timedelta(365000)) # then reset the expiration to 1,000 years from now
-        
-        # Preload lists of favorites
-        context['favorites'] = {
-            'datasets': favorites.dataset_favorite_entries(request),
-            'analyses': favorites.analysis_favorite_entries(request),
-            'topics': favorites.favorite_topic_entries(request)
-        }
-        
-        context['favids'] = {
-            'datasets': [fav['fav'].dataset.id for fav in context['favorites']['datasets']],
-            'analyses': [fav['fav'].analysis.id for fav in context['favorites']['analyses']],
-            'topics':   [fav['fav'].topic.id for fav in context['favorites']['topics']]
-        }
-
-        
-        return context
-    
-    def get(self, request, *args, **kwargs):
-        context = self.get_context_data(request, **kwargs)
-        return self.render_to_response(context)
-
-class DatasetBaseView(RootView):
-    def get_context_data(self, request, **kwargs):
-        context = super(DatasetBaseView, self).get_context_data(request, **kwargs)
-        context['datasets'] = Dataset.objects.all()
-        try:
-            dataset = get_object_or_404(Dataset, name=kwargs['dataset'])
-        except KeyError:
-            dataset = context['datasets'][0]
-        
-        context['dataset'] = dataset
-        context['dataset_url'] = "/datasets/%s" % (dataset)
-        
-        return context
-
-class AnalysisBaseView(DatasetBaseView):
-    def get_context_data(self, request, **kwargs):
-        context = super(AnalysisBaseView, self).get_context_data(request, **kwargs)
-        
-        analysis = get_object_or_404(Analysis, name=kwargs['analysis'], dataset=context['dataset'])
-        context['analysis'] = analysis
-        context['analysis_url'] = "%s/analyses/%s" % (context['dataset_url'],
-                analysis.name)
-    
-        context['attributes_url'] = context['analysis_url'] + "/attributes"
-        context['documents_url'] = context['analysis_url'] + "/documents"
-        context['plots_url'] = context['analysis_url'] + "/plots"
-        context['topics_url'] = context['analysis_url'] + "/topics"
-        context['words_url'] = context['analysis_url'] + "/words"
-        
-#        context['favorites']['topics'] = favorites.favorite_topic_entries(request, context['dataset'], analysis.name)
-        
-        return context
-
-def get_dataset_and_analysis(dataset_name, analysis_name):
-    dataset = get_object_or_404(Dataset, name=dataset_name)
-    analysis = get_object_or_404(Analysis, name=analysis_name, dataset=dataset)
-    return dataset, analysis
-
-################################################################################
-# Classes
-################################################################################
-
-# Base Filter classes
-#####################
 
 class FilterForm(forms.Form):
     def __init__(self, possible_filters, *args, **kwargs):
@@ -132,8 +39,8 @@ class FilterForm(forms.Form):
         self.fields['f'] = forms.ChoiceField(possible_filters)
         self.fields['f'].widget.attrs['onchange'] = 'add_new_filter()'
 
-    def add_filter(self, filter):
-        self.filters.append(filter)
+    def add_filter(self, filter_):
+        self.filters.append(filter_)
 
     def add_filter_form(self):
         ret_val = '<td>Add a filter by</td>'
@@ -144,8 +51,8 @@ class FilterForm(forms.Form):
     def __unicode__(self):
         ret_val = ''
         if self.filters:
-            for filter in self.filters:
-                ret_val += '<tr>%s</tr>' % filter.form()
+            for filter_ in self.filters:
+                ret_val += '<tr>%s</tr>' % filter_.form()
         ret_val += '<tr>%s</tr>' % self.add_filter_form()
         return ret_val
 
@@ -266,10 +173,6 @@ class BreadCrumbItem(object):
         html += '</li>'
         return html
 
-
-# Other classes
-###############
-
 class WordSummary(object):
     def __init__(self, word="", percent="", number=None):
         self.word = word
@@ -380,84 +283,3 @@ class Cloud(object):
     def __init__(self, name, html):
         self.name = name
         self.html = html
-
-
-################################################################################
-# Helper functions
-################################################################################
-
-
-# General helper functions
-##########################
-
-def set_word_context(word, document, analysis, topic=None):
-    word.left_context, word.word, word.right_context \
-        = document.get_context_for_word(word.word, analysis, topic)
-
-
-def paginate_list(list, page, num_per_page, object=None):
-    # If given, object overrides page, and we find the page that contains
-    # object
-    paginator = Paginator(list, num_per_page)
-    if object:
-        for page in range(1, paginator.num_pages+1):
-            list = paginator.page(page).object_list
-            if object in list:
-                return list, paginator.num_pages, page
-    return paginator.page(page).object_list, paginator.num_pages, None
-
-
-# TODO(matt): is there a better way to do this?
-def get_word_cloud(words, open='', close='', url=True):
-    #note that this only works if words is presorted by percent
-    idx = 3 if len(words) > 3 else len(words) - 1
-    if idx == -1:
-        return ""
-    scale = words[idx].percent
-
-    def cmpWord(x, y):
-        return cmp(x.word.lower(), y.word.lower())
-#        return cmp(str(x.word).lower(), str(y.word).lower())
-    words = sorted(words, cmpWord)
-
-    cloud = ''
-    for word in words:
-        if url:
-            cloud += '<a href="%s">' % word.url
-        size = word.percent / scale * 100 + 50
-        text = open + word.word.lower() + close
-        cloud += '<span style="font-size:%d%%">%s</span> ' % (size, text)
-        if url:
-            cloud += '</a>'
-    return cloud
-
-def word_cloud_widget(words, title='Word Cloud', open=None, close=None, url=True):
-    w = Widget(title, 'common/word_cloud')
-    
-    if open: w['open_text'] = open
-    if close: w['close_text'] = close
-    
-    #note that this only works if words is presorted by percent
-    if len(words) > 3: scale = words[3].percent
-    elif len(words) == 0: scale = 1.0
-    else: scale = words[-1:].percent
-
-    words = sorted(words, cmp=lambda x,y: cmp(x.word.lower(), y.word.lower()))
-    
-    for word in words:
-        word.size = word.percent / scale * 100 + 50
-    
-    w['words'] = words
-    
-    return w
-
-# Word tab helper functions (maybe these should be moved to a new file)
-############################
-
-def get_word_list(request, dataset_name):
-    words = Word.objects.filter(dataset__name=dataset_name)
-    word_base = request.session.get('word-find-base', '')
-    words = filter(lambda w: w.type.startswith(word_base), words)
-    return words
-
-# vim: et sw=4 sts=4

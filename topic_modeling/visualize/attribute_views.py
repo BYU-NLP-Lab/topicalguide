@@ -26,12 +26,10 @@
 from django.shortcuts import get_object_or_404
 
 from topic_modeling.visualize.charts import get_chart
-from topic_modeling.visualize.common import BreadCrumb, Tab,\
-    Widget, AnalysisBaseView
-from topic_modeling.visualize.common import get_word_cloud
-from topic_modeling.visualize.common import paginate_list
-from topic_modeling.visualize.common import set_word_context
-from topic_modeling.visualize.common import WordSummary
+from topic_modeling.visualize.common.ui import BreadCrumb, Tab,\
+    Widget, WordSummary
+from topic_modeling.visualize.common.views import AnalysisBaseView
+from topic_modeling.visualize.common.helpers import get_word_cloud, paginate_list, set_word_context
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.models import Value

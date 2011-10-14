@@ -26,10 +26,10 @@
 from django import forms
 from django.db.models import Max, Min
 
-from topic_modeling.visualize.common import FilterForm
-from topic_modeling.visualize.common import paginate_list
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.topics.common import sort_topics
+from topic_modeling.visualize.common.ui import FilterForm
+from topic_modeling.visualize.common.helpers import paginate_list
 
 # Methods
 #########

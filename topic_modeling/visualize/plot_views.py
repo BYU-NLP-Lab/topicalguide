@@ -25,7 +25,8 @@
 from django.http import HttpResponse
 
 from topic_modeling.visualize.charts import plot_types
-from topic_modeling.visualize.common import BreadCrumb, AnalysisBaseView
+from topic_modeling.visualize.common.ui import BreadCrumb
+from topic_modeling.visualize.common.views import AnalysisBaseView
 
 class PlotView(AnalysisBaseView):
     template_name = "plots.html"

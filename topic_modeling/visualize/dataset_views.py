@@ -21,7 +21,8 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 from random import randint
-from topic_modeling.visualize.common import DatasetBaseView, BreadCrumb
+from topic_modeling.visualize.common.ui import BreadCrumb
+from topic_modeling.visualize.common.views import DatasetBaseView
 
 class DatasetView(DatasetBaseView):
     template_name = "datasets.html"
