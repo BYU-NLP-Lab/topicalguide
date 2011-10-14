@@ -27,6 +27,8 @@ from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis,\
     AnalysisFavorite, TopicFavorite, Topic
 from django.core import serializers
 from django.core.urlresolvers import reverse
+from topic_modeling.visualize.topics.names import current_name_scheme,\
+    topic_name_with_ns
 
 class SerializerResponse(HttpResponse):
     def __init__(self, obj, fmt='json', *args, **kwargs):
@@ -101,10 +103,36 @@ def analysis(request, dataset, analysis):
 
 @require_GET
 def topics(request, dataset, analysis):
-    return JsonResponse(_topic_favorites(request, dataset, analysis))
+    return JsonResponse([fav.topic.number for fav in _topic_favorites(request, dataset, analysis)])
 
-def _topic_favorites(request, dataset, analysis):
-    return [fav.topic.number for fav in TopicFavorite.objects.filter(topic__analysis__dataset__name=dataset, topic__analysis__name=analysis, session_key=request.session.session_key)]
+def _topic_favorites(request, dataset=None, analysis=None):
+    if dataset:
+        if analysis:
+            return TopicFavorite.objects.filter(topic__analysis__dataset__name=dataset, topic__analysis__name=analysis, session_key=request.session.session_key)
+        else:
+            return TopicFavorite.objects.filter(topic__analysis__dataset__name=dataset, session_key=request.session.session_key)
+    else:
+        if analysis:
+            return TopicFavorite.objects.filter(topic__analysis__name=analysis, session_key=request.session.session_key)
+        else:
+            return TopicFavorite.objects.filter(session_key=request.session.session_key)
+
+def favorite_topic_entries(request, dataset=None, analysis=None):
+    entries = list()
+    for fav in _topic_favorites(request, dataset, analysis):
+        topic = fav.topic
+        analysis = topic.analysis
+        dataset = analysis.dataset
+        ns = current_name_scheme(request.session, analysis)
+        kwargs = {'dataset': dataset.name,
+                  'analysis': analysis.name,
+                  'topic': topic.number}
+        entries.append({
+                     'text': topic_name_with_ns(fav.topic, ns),
+                     'url': reverse('tg-topic', kwargs=kwargs),
+                     'favurl': reverse('tg-favs-topic', kwargs=kwargs),
+                     'fav': fav})
+    return entries
 
 @require_http_methods(['GET', 'PUT', 'DELETE'])
 def topic(request, dataset, analysis, topic):

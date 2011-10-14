@@ -63,12 +63,14 @@ class RootView(TemplateResponseMixin, View):
         # Preload lists of favorites
         context['favorites'] = {
             'datasets': favorites.dataset_favorite_entries(request),
-            'analyses': favorites.analysis_favorite_entries(request)
+            'analyses': favorites.analysis_favorite_entries(request),
+            'topics': favorites.favorite_topic_entries(request)
         }
         
         context['favids'] = {
             'datasets': [fav['fav'].dataset.id for fav in context['favorites']['datasets']],
-            'analyses': [fav['fav'].analysis.id for fav in context['favorites']['analyses']]
+            'analyses': [fav['fav'].analysis.id for fav in context['favorites']['analyses']],
+            'topics':   [fav['fav'].topic.id for fav in context['favorites']['topics']]
         }
 
         
@@ -107,7 +109,7 @@ class AnalysisBaseView(DatasetBaseView):
         context['topics_url'] = context['analysis_url'] + "/topics"
         context['words_url'] = context['analysis_url'] + "/words"
         
-        context['favorites']['topics'] = favorites._topic_favorites(request, context['dataset'], analysis.name)
+#        context['favorites']['topics'] = favorites.favorite_topic_entries(request, context['dataset'], analysis.name)
         
         return context
 

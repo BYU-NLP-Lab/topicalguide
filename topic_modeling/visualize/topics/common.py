@@ -25,21 +25,12 @@
 
 from django import forms
 
-from topic_modeling.visualize.models import TopicName
-from topic_modeling.visualize.models import TopicNameScheme
+from topic_modeling.visualize.topics.names import topic_name_with_ns,\
+    current_name_scheme
 
 
 # Methods
 #########
-
-def get_topic_name(topic, name_scheme_id):
-    ns = TopicNameScheme.objects.get(id=name_scheme_id)
-    try:
-        name = TopicName.objects.get(topic=topic, name_scheme=ns).name
-    except:
-        name = topic.name
-    return name
-
 def sort_topics(topics, sort_by, session):
     # Because of the way I had to implement metric sorting, and the way that
     # filtering is implemented, you cannot filter after you have sorted.  Be
@@ -49,10 +40,9 @@ def sort_topics(topics, sort_by, session):
     if sort_by in django_orderings:
         return topics.order_by(sort_by)
     elif sort_by == 'name':
-        name_scheme_id = session['current_name_scheme_id']
-        ns = TopicNameScheme.objects.get(id=name_scheme_id)
+        ns = current_name_scheme(session, topics.all()[0].analysis)
         topic_list = list(topics.all())
-        topic_list.sort(key=lambda x: get_topic_name(x, name_scheme_id))
+        topic_list.sort(key=lambda x: topic_name_with_ns(x, ns))
         return topic_list
     elif 'metric:' in sort_by:
         metric_name = sort_by[7:]
