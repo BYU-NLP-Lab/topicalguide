@@ -24,6 +24,7 @@
  
 nav#header {
 	position: fixed;
+	top: 0;
     width: 100%;
     margin-bottom: 1em;
     clear: both;
