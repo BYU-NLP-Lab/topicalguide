@@ -23,6 +23,8 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
+{% load url from future %}
+
 {% block scripts %}
     {{block.super}}
     <script>
@@ -52,13 +54,13 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		{% block nav_menu %}
 		    <ul id="breadcrumbs" class="nav-menu left">
 				<li id="logo">
-					<a href="/">
+					<a href="{% url 'tg-datasets' %}">
 						<img src="{{nlp_lab_small_logo_url}}" alt="BYU NLP Lab Logo"/>
 					</a>
 				</li>
 				
 				<li id="title-text" class="breadcrumb" title="Go Home">
-					<a href="/">The Topical Guide</a>
+					<a href="{% url 'tg-datasets' %}">The Topical Guide</a>
 				</li>
 				
 				{{breadcrumb.to_ul|safe}}
@@ -75,7 +77,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 				{% endcomment %}
 			
 				<li id="favorites">
-				    <span>Favorites</span>
+				    <span><img class="inactive-star"/>Favorites</span>
 				    <ul>
 				    {% for type,favs in favorites.items %}
 				    {% if favs %}

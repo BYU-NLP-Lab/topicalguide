@@ -20,10 +20,15 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from topic_modeling.visualize.models import TopicNameScheme, TopicName
+from topic_modeling.visualize.models import TopicNameScheme, TopicName, Analysis
 
 def name_schemes(analysis):
-    return TopicNameScheme.objects.filter(analysis__name=analysis).order_by('name')
+#    if isinstance(analysis, basestring):
+#        return TopicNameScheme.objects.filter(analysis__name=analysis).order_by('name')
+    if isinstance(analysis, Analysis):
+        return analysis.topicnamescheme_set.order_by('name')
+    else:
+        raise TypeError("Can only get name schemes for Analysis objects")
 
 def current_name_scheme_id(session, analysis):
     schemes = name_schemes(analysis)

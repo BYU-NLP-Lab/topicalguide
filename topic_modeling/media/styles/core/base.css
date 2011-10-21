@@ -144,12 +144,31 @@ label {
 */
 
 /***** Favorites *****/
-img.star {
+img.inactive-star, img.star {
+	/*height: 0;
+	width: 0;*/
+	/*padding: 1em;*/
+	/*padding: 0.6em 1em 0.6em 1em;*/
+	/*margin: 1em;*/
+	/*height: inherit;
+	width: 150px;*/
+	/*
+	background-image: url("/site-media/images/openclipart/Outlined_star-45623.png");
+	background-repeat: no-repeat;
+	background-position: center center;
+	*/
+	
+	width: 1.2em;
+	height: 1.2em;
+	/*
     min-height: 1em;
     min-width: 1em;
+*/
     content: url("/site-media/images/openclipart/Outlined_star-45623.png");
+    
 }
 
-img.star.fav {
-    content: url("/site-media/images/openclipart/Star-349834968906.png") !important;
+img.inactive-star, img.star.fav {
+	content: url("/site-media/images/openclipart/Star-349834968906.png") !important;
+    /*background-image: url("/site-media/images/openclipart/Star-349834968906.png") !important;*/
 }

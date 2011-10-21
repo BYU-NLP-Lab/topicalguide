@@ -43,7 +43,7 @@ class AttributeView(AnalysisBaseView):
         
         dataset = context['dataset']
         analysis = context['analysis']
-        attribute = kwargs['attribute']
+        attribute = kwargs['attribute'] if 'attribute' in kwargs else None
         try:
             value = kwargs['value']
         except KeyError:
