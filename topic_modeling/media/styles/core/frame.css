@@ -167,6 +167,10 @@ nav#header li#favorites {
 	padding: 0;
 }
 
+li#favorites > img.inactive-star {
+	margin-right: 0.2em;
+}
+
 /* The "Favorites" button */
 nav#header li#favorites > span {
     display: inline-block;

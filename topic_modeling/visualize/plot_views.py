@@ -36,12 +36,11 @@ class PlotView(AnalysisBaseView):
         
         dataset = context['dataset']
         analysis = context['analysis']
-        plot = kwargs['plot']
+        
         
         plots = plot_types.keys()
         plots.sort(key=lambda x: plot_types[x][1])
-        if not plot:
-            plot = plots[0]
+        plot = kwargs['plot'] if 'plot' in kwargs else plots[0]
         
         context['view_description'] = "Plots"
         context['highlight'] = 'plots_tab'

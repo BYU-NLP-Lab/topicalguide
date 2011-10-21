@@ -23,6 +23,8 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
+{% load url from future %}
+
 {% block stylesheets %}
     {{block.super}}
     <link rel="stylesheet" href="{{STYLES}}/datasets.css" type="text/css" />
@@ -53,7 +55,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% if datasets %}
 <div id="accordion">
     {% for dataset,analyses in plot_img_urls.items %}
-    <div><a>{{dataset.readable_name}}<img class="star{% if dataset.id in favids.datasets %} fav{% endif %}" favurl="{% url tg-favs-dataset dataset=dataset.name %}" /></a></div>
+    <div><a>{{dataset.readable_name}}<img class="star{% if dataset.id in favids.datasets %} fav{% endif %}" favurl="{% url 'tg-favs-dataset' dataset=dataset.name %}" /></a></div>
     <div>
     
         
@@ -112,10 +114,10 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 			            <li class="ui-widget{% ifequal analysis curanalysis %} current_analysis{% endifequal %}">
 			            	<div class="ui-widget-content ui-corner-all	">
 				                <div class="ui-widget-header ui-corner-all">
-				                    <a href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}" class="analysis-link">{{analysis.readable_name}}</a>
-				                    <img class="star{% if analysis.id in favids.analyses %} fav{% endif %}" favurl="{% url tg-favs-analysis dataset=dataset.name, analysis=analysis.name %}" />
+				                    <a href="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}" class="analysis-link">{{analysis.readable_name}}</a>
+				                    <img class="star{% if analysis.id in favids.analyses %} fav{% endif %}" favurl="{% url 'tg-favs-analysis' dataset=dataset.name analysis=analysis.name %}" />
 			                    </div>
-				                <a href="/datasets/{{dataset.name}}/analyses/{{analysis.name}}" class="analysis-link">
+				                <a href="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}" class="analysis-link">
 					                {% with analysis.analysismetricvalue_set as metricval_mgr %}
 						                {% if metricval_mgr.count > 0 %}
 								            <table class="ui-widget metrics">

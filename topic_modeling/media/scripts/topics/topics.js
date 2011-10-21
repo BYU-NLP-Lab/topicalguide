@@ -74,6 +74,15 @@ function redraw_list_control(json_link) {
 	});
 }
 
+function redraw_topics(json_link) {
+	$.getJSON(json_link, {}, function(data) {
+		$("div#sidebar table.filters").html(data.filter_form);
+		set_nav_arrows(data.page, data.num_pages);
+		update_list_contents(data.topics);
+		cursor_default();
+	});
+}
+
 function get_page(page) {
 	cursor_wait();
 	var link = "/feeds/topic-page/datasets/" + $.fn.dataset;

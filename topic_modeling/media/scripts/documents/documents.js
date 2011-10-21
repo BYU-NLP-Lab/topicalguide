@@ -35,6 +35,7 @@ function update_list_contents(documents_list) {
 
 function redraw_list_control(json_link) {
 	$.getJSON(json_link, {}, function(data) {
+		$("div#sidebar table.filters").html(data.filter_form);
 		set_nav_arrows(data.page, data.num_pages);
 		update_list_contents(data.documents);
 		cursor_default();

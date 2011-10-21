@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -43,6 +41,8 @@ from topic_modeling.visualize.topics.filters import possible_topic_filters
 from django.db import transaction
 from topic_modeling.visualize.topics.names import current_name_scheme,\
     topic_name_with_ns
+from django.views.decorators.http import require_GET
+from topic_modeling.visualize.common.http_responses import JsonResponse
 
 # General and Sidebar stuff
 ###########################
@@ -70,21 +70,24 @@ def topic_ordering(request, dataset, analysis, order_by):
     return HttpResponse(simplejson.dumps(ret_val))
 
 
-def get_topic_page(request, dataset, analysis, number):
+@require_GET
+def topic_page(request, dataset, analysis, number):
+    analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)
     request.session['topic-page'] = int(number)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
     topics = request.session.get('topics-list', None)
     if not topics:
-        topics = Topic.objects.filter(analysis__name=analysis,
-                analysis__dataset__name=dataset)
+        topics = analysis.topic_set()
+#        topics = Topic.objects.filter(analysis__name=analysis,
+#                analysis__dataset__name=dataset)
     num_per_page = request.session.get('topics-per-page', 20)
     page = int(number)
     topics, num_pages, _ = paginate_list(topics, page, num_per_page)
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
 # Widgets
@@ -150,8 +153,8 @@ def remove_topic_filter(request, dataset, analysis, topic, number):
 
 
 def filtered_topics_response(request, dataset, analysis):
-    ns = current_name_scheme(request.session, analysis)
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    ns = current_name_scheme(request.session, analysis)
     topics = analysis.topic_set
     request.session['topic-page'] = 1
     topics, filter_form, num_pages = clean_topics_from_session(topics,

@@ -32,6 +32,8 @@ from topic_modeling.visualize.topics.names import topic_name_with_ns,\
 # Methods
 #########
 def sort_topics(topics, sort_by, session):
+    if not topics.exists():
+        raise ValueError("You probably thought topics had something in it. Unfortunately, it doesn't")
     # Because of the way I had to implement metric sorting, and the way that
     # filtering is implemented, you cannot filter after you have sorted.  Be
     # sure to call this method after filtering, and before paginate_list,
