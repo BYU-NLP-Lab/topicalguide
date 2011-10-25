@@ -22,7 +22,8 @@
 
 import random
 
-from django.http import HttpResponse
+from django.utils import simplejson
+from django.http import HttpResponse, HttpResponseRedirect
 
 from topic_modeling import anyjson
 from topic_modeling.visualize.charts import TopicAttributeChart
@@ -96,17 +97,17 @@ def topic_attribute_plot(request, attribute, topic, value):
             chart_parameters['histogram'] = 'True'
         chart = TopicAttributeChart(chart_parameters)
         return HttpResponse(chart.get_chart_image(), mimetype="image/png")
+    elif fmt == 'csv':
+        chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
+        if request.GET.get('frequency', False):
+            chart_parameters['frequency'] = 'True'
+        if request.GET.get('histogram', False):
+            chart_parameters['histogram'] = 'True'
+        chart = TopicAttributeChart(chart_parameters)
+        return HttpResponse(chart.get_csv_file(), mimetype="text/csv")
     else:
         raise ValueError("Format '%' is not supported" % fmt)
 
-def topic_attribute_csv(request, attribute, topic, value):
-    chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
-    if request.GET.get('frequency', False):
-        chart_parameters['frequency'] = 'True'
-    if request.GET.get('histogram', False):
-        chart_parameters['histogram'] = 'True'
-    chart = TopicAttributeChart(chart_parameters)
-    return HttpResponse(chart.get_csv_file(), mimetype="text/csv")
 
 def topic_metric_plot(request, dataset, analysis, metric):
     chart_parameters = {'dataset': dataset, 'analysis': analysis}

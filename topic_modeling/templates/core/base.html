@@ -36,7 +36,13 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         {% block scripts %}
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="{{SCRIPTS}}/core/base.js"></script>        
+        <script type="text/javascript" src="{{SCRIPTS}}/core/base.js"></script>
+        
+		<script type="text/javascript" src="{{SCRIPTS}}/charts/highcharts/highcharts.js"></script>
+		<script type="text/javascript" src="{{SCRIPTS}}/charts/highcharts/modules/exporting.js"></script>		
+		<script type="text/javascript" src="http://www.highcharts.com/highslide/highslide-full.min.js"></script>
+		<script type="text/javascript" src="http://www.highcharts.com/highslide/highslide.config.js" charset="utf-8"></script>
+		<link rel="stylesheet" type="text/css" href="http://www.highcharts.com/highslide/highslide.css" />
 		        
         {% endblock %}
     </head>
