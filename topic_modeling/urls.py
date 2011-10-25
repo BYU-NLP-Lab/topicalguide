@@ -34,7 +34,6 @@ from topic_modeling.visualize.attribute_views import AttributeDocumentView, \
 from topic_modeling.cssmin import cssmin
 from django.http import HttpResponse
 from topic_modeling.visualize.plot_views import PlotView
-from topic_modeling.visualize.plot_views_new import PlotViewNew
 
 def render_style(request, style_path):
     css = open(settings.STYLES_ROOT + '/' + style_path).read()
@@ -62,7 +61,6 @@ map = r'maps/(?P<namescheme>[^/]*)'
 attribute = r'attributes/(?P<attribute>[^/]*)'
 value = r'values/(?P<value>[^/]*)'
 plot = r'plots/(?P<plot>[^/]*)'
-plot_new = r'plots_new/(?P<plot>[^/]*)'
 chart_type = r'chart-types/(?P<chart_type>[^/]*)'
 document = r'documents/(?P<document>[^/]*)'
 num_words = r'num-words/(?P<num_words>[^/]*)'
@@ -122,9 +120,6 @@ urlpatterns = patterns('',
 # Plot View
     url(analysis_base + '/plots$', PlotView.as_view(), name='tg-plots'),
     url(analysis_base + '/' + plot + '$', PlotView.as_view(), name='tg-plot'),
-    url(analysis_base + '/plots_new$', PlotViewNew.as_view(), name='tg-plots-new'),
-    url(analysis_base + '/' + plot_new + '$', PlotViewNew.as_view(), name='tg-plot-new')
-)
 
 urlpatterns += patterns(prefix + '.ajax_calls',
 # AJAX Calls

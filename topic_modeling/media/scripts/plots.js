@@ -52,7 +52,6 @@ function update_topic_attribute_plot() {
 			var tmpline = [];
 			$.each(tmp, function(index, value) {
 				//console.log("idx:" + index + " cont:"+ticks[index]);
-				//tmpline.push([index, parseFloat(value)]);
 				tmpline.push(parseFloat(value));
 			});
 			linedata.push(tmpline);
@@ -121,54 +120,6 @@ function update_topic_attribute_plot() {
 			$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-25 });
 		 });
 	});
-}
-
-function update_topic_attribute_plot_old() {
-	set_loading_image();
-	var url_base = "/feeds/topic-attribute-plot/";
-	attribute = $("select#id_attribute").val();
-	url_base += 'attributes/' + attribute + '/';
-
-	if ($("select#id_topics").val() == null) {
-		$("select#id_topics option:first").attr("selected", true);
-	}
-	if ($("select#id_values").val() == null) {
-		highlight_all_topic_attribute_values(0);
-	}
-
-	// Now get selected values and make a list of them
-	var selected = $("select#id_values").val();
-	selected = selected.sort(numerical_sort_function);
-	url_base += "values/" + selected[0];
-	for ( var i = 1; i < selected.length; i++) {
-		url_base += "." + selected[i];
-	}
-	url_base += "/topics";
-
-	// Now get selected topics and make a list of them
-	var selected = $("select#id_topics").val()
-	url_base += '/';
-	selected = selected.sort(numerical_sort_function)
-	url_base += selected[0];
-	for ( var i = 1; i < selected.length; i++) {
-		url_base += "." + selected[i];
-	}
-	var added_query = false;
-	if ($('#id_by_frequency:checked').val() != null) {
-		url_base += "?frequency=true";
-		added_query = true;
-	}
-	if ($('#id_histogram:checked').val() != null) {
-		if (!added_query) {
-			url_base += '?';
-		} else {
-			url_base += '&';
-		}
-		url_base += "histogram=true";
-	}
-	// When the URL is ready, change the source of the
-	// image to point to the correct one
-	$("img#plot_image").attr("src", url_base);
 }
 
 /*
