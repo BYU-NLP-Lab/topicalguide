@@ -234,6 +234,31 @@ class TopicAttributeChart(object):
         else:
             return self.get_line_chart()
 
+    def get_source_data(self):
+        return self.get_chart_json()
+    
+    def get_chart_json(self):
+
+        thinned_labels = self.values
+        labels = []
+        for i in thinned_labels :
+            labels.append(i.value)            
+                            
+        d = {}
+        d['y-data'] = {}
+        for topic in self.chartdata:                    
+            d['y-data'].setdefault(topic.name, []).append(self.chartdata[topic])
+                   
+        d['x-data'] = [labels]              
+        d['x-axis-label'] = self.attribute.name
+        
+        if self.frequency:
+            d['y-axis-label'] = 'Frequency'
+        else:
+            d['y-axis-label'] = 'Percent' 
+        
+        return d         
+        
     def get_bar_chart(self):
         """ Creates a Bar chart and writes it as a png, returning the data.
         
