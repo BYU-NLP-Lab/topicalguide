@@ -26,16 +26,28 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block stylesheets %}
     {{block.super}}
     <link rel="stylesheet" href="{{STYLES}}/plot.css" type="text/css" />
+    <link rel="stylesheet" href="{{SCRIPTS}}/charts/jqplot/css/jquery.jqplot.min.css" type="text/css" />
 {% endblock %}
 
 {% block scripts %}
     {{block.super}}
+	<script charset="utf=8" language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/js/jquery.jqplot.min.js"></script>	
+	<script charset="utf=8" language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.cursor.js"></script>	
+	<script charset="utf=8" language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.highlighter.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.barRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+	
 	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/plots.js"></script>
 	<script charset="utf-8" type="text/javascript">
 		function set_loading_image() {
 		    $("img#plot_image").attr("src", "{{IMAGES}}/ajax-loader.gif");
 		}
 	</script>
+	
+	<!--[if lt IE 9]><script language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/js/excanvas.min.js"></script><![endif]-->	
 {% endblock %}
 
 {% block sidebar %}
@@ -50,11 +62,12 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block presentation_area %}
 <div class="ui-widget">
     <div class="ui-widget-header ui-corner-all">Title</div>
-    <div class="ui-widget-content ui-corner-all">
-        <img name="plot_image" id="plot_image" src="{{ chart_address }}"/>
+    <div class="ui-widget-content ui-corner-all">   		                     
+		<div id="jqplot"></div>
+		<span id="jqplot_info"></span>   
     </div>
 </div>
-
+     
 <script charset="utf=8" type="text/javascript">
     $("#accordion").accordion({ collapsible: true })
     
