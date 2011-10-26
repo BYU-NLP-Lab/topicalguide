@@ -168,7 +168,7 @@ img.inactive-star, img.star {
     
 }
 
-img.inactive-star, img.star.fav {
+img.inactive-star.fav, img.star.fav {
 	content: url("/site-media/images/openclipart/Star-349834968906.png") !important;
     /*background-image: url("/site-media/images/openclipart/Star-349834968906.png") !important;*/
 }
