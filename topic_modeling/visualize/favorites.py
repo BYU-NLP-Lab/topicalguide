@@ -22,7 +22,7 @@
 
 from django.views.decorators.http import require_http_methods, require_GET
 from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis,\
-    AnalysisFavorite, TopicFavorite, Topic
+    AnalysisFavorite, TopicFavorite, Topic, TopicViewFavorite
 from django.core.urlresolvers import reverse
 from topic_modeling.visualize.topics.names import current_name_scheme,\
     topic_name_with_ns
@@ -160,11 +160,22 @@ def _favorites_ajax_handler(request, get, create):
         raise Exception("Unsupported HTTP method '" + request.method + "'")
 
 @require_GET
-def views(request):
+def topic_views(request):
+    return JsonResponse([{'favid':fav.favid, 'name':fav.name} for fav in _topic_view_favorites(request)])
+
+def _topic_view_favorites(request):
+    return TopicViewFavorite.objects.filter(session_key=request.session.session_key)
+
+@require_http_methods(['GET', 'PUT', 'DELETE'])
+def topic_view(request, viewid):
+    pass
+
+@require_GET
+def document_views(request):
     pass
 
 @require_http_methods(['GET', 'PUT', 'DELETE'])
-def view(request, viewid):
+def document_view(request, viewid):
     pass
 
 #def index(request, dataset, analysis, id):
