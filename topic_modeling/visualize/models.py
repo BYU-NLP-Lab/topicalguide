@@ -25,8 +25,6 @@ from django.db import models
 from topic_modeling.anyjson import deserialize
 import datetime
 
-from django.contrib.sessions.models import Session
-
 ##############################################################################
 # Tables just to hold information about data and documents
 ##############################################################################
@@ -580,5 +578,22 @@ class AnalysisFavorite(Favorite):
 
 class TopicFavorite(Favorite):
     topic = models.ForeignKey(Topic)
+
+class TopicViewFavorite(Favorite):
+    '''A unique identifier. For URLs.'''
+    favid = models.SlugField(unique=True)
+    
+    '''A short, human-readable name'''
+    name = models.TextField(max_length=128)
+    
+    '''The topic we'll be viewing'''
+    topic = models.ForeignKey(Topic)
+    
+    '''Serialization of the filter set'''
+    filters = models.TextField()
+    
+
+class DocumentViewFavorite(Favorite):
+    pass
 
 # vim: et sw=4 sts=4
