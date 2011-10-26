@@ -18,7 +18,7 @@ function set_name_scheme() {
 }
 
 function bind_favorites() {
-	$("img.star").click(function() {
+	$("img.star:not(.inactive)").click(function() {
 		toggle_favorite($(this));
 	});
 }

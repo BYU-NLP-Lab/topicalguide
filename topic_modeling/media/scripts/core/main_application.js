@@ -58,3 +58,11 @@ function set_nav_arrows(current_page, num_pages) {
 	else
 		$("div#list-nav > span#fwd-arrows").css("visibility", "visible");
 }
+
+function bind_filters() {
+	$("div#sidebar table.filters tr td.remove").each(function(index, obj) {
+		$(obj).click(function(){
+			remove_filter(index);
+		});
+	});
+}

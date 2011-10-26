@@ -21,7 +21,6 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 from django.http import HttpResponse
-from django.utils import simplejson
 from django.db.models.aggregates import Min
 
 from topic_modeling.visualize.common.ui import FilterForm
@@ -57,17 +56,18 @@ def rename_topic(request, dataset, analysis, topic, name):
 
 
 def topic_ordering(request, dataset, analysis, order_by):
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    
     request.session['topic-sort'] = order_by
     request.session['topic-page'] = 1
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
-    topics = Topic.objects.filter(analysis__name=analysis,
-            analysis__dataset__name=dataset)
+    topics = analysis.topic_set
     topics, _, num_pages = clean_topics_from_session(topics, request.session)
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = 1
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
 @require_GET
@@ -102,7 +102,7 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
     top_values = top_values_for_attr_topic(topic=topic, attribute=attribute, order_by=order_by)
     ret_val['attribute'] = attribute.name
     ret_val['values'] = [vars(v) for v in top_values]
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
 def similar_topics(request, dataset, analysis, topic, measure):
@@ -124,7 +124,7 @@ def similar_topics(request, dataset, analysis, topic, measure):
         topics += [vars(AjaxTopic(similar_topic, topic_name))]
     ret_val['values'] = values
     ret_val['topics'] = topics
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
 # Filters
@@ -164,7 +164,7 @@ def filtered_topics_response(request, dataset, analysis):
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = request.session.get('topic-page', 1)
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
 def update_topic_attribute_filter(request, dataset, analysis, topic, number,
