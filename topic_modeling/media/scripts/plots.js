@@ -33,7 +33,6 @@ function update_topic_attribute_plot() {
 		url_base += "." + selected[i];
 	}
 	var added_query = false;
-	url_base += "/json/"
 	if ($('#id_by_frequency:checked').val() != null) {
 		url_base += "?frequency=true";
 		added_query = true;

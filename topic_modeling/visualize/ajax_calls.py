@@ -76,28 +76,28 @@ def attribute_values(request, attribute):
     #values = attribute.value_set.all()
     return HttpResponse(anyjson.dumps([(v.id, v.value) for v in values]))
 
-
 def topic_attribute_plot(request, attribute, topic, value):
-    chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
-    if request.GET.get('frequency', False):
-        chart_parameters['frequency'] = 'True'
-    if request.GET.get('histogram', False):
-        chart_parameters['histogram'] = 'True'
-    chart = TopicAttributeChart(chart_parameters)
-
-    return HttpResponse(chart.get_chart_image(), mimetype="image/png")
-
-def topic_attribute_plot_json(request, attribute, topic, value):
-    chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
-    if request.GET.get('frequency', False):
-        chart_parameters['frequency'] = 'True'
-    if request.GET.get('histogram', False):
-        chart_parameters['histogram'] = 'True'
-    chart = TopicAttributeChart(chart_parameters)
-
-    return HttpResponse(simplejson.dumps(chart.get_source_data()),
-                        content_type = 'application/javascript; charset=utf8')
-
+    fmt = request.GET['fmt'] if 'fmt' in request.GET else 'json'
+    if fmt=='json':
+        chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
+        if request.GET.get('frequency', False):
+            chart_parameters['frequency'] = 'True'
+        if request.GET.get('histogram', False):
+            chart_parameters['histogram'] = 'True'
+        chart = TopicAttributeChart(chart_parameters)
+    
+        return HttpResponse(anyjson.dumps(chart.get_source_data()),
+                            content_type = 'application/javascript; charset=utf8')
+    elif fmt=='png':
+        chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
+        if request.GET.get('frequency', False):
+            chart_parameters['frequency'] = 'True'
+        if request.GET.get('histogram', False):
+            chart_parameters['histogram'] = 'True'
+        chart = TopicAttributeChart(chart_parameters)
+        return HttpResponse(chart.get_chart_image(), mimetype="image/png")
+    else:
+        raise ValueError("Format '%' is not supported" % fmt)
 
 def topic_metric_plot(request, dataset, analysis, metric):
     chart_parameters = {'dataset': dataset, 'analysis': analysis}
