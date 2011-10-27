@@ -510,7 +510,7 @@ class NumericalAttributesDistributionChart(Chart):
 # The format is this: '[name of plot]': (class of plot, order in list)
 plot_types = { 'Topics vs. Attributes': (TopicAttributeChart, 1),
         #'NumericalAttribute-Distribution': NumericalAttributesDistributionChart,
-        'Topic Metric Comparison': (TopicMetricChart, 2),
+#        'Topic Metric Comparison': (TopicMetricChart, 2),
         }
 
 
