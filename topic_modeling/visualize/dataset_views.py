@@ -57,6 +57,7 @@ class DatasetView(DatasetBaseView):
                     plot_img_url += "values/" + '.'.join([str(x) for x in attrvalues])
                     plot_img_url += "/topics/"
                     plot_img_url += '.'.join([str(x) for x in topics])
+                    plot_img_url += '?fmt=png'
                     
                     context['plot_img_urls'][dataset][analysis] = plot_img_url
         return context
