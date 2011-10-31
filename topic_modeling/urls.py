@@ -251,8 +251,8 @@ urlpatterns += patterns(favs_prefix,
     url(r'^'+dataset + '/' + analysis + '/' + topic + '/fav$', 'topic', name='tg-favs-topic'),
     url(r'^favs/topics$', 'topic_views', name='tg-favs-topic-views'),
     url(r'^favs/docs$', 'document_views', name='tg-favs-doc-views'),
-    url(r'^favs/topics/(?P<viewid>[^/]+)$', 'topic_view', name='tg-favs-topic-view'),
-    url(r'^favs/docs/(?P<viewid>[^/]+)$', 'document_view', name='tg-favs-doc-view')
+    url(r'^favs/topics/(?P<favid>[^/]+)$', 'topic_view', name='tg-favs-topic-view'),
+    url(r'^favs/docs/(?P<favid>[^/]+)$', 'document_view', name='tg-favs-doc-view')
 )
 
 urlpatterns += patterns('',
