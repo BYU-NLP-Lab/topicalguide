@@ -28,10 +28,40 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block scripts %}
     {{block.super}}
     <script>
-        $(document).ready(function(){
+        $(document).ready(function() {
         	{# Favorite This View #}
+        	
+        	
+        	var form = $("#fav-this-form");
+        	var input = $("> input", form);
+        	
+        	input.keyup(function() {
+                if(!this.value) {
+                    $(this).addClass('ui-state-error');
+                } else {
+                    $(this).removeClass("ui-state-error");
+                }
+            });
+        	form.dialog({
+        		autoOpen:false,
+        		modal:true,
+        		position:'top',
+        		title:'Enter a name for this favorite',
+        		buttons: {"Save": function(){
+        			var name = input.val();
+        			var favid = slugify(name);
+        			if(favid) {
+        			    form.dialog('close');
+        			    favorite_this_view(name, favid);
+       			    }
+        		}, "Cancel": function(){
+        			form.dialog('close');
+        		}}
+       		});
+        	
         	$("li#fav-this > img.star.inactive").click(function(){
-        		favorite_this_view();
+        		input.addClass("ui-state-error").text('');
+        		form.dialog('open');
         	});
         	
         	{# Favorites Menu #}
@@ -54,6 +84,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block header %}
+{# Modal dialog form used by the Favorite This View functionality #}
+<div id="fav-this-form" title="Favorite This View">
+    <input type="text" name="name" id="name" class="text ui-widget-content ui-corner-all" />
+</div>
+
 <nav id="header">
 	{#<ul id="top-menu" class="nav-menu">#}
 		{% block nav_menu %}
@@ -69,10 +104,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 				</li>
 				
 				{{breadcrumb.to_ul|safe}}
-				
+				{% block fav_this_view %}
 				<li id="fav-this" title="Favorite This View">
 				    <img class="star inactive"/>
 		        </li>
+		        {% endblock %}
 		    </ul>{# end breadcrumbs #}
 		    <ul id="buttons" class="nav-menu right">
 			    {% comment %}

@@ -20,13 +20,22 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.views.decorators.http import require_http_methods, require_GET
-from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis,\
-    AnalysisFavorite, TopicFavorite, Topic, TopicViewFavorite
+#from topic_modeling.visualize.topics.views import TopicView
+
 from django.core.urlresolvers import reverse
-from topic_modeling.visualize.topics.names import current_name_scheme,\
-    topic_name_with_ns
+from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_http_methods, require_GET
 from topic_modeling.visualize.common.http_responses import JsonResponse
+from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis, AnalysisFavorite, TopicFavorite, Topic, \
+    TopicViewFavorite
+from topic_modeling.visualize.topics.names import current_name_scheme, topic_name_with_ns
+from django.template.defaultfilters import slugify
+import pickle
+from django.http import HttpResponse
+from topic_modeling import anyjson
+import base64
+
+
 
 @require_GET
 def datasets(request):
@@ -159,16 +168,36 @@ def _favorites_ajax_handler(request, get, create):
     else:
         raise Exception("Unsupported HTTP method '" + request.method + "'")
 
+
 @require_GET
 def topic_views(request):
-    return JsonResponse([{'favid':fav.favid, 'name':fav.name} for fav in _topic_view_favorites(request)])
+    return JsonResponse([{'favid':fav.favid, 'name':fav.name, 'topic_num':fav.topic.number} for fav in _topic_view_favorites(request)])
 
 def _topic_view_favorites(request):
     return TopicViewFavorite.objects.filter(session_key=request.session.session_key)
 
 @require_http_methods(['GET', 'PUT', 'DELETE'])
-def topic_view(request, viewid):
-    pass
+def topic_view(request, favid):
+    from topic_modeling.visualize.topics.views import TopicView
+    if request.method=='GET':
+        fav = get_object_or_404(TopicViewFavorite, favid=favid)
+        filters = base64.b64decode(fav.filters)
+        topic_filters = pickle.loads(filters)
+        return TopicView.as_view()(request, favid, dataset=fav.topic.analysis.dataset, analysis=fav.topic.analysis, topic_filters=topic_filters)
+    elif request.method=='PUT':
+        params = anyjson.loads(request.read())
+        dataset = Dataset.objects.get(name=params['dataset'])
+        analysis = Analysis.objects.get(dataset=dataset, name=params['analysis'])
+        topic = Topic.objects.get(analysis=analysis,number=params['topic'])
+        name = params['name']
+#        favid = params.get('favid', slugify(name))
+        filters =  base64.b64encode(pickle.dumps(request.session.get('topic-filters', list())))
+        TopicViewFavorite.objects.create(session_key=request.session.session_key, topic=topic, name=name, favid=favid, filters=filters)
+        return HttpResponse(status=201)
+    elif request.method=='DELETE':
+        fav = get_object_or_404(TopicViewFavorite, favid=favid)
+        fav.delete()
+        return HttpResponse(status=204)
 
 @require_GET
 def document_views(request):

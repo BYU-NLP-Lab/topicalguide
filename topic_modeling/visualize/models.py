@@ -581,7 +581,7 @@ class TopicFavorite(Favorite):
 
 class TopicViewFavorite(Favorite):
     '''A unique identifier. For URLs.'''
-    favid = models.SlugField(unique=True)
+    favid = models.SlugField(primary_key=True)
     
     '''A short, human-readable name'''
     name = models.TextField(max_length=128)

@@ -29,4 +29,4 @@ class SerializerResponse(HttpResponse):
 
 class JsonResponse(HttpResponse):
     def __init__(self, obj, *args, **kwargs):
-        super(JsonResponse, self).__init__(anyjson.dumps(obj), *args, **kwargs)
+        super(JsonResponse, self).__init__(anyjson.dumps(obj), content_type='application/json', *args, **kwargs)
