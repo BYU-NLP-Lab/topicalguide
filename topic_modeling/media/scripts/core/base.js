@@ -18,26 +18,58 @@ function set_name_scheme() {
 }
 
 function bind_favorites() {
-	$("img.star:not(.inactive)").click(function() {
+	$("img.star:not(.inactive)").unbind('click').click(function() {
 		toggle_favorite($(this));
 	});
 }
 
 function toggle_favorite(fav) {
-	var type = fav.attr("type");
-	var itemid = fav.attr("itemid");
-	
 	if(fav.hasClass("fav")) {
-		fav.removeClass("fav");
 		$.ajax({
 			url: fav.attr("favurl"),
-			type: 'DELETE'
+			type: 'DELETE',
+			success: function() {
+				fav.removeClass("fav");
+			}
 		});
 	} else {
-		fav.addClass("fav");
 		$.ajax({
 			url: fav.attr("favurl"),
-			type: 'PUT'
+			type: 'PUT',
+			success: function() {
+				fav.addClass("fav");
+			}
 		});
 	}
+}
+
+function infoMessage(text) {
+	message(text, 'ui-state-highlight');
+}
+
+function errorMessage(text) {
+	message(text, 'ui-state-error');
+}
+
+function message(text, klass) {
+    if($("div#notification").length < 1) {
+        //If the message div doesn't exist, create it
+    	$("li#favorites").prepend('<div id="notification" style="float:right">' + text + '</div>');
+    } else {
+        //Else, update the text
+        $("div#notification").html(text);
+    }
+    
+    $("div#notification").removeClass().addClass(klass).click(function(){
+    	$(this).hide();
+    });
+    
+    //Fade message in
+    $("li#favorites span#buttons").hide("slow");
+    $("div#notification").show('slow');
+    //Fade message out in 5 seconds
+    setTimeout('$("div#notification").hide("slow")',5000);
+    setTimeout('$("li#favorites span#buttons").show()',5000);
+    
+    $("div#notification").unbind('click');
 }

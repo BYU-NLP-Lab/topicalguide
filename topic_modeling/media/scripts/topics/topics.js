@@ -31,13 +31,20 @@ function slugify(text) {
 
 function favorite_this_view(name, favid) {
 	var url = '/favs/topics/' + favid;
+	var fullUrl = window.location.origin + url;
 //	{"dataset":"state_of_the_union", "analysis":"lda100topics", "topic":10, "name":"The best topics"}
 	var params = '{"dataset":"' + $.fn.dataset + '", "analysis":"' + $.fn.analysis + '", '
 				  + '"topic":' + $.fn.topic.number + ', "name":"' + name + '"}';
 	$.ajax({
 		type:'PUT',
 		url:url,
-		data:params
+		data:params,
+		success: function() {
+			infoMessage('View now available at <a href="' + url + '">' + fullUrl + '</a>');
+		},
+		error: function() {
+			errorMessage('View at ' + fullUrl + ' already exists');
+		}
 	});
 }
 
