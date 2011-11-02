@@ -42,10 +42,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
                     $(this).removeClass("ui-state-error");
                 }
             });
+        	
         	form.dialog({
         		autoOpen:false,
         		modal:true,
-        		position:'top',
+        		position:['right','top'],
         		title:'Enter a name for this favorite',
         		buttons: {"Save": function(){
         			var name = input.val();
@@ -59,21 +60,31 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         		}}
        		});
         	
-        	$("li#fav-this > img.star.inactive").click(function(){
-        		input.addClass("ui-state-error").text('');
-        		form.dialog('open');
+        	$("button#fav-this").button({label: "Fav This"}).click(function(){
+                input.addClass("ui-state-error").text('');
+                form.dialog('open');
+            });
+        	$("button#favs").button({text:false, icons: {primary: "ui-icon-triangle-1-s"}}).click(function(){
+        		var menu = $("nav#header li#favorites ul");
+        		switch(menu.css("visibility")) {
+	        		case "visible":
+	        			menu.css("visibility","hidden");
+	        			break;
+	        		case "hidden":
+	        			menu.css("visibility","visible");
+	        			break;
+	       			default:
+	       				menu.css("visibility","hidden");
+	       				break;
+        		}
         	});
         	
-        	{# Favorites Menu #}
-        	$("nav#header li#favorites > span").mouseenter(function(){
-        		$(this).addClass("active");
-        		$(this).parent().children("ul").css("visibility","visible");
-        		
+        	$("span#buttons").buttonset();
+        	{% comment %}
+        	$("li#favorites > ul").mouseleave(function(){
+        		$(this).css("visibility","hidden");
         	});
-        	$("nav#header li#favorites").mouseleave(function() {
-        		$(this).children("span").removeClass("active");
-        		$(this).children("ul").css("visibility","hidden");
-        	});
+        	{% endcomment %}
         });
     </script>
 {% endblock %}
@@ -90,57 +101,54 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 </div>
 
 <nav id="header">
-	{#<ul id="top-menu" class="nav-menu">#}
-		{% block nav_menu %}
-		    <ul id="breadcrumbs" class="nav-menu left">
-				<li id="logo">
-					<a href="{% url 'tg-datasets' %}">
-						<img src="{{nlp_lab_small_logo_url}}" alt="BYU NLP Lab Logo"/>
-					</a>
-				</li>
-				
-				<li id="title-text" class="breadcrumb" title="Go Home">
-					<a href="{% url 'tg-datasets' %}">The Topical Guide</a>
-				</li>
-				
-				{{breadcrumb.to_ul|safe}}
-				{% block fav_this_view %}
-				<li id="fav-this" title="Favorite This View">
-				    <img class="star inactive"/>
-		        </li>
-		        {% endblock %}
-		    </ul>{# end breadcrumbs #}
-		    <ul id="buttons" class="nav-menu right">
-			    {% comment %}
-				<li id="namescheme-dropdown">
-					Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
-					{% for namescheme in nameschemes %}
-					<option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
-					{% endfor %}
-					</select>
-				</li>
-				{% endcomment %}
+	{% block nav_menu %}
+	    <ul id="breadcrumbs" class="nav-menu left">
+			<li id="logo">
+				<a href="{% url 'tg-datasets' %}">
+					<img src="{{nlp_lab_small_logo_url}}" alt="BYU NLP Lab Logo"/>
+				</a>
+			</li>
 			
-				<li id="favorites">
-				    <span><img class="inactive-star fav"/>Favorites</span>
-				    <ul>
-				    {% for type,favs in favorites.items %}
-				    {% if favs %}
-				        <li id="{{type}}" class="entity">
-				            <a class="entity-type">{{type|title}}</a>
-				            <ul>
-				            {% for fav in favs %}
-				                <li class="favorite"><img class="star fav" favurl="{{fav.favurl}}" /><a href="{{fav.url}}">{{fav.text}}</a></li>
-				            {% endfor %}
-				            </ul>
-				        </li>
-				    {% endif %}
-				    {% endfor %}
-				    </ul>
-			    </li>{# end favorites #}
-		    </ul>
-		{% endblock %}
-	{#</ul>#}
+			<li id="title-text" class="breadcrumb" title="Go Home">
+				<a href="{% url 'tg-datasets' %}">The Topical Guide</a>
+			</li>
+			
+			{{breadcrumb.to_ul|safe}}
+	    </ul>{# end breadcrumbs #}
+	    <ul id="buttons" class="nav-menu right">
+		    {% comment %}
+			<li id="namescheme-dropdown">
+				Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
+				{% for namescheme in nameschemes %}
+				<option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
+				{% endfor %}
+				</select>
+			</li>
+			{% endcomment %}
+			
+			<li id="favorites">
+			    <span id="buttons">
+					<button id="fav-this" title="Favorite This View"></button>
+					<button id="favs" title="Favorites">&nbsp;</button>
+				</span>
+				<ul>
+                   {% for type,favs in favorites.items %}
+                   {% if favs %}
+                       <li id="{{type}}" class="entity">
+                           <a class="entity-type">{{type|title}}</a>
+                           <ul>
+                           {% for fav in favs %}
+                               <li class="favorite"><img class="star fav" favurl="{{fav.favurl}}" /><a href="{{fav.url}}">{{fav.text}}</a></li>
+                           {% endfor %}
+                           </ul>
+                       </li>
+                   {% endif %}
+                   {% endfor %}
+                   </ul>
+			</li>
+		    
+	    </ul>
+	{% endblock %}
 </nav>
 {% endblock %}{# end block header #}
 

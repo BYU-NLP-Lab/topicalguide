@@ -69,7 +69,6 @@ ul.nav-menu > li {
     line-height: 2em;
     padding-left: 0.9em;
     padding-right: 0.9em;
-    border-right: 1px dashed gray;
     display: table-cell;
 }
 
@@ -171,14 +170,31 @@ li#favorites > img.inactive-star {
 	margin-right: 0.2em;
 }
 
+/* "Favorite This View" button */
+button#favs {
+	background-image: url("/site-media/images/openclipart/Star-349834968906.png");
+}
+
+li#fav-this span#buttons {
+	margin: 0;
+	padding: 0;
+}
+nav#header button.ui-button, nav#header button.ui-button > span {
+	height: 1.8em;
+	padding: 0 0.3em 0 0.3em;
+}
+li#fav-this > button img.star {
+	padding-top: 0.1em;
+}
+
 /* The "Favorites" button */
-nav#header li#favorites > span {
+/*nav#header li#favorites > span {
     display: inline-block;
     height: 2em;
     line-height: 2em;
     padding: 0 0.9em 0 0.9em;
     margin-right: 0.5em;
-}
+}*/
 
 nav#header li#favorites > span.active {
 	background-color: white;
