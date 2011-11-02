@@ -192,6 +192,9 @@ nav#header li#favorites > ul {
 	text-align: left;
 	box-shadow: 0.5em 0.2em 0.5em #ccc;
 	margin-right: 0.5em;
+	height: 40em;
+	overflow-y:scroll;
+	overflow-x:hidden;
 }
 
 nav#header li#favorites ul {

@@ -20,21 +20,19 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-#from topic_modeling.visualize.topics.views import TopicView
+import base64
+import pickle
 
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods, require_GET
+
+from topic_modeling import anyjson
 from topic_modeling.visualize.common.http_responses import JsonResponse
 from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis, AnalysisFavorite, TopicFavorite, Topic, \
     TopicViewFavorite
 from topic_modeling.visualize.topics.names import current_name_scheme, topic_name_with_ns
-from django.template.defaultfilters import slugify
-import pickle
-from django.http import HttpResponse
-from topic_modeling import anyjson
-import base64
-
 
 
 @require_GET
@@ -155,16 +153,18 @@ def _favorites_ajax_handler(request, get, create):
     fav = get()
     
     if request.method=='GET':
-        fav_exists = fav is not None
-        return JsonResponse(fav_exists)
+        if fav is not None:
+            return HttpResponse(status=200)
+        else:
+            return HttpResponse(status=404)
     elif request.method=='PUT':
         if not fav:
             create()
-        return JsonResponse(True)
+        return HttpResponse(status=201)
     elif request.method=='DELETE':
         if fav:
             fav.delete()
-        return JsonResponse(True)
+        return HttpResponse(status=204)
     else:
         raise Exception("Unsupported HTTP method '" + request.method + "'")
 
@@ -175,6 +175,17 @@ def topic_views(request):
 
 def _topic_view_favorites(request):
     return TopicViewFavorite.objects.filter(session_key=request.session.session_key)
+
+def topic_view_favorite_entries(request):
+    entries = list()
+    for fav in _topic_view_favorites(request):
+        url = reverse('tg-favs-topic-view', kwargs={'favid': fav.favid})
+        entries.append({
+                     'text': fav.name,
+                     'url': url,
+                     'favurl': url,
+                     'fav': fav})
+    return entries
 
 @require_http_methods(['GET', 'PUT', 'DELETE'])
 def topic_view(request, favid):
