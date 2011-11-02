@@ -46,8 +46,6 @@ nav#header, footer {
     background-color: hsla(210,85%,65%,1);
 }
 
-
-
 ul.nav-menu {
     height: 2em;
     list-style-type: none;
@@ -170,7 +168,7 @@ li#favorites > img.inactive-star {
 	margin-right: 0.2em;
 }
 
-/* "Favorite This View" button */
+/* Favorites button */
 button#favs {
 	background-image: url("/site-media/images/openclipart/Star-349834968906.png");
 }
@@ -186,22 +184,6 @@ nav#header button.ui-button, nav#header button.ui-button > span {
 li#fav-this > button img.star {
 	padding-top: 0.1em;
 }
-
-/* The "Favorites" button */
-/*nav#header li#favorites > span {
-    display: inline-block;
-    height: 2em;
-    line-height: 2em;
-    padding: 0 0.9em 0 0.9em;
-    margin-right: 0.5em;
-}*/
-
-nav#header li#favorites > span.active {
-	background-color: white;
-	border-left-width: 0.2em;
-	border-left-color: gray;
-}
-
 
 /* The drop-down element */
 nav#header li#favorites > ul {
@@ -220,38 +202,6 @@ nav#header li#favorites ul {
 nav#header li#favorites li.entity:not(:last-child) {
 	margin-bottom: 2em;
 }
-
-nav#header li#favorites li.favorite > a {
-	/*
-	display: inline-block;
-	height: 22px;
-	line-height: 22px;
-	vertical-align: middle;
-	*/
-}
-/*
-#sidebar-list > li::before,
-nav#header li#favorites li.favorite > a::before {
-	content: " ";
-	display: inline-block;
-	height: .1em;
-	width: .1em;
-	
-	background-repeat: no-repeat;
-	background-position: center right;
-	background-origin: padding-box;
-	padding: 1em;
-}*/
-
-
-
-
-
-/*
-#sidebar-list > li::before {
-	background-image: url("/site-media/images/openclipart/Outlined_star-45623.png");
-}
-*/
 
 nav#header li#favorites li.favorite > a::before {
 	background-image: url("/site-media/images/openclipart/Star-349834968906.png");
