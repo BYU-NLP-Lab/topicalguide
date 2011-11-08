@@ -117,10 +117,6 @@ urlpatterns = patterns('',
     url(analysis_base + '/documents$', DocumentView.as_view(), name='tg-docs'),
     url(analysis_base + '/' + document + '$', DocumentView.as_view(), name='tg-doc'),
 
-## Favorite Views
-#    (r'^favorite/' + dataset + '/' + analysis + '/' + id + '$',
-#     'topic_modeling.visualize.favorite.index'),
-
 # Plot View
     url(analysis_base + '/plots$', PlotView.as_view(), name='tg-plots'),
     url(analysis_base + '/' + plot + '$', PlotView.as_view(), name='tg-plot')
@@ -235,7 +231,6 @@ urlpatterns += patterns(prefix+'.documents.ajax',
     (r'^feeds/update-document-metric-filter/' + dataset + '/' + analysis + '/' + \
             document + '/' + number + '/' + metric + '/' + comp + '/' + value + '$',
         'update_document_metric_filter'),
-
 )
 
 # Favorites
