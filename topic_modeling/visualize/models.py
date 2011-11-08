@@ -552,18 +552,7 @@ class WordMetaInfoValue(MetaInfoValue):
     word = models.ForeignKey(Word)
 
 ## Favorites
-#class Favorite(models.Model):
-#    sessions = models.ManyToManyField(Session, related_name='session_set')
-#    timestamp = models.DateTimeField(default=datetime.datetime.now)
-#    
-#    class Meta:
-#        abstract = True
-#
-#class DatasetFavorite(Favorite):
-#    dataset = models.ForeignKey(Dataset)
-
 class Favorite(models.Model):
-#    session = models.ForeignKey(Session)
     session_key = models.CharField(max_length=40, db_index=True)
     timestamp = models.DateTimeField(default=datetime.datetime.now)
     
@@ -579,21 +568,25 @@ class AnalysisFavorite(Favorite):
 class TopicFavorite(Favorite):
     topic = models.ForeignKey(Topic)
 
-class TopicViewFavorite(Favorite):
+class ViewFavorite(Favorite):
     '''A unique identifier. For URLs.'''
     favid = models.SlugField(primary_key=True)
     
     '''A short, human-readable name'''
     name = models.TextField(max_length=128)
     
-    '''The topic we'll be viewing'''
-    topic = models.ForeignKey(Topic)
-    
     '''Serialization of the filter set'''
     filters = models.TextField()
     
+    class Meta:
+        abstract = True
 
-class DocumentViewFavorite(Favorite):
-    pass
+class TopicViewFavorite(ViewFavorite):
+    '''The topic we'll be viewing'''
+    topic = models.ForeignKey(Topic)
+
+class DocumentViewFavorite(ViewFavorite):
+    '''The topic we'll be viewing'''
+    document = models.ForeignKey(Document)
 
 # vim: et sw=4 sts=4

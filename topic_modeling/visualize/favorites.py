@@ -31,7 +31,7 @@ from django.views.decorators.http import require_http_methods, require_GET
 from topic_modeling import anyjson
 from topic_modeling.visualize.common.http_responses import JsonResponse
 from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis, AnalysisFavorite, TopicFavorite, Topic, \
-    TopicViewFavorite
+    TopicViewFavorite, DocumentViewFavorite, Document
 from topic_modeling.visualize.topics.names import current_name_scheme, topic_name_with_ns
 
 
@@ -212,95 +212,32 @@ def topic_view(request, favid):
 
 @require_GET
 def document_views(request):
-    pass
+    return JsonResponse([{'favid':fav.favid, 'name':fav.name, 'doc_id':fav.document.id} for fav in _document_view_favorites(request)])
+
+def _document_view_favorites(request):
+    return DocumentViewFavorite.objects.filter(session_key=request.session.session_key)
 
 @require_http_methods(['GET', 'PUT', 'DELETE'])
-def document_view(request, viewid):
-    pass
+def document_view(request, favid):
+    from topic_modeling.visualize.documents.views import DocumentView
+    if request.method=='GET':
+        fav = get_object_or_404(DocumentViewFavorite, favid=favid)
+        filters = base64.b64decode(fav.filters)
+        doc_filters = pickle.loads(filters)
+        return DocumentView.as_view()(request, favid, dataset=fav.topic.analysis.dataset, analysis=fav.topic.analysis, document_filters=doc_filters)
+    elif request.method=='PUT':
+        params = anyjson.loads(request.read())
+        dataset = Dataset.objects.get(name=params['dataset'])
+        analysis = Analysis.objects.get(dataset=dataset, name=params['analysis'])
+        document = Document.objects.get(id=params['document'], dataset=dataset)
 
-#def index(request, dataset, analysis, id):
-#    page_vars = dict()
-#    page_vars['highlight'] = 'favorite_tab'
-#    page_vars['tab'] = 'favorite'
-#    page_vars['dataset'] = dataset
-#    page_vars['analysis'] = analysis
-#
-#    page_vars['page_num'] = 1
-#    page_vars['num_pages'] = 1
-#    page_vars['favorites'] = request.session.get('favorite-set', set())
-#
-#    if id == '':
-#        id = 0
-#    else:
-#        id = int(id)
-#
-#    page_vars['curr_favorite'] = None
-#    for fav in page_vars['favorites']:
-#        if fav.id == id:
-#            page_vars['curr_favorite'] = fav
-#
-#    return render_to_response('favorite.html', page_vars)
-#
-#class Favorite:
-#    def __init__(self, url, id, session, tab):
-#        self.name = tab + ":" + url.split('/')[-1]
-#        self.url = url
-#        self.id = id
-#        self.session_recall = {}
-#        for key in session.keys():
-#            if key.startswith(tab):
-#                self.session_recall[key] = copy.deepcopy(session[key])
-#        self.tab = tab
-#
-#    def __hash__(self):
-#        return self.id
-#
-#    def __eq__(self, other):
-#        return self.id == other.id
-#
-#    def __cmp__(self, other):
-#        return self.id - other.id
-#
-##AJAX Calls
-#def get_favorite_page(request, number):
-#    ret_val = dict()
-#    favorites = request.session.get('favorite-set', set())
-#    ret_val['favorites'] = [{'id' : fav.id, 'name' : fav.name}
-#                            for fav in favorites]
-#    ret_val['num_pages'] = 1
-#    ret_val['page'] = 1
-#
-#    return HttpResponse(anyjson.dumps(ret_val))
-#
-#def add_favorite(request, tab):
-#    favorites = request.session.get('favorite-set', set())
-#    id = request.session.get('last-favorite-id', 0)
-#    url = request.GET['url']
-#    favorite = Favorite(url, id, request.session, tab)
-#    favorites.add(favorite)
-#    request.session['last-favorite-id'] = favorite.id + 1
-#    request.session['favorite-set'] = favorites
-#    return HttpResponse('Favorite Added:' + favorite.url)
-#
-#def remove_all_favorites(request):
-#    if 'favorite-set' in request.session:
-#        request.session.remove('favorite-list')
-#    return HttpResponse('Favorites cleared')
-#
-#def remove_favorite(request, url):
-#    favorites = request.session.get('favorite-set', set())
-#    if url in favorites:
-#        favorites.remove(url)
-#    request.session['favorite-set'] = favorites
-#    return HttpResponse('Url Removed:' + url)
-#
-#def recall_favorite(request, id):
-#    favorites = request.session.get('favorite-set', set())
-#    id = int(id)
-#    for favorite in favorites:
-#        if favorite.id == id:
-#            for key in favorite.session_recall.keys():
-#                request.session[key] = copy.deepcopy(favorite.session_recall[key])
-#            return HttpResponseRedirect(favorite.url)
-#    return HttpResponse('Unknown Favorite')
-
+#        topic = Topic.objects.get(analysis=analysis,number=params['topic'])
+        name = params['name']
+#        favid = params.get('favid', slugify(name))
+        filters =  base64.b64encode(pickle.dumps(request.session.get('document-filters', list())))
+        DocumentViewFavorite.objects.create(session_key=request.session.session_key, document=document, name=name, favid=favid, filters=filters)
+        return HttpResponse(status=201)
+    elif request.method=='DELETE':
+        fav = get_object_or_404(DocumentViewFavorite, favid=favid)
+        fav.delete()
+        return HttpResponse(status=204)
