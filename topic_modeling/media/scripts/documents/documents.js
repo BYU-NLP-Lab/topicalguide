@@ -14,6 +14,24 @@ function tabify() {
 	$("div#tabs").tabs();
 }
 
+function favorite_this_view(name, favid) {
+	var url = '/favs/docs/' + favid;
+	var fullUrl = window.location.origin + url;
+	var params = '{"dataset":"' + $.fn.dataset + '", "analysis":"' + $.fn.analysis + '", '
+				  + '"document":' + $.fn.doc.id + ', "name":"' + name + '"}';
+	$.ajax({
+		type:'PUT',
+		url:url,
+		data:params,
+		success: function() {
+			infoMessage('View now available at <a href="' + url + '">' + fullUrl + '</a>');
+		},
+		error: function() {
+			errorMessage('View at ' + fullUrl + ' already exists');
+		}
+	});
+}
+
 /***** Sidebar *****/
 function update_list_contents(documents_list) {
 	var curdoc = $.fn.doc.id;

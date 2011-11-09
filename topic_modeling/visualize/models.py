@@ -586,7 +586,10 @@ class TopicViewFavorite(ViewFavorite):
     topic = models.ForeignKey(Topic)
 
 class DocumentViewFavorite(ViewFavorite):
-    '''The topic we'll be viewing'''
+    '''The document we'll be viewing'''
     document = models.ForeignKey(Document)
+    
+    '''And the analysis we're using'''
+    analysis = models.ForeignKey(Analysis)
 
 # vim: et sw=4 sts=4
