@@ -28,7 +28,7 @@ from django.views.generic.base import TemplateResponseMixin, View
 
 from topic_modeling.visualize.models import Dataset, Analysis
 from topic_modeling.visualize.favorites import dataset_favorite_entries, analysis_favorite_entries, favorite_topic_entries,\
-    topic_view_favorite_entries
+    topic_view_favorite_entries, document_view_favorite_entries
 
 '''
 Like TemplateView, but better
@@ -57,13 +57,15 @@ class RootView(TemplateResponseMixin, View):
         context['favorites'] = {
             'datasets': dataset_favorite_entries(request),
             'analyses': analysis_favorite_entries(request),
-            'topics': favorite_topic_entries(request) + topic_view_favorite_entries(request)
+            'topics': favorite_topic_entries(request) + topic_view_favorite_entries(request),
+            'documents': document_view_favorite_entries(request)
         }
         
         context['favids'] = {
             'datasets': [fav['fav'].dataset.id for fav in context['favorites']['datasets']],
             'analyses': [fav['fav'].analysis.id for fav in context['favorites']['analyses']],
-            'topics':   [fav['fav'].topic.id for fav in context['favorites']['topics']]
+            'topics':   [fav['fav'].topic.id for fav in context['favorites']['topics']],
+            'documents':     [fav['fav'].document.id for fav in context['favorites']['documents']]
         }
 
         

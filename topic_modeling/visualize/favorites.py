@@ -35,6 +35,32 @@ from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis, 
 from topic_modeling.visualize.topics.names import current_name_scheme, topic_name_with_ns
 
 
+'''
+    {get} should return None if the favorite doesn't exist
+'''
+@require_http_methods(['GET','PUT','DELETE'])
+def _favorites_ajax_handler(request, get, create):
+    fav = get()
+    
+    if request.method=='GET':
+        if fav is not None:
+            return HttpResponse(status=200)
+        else:
+            return HttpResponse(status=404)
+    elif request.method=='PUT':
+        if not fav:
+            create()
+        return HttpResponse(status=201)
+    elif request.method=='DELETE':
+        if fav:
+            fav.delete()
+        return HttpResponse(status=204)
+    
+    return HttpResponse(status=500)
+
+
+# Entity-linked Favorites
+## Dataset Favorites
 @require_GET
 def datasets(request):
     return JsonResponse([fav.dataset.id for fav in _dataset_favorites(request)])
@@ -63,6 +89,7 @@ def dataset(request, dataset):
     
     return _favorites_ajax_handler(request, get, create)
 
+## Analysis Favorites
 @require_GET
 def analyses(request, **kwargs):
     if 'dataset' in kwargs:
@@ -98,6 +125,7 @@ def analysis(request, dataset, analysis):
     
     return _favorites_ajax_handler(request, get, create)
 
+## Topic Favorites
 @require_GET
 def topics(request, dataset, analysis):
     return JsonResponse([fav.topic.number for fav in _topic_favorites(request, dataset, analysis)])
@@ -146,29 +174,9 @@ def topic(request, dataset, analysis, topic):
     
     return _favorites_ajax_handler(request, get, create)
 
-'''
-    {get} should return None if the favorite doesn't exist
-'''
-def _favorites_ajax_handler(request, get, create):
-    fav = get()
-    
-    if request.method=='GET':
-        if fav is not None:
-            return HttpResponse(status=200)
-        else:
-            return HttpResponse(status=404)
-    elif request.method=='PUT':
-        if not fav:
-            create()
-        return HttpResponse(status=201)
-    elif request.method=='DELETE':
-        if fav:
-            fav.delete()
-        return HttpResponse(status=204)
-    else:
-        raise Exception("Unsupported HTTP method '" + request.method + "'")
 
-
+# Favorites that include the filter set
+## Topic View Favorites
 @require_GET
 def topic_views(request):
     return JsonResponse([{'favid':fav.favid, 'name':fav.name, 'topic_num':fav.topic.number} for fav in _topic_view_favorites(request)])
@@ -210,6 +218,15 @@ def topic_view(request, favid):
         fav.delete()
         return HttpResponse(status=204)
 
+
+## Document View Favorites
+def document_view_favorite_entries(request):
+    entries = list()
+    for fav in _document_view_favorites(request):
+        url = reverse('tg-favs-doc-view', kwargs={'favid':fav.favid})
+        entries.append({'text': fav.name, 'url':url, 'favurl': url, 'fav': fav})
+    return entries
+
 @require_GET
 def document_views(request):
     return JsonResponse([{'favid':fav.favid, 'name':fav.name, 'doc_id':fav.document.id} for fav in _document_view_favorites(request)])
@@ -224,18 +241,14 @@ def document_view(request, favid):
         fav = get_object_or_404(DocumentViewFavorite, favid=favid)
         filters = base64.b64decode(fav.filters)
         doc_filters = pickle.loads(filters)
-        return DocumentView.as_view()(request, favid, dataset=fav.topic.analysis.dataset, analysis=fav.topic.analysis, document_filters=doc_filters)
+        return DocumentView.as_view()(request, favid, dataset=fav.analysis.dataset, analysis=fav.analysis, document_filters=doc_filters)
     elif request.method=='PUT':
         params = anyjson.loads(request.read())
         dataset = Dataset.objects.get(name=params['dataset'])
         analysis = Analysis.objects.get(dataset=dataset, name=params['analysis'])
         document = Document.objects.get(id=params['document'], dataset=dataset)
-
-#        topic = Topic.objects.get(analysis=analysis,number=params['topic'])
-        name = params['name']
-#        favid = params.get('favid', slugify(name))
         filters =  base64.b64encode(pickle.dumps(request.session.get('document-filters', list())))
-        DocumentViewFavorite.objects.create(session_key=request.session.session_key, document=document, name=name, favid=favid, filters=filters)
+        DocumentViewFavorite.objects.create(session_key=request.session.session_key, document=document,analysis=analysis, name=params['name'], favid=favid, filters=filters)
         return HttpResponse(status=201)
     elif request.method=='DELETE':
         fav = get_object_or_404(DocumentViewFavorite, favid=favid)

@@ -73,3 +73,10 @@ function message(text, klass) {
     
     $("div#notification").unbind('click');
 }
+
+function slugify(text) {
+    return text.toLowerCase()
+	    .replace(/[^\w ]+/g,'')
+	    .replace(/ +/g,'-')
+	    .replace(/\//g, '-');
+}
