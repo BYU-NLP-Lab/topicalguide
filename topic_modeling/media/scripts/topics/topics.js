@@ -34,6 +34,7 @@ function favorite_this_view(name, favid) {
 		data:params,
 		success: function() {
 			infoMessage('View now available at <a href="' + url + '">' + fullUrl + '</a>');
+			add_favorite_to_menu('Topics', name, url, url);
 		},
 		error: function() {
 			errorMessage('View at ' + fullUrl + ' already exists');
@@ -56,28 +57,26 @@ function update_list_contents(topics_list) {
 	var topic = $.fn.topic.number;
 	var new_html = '';
 	for (var i = 0; i < topics_list.length; i++) {
+		var url = $.fn.topics_url + '/' + $.fn.topic.post_link;
+		var text = topics_list[i].name + (topics_list[i].topicgroup) ? ' - GROUP' : '';
+		
 		new_html += '<li';
 		if (topics_list[i].number == topic) {
 			new_html += ' class="selected"';
 		}
 		new_html += '>';
 		
-		new_html += '<img class="star" topicnum="' + topics_list[i].number + '" favurl="' + $.fn.topics_url + '/' + topics_list[i].number + '/fav"/>';
+		new_html += '<img class="star" type="topics" url="' + url + '" text="' + text + '" favurl="' + $.fn.topics_url + '/' + topics_list[i].number + '/fav"/>';
 		
-		new_html += '<a href="' + $.fn.topics_url;
-		new_html += '/' + topics_list[i].number;
-		new_html += $.fn.topic.post_link;
-		new_html += '">';
-		new_html += topics_list[i].name;
+		new_html += '<a href="' + url + '">';
+		new_html += text;
+		new_html += '</a></li>';
         if (topics_list[i].topicgroup) {
-          new_html += ' - GROUP</a></li>';
           for(var j = 0; j < topics_list[i].topicgroup.length; j++) {
               new_html += '<li>';
               new_html += topics_list[i].topicgroup[j];
               new_html += '</li>';
           }
-        } else {
-          new_html += '</a></li>';
         }
 	}
 	$("ul#sidebar-list").html(new_html);

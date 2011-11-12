@@ -2,6 +2,7 @@ $(document).ready(function (){
     bind_favorites();
 });
 
+/***** Utility Functions *****/
 function cursor_wait() {
 	document.body.style.cursor = 'wait';
 }
@@ -17,6 +18,14 @@ function set_name_scheme() {
     location.reload()
 }
 
+function slugify(text) {
+    return text.toLowerCase()
+	    .replace(/[^\w ]+/g,'')
+	    .replace(/ +/g,'-')
+	    .replace(/\//g, '-');
+}
+
+/***** Favorites *****/
 function bind_favorites() {
 	$("img.star:not(.inactive)").unbind('click').click(function() {
 		toggle_favorite($(this));
@@ -24,12 +33,16 @@ function bind_favorites() {
 }
 
 function toggle_favorite(fav) {
+	var category = fav.attr("type");
+	var favurl = fav.attr("favurl");
+	
 	if(fav.hasClass("fav")) {
 		$.ajax({
 			url: fav.attr("favurl"),
 			type: 'DELETE',
 			success: function() {
 				fav.removeClass("fav");
+				remove_favorite_from_menu(category, favurl);
 			}
 		});
 	} else {
@@ -38,11 +51,31 @@ function toggle_favorite(fav) {
 			type: 'PUT',
 			success: function() {
 				fav.addClass("fav");
+				var text = fav.attr("text");
+				var url = fav.attr("url");
+				add_favorite_to_menu(category, text, url, favurl);
 			}
 		});
 	}
 }
 
+function add_favorite_to_menu(category, text, url, favurl) {
+	var newFav = '<li class="favorite">';
+	newFav += '<img class="star fav" favurl="' + favurl + '"/>';
+	newFav += '<a href="' + url + '">' + text + '</a>';
+	$("li#favorites > ul > li#" + category.toLowerCase() + " > ul").append(newFav);
+	bind_favorites();
+}
+
+function remove_favorite_from_menu(category, favurl) {
+	$("li#favorites > ul > li#" + category.toLowerCase() + " > ul > li.favorite").each(function() {
+		$(this, " > img[favurl='" + favurl + "']").each(function(i,val){
+			val.hide('slow', function(){ $(this).remove(); })
+		});
+	});
+}
+
+/***** Status Messages *****/
 function infoMessage(text) {
 	message(text, 'ui-state-highlight');
 }
@@ -74,9 +107,3 @@ function message(text, klass) {
     $("div#notification").unbind('click');
 }
 
-function slugify(text) {
-    return text.toLowerCase()
-	    .replace(/[^\w ]+/g,'')
-	    .replace(/ +/g,'-')
-	    .replace(/\//g, '-');
-}
