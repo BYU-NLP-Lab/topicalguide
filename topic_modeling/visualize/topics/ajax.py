@@ -224,7 +224,7 @@ def update_topic_word_filter(request, dataset, analysis, topic, number, word):
 
 class AjaxTopic(object):
     def __init__(self, topic, topic_name):
-        self.name = str(topic.number) + ": " + topic_name
+        self.name = topic_name
         self.number = topic.number
         try:
             # TODO(matt): This looks like it gets the wrong name
