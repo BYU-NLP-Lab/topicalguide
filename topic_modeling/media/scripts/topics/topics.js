@@ -57,19 +57,17 @@ function update_list_contents(topics_list) {
 	var topic = $.fn.topic.number;
 	var new_html = '';
 	for (var i = 0; i < topics_list.length; i++) {
-		var url = $.fn.topics_url + '/' + $.fn.topic.post_link;
-		var text = topics_list[i].name + (topics_list[i].topicgroup) ? ' - GROUP' : '';
+		var number = topics_list[i].number;
+		var url = $.fn.topics_url + '/' + number;
+		var text = topics_list[i].name + ((topics_list[i].topicgroup) ? ' - GROUP' : '');
+		var favurl = $.fn.topics_url + '/' + number + '/fav';
 		
-		new_html += '<li';
-		if (topics_list[i].number == topic) {
-			new_html += ' class="selected"';
-		}
-		new_html += '>';
+		new_html += '<li' + (number == topic ? ' class="selected"' : '') + '>';
 		
-		new_html += '<img class="star" type="topics" url="' + url + '" text="' + text + '" favurl="' + $.fn.topics_url + '/' + topics_list[i].number + '/fav"/>';
+		new_html += '<img class="star" type="topics" url="' + url + '" text="' + text + '" favurl="' + favurl + '"/>';
 		
 		new_html += '<a href="' + url + '">';
-		new_html += text;
+		new_html += number + ': ' + text;
 		new_html += '</a></li>';
         if (topics_list[i].topicgroup) {
           for(var j = 0; j < topics_list[i].topicgroup.length; j++) {

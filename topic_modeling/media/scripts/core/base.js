@@ -61,17 +61,37 @@ function toggle_favorite(fav) {
 
 function add_favorite_to_menu(category, text, url, favurl) {
 	var newFav = '<li class="favorite">';
-	newFav += '<img class="star fav" favurl="' + favurl + '"/>';
+	newFav += '<img class="star fav" url="' + url + '" favurl="' + favurl + '" type="' + category + '" text="' + text + '"/>';
 	newFav += '<a href="' + url + '">' + text + '</a>';
-	$("li#favorites > ul > li#" + category.toLowerCase() + " > ul").append(newFav);
+	
+	var ul = $("ul#entities");
+	var li = $("> li.entity#" + category.toLowerCase(), ul);
+	if(li.length == 0) {
+		var newLi = '<li id="' + category.toLowerCase() + '" class="entity">';
+		newLi += '<a class="entity-type">' + _title_case(category) + '</a>';
+		newLi += '<ul></ul>';
+		newLi += '</li>';
+		ul.append(newLi);
+		li = $("> li.entity#" + category.toLowerCase(), ul);
+	}
+	
+	$(" > ul", li).append(newFav);
 	bind_favorites();
 }
 
+function _title_case(s) {
+	return s.charAt(0).toUpperCase() + s.substr(1);
+}
+
 function remove_favorite_from_menu(category, favurl) {
-	$("li#favorites > ul > li#" + category.toLowerCase() + " > ul > li.favorite").each(function() {
-		$(this, " > img[favurl='" + favurl + "']").each(function(i,val){
-			val.hide('slow', function(){ $(this).remove(); })
-		});
+	var entityLi = $("ul#entities > li#" + category.toLowerCase());
+	var items = $(" > ul > li.favorite", entityLi);
+	var total = items.length;
+	items.each(function() {
+		if($(" > img[favurl='" + favurl + "']", this).length > 0) {
+			var hideMe = total > 1 ? $(this) : entityLi;
+			hideMe.hide('slow', function(){ hideMe.remove(); });
+		}
 	});
 }
 
