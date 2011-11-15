@@ -20,39 +20,22 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
+from math import log
+from topic_modeling.visualize.models import AnalysisMetric, AnalysisMetricValue
 
-from metric_scripts import MetricSet
+def add_metric(analysis):
+    metric, _ = AnalysisMetric.objects.get_or_create(name="Topic Entropy")
+    
+    # Get normalized topic counts
+    counts = [topic.total_count for topic in analysis.topic_set.all()]
+    total = float(sum(counts))
+    
+    entropy = 0.0
+    for count in counts:
+        prob = float(count) / total
+        entropy -= prob * log(prob) / log(2)
+    
+    AnalysisMetricValue.objects.create(metric=metric, analysis=analysis, value=entropy)
 
-import alpha
-import attribute_entropy
-import coherence
-import document_entropy
-import sentiment
-import subset_document_entropy
-import subset_token_count
-import token_count
-import type_count
-import word_entropy
-
-metrics = MetricSet()
-metrics['alpha'] = alpha
-metrics['attribute entropy'] = attribute_entropy
-metrics['coherence'] = coherence
-metrics['document entropy'] = document_entropy
-metrics['sentiment'] = sentiment
-metrics['subset document entropy'] = subset_document_entropy
-metrics['subset token count'] = subset_token_count
-metrics['token count'] = token_count
-metrics['type count'] = type_count
-metrics['word entropy'] = word_entropy
-
-from pairwise import document_correlation
-from pairwise import pairwise_coherence
-from pairwise import word_correlation
-
-pairwise_metrics = MetricSet()
-pairwise_metrics['document correlation'] = document_correlation
-pairwise_metrics['pairwise coherence'] = pairwise_coherence
-pairwise_metrics['word correlation'] = word_correlation
-
-# vim: et sw=4 sts=4
+def metric_names_generated(_analysis):
+    return ["Topic Entropy"]

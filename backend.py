@@ -56,13 +56,14 @@ from build.common.db_cleanup import remove_analysis
 from build.common.db_cleanup import remove_dataset
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
-from topic_modeling.visualize.models import Analysis
+from topic_modeling.visualize.models import Analysis, DatasetMetric, AnalysisMetric
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import TopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import DocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import TopicNameScheme
+
 from django.db.utils import DatabaseError
 
 #If this file is invoked directly, pass it in to the doit system for processing.
@@ -357,6 +358,96 @@ if 'task_name_schemes' not in locals():
             task['task_dep'] = ['analysis_import']
             task['clean'] = [(clean_names,[ns])]
             task['uptodate'] = [scheme_in_database(ns)]
+            yield task
+
+if 'task_dataset_metrics' not in locals():
+    def task_dataset_metrics():
+        from metric_scripts.datasets import metrics
+        def metric_in_database(dataset_metric):
+            try:
+                DatasetMetric.objects.get(name=dataset_metric)
+                return True
+            except DatasetMetric.DoesNotExist:
+                return False
+        
+        def import_metric(dataset_metric):
+            start_time = datetime.now()
+            print 'Adding %s...' % dataset_metric,
+            sys.stdout.flush()
+            
+            dataset = Dataset.objects.get(name=dataset_name)
+            
+            try:
+                metrics[dataset_metric].add_metric(dataset)
+                end_time = datetime.now()
+                print '  Done', end_time - start_time
+                sys.stdout.flush()
+            except KeyError as e:
+                print "\nI couldn't find the metric you specified:", e
+                sys.stdout.flush()
+            except RuntimeError as e:
+                print "\nThere was an error importing the specified metric:", e
+                sys.stdout.flush()
+        
+        def clean_metric(dataset_metric):
+            dataset = Dataset.objects.get(name=dataset_name)
+            names = metrics[dataset_metric].metric_names_generated(dataset)
+            for name in names:
+                DatasetMetric.objects.get(name=name).delete()
+        
+        print "Available dataset metrics: " + u', '.join(metrics)
+        for dataset_metric in metrics:
+            task = dict()
+            task['name'] = dataset_metric.replace(' ', '_')
+            task['actions'] = [(import_metric, [dataset_metric])]
+            task['clean'] = ["ls", (clean_metric, [dataset_metric])]
+            task['task_dep'] = ['dataset_import']
+            task['uptodate'] = [metric_in_database(dataset_metric)]
+            yield task
+
+if 'task_analysis_metrics' not in locals():
+    def task_analysis_metrics():
+        from metric_scripts.analyses import metrics
+        def metric_in_database(analysis_metric):
+            try:
+                AnalysisMetric.objects.get(name=analysis_metric)
+                return True
+            except AnalysisMetric.DoesNotExist:
+                return False
+        
+        def import_metric(analysis_metric):
+            start_time = datetime.now()
+            print 'Adding %s...' % analysis_metric,
+            sys.stdout.flush()
+            
+            analysis = Analysis.objects.get(name=analysis_name)
+            
+            try:
+                metrics[analysis_metric].add_metric(analysis)
+                end_time = datetime.now()
+                print '  Done', end_time - start_time
+                sys.stdout.flush()
+            except KeyError as e:
+                print "\nI couldn't find the metric you specified:", e
+                sys.stdout.flush()
+            except RuntimeError as e:
+                print "\nThere was an error importing the specified metric:", e
+                sys.stdout.flush()
+        
+        def clean_metric(analysis_metric):
+            analysis = Analysis.objects.get(name=analysis_metric)
+            names = metrics[analysis_metric].metric_names_generated(analysis)
+            for name in names:
+                AnalysisMetric.objects.get(name=name).delete()
+        
+        print "Available analysis metrics: " + u', '.join(metrics)
+        for analysis_metric in metrics:
+            task = dict()
+            task['name'] = analysis_metric.replace(' ', '_')
+            task['actions'] = [(import_metric, [analysis_metric])]
+            task['clean'] = ["ls", (clean_metric, [analysis_metric])]
+            task['task_dep'] = ['analysis_import']
+            task['uptodate'] = [metric_in_database(analysis_metric)]
             yield task
 
 if 'task_topic_metrics' not in locals():
