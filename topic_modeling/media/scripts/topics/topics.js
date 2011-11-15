@@ -64,7 +64,7 @@ function update_list_contents(topics_list) {
 		
 		new_html += '<li' + (number == topic ? ' class="selected"' : '') + '>';
 		
-		new_html += '<img class="star" type="topics" url="' + url + '" text="' + text + '" favurl="' + favurl + '"/>';
+		new_html += '<img class="star" type="topics" topicnum="' + number + '" url="' + url + '" text="' + text + '" favurl="' + favurl + '"/>';
 		
 		new_html += '<a href="' + url + '">';
 		new_html += number + ': ' + text;
