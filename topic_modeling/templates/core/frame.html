@@ -60,7 +60,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         		}}
        		});
         	
-        	$("button#fav-this").button({label: "Fav This"}).click(function(){
+        	$("button#fav-this").button({label: "Fav This View"}).click(function(){
                 input.addClass("ui-state-error").val('');
                 form.dialog('open');
             });
@@ -123,7 +123,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 			
 			<li id="favorites">
 			    <span id="buttons">
-					<button id="fav-this" title="Favorite This View"></button>
+					{% block fav-this-button %}<button id="fav-this" title="Favorite This View"></button>{% endblock %}
 					<button id="favs" title="Favorites">&nbsp;</button>
 				</span>
 				<ul id="entities">
