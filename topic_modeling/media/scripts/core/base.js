@@ -2,6 +2,71 @@ $(document).ready(function (){
     bind_favorites();
 });
 
+$.fn.favs = new Array();
+$.fn.fav_handlers = _default_handlers();
+
+function _default_fav_handler() {
+	var handler = new Object();
+	handler.fav = function(){}
+	handler.unfav = function(){}
+	handler.fav_succeeded = function(){}
+	handler.fav_failed = function(){}
+	handler.unfav_succeeded = function(){}
+	handler.unfav_failed = function(){}
+	return handler;
+}
+
+function _default_handlers() {
+	var handlers = [];
+	$.fn.fav_handlers = handlers;
+	
+	var classHandler = _default_fav_handler();
+	classHandler.fav_succeeded = function(favElement) {
+		favElement.addClass('fav');
+	};
+	classHandler.unfav_succeeded = function(favElement) {
+		favElement.removeClass('fav');
+	};
+	handlers.push(classHandler);
+	
+	var ajaxHandler = _default_fav_handler();
+	ajaxHandler.fav = function(favElement) {
+		$.ajax({
+			url: favElement.attr("favurl"),
+			type: 'PUT',
+			success: function() {
+				fav_succeeded(favElement);
+			}
+		});
+	};
+	ajaxHandler.unfav = function(favElement) {
+		$.ajax({
+			url: favElement.attr("favurl"),
+			type: 'DELETE',
+			success: function() {
+				unfav_succeeded(favElement);
+			}
+		});
+	};
+	handlers.push(ajaxHandler);
+	
+	var menuHandler = _default_fav_handler();
+	menuHandler.fav_succeeded = function(favElement) {
+		var type = favElement.attr("type");
+		var text = favElement.attr("text");
+		var url = favElement.attr("url");
+		var favurl = favElement.attr("favurl");
+		add_favorite_to_menu(type, text, url, favurl);
+	}
+	menuHandler.unfav_succeeded = function(favElement) {
+		var type = favElement.attr("type");
+		var favurl = favElement.attr("favurl");
+		remove_favorite_from_menu(type, favurl);
+	}
+	handlers.push(menuHandler);
+	return handlers;
+}
+
 /***** Utility Functions *****/
 function cursor_wait() {
 	document.body.style.cursor = 'wait';
@@ -27,36 +92,64 @@ function slugify(text) {
 
 /***** Favorites *****/
 function bind_favorites() {
-	$("img.star:not(.inactive)").unbind('click').click(function() {
-		toggle_favorite($(this));
+	$("img.star:not(.inactive)").each(function() {
+		var jqobj = $(this);
+		register_favorite(jqobj.attr("favurl"), this);
+		jqobj.unbind('click').click(function() {
+			toggle_fav($(this));
+		});
 	});
 }
 
-function toggle_favorite(fav) {
-	var category = fav.attr("type");
-	var favurl = fav.attr("favurl");
-	
-	if(fav.hasClass("fav")) {
-		$.ajax({
-			url: fav.attr("favurl"),
-			type: 'DELETE',
-			success: function() {
-				fav.removeClass("fav");
-				remove_favorite_from_menu(category, favurl);
-			}
-		});
-	} else {
-		$.ajax({
-			url: fav.attr("favurl"),
-			type: 'PUT',
-			success: function() {
-				fav.addClass("fav");
-				var text = fav.attr("text");
-				var url = fav.attr("url");
-				add_favorite_to_menu(category, text, url, favurl);
-			}
-		});
+function register_favorite(favurl, favElement) {
+	$.fn.favs[favurl] = favElement;
+}
+
+function add_fav_handler(handler) {
+	$.fn.fav_handlers.add(handler);
+}
+
+function fav(favElement) {
+	for(var i = 0; i < $.fn.fav_handlers.length; i++) {
+		$.fn.fav_handlers[i].fav(favElement);
 	}
+}
+
+function fav_succeeded(favElement) {
+	for(var i = 0; i < $.fn.fav_handlers.length; i++) {
+		$.fn.fav_handlers[i].fav_succeeded(favElement);
+	}
+}
+
+function fav_failed(favElement) {
+	for(var i = 0; i < $.fn.fav_handlers.length; i++) {
+		$.fn.fav_handlers[i].fav_failed(favElement);
+	}
+}
+
+function unfav(favElement) {
+	for(var i = 0; i < $.fn.fav_handlers.length; i++) {
+		$.fn.fav_handlers[i].unfav(favElement);
+	}
+}
+
+function unfav_succeeded(favElement) {
+	for(var i = 0; i < $.fn.fav_handlers.length; i++) {
+		$.fn.fav_handlers[i].unfav_succeeded(favElement);
+	}
+}
+
+function unfav_failed(favElement) {
+	for(var i = 0; i < $.fn.fav_handlers.length; i++) {
+		$.fn.fav_handlers[i].unfav_failed(favElement);
+	}
+}
+
+function toggle_fav(favElement) {
+	if(favElement.hasClass("fav"))
+		unfav(favElement);
+	else
+		fav(favElement);
 }
 
 function add_favorite_to_menu(category, text, url, favurl) {

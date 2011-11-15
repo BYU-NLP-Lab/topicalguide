@@ -24,7 +24,8 @@ function favorite_this_view(name, favid) {
 		url:url,
 		data:params,
 		success: function() {
-			infoMessage('View now available at <a href="' + url + '">' + fullUrl + '</a>');
+//			infoMessage('View now available at <a href="' + url + '">' + fullUrl + '</a>');
+			add_favorite_to_menu('Documents', name, url, url);
 		},
 		error: function() {
 			errorMessage('View at ' + fullUrl + ' already exists');
