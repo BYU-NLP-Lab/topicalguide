@@ -202,7 +202,7 @@ def topic_view(request, favid):
         fav = get_object_or_404(TopicViewFavorite, favid=favid)
         filters = base64.b64decode(fav.filters)
         topic_filters = pickle.loads(filters)
-        return TopicView.as_view()(request, favid, dataset=fav.topic.analysis.dataset, analysis=fav.topic.analysis, topic_filters=topic_filters)
+        return TopicView.as_view()(request, favid, dataset=fav.topic.analysis.dataset, analysis=fav.topic.analysis, topic=fav.topic.number, topic_filters=topic_filters)
     elif request.method=='PUT':
         params = anyjson.loads(request.read())
         dataset = Dataset.objects.get(name=params['dataset'])
@@ -241,7 +241,7 @@ def document_view(request, favid):
         fav = get_object_or_404(DocumentViewFavorite, favid=favid)
         filters = base64.b64decode(fav.filters)
         doc_filters = pickle.loads(filters)
-        return DocumentView.as_view()(request, favid, dataset=fav.analysis.dataset, analysis=fav.analysis, document_filters=doc_filters)
+        return DocumentView.as_view()(request, favid, dataset=fav.analysis.dataset, analysis=fav.analysis, document=fav.document.id, document_filters=doc_filters)
     elif request.method=='PUT':
         params = anyjson.loads(request.read())
         dataset = Dataset.objects.get(name=params['dataset'])
