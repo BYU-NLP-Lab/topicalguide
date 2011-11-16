@@ -31,6 +31,7 @@ from topic_modeling.visualize.models import Analysis, Attribute, AttributeValue,
     AttributeValueTopic, Dataset, Topic, TopicMetric, Value
 import StringIO
 import math
+import csv
 
 import matplotlib
 #Avoid using X windows by setting a backend that doesn't use it. This is necessary for headless setups
@@ -151,7 +152,7 @@ class TopicAttributePlotForm(forms.Form):
 
     def __init__(self, dataset, analysis, *args, **kwargs):
         super(TopicAttributePlotForm, self).__init__(*args, **kwargs)
-        
+
         #The list of topics
         topics = analysis.topic_set.all()
         self.fields['topics'] = forms.ModelMultipleChoiceField(topics,
@@ -159,7 +160,7 @@ class TopicAttributePlotForm(forms.Form):
         self.fields['topics'].widget.attrs['onchange'] = \
                 'update_topic_attribute_plot()'
         self.fields['topics'].widget.attrs['class'] = 'under-label'
-        
+
         #Available attributes
         attributes = dataset.attribute_set.all()
         self.fields['attribute'] = forms.ModelChoiceField(attributes,
@@ -167,19 +168,19 @@ class TopicAttributePlotForm(forms.Form):
         self.fields['attribute'].widget.attrs['onchange'] = \
                 'update_attribute_values()'
         self.fields['attribute'].widget.attrs['class'] = 'under-label'
-        
+
         #Frequency checkbox
         self.fields['by_frequency'] = forms.BooleanField(required=False)
         self.fields['by_frequency'].widget.attrs['onchange'] = \
                 'update_topic_attribute_plot()'
         self.fields['by_frequency'].widget.attrs['class'] = 'beside-label'
-        
+
         #Histogram checkbox
         self.fields['histogram'] = forms.BooleanField(required=False)
         self.fields['histogram'].widget.attrs['onchange'] = \
                 'update_topic_attribute_plot()'
         self.fields['histogram'].widget.attrs['class'] = 'beside-label'
-        
+
         #List of values the current attribute can take
         if attributes.count() != 0:
             attribute = attributes[0]
@@ -189,7 +190,7 @@ class TopicAttributePlotForm(forms.Form):
             self.fields['values'].widget.attrs['onchange'] = \
                     'update_topic_attribute_plot()'
             self.fields['values'].widget.attrs['class'] = 'under-label hideable'
-        
+
         #The Select All button
         button = Button(onClick='highlight_all_topic_attribute_values(1)',
                         value='Select All')
@@ -321,6 +322,17 @@ class TopicAttributeChart(object):
         fig.canvas.print_figure(line_chart_image, dpi=80)
         return line_chart_image.getvalue()
 
+    def get_csv_file(self):
+        csv_file = StringIO.StringIO()
+        topics = list(self.chartdata.keys())
+        values = list(self.values)
+
+        writer = csv.writer(csv_file)
+        writer.writerow(["value"] + topics)
+        for i, value in enumerate(values):
+            writer.writerow([value] + [self.chartdata[t][i] for t in topics])
+
+        return csv_file.getvalue()
 
 # Topic Metric Classes
 ######################

@@ -44,19 +44,19 @@ def word_in_context(request, dataset, analysis, word, topic=None):
     analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)
     w = Word.objects.get(dataset__name=dataset, type=word)
     word_context = WordSummary(word)
-    
+
     if topic is None:
         docset = w.documentword_set.all()
     else:
         topic = Topic.objects.get(analysis=analysis, number=topic)
         docset = topic.documenttopicword_set.filter(word=w)
-    
+
     num_docs = len(docset)
     d = docset[random.randint(0, num_docs - 1)]
-    
+
     word_context.left_context, word_context.word, word_context.right_context \
-        = d.document.get_context_for_word(word, analysis, topic.number if topic else None)
-    
+ = d.document.get_context_for_word(word, analysis, topic.number if topic else None)
+
     word_context.doc_name = d.document.filename
     word_context.doc_id = d.document.id
     return HttpResponse(anyjson.dumps(vars(word_context)))
@@ -78,17 +78,17 @@ def attribute_values(request, attribute):
 
 def topic_attribute_plot(request, attribute, topic, value):
     fmt = request.GET['fmt'] if 'fmt' in request.GET else 'json'
-    if fmt=='json':
+    if fmt == 'json':
         chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
         if request.GET.get('frequency', False):
             chart_parameters['frequency'] = 'True'
         if request.GET.get('histogram', False):
             chart_parameters['histogram'] = 'True'
         chart = TopicAttributeChart(chart_parameters)
-    
+
         return HttpResponse(anyjson.dumps(chart.get_source_data()),
-                            content_type = 'application/javascript; charset=utf8')
-    elif fmt=='png':
+                            content_type='application/javascript; charset=utf8')
+    elif fmt == 'png':
         chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
         if request.GET.get('frequency', False):
             chart_parameters['frequency'] = 'True'
@@ -98,6 +98,15 @@ def topic_attribute_plot(request, attribute, topic, value):
         return HttpResponse(chart.get_chart_image(), mimetype="image/png")
     else:
         raise ValueError("Format '%' is not supported" % fmt)
+
+def topic_attribute_csv(request, attribute, topic, value):
+    chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
+    if request.GET.get('frequency', False):
+        chart_parameters['frequency'] = 'True'
+    if request.GET.get('histogram', False):
+        chart_parameters['histogram'] = 'True'
+    chart = TopicAttributeChart(chart_parameters)
+    return HttpResponse(chart.get_csv_file(), mimetype="text/csv")
 
 def topic_metric_plot(request, dataset, analysis, metric):
     chart_parameters = {'dataset': dataset, 'analysis': analysis}
