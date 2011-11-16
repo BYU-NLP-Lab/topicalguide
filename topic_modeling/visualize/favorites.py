@@ -20,14 +20,47 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.views.decorators.http import require_http_methods, require_GET
-from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis,\
-    AnalysisFavorite, TopicFavorite, Topic
-from django.core.urlresolvers import reverse
-from topic_modeling.visualize.topics.names import current_name_scheme,\
-    topic_name_with_ns
-from topic_modeling.visualize.common.http_responses import JsonResponse
+import base64
+import pickle
 
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_http_methods, require_GET
+
+from topic_modeling import anyjson
+from topic_modeling.visualize.common.http_responses import JsonResponse
+from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis, AnalysisFavorite, TopicFavorite, Topic, \
+    TopicViewFavorite, DocumentViewFavorite, Document
+from topic_modeling.visualize.topics.names import current_name_scheme, topic_name_with_ns
+
+
+'''
+    {get} should return None if the favorite doesn't exist
+'''
+@require_http_methods(['GET','PUT','DELETE'])
+def _favorites_ajax_handler(request, get, create):
+    fav = get()
+    
+    if request.method=='GET':
+        if fav is not None:
+            return HttpResponse(status=200)
+        else:
+            return HttpResponse(status=404)
+    elif request.method=='PUT':
+        if not fav:
+            create()
+        return HttpResponse(status=201)
+    elif request.method=='DELETE':
+        if fav:
+            fav.delete()
+        return HttpResponse(status=204)
+    
+    return HttpResponse(status=500)
+
+
+# Entity-linked Favorites
+## Dataset Favorites
 @require_GET
 def datasets(request):
     return JsonResponse([fav.dataset.id for fav in _dataset_favorites(request)])
@@ -56,6 +89,7 @@ def dataset(request, dataset):
     
     return _favorites_ajax_handler(request, get, create)
 
+## Analysis Favorites
 @require_GET
 def analyses(request, **kwargs):
     if 'dataset' in kwargs:
@@ -91,6 +125,7 @@ def analysis(request, dataset, analysis):
     
     return _favorites_ajax_handler(request, get, create)
 
+## Topic Favorites
 @require_GET
 def topics(request, dataset, analysis):
     return JsonResponse([fav.topic.number for fav in _topic_favorites(request, dataset, analysis)])
@@ -139,117 +174,83 @@ def topic(request, dataset, analysis, topic):
     
     return _favorites_ajax_handler(request, get, create)
 
-'''
-    {get} should return None if the favorite doesn't exist
-'''
-def _favorites_ajax_handler(request, get, create):
-    fav = get()
-    
-    if request.method=='GET':
-        fav_exists = fav is not None
-        return JsonResponse(fav_exists)
-    elif request.method=='PUT':
-        if not fav:
-            create()
-        return JsonResponse(True)
-    elif request.method=='DELETE':
-        if fav:
-            fav.delete()
-        return JsonResponse(True)
-    else:
-        raise Exception("Unsupported HTTP method '" + request.method + "'")
 
+# Favorites that include the filter set
+## Topic View Favorites
 @require_GET
-def views(request):
-    pass
+def topic_views(request):
+    return JsonResponse([{'favid':fav.favid, 'name':fav.name, 'topic_num':fav.topic.number} for fav in _topic_view_favorites(request)])
+
+def _topic_view_favorites(request):
+    return TopicViewFavorite.objects.filter(session_key=request.session.session_key)
+
+def topic_view_favorite_entries(request):
+    entries = list()
+    for fav in _topic_view_favorites(request):
+        url = reverse('tg-favs-topic-view', kwargs={'favid': fav.favid})
+        entries.append({
+                     'text': fav.name,
+                     'url': url,
+                     'favurl': url,
+                     'fav': fav})
+    return entries
 
 @require_http_methods(['GET', 'PUT', 'DELETE'])
-def view(request, viewid):
-    pass
+def topic_view(request, favid):
+    from topic_modeling.visualize.topics.views import TopicView
+    if request.method=='GET':
+        fav = get_object_or_404(TopicViewFavorite, favid=favid)
+        filters = base64.b64decode(fav.filters)
+        topic_filters = pickle.loads(filters)
+        return TopicView.as_view()(request, favid, dataset=fav.topic.analysis.dataset, analysis=fav.topic.analysis, topic=fav.topic.number, topic_filters=topic_filters)
+    elif request.method=='PUT':
+        params = anyjson.loads(request.read())
+        dataset = Dataset.objects.get(name=params['dataset'])
+        analysis = Analysis.objects.get(dataset=dataset, name=params['analysis'])
+        topic = Topic.objects.get(analysis=analysis,number=params['topic'])
+        name = params['name']
+#        favid = params.get('favid', slugify(name))
+        filters =  base64.b64encode(pickle.dumps(request.session.get('topic-filters', list())))
+        TopicViewFavorite.objects.create(session_key=request.session.session_key, topic=topic, name=name, favid=favid, filters=filters)
+        return HttpResponse(status=201)
+    elif request.method=='DELETE':
+        fav = get_object_or_404(TopicViewFavorite, favid=favid)
+        fav.delete()
+        return HttpResponse(status=204)
 
-#def index(request, dataset, analysis, id):
-#    page_vars = dict()
-#    page_vars['highlight'] = 'favorite_tab'
-#    page_vars['tab'] = 'favorite'
-#    page_vars['dataset'] = dataset
-#    page_vars['analysis'] = analysis
-#
-#    page_vars['page_num'] = 1
-#    page_vars['num_pages'] = 1
-#    page_vars['favorites'] = request.session.get('favorite-set', set())
-#
-#    if id == '':
-#        id = 0
-#    else:
-#        id = int(id)
-#
-#    page_vars['curr_favorite'] = None
-#    for fav in page_vars['favorites']:
-#        if fav.id == id:
-#            page_vars['curr_favorite'] = fav
-#
-#    return render_to_response('favorite.html', page_vars)
-#
-#class Favorite:
-#    def __init__(self, url, id, session, tab):
-#        self.name = tab + ":" + url.split('/')[-1]
-#        self.url = url
-#        self.id = id
-#        self.session_recall = {}
-#        for key in session.keys():
-#            if key.startswith(tab):
-#                self.session_recall[key] = copy.deepcopy(session[key])
-#        self.tab = tab
-#
-#    def __hash__(self):
-#        return self.id
-#
-#    def __eq__(self, other):
-#        return self.id == other.id
-#
-#    def __cmp__(self, other):
-#        return self.id - other.id
-#
-##AJAX Calls
-#def get_favorite_page(request, number):
-#    ret_val = dict()
-#    favorites = request.session.get('favorite-set', set())
-#    ret_val['favorites'] = [{'id' : fav.id, 'name' : fav.name}
-#                            for fav in favorites]
-#    ret_val['num_pages'] = 1
-#    ret_val['page'] = 1
-#
-#    return HttpResponse(anyjson.dumps(ret_val))
-#
-#def add_favorite(request, tab):
-#    favorites = request.session.get('favorite-set', set())
-#    id = request.session.get('last-favorite-id', 0)
-#    url = request.GET['url']
-#    favorite = Favorite(url, id, request.session, tab)
-#    favorites.add(favorite)
-#    request.session['last-favorite-id'] = favorite.id + 1
-#    request.session['favorite-set'] = favorites
-#    return HttpResponse('Favorite Added:' + favorite.url)
-#
-#def remove_all_favorites(request):
-#    if 'favorite-set' in request.session:
-#        request.session.remove('favorite-list')
-#    return HttpResponse('Favorites cleared')
-#
-#def remove_favorite(request, url):
-#    favorites = request.session.get('favorite-set', set())
-#    if url in favorites:
-#        favorites.remove(url)
-#    request.session['favorite-set'] = favorites
-#    return HttpResponse('Url Removed:' + url)
-#
-#def recall_favorite(request, id):
-#    favorites = request.session.get('favorite-set', set())
-#    id = int(id)
-#    for favorite in favorites:
-#        if favorite.id == id:
-#            for key in favorite.session_recall.keys():
-#                request.session[key] = copy.deepcopy(favorite.session_recall[key])
-#            return HttpResponseRedirect(favorite.url)
-#    return HttpResponse('Unknown Favorite')
 
+## Document View Favorites
+def document_view_favorite_entries(request):
+    entries = list()
+    for fav in _document_view_favorites(request):
+        url = reverse('tg-favs-doc-view', kwargs={'favid':fav.favid})
+        entries.append({'text': fav.name, 'url':url, 'favurl': url, 'fav': fav})
+    return entries
+
+@require_GET
+def document_views(request):
+    return JsonResponse([{'favid':fav.favid, 'name':fav.name, 'doc_id':fav.document.id} for fav in _document_view_favorites(request)])
+
+def _document_view_favorites(request):
+    return DocumentViewFavorite.objects.filter(session_key=request.session.session_key)
+
+@require_http_methods(['GET', 'PUT', 'DELETE'])
+def document_view(request, favid):
+    from topic_modeling.visualize.documents.views import DocumentView
+    if request.method=='GET':
+        fav = get_object_or_404(DocumentViewFavorite, favid=favid)
+        filters = base64.b64decode(fav.filters)
+        doc_filters = pickle.loads(filters)
+        return DocumentView.as_view()(request, favid, dataset=fav.analysis.dataset, analysis=fav.analysis, document=fav.document.id, document_filters=doc_filters)
+    elif request.method=='PUT':
+        params = anyjson.loads(request.read())
+        dataset = Dataset.objects.get(name=params['dataset'])
+        analysis = Analysis.objects.get(dataset=dataset, name=params['analysis'])
+        document = Document.objects.get(id=params['document'], dataset=dataset)
+        filters =  base64.b64encode(pickle.dumps(request.session.get('document-filters', list())))
+        DocumentViewFavorite.objects.create(session_key=request.session.session_key, document=document,analysis=analysis, name=params['name'], favid=favid, filters=filters)
+        return HttpResponse(status=201)
+    elif request.method=='DELETE':
+        fav = get_object_or_404(DocumentViewFavorite, favid=favid)
+        fav.delete()
+        return HttpResponse(status=204)

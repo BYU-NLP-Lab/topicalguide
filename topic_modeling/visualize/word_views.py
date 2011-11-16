@@ -34,7 +34,7 @@ class WordView(AnalysisBaseView):
         context = super(WordView, self).get_context_data(request, **kwargs)
         dataset = context['dataset']
         analysis = context['analysis']
-        word = kwargs['word']
+        word = kwargs['word'] if 'word' in kwargs else None
         
         context['highlight'] = 'words_tab'
         context['tab'] = 'word'

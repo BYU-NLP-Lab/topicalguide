@@ -109,8 +109,7 @@ class DocumentFilterByTopic(object):
                 self._form.fields['topic'], 'topic_filter_%d' % self.id)
         ret_val += '</td><td>'
         ret_val += topic.as_widget()
-        ret_val += '</td><td class="remove" '
-        ret_val += 'onclick="remove_filter(%d)">X</td>' % self.id
+        ret_val += '</td><td class="remove">X</td>'
         return ret_val
 
 
@@ -169,8 +168,7 @@ class DocumentFilterByAttribute(object):
             val = forms.forms.BoundField(self._form, self._form.fields['value'],
                     'attribute_filter_value_%d' % self.id)
             ret_val += val.as_widget()
-        ret_val += '</td><td class="remove" '
-        ret_val += 'onclick="remove_filter(%d)">X</td>' % self.id
+        ret_val += '</td><td class="remove">X</td>'
         return ret_val
 
 
@@ -254,8 +252,7 @@ class DocumentFilterByMetric(object):
             val = forms.forms.BoundField(self._form, self._form.fields['value'],
                     'metric_filter_value_%d' % self.id)
             ret_val += val.as_widget()
-        ret_val += '</td><td class="remove" '
-        ret_val += 'onclick="remove_filter(%d)">X</td>' % self.id
+        ret_val += '</td><td class="remove">X</td>'
         return ret_val
 
 

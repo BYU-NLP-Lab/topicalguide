@@ -52,12 +52,12 @@ def render_script(request, script_path):
     script = open('%s/%s' % (settings.SCRIPTS_ROOT, script_path)).read()
     return HttpResponse(script, mimetype="text/javascript")
 
-dataset = r'datasets/(?P<dataset>[^/]*)'
-dataset_nc = r'datasets/[^/]*'
-analysis = r'analyses/(?P<analysis>[^/]*)'
+dataset = r'datasets/(?P<dataset>[^/]+)'
+dataset_nc = r'datasets/[^/]+'
+analysis = r'analyses/(?P<analysis>[^/]+)'
 topic = r'topics/(?P<topic>[^/]*)'
 word = r'words/(?P<word>[^/]*)'
-map = r'maps/(?P<namescheme>[^/]+)'
+map = r'maps/(?P<namescheme>[^/]*)'
 attribute = r'attributes/(?P<attribute>[^/]*)'
 value = r'values/(?P<value>[^/]*)'
 plot = r'plots/(?P<plot>[^/]*)'
@@ -99,6 +99,7 @@ urlpatterns = patterns('',
         TopicWordView.as_view(), name='tg-topic-word'),
 
 # Attribute Views
+    url(analysis_base + '/attributes$', AttributeView.as_view(), name='tg-attrs'),
     url(analysis_base + '/' + attribute + '$',
         AttributeView.as_view(), name='tg-attr'),
     url(analysis_base + '/' + attribute + '/' + value + '$',
@@ -109,18 +110,16 @@ urlpatterns = patterns('',
         AttributeDocumentView.as_view(), name='tg-attr-val-doc'),
 
 # Word Views
+    url(analysis_base + '/words$', WordView.as_view(), name='tg-words'),
     url(analysis_base + '/' + word + '$', WordView.as_view(), name='tg-word'),
 
 # Document Views
+    url(analysis_base + '/documents$', DocumentView.as_view(), name='tg-docs'),
     url(analysis_base + '/' + document + '$', DocumentView.as_view(), name='tg-doc'),
 
-## Favorite Views
-#    (r'^favorite/' + dataset + '/' + analysis + '/' + id + '$',
-#     'topic_modeling.visualize.favorite.index'),
-
 # Plot View
-    url(analysis_base + '/' + plot + '$',
-        PlotView.as_view(), name='tg-plot')
+    url(analysis_base + '/plots$', PlotView.as_view(), name='tg-plots'),
+    url(analysis_base + '/' + plot + '$', PlotView.as_view(), name='tg-plot')
 )
 
 feeds_base = 'feeds'
@@ -162,7 +161,7 @@ urlpatterns += patterns(prefix + '.topics.ajax',
             '/' + order_by + '$',
         'top_attrvaltopic'),
     (r'^feeds/topic-page/' + dataset + '/' + analysis + '/' + number + '$',
-        'get_topic_page'),
+        'topic_page'),
     (r'^feeds/similar-topics/' + dataset + '/' + analysis + '/' + topic + '/' + measure + '$',
         'similar_topics'),
     (r'^feeds/rename-topic/' + dataset + '/' + analysis + '/' + topic + '/' + name + '$',
@@ -234,7 +233,6 @@ urlpatterns += patterns(prefix + '.documents.ajax',
     (r'^feeds/update-document-metric-filter/' + dataset + '/' + analysis + '/' + \
             document + '/' + number + '/' + metric + '/' + comp + '/' + value + '$',
         'update_document_metric_filter'),
-
 )
 
 # Favorites
@@ -248,8 +246,10 @@ urlpatterns += patterns(favs_prefix,
     url(r'^' + dataset + '/' + analysis + '/fav$', 'analysis', name='tg-favs-analysis'),
     url(r'^' + dataset + '/' + analysis + '/topics.favs$', 'topics', name='tg-favs-topics'),
     url(r'^' + dataset + '/' + analysis + '/' + topic + '/fav$', 'topic', name='tg-favs-topic'),
-    url(r'^favs$', 'views', name='tg-favs-views'),
-    url(r'^favs/(?P<viewid>[^/]+)', 'view', name='tg-favs-view')
+    url(r'^favs/topics$', 'topic_views', name='tg-favs-topic-views'),
+    url(r'^favs/docs$', 'document_views', name='tg-favs-doc-views'),
+    url(r'^favs/topics/(?P<favid>[^/]+)$', 'topic_view', name='tg-favs-topic-view'),
+    url(r'^favs/docs/(?P<favid>[^/]+)$', 'document_view', name='tg-favs-doc-view')
 )
 
 urlpatterns += patterns('',
