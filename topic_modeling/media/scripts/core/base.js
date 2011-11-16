@@ -21,8 +21,8 @@ function slugify(text) {
 	    .replace(/\//g, '-');
 }
 
-function _title_case(s) {
-	return s.charAt(0).toUpperCase() + s.substr(1);
+function _type_to_section_name(s) {	
+	return s.charAt(0).toUpperCase() + s.substr(1) + (s[s.length-1]!='s' ? 's' : '');
 }
 
 /***** Favorites *****/
@@ -163,28 +163,28 @@ function unfav_failed(favElement) {
 	}
 }
 
-function add_favorite_to_menu(category, text, url, favurl) {
+function add_favorite_to_menu(type, text, url, favurl) {
 	var newFav = '<li class="favorite">';
-	newFav += '<img class="star fav" url="' + url + '" favurl="' + favurl + '" type="' + category + '" text="' + text + '"/>';
+	newFav += '<img class="star fav" url="' + url + '" favurl="' + favurl + '" type="' + type + '" text="' + text + '"/>';
 	newFav += '<a href="' + url + '">' + text + '</a>';
 	
 	var ul = $("ul#entities");
-	var li = $("> li.entity#" + category.toLowerCase(), ul);
+	var li = $("> li.entity#" + type.toLowerCase(), ul);
 	if(li.length == 0) {
-		var newLi = '<li id="' + category.toLowerCase() + '" class="entity">';
-		newLi += '<a class="entity-type">' + _title_case(category) + '</a>';
+		var newLi = '<li id="' + type.toLowerCase() + '" class="entity">';
+		newLi += '<a class="entity-type">' + _type_to_section_name(type) + '</a>';
 		newLi += '<ul></ul>';
 		newLi += '</li>';
 		ul.append(newLi);
-		li = $("> li.entity#" + category.toLowerCase(), ul);
+		li = $("> li.entity#" + type.toLowerCase(), ul);
 	}
 	
 	$(" > ul", li).append(newFav);
 	bind_favorites();
 }
 
-function remove_favorite_from_menu(category, favurl) {
-	var entityLi = $("ul#entities > li#" + category.toLowerCase());
+function remove_favorite_from_menu(type, favurl) {
+	var entityLi = $("ul#entities > li#" + type.toLowerCase());
 	var items = $(" > ul > li.favorite", entityLi);
 	var total = items.length;
 	items.each(function() {

@@ -57,7 +57,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% if datasets %}
 <div id="accordion">
     {% for dataset,analyses in plot_img_urls.items %}
-    <div><a>{{dataset.readable_name}}<img class="star{% if dataset.id in favids.datasets %} fav{% endif %}" favurl="{% url 'tg-favs-dataset' dataset=dataset.name %}" /></a></div>
+    <div><a>{{dataset.readable_name}}<img type="dataset" text="{{dataset.readable_name}}" class="star{% if dataset.id in favids.datasets %} fav{% endif %}" url="{% url 'tg-dataset' dataset=dataset.name %}" favurl="{% url 'tg-favs-dataset' dataset=dataset.name %}" /></a></div>
     <div>
     
         
@@ -117,7 +117,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 			            	<div class="ui-widget-content ui-corner-all	">
 				                <div class="ui-widget-header ui-corner-all">
 				                    <a href="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}" class="analysis-link">{{analysis.readable_name}}</a>
-				                    <img class="star{% if analysis.id in favids.analyses %} fav{% endif %}" favurl="{% url 'tg-favs-analysis' dataset=dataset.name analysis=analysis.name %}" />
+				                    <img class="star{% if analysis.id in favids.analyses %} fav{% endif %}" type="analyses" text="{{dataset.readable_name}}: {{analysis.name}}" url="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}" favurl="{% url 'tg-favs-analysis' dataset=dataset.name analysis=analysis.name %}" />
 			                    </div>
 				                <a href="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}" class="analysis-link">
 					                {% with analysis.analysismetricvalue_set as metricval_mgr %}
