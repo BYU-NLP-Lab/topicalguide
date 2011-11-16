@@ -336,6 +336,7 @@ def _parse_mallet_file(analysis, state_file, document_metadata, tokenized_file, 
     for word in analysis.dataset.word_set.all():
         word_index[word.type] = word
     end = datetime.now()
+    transaction.commit()
     print >> sys.stderr, '  Done', end - start
     sys.stdout.flush()
     transaction.commit()

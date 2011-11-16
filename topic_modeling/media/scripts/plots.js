@@ -12,32 +12,35 @@ function highlight_all_topic_attribute_values(refresh) {
 }
 
 function update_topic_attribute_plot() {
-	var url_base = "/feeds/topic-attribute-plot/";
-	attribute = $("select#id_attribute").val();
-	url_base += 'attributes/' + attribute + '/';
-	// Now get selected values and make a list of them
-	var selected = $("select#id_values").val();
-	selected = selected.sort(numerical_sort_function);
-	url_base += "values/" + selected[0];
-	for ( var i = 1; i < selected.length; i++) {
-		url_base += "." + selected[i];
-	}
-	url_base += "/topics";
+    var url_base = "";
+    attribute = $("select#id_attribute").val();
+    url_base += 'attributes/' + attribute + '/';
+    // Now get selected values and make a list of them
+    var selected = $("select#id_values").val();
+    selected = selected.sort(numerical_sort_function);
+    url_base += "values/" + selected[0];
+    for ( var i = 1; i < selected.length; i++) {
+        url_base += "." + selected[i];
+    }
+    url_base += "/topics";
 
-	// Now get selected topics and make a list of them
-	var selected = $("select#id_topics").val()
-	url_base += '/';
-	selected = selected.sort(numerical_sort_function)
-	url_base += selected[0];
-	for ( var i = 1; i < selected.length; i++) {
-		url_base += "." + selected[i];
-	}
-	var added_query = false;
-	if ($('#id_by_frequency:checked').val() != null) {
-		url_base += "?frequency=true";
-		added_query = true;
-	}
-	
+    // Now get selected topics and make a list of them
+    var selected = $("select#id_topics").val()
+    url_base += '/';
+    selected = selected.sort(numerical_sort_function)
+    url_base += selected[0];
+    for ( var i = 1; i < selected.length; i++) {
+        url_base += "." + selected[i];
+    }
+    var added_query = false;
+    if ($('#id_by_frequency:checked').val() != null) {
+        url_base += "?frequency=true";
+        added_query = true;
+    }
+    
+    $("a#csv_data").attr("href", "/feeds/topic-attribute-csv/" + url_base);
+    url_base = "/feeds/topic-attribute-plot/" + url_base;
+    
 	$.getJSON(url_base, function(data) {
 		// key is the data title
 		// data[key] is the string
@@ -90,7 +93,6 @@ function update_topic_attribute_plot() {
 			cursor: {},
 			highlighter: {}
 		};		
-
 		jqplot_options.axes.xaxis.label = data['x-axis-label'];
 		jqplot_options.axes.yaxis.label = data['y-axis-label'];		
 		

@@ -23,12 +23,12 @@
 from django.conf.urls.defaults import patterns, url
 from django.conf import settings
 
-from topic_modeling.visualize.topics.views import TopicView, TopicWordView,\
+from topic_modeling.visualize.topics.views import TopicView, TopicWordView, \
     TopicDocumentView
 from topic_modeling.visualize.documents.views import DocumentView
 from topic_modeling.visualize.dataset_views import DatasetView
 from topic_modeling.visualize.word_views import WordView
-from topic_modeling.visualize.attribute_views import AttributeDocumentView,\
+from topic_modeling.visualize.attribute_views import AttributeDocumentView, \
     AttributeWordView, AttributeView
 
 from topic_modeling.cssmin import cssmin
@@ -36,16 +36,16 @@ from django.http import HttpResponse
 from topic_modeling.visualize.plot_views import PlotView
 
 def render_style(request, style_path):
-    css = open(settings.STYLES_ROOT + '/' + style_path).read() 
+    css = open(settings.STYLES_ROOT + '/' + style_path).read()
     css = cssmin(css)
-    
+
     if style_path.endswith(".css"):
         mimetype = "text/css"
     elif style_path.endswith(".png"):
         mimetype = "image/png"
     else:
         mimetype = None
-    
+
     return HttpResponse(css, mimetype=mimetype)
 
 def render_script(request, script_path):
@@ -83,11 +83,11 @@ analysis_base = dataset_base + '/' + analysis
 
 urlpatterns = patterns('',
 # Dataset View
-    url(r'^$', DatasetView.as_view(),                name='tg-datasets'),
+    url(r'^$', DatasetView.as_view(), name='tg-datasets'),
     url(r'^' + dataset + '$', DatasetView.as_view(), name='tg-dataset'),
 
 # Analysis View
-    url(analysis_base + '$', TopicView.as_view(),    name='tg-analysis'),
+    url(analysis_base + '$', TopicView.as_view(), name='tg-analysis'),
 
 # Topic Views
     url(analysis_base + '/' + topic + '$', TopicView.as_view(), name='tg-topic'),
@@ -125,7 +125,7 @@ urlpatterns = patterns('',
 
 feeds_base = 'feeds'
 
-urlpatterns += patterns(prefix+'.ajax_calls',
+urlpatterns += patterns(prefix + '.ajax_calls',
 # AJAX Calls
     (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + word + '$',
         'word_in_context'),
@@ -136,6 +136,8 @@ urlpatterns += patterns(prefix+'.ajax_calls',
 # Topic-Attribute Plots
     (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '$',
         'topic_attribute_plot'),
+    (r'^feeds/topic-attribute-csv/' + attribute + '/' + value + '/' + topic + '$',
+        'topic_attribute_csv'),
     (r'^feeds/attribute-values/' + dataset_nc + '/' + attribute + '$',
         'attribute_values'),
 # Topic-Metric Plots
@@ -152,7 +154,7 @@ urlpatterns += patterns(prefix+'.ajax_calls',
         'get_attribute_page')
 )
 
-urlpatterns += patterns(prefix+'.topics.ajax',
+urlpatterns += patterns(prefix + '.topics.ajax',
 # Topics
     (r'^feeds/topic-ordering/' + dataset + '/' + analysis + '/' + order_by + '$',
         'topic_ordering'),
@@ -203,7 +205,7 @@ urlpatterns += patterns(prefix+'.topics.ajax',
 )
 
 # Documents
-urlpatterns += patterns(prefix+'.documents.ajax',
+urlpatterns += patterns(prefix + '.documents.ajax',
     (r'^feeds/document-ordering/' + dataset + '/' + analysis + '/' + order_by + '$',
         'document_ordering'),
     (r'^feeds/document-page/' + dataset + '/' + analysis + '/' + document + '/' + number + '$',
@@ -241,11 +243,11 @@ item_id = r'/(?P<item_id>[^/]+)'
 
 urlpatterns += patterns(favs_prefix,
     url('^datasets.favs$', 'datasets', name='tg-favs-datasets'),
-    url(r'^'+dataset + '/fav$', 'dataset', name='tg-favs-dataset'),
-    url(r'^'+dataset + '/analyses.favs$', 'analyses', name='tg-favs-analyses'),
-    url(r'^'+dataset + '/' + analysis + '/fav$', 'analysis', name='tg-favs-analysis'),
-    url(r'^'+dataset + '/' + analysis + '/topics.favs$', 'topics', name='tg-favs-topics'),
-    url(r'^'+dataset + '/' + analysis + '/' + topic + '/fav$', 'topic', name='tg-favs-topic'),
+    url(r'^' + dataset + '/fav$', 'dataset', name='tg-favs-dataset'),
+    url(r'^' + dataset + '/analyses.favs$', 'analyses', name='tg-favs-analyses'),
+    url(r'^' + dataset + '/' + analysis + '/fav$', 'analysis', name='tg-favs-analysis'),
+    url(r'^' + dataset + '/' + analysis + '/topics.favs$', 'topics', name='tg-favs-topics'),
+    url(r'^' + dataset + '/' + analysis + '/' + topic + '/fav$', 'topic', name='tg-favs-topic'),
     url(r'^favs$', 'views', name='tg-favs-views'),
     url(r'^favs/(?P<viewid>[^/]+)', 'view', name='tg-favs-view')
 )
