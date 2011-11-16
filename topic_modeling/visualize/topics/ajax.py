@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topic Browser
 # Copyright 2010-2011 Brigham Young University
 #
@@ -23,7 +21,6 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 from django.http import HttpResponse
-from django.utils import simplejson
 from django.db.models.aggregates import Min
 
 from topic_modeling.visualize.common.ui import FilterForm
@@ -43,6 +40,8 @@ from topic_modeling.visualize.topics.filters import possible_topic_filters
 from django.db import transaction
 from topic_modeling.visualize.topics.names import current_name_scheme,\
     topic_name_with_ns
+from django.views.decorators.http import require_GET
+from topic_modeling.visualize.common.http_responses import JsonResponse
 
 # General and Sidebar stuff
 ###########################
@@ -57,34 +56,38 @@ def rename_topic(request, dataset, analysis, topic, name):
 
 
 def topic_ordering(request, dataset, analysis, order_by):
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    
     request.session['topic-sort'] = order_by
     request.session['topic-page'] = 1
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
-    topics = Topic.objects.filter(analysis__name=analysis,
-            analysis__dataset__name=dataset)
+    topics = analysis.topic_set
     topics, _, num_pages = clean_topics_from_session(topics, request.session)
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = 1
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
-def get_topic_page(request, dataset, analysis, number):
+@require_GET
+def topic_page(request, dataset, analysis, number):
+    analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)
     request.session['topic-page'] = int(number)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
     topics = request.session.get('topics-list', None)
     if not topics:
-        topics = Topic.objects.filter(analysis__name=analysis,
-                analysis__dataset__name=dataset)
+        topics = analysis.topic_set()
+#        topics = Topic.objects.filter(analysis__name=analysis,
+#                analysis__dataset__name=dataset)
     num_per_page = request.session.get('topics-per-page', 20)
     page = int(number)
     topics, num_pages, _ = paginate_list(topics, page, num_per_page)
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
 # Widgets
@@ -99,7 +102,7 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
     top_values = top_values_for_attr_topic(topic=topic, attribute=attribute, order_by=order_by)
     ret_val['attribute'] = attribute.name
     ret_val['values'] = [vars(v) for v in top_values]
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
 def similar_topics(request, dataset, analysis, topic, measure):
@@ -121,7 +124,7 @@ def similar_topics(request, dataset, analysis, topic, measure):
         topics += [vars(AjaxTopic(similar_topic, topic_name))]
     ret_val['values'] = values
     ret_val['topics'] = topics
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
 # Filters
@@ -150,8 +153,8 @@ def remove_topic_filter(request, dataset, analysis, topic, number):
 
 
 def filtered_topics_response(request, dataset, analysis):
-    ns = current_name_scheme(request.session, analysis)
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    ns = current_name_scheme(request.session, analysis)
     topics = analysis.topic_set
     request.session['topic-page'] = 1
     topics, filter_form, num_pages = clean_topics_from_session(topics,
@@ -161,7 +164,7 @@ def filtered_topics_response(request, dataset, analysis):
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = request.session.get('topic-page', 1)
-    return HttpResponse(simplejson.dumps(ret_val))
+    return JsonResponse(ret_val)
 
 
 def update_topic_attribute_filter(request, dataset, analysis, topic, number,
@@ -221,7 +224,7 @@ def update_topic_word_filter(request, dataset, analysis, topic, number, word):
 
 class AjaxTopic(object):
     def __init__(self, topic, topic_name):
-        self.name = str(topic.number) + ": " + topic_name
+        self.name = topic_name
         self.number = topic.number
         try:
             # TODO(matt): This looks like it gets the wrong name

@@ -22,33 +22,29 @@
  * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
  */
 
-function add_new_filter()
-{
+function add_new_filter() {
 	cursor_wait();
 	var link = "/feeds/new-topic-filter/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
 	link += "/topics/" + $.fn.topic.number;
 	link += "/name/" + $("#id_filter").val();
 	$.get(link, {}, function(filter) {
-		$("#id_filter_form").html(filter);
+		$("div#sidebar table.filters").html(filter);
+		bind_filters();
 		cursor_default();
 	});
 }
-function remove_filter(id)
-{
+
+function remove_filter(id) {
 	cursor_wait();
 	var link = "/feeds/remove-topic-filter/datasets/" + $.fn.dataset;
 	link += "/analyses/" + $.fn.analysis;
 	link += "/topics/" + $.fn.topic.number;
 	link += "/number/" + id;
-	$.getJSON(link, {}, function(data) {
-		$("#id_filter_form").html(data.filter_form);
-		redraw_topics(data.topics, data.page, data.num_pages);
-		cursor_default();
-	});
+	redraw_topics(link);
 }
-function update_attr_filter_attribute(id)
-{
+
+function update_attr_filter_attribute(id) {
 	cursor_wait();
 	var link = "/feeds/update-topic-attribute-filter/datasets/";
 	link += $.fn.dataset;
@@ -56,14 +52,10 @@ function update_attr_filter_attribute(id)
 	link += "/topics/" + $.fn.topic.number;
 	link += "/number/" + id;
 	link += "/attributes/" + $("#id_attribute_filter_"+id).val();
-	$.getJSON(link, {}, function(data) {
-		$("#id_filter_form").html(data.filter_form);
-		redraw_topics(data.topics, data.page, data.num_pages);
-		cursor_default();
-	});
+	redraw_list_control(link);
 }
-function update_attr_filter_value(id)
-{
+
+function update_attr_filter_value(id) {
 	cursor_wait();
 	var link = "/feeds/update-topic-attribute-filter/datasets/";
 	link += $.fn.dataset;
@@ -72,14 +64,10 @@ function update_attr_filter_value(id)
 	link += "/number/" + id;
 	link += "/attributes/" + $("#id_attribute_filter_"+id).val();
 	link += "/values/" + $("#id_attribute_filter_value_"+id).val();
-	$.getJSON(link, {}, function(data) {
-		$("#id_filter_form").html(data.filter_form);
-		redraw_topics(data.topics, data.page, data.num_pages);
-		cursor_default();
-	});
+	redraw_list_control(link);
 }
-function update_metric_filter_metric(id)
-{
+
+function update_metric_filter_metric(id) {
 	cursor_wait();
 	var link = "/feeds/update-topic-metric-filter/datasets/";
 	link += $.fn.dataset;
@@ -87,14 +75,10 @@ function update_metric_filter_metric(id)
 	link += "/topics/" + $.fn.topic.number;
 	link += "/number/" + id;
 	link += "/metrics/" + $("#id_metric_filter_"+id).val();
-	$.getJSON(link, {}, function(data) {
-		$("#id_filter_form").html(data.filter_form);
-		redraw_topics(data.topics, data.page, data.num_pages);
-		cursor_default();
-	});
+	redraw_list_control(link);
 }
-function update_metric_filter(id)
-{
+
+function update_metric_filter(id) {
 	cursor_wait();
 	var link = "/feeds/update-topic-metric-filter/datasets/";
 	link += $.fn.dataset;
@@ -104,14 +88,10 @@ function update_metric_filter(id)
 	link += "/metrics/" + $("#id_metric_filter_"+id).val();
 	link += "/comps/" + $("#id_metric_filter_comp_"+id).val();
 	link += "/values/" + $("#id_metric_filter_value_"+id).val();
-	$.getJSON(link, {}, function(data) {
-		$("#id_filter_form").html(data.filter_form);
-		redraw_topics(data.topics, data.page, data.num_pages);
-		cursor_default();
-	});
+	redraw_list_control(link);
 }
-function update_document_filter_document(id)
-{
+
+function update_document_filter_document(id) {
 	cursor_wait();
 	var link = "/feeds/update-topic-document-filter/datasets/";
 	link += $.fn.dataset;
@@ -119,14 +99,10 @@ function update_document_filter_document(id)
 	link += "/topics/" + $.fn.topic.number;
 	link += "/number/" + id;
 	link += "/documents/" + $("#id_document_filter_"+id).val();
-	$.getJSON(link, {}, function(data) {
-		$("#id_filter_form").html(data.filter_form);
-		redraw_topics(data.topics, data.page, data.num_pages);
-		cursor_default();
-	});
+	redraw_list_control(link);
 }
-function update_word_filter_word(id)
-{
+
+function update_word_filter_word(id) {
 	cursor_wait();
 	var link = "/feeds/update-topic-word-filter/datasets/";
 	link += $.fn.dataset;
@@ -134,9 +110,5 @@ function update_word_filter_word(id)
 	link += "/topics/" + $.fn.topic.number;
 	link += "/number/" + id;
 	link += "/words/" + $("#id_word_filter_"+id).val();
-	$.getJSON(link, {}, function(data) {
-		$("#id_filter_form").html(data.filter_form);
-		redraw_topics(data.topics, data.page, data.num_pages);
-		cursor_default();
-	});
+	redraw_list_control(link);
 }

@@ -134,22 +134,14 @@ label {
     padding: 0 !important;
     /*padding: 0.25em 0.5em 0.25em 0.5em !important;*/
 }
-/*
-.ui-icon {
-    background-size: contain;
-    -webkit-background-size: cover;
-    -moz-background-size: cover;
-    -o-background-size: cover;
-}
-*/
 
 /***** Favorites *****/
-img.star {
-    min-height: 1em;
-    min-width: 1em;
+img.inactive-star, img.star {
+	width: 1.2em;
+	height: 1.2em;
     content: url("/site-media/images/openclipart/Outlined_star-45623.png");
 }
 
-img.star.fav {
-    content: url("/site-media/images/openclipart/Star-349834968906.png") !important;
+img.inactive-star.fav, img.star.fav {
+	content: url("/site-media/images/openclipart/Star-349834968906.png") !important;
 }

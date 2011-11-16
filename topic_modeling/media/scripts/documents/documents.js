@@ -11,8 +11,26 @@ function fix_tab_height() {
 }
 
 function tabify() {
-//	$("div#presentation-area div.tabs, div#presentation-area div.tabs .lower-tabs").tabs();
 	$("div#tabs").tabs();
+}
+
+function favorite_this_view(name, favid) {
+	var url = '/favs/docs/' + favid;
+	var fullUrl = window.location.origin + url;
+	var params = '{"dataset":"' + $.fn.dataset + '", "analysis":"' + $.fn.analysis + '", '
+				  + '"document":' + $.fn.doc.id + ', "name":"' + name + '"}';
+	$.ajax({
+		type:'PUT',
+		url:url,
+		data:params,
+		success: function() {
+//			infoMessage('View now available at <a href="' + url + '">' + fullUrl + '</a>');
+			add_favorite_to_menu('Documents', name, url, url);
+		},
+		error: function() {
+			errorMessage('View at ' + fullUrl + ' already exists');
+		}
+	});
 }
 
 /***** Sidebar *****/
@@ -35,6 +53,8 @@ function update_list_contents(documents_list) {
 
 function redraw_list_control(json_link) {
 	$.getJSON(json_link, {}, function(data) {
+		$("div#sidebar table.filters").html(data.filter_form);
+		bind_filters();
 		set_nav_arrows(data.page, data.num_pages);
 		update_list_contents(data.documents);
 		cursor_default();

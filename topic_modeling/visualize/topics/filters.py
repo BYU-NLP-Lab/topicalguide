@@ -132,8 +132,7 @@ class TopicFilterByAttribute(object):
             val = forms.forms.BoundField(self._form, self._form.fields['value'],
                     'attribute_filter_value_%d' % self.id)
             ret_val += val.as_widget()
-        ret_val += '</td><td class="remove" '
-        ret_val += 'onclick="remove_filter(%d)">X</td>' % self.id
+        ret_val += '</td><td class="remove">X</td>'
         return ret_val
 
 
@@ -216,8 +215,7 @@ class TopicFilterByMetric(object):
             val = forms.forms.BoundField(self._form, self._form.fields['value'],
                     'metric_filter_value_%d' % self.id)
             ret_val += val.as_widget()
-        ret_val += '</td><td class="remove" '
-        ret_val += 'onclick="remove_filter(%d)">X</td>' % self.id
+        ret_val += '</td><td class="remove">X</td>'
         return ret_val
 
 
@@ -292,8 +290,7 @@ class TopicFilterByDocument(object):
                 self._form.fields['document'], 'document_filter_%d' % self.id)
         ret_val += '</td><td>'
         ret_val += document.as_widget()
-        ret_val += '</td><td class="remove" '
-        ret_val += 'onclick="remove_filter(%d)">X</td>' % self.id
+        ret_val += '</td><td class="remove">X</td>'
         return ret_val
 
 
@@ -339,8 +336,7 @@ class TopicFilterByWord(object):
                 self._form.fields['word'], 'word_filter_%d' % self.id)
         ret_val += '</td><td>'
         ret_val += word.as_widget()
-        ret_val += '</td><td class="remove" '
-        ret_val += 'onclick="remove_filter(%d)">X</td>' % self.id
+        ret_val += '</td><td class="remove">X</td>'
         return ret_val
 
 

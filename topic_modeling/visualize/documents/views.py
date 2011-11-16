@@ -35,8 +35,10 @@ class DocumentView(AnalysisBaseView):
     
     def get_context_data(self, request, **kwargs):
         context = super(DocumentView, self).get_context_data(request, **kwargs)
-        if 'document' in kwargs:
-            document_num = kwargs['document']
+        document_num = kwargs.get('document', None)
+        
+        if 'document_filters' in kwargs:
+            request.session['document-filters'] = kwargs['document_filters']
         
         context['highlight'] = 'documents_tab'
         context['tab'] = 'document'

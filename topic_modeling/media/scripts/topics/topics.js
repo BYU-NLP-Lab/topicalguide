@@ -22,6 +22,26 @@
  * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
  */
 
+function favorite_this_view(name, favid) {
+	var url = '/favs/topics/' + favid;
+	var fullUrl = window.location.origin + url;
+//	{"dataset":"state_of_the_union", "analysis":"lda100topics", "topic":10, "name":"The best topics"}
+	var params = '{"dataset":"' + $.fn.dataset + '", "analysis":"' + $.fn.analysis + '", '
+				  + '"topic":' + $.fn.topic.number + ', "name":"' + name + '"}';
+	$.ajax({
+		type:'PUT',
+		url:url,
+		data:params,
+		success: function() {
+			infoMessage('View now available at <a href="' + url + '">' + fullUrl + '</a>');
+			add_favorite_to_menu('Topics', name, url, url);
+		},
+		error: function() {
+			errorMessage('View at ' + fullUrl + ' already exists');
+		}
+	});
+}
+
 function load_favorites() {
 	$.getJSON($.fn.topics_url+'.favs', function(data){
 		$("ul#sidebar-list img.star").each(function(){
@@ -37,28 +57,24 @@ function update_list_contents(topics_list) {
 	var topic = $.fn.topic.number;
 	var new_html = '';
 	for (var i = 0; i < topics_list.length; i++) {
-		new_html += '<li';
-		if (topics_list[i].number == topic) {
-			new_html += ' class="selected"';
-		}
-		new_html += '>';
+		var number = topics_list[i].number;
+		var url = $.fn.topics_url + '/' + number;
+		var text = topics_list[i].name + ((topics_list[i].topicgroup) ? ' - GROUP' : '');
+		var favurl = $.fn.topics_url + '/' + number + '/fav';
 		
-		new_html += '<img class="star" topicnum="' + topics_list[i].number + '" favurl="' + $.fn.topics_url + '/' + topics_list[i].number + '/fav"/>';
+		new_html += '<li' + (number == topic ? ' class="selected"' : '') + '>';
 		
-		new_html += '<a href="' + $.fn.topics_url;
-		new_html += '/' + topics_list[i].number;
-		new_html += $.fn.topic.post_link;
-		new_html += '">';
-		new_html += topics_list[i].name;
+		new_html += '<img class="star" type="topics" topicnum="' + number + '" url="' + url + '" text="' + text + '" favurl="' + favurl + '"/>';
+		
+		new_html += '<a href="' + url + '">';
+		new_html += number + ': ' + text;
+		new_html += '</a></li>';
         if (topics_list[i].topicgroup) {
-          new_html += ' - GROUP</a></li>';
           for(var j = 0; j < topics_list[i].topicgroup.length; j++) {
               new_html += '<li>';
               new_html += topics_list[i].topicgroup[j];
               new_html += '</li>';
           }
-        } else {
-          new_html += '</a></li>';
         }
 	}
 	$("ul#sidebar-list").html(new_html);
@@ -68,6 +84,18 @@ function update_list_contents(topics_list) {
 
 function redraw_list_control(json_link) {
 	$.getJSON(json_link, {}, function(data) {
+		$("div#sidebar table.filters").html(data.filter_form);
+		bind_filters();
+		set_nav_arrows(data.page, data.num_pages);
+		update_list_contents(data.topics);
+		cursor_default();
+	});
+}
+
+function redraw_topics(json_link) {
+	$.getJSON(json_link, {}, function(data) {
+		$("div#sidebar table.filters").html(data.filter_form);
+		bind_filters();
 		set_nav_arrows(data.page, data.num_pages);
 		update_list_contents(data.topics);
 		cursor_default();

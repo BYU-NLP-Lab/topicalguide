@@ -20,31 +20,24 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-
+import os
 from collections import namedtuple
+
 from django.db.models import Avg
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
+
 from topic_modeling.visualize.charts import get_chart
-
-from topic_modeling.visualize.common.ui import BreadCrumb, Widget, WordSummary,\
-     Tab
+from topic_modeling.visualize.common.ui import BreadCrumb, Widget, WordSummary, Tab
 from topic_modeling.visualize.common.views import AnalysisBaseView
-from topic_modeling.visualize.common.helpers import word_cloud_widget, \
-    set_word_context, get_word_cloud, get_dataset_and_analysis
-
+from topic_modeling.visualize.common.helpers import word_cloud_widget, set_word_context, get_word_cloud, \
+                                                    get_dataset_and_analysis
 from topic_modeling.visualize.documents.views import tabs as doc_tabs
-from topic_modeling.visualize.models import Analysis, Document, Topic, \
-    TopicMetaInfo, TopicMetaInfoValue, Word
-from topic_modeling.visualize.topics.common import RenameForm, SortTopicForm, \
-    top_values_for_attr_topic
-from topic_modeling.visualize.topics.filters import TopicFilterByDocument, \
-    TopicFilterByWord, clean_topics_from_session
-from topic_modeling.visualize.topics.names import name_schemes, \
-    current_name_scheme, topic_name_with_ns
+from topic_modeling.visualize.models import Analysis, Document, Topic, TopicMetaInfo, TopicMetaInfoValue, Word
+from topic_modeling.visualize.topics.common import RenameForm, SortTopicForm, top_values_for_attr_topic
+from topic_modeling.visualize.topics.filters import TopicFilterByDocument, TopicFilterByWord, clean_topics_from_session
+from topic_modeling.visualize.topics.names import name_schemes, current_name_scheme, topic_name_with_ns
 from topic_modeling.visualize.word_views import words_tab
-import os
-
 
 
 class TopicView(AnalysisBaseView):
@@ -53,10 +46,14 @@ class TopicView(AnalysisBaseView):
     def get_context_data(self, request, **kwargs):
         context = super(TopicView, self).get_context_data(request, **kwargs)
         
+        if 'topic_filters' in kwargs:
+            request.session['topic-filters'] = kwargs['topic_filters']
+        
         dataset = context['dataset']
         analysis = context['analysis']
-        topic = kwargs['topic'] if 'topic' in kwargs else None
-        extra_filters = kwargs['extra_filters'] if 'extra_filters' in kwargs else []
+        topic = kwargs.get('topic', None)
+        extra_filters = kwargs.get('extra_filters', [])
+        
         
         #TODO: clean up this context by moving widget-specific entries into widget contexts
         
