@@ -29,7 +29,8 @@ from django.db import transaction
 from math import log
 from optparse import OptionParser
 
-from topic_modeling.visualize.models import Analysis, Dataset, DocumentMetric
+from topic_modeling.visualize.models import Analysis, Dataset, DocumentMetric,\
+    WordType
 from topic_modeling.visualize.models import DocumentMetricValue
 
 metric_name = 'Number of types'
@@ -47,8 +48,8 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         metric.save()
     documents = dataset.document_set.all()
     for document in documents:
-        dmv = DocumentMetricValue(document=document, metric=metric,
-                value=document.words.count())
+        type_count = WordType.objects.filter(tokens__doc=document).distinct().count()
+        dmv = DocumentMetricValue(document=document, metric=metric, value=type_count)
         dmv.save()
     transaction.commit()
 

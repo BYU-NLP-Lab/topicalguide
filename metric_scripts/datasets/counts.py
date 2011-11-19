@@ -20,31 +20,18 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from topic_modeling.visualize.models import DatasetMetric, DatasetMetricValue
+from topic_modeling.visualize.models import DatasetMetric, DatasetMetricValue,\
+    WordType, WordToken
 
 def add_metric(dataset):
     token_metric, _ = DatasetMetric.objects.get_or_create(name="Token Count")
     type_metric, _ = DatasetMetric.objects.get_or_create(name="Type Count")
     
-    token_count = 0
-    type_count = 0
-    for doc in dataset.document_set.all():
-        token_count += doc.word_count
-        type_count += doc.words.count()
-    
-    try:
-        mv = token_metric.datasetmetricvalue_set.get(dataset=dataset)
-        mv.value = token_count
-        mv.save()
-    except DatasetMetricValue.DoesNotExist:
-        DatasetMetricValue.objects.create(metric=token_metric, dataset=dataset, value=token_count)
-    
-    try:
-        mv = type_metric.datasetmetricvalue_set.get(dataset=dataset)
-        mv.value = type_count
-        mv.save()
-    except DatasetMetricValue.DoesNotExist:
-        DatasetMetricValue.objects.create(metric=type_metric, dataset=dataset, value=type_count)
+    token_count = WordToken.objects.filter(doc__dataset=dataset).distinct().count()
+    type_count = WordType.objects.filter(tokens__doc__dataset=dataset).distinct().count()
+
+    DatasetMetricValue.objects.create(metric=token_metric, dataset=dataset, value=token_count)
+    DatasetMetricValue.objects.create(metric=type_metric, dataset=dataset, value=type_count)
 
 def metric_names_generated(_dataset):
     return ["Token Count", "Type Count"]

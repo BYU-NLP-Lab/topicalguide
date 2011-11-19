@@ -22,24 +22,16 @@
 
 
 import os, sys
-
-
-sys.path.append(os.curdir)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+import re
 
 from import_scripts.metadata import Metadata
 
-from topic_modeling import settings
-settings.DEBUG = False
-
-
-from topic_modeling.visualize.models import Attribute
+from topic_modeling.visualize.models import Attribute, WordToken, WordType
 from topic_modeling.visualize.models import AttributeValue
 from topic_modeling.visualize.models import AttributeValueDocument
 from topic_modeling.visualize.models import AttributeValueWord
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
-from topic_modeling.visualize.models import DocumentWord
 from topic_modeling.visualize.models import Value
 from topic_modeling.visualize.models import Word
 
@@ -51,7 +43,7 @@ from datetime import datetime
 NUM_DOTS = 100
 
 def import_dataset(name, readable_name, description, state_file, metadata_filenames,
-                   dataset_dir, files_dir):
+                   dataset_dir, files_dir, token_regex):
     
     print >> sys.stderr, "dataset_import({0})".format(
         ', '.join([name, readable_name, description, state_file,
@@ -72,10 +64,11 @@ def import_dataset(name, readable_name, description, state_file, metadata_filena
 
     dataset, created = _create_dataset(name, readable_name, description, dataset_dir, files_dir)
     if created:
+        _load_documents(dataset, token_regex)
         document_metadata = Metadata(metadata_filenames['documents'])
         docs, attrs, vals, attrvaldoc = _import_document_attributes(document_metadata)
 
-        doc_index = _create_document_table(dataset, docs)
+        doc_index = _index_document_table(dataset, docs)
         attr_index = _create_attribute_table(dataset, attrs)
         value_index = _create_value_table(vals, attr_index)
         _create_attrvaldoc_table(attrvaldoc, attr_index, value_index, doc_index)
@@ -86,7 +79,6 @@ def import_dataset(name, readable_name, description, state_file, metadata_filena
         words, docword, attrval, attrvalword = _parse_mallet_file(state_file,
                 document_metadata)
         word_index = _create_word_table(dataset, words)
-        _create_docword_table(docword, doc_index, word_index)
         _create_attrval_table(attrval, attr_index, value_index)
         _create_attrvalword_table(attrvalword, attr_index, value_index,
                 word_index)
@@ -100,7 +92,28 @@ def import_dataset(name, readable_name, description, state_file, metadata_filena
         print >> sys.stderr, 'It took', end_time - start_time,
         print >> sys.stderr, 'to import the dataset'
 
-
+@transaction.commit_manually
+def _load_documents(dataset, token_regex):
+    print >> sys.stderr, 'Loading documents...  ',
+    for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
+        for filename in filenames:
+            filename = '%s/%s' % (dirpath, filename)
+            doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
+            print >> sys.stderr, filename
+            
+            file = open(filename)
+            content = file.read()
+            file.close()
+            del file
+            
+            for position,match in enumerate(re.finditer(token_regex, content)):
+                token = match.group()
+                token_lc = token.lower()
+                type, type_created = WordType.objects.get_or_create(type=token_lc)
+                if type_created: transaction.commit()
+                WordToken.objects.create(type=type, doc=doc, position=position)
+            del content
+            transaction.commit()
 
 #############################################################################
 # Database creation code (in the order it's called in main)
@@ -113,10 +126,9 @@ def _create_dataset(name, readable_name, description, dataset_dir, files_dir):
     print >> sys.stderr, 'Done'
     return dataset,created
 
-@transaction.commit_manually
-def _create_document_table(dataset, filenames):
+def _index_document_table(dataset, filenames):
     num_per_dot = max(1, int(len(filenames)/NUM_DOTS))
-    print >> sys.stderr, 'Creating the Document Table',
+    print >> sys.stderr, 'Indexing the Document Table',
     print >> sys.stderr, '(%d documents per dot)' % (num_per_dot),
     sys.stdout.flush()
     start = datetime.now()
@@ -127,10 +139,8 @@ def _create_document_table(dataset, filenames):
         if num_so_far % num_per_dot == 0:
             print >> sys.stderr, '.',
             sys.stdout.flush()
-        doc = Document(filename=filename, dataset=dataset)
-        doc.save()
+        doc, _ = Document.objects.get_or_create(filename=filename, dataset=dataset)
         doc_index[filename] = doc
-    transaction.commit()
     end = datetime.now()
     print >> sys.stderr, '  Done', end - start
     return doc_index
@@ -232,39 +242,6 @@ def _create_word_table(dataset, words):
     end = datetime.now()
     print >> sys.stderr, '  Done', end - start
     return word_index
-
-
-@transaction.commit_manually
-def _create_docword_table(docword, doc_index, word_index):
-    num_per_dot = max(1, int(len(docword)/NUM_DOTS))
-    print >> sys.stderr, 'Creating the DocumentWord table',
-    print >> sys.stderr, '(%d entries per dot)' % (num_per_dot),
-    sys.stdout.flush()
-    num_so_far = 0
-    start = datetime.now()
-    total_doc_counts = defaultdict(int)
-    for filename, word in docword:
-        num_so_far += 1
-        if num_so_far % num_per_dot == 0:
-            print >> sys.stderr, '.',
-            sys.stdout.flush()
-        doc = doc_index[filename]
-        w = word_index[word]
-        count = docword[(filename, word)]
-        dw = DocumentWord(document=doc, word=w, count=count)
-        dw.save()
-        total_doc_counts[filename] += count
-    transaction.commit()
-    end = datetime.now()
-    print >> sys.stderr, '  Done', end-start
-    print >> sys.stderr, 'Updating Document total word counts...  ',
-    for filename in total_doc_counts:
-        doc = doc_index[filename]
-        doc.word_count = total_doc_counts[filename]
-        doc.save()
-    transaction.commit()
-    print >> sys.stderr, 'Done'
-
 
 @transaction.commit_manually
 def _create_attrval_table(attrval, attr_index, value_index):

@@ -75,7 +75,6 @@ class Document(models.Model):
     filename = models.CharField(max_length=128, db_index=True)
     dataset = models.ForeignKey(Dataset)
     word_count = models.IntegerField(default=0)
-    words = models.ManyToManyField('Word', through='DocumentWord')
     attributes = models.ManyToManyField('Attribute',
             through='AttributeValueDocument')
 
@@ -250,6 +249,17 @@ class Word(models.Model):
         return self.type
 
 
+class WordType(models.Model):
+    type = models.CharField(max_length=128, db_index=True)
+
+class WordToken(models.Model):
+    type = models.ForeignKey(WordType, related_name='tokens')
+    doc = models.ForeignKey(Document, related_name='tokens')
+    position = models.IntegerField()
+#    '''The form of this type instance. If null, it defers to type.value'''
+#    token = models.CharField(max_length=128, db_index=True, null=True)
+    topics = models.ManyToManyField('Topic', related_name='tokens')
+
 # Links between the basic things in the database
 ################################################
 
@@ -273,12 +283,6 @@ class AttributeValueWord(models.Model):
     attribute = models.ForeignKey(Attribute)
     word = models.ForeignKey(Word)
     value = models.ForeignKey(Value)
-    count = models.IntegerField(default=0)
-
-
-class DocumentWord(models.Model):
-    document = models.ForeignKey(Document)
-    word = models.ForeignKey(Word)
     count = models.IntegerField(default=0)
 
 
