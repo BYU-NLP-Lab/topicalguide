@@ -36,10 +36,21 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     });
 {% endblock %}
 
-{% block above_sidebar %}
-    <p>
-        <label for="attribute">Attribute Name:</label>
-        <ul id="attribute_list" class="vertical">
+{% block sidebar %}
+    <div id="list-nav">
+        <span id="back-arrows" class="arrows" style="visibility:hidden;">
+            <a id="first" title="First"><img src="{{IMAGES}}/tango/22x22/actions/go-first.png"/></a>
+            <a id="prev" title="Previous"><img src="{{IMAGES}}/tango/22x22/actions/go-previous.png"/></a>
+        </span>
+        <span id="page-situation">Page <span id="current-page"></span> of <span id="page-count"></span>
+        </span>
+        <span id="fwd-arrows" class="arrows" style="visibility:hidden;">
+            <a id="last" title="Last"><img src="{{IMAGES}}/tango/22x22/actions/go-last.png"/></a>
+            <a id="next" title="Next"><img src="{{IMAGES}}/tango/22x22/actions/go-next.png"/></a>
+        </span>
+    </div>
+    <div>
+        <ul id="attribute_list" class="vertical vertical_left">
             {% for a in attributes %}
                 <li {% ifequal attribute a %}class="selected"{% endifequal %}>
                     <a href="{{ attributes_url}}/{{a.name}}">
@@ -48,7 +59,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
                 </li>
             {% endfor %}
         </ul>
-    </p>
+        <ul id="sidebar-list" class="vertical vertical_left"></ul>
+    </div>
 {% endblock %}
+
 
 {% block fav-this-button %}{% endblock %}
