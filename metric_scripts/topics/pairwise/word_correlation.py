@@ -37,7 +37,7 @@ from numpy import dot, zeros
 from numpy.linalg import norm
 from optparse import OptionParser
 
-from topic_modeling.visualize.models import Analysis, Word, TopicWord
+from topic_modeling.visualize.models import Analysis, WordType
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
@@ -55,12 +55,14 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         metric = PairwiseTopicMetric(name=metric_name, analysis=analysis)
         metric.save()
 
-    num_words = Word.objects.order_by('-pk')[0].id + 1
+    word_types = WordType.objects.filter(tokens__topics__analysis=analysis).all()
+    num_types = word_types.count()
+#    num_words = Word.objects.order_by('-pk')[0].id + 1
     topics = list(analysis.topic_set.all().order_by('number'))
 
     topicwordvectors = []
     for topic in topics:
-        topicwordvectors.append(topic_word_vector(topic, num_words))
+        topicwordvectors.append(topic_word_vector(topic, num_types))
 
     for i, topic1 in enumerate(topics):
         topic1_word_vals = topicwordvectors[i]
@@ -81,10 +83,13 @@ def pmcc(topic1_word_vals, topic2_word_vals):
             (norm(topic1_word_vals) * norm(topic2_word_vals)))
 
 
-def topic_word_vector(topic, num_words):
-    topic_word_vals = zeros(num_words)
-    for topicword in topic.topicword_set.all():
-        topic_word_vals[topicword.word_id] = topicword.count
+def topic_word_vector(word_types, topic):
+    topic_word_vals = zeros(len(word_types))
+    for i, word_type in enumerate(word_types):
+        topic_word_vals[i] = topic.tokens.filter(type=word_type).count()
+        
+#    for topicword in topic.topicword_set.all():
+#        topic_word_vals[topicword.word_id] = topicword.count
     return topic_word_vals
 
 

@@ -26,6 +26,7 @@
 from __future__ import division
 
 import os, sys
+from django.db.models.aggregates import Count
 
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
@@ -34,13 +35,10 @@ from django.db import transaction
 
 import sqlite3
 
-from math import log
-from numpy import dot, zeros
-from numpy.linalg import norm
 from optparse import OptionParser
 
 from metric_scripts.topics.coherence import compute_pmi
-from topic_modeling.visualize.models import Analysis, Word, TopicWord
+from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
@@ -110,8 +108,9 @@ def metric_names_generated(dataset, analysis):
 
 
 def topic_words(topic, num_words):
-    return list([tw.word.type for tw in
-        topic.topicword_set.order_by('-count')[:10]])
+    return list([token.type.type for token in topic.tokens.annotate(count=Count()).order_by('-count')[:10]])
+#    return list([tw.word.type for tw in
+#        topic.topicword_set.order_by('-count')[:10]])
 
 
 if __name__ == '__main__':

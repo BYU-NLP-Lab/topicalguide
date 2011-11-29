@@ -73,10 +73,8 @@ LEFT_CONTEXT_SIZE = 40
 RIGHT_CONTEXT_SIZE = 40
 class Document(models.Model):
     filename = models.CharField(max_length=128, db_index=True)
-    dataset = models.ForeignKey(Dataset)
+    dataset = models.ForeignKey(Dataset, related_name='docs')
     word_count = models.IntegerField(default=0)
-    attributes = models.ManyToManyField('Attribute',
-            through='AttributeValueDocument')
 
     def __unicode__(self):
         return unicode(self.filename)
@@ -202,51 +200,12 @@ class Document(models.Model):
     
     def get_title(self):
         try:
-            return self.attributevaluedocument_set.get(attribute__name='title').value
-        except AttributeValueDocument.DoesNotExist:
+            return self.documentmetainfovalue_set.get(info_type__name='title').value
+        except DocumentMetaInfoValue.DoesNotExist:
             return self.filename
 
     class Meta:
         ordering = ['dataset', 'filename']
-
-
-class Attribute(models.Model):
-    name = models.CharField(max_length=128, db_index=True)
-    dataset = models.ForeignKey(Dataset)
-    documents = models.ManyToManyField('Document',
-            through='AttributeValueDocument')
-    # or this?
-    # analysis = models.ForeignKey(Analysis)
-
-    def __unicode__(self):
-        return self.name
-
-    class Meta:
-        ordering = ['name']
-
-
-class Value(models.Model):
-    value = models.CharField(max_length=128, db_index=True)
-    attribute = models.ForeignKey(Attribute)
-
-    def __unicode__(self):
-        return self.value
-
-    class Meta:
-        ordering = ['value']
-
-
-class Word(models.Model):
-    dataset = models.ForeignKey(Dataset)
-    count = models.IntegerField(default=0)
-    type = models.CharField(max_length=128, db_index=True)
-    ngram = models.BooleanField(default=False)
-
-    class Meta:
-        ordering = ['type']
-
-    def __unicode__(self):
-        return self.type
 
 
 class WordType(models.Model):
@@ -255,36 +214,38 @@ class WordType(models.Model):
 class WordToken(models.Model):
     type = models.ForeignKey(WordType, related_name='tokens')
     doc = models.ForeignKey(Document, related_name='tokens')
-    position = models.IntegerField()
+    token_index = models.IntegerField()
+    start = models.IntegerField()
+    
 #    '''The form of this type instance. If null, it defers to type.value'''
 #    token = models.CharField(max_length=128, db_index=True, null=True)
     topics = models.ManyToManyField('Topic', related_name='tokens')
 
-# Links between the basic things in the database
-################################################
-
-class AttributeValueDocument(models.Model):
-    document = models.ForeignKey(Document)
-    attribute = models.ForeignKey(Attribute)
-    value = models.ForeignKey(Value)
-
-    def __unicode__(self):
-        return u'{a} is "{v}" for {d}'.format(a=self.attribute, v=self.value,
-                d=self.document)
-
-
-class AttributeValue(models.Model):
-    attribute = models.ForeignKey(Attribute)
-    value = models.ForeignKey(Value)
-    token_count = models.IntegerField(default=0)
-
-
-class AttributeValueWord(models.Model):
-    attribute = models.ForeignKey(Attribute)
-    word = models.ForeignKey(Word)
-    value = models.ForeignKey(Value)
-    count = models.IntegerField(default=0)
-
+## Links between the basic things in the database
+#################################################
+#
+#class AttributeValueDocument(models.Model):
+#    document = models.ForeignKey(Document)
+#    attribute = models.ForeignKey(Attribute)
+#    value = models.ForeignKey(Value)
+#
+#    def __unicode__(self):
+#        return u'{a} is "{v}" for {d}'.format(a=self.attribute, v=self.value,
+#                d=self.document)
+#
+#
+#class AttributeValue(models.Model):
+#    attribute = models.ForeignKey(Attribute)
+#    value = models.ForeignKey(Value)
+#    token_count = models.IntegerField(default=0)
+#
+#
+#class AttributeValueWord(models.Model):
+#    attribute = models.ForeignKey(Attribute)
+#    word = models.ForeignKey(Word)
+#    value = models.ForeignKey(Value)
+#    count = models.IntegerField(default=0)
+#
 
 ##############################################################################
 # Tables that hold information about particular analyses of the data
@@ -296,6 +257,7 @@ class AttributeValueWord(models.Model):
 # This is assuming perhaps several different runs of different kinds of LDA
 class Analysis(models.Model):
     dataset = models.ForeignKey(Dataset)
+    stopwords = models.ManyToManyField(WordToken)
 
     name = models.SlugField()
 
@@ -326,10 +288,10 @@ class Topic(models.Model):
     number = models.IntegerField()
     name = models.CharField(max_length=128)
     total_count = models.IntegerField()
-    analysis = models.ForeignKey(Analysis)
-    documents = models.ManyToManyField(Document, through='DocumentTopic')
+    analysis = models.ForeignKey(Analysis, related_name='topics')
+#    documents = models.ManyToManyField(Document, through='DocumentTopic')
     metrics = models.ManyToManyField('TopicMetric', through='TopicMetricValue')
-    words = models.ManyToManyField(Word, through='TopicWord')
+#    words = models.ManyToManyField(Word, through='TopicWord')
 
     def __unicode__(self):
         return '%d: %s' % (self.number, self.name)
@@ -338,7 +300,6 @@ class Topic(models.Model):
         ordering = ['name']
 
 class TopicGroup(Topic):
-
     @property
     def subtopics(self):
         return [topicgrouptopic.topic for topicgrouptopic
@@ -447,42 +408,19 @@ class PairwiseDocumentMetricValue(MetricValue):
         return '%s(%s, %s) = %d' % (self.metric.name, self.document1.filename,
                 self.document2.filename, self.value)
 
-class WordMetric(Metric):
-    analysis = models.ForeignKey(Analysis)
+class WordTypeMetric(Metric):
+    pass
 
-class WordMetricValue(MetricValue):
-    word = models.ForeignKey(Word)
-    metric = models.ForeignKey(WordMetric)
+class WordTypeMetricValue(MetricValue):
+    type = models.ForeignKey(WordType)
+    metric = models.ForeignKey(WordTypeMetric)
 
+class WordTokenMetric(Metric):
+    pass
 
-
-# Links between the basic components of the analysis and with the raw data
-##########################################################################
-
-class TopicWord(models.Model):
-    topic = models.ForeignKey(Topic)
-    word = models.ForeignKey(Word)
-    count = models.IntegerField(default=0)
-
-
-class DocumentTopic(models.Model):
-    topic = models.ForeignKey(Topic)
-    document = models.ForeignKey(Document)
-    count = models.IntegerField(default=0)
-
-
-class DocumentTopicWord(models.Model):
-    topic = models.ForeignKey(Topic)
-    word = models.ForeignKey(Word)
-    document = models.ForeignKey(Document)
-    count = models.IntegerField(default=0)
-
-
-class AttributeValueTopic(models.Model):
-    attribute = models.ForeignKey(Attribute)
-    value = models.ForeignKey(Value)
-    topic = models.ForeignKey(Topic)
-    count = models.IntegerField(default=0)
+class WordTokenMetricValue(MetricValue):
+    token = models.ForeignKey(WordToken)
+    metric = models.ForeignKey(WordTokenMetric)
 
 # Metadata
 
@@ -588,12 +526,20 @@ class DocumentMetaInfoValue(MetaInfoValue):
     info_type = models.ForeignKey(DocumentMetaInfo)
     document = models.ForeignKey(Document)
 
-class WordMetaInfo(MetaInfo):
+class WordTypeMetaInfo(MetaInfo):
     pass
 
-class WordMetaInfoValue(MetaInfoValue):
-    info_type = models.ForeignKey(WordMetaInfo)
-    word = models.ForeignKey(Word)
+class WordTypeMetaInfoValue(MetaInfoValue):
+    info_type = models.ForeignKey(WordTypeMetaInfo)
+    word_type = models.ForeignKey(WordType)
+
+class WordTokenMetaInfo(MetaInfo):
+    pass
+
+class WordTokenMetaInfoValue(MetaInfoValue):
+    info_type = models.ForeignKey(WordTokenMetaInfo)
+    word_token = models.ForeignKey(WordToken)
+    analysis = models.ForeignKey(Analysis, null=True)
 
 ## Favorites
 class Favorite(models.Model):

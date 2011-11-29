@@ -27,6 +27,7 @@ from __future__ import division
 
 import os
 import sys
+from django.db.models.aggregates import Count
 
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
@@ -35,7 +36,7 @@ from django.db import transaction
 from optparse import OptionParser
 
 from topic_modeling.visualize.models import Analysis, Dataset
-from topic_modeling.visualize.models import TopicNameScheme,TopicName,Topic,TopicWord
+from topic_modeling.visualize.models import TopicNameScheme,TopicName,Topic
 
 class TopNTopicNamer:
     def __init__(self, dataset_name, analysis_name, n):
@@ -86,7 +87,8 @@ class TopNTopicNamer:
         return name
     
     def ranked_topic_terms(self,topic):
-        return  TopicWord.objects.filter(topic=topic).order_by('-count')
+        return topic.tokens.annotate(count=Count()).order_by('-count')
+#        return  TopicWord.objects.filter(topic=topic).order_by('-count')
 
 if __name__ == '__main__':
     parser = OptionParser()
