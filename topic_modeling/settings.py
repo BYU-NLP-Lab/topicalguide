@@ -114,7 +114,7 @@ ROOT_URLCONF = 'topic_modeling.urls'
 
 
 
-TEMPLATE_DIRS = ('topic_modeling/templates')
+TEMPLATE_DIRS = ('/home/josh/Projects/topicalguide/topic_modeling/templates')
 
 INSTALLED_APPS = (
     'topic_modeling.visualize',

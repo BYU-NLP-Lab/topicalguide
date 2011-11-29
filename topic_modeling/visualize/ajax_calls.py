@@ -30,38 +30,66 @@ from topic_modeling.visualize.charts import TopicMetricChart
 from topic_modeling.visualize.common.helpers import get_word_list
 from topic_modeling.visualize.common.helpers import paginate_list
 from topic_modeling.visualize.common.ui import WordSummary
-from topic_modeling.visualize.models import Analysis
+from topic_modeling.visualize.models import Analysis, WordToken, Dataset
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word
 from topic_modeling.visualize import sess_key
 from topic_modeling.visualize.topics.names import set_current_name_scheme_id
+from django.views.decorators.http import require_GET
+from topic_modeling.visualize.common.http_responses import JsonResponse
 
 
 
 # General ajax calls
 ####################
 
+@require_GET
 def word_in_context(request, dataset, analysis, word, topic=None):
-    analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)
-    w = Word.objects.get(dataset__name=dataset, type=word)
-    word_context = WordSummary(word)
+    dataset = Dataset.objects.get(name=dataset)
 
     if topic is None:
-        docset = w.documentword_set.all()
+        tokens = WordToken.objects.filter(doc__dataset=dataset).all()
     else:
-        topic = Topic.objects.get(analysis=analysis, number=topic)
-        docset = topic.documenttopicword_set.filter(word=w)
-
-    num_docs = len(docset)
-    d = docset[random.randint(0, num_docs - 1)]
-
-    word_context.left_context, word_context.word, word_context.right_context \
- = d.document.get_context_for_word(word, analysis, topic.number if topic else None)
-
-    word_context.doc_name = d.document.filename
-    word_context.doc_id = d.document.id
-    return HttpResponse(anyjson.dumps(vars(word_context)))
+#FIXME Make this work
+#select token.*
+#from visualize_wordtype as type, visualize_wordtoken as token, visualize_document as doc, visualize_dataset as dataset
+#where type.type='abandon' and type.id=token.type_id
+#and exists (select * from visualize_wordtoken_topics as wttopics where wttopics.wordtoken_id=token.id);
+        analysis = dataset.analysis_set.get(name=analysis)
+        topic = analysis.topic_set.get(number=int(topic))
+        tokens = WordToken.objects.filter(doc__dataset=dataset, topics__contains=topic).all()
+    
+    token = tokens[random.randint(0, len(tokens)-1)]
+    doc = token.doc
+    left = doc.tokens.get(position=token.position-1) if token.position > 0 else None
+    right = doc.tokens.get(position=token.position+1) if token.position < doc.tokens.count()-1 else None
+    
+    token_context = dict()
+    token_context['word'] = token.type.type
+    token_context['left_context'] = left.type.type if left else ''
+    token_context['right_context'] = right.type.type if right else ''
+    token_context['doc_name'] = doc.filename
+    token_context['doc_id'] = doc.id
+    
+    return JsonResponse(token_context)
+#    w = Word.objects.get(dataset__name=dataset, type=word)
+#    word_context = WordSummary(word)
+#    if topic is None:
+#        docset = w.documentword_set.all()
+#    else:
+#        topic = Topic.objects.get(analysis=analysis, number=topic)
+#        docset = topic.documenttopicword_set.filter(word=w)
+#
+#    num_docs = len(docset)
+#    d = docset[random.randint(0, num_docs - 1)]
+#
+#    word_context.left_context, word_context.word, word_context.right_context \
+# = d.document.get_context_for_word(word, analysis, topic.number if topic else None)
+#
+#    word_context.doc_name = d.document.filename
+#    word_context.doc_id = d.document.id
+#    return HttpResponse(anyjson.dumps(vars(word_context)))
 
 
 # Plots tab ajax calls

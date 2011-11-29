@@ -157,7 +157,7 @@ c.default('num_iterations', 500)
 # For dynamically generated metadata file, define task_attributes_file with
 # targets [$ENTITYTYPE$_metadata_file]
 c.default('metadata_filenames', {})
-metadata_entities = ('datasets','documents','words','analyses','topics')
+metadata_entities = ('datasets','documents','word_types','word_tokens','analyses','topics')
 c.default('metadata_dir', c['dataset_dir'] + '/metadata')
 if not os.path.exists(c['metadata_dir']): os.makedirs(c['metadata_dir'])
 for entity_type in metadata_entities:

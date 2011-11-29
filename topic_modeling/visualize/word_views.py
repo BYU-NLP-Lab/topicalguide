@@ -25,7 +25,7 @@ from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.ui import BreadCrumb, WordSummary, \
     WordFindForm, Tab, Widget
 from topic_modeling.visualize.common.helpers import get_word_list, paginate_list
-from topic_modeling.visualize.models import Word
+from topic_modeling.visualize.models import Word, Document
 from topic_modeling.visualize import sess_key
 
 
@@ -78,14 +78,24 @@ def words_tab(analysis, word, word_url, images_url):
     
     return tab
 
+#def top_documents_widget(dataset, word):
+#    w = Widget('Top Documents', 'words/top_documents')
+#    docwords = word.documentword_set.filter(
+#            document__dataset=dataset)
+#    total = reduce(lambda x, dw: x + dw.count, docwords, 0)
+#    docs = sorted([WordSummary(dw.document.filename, float(dw.count) / total)
+#                   for dw in docwords])
+#    w['chart_url'] = get_chart(docs)
+#    return w
+
 def top_documents_widget(dataset, word):
     w = Widget('Top Documents', 'words/top_documents')
-    docwords = word.documentword_set.filter(
-            document__dataset=dataset)
-    total = reduce(lambda x, dw: x + dw.count, docwords, 0)
-    docs = sorted([WordSummary(dw.document.filename, float(dw.count) / total)
-                   for dw in docwords])
-    w['chart_url'] = get_chart(docs)
+    docs = Document.objects.raw('''select doc.*,count(*) as count
+    from visualize_wordtype as type, visualize_wordtoken as token, visualize_document as doc
+    where type.type=%s and token.type_id=type.id and token.doc_id=doc.id group by doc.id order by count desc''', [word.type])
+    total = float(sum([doc.count for doc in docs]))
+    doc_summaries = [WordSummary(doc.filename, float(doc.count) / total) for doc in docs]
+    w['chart_url'] = get_chart(doc_summaries)
     return w
 
 def top_topics_widget(analysis, word):

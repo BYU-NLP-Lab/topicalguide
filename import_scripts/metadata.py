@@ -7,8 +7,8 @@ from datetime import datetime
 from topic_modeling import anyjson
 from topic_modeling.visualize.models import DatasetMetaInfo,\
     DatasetMetaInfoValue, Document, DocumentMetaInfo, DocumentMetaInfoValue,\
-    Word, WordMetaInfo, WordMetaInfoValue, AnalysisMetaInfo,\
-    AnalysisMetaInfoValue, TopicMetaInfo, TopicMetaInfoValue
+    AnalysisMetaInfo, AnalysisMetaInfoValue, TopicMetaInfo, TopicMetaInfoValue, WordType,\
+    WordTypeMetaInfo, WordTypeMetaInfoValue, WordTokenMetaInfoValue, WordTokenMetaInfo
 
 datetime_format = "%Y-%m-%dT%H:%M:%S"
 
@@ -40,16 +40,31 @@ def import_document_metadata(dataset, document_metadata):
     end = datetime.now()
     print >> sys.stderr, '  Done', end - start
 
-def import_word_metadata(dataset, word_metadata):
+def import_word_type_metadata(dataset, word_type_metadata):
     print >> sys.stderr, 'Importing word metadata...  ',
     sys.stdout.flush()
     start = datetime.now()
     
-    for word_type, metadata in word_metadata.items():
-        word, _ = Word.objects.get_or_create(dataset=dataset, type=word_type)
+    for word_type, metadata in word_type_metadata.items():
+        word, _ = WordType.objects.get_or_create(dataset=dataset, type=word_type)
         for attribute, value in metadata.items():
-            mi,__ = WordMetaInfo.objects.get_or_create(name=attribute)
-            miv, ___ = WordMetaInfoValue.objects.get_or_create(info_type=mi, word=word)
+            mi,__ = WordTypeMetaInfo.objects.get_or_create(name=attribute)
+            miv, ___ = WordTypeMetaInfoValue.objects.get_or_create(info_type=mi, word=word)
+            miv.set(value)
+            miv.save()
+    end = datetime.now()
+    print >> sys.stderr, '  Done', end - start
+
+def import_word_token_metadata(dataset, word_token_metadata):
+    print >> sys.stderr, 'Importing word metadata...  ',
+    sys.stdout.flush()
+    start = datetime.now()
+    
+    for word_type, metadata in word_token_metadata.items():
+        word_token, _ = dataset.tokens.get_or_create(type__type=word_type)
+        for attribute, value in metadata.items():
+            mi,__ = WordTokenMetaInfo.objects.get_or_create(name=attribute)
+            miv, ___ = WordTokenMetaInfoValue.objects.get_or_create(info_type=mi, word_token=word_token)
             miv.set(value)
             miv.save()
     end = datetime.now()

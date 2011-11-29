@@ -24,7 +24,8 @@
 from __future__ import division
 from math import isnan
 
-import sys
+import os, sys
+#from django.db.models.aggregates import Count
 
 from django.db import transaction
 
@@ -32,7 +33,7 @@ from django.db import transaction
 from numpy import dot, zeros
 from numpy.linalg import norm
 
-from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.models import Analysis, Dataset, WordType
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetricValue
 
@@ -48,19 +49,12 @@ def add_metric(dataset, analysis):
     except PairwiseDocumentMetric.DoesNotExist:
         metric = PairwiseDocumentMetric(name=metric_name, analysis=analysis)
         metric.save()
-    
-    words = dataset.word_set
-    num_words = words.count()
-
+   
+    word_types = WordType.objects.filter(tokens__doc__dataset=dataset).all()
+    num_types = word_types.count()
     documents = list(dataset.document_set.all())
-    
-    i = 0
-    wordidx = {}
-    for word in words.all():
-        wordidx[word.id] = i
-        i += 1
-    
-    docwordvectors = [document_word_vector(doc, num_words, wordidx) for doc in documents]
+
+    docwordvectors = [document_word_vector(word_types, doc) for doc in documents]
     vectornorms = [norm(vector) for vector in docwordvectors]
     
 #    start = datetime.now()
@@ -98,10 +92,14 @@ def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
             (doc1_norm * doc2_norm))
 
 
-def document_word_vector(document, word_count, wordidx):
-    document_word_vals = zeros(word_count)
-    for docword in document.documentword_set.all():
-        document_word_vals[wordidx[docword.word_id]] = docword.count
+def document_word_vector(word_types, document):
+    document_word_vals = zeros(len(word_types))
+    
+    for i, word_type in enumerate(word_types):
+        document_word_vals[i] = document.tokens.filter(type=word_type).count()
+    
+#    for x in document.tokens.values('type__id').annotate(count=Count('id')):
+#        document_word_vals[x['type__id']] = x['count']
     return document_word_vals
 
 # vim: et sw=4 sts=4

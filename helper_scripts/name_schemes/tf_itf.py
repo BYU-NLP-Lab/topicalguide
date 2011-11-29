@@ -32,7 +32,7 @@ from operator import itemgetter
 from django.db.models import Sum
 
 from topic_modeling.visualize.models import Analysis, Dataset
-from topic_modeling.visualize.models import TopicNameScheme,TopicName,Topic,TopicWord
+from topic_modeling.visualize.models import TopicNameScheme,TopicName,Topic
 import math
 
 class TfitfTopicNamer:
@@ -85,8 +85,9 @@ class TfitfTopicNamer:
     def ranked_topic_terms(self,topic):
         term_rankings = {}
         
-        topic_words = TopicWord.objects.filter(topic=topic)
-        total_tokens_in_topic = topic_words.aggregate(total_tokens_in_topic=Sum('count'))['total_tokens_in_topic']
+        total_tokens_in_topic = topic.tokens.count()
+#        topic_words = TopicWord.objects.filter(topic=topic)
+#        total_tokens_in_topic = topic_words.aggregate(total_tokens_in_topic=Sum('count'))['total_tokens_in_topic']
 #        total_tokens_in_topic = topic_words.sum('count')
         
         for topic_word in topic_words:
@@ -96,15 +97,17 @@ class TfitfTopicNamer:
         
         return sorted(term_rankings.iteritems(),key=itemgetter(1),reverse=True)
     
-    def tf_itf(self,topic_word,total_tokens_in_topic):
-        return self.term_frequency(topic_word.word,topic_word.topic,total_tokens_in_topic) * self.inverse_topic_frequency(topic_word.word)
+    def tf_itf(self,analysis, topic_word,total_tokens_in_topic):
+        return self.term_frequency(topic_word.word,topic_word.topic,total_tokens_in_topic) * self.inverse_topic_frequency(analysis, topic_word.word)
     
     def term_frequency(self,term,topic,total_tokens_in_topic):
-        term_count_in_topic = TopicWord.objects.filter(word=term,topic=topic).count()
+        term_count_in_topic = topic.tokens.filter(type__type=term).count()
+#        term_count_in_topic = TopicWord.objects.filter(word=term,topic=topic).count()
         return term_count_in_topic / total_tokens_in_topic
         
-    def inverse_topic_frequency(self,term):
-        topics_containing_term = TopicWord.objects.filter(word=term).count()
+    def inverse_topic_frequency(self, analysis, term):
+        topics_containing_term = analysis.topics.filter(tokens__type__type=term).count()
+#        topics_containing_term = TopicWord.objects.filter(word=term).count()
         return math.log(self.total_number_of_topics / topics_containing_term)
 
 if __name__ == '__main__':
