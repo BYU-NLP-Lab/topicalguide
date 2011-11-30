@@ -106,10 +106,10 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
 
 
 def similar_topics(request, dataset, analysis, topic, measure):
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
     request.session['topic-similarity-measure'] = measure
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     topic = analysis.topic_set.get(number=topic)
     measure = analysis.pairwisetopicmetric_set.get(name=measure)
     similar_topics = topic.pairwisetopicmetricvalue_originating.\
