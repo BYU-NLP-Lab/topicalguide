@@ -25,7 +25,7 @@ from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.ui import BreadCrumb, WordSummary, \
     WordFindForm, Tab, Widget
 from topic_modeling.visualize.common.helpers import get_word_list, paginate_list
-from topic_modeling.visualize.models import Word, Document
+from topic_modeling.visualize.models import WordType, Document
 from topic_modeling.visualize import sess_key
 
 
@@ -51,7 +51,7 @@ class WordView(AnalysisBaseView):
         context['page_num'] = page_num
         
         if word:
-            word = Word.objects.get(dataset=dataset, type=word)
+            word = WordType.objects.get(type=word)
         else:
             word = context['words'][0]
     
@@ -62,7 +62,7 @@ class WordView(AnalysisBaseView):
         word_base = request.session.get(sess_key(dataset,'word-find-base'), '')
         context['word_find_form'] = WordFindForm(word_base)
         
-        context['view_description'] = "Word '{0}'".format(word.type)
+        context['view_description'] = "Word Type '{0}'".format(word.type)
         
         context['tabs'] = [words_tab(analysis, word, word_url, context['IMAGES'])]
         

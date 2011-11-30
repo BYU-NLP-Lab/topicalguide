@@ -311,18 +311,19 @@ class TopicFilterByWord(object):
     def __init__(self, analysis, id):
         self.analysis = analysis
         self.id = id
-        self.current_word = None
+        self.current_word_type = None
         self.remake_form()
 
     def apply(self, topic_set):
-        if not self.current_word:
+        if not self.current_word_type:
             return topic_set
-        word = self.analysis.dataset.word_set.get(type=self.current_word)
-        return topic_set.filter(topicword__word=word)
+        return topic_set.filter(tokens__type=self.current_word_type)
+#        word = self.analysis.dataset.word_set.get(type=self.current_word)
+#        return topic_set.filter(topicword__word=word)
 
     def remake_form(self):
-        if self.current_word:
-            word = self.current_word
+        if self.current_word_type:
+            word = self.current_word_type
         else:
             word = 'None'
         self._form = WordForm(self.analysis.dataset, self.id, word)

@@ -26,7 +26,7 @@
 
 
 from django.core.paginator import Paginator, EmptyPage
-from topic_modeling.visualize.models import Dataset, Analysis, Word
+from topic_modeling.visualize.models import Dataset, Analysis, WordType
 from django.shortcuts import get_object_or_404
 from topic_modeling.visualize.common.ui import Widget
 from topic_modeling.visualize import sess_key
@@ -103,7 +103,11 @@ def word_cloud_widget(words, title='Word Cloud', open_=None, close=None, url=Tru
 ############################
 
 def get_word_list(request, dataset_name):
-    words = Word.objects.filter(dataset__name=dataset_name)
-    word_base = request.session.get(sess_key(dataset_name,'word-find-base'), '')
-    words = filter(lambda w: w.type.startswith(word_base), words)
-    return words
+    dataset = Dataset.objects.get(name=dataset_name)
+    word_base = request.session.get('word-find-base', '')
+    word_types = WordType.objects.filter(tokens__doc__dataset=dataset, type__startswith=word_base)
+    return word_types
+#    words = Word.objects.filter(dataset__name=dataset_name)
+#    word_base = request.session.get('word-find-baseword_base = request.session.get('word-find-base', '')', '')
+#    words = filter(lambda w: w.type.startswith(word_base), words)
+#    return words

@@ -74,16 +74,16 @@ RIGHT_CONTEXT_SIZE = 40
 class Document(models.Model):
     filename = models.CharField(max_length=128, db_index=True)
     dataset = models.ForeignKey(Dataset, related_name='docs')
-    word_count = models.IntegerField(default=0)
+#    word_count = models.IntegerField(default=0)
 
     def __unicode__(self):
         return unicode(self.filename)
 
-    def get_markup(self, analysis):
-        markup_file = MarkupFile.objects.get(document=self, analysis=analysis)
-        markup = deserialize(open(self.dataset.dataset_dir + '/' +
-                markup_file.path).read())
-        return markup
+#    def get_markup(self, analysis):
+#        markup_file = MarkupFile.objects.get(document=self, analysis=analysis)
+#        markup = deserialize(open(self.dataset.dataset_dir + '/' +
+#                markup_file.path).read())
+#        return markup
 
     def get_context_for_word(self, word_to_find, analysis, topic=None):
         markup = self.get_markup(analysis)
@@ -287,7 +287,7 @@ class MarkupFile(models.Model):
 class Topic(models.Model):
     number = models.IntegerField()
     name = models.CharField(max_length=128)
-    total_count = models.IntegerField()
+#    total_count = models.IntegerField()
     analysis = models.ForeignKey(Analysis, related_name='topics')
 #    documents = models.ManyToManyField(Document, through='DocumentTopic')
     metrics = models.ManyToManyField('TopicMetric', through='TopicMetricValue')
@@ -523,8 +523,8 @@ class DocumentMetaInfo(MetaInfo):
     pass
 
 class DocumentMetaInfoValue(MetaInfoValue):
-    info_type = models.ForeignKey(DocumentMetaInfo)
-    document = models.ForeignKey(Document)
+    info_type = models.ForeignKey(DocumentMetaInfo, related_name='values')
+    document = models.ForeignKey(Document, related_name='metainfovalues')
 
 class WordTypeMetaInfo(MetaInfo):
     pass

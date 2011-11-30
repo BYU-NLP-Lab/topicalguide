@@ -41,7 +41,7 @@ def import_document_metadata(dataset, document_metadata):
     print >> sys.stderr, '  Done', end - start
 
 def import_word_type_metadata(dataset, word_type_metadata):
-    print >> sys.stderr, 'Importing word metadata...  ',
+    print >> sys.stderr, 'Importing word type metadata...  ',
     sys.stdout.flush()
     start = datetime.now()
     
@@ -56,7 +56,7 @@ def import_word_type_metadata(dataset, word_type_metadata):
     print >> sys.stderr, '  Done', end - start
 
 def import_word_token_metadata(dataset, word_token_metadata):
-    print >> sys.stderr, 'Importing word metadata...  ',
+    print >> sys.stderr, 'Importing word token metadata...  ',
     sys.stdout.flush()
     start = datetime.now()
     
