@@ -33,7 +33,7 @@ from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.helpers import word_cloud_widget, set_word_context, get_word_cloud, \
                                                     get_dataset_and_analysis
 from topic_modeling.visualize.documents.views import tabs as doc_tabs
-from topic_modeling.visualize.models import Analysis, Document, Topic, TopicMetaInfo, TopicMetaInfoValue, Word
+from topic_modeling.visualize.models import Analysis, Document, Topic, TopicMetaInfo, TopicMetaInfoValue, WordType
 from topic_modeling.visualize.topics import topic_attribute
 from topic_modeling.visualize.topics.common import RenameForm, SortTopicForm, top_values_for_attr_topic
 from topic_modeling.visualize.topics.filters import TopicFilterByDocument, TopicFilterByWord, clean_topics_from_session
@@ -108,11 +108,11 @@ class TopicWordView(TopicView):
     def get_context_data(self, request, **kwargs):
         dataset_name = kwargs['dataset']
         analysis_name = kwargs['analysis']
-        word = Word.objects.get(dataset__name=dataset_name, type=kwargs['word'])
+        word = WordType.objects.get(type=kwargs['word'])
         
         filter = TopicFilterByWord(Analysis.objects.get(dataset__name=dataset_name,
                 name=analysis_name), 0)
-        filter.current_word = word
+        filter.current_word_type = word
         
         context = super(TopicWordView, self).get_context_data(request, extra_filters=[filter], **kwargs)
         analysis = context['analysis']

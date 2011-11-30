@@ -455,8 +455,8 @@ if 'task_dataset_import' not in locals():
         # analysis_import.py, now that we are using this build script - we don't
         #  need standalone scripts anymore for that stuff
         task = dict()
-        task['actions'] = [(import_dataset, [c['dataset_name'], c['dataset_readable_name'], c['dataset_description'], c['mallet_output'], c['metadata_filenames'], c['dataset_dir'], c['files_dir'], c['token_regex']])]
-        task['file_dep'] = [c['mallet_output'], c['metadata_filenames']['documents']]
+        task['actions'] = [(import_dataset, [c['dataset_name'], c['dataset_readable_name'], c['dataset_description'], c['metadata_filenames'], c['dataset_dir'], c['files_dir'], c['token_regex']])]
+        task['file_dep'] = [c['metadata_filenames']['documents']]
         task['clean'] = [(remove_dataset, [])]
         task['uptodate'] = [utd]
         return task

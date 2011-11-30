@@ -28,7 +28,7 @@ from django import forms, template
 from django.template.context import Context
 from django.template.defaultfilters import slugify
 
-from topic_modeling.visualize.models import Dataset, Analysis, Word, Document,\
+from topic_modeling.visualize.models import Dataset, Analysis, WordType, Document,\
     Attribute, Value
 from topic_modeling import settings
 
@@ -79,8 +79,8 @@ class BreadCrumb(object):
             self.analysis(obj)
 #        elif isinstance(obj, Topic):
 #            self.topic(obj)
-        elif isinstance(obj, Word):
-            self.word(obj)
+        elif isinstance(obj, WordType):
+            self.word_type(obj)
         elif isinstance(obj, Document):
             self.document(obj)
         elif isinstance(obj, Attribute):
@@ -115,10 +115,10 @@ class BreadCrumb(object):
         self._add_item(url, text, tooltip)
         return self
 
-    def word(self, word):
-        url = '/words/' + word.type
-        text = "Word '"+word.type+"'"
-        tooltip = text + " (id={0})".format(word.id)
+    def word_type(self, word_type):
+        url = '/words/' + word_type.type
+        text = "Word '"+word_type.type+"'"
+        tooltip = text + " (id={0})".format(word_type.id)
         self._add_item(url, text, tooltip)
         return self
 

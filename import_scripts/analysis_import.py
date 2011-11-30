@@ -93,10 +93,10 @@ def _create_analysis(dataset, analysis_name, analysis_readable_name, analysis_de
     return analysis, created
 
 
-@transaction.commit_manually
+#@transaction.commit_manually
 def _load_analysis(analysis, state_file, document_metadata, tokenized_file, token_regex):
     for doc,topic,word_type,word_token in _state_file_iterator(analysis, state_file):
-        print '%s, %s, %s, %s %s' % (doc.filename, topic.number, word_type.type, word_token.word_index, word_token.start)
+        print '%s, %s, %s, %s %s' % (doc.filename, topic.number, word_type.type, word_token.token_index, word_token.start)
     
 #    """ Parses the state output file from mallet and stores a representation of it in the database
 #
@@ -170,28 +170,58 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
     Yields (document,topic,type,token) tuples for each line in a Mallet state file
 '''
 def _state_file_iterator(analysis, state_file):
+    files_dir = analysis.dataset.files_dir
     prior_docpath = None
+    token_num = None
     
     f = codecs.open(state_file, 'r', 'utf-8')
     for _count, line in enumerate(f):
         line = line.strip()
         if line[0] != "#":
+            print line
+            print str(token_num)
             _, docpath, __, ___, word, topic_num = line.split()
             word = word.lower()
+            docpath = '%s/%s' % (files_dir, docpath)
             
-            if prior_docpath is None or not prior_docpath.equals(docpath):
+            if prior_docpath is None or prior_docpath != docpath:
                 token_num = 0
                 prior_docpath = docpath
             
-            doc, _doc_created = analysis.dataset.docs.get_or_create(filename=docpath)
+            doc = analysis.dataset.docs.get(filename=docpath)
             topic, _topic_created = analysis.topics.get_or_create(number=topic_num)
             word_type = WordType.objects.get(type=word)
-            word_token = doc.tokens.get(type=word_type, word_index__gte=token_num)
+            word_token = doc.tokens.filter(type=word_type, token_index__gte=token_num).order_by('token_index')[0]
             yield (doc,topic,word_type,word_token)
-            token_num = word_token.word_index
+            token_num = word_token.token_index
+            print str(token_num)
             
 
+def _load_analysis2(analysis, state_file, document_metadata, tokenized_file, token_regex):
+    doc = None
+    prior_docpath = None
+    tokens = None
+    
+    it = _state_file_iterator2(state_file, analysis.dataset.files_dir)
+    
+    for docpath, topic_num, word in _state_file_iterator2(state_file, analysis.dataset.files_dir):
+        if prior_docpath is None or prior_docpath != docpath:
+            doc = analysis.dataset.docs.get(filename=docpath)
+            tokens = doc.tokens.order_by('token_index').all()
+            prior_docpath = docpath
 
+'''Just parse the text and yield it as a tuple per line'''
+def _state_file_iterator2(state_file, files_dir):
+    f = codecs.open(state_file, 'r', 'utf-8')
+    for _count, line in enumerate(f):
+        line = line.strip()
+        if line[0] != "#":
+            print line
+            _, docpath, __, ___, word, topic_num = line.split()
+            word = word.lower()
+            docpath = '%s/%s' % (files_dir, docpath)
+            
+            yield (docpath, topic_num, word)
 
 def _default_topic_names(topic_word_counts):
     indexed_topic_word_counts = defaultdict(list)

@@ -36,11 +36,11 @@ from datetime import datetime
 
 NUM_DOTS = 100
 
-def import_dataset(name, readable_name, description, state_file, metadata_filenames,
+def import_dataset(name, readable_name, description, metadata_filenames,
                    dataset_dir, files_dir, token_regex):
     
     print >> sys.stderr, "dataset_import({0})".format(
-        ', '.join([name, readable_name, description, state_file,
+        ', '.join([name, readable_name, description,
         metadata_filenames['datasets'], metadata_filenames['documents'], metadata_filenames['word_types'], metadata_filenames['word_tokens'],
         dataset_dir, files_dir]))
     
@@ -84,12 +84,12 @@ def _load_documents(dataset, token_regex):
             file.close()
             del file
             
-            for word_index,match in enumerate(re.finditer(token_regex, content)):
+            for token_index,match in enumerate(re.finditer(token_regex, content)):
                 token = match.group()
                 token_lc = token.lower()
                 type, type_created = WordType.objects.get_or_create(type=token_lc)
                 if type_created: transaction.commit()
-                WordToken.objects.create(type=type, doc=doc, word_index=word_index, start=match.start)
+                WordToken.objects.create(type=type, doc=doc, token_index=token_index, start=match.start())
             del content
             transaction.commit()
 

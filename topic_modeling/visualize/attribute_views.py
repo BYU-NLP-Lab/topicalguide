@@ -30,10 +30,10 @@ from topic_modeling.visualize.common.ui import BreadCrumb, Tab,\
     Widget, WordSummary
 from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.helpers import get_word_cloud, paginate_list, set_word_context
-from topic_modeling.visualize.models import Attribute
+from topic_modeling.visualize.models import Attribute, DocumentMetaInfo
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.models import Value
-from topic_modeling.visualize.models import Word
+from topic_modeling.visualize.models import WordType
 from topic_modeling.visualize import sess_key
 
 class AttributeView(AnalysisBaseView):
@@ -97,8 +97,12 @@ class AttributeWordView(AttributeView):
         analysis = context['analysis']
         attribute = context['attribute']
         value = context['value']
-        word = Word.objects.get(dataset=dataset, type=kwargs['word'])
-        documents = word.document_set.filter(attribute=attribute,
+        mi = DocumentMetaInfo.objects.get(name=kwargs['attribute'])
+        mivs = mi.values.filter()
+        documents = dataset.docs.filter(metainfovalues)
+        
+        word = WordType.objects.get(type=kwargs['word'])
+        documents = word.document_set.filter(attribute=attribute,#FIXME
                 attributevaluedocument__value=value)
         words = []
         for document in documents:

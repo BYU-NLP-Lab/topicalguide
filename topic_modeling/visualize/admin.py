@@ -1,4 +1,3 @@
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -21,11 +20,11 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from topic_modeling.visualize.models import *
-from django.contrib import admin
-
-admin.site.register(Dataset)
-admin.site.register(Topic)
-admin.site.register(Attribute)
-admin.site.register(Document)
-admin.site.register(Word)
+#from topic_modeling.visualize.models import *
+#from django.contrib import admin
+#
+#admin.site.register(Dataset)
+#admin.site.register(Topic)
+#admin.site.register(Attribute)
+#admin.site.register(Document)
+#admin.site.register(Word)
