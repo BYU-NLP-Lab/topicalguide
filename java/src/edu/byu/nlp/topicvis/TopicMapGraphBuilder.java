@@ -281,7 +281,7 @@ public class TopicMapGraphBuilder {
 		final String analysisName = args[2];
 		final String topicNameScheme = args[3];
 		final String pairwiseMetricName = args[4];
-		final String yambaFilename = args[5];
+		final String jdbcPath = args[5];
 		final String imgDir = args[6];
 		final String linkedImgDir = args[7];
 		final String gexfFilename = args[8];
@@ -293,12 +293,12 @@ public class TopicMapGraphBuilder {
 		System.out.println("\tanalysis name: " + analysisName);
 		System.out.println("\ttopic name scheme: " + topicNameScheme);
 		System.out.println("\tpairwise topic metric: " + pairwiseMetricName);
-		System.out.println("\tyamba file: " + yambaFilename);
+		System.out.println("\tjdbc path: " + jdbcPath);
 		System.out.println("\timg dir: " + imgDir);
 		System.out.println("\tlinked img dir: " + linkedImgDir);
 		System.out.println("\tgexf file name: " + gexfFilename);
 
-		final YambaDatabase db = new YambaDatabase(yambaFilename);
+		final YambaDatabase db = new YambaDatabase(jdbcPath);
 		final Bijection<String> topicNameNumIdx = topicNameNumIdx(db, datasetName, analysisName, topicNameScheme);
 		final TopicMapGraphBuilder tmg = new TopicMapGraphBuilder(db, topicNameNumIdx, datasetName, analysisName, topicNameScheme);
 		final TopicMetricDistanceGraphGenerator generator = new TopicMetricDistanceGraphGenerator(db, datasetName, analysisName, pairwiseMetricName, topicNameNumIdx);

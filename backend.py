@@ -205,11 +205,26 @@ if 'graphs_min_value' not in locals():
     graphs_min_value = 1
 if 'graphs_pairwise_metric' not in locals():
     graphs_pairwise_metric = "Document Correlation"
-if 'yamba_file' not in locals():
-    yamba_file = base_dir + "/yamba"
-if not os.path.exists(yamba_file):
-    print "Initializing database..."
-    os.system("python topic_modeling/manage.py syncdb --noinput > /dev/null")
+
+db_type = settings.database_type()
+if db_type=='sqlite3':
+    if 'yamba_file' not in locals(): yamba_file = base_dir + "/yamba"
+    if not os.path.exists(yamba_file):
+        print "Initializing database..."
+        os.system("python topic_modeling/manage.py syncdb --noinput > /dev/null")
+    if 'db_jar' not in locals(): db_jar = 'sqlitejdbc-v056.jar'
+    if 'jdbc_path' not in locals(): jdbc_path = "jdbc:sqlite:" + yamba_file
+elif db_type=='mysql':
+    if 'mysql_server' not in locals(): mysql_server = 'localhost'
+    if 'mysql_db' not in locals(): mysql_db = 'topicalguide'
+    if 'mysql_user' not in locals(): mysql_user = 'topicalguide'
+    if 'mysql_password' not in locals(): mysql_password = 'topicalguide'
+    if 'db_jar' not in locals(): db_jar = 'mysql-connector-java-5.1.18-bin.jar'
+    if 'jdbc_path' not in locals(): jdbc_path = 'jdbc:mysql:%s/%s?user=%s&password=%s' % (mysql_server, mysql_db, mysql_user, mysql_password)
+else: raise Exception("Unknown database type '" + db_type + "'")
+
+
+
 
 print "----- Topical Guide Data Import System -----"
 print "Dataset name: " + dataset_name
@@ -311,7 +326,7 @@ if 'task_dataset_import' not in locals():
         #  need standalone scripts anymore for that stuff
         task = dict()
         task['actions'] = [(import_dataset, [dataset_name, dataset_readable_name, dataset_description, mallet_output, metadata_filenames, dataset_dir, files_dir])]
-        task['file_dep'] = [mallet_output, metadata_filenames['documents'], yamba_file]
+        task['file_dep'] = [mallet_output, metadata_filenames['documents']]
         task['clean'] = [(remove_dataset, [dataset_name])]
         task['uptodate'] = [dataset_in_database()]
         return task
@@ -678,6 +693,9 @@ if 'task_compile_java' not in locals():
 
 if 'task_graphs' not in locals():
     def task_graphs():
+        classpath = '{0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/{2}'.format(java_bin, java_base, db_jar)
+        
+        
         for ns in name_schemes:
             task = dict()
             graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(dataset_dir, analysis_name, ns.scheme_name())
@@ -685,8 +703,8 @@ if 'task_graphs' not in locals():
             gexf_file_name = "{0}/full_graph.gexf".format(graphs_img_dir)
             
             task['actions'] = [
-                'java -cp {0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/sqlitejdbc-v056.jar {2} {3} {4} {5} {6} "{7}" {8} {9} {10} {11}'
-                .format(java_bin,java_base,graph_builder_class,graphs_min_value,dataset_name,analysis_name,ns.scheme_name(),graphs_pairwise_metric, yamba_file, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
+                'java -cp {0} {1} {2} {3} {4} {5} "{6}" {7} {8} {9} {10}'
+                .format(classpath,graph_builder_class,graphs_min_value,dataset_name,analysis_name,ns.scheme_name(),graphs_pairwise_metric, jdbc_path, graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
             ]
             task['task_dep'] = ['pairwise_topic_metrics', 'name_schemes', 'compile_java']
             task['clean'] =  [
@@ -696,6 +714,7 @@ if 'task_graphs' not in locals():
             task['name'] = ns.scheme_name()
             task['uptodate'] = [os.path.exists(graphs_img_dir)]
             yield task
+        
 #
 #def task_reset_db():
 #    actions = ['yes "yes" | python topic_modeling/manage.py reset visualize']

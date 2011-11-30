@@ -61,13 +61,15 @@ def import_dataset(name, readable_name, description, state_file, metadata_filena
     
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
-    # These are some attempts to make the database access a little faster
-    cursor = connection.cursor()
-    cursor.execute('PRAGMA temp_store=MEMORY')
-    cursor.execute('PRAGMA synchronous=OFF')
-    cursor.execute('PRAGMA cache_size=2000000')
-    cursor.execute('PRAGMA journal_mode=MEMORY')
-    cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
+    
+    if settings.database_type()=='sqlite3':
+        # These are some attempts to make the database access a little faster
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA temp_store=MEMORY')
+        cursor.execute('PRAGMA synchronous=OFF')
+        cursor.execute('PRAGMA cache_size=2000000')
+        cursor.execute('PRAGMA journal_mode=MEMORY')
+        cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
 
     dataset, created = _create_dataset(name, readable_name, description, dataset_dir, files_dir)
     if created:
@@ -98,9 +100,11 @@ def import_dataset(name, readable_name, description, state_file, metadata_filena
         
         word_metadata = Metadata(metadata_filenames['words'])
         import_word_metadata(dataset, word_metadata)
-
-        cursor.execute('PRAGMA journal_mode=DELETE')
-        cursor.execute('PRAGMA locking_mode=NORMAL')
+        
+        if settings.database_type()=='sqlite3':
+            cursor = connection.cursor()
+            cursor.execute('PRAGMA journal_mode=DELETE')
+            cursor.execute('PRAGMA locking_mode=NORMAL')
         end_time = datetime.now()
         print >> sys.stderr, 'Finishing time:', end_time
         print >> sys.stderr, 'It took', end_time - start_time,
