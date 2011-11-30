@@ -31,20 +31,39 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * WARNING: This class constructs queries in a horribly unsafe fashion that's begging for a SQL
+ * injection attack. Need to use prepared statements with parameter substitution rather than
+ * concatenating strings.
+ * 
+ * @author Josh Hansen
+ *
+ */
 public class YambaDatabase {
 	private final Connection connection;
-	public YambaDatabase(final String yambaFilename) {
-		this.connection = connect(yambaFilename);
+	
+	public YambaDatabase(final String jdbcPath) {
+		this.connection = connect(jdbcPath);
 	}
-
-	private static Connection connect(final String yambaFilename) {
+	
+	private static String connectionClassName(final String jdbcPath) {
+		if(jdbcPath.contains("sqlite")) {
+			return "org.sqlite.JDBC";
+		}
+		if(jdbcPath.contains("mysql")) {
+			return "com.mysql.jdbc.Driver";
+		}
+		throw new IllegalArgumentException("Unrecognized JDBC path type: " + jdbcPath);
+	}
+	
+	private static Connection connect(final String jdbcPath) {
 		Connection connection = null;
 		try {
-			Class.forName("org.sqlite.JDBC");
+			Class.forName(connectionClassName(jdbcPath));
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-
+		
 		try {
 			connection = DriverManager.getConnection("jdbc:sqlite:" + yambaFilename);
 		} catch(SQLException e) {
