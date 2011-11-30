@@ -37,10 +37,18 @@ MANAGERS = ADMINS
 
 DATABASES = {
 	'default': {
-		'ENGINE': 'django.db.backends.sqlite3',
-		'NAME': 'yamba'
+#		'ENGINE': 'django.db.backends.sqlite3',
+#		'NAME': 'yamba'
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'topicalguide',
+        'SERVER': 'localhost',
+        'PASSWORD': 'topicalguide',
+        'NAME': 'topicalguide'
 	}
 }
+
+def database_type():
+    return DATABASES['default']['ENGINE'].split('.')[-1]
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
