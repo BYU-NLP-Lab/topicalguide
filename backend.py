@@ -48,6 +48,10 @@ from collections import defaultdict
 from datetime import datetime
 from subprocess import Popen, PIPE
 
+os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+from topic_modeling import settings
+settings.DEBUG = False # Disable debugging to prevent the database layer from caching queries and thus hogging memory
+
 from import_scripts.dataset_import import import_dataset
 from import_scripts.analysis_import import import_analysis
 
@@ -91,8 +95,6 @@ filename = "build/{0}.py".format(build)
 ast = compile(open(filename).read(), filename, 'exec')
 eval(ast, globals(), locals())
 # Variables and Paths
-
-os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
 # This variable should be with Mallet, but it is needed to name the analysis,
 # so we have it up here.
