@@ -220,7 +220,7 @@ elif db_type=='mysql':
     if 'mysql_user' not in locals(): mysql_user = 'topicalguide'
     if 'mysql_password' not in locals(): mysql_password = 'topicalguide'
     if 'db_jar' not in locals(): db_jar = 'mysql-connector-java-5.1.18-bin.jar'
-    if 'jdbc_path' not in locals(): jdbc_path = 'jdbc:mysql:%s/%s?user=%s&password=%s' % (mysql_server, mysql_db, mysql_user, mysql_password)
+    if 'jdbc_path' not in locals(): jdbc_path = 'jdbc:mysql://%s/%s?user=%s\&password=%s' % (mysql_server, mysql_db, mysql_user, mysql_password)
 else: raise Exception("Unknown database type '" + db_type + "'")
 
 
