@@ -275,6 +275,8 @@ public class TopicMapGraphBuilder {
 	}
 
 	public static void main(String[] args) {
+                for(String arg : args)
+                    System.out.println(arg);
 		final int minValue = Integer.parseInt(args[0]);
 //		final String baseUrl = args[1];
 		final String datasetName = args[1];
