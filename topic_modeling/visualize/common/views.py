@@ -28,7 +28,7 @@ from django.views.generic.base import TemplateResponseMixin, View
 
 from topic_modeling.visualize.models import Dataset, Analysis
 from topic_modeling.visualize.favorites import dataset_favorite_entries, analysis_favorite_entries, favorite_topic_entries,\
-    topic_view_favorite_entries, document_view_favorite_entries
+    topic_view_favorite_entries, document_view_favorite_entries, favorite_document_entries
 
 '''
 Like TemplateView, but better
@@ -104,6 +104,9 @@ class AnalysisBaseView(DatasetBaseView):
         context['topics_url'] = context['analysis_url'] + "/topics"
         context['words_url'] = context['analysis_url'] + "/words"
         
-#        context['favorites']['topics'] = favorites.favorite_topic_entries(request, context['dataset'], analysis.name)
+        # Set up entity-level document favorites. We do this in AnalysisBaseView because our document URLs still rely
+        # on the name of the current analysis
+        context['favorites']['documents'] = favorite_document_entries(request, kwargs['dataset'], kwargs['analysis']) + context['favorites']['documents']
+        context['favids']['documents'] = [fav['fav'].document.id for fav in context['favorites']['documents']]
         
         return context
