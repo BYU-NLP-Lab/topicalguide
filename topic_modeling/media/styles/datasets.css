@@ -61,35 +61,18 @@ div#analysis-container {
 	margin-top: 10px;
 }
 
-ul.analyses {
-	display: table-row;
-    list-style-type: none;
-    margin: 0;
-    padding: 10px;
-    height: 140px;
-    /*padding: 4px;*/
-}
-
-ul.analyses li {
-	float: left;
-	display: table-cell;
-	position: relative;
-    /*margin: 0;*/
-    padding: 5px;
-    margin: 4px;
-}
-
-ul.analyses li img.plot {
-    width: 150px; height: 150px; /* Set the small thumbnail size */
+img.plot {
+    width: 20em; height: 20em; /* Set the small thumbnail size */
     -ms-interpolation-mode: bicubic; /* IE Fix for Bicubic Scaling */
     border: 1px solid #ddd;
     padding: 5px;
     background: #f0f0f0;
     position: relative;
     left: 0; top: 0;
+    /*margin: 0 auto 1em auto;*/
+    display: block;
 }
 
-ul.analyses li img.plot.hover {
-    background:url(thumb_bg.png) no-repeat center center;  /* Image used as background on hover effect */
-    /*border: none;*/ /* Get rid of border on hover */
+img.plot:hover {
+    background:url(thumb_bg.png) no-repeat center center;
 }

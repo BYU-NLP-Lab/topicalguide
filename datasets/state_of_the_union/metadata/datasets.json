@@ -2,15 +2,14 @@
     "types": {
         "readable_name": "text",
         "description": "text",
-        "creator": "text",
-        "token_count": "int"
+        "creator": "text"
     },
     "data": {
         "state_of_the_union": {
-            "readable_name": "State of the Union Addresses 1790-2010",
-            "description": "State of the Union Addresses taken from WikiSource by adding all addresses to a 'book' and downloading it.",
-            "creator": "Josh Hansen",
-            "token_count": 1905284
+            "readable_name": "State of the Union Messages 1790-2010",
+            "description": "This dataset consists of State of the Union messages delivered by the U.S. President to
+                            Congress as mandated by the Constitution. The documents were retrieved from WikiSource.",
+            "creator": "Josh Hansen"
         }
     }
 }
