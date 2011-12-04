@@ -1,6 +1,32 @@
+$(document).ready(function() {
+    $("#accordion").accordion();
+    $(".dataset-sections").accordion({collapsible: true,autoHeight: false});
+    $("#explore").button().click(explore);
+    $("img.plot").click(explore);
+    
+    $("select#analysis").select(function(){
+    	
+    });
+    
+    //image_preview();
+    $(".analysis-link").click(function(){
+        $("html").hide("fade", {}, 250);
+    });
+    bind_favorites();
+});
+
+function explore() {
+	window.location.href = $("select#analysis > option:selected").attr("url");
+}
+
+function load_plot_image() {
+	
+	$("select#analysis > option:selected").attr("img_url")
+}
+
 /* From http://www.sohtanaka.com/web-design/fancy-thumbnail-hover-effect-w-jquery/ */
 function image_preview() {
-	$("ul.analyses li img.plot").hover(function() {
+	$("img.plot").hover(function() {
 		$(this).css({'z-index' : '10'}); /*Add a higher z-index value so this image stays on top*/ 
 		$(this).addClass("hover").stop() /* Add class of "hover", then stop animation queue buildup*/
 			.animate({
