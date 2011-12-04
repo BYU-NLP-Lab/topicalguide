@@ -26,10 +26,6 @@ function _type_to_section_name(s) {
 }
 
 /***** Favorites *****/
-$(document).ready(function (){
-    bind_favorites();
-});
-
 $.fn.favs = new Array();
 $.fn.fav_handlers = _default_fav_handlers();
 

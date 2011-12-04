@@ -568,6 +568,9 @@ class AnalysisFavorite(Favorite):
 class TopicFavorite(Favorite):
     topic = models.ForeignKey(Topic)
 
+class DocumentFavorite(Favorite):
+    document = models.ForeignKey(Document)
+
 class ViewFavorite(Favorite):
     '''A unique identifier. For URLs.'''
     favid = models.SlugField(primary_key=True)

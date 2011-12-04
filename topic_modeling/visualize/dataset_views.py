@@ -24,6 +24,17 @@ from random import randint
 from topic_modeling.visualize.common.ui import BreadCrumb
 from topic_modeling.visualize.common.views import DatasetBaseView
 
+
+'''
+    The image urls data structure:
+    {dataset_obj: {
+        'analysis_img_urls': {
+            analysis_obj: '...'
+            }
+        },
+        'initial_plot_img_url': '...'
+    }
+'''
 class DatasetView(DatasetBaseView):
     template_name = "datasets.html"
     
@@ -33,17 +44,19 @@ class DatasetView(DatasetBaseView):
         context['view_description'] = 'Available Datasets'
         context['breadcrumb'] = BreadCrumb().item('Available Datasets')
         
+        
+        img_urls = dict()
+        
         # Randomly generate the parameters that will be used in generation of plots
         # We do this for every analysis so that each analysis has its own plot
-        context['plot_img_urls'] = dict()
-        
         for dataset in context['datasets']:
-            context['plot_img_urls'][dataset] = dict()
-            
+            img_urls[dataset] = dict()
+            analysis_img_urls = dict()
             attributes = dataset.attribute_set.all()
             
-            for analysis in dataset.analysis_set.all():
-                if len(attributes) > 0:
+            if len(attributes) > 0 and dataset.analysis_set.count() > 0:
+                for i, analysis in enumerate(dataset.analysis_set.all()):
+                    
                     attribute = self._sample_list(attributes)
                     attrvalues = attribute.attributevalue_set.all()
                     attrvalues = [attrval.value.id for attrval in attrvalues]
@@ -59,7 +72,14 @@ class DatasetView(DatasetBaseView):
                     plot_img_url += '.'.join([str(x) for x in topics])
                     plot_img_url += '?fmt=png'
                     
-                    context['plot_img_urls'][dataset][analysis] = plot_img_url
+                    analysis_img_urls[analysis] = plot_img_url
+                    
+                    if i == 0: img_urls[dataset]['initial_plot_img_url'] = plot_img_url
+            else:
+                img_urls[dataset]['initial_plot_img_url'] = None
+            
+            img_urls[dataset]['analysis_img_urls'] = analysis_img_urls
+        context['plot_img_urls'] = img_urls
         return context
 
     def _sample_list(self, list):
