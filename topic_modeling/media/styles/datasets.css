@@ -48,7 +48,7 @@
 
 .main {
 	 float: left;
-	 /*width:22em;*/
+	 width:22em;
 }
 
 .sidebar {
@@ -100,7 +100,7 @@ img.plot:hover {
 
 #description-container {
 	float: left;
-	margin-top: 2em;
+	margin-top: 1em;
 	clear: both;
 }
 
