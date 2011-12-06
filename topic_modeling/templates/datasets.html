@@ -41,14 +41,14 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <img id="lab-logo-invisible" src="{{nlp_lab_logo_url|safe}}"/>
 <a href="{{nlp_lab_url|safe}}"><img id="lab-logo" src="{{nlp_lab_logo_url|safe}}"/></a>
 <header>
-	<h1><a href="{{topical_guide_project_url|safe}}">The Topical Guide</a></h1>
-	<h2>Available Datasets</h2>
+	<h1 class="title"><a href="{{topical_guide_project_url|safe}}">The Topical Guide</a></h1>
+	<h2 class="subtitle">Available Datasets</h2>
 </header>
 
 {% if datasets %}
 <div id="accordion">
     {% for dataset,dataset_info in plot_img_urls.iteritems %}
-    <div>
+    <h1>
         <a>
             {{dataset.readable_name}}
             <img type="dataset"
@@ -57,22 +57,21 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
                 url="{% url 'tg-dataset' dataset=dataset.name %}"
                 favurl="{% url 'tg-favs-dataset' dataset=dataset.name %}" />
         </a>
-    </div>
-    <div>
-        <div style="float: left; width:22em;">
-        {% if dataset.analysis_set.count > 0 %}
-        <div id="img-wrapper">
-	        <img id="{{dataset.name}}__plot" class="plot" src="{{dataset_info.initial_plot_img_url}}"/>
+    </h1>
+    <div id="content">
+        <div id="main" style="float: left; width:22em;">
+	        {% if dataset.analysis_set.count > 0 %}
+	        <div id="img-wrapper">
+		        <img id="{{dataset.name}}__plot" class="plot" src="{{dataset_info.initial_plot_img_url}}"/>
+	        </div>
+	        <div id="explore-wrapper"><div id="explore">Explore!</div></div>
+	        
+	        {% else %}
+	            <div class="ui-state-highlight">No analyses available for this dataset. Try importing one using <code>backend.py analysis_import</code>.</div>
+	        {% endif %}
         </div>
-        <div id="explore-wrapper"><div id="explore">Explore!</div></div>
         
-        {% else %}
-            <div class="ui-state-highlight">No analyses available for this dataset. Try importing one using <code>backend.py analysis_import</code>.</div>
-        {% endif %}
-        
-        </div>
-        
-        <div class="dataset-sections" style="float:left; width: 30em;">
+        <div id="sidebar" class="dataset-sections" style="float:left; width: 30em;">
             <h3>Settings</h3>
             <div id="analyses-selector">
                 <span><em>Analysis:</em></span>
@@ -131,10 +130,23 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	            {% endif %}
 	        {% endwith %}
 	        </div>
-            <h3>About This Dataset</h3>
-            <div>{{dataset.description}}</div>
+            
         </div>{# end dataset-sections #}
         
+        <div id="description-container">
+	        <h2>About This Dataset</h2>
+	        <div>{{dataset.description}}</div>
+        </div>
+    </div>{# end accordion item content div #}
+    {% endfor %}
+</div>{# end div#accordion #}
+{% else %}
+    <div class="ui-state-highlight">No datasets yet. Try importing one using <code>backend.py dataset_import</code>.</div>
+{% endif %}
+{% endblock %}{# end block body #}
+
+
+
         {% comment %}
         {#<p class="description">{{dataset.description|linebreaks}}</p>#}
         {% if dataset.analysis_set.count > 0 %}
@@ -207,10 +219,4 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             <div class="ui-state-highlight">No analyses available for this dataset.</div>
         {% endif %}
         {% endcomment %}
-    </div>{# end accordion item content div #}
-    {% endfor %}
-</div>{# end div#accordion #}
-{% else %}
-    <div class="ui-state-highlight">No datasets yet. Try importing one using <code>backend.py dataset_import</code>.</div>
-{% endif %}
-{% endblock %}{# end block body #}
+

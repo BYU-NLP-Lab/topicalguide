@@ -32,11 +32,11 @@ nav#header {
 }
 
 footer {
-    position: fixed;
-    bottom: 0;
+    /*position: absolute;*/
+    /*bottom: 0;*/
     width: 100%;
     border-top: 1px solid gray;
-    margin-top: 1em;
+    margin-top: 2em;
     clear: both;
     text-align: center;
     z-index: 5;

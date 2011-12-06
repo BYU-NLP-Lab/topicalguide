@@ -31,7 +31,7 @@
   src: local('Caudex'), url('/site-media/fonts/caudex/Caudex-Regular.woff') format('woff');
 }
 
-h1 {
+.title {
 	font-style: normal;
 	font-size: 50px;
 	font-family: 'Caudex', arial, serif;
@@ -40,10 +40,19 @@ h1 {
     margin: 1em 0em .6em 0em;
 }
 
-h2 {
+.subtitle {
 	font-family: 'Caudex', arial, serif;
     font-weight: normal;
 	text-align: center;
+}
+
+h1 {
+	/*font-size: 20px;*/
+	text-align: left;
+}
+
+h2 {
+	
 }
 
 img#lab-logo-invisible {
@@ -76,3 +85,10 @@ img.plot {
 img.plot:hover {
     background:url(thumb_bg.png) no-repeat center center;
 }
+
+#description-container {
+	float: left;
+	margin-top: 2em;
+	clear: both;
+}
+
