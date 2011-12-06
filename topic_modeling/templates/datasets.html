@@ -50,7 +50,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     {% for dataset,dataset_info in plot_img_urls.iteritems %}
     <h1 class="header">
         <a>
-            {{dataset.readable_name}}
+            {% if dataset_info.readable_name %}{{dataset_info.readable_name}}{% else %}{{dataset.name}}{% endif %}
             <img type="dataset"
                 text="{{dataset.readable_name}}"
                 class="star{% if dataset.id in favids.datasets %}fav{% endif %}"
@@ -68,6 +68,13 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	        
 	        {% else %}
 	            <div class="ui-state-highlight">No analyses available for this dataset. Try importing one using <code>backend.py analysis_import</code>.</div>
+	        {% endif %}
+	        
+	        {% if dataset_info.description %}
+	        <div id="description-container">
+		        <h2>About This Dataset</h2>
+		        <div>{{dataset_info.description}}</div>
+	        </div>
 	        {% endif %}
         </div>
         
@@ -129,11 +136,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             {% endif %}
 	        </div>{# end metrics #}
         </div>{# end sidebar #}
-        
-        <div id="description-container">
-	        <h2>About This Dataset</h2>
-	        <div>{{dataset.description}}</div>
-        </div>
     </div>{# end #content #}
     {% endfor %}
 </div>{# end #accordion #}

@@ -26,13 +26,16 @@ from topic_modeling.visualize.common.views import DatasetBaseView
 
 
 '''
+    FIXME: Come up with a better name for this data structure
+    
     The image urls data structure:
     {dataset_obj: {
         'analysis_img_urls': {
             analysis_obj: '...'
             }
         },
-        'initial_plot_img_url': '...'
+        'initial_plot_img_url': '...',
+        'description': 'This dataset is blah blah blah...'
     }
 '''
 class DatasetView(DatasetBaseView):
@@ -79,6 +82,16 @@ class DatasetView(DatasetBaseView):
                 img_urls[dataset]['initial_plot_img_url'] = None
             
             img_urls[dataset]['analysis_img_urls'] = analysis_img_urls
+            
+            try:
+                img_urls[dataset]['readable_name'] = self._readable_name(dataset)
+            except:
+                pass
+            
+            try:
+                img_urls[dataset]['description'] = self._description(dataset)
+            except:
+                pass
         context['plot_img_urls'] = img_urls
         
         context['metrics'] = self._metrics(context['dataset'])
@@ -104,4 +117,10 @@ class DatasetView(DatasetBaseView):
             metadata += [(miv.info_type.name + ' (' + analysis.name + ')', miv.value(), miv.type()) for miv in analysis.analysismetainfovalue_set.iterator()]
         
         return metadata
+    
+    def _description(self, dataset):
+        return dataset.datasetmetainfovalue_set.get(info_type__name='description').value()
+    
+    def _readable_name(self, dataset):
+        return dataset.datasetmetainfovalue_set.get(info_type__name='readable_name').value()
 # vim: et sw=4 sts=4
