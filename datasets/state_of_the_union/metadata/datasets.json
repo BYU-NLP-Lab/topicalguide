@@ -7,8 +7,7 @@
     "data": {
         "state_of_the_union": {
             "readable_name": "State of the Union Messages 1790-2010",
-            "description": "This dataset consists of State of the Union messages delivered by the U.S. President to
-                            Congress as mandated by the Constitution. The documents were retrieved from WikiSource.",
+            "description": "This dataset consists of State of the Union messages delivered by the U.S. President to Congress as mandated by the Constitution. The documents were retrieved from WikiSource.",
             "creator": "Josh Hansen"
         }
     }
