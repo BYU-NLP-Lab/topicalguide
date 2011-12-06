@@ -80,8 +80,28 @@ class DatasetView(DatasetBaseView):
             
             img_urls[dataset]['analysis_img_urls'] = analysis_img_urls
         context['plot_img_urls'] = img_urls
+        
+        context['metrics'] = self._metrics(context['dataset'])
+        context['metadata'] = self._metadata(context['dataset'])
+        
         return context
 
     def _sample_list(self, list):
         return list[randint(0, len(list) - 1)]
+    
+    def _metrics(self, dataset):
+        metrics = [(mv.metric.name, mv.value) for mv in dataset.datasetmetricvalue_set.iterator()]
+        
+        for analysis in dataset.analysis_set.iterator():
+            metrics += [(mv.metric.name + ' (' + analysis.name + ')', mv.value) for mv in analysis.analysismetricvalue_set.iterator()]
+        
+        return metrics
+    
+    def _metadata(self, dataset):
+        metadata = [(miv.info_type.name, miv.value(), miv.type()) for miv in dataset.datasetmetainfovalue_set.iterator()]
+        
+        for analysis in dataset.analysis_set.iterator():
+            metadata += [(miv.info_type.name + ' (' + analysis.name + ')', miv.value(), miv.type()) for miv in analysis.analysismetainfovalue_set.iterator()]
+        
+        return metadata
 # vim: et sw=4 sts=4
