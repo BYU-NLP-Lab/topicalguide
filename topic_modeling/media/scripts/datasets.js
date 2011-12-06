@@ -1,6 +1,6 @@
 $(document).ready(function() {
     $("#accordion").accordion();
-    $(".dataset-sections").accordion({collapsible: true,autoHeight: false});
+//    $(".dataset-sections").accordion({collapsible: true,autoHeight: false});
     $("#explore").button().click(explore);
     $("img.plot").click(explore);
     

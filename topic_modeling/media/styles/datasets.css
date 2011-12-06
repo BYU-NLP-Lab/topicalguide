@@ -46,6 +46,18 @@
 	text-align: center;
 }
 
+.main {
+	 float: left;
+	 /*width:22em;*/
+}
+
+.sidebar {
+	 float:left;
+	 width: 60%;
+	 margin-left: 2em;
+	 /*width: 30em;*/
+}
+
 h1 {
 	/*font-size: 20px;*/
 	text-align: left;
