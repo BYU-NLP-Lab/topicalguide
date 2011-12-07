@@ -32,6 +32,7 @@ import datetime
 # Basic things in the database
 ##############################
 
+# FIXME: readable_name and description should be deprecated in favor of the meta info system
 class Describable(models.Model):
     '''A unique identifier. For URLs.'''
     name = models.SlugField(unique=True)
@@ -450,12 +451,19 @@ class AttributeValueTopic(models.Model):
     count = models.IntegerField(default=0)
 
 # Metadata
+
+# TODO: rename MetaInfo -> MetaInfoField
+# TODO: also rename children
+# TODO: keep track of the field type. Use the 'choices' parameter to specify possible types.
+# TODO: Update the set, value, and type methods
 class MetaInfo(models.Model):
     name = models.CharField(max_length=128, db_index=True)
     
     class Meta:
         abstract = True
 
+# TODO: Use a consistent related_name in the children of this model.
+# TODO: Create class MetaInfoTarget with a value method that references the consistent metainfo related_name
 class MetaInfoValue(models.Model):
     bool_value = models.NullBooleanField(null=True)
     float_value = models.FloatField(null=True)
