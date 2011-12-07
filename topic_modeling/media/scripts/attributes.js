@@ -22,34 +22,37 @@
  * Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
  */
 
-function update_list_contents(values_list, attribute, value) {
+function update_list_contents(values_list) {
     var new_html = '';
     for (var i = 0; i < values_list.length; i++) {
+    	var value = values_list[i].value;
+    	var url = $.fn.attributes_url + '/' + $.fn.attribute + '/values/' + value;
+    	
         new_html += '<li';
-        if (values_list[i].value == value) {
+        if (value == $.fn.attrvalue) {
             new_html += ' class="selected"';
         }
+        new_html += ' value="' + value + '"';
         new_html += '>';
-        new_html += '<a href="' + $.fn.attributes_url + "/";
-        new_html += attribute;
-        new_html += '/values/' + values_list[i].value + '">';
-        new_html += values_list[i].value + '</a></li>';
+        
+        new_html += '<a href="' + url + '">';
+        new_html += value + '</a></li>';
     }
     
     $("ul#sidebar-list").html(new_html);
 }
 
-function redraw_list_control(json_link, attribute, value) {
+function redraw_list_control(json_link) {
 	$.getJSON(json_link, {}, function(data) {
 		set_nav_arrows(data.page, data.num_pages);
-		update_list_contents(data.values, attribute, value);
+		update_list_contents(data.values);
 	});
 }
 
-function get_page(page, attribute, value) {
+function get_page(page, value) {
 	var link = '/feeds/attribute-page/datasets/' + $.fn.dataset
             + '/analyses/' + $.fn.analysis
-            + '/attributes/' + attribute
+            + '/attributes/' + $.fn.attribute
             + '/number/' + page;
-	redraw_list_control(link, attribute, value);
+	redraw_list_control(link);
 }
