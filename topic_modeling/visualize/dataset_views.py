@@ -111,10 +111,15 @@ class DatasetView(DatasetBaseView):
         return metrics
     
     def _metadata(self, dataset):
-        metadata = [(miv.info_type.name, miv.value(), miv.type()) for miv in dataset.datasetmetainfovalue_set.iterator()]
+        ignored_fields = ('description','readable_name')
+        metadata = [(miv.info_type.name, miv.value(), miv.type())
+                    for miv in dataset.datasetmetainfovalue_set.iterator()
+                    if miv.info_type.name not in ignored_fields]
         
         for analysis in dataset.analysis_set.iterator():
-            metadata += [(miv.info_type.name + ' (' + analysis.name + ')', miv.value(), miv.type()) for miv in analysis.analysismetainfovalue_set.iterator()]
+            metadata += [(miv.info_type.name + ' (' + analysis.name + ')', miv.value(), miv.type())
+                         for miv in analysis.analysismetainfovalue_set.iterator()
+                         if miv.info_type.name not in ignored_fields]
         
         return metadata
     

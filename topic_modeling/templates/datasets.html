@@ -48,30 +48,25 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% if datasets %}
 <div id="accordion">
     {% for dataset,dataset_info in plot_img_urls.iteritems %}
-    <h1 class="header">
-        <a>
-            {% if dataset_info.readable_name %}{{dataset_info.readable_name}}{% else %}{{dataset.name}}{% endif %}
-            <img type="dataset"
+    <div>
+        <a>{% if dataset_info.readable_name %}{{dataset_info.readable_name}}{% else %}{{dataset.name}}{% endif %}<img type="dataset"
                 text="{{dataset.readable_name}}"
-                class="star{% if dataset.id in favids.datasets %}fav{% endif %}"
+                class="star{% if dataset.id in favids.datasets %} fav{% endif %}"
                 url="{% url 'tg-dataset' dataset=dataset.name %}"
                 favurl="{% url 'tg-favs-dataset' dataset=dataset.name %}" />
         </a>
-    </h1>
-    <div class="content">
+    </div>
+    <div class="tab-content">
         <div class="main">
 	        {% if dataset.analysis_set.count > 0 %}
-	        <div id="img-wrapper">
 		        <img id="{{dataset.name}}__plot" class="plot" src="{{dataset_info.initial_plot_img_url}}"/>
-	        </div>
-	        <div id="explore-wrapper"><div id="explore">Explore!</div></div>
-	        
+		        <div class="explore-wrapper"><button class="explore">Explore!</button></div>
 	        {% else %}
 	            <div class="ui-state-highlight">No analyses available for this dataset. Try importing one using <code>backend.py analysis_import</code>.</div>
 	        {% endif %}
 	        
 	        {% if dataset_info.description %}
-	        <div id="description-container">
+	        <div class="description-container">
 		        <h2>About This Dataset</h2>
 		        <div>{{dataset_info.description}}</div>
 	        </div>
@@ -79,17 +74,17 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         </div>
         
         <div class="sidebar">
-            <h3>Settings</h3>
+            <h2>Settings</h2>
             <div id="analyses-selector">
                 <span><em>Analysis:</em></span>
-                <select id="analysis">
+                <select class="analysis">
                 {% for analysis,plot_img_url in dataset_info.analysis_img_urls.iteritems %}
                     <option value="{{analysis.name}}" img_url="{{plot_img_url}}" url="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}">{{analysis.name}}</option>
                 {% endfor %}
                 </select>
             </div>{# end settings #}
 	        
-	        <h3>Metadata</h3>
+	        <h2>Metadata</h2>
             <div id="metadata">
             {% if metadata %}
                 <table class="ui-widget metadata">
@@ -113,7 +108,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             {% endif %}
 	        </div>{# end metadata #}
 	        
-            <h3>Metrics</h3>
+            <h2>Metrics</h2>
             <div id="metrics">
 			{% if metrics %}
                 <table class="ui-widget metrics">

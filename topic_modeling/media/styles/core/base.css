@@ -43,7 +43,7 @@ a:hover span {
 }
 
 /***** Tables *****/
-table:not(.metadata):not(.metrics) {
+table {
 	/*Make cell borders run together instead of having gaps:*/
 	border-collapse: collapse;
 	border-spacing: 0.9em;
