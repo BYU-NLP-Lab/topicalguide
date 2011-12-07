@@ -38,8 +38,8 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block fav-this-button %}{% endblock %}
 
 {% block body %}
-<img id="lab-logo-invisible" src="{{nlp_lab_logo_url|safe}}"/>
-<a href="{{nlp_lab_url|safe}}"><img id="lab-logo" src="{{nlp_lab_logo_url|safe}}"/></a>
+<img class="lab-logo invisible" src="{{nlp_lab_logo_url|safe}}"/>
+<a href="{{nlp_lab_url|safe}}"><img class="lab-logo" src="{{nlp_lab_logo_url|safe}}"/></a>
 <header>
 	<h1 class="title"><a href="{{topical_guide_project_url|safe}}">The Topical Guide</a></h1>
 	<h2 class="subtitle">Available Datasets</h2>
@@ -48,14 +48,14 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% if datasets %}
 <div id="accordion">
     {% for dataset,dataset_info in plot_img_urls.iteritems %}
-    <div>
+    <h1>
         <a>{% if dataset_info.readable_name %}{{dataset_info.readable_name}}{% else %}{{dataset.name}}{% endif %}<img type="dataset"
                 text="{{dataset.readable_name}}"
                 class="star{% if dataset.id in favids.datasets %} fav{% endif %}"
                 url="{% url 'tg-dataset' dataset=dataset.name %}"
                 favurl="{% url 'tg-favs-dataset' dataset=dataset.name %}" />
         </a>
-    </div>
+    </h1>
     <div class="tab-content">
         <div class="main">
 	        {% if dataset.analysis_set.count > 0 %}
@@ -63,13 +63,6 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		        <div class="explore-wrapper"><button class="explore">Explore!</button></div>
 	        {% else %}
 	            <div class="ui-state-highlight">No analyses available for this dataset. Try importing one using <code>backend.py analysis_import</code>.</div>
-	        {% endif %}
-	        
-	        {% if dataset_info.description %}
-	        <div class="description-container">
-		        <h2>About This Dataset</h2>
-		        <div>{{dataset_info.description}}</div>
-	        </div>
 	        {% endif %}
         </div>
         
@@ -131,6 +124,13 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
             {% endif %}
 	        </div>{# end metrics #}
         </div>{# end sidebar #}
+        
+    	{% if dataset_info.description %}
+        <div class="description-container">
+	        <h2>About This Dataset</h2>
+	        <div>{{dataset_info.description}}</div>
+        </div>
+        {% endif %}
     </div>{# end #content #}
     {% endfor %}
 </div>{# end #accordion #}

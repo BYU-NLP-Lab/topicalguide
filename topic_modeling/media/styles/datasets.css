@@ -24,17 +24,7 @@
 
 /* Style specific to the home page (aka datasets page) */
 
-img#lab-logo-invisible {
-    float: left;
-    margin-left: 10px;
-    visibility: hidden;
-}
-
-img#lab-logo {
-    float: right;
-    margin-right: 10px
-}
-
+/** Fonts **/
 @font-face {
   font-family: 'Caudex';
   font-style: normal;
@@ -42,25 +32,58 @@ img#lab-logo {
   src: local('Caudex'), url('/site-media/fonts/caudex/Caudex-Regular.woff') format('woff');
 }
 
-.title {
+/** Masthead images **/
+img.lab-logo {
+	height: 80px;
+	float: right;
+    margin-right: 10px;
+}
+
+img.lab-logo.invisible {
+    float: left;
+    margin-left: 10px;
+    visibility: hidden;
+}
+
+/** Headers **/
+h1.title {
 	font-style: normal;
 	font-size: 50px;
 	font-family: 'Caudex', arial, serif;
 	font-weight: normal;
     text-align: center;
-    margin: 1em 0em .6em 0em;
+    /*margin: 1em 0em .6em 0em;*/
+    margin: 1em 0 0 0;
 }
 
-.subtitle {
+h2.subtitle {
 	font-family: 'Caudex', arial, serif;
     font-weight: normal;
 	text-align: center;
+	margin-top: 0.2em;
 }
 
-.main {
+h2:not(.subtitle) {
+	font-size: 1em;
+	margin-bottom: 0.2em;
+}
+
+/** Page Structure **/
+div.main {
 	float: left;
-	/*width:22em;*/
 	width: 35%;
+}
+
+div.sidebar {
+	float:left;
+	width: 60%;
+	margin-left: 5%;
+}
+
+div.description-container {
+	float: left;
+	clear: both;
+	width: 100%;
 }
 
 .explore-wrapper {
@@ -71,39 +94,13 @@ button.explore {
 	width: 100%;
 }
 
-.sidebar {
-	float:left;
-	width: 60%;
-	margin-left: 5%;
-}
-
-h1 {
-	         font-style: normal;
-          font-size: 50px;
-          font-family: 'Caudex', arial, serif;
-          font-weight: normal;
-      /*text-align: center;*/
-      margin: 1em 0em .6em 0em;
-}
-
-h1.tab-header, h1.tab-header a {
-	text-align: left;
-}
-
-h2 {
-	font-size: 1em;
-	margin-bottom: 0.2em;
-}
-
+/** Plots **/
 img.plot {
 	width: 96%;
 	padding: 2%;
     -ms-interpolation-mode: bicubic; /* IE Fix for Bicubic Scaling */
     border: 1px solid #ddd;
     background: #f0f0f0;
-    /*position: relative;
-    left: 0; top: 0;
-    display: block;*/
 }
 
 img.plot:hover {
