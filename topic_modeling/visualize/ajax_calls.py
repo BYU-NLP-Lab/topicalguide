@@ -134,7 +134,7 @@ def get_attribute_page(request, dataset, analysis, attribute, number):
 
     num_per_page = request.session.get('attributes-per-page', 20)
     page = int(number)
-    values, num_pages, _ = paginate_list(values, page, num_per_page)
+    values, num_pages, page = paginate_list(values, page, num_per_page)
     ret_val['values'] = [vars(AjaxValue(val.value)) for val in values]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
@@ -162,7 +162,7 @@ def get_word_page(request, dataset, analysis, number):
 
     num_per_page = request.session.get('words-per-page', 30)
     page = int(number)
-    words, num_pages, _ = paginate_list(words, page, num_per_page)
+    words, num_pages, page = paginate_list(words, page, num_per_page)
 
     ret_val['words'] = [vars(AjaxWord(word.type)) for word in words]
     ret_val['num_pages'] = num_pages

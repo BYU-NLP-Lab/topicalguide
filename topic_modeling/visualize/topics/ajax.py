@@ -83,7 +83,7 @@ def topic_page(request, dataset, analysis, number):
 #                analysis__dataset__name=dataset)
     num_per_page = request.session.get('topics-per-page', 20)
     page = int(number)
-    topics, num_pages, _ = paginate_list(topics, page, num_per_page)
+    topics, num_pages, page = paginate_list(topics, page, num_per_page)
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page

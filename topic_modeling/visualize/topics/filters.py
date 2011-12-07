@@ -80,9 +80,8 @@ def clean_topics_from_session(topics, session, extra_filters=[], topic=None):
     session['topics-list'] = topics
     page_num = session.get('topic-page', 1)
     per_page = session.get('topics-per-page', 20)
-    topics, num_pages, page = paginate_list(topics, page_num, per_page, topic)
-    if page:
-        session['topic-page'] = page
+    topics, num_pages, page_num = paginate_list(topics, page_num, per_page, topic)
+    session['topic-page'] = page_num
     return topics, filter_form, num_pages
 
 
