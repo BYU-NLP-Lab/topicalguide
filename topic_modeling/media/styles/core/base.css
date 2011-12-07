@@ -116,10 +116,6 @@ ul.vertical > li:hover {
     -moz-transition: background 300ms ease;
 }
 
-ul.vertical_left {
-    float: left;
-}
-
 /***** Other Elements *****/
 label {
     font-weight:normal;

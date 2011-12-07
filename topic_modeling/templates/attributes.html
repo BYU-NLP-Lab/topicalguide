@@ -23,45 +23,41 @@ contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endcomment %}
 
+{% block stylesheets %}
+    {{block.super}}
+    <link rel="stylesheet" href="{{STYLES}}/attributes.css" type="text/css" />
+{% endblock %}
+
 {% block scripts %}
     {{block.super}}
     <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/attributes.js"></script>
+    <script charset="utf-8" type="text/javascript">
+        $.fn.attribute = "{{attribute.name}}";
+        $.fn.attrvalue = "{{value.value}}";
+    </script>
 {% endblock %}
 
 {% block document_ready_script %}
     {{block.super}}
-    get_page({{page_num}}, "{{attribute.name}}", "{{value.value}}");
-    $("select#attribute").change(function(){
-        window.location.href = $("option:selected").val();
-    });
+    get_page({{page_num}});
 {% endblock %}
 
-{% block sidebar %}
-    <div id="list-nav">
-        <span id="back-arrows" class="arrows" style="visibility:hidden;">
-            <a id="first" title="First"><img src="{{IMAGES}}/tango/22x22/actions/go-first.png"/></a>
-            <a id="prev" title="Previous"><img src="{{IMAGES}}/tango/22x22/actions/go-previous.png"/></a>
-        </span>
-        <span id="page-situation">Page <span id="current-page"></span> of <span id="page-count"></span>
-        </span>
-        <span id="fwd-arrows" class="arrows" style="visibility:hidden;">
-            <a id="last" title="Last"><img src="{{IMAGES}}/tango/22x22/actions/go-last.png"/></a>
-            <a id="next" title="Next"><img src="{{IMAGES}}/tango/22x22/actions/go-next.png"/></a>
-        </span>
-    </div>
-    <div>
-        <ul id="attribute_list" class="vertical vertical_left">
-            {% for a in attributes %}
-                <li {% ifequal attribute a %}class="selected"{% endifequal %}>
-                    <a href="{{ attributes_url}}/{{a.name}}">
-                        {{a.name}}
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
-        <ul id="sidebar-list" class="vertical vertical_left"></ul>
-    </div>
+{% block above_sidebar %}
+<div id="attributes">
+    <h1>Attributes</h1>
+    <ul id="attributes-list" class="vertical">
+        {% for a in attributes %}
+            <li {% ifequal attribute a %}class="selected"{% endifequal %}>
+                <a href="{{ attributes_url}}/{{a.name}}">
+                    {{a.name}}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
 {% endblock %}
 
+{% block sidebar-list-nav %}<h1>Values</h1>{{block.super}}{% endblock %}
 
+{# We aren't ready for a fav-this button here yet #}
 {% block fav-this-button %}{% endblock %}
