@@ -60,7 +60,8 @@ from build.common.db_cleanup import remove_analysis
 from build.common.db_cleanup import remove_dataset
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
-from topic_modeling.visualize.models import Analysis, DatasetMetric, AnalysisMetric
+from topic_modeling.visualize.models import Analysis, DatasetMetric, AnalysisMetric, DatasetMetricValue,\
+    AnalysisMetricValue
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import TopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetric
@@ -381,11 +382,12 @@ if 'task_dataset_metrics' not in locals():
     def task_dataset_metrics():
         from metric_scripts.datasets import metrics
         def metric_in_database(dataset_metric):
-            try:
-                DatasetMetric.objects.get(name=dataset_metric)
-                return True
-            except DatasetMetric.DoesNotExist:
-                return False
+            for name in dataset_metric.metric_names_generated(dataset_name):
+                try:
+                    DatasetMetricValue.objects.get(metric__name=name, dataset__name=dataset_name)
+                except DatasetMetricValue.DoesNotExist:
+                    return False
+            return True
         
         def import_metric(dataset_metric):
             start_time = datetime.now()
@@ -413,24 +415,25 @@ if 'task_dataset_metrics' not in locals():
                 DatasetMetric.objects.get(name=name).delete()
         
         print "Available dataset metrics: " + u', '.join(metrics)
-        for dataset_metric in metrics:
+        for metric_name,metric in metrics.iteritems():
             task = dict()
-            task['name'] = dataset_metric.replace(' ', '_')
-            task['actions'] = [(import_metric, [dataset_metric])]
-            task['clean'] = ["ls", (clean_metric, [dataset_metric])]
+            task['name'] = metric_name.replace(' ', '_')
+            task['actions'] = [(import_metric, [metric_name])]
+            task['clean'] = ["ls", (clean_metric, [metric_name])]
             task['task_dep'] = ['dataset_import']
-            task['uptodate'] = [metric_in_database(dataset_metric)]
+            task['uptodate'] = [metric_in_database(metric)]
             yield task
 
 if 'task_analysis_metrics' not in locals():
     def task_analysis_metrics():
         from metric_scripts.analyses import metrics
         def metric_in_database(analysis_metric):
-            try:
-                AnalysisMetric.objects.get(name=analysis_metric)
-                return True
-            except AnalysisMetric.DoesNotExist:
-                return False
+            for name in analysis_metric.metric_names_generated(analysis_name):
+                try:
+                    AnalysisMetricValue.objects.get(metric__name=name, analysis__name=analysis_name)
+                except AnalysisMetricValue.DoesNotExist:
+                    return False
+            return True
         
         def import_metric(analysis_metric):
             start_time = datetime.now()
@@ -458,13 +461,13 @@ if 'task_analysis_metrics' not in locals():
                 AnalysisMetric.objects.get(name=name).delete()
         
         print "Available analysis metrics: " + u', '.join(metrics)
-        for analysis_metric in metrics:
+        for metric_name, metric in metrics.iteritems():
             task = dict()
-            task['name'] = analysis_metric.replace(' ', '_')
-            task['actions'] = [(import_metric, [analysis_metric])]
-            task['clean'] = ["ls", (clean_metric, [analysis_metric])]
+            task['name'] = metric_name.replace(' ', '_')
+            task['actions'] = [(import_metric, [metric_name])]
+            task['clean'] = ["ls", (clean_metric, [metric_name])]
             task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [metric_in_database(analysis_metric)]
+            task['uptodate'] = [metric_in_database(metric)]
             yield task
 
 if 'task_topic_metrics' not in locals():

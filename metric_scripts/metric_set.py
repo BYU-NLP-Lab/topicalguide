@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -22,6 +20,8 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
+
+#TODO: Determine if MetricSet can just be replaced with a dict
 class MetricSet(object):
     def __init__(self):
         self.metric_names = []
@@ -42,6 +42,9 @@ class MetricSet(object):
 
     def __iter__(self):
         return self.metric_names.__iter__()
+    
+    def iteritems(self):
+        return self.functions.iteritems()
 
 
 # vim: et sw=4 sts=4
