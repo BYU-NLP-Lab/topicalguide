@@ -4,7 +4,7 @@ $(document).ready(function() {
     //Event handlers
     $("button.explore").button().click(explore);
     $("img.plot").click(explore);
-    $("select.analysis").select(load_plot_image);
+    $("select.analysis").change(load_plot_image);
     
     bind_favorites();
 });
