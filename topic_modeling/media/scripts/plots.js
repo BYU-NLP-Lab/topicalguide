@@ -1,3 +1,7 @@
+var jqPlotChart;
+var legends;
+var ticks;
+
 function numerical_sort_function(a, b) {
 	return (a - b)
 }
@@ -43,8 +47,8 @@ function update_topic_attribute_plot() {
 		// key is the data title
 		// data[key] is the string
 		var linedata = [];
-		var legends = [];
-		var ticks = data['x-data'].toString().split(',');
+		legends = [];
+		ticks = data['x-data'].toString().split(',');
 		
 		$.each(data['y-data'], function(key, val) {
 			legends.push({'label':key});
@@ -80,13 +84,13 @@ function update_topic_attribute_plot() {
 					renderer : $.jqplot.CategoryAxisRenderer
 				}
 			},
-			seriesDefaults : {
-				
+			seriesDefaults : {				
 			},
 			series : legends,
 			legend : {
 				show : true,
-				placement: 'outside'
+				placement: 'outsideGrid',
+				location: 'ne',								
 			},
 			cursor: {},
 			highlighter: {}
@@ -105,21 +109,43 @@ function update_topic_attribute_plot() {
 			jqplot_options.stackSeries = true;
 			jqplot_options.seriesDefaults.renderer = $.jqplot.BarRenderer;
 			jqplot_options.seriesDefaults.rendererOptions = [];
-			jqplot_options.seriesDefaults.rendererOptions.push({'barMargin': 30, 'highlightMouseDown': true});
+			jqplot_options.seriesDefaults.rendererOptions.push({'barMargin': 10, 'highlightMouseDown': true});
 			jqplot_options.captureRightClick = true;
 		}			
 		
 		$('#jqplot').html("");
-		$.jqplot('jqplot', linedata, jqplot_options);
-		$('#jqplot').unbind('jqplotDataClick');
-		$('#jqplot').bind('jqplotDataClick', function (ev, seriesIndex, pointIndex, data) {
-			//console.log(legends[seriesIndex]+"idx:"+seriesIndex);
-			console.log(legends);
-			console.log("idx:"+seriesIndex);
-			$('#jqplot_info').html(legends[seriesIndex].label+'<br/> ( '+ticks[pointIndex]+', '+parseFloat(data[1]).toFixed(5) +" )");
-			$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-25 });
-		 });
-	});
+		jqPlotChart = $.jqplot('jqplot', linedata, jqplot_options);		
+		
+	});		
+	update_plot();
+}
+
+function update_plot(){
+	jqPlotChart.replot( { resetAxes: true } );
+	offset = 50;
+	containerHeight = $('#jqplot_container').height();
+	legendHeight = $('.jqplot-table-legend').height();
+	
+//	console.log(containerHeight);
+//	console.log(legendHeight);
+//	if(legendHeight > containerHeight){
+//		$('#jqplot_container').height(legendHeight);
+//	}else{
+//		$('#jqplot_container').height($('#jqplot').height());
+//	}
+	
+	$('#jqplot').unbind('jqplotDataClick');
+	$('#jqplot').bind('jqplotDataClick', function (ev, seriesIndex, pointIndex, data) {
+		//console.log(legends[seriesIndex]+"idx:"+seriesIndex);
+		//console.log(legends);
+		//console.log("idx:"+seriesIndex);
+		$('#jqplot_info').html(legends[seriesIndex].label+'<br/> ( '+ticks[pointIndex]+', '+parseFloat(data[1]).toFixed(5) +" )");
+		$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-197 });
+	 });
+	$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-197 });
+	//$('#jqplot_container').height($('.jqplot-table-legend').height());
+	//console.log("container.height: "+$('#jqplot_container').height());
+	//console.log("legends.height: "+$('.jqplot-table-legend').height());
 }
 
 /*

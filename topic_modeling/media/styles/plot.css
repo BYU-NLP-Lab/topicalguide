@@ -16,9 +16,8 @@
 }
 
 div#jqplot {
-	height: 600px;
-	width: 1000px;
-	margin: 0 auto;
+	margin:15px;
+	height:500px;
 }
 
 span#jqplot_info { text-align:right; } 
@@ -139,7 +138,7 @@ table.jqplot-table-legend,table.jqplot-cursor-legend {
 	border: 1px solid #ccc;
 	position: absolute;
 	font-size: .75em;
-	width: 150px
+	width:150px;
 }
 
 td.jqplot-table-legend {
