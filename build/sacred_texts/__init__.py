@@ -53,13 +53,19 @@ def bible_verse_it():
                         text += ' ' + line
             blank_lines_count = 0
 
-
 if __name__=='__main__':
-    prev_book = None
+    
+    prev = None
+    prev_chapter = None
+    text = ''
     for x in bible_verse_it():
-        testament,book,chapter,verse,text = x
-#        if prev_book is None or book!=prev_book:
-        print x
-        prev_book = book
-
-#    for x in bible_it(): print x
+        testament,book,chapter,verse,_text = x
+        
+        if prev is None or prev[2] != chapter:
+            if text: print '%s %s: %s' % (prev[1], prev[2], text)
+            text = _text
+        else:
+            text += _text
+        prev = x
+        
+    print '%s %s: %s' % (prev[1], prev[2], text)
