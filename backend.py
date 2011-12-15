@@ -118,12 +118,15 @@ if 'analysis_description' not in locals():
 
 if 'base_dir' not in locals():
     base_dir = os.curdir
+if 'raw_data_dir' not in locals():
+    raw_data_dir = base_dir + "/raw-data"
 if 'datasets_dir' not in locals():
     datasets_dir = base_dir + "/datasets"
 if 'dataset_dir' not in locals():
     dataset_dir = "{0}/{1}".format(datasets_dir, dataset_name)
 if 'files_dir' not in locals():
     files_dir = dataset_dir + "/files"
+    if not os.path.exists(files_dir): os.makedirs(files_dir)
 if 'token_regex' not in locals():
     token_regex = r'[A-Za-z]+'
 
