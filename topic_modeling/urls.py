@@ -119,7 +119,8 @@ urlpatterns = patterns('',
 
 # Plot View
     url(analysis_base + '/plots$', PlotView.as_view(), name='tg-plots'),
-    url(analysis_base + '/' + plot + '$', PlotView.as_view(), name='tg-plot'),
+    url(analysis_base + '/' + plot + '$', PlotView.as_view(), name='tg-plot')
+)
 
 urlpatterns += patterns(prefix + '.ajax_calls',
 # AJAX Calls
@@ -130,9 +131,7 @@ urlpatterns += patterns(prefix + '.ajax_calls',
     (r'^feeds/set-current-name-scheme/(?P<name_scheme>[^/]*)$',
         'set_current_name_scheme'),
 # Topic-Attribute Plots
-    (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '(?:fmt=(?P<fmt>.+))?$', 'topic_attribute_plot'),
-#    (r'^feeds/topic-attribute-csv/' + attribute + '/' + value + '/' + topic + '$', 'topic_attribute_csv'),
-#    (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '/json/$', 'topic_attribute_plot_json'),   
+    (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '$', 'topic_attribute_plot'),
     (r'^feeds/attribute-values/' + dataset_nc + '/' + attribute + '$', 'attribute_values'),
 # Topic-Metric Plots
     (r'^feeds/topic-metric-plot/' + dataset + '/' + analysis + '/' + metric + '$',
