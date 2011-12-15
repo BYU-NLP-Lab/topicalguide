@@ -22,8 +22,7 @@
 
 import random
 
-from django.utils import simplejson
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 
 from topic_modeling import anyjson
 from topic_modeling.visualize.charts import TopicAttributeChart
