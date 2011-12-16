@@ -25,13 +25,6 @@
 /* Style specific to the home page (aka datasets page) */
 
 /** Fonts **/
-@font-face {
-  font-family: 'Caudex';
-  font-style: normal;
-  font-weight: 400;
-  src: local('Caudex'), url('/site-media/fonts/caudex/Caudex-Regular.woff') format('woff');
-}
-
 /** Masthead images **/
 img.lab-logo {
 	height: 80px;
@@ -48,9 +41,10 @@ img.lab-logo.invisible {
 /** Headers **/
 h1.title {
 	font-style: normal;
-	font-size: 50px;
+	font-size: 48px;
 	font-family: 'Caudex', arial, serif;
-	font-weight: normal;
+	font-weight: 400;
+	color: #222;
     text-align: center;
     /*margin: 1em 0em .6em 0em;*/
     margin: 1em 0 0 0;
