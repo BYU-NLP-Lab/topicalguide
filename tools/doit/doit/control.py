@@ -112,7 +112,7 @@ class TaskControl(object):
         for task in self.tasks.itervalues():
             for dep in task.file_dep:
                 if (dep in self.targets and
-                    self.targets[dep] not in task.task_dep):
+                    self.targets[dep].name not in task.task_dep):
                     task.task_dep.append(self.targets[dep].name)
 
 
@@ -218,7 +218,8 @@ class TaskControl(object):
             for dyn_task in self._add_task(gen_id, dyn.name, include_setup):
                 yield dyn_task
             # wait for dynamic task to complete
-            yield WaitRunTask(dyn.name)
+            if not include_setup:
+                yield WaitRunTask(dyn.name)
             # refresh this task dependencies
             this_task.update_deps(dyn.values)
 

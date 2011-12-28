@@ -18,6 +18,8 @@ By default all commands are relative to ``dodo.py`` in the current folder. You c
     $ doit -f release.py
 
 
+*doit* can seek for the ``dodo.py`` file on parent folders if the the option ``--seek-file`` is specified.
+
 
 verbosity
 -----------
@@ -189,4 +191,13 @@ You need to check `doit_cmd.py <http://bazaar.launchpad.net/~schettino72/doit/tr
 
   The parameters `--file` and `--dir` can not be used on config because they control how the dodo file itself is loaded.
 
+
+bash completion
+-----------------
+
+Bash completion for `doit` to auto-complete task names is available at `bash_completion_doit <http://bazaar.launchpad.net/~schettino72/doit/trunk/annotate/head%3A/bash_completion_doit>`_ . To activate it:
+
+.. code-block:: console
+
+  $ source <path-to-file>/bash_completion_doit
 

@@ -5,7 +5,7 @@ import time
 import datetime
 import StringIO
 
-from doit.dependency import json
+from doit import json
 
 
 class ConsoleReporter(object):
@@ -22,6 +22,9 @@ class ConsoleReporter(object):
         self.show_err = options.get('show_err', True)
         self.outstream = outstream
 
+    def write(self, text):
+        self.outstream.write(text)
+
     def get_status(self, task):
         """called when task is selected (check if up-to-date)"""
         pass
@@ -29,8 +32,9 @@ class ConsoleReporter(object):
     def execute_task(self, task):
         """called when excution starts"""
         # ignore tasks that do not define actions
-        if task.actions:
-            self.outstream.write('.  %s\n' % task.title())
+        # ignore private/hidden tasks (tasks that start with an underscore)
+        if task.actions and (task.name[0] != '_'):
+            self.write('.  %s\n' % task.title())
 
     def add_failure(self, task, exception):
         """called when excution finishes with a failure"""
@@ -42,11 +46,11 @@ class ConsoleReporter(object):
 
     def skip_uptodate(self, task):
         """skipped up-to-date task"""
-        self.outstream.write("-- %s\n" % task.title())
+        self.write("-- %s\n" % task.title())
 
     def skip_ignore(self, task):
         """skipped ignored task"""
-        self.outstream.write("!! %s\n" % task.title())
+        self.write("!! %s\n" % task.title())
 
     def cleanup_error(self, exception):
         """error during cleanup"""
@@ -64,25 +68,25 @@ class ConsoleReporter(object):
         """called when finshed running all tasks"""
         # if test fails print output from failed task
         for result in self.failures:
-            self.outstream.write("#"*40 + "\n")
+            self.write("#"*40 + "\n")
             msg = '%s - taskid:%s\n' % (result['exception'].get_name(),
                                         result['task'].name)
-            self.outstream.write(msg)
-            self.outstream.write(result['exception'].get_msg())
-            self.outstream.write("\n")
+            self.write(msg)
+            self.write(result['exception'].get_msg())
+            self.write("\n")
             task = result['task']
             if self.show_out:
                 out = "".join([a.out for a in task.actions if a.out])
-                self.outstream.write("%s\n" % out)
+                self.write("%s\n" % out.encode('utf-8'))
             if self.show_err:
                 err = "".join([a.err for a in task.actions if a.err])
-                self.outstream.write("%s\n" % err)
+                self.write("%s\n" % err.encode('utf-8'))
 
         if self.runtime_errors:
-            self.outstream.write("#"*40 + "\n")
-            self.outstream.write("Execution aborted.\n")
-            self.outstream.write("\n".join(self.runtime_errors))
-            self.outstream.write("\n")
+            self.write("#"*40 + "\n")
+            self.write("Execution aborted.\n")
+            self.write("\n".join(self.runtime_errors))
+            self.write("\n")
 
 
 class ExecutedOnlyReporter(ConsoleReporter):
@@ -118,7 +122,7 @@ class TaskResult(object):
         """called when task starts its execution"""
         self._started_on = time.time()
 
-    def _set_result(self, result, error=None):
+    def set_result(self, result, error=None):
         """called when task finishes its execution"""
         self._finished_on = time.time()
         self.result = result
@@ -156,7 +160,7 @@ class JsonReporter(object):
          - started (str)
          - elapsed (float)
     """
-    def __init__(self, outstream, options=None):
+    def __init__(self, outstream, options=None): #pylint: disable=W0613
         # options parameter is not used
         # json result is sent to stdout when doit finishes running
         self.t_results = {}
@@ -181,19 +185,19 @@ class JsonReporter(object):
 
     def add_failure(self, task, exception):
         """called when excution finishes with a failure"""
-        self.t_results[task.name]._set_result('fail', exception.get_msg())
+        self.t_results[task.name].set_result('fail', exception.get_msg())
 
     def add_success(self, task):
         """called when excution finishes successfuly"""
-        self.t_results[task.name]._set_result('success')
+        self.t_results[task.name].set_result('success')
 
     def skip_uptodate(self, task):
         """skipped up-to-date task"""
-        self.t_results[task.name]._set_result('up-to-date')
+        self.t_results[task.name].set_result('up-to-date')
 
     def skip_ignore(self, task):
         """skipped ignored task"""
-        self.t_results[task.name]._set_result('ignore')
+        self.t_results[task.name].set_result('ignore')
 
     def cleanup_error(self, exception):
         """error during cleanup"""

@@ -23,4 +23,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-__version__ = (0, 10, 0)
+__version__ = (0, 14, 0)
+
+# Use simplejson or Python 2.6 json
+# simplejson is much faster that py26:json. so use simplejson if available
+try:
+    import simplejson
+    json = simplejson
+except ImportError: # pragma: no cover
+    import json
+json # pyflakes
+
+
+
+# used to save variable values passed from command line
+CMDLINE_VARS = None
+
+def reset_vars():
+    global CMDLINE_VARS
+    CMDLINE_VARS = {}
+
+def get_var(name, default=None):
+    return CMDLINE_VARS.get(name, default)
+
+def set_var(name, value):
+    CMDLINE_VARS[name] = value

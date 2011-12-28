@@ -1,25 +1,10 @@
 import os
 import threading
 
-import py.test
+import pytest
 
 from doit.filewatch import FileModifyWatcher
 
-
-def pytest_funcarg__cwd(request):
-    """set cwd to parent folder of this file."""
-    def set_cwd():
-        cwd = {}
-        cwd['preivous'] = os.getcwd()
-        cwd['current'] = os.path.abspath(os.path.dirname(__file__))
-        os.chdir(cwd['current'])
-        return cwd
-    def restore_cwd(cwd):
-        os.chdir(cwd['preivous'])
-    return request.cached_setup(
-        setup=set_cwd,
-        teardown=restore_cwd,
-        scope="function")
 
 
 class TestFileWatcher(object):
@@ -35,11 +20,11 @@ class TestFileWatcher(object):
 
     def testUnsuportedPlatform(self, monkeypatch):
         monkeypatch.setattr(FileModifyWatcher, 'supported_platforms', ())
-        py.test.raises(Exception, FileModifyWatcher, [])
+        pytest.raises(Exception, FileModifyWatcher, [])
 
     def testHandleEventNotSubclassed(self):
         fw = FileModifyWatcher([])
-        py.test.raises(NotImplementedError, fw.handle_event, None)
+        pytest.raises(NotImplementedError, fw.handle_event, None)
 
     def testLoop(self, cwd):
         file1, file2, file3 = 'data/w1.txt', 'data/w2.txt', 'data/w3.txt'
