@@ -1,8 +1,10 @@
+# coding=UTF-8
+
 import os, shutil
 import tempfile
 from StringIO import StringIO
 
-import py.test
+import pytest
 
 from doit.exceptions import TaskError
 from doit.exceptions import CatchedException
@@ -19,17 +21,17 @@ PROGRAM = "python %s/sample_process.py" % TEST_PATH
 class TestTaskCheckInput(object):
 
     def testOkType(self):
-        task.Task.check_attr_input('xxx', 'attr', [], ([int, list],[]))
+        task.Task.check_attr('xxx', 'attr', [], ([int, list],[]))
 
     def testOkValue(self):
-        task.Task.check_attr_input('xxx', 'attr', None, ([list], [None]))
+        task.Task.check_attr('xxx', 'attr', None, ([list], [None]))
 
     def testFailType(self):
-        py.test.raises(task.InvalidTask, task.Task.check_attr_input, 'xxx',
+        pytest.raises(task.InvalidTask, task.Task.check_attr, 'xxx',
                       'attr', int, ([list], [False]))
 
     def testFailValue(self):
-        py.test.raises(task.InvalidTask, task.Task.check_attr_input, 'xxx',
+        pytest.raises(task.InvalidTask, task.Task.check_attr, 'xxx',
                       'attr', True, ([list], [False]))
 
 
@@ -48,7 +50,7 @@ class TestTaskInit(object):
     # give proper error message when anything else is used.
     def test_dependencyNotSequence(self):
         filePath = "data/dependency1"
-        py.test.raises(task.InvalidTask, task.Task,
+        pytest.raises(task.InvalidTask, task.Task,
                       "Task X",["taskcmd"], file_dep=filePath)
 
     def test_options(self):
@@ -56,6 +58,7 @@ class TestTaskInit(object):
         p1 = {'name':'p1', 'default':'p1-default'}
         p2 = {'name':'p2', 'default':'', 'short':'m'}
         t = task.Task("MyName", None, params=[p1, p2])
+        t._init_options()
         assert 'p1-default' == t.options['p1']
         assert '' == t.options['p2']
 
@@ -67,28 +70,47 @@ class TestTaskInit(object):
         t = task.Task("t", ["q"])
         assert t.run_status is None
 
-    def test_dependencyTrueRunOnce(self):
-        t = task.Task("Task X",["taskcmd"], run_once=True)
-        assert t.run_once
+
+class TestTaskInsertAction(object):
+    def test_insert_action(self):
+        t = task.Task("Task X", ["taskcmd"])
+        def void(task, values, (my_arg1,)): pass
+        t.insert_action((void, [1]))
+        assert 2 == len(t.actions)
 
 
 class TestTaskUpToDate(object):
 
-    def test_dependencyFalseRunalways(self):
-        t = task.Task("Task X",["taskcmd"], uptodate=[False])
-        assert t.uptodate == [False]
+    def test_FalseRunalways(self):
+        t = task.Task("Task X", ["taskcmd"], uptodate=[False])
+        assert t.uptodate == [(False, None, None)]
 
-    def test_dependencyNoneIgnored(self):
-        t = task.Task("Task X",["taskcmd"], uptodate=[None])
-        assert not t.run_once
-        assert t.uptodate == [None]
+    def test_NoneIgnored(self):
+        t = task.Task("Task X", ["taskcmd"], uptodate=[None])
+        assert t.uptodate == [(None, None, None)]
 
-    # deprecate bool and none values for file_dep. to be removed on 0.11
-    def test_deprecation(self):
-        t = task.Task("Task x", ["taskcmd"], file_dep=[True, False, None])
-        assert 0 == len(t.file_dep)
-        assert True == t.run_once
-        assert [False, None] == t.uptodate
+    def test_callable_function(self):
+        def custom_check(): return True
+        t = task.Task("Task X", ["taskcmd"], uptodate=[custom_check])
+        assert t.uptodate[0] == (custom_check, [], {})
+
+    def test_callable_instance_method(self):
+        class Base(object):
+            def check(): return True
+        base = Base()
+        t = task.Task("Task X", ["taskcmd"], uptodate=[base.check])
+        assert t.uptodate[0] == (base.check, [], {})
+
+    def test_tuple(self):
+        def custom_check(pos_arg, xxx=None): return True
+        t = task.Task("Task X", ["taskcmd"],
+                      uptodate=[(custom_check, [123], {'xxx':'yyy'})])
+        assert t.uptodate[0] == (custom_check, [123], {'xxx':'yyy'})
+
+    def test_invalid(self):
+        pytest.raises(task.InvalidTask,
+                      task.Task, "Task X", ["taskcmd"], uptodate=[{'x':'y'}])
+
 
 class TestTaskExpandFileDep(object):
 
@@ -96,13 +118,14 @@ class TestTaskExpandFileDep(object):
         my_task = task.Task("Task X", ["taskcmd"], file_dep=["123","456"])
         assert set(["123","456"]) == my_task.file_dep
 
-    def test_runOnce_or_fileDependency(self):
-        py.test.raises(task.InvalidTask, task.Task, "Task X",
-                       ["taskcmd"], file_dep=["whatever"], run_once=True)
-
     def test_file_dep_must_be_string(self):
-        py.test.raises(task.InvalidTask, task.Task, "Task X", ["taskcmd"],
+        pytest.raises(task.InvalidTask, task.Task, "Task X", ["taskcmd"],
                        file_dep=[['aaaa']])
+
+    def test_file_dep_unicode(self):
+        unicode_name = u"中文"
+        my_task = task.Task("Task X", ["taskcmd"], file_dep=[unicode_name])
+        assert unicode_name in my_task.file_dep
 
 
 class TestTaskDeps(object):
@@ -119,7 +142,7 @@ class TestTaskDeps(object):
 
     def test_calc_dep(self):
         my_task = task.Task("Task X", ["taskcmd"], calc_dep=["123"])
-        assert ["123"] == my_task.calc_dep
+        assert set(["123"]) == my_task.calc_dep
         assert ["123"] == my_task.calc_dep_stack
 
     def test_update_deps(self):
@@ -134,22 +157,27 @@ class TestTaskDeps(object):
                              })
         assert set(['fileX', 'fileY']) == my_task.file_dep
         assert ['resultX', 'taskY', 'resultY'] == my_task.task_dep
-        assert ['calcX', 'calcY'] == my_task.calc_dep
+        assert set(['calcX', 'calcY']) == my_task.calc_dep
         assert ['resultX', 'resultY'] == my_task.result_dep
-        assert [None, True] == my_task.uptodate
+        assert [(None, None, None), (True, None, None)] == my_task.uptodate
 
 
 class TestTask_Getargs(object):
     def test_ok(self):
         getargs = {'x' : 't1.x', 'y': 't2.z'}
         t = task.Task('t3', None, getargs=getargs)
-        assert 't1' in t.task_dep
-        assert 't2' in t.task_dep
+        assert 't1' in t.setup_tasks
+        assert 't2' in t.setup_tasks
 
     def test_invalid_desc(self):
         getargs = {'x' : 't1'}
-        assert py.test.raises(task.InvalidTask, task.Task,
+        assert pytest.raises(task.InvalidTask, task.Task,
                               't3', None, getargs=getargs)
+
+    def test_many_dots(self):
+        getargs = {'x': 't2:file.ext.x'}
+        t = task.Task('t1', None, getargs=getargs)
+        assert 't2:file.ext' in t.setup_tasks
 
 
 class TestTaskTitle(object):
@@ -221,7 +249,8 @@ class TestTaskActions(object):
     # python and commands mixed on same task
     def test_mixed(self):
         def my_print(msg):
-            print msg,
+            import sys # python3 2to3 cant handle print with a trailing comma
+            sys.stdout.write(msg)
         t = task.Task("taskX",["%s hi_stdout hi2" % PROGRAM,
                                (my_print,['_PY_']),
                                "%s hi_list hi6" % PROGRAM])
@@ -258,7 +287,7 @@ class TestTaskClean(object):
             tmpdir['files'] = files
             # create empty files
             for filename in tmpdir['files']:
-                file(filename, 'a').close()
+                open(filename, 'a').close()
             return tmpdir
         def remove_tmpdir(tmpdir):
             if os.path.exists(tmpdir['dir']):
@@ -317,7 +346,7 @@ class TestTaskClean(object):
         # a clean action can be anything, it can even not clean anything!
         c_path = tmpdir['files'][0]
         def say_hello():
-            fh = file(c_path, 'a')
+            fh = open(c_path, 'a')
             fh.write("hello!!!")
             fh.close()
         t = task.Task("xxx",None,targets=tmpdir['files'], clean=[(say_hello,)])
@@ -326,7 +355,7 @@ class TestTaskClean(object):
         t.clean(StringIO(), False)
         for filename in tmpdir['files']:
             assert os.path.exists(filename)
-        fh = file(c_path, 'r')
+        fh = open(c_path, 'r')
         got = fh.read()
         fh.close()
         assert "hello!!!" == got
@@ -391,8 +420,8 @@ class TestDictToTask(object):
 
     def testDictFieldTypo(self):
         dict_ = {'name':'z','actions':['xpto 14'],'typo_here':['xxx']}
-        py.test.raises(action.InvalidTask, task.dict_to_task, dict_)
+        pytest.raises(action.InvalidTask, task.dict_to_task, dict_)
 
     def testDictMissingFieldAction(self):
-        py.test.raises(action.InvalidTask, task.dict_to_task, {'name':'xpto 14'})
+        pytest.raises(action.InvalidTask, task.dict_to_task, {'name':'xpto 14'})
 

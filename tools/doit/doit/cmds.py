@@ -1,6 +1,7 @@
 """cmd-line functions"""
 import sys
 import itertools
+import codecs
 
 from doit import dependency
 from doit.exceptions import InvalidCommand
@@ -11,6 +12,7 @@ from doit.reporter import REPORTERS
 from doit.dependency import Dependency
 from doit.filewatch import FileModifyWatcher
 
+
 def doit_run(dependency_file, task_list, output, options=None,
              verbosity=None, always_execute=False, continue_=False,
              reporter='default', num_process=0):
@@ -18,13 +20,14 @@ def doit_run(dependency_file, task_list, output, options=None,
     @param reporter: (str) one of provided reporters or ...
                      (class) user defined reporter class (can only be specified
            from DOIT_CONFIG - never from command line)
+                     (reporter instance) - only used in unittests
     """
     # get tasks to be executed
     task_control = TaskControl(task_list)
     task_control.process(options)
 
     # reporter
-    if isinstance(reporter, str):
+    if isinstance(reporter, basestring):
         if reporter not in REPORTERS:
             msg = ("No reporter named '%s'."
                    " Type 'doit help run' to see a list "
@@ -43,16 +46,19 @@ def doit_run(dependency_file, task_list, output, options=None,
     show_out = use_verbosity < 2 # show on error report
 
     # outstream
-    if isinstance(output, str):
-        outstream = open(output, 'w')
+    if isinstance(output, basestring):
+        outstream = codecs.open(output, 'w', encoding='utf-8')
     else: # outfile is a file-like object (like StringIO or sys.stdout)
         outstream = output
 
     # run
     try:
         # FIXME stderr will be shown twice in case of task error/failure
-        reporter_obj = reporter_cls(outstream, {'show_out':show_out,
-                                                'show_err': True})
+        if isinstance(reporter_cls, type):
+            reporter_obj = reporter_cls(outstream, {'show_out':show_out,
+                                                    'show_err': True})
+        else: # also accepts reporter instances
+            reporter_obj = reporter_cls
 
         if num_process == 0:
             runner = Runner(dependency_file, reporter_obj, continue_,
@@ -114,12 +120,14 @@ def doit_list(dependency_file, task_list, outstream, filter_tasks,
     @param print_dependencies(bool)
     """
     status_map = {'ignore': 'I', 'up-to-date': 'U', 'run': 'R'}
-    def _list_print_task(task):
+    def _list_print_task(task, col1_len):
         """print a single task"""
-        task_str = task.name
+        col1_fmt = "%%-%ds" % (col1_len + 3)
+        task_str = col1_fmt % task.name
         # add doc
         if print_doc and task.doc:
-            task_str += "\t* %s" % task.doc
+            task_str += "%s" % task.doc
+        # FIXME this does not take calc_dep into account
         if print_status:
             task_uptodate = dependency_manager.get_status(task)
             task_str = "%s %s" % (status_map[task_uptodate], task_str)
@@ -132,31 +140,36 @@ def doit_list(dependency_file, task_list, outstream, filter_tasks,
                 outstream.write(" -  %s\n" % dep)
             outstream.write("\n")
 
-        # print subtasks
-        if print_subtasks:
-            for subt in task.task_dep:
-                if subt.startswith("%s" % task.name):
-                    _list_print_task(tasks[subt])
 
     # dict of all tasks
     tasks = dict([(t.name, t) for t in task_list])
     # list only tasks passed on command line
     if filter_tasks:
-        print_tasks = [tasks[name] for name in filter_tasks]
+        base_list = [tasks[name] for name in filter_tasks]
+        if print_subtasks:
+            for task in base_list:
+                for subt in task.task_dep:
+                    if subt.startswith("%s" % task.name):
+                        base_list.append(tasks[subt])
     else:
-        print_tasks = task_list
+        base_list = task_list
     # status
     if print_status:
         dependency_manager = Dependency(dependency_file)
 
-    for task in print_tasks:
+    print_list = []
+    for task in base_list:
         # exclude subtasks (never exclude if filter specified)
-        if (not filter_tasks) and task.is_subtask:
+        if (not print_subtasks) and (not filter_tasks) and task.is_subtask:
             continue
         # exclude private tasks
         if (not print_private) and task.name.startswith('_'):
             continue
-        _list_print_task(task)
+        print_list.append(task)
+
+    max_name_len = max(len(t.name) for t in print_list) if print_list else 0
+    for task in sorted(print_list):
+        _list_print_task(task, max_name_len)
     return 0
 
 
@@ -225,27 +238,37 @@ def doit_ignore(dependency_file, task_list, outstream, ignore_tasks):
     dependency_manager.close()
 
 
-def doit_auto(dependency_file, task_list, filter_tasks, loop_callback=None):
+def _auto_watch(task_list, filter_tasks):
+    """return list of tasks and files that need to be watched by auto cmd"""
+    this_list = [t.clone() for t in task_list]
+    task_control = TaskControl(this_list)
+    task_control.process(filter_tasks)
+    # remove duplicates preserving order
+    task_set = set()
+    tasks_to_run = []
+    for dis in task_control.task_dispatcher(True):
+        if dis.name not in task_set:
+            tasks_to_run.append(dis)
+            task_set.add(dis.name)
+    watch_tasks = [t.name for t in tasks_to_run]
+    watch_files = list(itertools.chain(*[s.file_dep for s in tasks_to_run]))
+    watch_files = list(set(watch_files))
+    return watch_tasks, watch_files
+
+def doit_auto(dependency_file, task_list, filter_tasks,
+              verbosity=None, reporter='executed-only', loop_callback=None):
     """Re-execute tasks automatically a depedency changes
 
     @param filter_tasks (list -str): print only tasks from this list
     @loop_callback: used to stop loop on unittests
     """
-    task_control = TaskControl(task_list)
-    task_control.process(filter_tasks)
-    tasks_to_run = list(set([t for t in task_control.task_dispatcher(True)]))
-    watch_tasks = [t.name for t in tasks_to_run]
-    watch_files = list(itertools.chain(*[s.file_dep for s in tasks_to_run]))
-    watch_files = list(set(watch_files))
-
+    watch_tasks, watch_files = _auto_watch(task_list, filter_tasks)
     class DoitAutoRun(FileModifyWatcher):
         """Execute doit on event handler of file changes """
         def handle_event(self, event):
-            doit_run(dependency_file, task_list, sys.stdout,
-                     watch_tasks, reporter='executed-only')
-            # reset run_status
-            for task in task_list:
-                task.run_status = None
+            this_list = [t.clone() for t in task_list]
+            doit_run(dependency_file, this_list, sys.stdout,
+                     watch_tasks, verbosity=verbosity, reporter=reporter)
 
     file_watcher = DoitAutoRun(watch_files)
     # always run once when started

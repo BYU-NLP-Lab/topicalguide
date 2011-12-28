@@ -1,9 +1,10 @@
 import sys
 import inspect
 
-import py.test
+import pytest
 from mock import Mock
 
+from doit import get_var
 from doit.exceptions import InvalidCommand
 from doit import doit_cmd
 from doit import loader
@@ -54,6 +55,21 @@ class TestRun(object):
         monkeypatch.setattr(doit_cmd, "doit_list", mock_list)
         doit_cmd.cmd_main(["list"])
         assert 1 == mock_list.call_count
+
+    def test_cmdline_vars(self, monkeypatch):
+        monkeypatch.setattr(loader, "get_tasks", mock_get_tasks)
+        mock_run = Mock()
+        monkeypatch.setattr(doit_cmd, "doit_run", mock_run)
+        doit_cmd.cmd_main(['x=1', 'y=abc'])
+        assert '1' == get_var('x')
+        assert 'abc' == get_var('y')
+
+    def test_cmdline_vars_not_opts(self, monkeypatch):
+        monkeypatch.setattr(loader, "get_tasks", mock_get_tasks)
+        mock_run = Mock()
+        monkeypatch.setattr(doit_cmd, "doit_run", mock_run)
+        doit_cmd.cmd_main(['--z=5'])
+        assert None == get_var('--z')
 
 
 class TestInterface(object):
@@ -191,17 +207,19 @@ class TestInterface(object):
         monkeypatch.setattr(loader, "get_tasks", mock_get_tasks)
         mock_auto = Mock()
         monkeypatch.setattr(doit_cmd, "doit_auto", mock_auto)
-        doit_cmd.cmd_main(["auto", "b"])
+        doit_cmd.cmd_main(["auto", "-v", "2", "b"])
 
         expected = [('dependency_file', '.doit.db'),
                     ('task_list', mock_get_tasks()['task_list']),
                     ('filter_tasks', ['b']),
+                    ('verbosity', 2),
+                    ('reporter', 'executed-only'),
                     ('loop_callback', None),
                     ]
 
         assert len(expected) == len(argspec[0])
-        #                                                    + loop_callback
-        assert len(expected) == (len(mock_auto.call_args[0]) + 1)
+        #                                    + reporter + loop_callback
+        assert len(expected) == (len(mock_auto.call_args[0]) + 2)
         for exp,got in zip(expected, zip(argspec[0], mock_auto.call_args[0])):
             assert exp == got
 
@@ -213,7 +231,7 @@ class TestErrors(object):
             raise KeyboardInterrupt()
         mock_cmd = Mock(side_effect=my_raise)
         monkeypatch.setattr(doit_cmd, "doit_run", mock_cmd)
-        py.test.raises(KeyboardInterrupt, doit_cmd.cmd_main, [])
+        pytest.raises(KeyboardInterrupt, doit_cmd.cmd_main, [])
 
     def test_user_error(self, capsys, monkeypatch):
         monkeypatch.setattr(loader, "get_tasks", mock_get_tasks)

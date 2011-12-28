@@ -1,16 +1,13 @@
 import os
 from multiprocessing import Queue
 
-import py.test
+import pytest
 from mock import Mock
 
 from doit.dependency import Dependency
 from doit.task import Task
 from doit.control import TaskControl
 from doit import runner
-
-# dependencies file
-TESTDB = "testdb"
 
 
 # sample actions
@@ -61,78 +58,73 @@ class FakeReporter(object):
 
 
 def pytest_funcarg__reporter(request):
-    def remove_testdb(void):
-        if os.path.exists(TESTDB):
-            os.remove(TESTDB)
     def create_fake_reporter():
-        remove_testdb(None)
         return FakeReporter()
     return request.cached_setup(
         setup=create_fake_reporter,
-        teardown=remove_testdb,
         scope="function")
 
 
 class TestRunner(object):
-    def testInit(self, reporter):
-        my_runner = runner.Runner(TESTDB, reporter)
+    def testInit(self, reporter, depfile):
+        my_runner = runner.Runner(depfile.name, reporter)
         assert False == my_runner._stop_running
         assert runner.SUCCESS == my_runner.final_result
 
 
 class TestRunner_SelectTask(object):
-    def test_ready(self, reporter):
+    def test_ready(self, reporter, depfile):
         t1 = Task("taskX", [(my_print, ["out a"] )])
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
         assert True == my_runner.select_task(t1)
         assert ('start', t1) == reporter.log.pop(0)
         assert not reporter.log
 
-    def test_DependencyError(self,reporter):
+    def test_DependencyError(self, reporter, depfile):
         t1 = Task("taskX", [(my_print, ["out a"] )],
                   file_dep=["i_dont_exist"])
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
         assert False == my_runner.select_task(t1)
         assert ('start', t1) == reporter.log.pop(0)
         assert ('fail', t1) == reporter.log.pop(0)
         assert not reporter.log
 
-    def test_upToDate(self,reporter):
+    def test_upToDate(self, reporter, depfile):
         t1 = Task("taskX", [(my_print, ["out a"] )], file_dep=[__file__])
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
         my_runner.dependency_manager.save_success(t1)
         assert False == my_runner.select_task(t1)
         assert ('start', t1) == reporter.log.pop(0)
         assert ('up-to-date', t1) == reporter.log.pop(0)
         assert not reporter.log
 
-    def test_ignore(self,reporter):
+    def test_ignore(self, reporter, depfile):
         t1 = Task("taskX", [(my_print, ["out a"] )])
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
         my_runner.dependency_manager.ignore(t1)
         assert False == my_runner.select_task(t1)
         assert ('start', t1) == reporter.log.pop(0)
         assert ('ignore', t1) == reporter.log.pop(0)
         assert not reporter.log
 
-    def test_alwaysExecute(self, reporter):
+    def test_alwaysExecute(self, reporter, depfile):
         t1 = Task("taskX", [(my_print, ["out a"] )])
-        my_runner = runner.Runner(TESTDB, reporter, always_execute=True)
+        my_runner = runner.Runner(depfile.name, reporter, always_execute=True)
         my_runner.dependency_manager.ignore(t1)
         assert True == my_runner.select_task(t1)
         assert ('start', t1) == reporter.log.pop(0)
         assert not reporter.log
 
-    def test_noSetup_ok(self, reporter):
+    def test_noSetup_ok(self, reporter, depfile):
         t1 = Task("taskX", [(my_print, ["out a"] )])
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
         assert True == my_runner.select_task(t1)
         assert ('start', t1) == reporter.log.pop(0)
         assert not reporter.log
 
-    def test_withSetup(self, reporter):
+    def test_withSetup(self, reporter, depfile):
         t1 = Task("taskX", [(my_print, ["out a"] )], setup=["taskY"])
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
         # defer execution
         assert False == my_runner.select_task(t1)
         assert ('start', t1) == reporter.log.pop(0)
@@ -142,12 +134,16 @@ class TestRunner_SelectTask(object):
         assert not reporter.log
 
 
-    def test_getargs_ok(self, reporter):
+    def test_getargs_ok(self, reporter, depfile):
         def ok(): return {'x':1}
         def check_x(my_x): return my_x == 1
         t1 = Task('t1', [(ok,)])
         t2 = Task('t2', [(check_x,)], getargs={'my_x':'t1.x'})
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
+
+        # t2 gives chance for setup tasks to be executed
+        assert False == my_runner.select_task(t2)
+        assert ('start', t2) == reporter.log.pop(0)
 
         # execute task t1 to calculate value
         assert True == my_runner.select_task(t1)
@@ -160,16 +156,19 @@ class TestRunner_SelectTask(object):
         # t2.options are set on select_task
         assert {} == t2.options
         assert True == my_runner.select_task(t2)
-        assert ('start', t2) == reporter.log.pop(0)
         assert not reporter.log
         assert {'my_x': 1} == t2.options
 
-    def test_getargs_fail(self, reporter):
+    def test_getargs_fail(self, reporter, depfile):
         # invalid getargs. Exception wil be raised and task will fail
         def check_x(my_x): return True
         t1 = Task('t1', [lambda :True])
         t2 = Task('t2', [(check_x,)], getargs={'my_x':'t1.x'})
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
+
+        # t2 gives chance for setup tasks to be executed
+        assert False == my_runner.select_task(t2)
+        assert ('start', t2) == reporter.log.pop(0)
 
         # execute task t1 to calculate value
         assert True == my_runner.select_task(t1)
@@ -181,43 +180,53 @@ class TestRunner_SelectTask(object):
 
         # select_task t2 fails
         assert False == my_runner.select_task(t2)
-        assert ('start', t2) == reporter.log.pop(0)
         assert ('fail', t2) == reporter.log.pop(0)
         assert not reporter.log
 
 
 class TestTask_Teardown(object):
-    def test_ok(self, reporter):
+    def test_ok(self, reporter, depfile):
         touched = []
         def touch():
             touched.append(1)
         t1 = Task('t1', [], teardown=[(touch,)])
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
         my_runner.teardown_list = [t1]
         my_runner.teardown()
         assert 1 == len(touched)
         assert ('teardown', t1) == reporter.log.pop(0)
         assert not reporter.log
 
-    def test_errors(self, reporter):
+    def test_reverse_order(self, reporter, depfile):
+        def do_nothing():pass
+        t1 = Task('t1', [], teardown=[do_nothing])
+        t2 = Task('t2', [], teardown=[do_nothing])
+        my_runner = runner.Runner(depfile.name, reporter)
+        my_runner.teardown_list = [t1, t2]
+        my_runner.teardown()
+        assert ('teardown', t2) == reporter.log.pop(0)
+        assert ('teardown', t1) == reporter.log.pop(0)
+        assert not reporter.log
+
+    def test_errors(self, reporter, depfile):
         def raise_something(x):
             raise Exception(x)
         t1 = Task('t1', [], teardown=[(raise_something,['t1 blow'])])
         t2 = Task('t2', [], teardown=[(raise_something,['t2 blow'])])
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
         my_runner.teardown_list = [t1, t2]
         my_runner.teardown()
-        assert ('teardown', t1) == reporter.log.pop(0)
-        assert ('cleanup_error',) == reporter.log.pop(0)
         assert ('teardown', t2) == reporter.log.pop(0)
+        assert ('cleanup_error',) == reporter.log.pop(0)
+        assert ('teardown', t1) == reporter.log.pop(0)
         assert ('cleanup_error',) == reporter.log.pop(0)
         assert not reporter.log
 
 
 class TestTask_RunAll(object):
-    def test_reporter_runtime_error(self, reporter):
+    def test_reporter_runtime_error(self, reporter, depfile):
         t1 = Task('t1', [], setup=['make_invalid'])
-        my_runner = runner.Runner(TESTDB, reporter)
+        my_runner = runner.Runner(depfile.name, reporter)
         tc = TaskControl([t1])
         tc.process(None)
         my_runner.run_all(tc)
@@ -233,7 +242,6 @@ def pytest_generate_tests(metafunc):
             metafunc.addcall(id=RunnerClass.__name__,
                              funcargs=dict(RunnerClass=RunnerClass))
 
-# TODO test action is picklable (closures are not)
 
 
 # decorator to force coverage on function.
@@ -254,8 +262,10 @@ def cov_dec(func): # pragma: no cover
             cov.save()
     return wrap
 
+
 # monkey patch function executed in a subprocess to get coverage
-runner.MRunner.execute_task = cov_dec(runner.MRunner.execute_task)
+# TODO - disabled because it was not working anymore...
+#runner.MRunner.execute_task = cov_dec(runner.MRunner.execute_task)
 
 
 def ok(): return "ok"
@@ -263,10 +273,10 @@ def ok2(): return "different"
 
 class TestRunner_run_tasks(object):
 
-    def test_teardown(self, reporter, RunnerClass):
+    def test_teardown(self, reporter, RunnerClass, depfile):
         t1 = Task('t1', [], teardown=[ok])
         t2 = Task('t2', [])
-        my_runner = RunnerClass(TESTDB, reporter)
+        my_runner = RunnerClass(depfile.name, reporter)
         tc = TaskControl([t1, t2])
         tc.process(None)
         assert [] == my_runner.teardown_list
@@ -275,10 +285,10 @@ class TestRunner_run_tasks(object):
         assert ('teardown', t1) == reporter.log[-1]
 
     # testing whole process/API
-    def test_success(self, reporter, RunnerClass):
+    def test_success(self, reporter, RunnerClass, depfile):
         tasks = [Task("taskX", [(my_print, ["out a"] )] ),
                  Task("taskY", [(my_print, ["out a"] )] )]
-        my_runner = RunnerClass(TESTDB, reporter)
+        my_runner = RunnerClass(depfile.name, reporter)
         tc = TaskControl(tasks)
         tc.process(None)
         my_runner.run_tasks(tc)
@@ -291,10 +301,10 @@ class TestRunner_run_tasks(object):
         assert ('success', tasks[1]) == reporter.log.pop(0)
 
     # whenever a task fails remaining task are not executed
-    def test_failureOutput(self, reporter, RunnerClass):
+    def test_failureOutput(self, reporter, RunnerClass, depfile):
         tasks = [Task("taskX", [_fail]),
                  Task("taskY", [_fail])]
-        my_runner = RunnerClass(TESTDB, reporter)
+        my_runner = RunnerClass(depfile.name, reporter)
         tc = TaskControl(tasks)
         tc.process(None)
         my_runner.run_tasks(tc)
@@ -306,10 +316,10 @@ class TestRunner_run_tasks(object):
         assert 0 == len(reporter.log)
 
 
-    def test_error(self, reporter, RunnerClass):
+    def test_error(self, reporter, RunnerClass, depfile):
         tasks = [Task("taskX", [_error]),
                  Task("taskY", [_error])]
-        my_runner = RunnerClass(TESTDB, reporter)
+        my_runner = RunnerClass(depfile.name, reporter)
         tc = TaskControl(tasks)
         tc.process(None)
         my_runner.run_tasks(tc)
@@ -322,7 +332,7 @@ class TestRunner_run_tasks(object):
 
 
     # when successful dependencies are updated
-    def test_updateDependencies(self, reporter, RunnerClass):
+    def test_updateDependencies(self, reporter, RunnerClass, depfile):
         depPath = os.path.join(os.path.dirname(__file__),"data/dependency1")
         ff = open(depPath,"a")
         ff.write("xxx")
@@ -336,29 +346,18 @@ class TestRunner_run_tasks(object):
         targets = [filePath]
 
         tasks = [Task("taskX", [my_print], dependencies, targets)]
-        my_runner = RunnerClass(TESTDB, reporter)
+        my_runner = RunnerClass(depfile.name, reporter)
         tc = TaskControl(tasks)
         tc.process(None)
         my_runner.run_tasks(tc)
         assert runner.SUCCESS == my_runner.finish()
-        d = Dependency(TESTDB)
+        d = Dependency(depfile.name)
         assert d._get("taskX", os.path.abspath(depPath))
 
-    # when successful and run_once is updated
-    def test_successRunOnce(self, reporter, RunnerClass):
-        tasks = [Task("taskX", [my_print], run_once=True)]
-        my_runner = RunnerClass(TESTDB, reporter)
-        tc = TaskControl(tasks)
-        tc.process(None)
-        my_runner.run_tasks(tc)
-        assert runner.SUCCESS == my_runner.finish()
-        d = Dependency(TESTDB)
-        assert '1' == d._get('taskX', 'run-once:')
-
-    def test_resultDependency(self, reporter, RunnerClass):
+    def test_resultDependency(self, reporter, RunnerClass, depfile):
         t1 = Task("t1", [(ok,)])
         t2 = Task("t2", [(ok,)], result_dep=['t1'])
-        my_runner = RunnerClass(TESTDB, reporter)
+        my_runner = RunnerClass(depfile.name, reporter)
         tc = TaskControl([t1, t2])
         tc.process(None)
         my_runner.run_tasks(tc)
@@ -373,7 +372,7 @@ class TestRunner_run_tasks(object):
         # again
         t1 = Task("t1", [(ok,)])
         t2 = Task("t2", [(ok,)], result_dep=['t1'])
-        my_runner2 = RunnerClass(TESTDB, reporter)
+        my_runner2 = RunnerClass(depfile.name, reporter)
         tc2 = TaskControl([t1, t2])
         tc2.process(None)
         my_runner2.run_tasks(tc2)
@@ -387,7 +386,7 @@ class TestRunner_run_tasks(object):
         # change t1, t2 executed again
         t1B = Task("t1", [(ok2,)])
         t2 = Task("t2", [(ok,)], result_dep=['t1'])
-        my_runner3 = RunnerClass(TESTDB, reporter)
+        my_runner3 = RunnerClass(depfile.name, reporter)
         tc3 = TaskControl([t1B, t2])
         tc3.process(None)
         my_runner3.run_tasks(tc3)
@@ -400,11 +399,11 @@ class TestRunner_run_tasks(object):
         assert ('success', t2) == reporter.log.pop(0)
 
 
-    def test_continue(self, reporter, RunnerClass):
+    def test_continue(self, reporter, RunnerClass, depfile):
         tasks = [Task("task1", [(_fail,)] ),
                  Task("task2", [(_error,)] ),
                  Task("task3", [(ok,)])]
-        my_runner = RunnerClass(TESTDB, reporter, continue_=True)
+        my_runner = RunnerClass(depfile.name, reporter, continue_=True)
         tc = TaskControl(tasks)
         tc.process(None)
         my_runner.run_tasks(tc)
@@ -420,14 +419,34 @@ class TestRunner_run_tasks(object):
         assert ('success', tasks[2]) == reporter.log.pop(0)
         assert 0 == len(reporter.log)
 
+    def test_getargs(self, reporter, RunnerClass, depfile):
+        def use_args(arg1):
+            print arg1
+        def make_args(): return {'myarg':1}
+        tasks = [Task("task1", [(use_args,)], getargs=dict(arg1="task2.myarg") ),
+                 Task("task2", [(make_args,)])]
+        my_runner = RunnerClass(depfile.name, reporter)
+        tc = TaskControl(tasks)
+        tc.process(None)
+        my_runner.run_tasks(tc)
+        assert runner.SUCCESS == my_runner.finish()
+        assert ('start', tasks[0]) == reporter.log.pop(0)
+        assert ('start', tasks[1]) == reporter.log.pop(0)
+        assert ('execute', tasks[1]) == reporter.log.pop(0)
+        assert ('success', tasks[1]) == reporter.log.pop(0)
+        assert ('execute', tasks[0]) == reporter.log.pop(0)
+        assert ('success', tasks[0]) == reporter.log.pop(0)
+        assert 0 == len(reporter.log)
+
 
     # SystemExit runner should not interfere with SystemExit
-    def testSystemExitRaises(self, reporter, RunnerClass):
+    def testSystemExitRaises(self, reporter, RunnerClass, depfile):
         t1 = Task("x", [_exit])
-        my_runner = RunnerClass(TESTDB, reporter)
+        my_runner = RunnerClass(depfile.name, reporter)
         tc = TaskControl([t1])
         tc.process(None)
-        py.test.raises(SystemExit, my_runner.run_tasks, tc)
+        pytest.raises(SystemExit, my_runner.run_tasks, tc)
+        my_runner.finish()
 
 
 class TestMReporter(object):
@@ -452,36 +471,36 @@ class TestMReporter(object):
 
 class TestMRunner_get_next_task(object):
     # simple normal case
-    def test_run_task(self, reporter):
+    def test_run_task(self, reporter, depfile):
         t1 = Task('t1', [])
         t2 = Task('t2', [])
         tc = TaskControl([t1, t2])
         tc.process(None)
-        run = runner.MRunner(TESTDB, reporter)
+        run = runner.MRunner(depfile.name, reporter)
         run._run_tasks_init(tc)
         assert t1 == run.get_next_task()
         assert t2 == run.get_next_task()
         assert None == run.get_next_task()
 
-    def test_stop_running(self, reporter):
+    def test_stop_running(self, reporter, depfile):
         t1 = Task('t1', [])
         t2 = Task('t2', [])
         tc = TaskControl([t1, t2])
         tc.process(None)
-        run = runner.MRunner(TESTDB, reporter)
+        run = runner.MRunner(depfile.name, reporter)
         run._run_tasks_init(tc)
         assert t1 == run.get_next_task()
         run._stop_running = True
         assert None == run.get_next_task()
 
-    def test_waiting(self, reporter):
+    def test_waiting(self, reporter, depfile):
         t1 = Task('t1', [])
         t2a = Task('t2A', [], task_dep=('t1',))
         t2b = Task('t2B', [], setup=('t1',))
         t3 = Task('t3', [], setup=('t2B',))
         tc = TaskControl([t1, t2a, t2b, t3])
         tc.process(None)
-        run = runner.MRunner(TESTDB, reporter)
+        run = runner.MRunner(depfile.name, reporter)
         run._run_tasks_init(tc)
 
         # first task ok
@@ -512,12 +531,12 @@ class TestMRunner_get_next_task(object):
         assert None == run.get_next_task()
 
 
-    def test_waiting_controller(self, reporter):
+    def test_waiting_controller(self, reporter, depfile):
         t1 = Task('t1', [])
         t2a = Task('t2A', [], calc_dep=('t1',))
         tc = TaskControl([t1, t2a])
         tc.process(None)
-        run = runner.MRunner(TESTDB, reporter)
+        run = runner.MRunner(depfile.name, reporter)
         run._run_tasks_init(tc)
 
         # first task ok
@@ -531,67 +550,71 @@ class TestMRunner_get_next_task(object):
 
 class TestMRunner_start_process(object):
     # 2 process, 3 tasks
-    def test_all_processes(self, reporter, monkeypatch):
+    def test_all_processes(self, reporter, monkeypatch, depfile):
         mock_process = Mock()
         monkeypatch.setattr(runner, 'Process', mock_process)
         t1 = Task('t1', [])
         t2 = Task('t2', [])
         tc = TaskControl([t1, t2])
         tc.process(None)
-        run = runner.MRunner(TESTDB, reporter, num_process=2)
+        run = runner.MRunner(depfile.name, reporter, num_process=2)
         run._run_tasks_init(tc)
         result_q = Queue()
         task_q = Queue()
 
         proc_list = run._run_start_processes(task_q, result_q)
+        run.finish()
         assert 2 == len(proc_list)
-        assert t1.name == task_q.get()[0]
-        assert t2.name == task_q.get()[0]
+        assert t1.name == task_q.get().name
+        assert t2.name == task_q.get().name
 
 
     # 2 process, 1 task
-    def test_less_processes(self, reporter, monkeypatch):
+    def test_less_processes(self, reporter, monkeypatch, depfile):
         mock_process = Mock()
         monkeypatch.setattr(runner, 'Process', mock_process)
         t1 = Task('t1', [])
         tc = TaskControl([t1])
         tc.process(None)
-        run = runner.MRunner(TESTDB, reporter, num_process=2)
+        run = runner.MRunner(depfile.name, reporter, num_process=2)
         run._run_tasks_init(tc)
         result_q = Queue()
         task_q = Queue()
 
         proc_list = run._run_start_processes(task_q, result_q)
+        run.finish()
         assert 1 == len(proc_list)
-        assert t1.name == task_q.get()[0]
+        assert t1.name == task_q.get().name
 
 
     # 2 process, 2 tasks (but only one task can be started)
-    def test_waiting_process(self, reporter, monkeypatch):
+    def test_waiting_process(self, reporter, monkeypatch, depfile):
         mock_process = Mock()
         monkeypatch.setattr(runner, 'Process', mock_process)
         t1 = Task('t1', [])
         t2 = Task('t2', [], task_dep=['t1'])
         tc = TaskControl([t1, t2])
         tc.process(None)
-        run = runner.MRunner(TESTDB, reporter, num_process=2)
+        run = runner.MRunner(depfile.name, reporter, num_process=2)
         run._run_tasks_init(tc)
         result_q = Queue()
         task_q = Queue()
 
         proc_list = run._run_start_processes(task_q, result_q)
+        run.finish()
         assert 2 == len(proc_list)
-        assert t1.name == task_q.get()[0]
-        assert t2.name != task_q.get()[0]
+        assert t1.name == task_q.get().name
+        assert isinstance(task_q.get(), runner.Hold)
 
 class TestMRunner_execute_task(object):
-    def test_hold(self, reporter):
-        run = runner.MRunner(TESTDB, reporter)
+    def test_hold(self, reporter, depfile):
+        run = runner.MRunner(depfile.name, reporter)
         task_q = Queue()
-        task_q.put((runner.Hold(), None)) # to test
-        task_q.put((None, None)) # to terminate function
+        task_q.put(runner.Hold()) # to test
+        task_q.put(None) # to terminate function
         result_q = Queue()
-        run.execute_task(task_q, result_q)
+        run.execute_task_subprocess(task_q, result_q)
+        run.finish()
         # nothing was done
         assert result_q.empty() # pragma: no cover (coverage bug?)
 
