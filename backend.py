@@ -292,7 +292,10 @@ if 'task_metadata_import' not in locals():
                 pass
         def datasets_done():
             if not os.path.exists(metadata_filenames['datasets']): return True
-            return DatasetMetaInfoValue.objects.filter(dataset=dataset()).count() > 0
+            try:
+                return DatasetMetaInfoValue.objects.filter(dataset=dataset()).count() > 0
+            except Dataset.DoesNotExist:
+                return False
                 
         def import_documents():
             try:
@@ -307,7 +310,10 @@ if 'task_metadata_import' not in locals():
                 pass
         def documents_done():
             if not os.path.exists(metadata_filenames['documents']): return True
-            return DocumentMetaInfoValue.objects.filter(document__dataset=dataset()).count() > 0
+            try:
+                return DocumentMetaInfoValue.objects.filter(document__dataset=dataset()).count() > 0
+            except Dataset.DoesNotExist:
+                return False
         
         def import_words():
             try:
@@ -322,7 +328,10 @@ if 'task_metadata_import' not in locals():
                 pass
         def words_done():
             if not os.path.exists(metadata_filenames['words']): return True
-            return WordMetaInfoValue.objects.filter(word__dataset=dataset()).count() > 0
+            try:
+                return WordMetaInfoValue.objects.filter(word__dataset=dataset()).count() > 0
+            except Dataset.DoesNotExist:
+                    return False
         
         for entity in ('datasets','documents','words'):#metadata_entities:
             task = dict()
@@ -347,7 +356,10 @@ if 'task_metadata_import' not in locals():
                 pass
         def analyses_done():
             if not os.path.exists(metadata_filenames['analyses']): return True
-            return AnalysisMetaInfoValue.objects.filter(analysis=analysis()).count() > 0
+            try:
+                return AnalysisMetaInfoValue.objects.filter(analysis=analysis()).count() > 0
+            except Dataset.DoesNotExist,Analysis.DoesNotExist:
+                return False
         
         def import_topics():
             try:
@@ -362,7 +374,10 @@ if 'task_metadata_import' not in locals():
                 pass
         def topics_done():
             if not os.path.exists(metadata_filenames['topics']): return True
-            return TopicMetaInfoValue.objects.filter(topic__analysis=analysis()).count() > 0
+            try:
+                return TopicMetaInfoValue.objects.filter(topic__analysis=analysis()).count() > 0
+            except Dataset.DoesNotExist,Analysis.DoesNotExist:
+                    return False
         
         for entity in ('analyses','topics'):
             task = dict()
