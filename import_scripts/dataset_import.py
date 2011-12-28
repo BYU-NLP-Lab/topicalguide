@@ -92,15 +92,6 @@ def import_dataset(name, readable_name, description, state_file, metadata_filena
         _create_attrvalword_table(attrvalword, attr_index, value_index,
                 word_index)
         
-        # --- Import Metadata ---
-        import_document_metadata(dataset, document_metadata)
-        
-        dataset_metadata = Metadata(metadata_filenames['datasets'])
-        import_dataset_metadata(dataset, dataset_metadata)
-        
-        word_metadata = Metadata(metadata_filenames['words'])
-        import_word_metadata(dataset, word_metadata)
-        
         if settings.database_type()=='sqlite3':
             cursor = connection.cursor()
             cursor.execute('PRAGMA journal_mode=DELETE')

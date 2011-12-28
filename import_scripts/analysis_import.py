@@ -90,14 +90,6 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
         _create_topicword_table(topic_word_counts, topic_index, word_index)
         _create_doctopicword_table(doc_topic_word_counts, doc_index, topic_index, word_index)
         _create_attrvaltopic_table(dataset, attr_val_topic_counts, topic_index)
-        
-        
-        # --- Import Metadata ---
-        analysis_metadata = Metadata(metadata_filenames['analyses'])
-        import_analysis_metadata(analysis, analysis_metadata)
-        
-        topic_metadata = Metadata(metadata_filenames['topics'])
-        import_topic_metadata(analysis, topic_metadata)
 
         end_time = datetime.now()
         print >> sys.stderr, 'Finishing time:', end_time

@@ -52,6 +52,9 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 from topic_modeling import settings
 settings.DEBUG = False # Disable debugging to prevent the database layer from caching queries and thus hogging memory
 
+from import_scripts.metadata import Metadata, import_dataset_metadata,\
+    import_document_metadata, import_word_metadata, import_analysis_metadata,\
+    import_topic_metadata
 from import_scripts.dataset_import import import_dataset
 from import_scripts.analysis_import import import_analysis
 
@@ -154,7 +157,10 @@ if 'mallet_num_iterations' not in locals():
 # targets [$ENTITYTYPE$_metadata_file]
 if 'metadata_filenames' not in locals():
     metadata_filenames = dict()
-for entity_type in ('datasets','documents','words','analyses','topics'):
+metadata_entities = ('datasets','documents','words','analyses','topics')
+metadata_dir = '{0}/metadata'.format(dataset_dir)
+if not os.path.exists(metadata_dir): os.makedirs(metadata_dir)
+for entity_type in metadata_entities:
     if entity_type not in metadata_filenames:
         metadata_filenames[entity_type] = '{0}/metadata/{1}.json'.format(dataset_dir, entity_type)
 
@@ -266,6 +272,96 @@ if not 'task_document_metadata' in locals() and not ('suppress_default_document_
         task['targets'] = [metadata_filenames['documents']]
         task['actions'] = [(make_document_metadata)]
         return task
+
+if 'task_metadata_import' not in locals():
+    def task_metadata_import():
+        def import_datasets():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                dataset_metadata = Metadata(metadata_filenames['datasets'])
+                import_dataset_metadata(dataset, dataset_metadata)
+            except Dataset.DoesNotExist:
+                pass
+        def clean_datasets():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                dataset.datasetmetainfovalue_set.all().delete()
+            except Dataset.DoesNotExist:
+                pass
+        def import_documents():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                document_metadata = Metadata(metadata_filenames['documents'])
+                import_document_metadata(dataset, document_metadata)
+            except Dataset.DoesNotExist:
+                pass
+        def clean_documents():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                dataset.document_set.datasetmetainfovalue_set.all().delete()
+            except Dataset.DoesNotExist:
+                pass
+        def import_words():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                word_metadata = Metadata(metadata_filenames['words'])
+                import_word_metadata(dataset, word_metadata)
+            except Dataset.DoesNotExist:
+                pass
+        def clean_words():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                dataset.word_set.wordmetainfovalue_set.all().delete()
+            except Dataset.DoesNotExist:
+                pass
+        
+        for entity in ('datasets','documents','words'):#metadata_entities:
+            task = dict()
+            task['name'] = entity
+            task['task_dep'] = ['dataset_import']
+            task['actions'] = [(locals()['import_'+entity])]
+            task['clean'] = [(locals()['clean_'+entity])]
+            yield task
+        
+        
+        def import_analyses():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                analysis = dataset.analysis_set.get(name=analysis_name)
+                analysis_metadata = Metadata(metadata_filenames['analyses'])
+                import_analysis_metadata(analysis, analysis_metadata)
+            except Dataset.DoesNotExist, Analysis.DoesNotExist:
+                pass
+        def clean_analyses():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                analysis = dataset.analysis_set.get(name=analysis_name)
+                analysis.analysismetainfovalue_set.all().delete()
+            except Dataset.DoesNotExist, Analysis.DoesNotExist:
+                pass
+        def import_topics():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                analysis = dataset.analysis_set.get(name=analysis_name)
+                topic_metadata = Metadata(metadata_filenames['topics'])
+                import_topic_metadata(analysis, topic_metadata)
+            except Dataset.DoesNotExist, Analysis.DoesNotExist:
+                pass
+        def clean_topics():
+            try:
+                dataset = Dataset.objects.get(name=dataset_name)
+                analysis = dataset.analysis_set.get(name=analysis_name)
+                analysis.topic_set.topicmetainfovalue_set.all().delete()
+            except Dataset.DoesNotExist, Analysis.DoesNotExist:
+                pass
+        
+        for entity in ('analyses','topics'):
+            task = dict()
+            task['name'] = entity
+            task['task_dep'] = ['analysis_import']
+            task['actions'] = [(locals()['import_'+entity])]
+            task['clean'] = [(locals()['clean_'+entity])]
+            yield task
 
 if 'task_mallet_input' not in locals():
     def task_mallet_input():
@@ -423,7 +519,7 @@ if 'task_dataset_metrics' not in locals():
             task = dict()
             task['name'] = metric_name.replace(' ', '_')
             task['actions'] = [(import_metric, [metric_name])]
-            task['clean'] = ["ls", (clean_metric, [metric_name])]
+            task['clean'] = [(clean_metric, [metric_name])]
             task['task_dep'] = ['dataset_import']
             task['uptodate'] = [metric_in_database(metric)]
             yield task
@@ -469,7 +565,7 @@ if 'task_analysis_metrics' not in locals():
             task = dict()
             task['name'] = metric_name.replace(' ', '_')
             task['actions'] = [(import_metric, [metric_name])]
-            task['clean'] = ["ls", (clean_metric, [metric_name])]
+            task['clean'] = [(clean_metric, [metric_name])]
             task['task_dep'] = ['analysis_import']
             task['uptodate'] = [metric_in_database(metric)]
             yield task
@@ -524,7 +620,7 @@ if 'task_topic_metrics' not in locals():
             task = dict()
             task['name'] = topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [topic_metric])]
-            task['clean'] = ["ls", (clean_metric, [topic_metric])]
+            task['clean'] = [(clean_metric, [topic_metric])]
             task['task_dep'] = ['analysis_import']
             task['uptodate'] = [metric_in_database(topic_metric)]
             yield task
@@ -629,7 +725,7 @@ if 'task_document_metrics' not in locals():
             task = dict()
             task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]
-            task['clean'] = ["ls", (clean_metric, [metric])]
+            task['clean'] = [(clean_metric, [metric])]
             task['task_dep'] = ['analysis_import']
             task['uptodate'] = [metric_in_database(metric)]
             yield task
