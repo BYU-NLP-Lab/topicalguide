@@ -64,7 +64,8 @@ from build.common.db_cleanup import remove_dataset
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
 from topic_modeling.visualize.models import Analysis, DatasetMetric, AnalysisMetric, DatasetMetricValue,\
-    AnalysisMetricValue
+    AnalysisMetricValue, DatasetMetaInfoValue, DocumentMetaInfoValue,\
+    WordMetaInfoValue, AnalysisMetaInfoValue, TopicMetaInfoValue
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import TopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetric
@@ -234,8 +235,6 @@ elif db_type=='mysql':
 else: raise Exception("Unknown database type '" + db_type + "'")
 
 
-
-
 print "----- Topical Guide Data Import System -----"
 print "Dataset name: " + dataset_name
 
@@ -256,6 +255,11 @@ def directory_recursive_hash(dir):
     if not os.path.exists(dir): return "0"
     return hash(cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir)))
 
+def dataset():
+    return Dataset.objects.get(name=dataset_name)
+
+def analysis():
+    return Analysis.objects.get(name=analysis_name, dataset__name=dataset_name)
 #If no existing attributes task exists, and if suppress_default_attributes_task is not set to True,
 #then define a default attributes task that generates an empty attributes file
 #TODO(josh): make the attributes file optional for the import scripts
@@ -277,43 +281,48 @@ if 'task_metadata_import' not in locals():
     def task_metadata_import():
         def import_datasets():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
                 dataset_metadata = Metadata(metadata_filenames['datasets'])
-                import_dataset_metadata(dataset, dataset_metadata)
+                import_dataset_metadata(dataset(), dataset_metadata)
             except Dataset.DoesNotExist:
                 pass
         def clean_datasets():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
-                dataset.datasetmetainfovalue_set.all().delete()
+                dataset().datasetmetainfovalue_set.all().delete()
             except Dataset.DoesNotExist:
                 pass
+        def datasets_done():
+            if not os.path.exists(metadata_filenames['datasets']): return True
+            return DatasetMetaInfoValue.objects.filter(dataset=dataset()).count() > 0
+                
         def import_documents():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
                 document_metadata = Metadata(metadata_filenames['documents'])
-                import_document_metadata(dataset, document_metadata)
+                import_document_metadata(dataset(), document_metadata)
             except Dataset.DoesNotExist:
                 pass
         def clean_documents():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
-                dataset.document_set.datasetmetainfovalue_set.all().delete()
+                dataset().document_set.documentmetainfovalue_set.all().delete()
             except Dataset.DoesNotExist:
                 pass
+        def documents_done():
+            if not os.path.exists(metadata_filenames['documents']): return True
+            return DocumentMetaInfoValue.objects.filter(document__dataset=dataset()).count() > 0
+        
         def import_words():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
                 word_metadata = Metadata(metadata_filenames['words'])
-                import_word_metadata(dataset, word_metadata)
+                import_word_metadata(dataset(), word_metadata)
             except Dataset.DoesNotExist:
                 pass
         def clean_words():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
-                dataset.word_set.wordmetainfovalue_set.all().delete()
+                dataset().word_set.wordmetainfovalue_set.all().delete()
             except Dataset.DoesNotExist:
                 pass
+        def words_done():
+            if not os.path.exists(metadata_filenames['words']): return True
+            return WordMetaInfoValue.objects.filter(word__dataset=dataset()).count() > 0
         
         for entity in ('datasets','documents','words'):#metadata_entities:
             task = dict()
@@ -321,39 +330,39 @@ if 'task_metadata_import' not in locals():
             task['task_dep'] = ['dataset_import']
             task['actions'] = [(locals()['import_'+entity])]
             task['clean'] = [(locals()['clean_'+entity])]
+            task['uptodate'] = [locals()[entity+'_done']()]
             yield task
         
         
         def import_analyses():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
-                analysis = dataset.analysis_set.get(name=analysis_name)
                 analysis_metadata = Metadata(metadata_filenames['analyses'])
-                import_analysis_metadata(analysis, analysis_metadata)
-            except Dataset.DoesNotExist, Analysis.DoesNotExist:
+                import_analysis_metadata(analysis(), analysis_metadata)
+            except Analysis.DoesNotExist:
                 pass
         def clean_analyses():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
-                analysis = dataset.analysis_set.get(name=analysis_name)
-                analysis.analysismetainfovalue_set.all().delete()
-            except Dataset.DoesNotExist, Analysis.DoesNotExist:
+                analysis().analysismetainfovalue_set.all().delete()
+            except Analysis.DoesNotExist:
                 pass
+        def analyses_done():
+            if not os.path.exists(metadata_filenames['analyses']): return True
+            return AnalysisMetaInfoValue.objects.filter(analysis=analysis()).count() > 0
+        
         def import_topics():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
-                analysis = dataset.analysis_set.get(name=analysis_name)
                 topic_metadata = Metadata(metadata_filenames['topics'])
-                import_topic_metadata(analysis, topic_metadata)
-            except Dataset.DoesNotExist, Analysis.DoesNotExist:
+                import_topic_metadata(analysis(), topic_metadata)
+            except Analysis.DoesNotExist:
                 pass
         def clean_topics():
             try:
-                dataset = Dataset.objects.get(name=dataset_name)
-                analysis = dataset.analysis_set.get(name=analysis_name)
-                analysis.topic_set.topicmetainfovalue_set.all().delete()
-            except Dataset.DoesNotExist, Analysis.DoesNotExist:
+                analysis().topic_set.topicmetainfovalue_set.all().delete()
+            except Analysis.DoesNotExist:
                 pass
+        def topics_done():
+            if not os.path.exists(metadata_filenames['topics']): return True
+            return TopicMetaInfoValue.objects.filter(topic__analysis=analysis()).count() > 0
         
         for entity in ('analyses','topics'):
             task = dict()
@@ -361,6 +370,7 @@ if 'task_metadata_import' not in locals():
             task['task_dep'] = ['analysis_import']
             task['actions'] = [(locals()['import_'+entity])]
             task['clean'] = [(locals()['clean_'+entity])]
+            task['uptodate'] = [locals()[entity+'_done']()]
             yield task
 
 if 'task_mallet_input' not in locals():
