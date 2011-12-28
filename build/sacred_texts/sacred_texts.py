@@ -31,6 +31,9 @@ dataset_description = '''A bunch of public domain religious texts.'''
 suppress_default_document_metadata_task = True
 extra_stopwords_file = os.curdir + '/build/sacred_texts/early-modern-english-extra-stopwords.txt'
 metadata_filenames = {'datasets': '%s/raw-data/%s/datasets.json' % (os.curdir, dataset_name)}
+token_regex = r'[A-Za-zÂâ]+'
+num_topics = 10
+mallet_num_iterations = 2000
 
 filename_abbrev = {
     'The New Testament of the King James Bible':'NT',
@@ -132,18 +135,18 @@ def task_extract_data():
 
 def _extract(data_dir, output_dir, metadata_filename):
     metadata_types = {
-        'testament':'text',
-        'book':'text',
-        'chapter':'int',
+        'collection':'text',
+        'work':'text',
         'title':'text',
+        'chapter':'int',
         'number':'text',
         'name':'text',
-        'other_number':'text',
-        'work':'text'
+        'other_number':'text'
     }
     metadata_data = {}
     
     _extract_bible(data_dir + '/pg10_bible-kjv.txt', output_dir, metadata_data)
+    _extract_book_of_mormon(data_dir + '/pg17_the-book-of-mormon.txt', output_dir, metadata_data)
     _extract_koran(data_dir + '/pg3434_the-koran.txt', output_dir, metadata_data)
     _extract_sacred_books_of_east(data_dir + '/pg12894_sacred-books-of-the-east.txt', output_dir, metadata_data)
     
@@ -153,8 +156,7 @@ def _extract(data_dir, output_dir, metadata_filename):
     fp.close()
 
 def _extract_bible(filename, output_dir, metadata):
-#    bible_filename = data_dir + '/sacred_texts/pg10_bible-kjv.txt'
-    for testament, book, chapter, text in bible_chapter_iterator(filename):
+    for testament, book, chapter, text in _bible_chapter_iterator(filename):
         subdir = '%s/%s' % (filename_abbrev[testament], filename_abbrev[book])
         subdir_abs = output_dir + '/' + subdir
         if not os.path.exists(subdir_abs): os.makedirs(subdir_abs)
@@ -163,7 +165,6 @@ def _extract_bible(filename, output_dir, metadata):
         
         fp = open(filename_abs, 'w')
         fp.write('%s\nChapter %s\n%s' % (book, chapter, text))
-#        print '\n%s\nChapter %s\n%s' % (book, chapter, text)
         print '%s %s' % (book, chapter)
         fp.close()
         
@@ -171,9 +172,9 @@ def _extract_bible(filename, output_dir, metadata):
         book_title = title_abbrev.get(book, filename_abbrev[book])
         title = '%s %s' % (book_title, chapter)
         
-        metadata[filename] = {'work':book,'testament':testament, 'book':book, 'chapter':chapter, 'title':title}
+        metadata[filename] = {'collection':testament, 'work':book, 'title':title, 'chapter':chapter}
     
-def bible_it(filename):
+def _bible_iterator(filename):
     started = False
     for line in open(filename):
         line = line.strip()
@@ -184,7 +185,7 @@ def bible_it(filename):
             else:
                 yield line
 
-def bible_verse_it(filename):
+def _bible_verse_iterator(filename):
     start_regex = re.compile(r'(?:(?P<chapter>\d+):(?P<verse>\d+) )?(?P<text>.+)')
     testament = None
     book = None
@@ -192,7 +193,7 @@ def bible_verse_it(filename):
     verse = None
     text = None
     blank_lines_count = 0
-    for line in bible_it(filename):
+    for line in _bible_iterator(filename):
         if not line.strip():
             blank_lines_count += 1
             if testament and book and chapter and verse and text:
@@ -227,10 +228,10 @@ def bible_verse_it(filename):
                         text += ' ' + line
             blank_lines_count = 0
 
-def bible_chapter_iterator(filename):
+def _bible_chapter_iterator(filename):
     prev_testament, prev_book, prev_chapter = None, None, None
     text = None
-    for x in bible_verse_it(filename):
+    for x in _bible_verse_iterator(filename):
         testament,book,chapter,verse,_text = x
         
         if prev_chapter is None or prev_chapter != chapter:
@@ -258,7 +259,7 @@ def _extract_koran(koran_filename, output_dir, metadata):
         fp.close()
         
         title = 'Sura %s "%s"' % (num, name)
-        metadata[filename] = {'number':num, 'name':name, 'other_number':newnum, 'work':'The Koran', 'title':title}
+        metadata[filename] = {'collection':'The Koran', 'work':'The Koran', 'title':title, 'number':num, 'name':name, 'other_number':newnum}
 
 def koran_iterator(filename):
     started = False
@@ -270,7 +271,6 @@ def koran_iterator(filename):
                 break
             else:
                 line = ''.join([c for c in line if c not in ('0123456789')])
-#                line = ''.join(line.split('\d+'))
                 yield line.replace('',"'").replace('','"').replace('','"').replace('',' ')
 
 romannum = '(?P<number>[IVXLC]+)'
@@ -310,6 +310,8 @@ def _extract_sacred_books_of_east(sboe_filename, output_dir, metadata):
         fp = codecs.open(filename_abs, mode='w', encoding='utf-8')
         fp.write(d.pop('text'))
         fp.close()
+        
+        d['collection'] = 'Sacred Books of the East'
         metadata[filename] = d
         print d['title']
 
@@ -323,6 +325,7 @@ def _sboe_iterator(filename):
                 break
             else:
                 yield line
+
 caps = '[A-Z \-:\[\]0123456789,Â]+'
 def _sboe_section_iterator(filename):
     min_length = 105
@@ -335,8 +338,6 @@ def _sboe_section_iterator(filename):
             fulltext = '\n'.join(text)
             if len(fulltext) > min_length:
                 d = {'text':fulltext}
-#                for i,title in enumerate(titles):
-#                    d['title'+str(i)] = title
                 d['work'] = titles[0]
                 d['title'] = ' '.join(titles[1:])
                 return d
@@ -388,8 +389,72 @@ def _sboe_section_iterator(filename):
             blank_lines = 0
         else: blank_lines += 1
 
+def _extract_book_of_mormon(bom_filename, output_dir, metadata):
+    for d in _bom_chapter_iterator(bom_filename):
+        subdir = (d['collection'] + '/' + d['work']).replace(' ','_')
+        subdir_abs = output_dir + '/' + subdir
+        if not os.path.exists(subdir_abs): os.makedirs(subdir_abs)
+        filename = subdir + '/' + d['chapter'].replace(' ','_') + '.txt'
+        filename_abs = output_dir + '/' + filename
+        
+        fp = open(filename_abs, mode='w')
+        fp.write(d.pop('text'))
+        fp.close()
+        
+        metadata[filename] = d
+        print d['title']
+
+def _bom_iterator(filename):
+    started = False
+    for line in open(filename):
+        line = line.strip()
+        if not started: started = line=='*** START OF THIS PROJECT GUTENBERG EBOOK THE BOOK OF MORMON ***'
+        else:
+            if line=='End of the Project Gutenberg EBook of The Book Of Mormon, by Anonymous':
+                break
+            else:
+                yield line
+
+def _bom_verse_iterator(filename):
+    verse_regex = re.compile('(?P<book>(?:\d )?[^\d]+) (?P<chapter>\d+):(?P<verse>\d+)')
+    book,chapter,verse,text = None,None,None,None
+    def yield_me():
+        return book, chapter, verse, '\n'.join(text).strip()
+    for line in _bom_iterator(filename):
+        if line:
+            m = verse_regex.match(line)
+            if m:
+                book,chapter,verse = m.groups()
+                text = []
+            else:
+                if text is not None: text += [line]
+        else:
+            if text:
+                yield yield_me()
+                text = None
+
+def _bom_chapter_iterator(filename):
+    book, chapter = None, None
+    text = None
+    
+    def yield_me():
+        title = '%s %s' % (book, chapter)
+        return {'collection':'The Book of Mormon', 'work':book, 'title':title, 'chapter':chapter, 'text':'\n\n'.join(text).strip()}
+    
+    for x in _bom_verse_iterator(filename):
+        book_,chapter_,_verse,_text = x
+        
+        if chapter is None or chapter != chapter_:
+            if text: yield yield_me()
+            text = [_text]
+        else:
+            text += [_text]
+        book, chapter = book_, chapter_
+        
+    yield yield_me()
+
 if __name__=='__main__':
-    for line in _sboe_section_iterator('/home/josh/Projects/topicalguide/raw-data/sacred_texts/pg12894_sacred-books-of-the-east.txt'):
+    for line in _bom_chapter_iterator('/home/josh/Projects/topicalguide/raw-data/sacred_texts/pg17_the-book-of-mormon.txt'):
         print line
 #    for num,name,newnum,text in koran_sura_iterator('/home/josh/Projects/topicalguide/raw-data/sacred_texts/pg3434_the-koran.txt'):
 #        print '%s "%s" (%s)\n\n%s' % (num,name,newnum,text)
