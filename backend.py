@@ -290,7 +290,7 @@ if 'task_metadata_import' not in locals():
                 dataset().datasetmetainfovalue_set.all().delete()
             except Dataset.DoesNotExist:
                 pass
-        def datasets_done():
+        def datasets_done(_task, _values):
             if not os.path.exists(metadata_filenames['datasets']): return True
             try:
                 return DatasetMetaInfoValue.objects.filter(dataset=dataset()).count() > 0
@@ -308,7 +308,7 @@ if 'task_metadata_import' not in locals():
                 dataset().document_set.documentmetainfovalue_set.all().delete()
             except Dataset.DoesNotExist:
                 pass
-        def documents_done():
+        def documents_done(_task, _values):
             if not os.path.exists(metadata_filenames['documents']): return True
             try:
                 return DocumentMetaInfoValue.objects.filter(document__dataset=dataset()).count() > 0
@@ -326,7 +326,7 @@ if 'task_metadata_import' not in locals():
                 dataset().word_set.wordmetainfovalue_set.all().delete()
             except Dataset.DoesNotExist:
                 pass
-        def words_done():
+        def words_done(_task, _values):
             if not os.path.exists(metadata_filenames['words']): return True
             try:
                 return WordMetaInfoValue.objects.filter(word__dataset=dataset()).count() > 0
@@ -339,7 +339,7 @@ if 'task_metadata_import' not in locals():
             task['task_dep'] = ['dataset_import']
             task['actions'] = [(locals()['import_'+entity])]
             task['clean'] = [(locals()['clean_'+entity])]
-            task['uptodate'] = [locals()[entity+'_done']()]
+            task['uptodate'] = [locals()[entity+'_done']]
             yield task
         
         
@@ -354,7 +354,7 @@ if 'task_metadata_import' not in locals():
                 analysis().analysismetainfovalue_set.all().delete()
             except Analysis.DoesNotExist:
                 pass
-        def analyses_done():
+        def analyses_done(_task, _values):
             if not os.path.exists(metadata_filenames['analyses']): return True
             try:
                 return AnalysisMetaInfoValue.objects.filter(analysis=analysis()).count() > 0
@@ -372,7 +372,7 @@ if 'task_metadata_import' not in locals():
                 analysis().topic_set.topicmetainfovalue_set.all().delete()
             except Analysis.DoesNotExist:
                 pass
-        def topics_done():
+        def topics_done(_task, _values):
             if not os.path.exists(metadata_filenames['topics']): return True
             try:
                 return TopicMetaInfoValue.objects.filter(topic__analysis=analysis()).count() > 0
@@ -385,18 +385,19 @@ if 'task_metadata_import' not in locals():
             task['task_dep'] = ['analysis_import']
             task['actions'] = [(locals()['import_'+entity])]
             task['clean'] = [(locals()['clean_'+entity])]
-            task['uptodate'] = [locals()[entity+'_done']()]
+            task['uptodate'] = [locals()[entity+'_done']]
             yield task
 
 if 'task_mallet_input' not in locals():
     def task_mallet_input():
+        def utd(task, values): return os.path.exists(mallet_input)
         task = dict()
         task['targets'] = [mallet_input]
         task['actions'] = [(make_token_file, [files_dir, mallet_input])]
         task['clean']   = ["rm -f "+mallet_input]
         if 'task_extract_data' in globals():
             task['task_dep'] = ['extract_data']
-        task['uptodate'] = [os.path.exists(mallet_input)]
+        task['uptodate'] = [utd]
 #        task['file_dep'] = [files_dir]
         return task
 
@@ -439,7 +440,7 @@ if 'task_mallet' not in locals():
 
 if 'task_dataset_import' not in locals():
     def task_dataset_import():
-        def dataset_in_database():
+        def dataset_in_database(_task, _values):
             try:
                 Dataset.objects.get(name=dataset_name)
                 print 'dataset ' + dataset_name + ' in database'
@@ -454,12 +455,12 @@ if 'task_dataset_import' not in locals():
         task['actions'] = [(import_dataset, [dataset_name, dataset_readable_name, dataset_description, mallet_output, metadata_filenames, dataset_dir, files_dir])]
         task['file_dep'] = [mallet_output, metadata_filenames['documents']]
         task['clean'] = [(remove_dataset, [dataset_name])]
-        task['uptodate'] = [dataset_in_database()]
+        task['uptodate'] = [dataset_in_database]
         return task
 
 if 'task_analysis_import' not in locals():
     def task_analysis_import():
-        def analysis_in_database():
+        def analysis_in_database(_task, _values):
             try:
                 d = Dataset.objects.get(name=dataset_name)
                 Analysis.objects.get(dataset=d, name=analysis_name)
@@ -475,7 +476,7 @@ if 'task_analysis_import' not in locals():
             "rm -rf {0}".format(markup_dir)
         ]
         task['task_dep'] = ['dataset_import']
-        task['uptodate'] = [analysis_in_database()]
+        task['uptodate'] = [analysis_in_database]
         return task
 
 if 'task_name_schemes' not in locals():
@@ -495,12 +496,13 @@ if 'task_name_schemes' not in locals():
 
         print "Available topic name schemes: " + u', '.join([ns.scheme_name() for ns in name_schemes])
         for ns in name_schemes:
+            def utd(_task, _values): return scheme_in_database(ns)
             task = dict()
             task['name'] = ns.scheme_name()
             task['actions'] = [(generate_names, [ns])]
             task['task_dep'] = ['analysis_import']
             task['clean'] = [(clean_names,[ns])]
-            task['uptodate'] = [scheme_in_database(ns)]
+            task['uptodate'] = [utd]
             yield task
 
 if 'task_dataset_metrics' not in locals():
@@ -541,12 +543,13 @@ if 'task_dataset_metrics' not in locals():
         
         print "Available dataset metrics: " + u', '.join(metrics)
         for metric_name,metric in metrics.iteritems():
+            def utd(task, values): return metric_in_database(metric)
             task = dict()
             task['name'] = metric_name.replace(' ', '_')
             task['actions'] = [(import_metric, [metric_name])]
             task['clean'] = [(clean_metric, [metric_name])]
             task['task_dep'] = ['dataset_import']
-            task['uptodate'] = [metric_in_database(metric)]
+            task['uptodate'] = [utd]
             yield task
 
 if 'task_analysis_metrics' not in locals():
@@ -587,12 +590,13 @@ if 'task_analysis_metrics' not in locals():
         
         print "Available analysis metrics: " + u', '.join(metrics)
         for metric_name, metric in metrics.iteritems():
+            def utd(task, values): return metric_in_database(metric)
             task = dict()
             task['name'] = metric_name.replace(' ', '_')
             task['actions'] = [(import_metric, [metric_name])]
             task['clean'] = [(clean_metric, [metric_name])]
             task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [metric_in_database(metric)]
+            task['uptodate'] = [utd]
             yield task
 
 if 'task_topic_metrics' not in locals():
@@ -642,12 +646,13 @@ if 'task_topic_metrics' not in locals():
 
         print "Available topic metrics: " + u', '.join(topic_metrics)
         for topic_metric in topic_metrics:
+            def utd(task, values): return metric_in_database(topic_metric)
             task = dict()
             task['name'] = topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [topic_metric])]
             task['clean'] = [(clean_metric, [topic_metric])]
             task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [metric_in_database(topic_metric)]
+            task['uptodate'] = [utd]
             yield task
 
 if 'task_pairwise_topic_metrics' not in locals():
@@ -698,12 +703,13 @@ if 'task_pairwise_topic_metrics' not in locals():
         print "Available pairwise topic metrics: " + u', '.join(
                 pairwise_topic_metrics)
         for pairwise_topic_metric in pairwise_topic_metrics:
+            def utd(task, values): return metric_in_database(pairwise_topic_metric)
             task = dict()
             task['name'] = pairwise_topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [pairwise_topic_metric])]
             task['clean'] = [(clean_metric, [pairwise_topic_metric])]
             task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [metric_in_database(pairwise_topic_metric)]
+            task['uptodate'] = [utd]
             yield task
 
 if 'task_document_metrics' not in locals():
@@ -747,12 +753,13 @@ if 'task_document_metrics' not in locals():
 
         print "Available document metrics: " + u', '.join(metrics)
         for metric in metrics:
+            def utd(task, values): return metric_in_database(metric)
             task = dict()
             task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]
             task['clean'] = [(clean_metric, [metric])]
             task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [metric_in_database(metric)]
+            task['uptodate'] = [utd]
             yield task
 
 if 'task_pairwise_document_metrics' not in locals():
@@ -797,12 +804,13 @@ if 'task_pairwise_document_metrics' not in locals():
 
         print "Available pairwise document metrics: " + u', '.join(pairwise_metrics)
         for metric in pairwise_document_metrics:
+            def utd(task, values): return metric_in_database(metric)
             task = dict()
             task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]
             task['clean'] = [(clean_metric, [metric])]
             task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [metric_in_database(metric)]
+            task['uptodate'] = [utd]
             yield task
 
 if 'task_metrics' not in locals():
@@ -825,6 +833,8 @@ if 'task_graphs' not in locals():
         
         
         for ns in name_schemes:
+            def utd(task, values): return os.path.exists(graphs_img_dir)
+                
             task = dict()
             graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(dataset_dir, analysis_name, ns.scheme_name())
             graphs_unlinked_img_dir = graphs_img_dir + "-unlinked"
@@ -840,7 +850,7 @@ if 'task_graphs' not in locals():
                 'rm -rf '+graphs_img_dir
             ]
             task['name'] = ns.scheme_name()
-            task['uptodate'] = [os.path.exists(graphs_img_dir)]
+            task['uptodate'] = [utd]
             yield task
         
 #
