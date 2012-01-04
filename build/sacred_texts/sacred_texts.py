@@ -31,9 +31,9 @@ dataset_description = '''A bunch of public domain religious texts.'''
 suppress_default_document_metadata_task = True
 extra_stopwords_file = os.curdir + '/build/sacred_texts/early-modern-english-extra-stopwords.txt'
 metadata_filenames = {'datasets': '%s/raw-data/%s/datasets.json' % (os.curdir, dataset_name)}
-token_regex = r'[A-Za-zÂâ]+'
+token_regex = '[A-Za-zÂâ]+'.decode('utf-8') # Not sure why it's necessary to use .decode('utf-8'), but it doesn't work otherwise
 num_topics = 10
-mallet_num_iterations = 2000
+mallet_num_iterations = 500
 
 filename_abbrev = {
     'The New Testament of the King James Bible':'NT',
