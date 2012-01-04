@@ -283,7 +283,8 @@ if 'task_mallet_imported_data' not in locals():
     def task_mallet_imported_data():
         task = dict()
         task['targets'] = [mallet_imported_data]
-        cmd = '{0} import-file --input {1} --output {2} --keep-sequence --set-source-by-name --remove-stopwords'.format(mallet, mallet_input, mallet_imported_data)
+#        cmd = '{0} import-file --input {1} --output {2} --keep-sequence --set-source-by-name --remove-stopwords'.format(mallet, mallet_input, mallet_imported_data)
+        cmd = '{0} import-dir --input {1} --output {2} --keep-sequence --set-source-by-name --remove-stopwords'.format(mallet, files_dir, mallet_imported_data)
         if token_regex is not None:
             cmd += " --token-regex " + token_regex
         task['actions'] = [cmd]
