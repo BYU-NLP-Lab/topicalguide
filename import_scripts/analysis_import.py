@@ -49,8 +49,8 @@ NUM_DOTS = 100
 
 def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, metadata_filenames, token_regex):
-    print >> sys.stderr, "analysis_import({0})".\
-            format(', '.join([dataset_name, analysis_name, analysis_readable_name, analysis_description,
+    print >> sys.stderr, u"analysis_import({0})".\
+            format(u', '.join([dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, str(metadata_filenames), token_regex]))
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
