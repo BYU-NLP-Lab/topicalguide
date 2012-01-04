@@ -1,3 +1,4 @@
+## -*- coding: utf-8 -*-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -22,6 +23,7 @@
 import os
 import re
 from topic_modeling import anyjson
+import codecs
 
 dataset_name = 'sacred_texts'
 dataset_readable_name = 'Sacred Texts'
@@ -121,7 +123,7 @@ def task_extract_data():
     task = dict()
     task['targets'] = [files_dir, metadata_filenames['documents']]
     task['actions'] = [
-        (_extract, [raw_data_dir, files_dir, metadata_filenames['documents']]
+        (_extract, [raw_data_dir+'/sacred_texts', files_dir, metadata_filenames['documents']]
         )
     ]
     task['clean'] = ['rm -rf '+files_dir, 'rm -rf '+metadata_filenames['documents']]
@@ -129,10 +131,30 @@ def task_extract_data():
     return task
 
 def _extract(data_dir, output_dir, metadata_filename):
-    metadata_types = {'testament':'text','book':'text','chapter':'int','title':'text'}
+    metadata_types = {
+        'testament':'text',
+        'book':'text',
+        'chapter':'int',
+        'title':'text',
+        'number':'text',
+        'name':'text',
+        'other_number':'text',
+        'work':'text'
+    }
     metadata_data = {}
-    bible_filename = data_dir + '/sacred_texts/pg10_bible-kjv.txt'
-    for testament, book, chapter, text in bible_chapter_iterator(bible_filename):
+    
+    _extract_bible(data_dir + '/pg10_bible-kjv.txt', output_dir, metadata_data)
+    _extract_koran(data_dir + '/pg3434_the-koran.txt', output_dir, metadata_data)
+    _extract_sacred_books_of_east(data_dir + '/pg12894_sacred-books-of-the-east.txt', output_dir, metadata_data)
+    
+    metadata = {'types':metadata_types, 'data':metadata_data}
+    fp = open(metadata_filename, 'w')
+    fp.write(anyjson.serialize(metadata))
+    fp.close()
+
+def _extract_bible(filename, output_dir, metadata):
+#    bible_filename = data_dir + '/sacred_texts/pg10_bible-kjv.txt'
+    for testament, book, chapter, text in bible_chapter_iterator(filename):
         subdir = '%s/%s' % (filename_abbrev[testament], filename_abbrev[book])
         subdir_abs = output_dir + '/' + subdir
         if not os.path.exists(subdir_abs): os.makedirs(subdir_abs)
@@ -149,13 +171,8 @@ def _extract(data_dir, output_dir, metadata_filename):
         book_title = title_abbrev.get(book, filename_abbrev[book])
         title = '%s %s' % (book_title, chapter)
         
-        metadata_data[filename] = {'testament':testament, 'book':book, 'chapter':chapter, 'title':title}
+        metadata[filename] = {'work':book,'testament':testament, 'book':book, 'chapter':chapter, 'title':title}
     
-    metadata = {'types':metadata_types, 'data':metadata_data}
-    fp = open(metadata_filename, 'w')
-    fp.write(anyjson.serialize(metadata))
-    fp.close()
-
 def bible_it(filename):
     started = False
     for line in open(filename):
@@ -224,3 +241,156 @@ def bible_chapter_iterator(filename):
         prev_testament, prev_book, prev_chapter = testament, book, chapter
         
     yield (prev_testament, prev_book, prev_chapter, '\n\n'.join(text))
+
+def _extract_koran(koran_filename, output_dir, metadata):
+    subdir = 'Koran'
+    subdir_abs = output_dir + '/' + subdir
+    if not os.path.exists(subdir_abs): os.makedirs(subdir_abs)
+    for num,name,newnum,text in koran_sura_iterator(koran_filename):
+        filename = subdir + '/' + num + '.txt'
+        filename_abs = output_dir + '/' + filename
+        
+        fp = open(filename_abs, 'w')
+        _name = '\n'+name if name is not None else ''
+        fp.write('The Koran\nSura %s%s\n\n%s' % (num, _name, text))
+#        print '\n%s\nChapter %s\n%s' % (book, chapter, text)
+        print 'Koran Sura %s' % (num)
+        fp.close()
+        
+        title = 'Sura %s "%s"' % (num, name)
+        metadata[filename] = {'number':num, 'name':name, 'other_number':newnum, 'work':'The Koran', 'title':title}
+
+def koran_iterator(filename):
+    started = False
+    for line in open(filename):
+        line = line.strip()
+        if not started: started = line=='*** START OF THE PROJECT GUTENBERG EBOOK, THE KORAN ***'
+        else:
+            if line=='End of The Project Gutenberg Etext of The Koran as translated by Rodwell End':
+                break
+            else:
+                line = ''.join([c for c in line if c not in ('0123456789')])
+#                line = ''.join(line.split('\d+'))
+                yield line.replace('',"'").replace('','"').replace('','"').replace('',' ')
+
+romannum = '(?P<number>[IVXLC]+)'
+def koran_sura_iterator(filename):
+    sura_regex = re.compile('SURA1? '+romannum+'\.1? (?:(?P<name>[^1]+)1? )?\[(?P<newnumber>[IVXLC]+)\.\]')
+    footnote_regex = re.compile('_+')
+    sura_num, sura_name, sura_newnum = None,None,None
+    text = None
+    found_footnotes = False
+    for line in koran_iterator(filename):
+        m = sura_regex.match(line)
+        if m:
+            if text is not None and len(text) > 0:
+                yield (sura_num, sura_name, sura_newnum, '\n'.join(text))
+            text = []
+            found_footnotes = False
+            sura_num, sura_name, sura_newnum = m.groupdict()['number'], m.groupdict()['name'], m.groupdict()['newnumber']
+        else:
+            if not found_footnotes:
+                m = footnote_regex.match(line)
+                if m:
+                    found_footnotes = True
+                elif text is not None:
+                    text += [line]
+                
+    yield (sura_num, sura_name, sura_newnum, '\n'.join(text))
+
+def _extract_sacred_books_of_east(sboe_filename, output_dir, metadata):
+    
+    for d in _sboe_section_iterator(sboe_filename):
+        subdir = 'SBOE/' + d['work'].replace(' ','_')
+        subdir_abs = output_dir + '/' + subdir
+        if not os.path.exists(subdir_abs): os.makedirs(subdir_abs)
+        filename = subdir + '/' + d['title'].replace(' ','_') + '.txt'
+        filename_abs = output_dir + '/' + filename
+        
+        fp = codecs.open(filename_abs, mode='w', encoding='utf-8')
+        fp.write(d.pop('text'))
+        fp.close()
+        metadata[filename] = d
+        print d['title']
+
+def _sboe_iterator(filename):
+    started = False
+    for line in codecs.open(filename, encoding='utf-8'):
+        line = line.strip()
+        if not started: started = line=='Division of the Sariras'
+        else:
+            if line=='***END OF THE PROJECT GUTENBERG EBOOK SACRED BOOKS OF THE EAST***':
+                break
+            else:
+                yield line
+caps = '[A-Z \-:\[\]0123456789,Â]+'
+def _sboe_section_iterator(filename):
+    min_length = 105
+    def clean(text):
+        for i in range(0,10) + ['[',']']:
+            text = text.replace(str(i),'')
+        return text
+    def yield_me():
+        if text:
+            fulltext = '\n'.join(text)
+            if len(fulltext) > min_length:
+                d = {'text':fulltext}
+#                for i,title in enumerate(titles):
+#                    d['title'+str(i)] = title
+                d['work'] = titles[0]
+                d['title'] = ' '.join(titles[1:])
+                return d
+            else:
+                raise Exception()
+        else:
+            raise Exception()
+    sections = ('VEDIC HYMNS','SELECTIONS FROM THE ZEND-AVESTA','THE DHAMMAPADA','THE UPANISHADS','SELECTIONS FROM THE KORAN','LIFE OF BUDDHA')
+    subsections = ['INTRODUCTION','TO THE UNKNOWN GOD','TO THE MARUTS','TO THE MARUTS AND INDRA','TO INDRA AND THE MARUTS','TO RUDRA','TO AGNI AND THE MARUTS','TO SOMA AND RUDRA','TO V\xc3\x82TA','TO V\xc3\x82YU','INDRA AND AGASTYA: A DIALOGUE']
+    subsections += ['DISCOVERY OF THE ZEND-AVESTA', 'THE CREATION', 'MYTH OF YIMA', 'THE EARTH', 'CONTRACTS AND OUTRAGES', 'UNCLEANNESS', 'FUNERALS AND PURIFICATION', 'CLEANSING THE UNCLEAN', 'SPELLS RECITED DURING THE CLEANSING', 'TO FIRES, WATERS, PLANTS', 'TO THE EARTH AND THE SACRED WATERS', 'PRAYER FOR HELPERS', 'A PRAYER FOR SANCTITY AND ITS BENEFITS', 'TO THE FIRE', 'TO THE BOUNTIFUL IMMORTALS', 'PRAISE OF THE HOLY BULL', 'TO RAIN AS A HEALING POWER', 'TO THE WATERS AND LIGHT OF THE SUN', 'TO THE WATERS AND LIGHT OF THE MOON', 'TO THE WATERS AND LIGHT OF THE STARS']
+    subsections += ['CHAPTER I', 'CHAPTER II', 'CHAPTER III', 'CHAPTER IV', 'CHAPTER V', 'CHAPTER VI', 'CHAPTER VII', 'CHAPTER VIII', 'CHAPTER IX', 'CHAPTER X', 'CHAPTER XI', 'CHAPTER XII', 'CHAPTER XIII', 'CHAPTER XIV', 'CHAPTER XV', 'CHAPTER XVI', 'CHAPTER XVII', 'CHAPTER XVIII', 'CHAPTER XIX', 'CHAPTER XX', 'CHAPTER XXI', 'CHAPTER XXII', 'CHAPTER XXIII', 'CHAPTER XXIV', 'CHAPTER XXV', 'CHAPTER XXVI']
+    subsections += ['THE COUCH OF BRAHMAN', 'KNOWLEDGE OF THE LIVING SPIRIT', 'LIFE AND CONSCIOUSNESS']
+    subsections += ['MOHAMMED AND MOHAMMEDANISM']
+    titles = None
+    text = None
+    blank_lines = 0
+    caps_regex = re.compile('^(?P<title>'+caps+')$')
+    
+    for line in _sboe_iterator(filename):
+        if line:
+            if line in sections:
+                try: yield yield_me()
+                except: pass
+                titles, text = [line],[]
+            else:
+                m = caps_regex.match(line)
+                if m:
+                    try: yield yield_me()
+                    except: pass
+                    text = []
+                    
+                    new_titles = [clean(m.groupdict()['title'])]
+                    
+                    if new_titles[0] in subsections:
+                        titles = titles[:1] + new_titles
+                    else:
+                        if len(titles) > 1:
+                            if titles[1] in subsections:
+                                if titles[1].startswith('CHAPTER '):
+                                    titles[1] = titles[1] + ': ' + new_titles[0]
+                                else:
+                                    titles = titles[:2] + new_titles
+                            else:
+                                titles = titles[:1] + new_titles
+                        else:
+                            titles += new_titles
+                else:
+                    text += [line]
+            blank_lines = 0
+        else: blank_lines += 1
+
+if __name__=='__main__':
+    for line in _sboe_section_iterator('/home/josh/Projects/topicalguide/raw-data/sacred_texts/pg12894_sacred-books-of-the-east.txt'):
+        print line
+#    for num,name,newnum,text in koran_sura_iterator('/home/josh/Projects/topicalguide/raw-data/sacred_texts/pg3434_the-koran.txt'):
+#        print '%s "%s" (%s)\n\n%s' % (num,name,newnum,text)
+#        print '%s "%s" (%s)' % (num,name,newnum)
