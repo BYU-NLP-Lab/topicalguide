@@ -27,6 +27,95 @@ dataset_name = 'sacred_texts'
 dataset_readable_name = 'Sacred Texts'
 dataset_description = '''A bunch of public domain religious texts.'''
 suppress_default_document_metadata_task = True
+extra_stopwords_file = os.curdir + '/build/sacred_texts/early-modern-english-extra-stopwords.txt'
+metadata_filenames = {'datasets': '%s/raw-data/%s/datasets.json' % (os.curdir, dataset_name)}
+
+filename_abbrev = {
+    'The New Testament of the King James Bible':'NT',
+    'The Old Testament of the King James Version of the Bible':'OT',
+    'The Acts of the Apostles':'Acts',
+    'The First Epistle of Paul the Apostle to Timothy':'1_Timothy',
+    'The Epistle of Paul the Apostle to the Colossians':'Colossians',
+    'The General Epistle of James':'James',
+    'The Epistle of Paul the Apostle to the Ephesians':'Ephesians',
+    'The Gospel According to Saint John':'John',
+    'The Epistle of Paul the Apostle to the Galatians':'Galatians',
+    'The Gospel According to Saint Luke':'Luke',
+    'The Epistle of Paul the Apostle to the Hebrews':'Hebrews',
+    'The Gospel According to Saint Mark':'Mark',
+    'The Epistle of Paul the Apostle to the Philippians':'Philippians',
+    'The Gospel According to Saint Matthew':'Matthew',
+    'The Epistle of Paul the Apostle to the Romans':'Romans',
+    'The Revelation of Saint John the Devine':'Revelation',
+    'The Epistle of Paul the Apostle to Titus':'Titus',
+    'The Second Epistle of Paul the Apostle to the Corinthians':'2_Corinthians',
+    'The First Epistle General of John':'1_John',
+    'The Second Epistle of Paul the Apostle to the Thessalonians':'2_Thessalonians',
+    'The First Epistle General of Peter':'1_Peter',
+    'The Second Epistle of Paul the Apostle to Timothy':'2_Timothy',
+    'The First Epistle of Paul the Apostle to the Corinthians':'1_Corinthians',
+    'The Second General Epistle of Peter':'2_Peter',
+    'The First Epistle of Paul the Apostle to the Thessalonians':'1_Thessalonians',
+    'Amos':'Amos',
+    'Malachi':'Malachi',
+    'The Book of Nehemiah':'Nehemiah',
+    'The First Book of Samuel':'1_Samuel',
+    'The Second Book of the Chronicles':'2_Chronicles',
+    'Ecclesiastes':'Ecclesiastes',
+    'Micah':'Micah',
+    'The Book of Psalms':'Psalms',
+    'The First Book of the Chronicles':'1_Chronicles',
+    'The Second Book of the Kings':'2_Kings',
+    'Ezra':'Ezra',
+    'Nahum':'Nahum',
+    'The Book of Ruth':'Ruth',
+    'The First Book of the Kings':'1_Kings',
+    'The Song of Solomon':'Song',
+    'Habakkuk':'Habakkuk',
+    'The Book of Daniel':'Daniel',
+    'The Book of the Prophet Ezekiel':'Ezekiel',
+    'The Fourth Book of Moses:  Called Numbers':'Numbers',
+    'The Third Book of Moses:  Called Leviticus':'Leviticus',
+    'Haggai':'Haggai',
+    'The Book of Esther':'Esther',
+    'The Book of the Prophet Isaiah':'Isaiah',
+    'The Lamentations of Jeremiah':'Lamentations',
+    'Zechariah':'Zechariah',
+    'Hosea':'Hosea',
+    'The Book of Job':'Job',
+    'The Book of the Prophet Jeremiah':'Jeremiah',
+    'The Proverbs':'Proverbs',
+    'Zephaniah':'Zephaniah',
+    'Joel':'Joel',
+    'The Book of Joshua':'Joshua',
+    'The Fifth Book of Moses:  Called Deuteronomy':'Deuteronomy',
+    'The Second Book of Moses:  Called Exodus':'Exodus',
+    'Jonah':'Jonah',
+    'The Book of Judges':'Judges',
+    'The First Book of Moses:  Called Genesis':'Genesis',
+    'The Second Book of Samuel':'2_Samuel'
+}
+
+title_abbrev = {
+    'The New Testament of the King James Bible':'The New Testament',
+    'The Old Testament of the King James Version of the Bible':'The Old Testament',
+    'The First Epistle of Paul the Apostle to Timothy':'1st Timothy',
+    'The Second Epistle of Paul the Apostle to the Corinthians':'2nd Corinthians',
+    'The First Epistle General of John':'1st John',
+    'The Second Epistle of Paul the Apostle to the Thessalonians':'2nd Thessalonians',
+    'The First Epistle General of Peter':'1st Peter',
+    'The Second Epistle of Paul the Apostle to Timothy':'2nd Timothy',
+    'The First Epistle of Paul the Apostle to the Corinthians':'1st Corinthians',
+    'The Second General Epistle of Peter':'2nd Peter',
+    'The First Epistle of Paul the Apostle to the Thessalonians':'1st Thessalonians',
+    'The First Book of Samuel':'1st Samuel',
+    'The Second Book of the Chronicles':'2nd Chronicles',
+    'The First Book of the Chronicles':'1st Chronicles',
+    'The Second Book of the Kings':'2nd Kings',
+    'The First Book of the Kings':'1st Kings',
+    'The Song of Solomon':'Song of Solomon',
+    'The Second Book of Samuel':'2nd Samuel'
+}
 
 def task_extract_data():
     task = dict()
@@ -40,11 +129,11 @@ def task_extract_data():
     return task
 
 def _extract(data_dir, output_dir, metadata_filename):
-    metadata_types = {'testament':'text','book':'text','chapter':'int'}
+    metadata_types = {'testament':'text','book':'text','chapter':'int','title':'text'}
     metadata_data = {}
     bible_filename = data_dir + '/sacred_texts/pg10_bible-kjv.txt'
     for testament, book, chapter, text in bible_chapter_iterator(bible_filename):
-        subdir = '%s/%s' % (testament, book)
+        subdir = '%s/%s' % (filename_abbrev[testament], filename_abbrev[book])
         subdir_abs = output_dir + '/' + subdir
         if not os.path.exists(subdir_abs): os.makedirs(subdir_abs)
         filename = subdir + '/' + chapter + '.txt'
@@ -56,7 +145,11 @@ def _extract(data_dir, output_dir, metadata_filename):
         print '%s %s' % (book, chapter)
         fp.close()
         
-        metadata_data[filename] = {'testament':testament, 'book':book, 'chapter':chapter}
+        #FIXME Psalms %num% -> Psalm %num%
+        book_title = title_abbrev.get(book, filename_abbrev[book])
+        title = '%s %s' % (book_title, chapter)
+        
+        metadata_data[filename] = {'testament':testament, 'book':book, 'chapter':chapter, 'title':title}
     
     metadata = {'types':metadata_types, 'data':metadata_data}
     fp = open(metadata_filename, 'w')

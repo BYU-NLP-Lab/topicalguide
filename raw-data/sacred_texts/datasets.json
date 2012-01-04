@@ -1,0 +1,14 @@
+{
+    "types": {
+        "readable_name": "text",
+        "description": "text",
+        "creator": "text"
+    },
+    "data": {
+        "sacred_texts": {
+            "readable_name": "Sacred Texts",
+            "description": "A bunch of public domain religious texts.",
+            "creator": "Josh Hansen"
+        }
+    }
+}

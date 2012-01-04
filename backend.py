@@ -104,7 +104,7 @@ eval(ast, globals(), locals())
 # This variable should be with Mallet, but it is needed to name the analysis,
 # so we have it up here.
 if 'num_topics' not in locals():
-    num_topics = 20
+    num_topics = 50
 
 if 'dataset_name' not in locals():
     dataset_name = None
@@ -152,7 +152,7 @@ if 'mallet_doctopics_output' not in locals():
 if 'mallet_optimize_interval' not in locals():
     mallet_optimize_interval = 10
 if 'mallet_num_iterations' not in locals():
-    mallet_num_iterations = 50
+    mallet_num_iterations = 500
 
 # For dynamically generated metadata file, define task_attributes_file with
 # targets [$ENTITYTYPE$_metadata_file]
@@ -163,7 +163,7 @@ metadata_dir = '{0}/metadata'.format(dataset_dir)
 if not os.path.exists(metadata_dir): os.makedirs(metadata_dir)
 for entity_type in metadata_entities:
     if entity_type not in metadata_filenames:
-        metadata_filenames[entity_type] = '{0}/metadata/{1}.json'.format(dataset_dir, entity_type)
+        metadata_filenames[entity_type] = '{0}/{1}.json'.format(metadata_dir, entity_type)
 
 if 'markup_dir' not in locals():
     markup_dir = "{0}/{1}-markup".format(dataset_dir, analysis_name)
@@ -406,9 +406,13 @@ if 'task_mallet_imported_data' not in locals():
         task = dict()
         task['targets'] = [mallet_imported_data]
 #        cmd = '{0} import-file --input {1} --output {2} --keep-sequence --set-source-by-name --remove-stopwords'.format(mallet, mallet_input, mallet_imported_data)
-        cmd = '{0} import-dir --input {1} --output {2} --keep-sequence --set-source-by-name --remove-stopwords'.format(mallet, files_dir, mallet_imported_data)
+        cmd = '{0} import-dir --input {1} --output {2} --keep-sequence --set-source-by-name --source-name-prefix "file:{3}/{4}/" --remove-stopwords'.format(mallet, files_dir, mallet_imported_data, os.getcwd(), files_dir)
+        
+        if 'extra_stopwords_file' in globals():
+            cmd += ' --extra-stopwords ' + globals()['extra_stopwords_file']
         if 'token_regex' in globals():
             cmd += " --token-regex " + globals()['token_regex']
+        
         task['actions'] = [cmd]
         task['file_dep'] = [mallet_input]
         task['clean'] = ["rm -f " + mallet_imported_data]
