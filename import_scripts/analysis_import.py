@@ -41,8 +41,7 @@ from topic_modeling.visualize.models import DocumentTopicWord
 from topic_modeling.visualize.models import MarkupFile
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import TopicWord
-from import_scripts.metadata import Metadata, import_topic_metadata,\
-    import_analysis_metadata
+from import_scripts.metadata import Metadata
 from topic_modeling import settings
 
 NUM_DOTS = 100

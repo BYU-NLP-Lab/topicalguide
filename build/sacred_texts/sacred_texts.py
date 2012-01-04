@@ -21,20 +21,24 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 import os
-import re
-from topic_modeling import anyjson
-import codecs
 
-dataset_name = 'sacred_texts'
-dataset_readable_name = 'Sacred Texts'
-dataset_description = '''A bunch of public domain religious texts.'''
-suppress_default_document_metadata_task = True
-extra_stopwords_file = os.curdir + '/build/sacred_texts/early-modern-english-extra-stopwords.txt'
-metadata_filenames = {'datasets': '%s/raw-data/%s/datasets.json' % (os.curdir, dataset_name)}
-token_regex = '[A-Za-zÂâ]+'.decode('utf-8') # Not sure why it's necessary to use .decode('utf-8'), but it doesn't work otherwise
-pairwise_document_metrics = ['topic correlation']
-num_topics = 10
-mallet_num_iterations = 500
+from backend import c
+        
+def initialize_config(config):
+    config['num_topics'] = 10
+    config['mallet_num_iterations'] = 500
+    config['token_regex'] = '[A-Za-zÂâ]+'.decode('utf-8') # Not sure why it's necessary to use .decode('utf-8'), but it doesn't work otherwise
+    config['suppress_default_document_metadata_task'] = True
+    config['extra_stopwords_file'] = lambda c: '%s/%s/early-modern-english-extra-stopwords.txt' % (c['raw_data_dir'], c['dataset_name'])
+    config['num_topics'] = 10
+    config['dataset_name'] = 'sacred_texts'
+    config['dataset_readable_name'] = 'Sacred Texts'
+    config['dataset_description'] = 'A bunch of public domain religious texts.'
+    config['pairwise_document_metrics'] = ['topic correlation']
+    config['metadata_filenames'] = lambda c: {
+          'datasets': '%s/%s/datasets.json' % (c['raw_data_dir'], c['dataset_name'])
+    }
+    
 
 filename_abbrev = {
     'The New Testament of the King James Bible':'NT',
@@ -125,13 +129,13 @@ title_abbrev = {
 
 def task_extract_data():
     task = dict()
-    task['targets'] = [files_dir, metadata_filenames['documents']]
+    task['targets'] = [c['files_dir'], c['metadata_filenames']['documents']]
     task['actions'] = [
-        (_extract, [raw_data_dir+'/sacred_texts', files_dir, metadata_filenames['documents']]
+        (_extract, [c['raw_data_dir']+'/sacred_texts', c['files_dir'], c['metadata_filenames']['documents']]
         )
     ]
-    task['clean'] = ['rm -rf '+files_dir, 'rm -rf '+metadata_filenames['documents']]
-    task['uptodate'] = [os.path.exists(files_dir)]
+    task['clean'] = ['rm -rf '+c['files_dir'], 'rm -rf '+c['metadata_filenames']['documents']]
+    task['uptodate'] = [os.path.exists(c['files_dir'])]
     return task
 
 def _extract(data_dir, output_dir, metadata_filename):
