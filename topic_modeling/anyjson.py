@@ -38,10 +38,10 @@ implementation = None
 _modules = [("yajl", "dumps", TypeError, "loads", ValueError),
             ("jsonlib2", "write", "WriteError", "read", "ReadError"),
             ("jsonlib", "write", "WriteError", "read", "ReadError"),
-            ("cjson", "encode", "EncodeError", "decode", "DecodeError"),
             ("simplejson", "dumps", TypeError, "loads", ValueError),
             ("json", "dumps", TypeError, "loads", ValueError),
             ("django.utils.simplejson", "dumps", TypeError, "loads",ValueError),
+#            ("cjson", "encode", "EncodeError", "decode", "DecodeError"),
            ]
 
 _fields = ("modname", "encoder", "encerror", "decoder", "decerror")
