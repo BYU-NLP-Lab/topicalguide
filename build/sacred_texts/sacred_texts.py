@@ -29,14 +29,14 @@ def initialize_config(config):
     config['mallet_num_iterations'] = 500
     config['token_regex'] = '[A-Za-zÂâ]+'.decode('utf-8') # Not sure why it's necessary to use .decode('utf-8'), but it doesn't work otherwise
     config['suppress_default_document_metadata_task'] = True
-    config['extra_stopwords_file'] = lambda c: '%s/%s/early-modern-english-extra-stopwords.txt' % (c['raw_data_dir'], c['dataset_name'])
+    config['extra_stopwords_file'] = lambda c: '%s/early-modern-english-extra-stopwords.txt' % c['raw_data_dir']
     config['num_topics'] = 10
     config['dataset_name'] = 'sacred_texts'
     config['dataset_readable_name'] = 'Sacred Texts'
     config['dataset_description'] = 'A bunch of public domain religious texts.'
     config['pairwise_document_metrics'] = ['topic correlation']
     config['metadata_filenames'] = lambda c: {
-          'datasets': '%s/%s/datasets.json' % (c['raw_data_dir'], c['dataset_name'])
+          'datasets': '%s/datasets.json' % c['raw_data_dir']
     }
     
 

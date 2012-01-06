@@ -20,10 +20,13 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-import random
-from django.db import models
-from topic_modeling.anyjson import deserialize
 import datetime
+import random
+
+from django.db import models
+
+from topic_modeling.anyjson import deserialize
+
 
 ##############################################################################
 # Tables just to hold information about data and documents
@@ -52,6 +55,17 @@ class Dataset(Describable):
 
     def __unicode__(self):
         return self.name
+    
+    def delete(self, *args, **kwargs):
+        for analysis in self.analysis_set.all():
+            print "\tremove analysis " + str(analysis)
+            analysis.delete()
+        
+        for doc in self.document_set.all():
+            print "\tremove doc " + str(doc)
+            doc.delete()
+        
+        super(Dataset, self).delete(*args, **kwargs)
 
 
 LEFT_CONTEXT_SIZE = 40
@@ -280,6 +294,13 @@ class Analysis(Describable):
 
     def __unicode__(self):
         return self.name
+    
+    def delete(self, *args, **kwargs):
+        for topic in self.topic_set.all():
+            print "\tremove topic " + str(topic)
+            topic.delete()
+        
+        super(Analysis, self).delete(*args, **kwargs)
 
 
 class MarkupFile(models.Model):
