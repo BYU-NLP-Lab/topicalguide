@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -26,17 +24,13 @@
 from __future__ import division
 from math import isnan
 
-import os, sys
-
-sys.path.append(os.curdir)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+import sys
 
 from django.db import transaction
 
-from datetime import datetime
+#from datetime import datetime
 from numpy import dot, zeros
 from numpy.linalg import norm
-from optparse import OptionParser
 
 from topic_modeling.visualize.models import Analysis, Dataset
 from topic_modeling.visualize.models import PairwiseDocumentMetric
@@ -44,15 +38,14 @@ from topic_modeling.visualize.models import PairwiseDocumentMetricValue
 
 metric_name = "Topic Correlation"
 @transaction.commit_manually
-def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
+def add_metric(dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(dataset=dataset, name=analysis)
     try:
         metric = PairwiseDocumentMetric.objects.get(name=metric_name,
                 analysis=analysis)
-        if not force_import:
-            raise RuntimeError("%s is already in the database for this"
-                    " analysis" % metric_name)
+        raise RuntimeError("%s is already in the database for this"
+                " analysis" % metric_name)
     except PairwiseDocumentMetric.DoesNotExist:
         metric = PairwiseDocumentMetric(name=metric_name, analysis=analysis)
         metric.save()
@@ -66,14 +59,13 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     doctopicvectors = [document_topic_vector(doc, topic_idx)
             for doc in documents]
     vectornorms = [norm(vector) for vector in doctopicvectors]
-    num_docs = len(documents)
     
-    start = datetime.now()
+#    start = datetime.now()
     for i, doc1 in enumerate(documents):
-        sys.stdout.write('.')
+        write('.')
 #        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
 #        print >> sys.stderr, 'Time for last document:', datetime.now() - start
-        start = datetime.now()
+#        start = datetime.now()
         doc1_topic_vals = doctopicvectors[i]
         doc1_norm = vectornorms[i]
         for j, doc2 in enumerate(documents):
@@ -88,11 +80,14 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
             else:
                 pass
         transaction.commit()
-    sys.stdout.write('\n')
+    write('\n')
 
-def metric_names_generated(dataset, analysis):
+def metric_names_generated(_dataset, _analysis):
     return [metric_name]
 
+def write(s):
+    sys.stdout.write(s)
+    sys.stdout.flush()
 
 def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
     return float(dot(doc1_topic_vals, doc2_topic_vals) /
@@ -106,28 +101,5 @@ def document_topic_vector(document, topic_idx):
             continue
         document_topic_vals[topic_idx[doctopic.topic_id]] = doctopic.count
     return document_topic_vals
-
-
-if __name__ == '__main__':
-    parser = OptionParser()
-    parser.add_option('-d', '--dataset-name',
-            dest='dataset_name',
-            help='The name of the dataset for which to add this topic metric',
-            )
-    parser.add_option('-a', '--analysis-name',
-            dest='analysis_name',
-            help='The name of the analysis for which to add this topic metric',
-            )
-    parser.add_option('-f', '--force-import',
-            dest='force_import',
-            action='store_true',
-            help='Force the import of this metric even if the script thinks the'
-            ' metric is already in the database',
-            )
-    options, args = parser.parse_args()
-    dataset = options.dataset_name
-    analysis = options.analysis_name
-    force_import = options.force_import
-    add_metric(dataset, analysis, force_import)
 
 # vim: et sw=4 sts=4
