@@ -41,12 +41,16 @@
 #  Allow specification of multiple num_topics
 #
 
-import os, sys
+import codecs
 import hashlib
+import os
+import sys
 
 from collections import defaultdict
 from datetime import datetime
 from subprocess import Popen, PIPE
+
+from django.db.utils import DatabaseError
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 from topic_modeling import settings
@@ -58,11 +62,9 @@ from import_scripts.metadata import Metadata, import_dataset_metadata,\
 from import_scripts.dataset_import import import_dataset
 from import_scripts.analysis_import import import_analysis
 
-from build.common.make_token_file import make_token_file
-from build.common.db_cleanup import remove_analysis
-from build.common.db_cleanup import remove_dataset
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
+
 from topic_modeling.visualize.models import Analysis, DatasetMetric, AnalysisMetric, DatasetMetricValue,\
     AnalysisMetricValue, DatasetMetaInfoValue, DocumentMetaInfoValue,\
     WordMetaInfoValue, AnalysisMetaInfoValue, TopicMetaInfoValue
@@ -73,17 +75,15 @@ from topic_modeling.visualize.models import DocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import TopicNameScheme
 
-from django.db.utils import DatabaseError
-
-#If this file is invoked directly, pass it in to the doit system for processing.
-# TODO(matt): Pretty hackish, but it's a starting place.  This should be
-# cleaned up when we have time.
-
 #build = "twitter"
 build = "state_of_the_union"
 #build = "kcna/kcna"
 #build = "congressional_record"
 
+
+#If this file is invoked directly, pass it in to the doit system for processing.
+# TODO(matt): Pretty hackish, but it's a starting place.  This should be
+# cleaned up when we have time.
 if __name__ == "__main__":
     if not os.path.exists(".dbs"): os.mkdir(".dbs")
     sys.path.append("tools/doit")
@@ -131,7 +131,8 @@ c.default('analysis_name', lambda c: "lda%stopics" % c['mallet_num_topics'])
 c.default('analysis_readable_name', lambda c: "LDA %s Topics" % c['mallet_num_topics'])
 c.default('analysis_description', lambda c: "Mallet LDA with %s topics" % c['mallet_num_topics'])
 c.default('base_dir', os.curdir)
-c.default('raw_data_dir', c['base_dir'] + "/raw-data")
+c.default('raw_data_base_dir', c['base_dir'] + "/raw-data")
+c.default('raw_data_dir', c['raw_data_base_dir'] + "/" + c['dataset_name'])
 c.default('datasets_dir', c['base_dir'] + "/datasets")
 c.default('dataset_dir', c['datasets_dir'] + "/" + c['dataset_name'])
 c.default('files_dir', c['dataset_dir'] + "/files")
@@ -222,26 +223,12 @@ print "Dataset name: " + c['dataset_name']
 
 if not os.path.exists(c['dataset_dir']): os.mkdir(c['dataset_dir'])
 
-def cmd_output(cmd):
-    return Popen(cmd, shell=True, bufsize=512, stdout=PIPE).stdout.read()
-
-def directory_timestamp(dir):
-    return str(os.path.getmtime(dir))
-
-def hash(txt):
-    hasher = hashlib.md5()
-    hasher.update(txt)
-    return hasher.hexdigest()
-
-def directory_recursive_hash(dir):
-    if not os.path.exists(dir): return "0"
-    return hash(cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir)))
-
 def dataset():
     return Dataset.objects.get(name=c['dataset_name'])
 
 def analysis():
     return Analysis.objects.get(name=c['analysis_name'], dataset__name=c['dataset_name'])
+
 #If no existing attributes task exists, and if suppress_default_attributes_task is not set to True,
 #then define a default attributes task that generates an empty attributes file
 #TODO(josh): make the attributes file optional for the import scripts
@@ -372,7 +359,23 @@ if 'task_metadata_import' not in locals():
 
 if 'task_mallet_input' not in locals():
     def task_mallet_input():
-        def utd(task, values): return os.path.exists(c['mallet_input'])
+        def make_token_file(docs_dir, output_file):
+            w = codecs.open(output_file, 'w', 'utf-8')
+            
+            for root, dirs, files in os.walk(docs_dir):
+                for f in files:
+                    path = '{0}/{1}'.format(root, f)
+                    # the [1:] takes off a leading /
+                    partial_root = root.replace(docs_dir, '')[1:]
+                    if partial_root:
+                        mallet_path = '{0}/{1}'.format(partial_root, f)
+                    else:
+                        mallet_path = f
+                    text = open(path).read().decode('utf-8').strip().replace('\n',' ').replace('\r',' ')
+                    w.write(u'{0} all {1}'.format(mallet_path, text))
+                    w.write(u'\n')
+        
+        def utd(_task, _values): return os.path.exists(c['mallet_input'])
         task = dict()
         task['targets'] = [c['mallet_input']]
         task['actions'] = [(make_token_file, [c['files_dir'], c['mallet_input']])]
@@ -425,9 +428,10 @@ if 'task_mallet' not in locals():
     def task_mallet():
         return {'actions':None, 'task_dep': ['mallet_input', 'mallet_imported_data', 'mallet_output_gz', 'mallet_output']}
 
+
 if 'task_dataset_import' not in locals():
     def task_dataset_import():
-        def dataset_in_database(_task, _values):
+        def utd(_task, _values):
             try:
                 dataset()
                 print 'dataset ' + c['dataset_name'] + ' in database'
@@ -435,34 +439,50 @@ if 'task_dataset_import' not in locals():
             except (Dataset.DoesNotExist,DatabaseError):
                 print 'dataset ' + c['dataset_name'] + ' NOT in database'
                 return False
+        
+        def remove_dataset():
+            print "remove_dataset(%s)" % c['dataset_name']
+            try:
+                dataset.delete()
+            except Dataset.DoesNotExist:
+                pass
+        
         # TODO(matt): clean up and possibly rename dataset_import.py and
         # analysis_import.py, now that we are using this build script - we don't
         #  need standalone scripts anymore for that stuff
         task = dict()
         task['actions'] = [(import_dataset, [c['dataset_name'], c['dataset_readable_name'], c['dataset_description'], c['mallet_output'], c['metadata_filenames'], c['dataset_dir'], c['files_dir']])]
         task['file_dep'] = [c['mallet_output'], c['metadata_filenames']['documents']]
-        task['clean'] = [(remove_dataset, [c['dataset_name']])]
-        task['uptodate'] = [dataset_in_database]
+        task['clean'] = [(remove_dataset, [])]
+        task['uptodate'] = [utd]
         return task
 
 if 'task_analysis_import' not in locals():
     def task_analysis_import():
-        def analysis_in_database(_task, _values):
+        def utd(_task, _values):
             try:
                 analysis()
                 return True
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
+        
+        def remove_analysis():
+            try:
+                print 'remove_analysis(%s)' % c['analysis_name']
+                analysis().delete()
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist):
+                pass
+            
         task = dict()
         task['actions'] = [(import_analysis, [c['dataset_name'], c['analysis_name'], c['analysis_readable_name'], c['analysis_description'],
                           c['markup_dir'], c['mallet_output'], c['mallet_input'], c['metadata_filenames'], c['token_regex']])]
         task['file_dep'] = [c['mallet_output'], c['mallet_input'], c['metadata_filenames']['documents']]
         task['clean'] = [
-            (remove_analysis, [c['dataset_name'], c['analysis_name']]),
+            (remove_analysis),
             "rm -rf {0}".format(c['markup_dir'])
         ]
         task['task_dep'] = ['dataset_import']
-        task['uptodate'] = [analysis_in_database]
+        task['uptodate'] = [utd]
         return task
 
 if 'task_name_schemes' not in locals():
@@ -526,7 +546,7 @@ if 'task_dataset_metrics' not in locals():
         
         print "Available dataset metrics: " + u', '.join(metrics)
         for metric_name,metric in metrics.iteritems():
-            def utd(task, values): return metric_in_database(metric)
+            def utd(_task, _values): return metric_in_database(metric)
             task = dict()
             task['name'] = metric_name.replace(' ', '_')
             task['actions'] = [(import_metric, [metric_name])]
@@ -570,7 +590,7 @@ if 'task_analysis_metrics' not in locals():
         
         print "Available analysis metrics: " + u', '.join(metrics)
         for metric_name, metric in metrics.iteritems():
-            def utd(task, values): return metric_in_database(metric)
+            def utd(_task, _values): return metric_in_database(metric)
             task = dict()
             task['name'] = metric_name.replace(' ', '_')
             task['actions'] = [(import_metric, [metric_name])]
@@ -621,7 +641,7 @@ if 'task_topic_metrics' not in locals():
 
         print "Available topic metrics: " + u', '.join(c['topic_metrics'])
         for topic_metric in c['topic_metrics']:
-            def utd(task, values): return metric_in_database(topic_metric)
+            def utd(_task, _values): return metric_in_database(topic_metric)
             task = dict()
             task['name'] = topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [topic_metric])]
@@ -673,7 +693,7 @@ if 'task_pairwise_topic_metrics' not in locals():
         print "Available pairwise topic metrics: " + u', '.join(
                 c['pairwise_topic_metrics'])
         for pairwise_topic_metric in c['pairwise_topic_metrics']:
-            def utd(task, values): return metric_in_database(pairwise_topic_metric)
+            def utd(_task, _values): return metric_in_database(pairwise_topic_metric)
             task = dict()
             task['name'] = pairwise_topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [pairwise_topic_metric])]
@@ -719,7 +739,7 @@ if 'task_document_metrics' not in locals():
 
         print "Available document metrics: " + u', '.join(metrics)
         for metric in metrics:
-            def utd(task, values): return metric_in_database(metric)
+            def utd(_task, _values): return metric_in_database(metric)
             task = dict()
             task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]
@@ -766,7 +786,7 @@ if 'task_pairwise_document_metrics' not in locals():
 
         print "Available pairwise document metrics: " + u', '.join(pairwise_metrics)
         for metric in c['pairwise_document_metrics']:
-            def utd(task, values): return metric_in_database(metric)
+            def utd(_task, _values): return metric_in_database(metric)
             task = dict()
             task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]
@@ -780,7 +800,22 @@ if 'task_metrics' not in locals():
         return {'actions':None, 'task_dep': ['analysis_import', 'topic_metrics', 'pairwise_topic_metrics', 'document_metrics', 'pairwise_document_metrics']}
 
 def task_hash_java():
-    return {'actions': [(directory_recursive_hash, [c['java_base']])]}
+    def _cmd_output(cmd):
+        return Popen(cmd, shell=True, bufsize=512, stdout=PIPE).stdout.read()
+    
+    def _directory_timestamp(dir_):
+        return str(os.path.getmtime(dir_))
+    
+    def _hash(txt):
+        hasher = hashlib.md5()
+        hasher.update(txt)
+        return hasher.hexdigest()
+    
+    def _directory_recursive_hash(dir_):
+        if not os.path.exists(dir): return "0"
+        return hash(_cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir_)))
+    
+    return {'actions': [(_directory_recursive_hash, [c['java_base']])]}
 
 if 'task_compile_java' not in locals():
     def task_compile_java():
@@ -795,7 +830,7 @@ if 'task_graphs' not in locals():
         
         
         for ns in c['name_schemes']:
-            def utd(task, values): return os.path.exists(graphs_img_dir)
+            def utd(_task, _values): return os.path.exists(graphs_img_dir)
                 
             task = dict()
             graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(c['dataset_dir'], c['analysis_name'], ns.scheme_name())
