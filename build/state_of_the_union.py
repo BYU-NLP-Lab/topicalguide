@@ -25,34 +25,43 @@ import os
 from build.state_of_the_union.extract_sotua_documents import extract_state_of_the_union
 from build.state_of_the_union.generate_attributes_file import generate_attributes_file
 
-num_topics = 100
-chron_list_filename = 'chronological_list.wiki'
-addresses_filename = 'state_of_the_union_addresses.txt'
-dataset_name = 'state_of_the_union'
-dataset_readable_name = 'State of the Union Addresses 1790-2010'
-dataset_description = \
-'''State of the Union Addresses taken from WikiSource by adding all
- addresses to a "book" and downloading it. Created by Josh Hansen.'''
-suppress_default_document_metadata_task = True
+from backend import c
+
+def initialize_config(config):
+    config['num_topics'] = 100
+    config['chron_list_filename'] = 'chronological_list.wiki'
+    config['addresses_filename'] = 'state_of_the_union_addresses.txt'
+    config['dataset_name'] = 'state_of_the_union'
+    config['dataset_readable_name'] = 'State of the Union Addresses 1790-2010'
+    config['dataset_description'] = \
+    '''State of the Union Addresses taken from WikiSource by adding all
+     addresses to a "book" and downloading it. Created by Josh Hansen.'''
+    config['suppress_default_document_metadata_task'] = True
+    config['metadata_filenames'] = lambda c: {
+          'datasets': '%s/datasets.json' % c['raw_data_dir']
+    }
 
 def task_document_metadata():
+    doc_meta_filename = c['metadata_filenames']['documents']
     task = dict()
-    task['targets'] = [metadata_filenames['documents']]
+    task['targets'] = [doc_meta_filename]
     task['actions'] = [(generate_attributes_file,
-                [dataset_dir+'/'+chron_list_filename, metadata_filenames['documents']])]
-    task['clean'] = ['rm -f '+metadata_filenames['documents']]
+                ['%s/%s' % (c['raw_data_dir'], c['chron_list_filename']), doc_meta_filename])]
+    task['clean'] = ['rm -f '+doc_meta_filename]
     return task
 
 def task_extract_data():
+    def utd(_task, _vals): return os.path.exists(c['files_dir'])
+        
     task = dict()
-    task['targets'] = [files_dir]
+    task['targets'] = [c['files_dir']]
     task['actions'] = [
         (extract_state_of_the_union,
-         [dataset_dir+'/'+chron_list_filename,
-          dataset_dir+'/'+addresses_filename,
-          files_dir]
+         ['%s/%s' % (c['raw_data_dir'], c['chron_list_filename']),
+          '%s/%s' % (c['raw_data_dir'], c['addresses_filename']),
+          c['files_dir']]
         )
     ]
-    task['clean'] = ['rm -rf '+files_dir]
-    task['uptodate'] = [os.path.exists(files_dir)]
+    task['clean'] = ['rm -rf '+c['files_dir']]
+    task['uptodate'] = [utd]
     return task
