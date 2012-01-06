@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -26,52 +24,50 @@
 from __future__ import division
 from math import isnan
 
-import os, sys
-
-sys.path.append(os.curdir)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+import sys
 
 from django.db import transaction
 
-from datetime import datetime
-from math import log
+#from datetime import datetime
 from numpy import dot, zeros
 from numpy.linalg import norm
-from optparse import OptionParser
 
-from topic_modeling.visualize.models import Analysis, Dataset, Word
-from topic_modeling.visualize.models import DocumentTopic
+from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetricValue
 
 metric_name = "Word Correlation"
 @transaction.commit_manually
-def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
+def add_metric(dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
-    analysis = Analysis.objects.get(dataset=dataset, name=analysis)
+    analysis = dataset.analysis_set.get(name=analysis)
     try:
-        metric = PairwiseDocumentMetric.objects.get(name=metric_name,
-                analysis=analysis)
-        if not force_import:
-            raise RuntimeError("%s is already in the database for this"
-                    " analysis" % metric_name)
+        metric = analysis.pairwisedocumentmetric_set.get(name=metric_name)
+        raise RuntimeError("%s is already in the database for this analysis" % metric_name)
     except PairwiseDocumentMetric.DoesNotExist:
         metric = PairwiseDocumentMetric(name=metric_name, analysis=analysis)
         metric.save()
     
-    num_words = Word.objects.order_by('-pk')[0].id + 1
+    words = dataset.word_set
+    num_words = words.count()
 
     documents = list(dataset.document_set.all())
-    docwordvectors = [document_word_vector(doc, num_words) for doc in documents]
-    vectornorms = [norm(vector) for vector in docwordvectors]
-    num_docs = len(documents)
     
-    start = datetime.now()
+    i = 0
+    wordidx = {}
+    for word in words.all():
+        wordidx[word.id] = i
+        i += 1
+    
+    docwordvectors = [document_word_vector(doc, num_words, wordidx) for doc in documents]
+    vectornorms = [norm(vector) for vector in docwordvectors]
+    
+#    start = datetime.now()
     for i, doc1 in enumerate(documents):
-        sys.stdout.write('.')
+        write('.')
 #        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
 #        print >> sys.stderr, 'Time for last document:', datetime.now() - start
-        start = datetime.now()
+#        start = datetime.now()
         doc1_word_vals = docwordvectors[i]
         doc1_norm = vectornorms[i]
         for j, doc2 in enumerate(documents):
@@ -86,9 +82,13 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
             else:
                 pass
         transaction.commit()
-    sys.stdout.write('\n')
+    write('\n')
 
-def metric_names_generated(dataset, analysis):
+def write(s):
+    sys.stdout.write(s)
+    sys.stdout.flush()
+
+def metric_names_generated(_dataset, _analysis):
     return [metric_name]
 
 
@@ -97,33 +97,10 @@ def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
             (doc1_norm * doc2_norm))
 
 
-def document_word_vector(document, num_words):
-    document_word_vals = zeros(num_words)
+def document_word_vector(document, word_count, wordidx):
+    document_word_vals = zeros(word_count)
     for docword in document.documentword_set.all():
-        document_word_vals[docword.word_id] = docword.count
+        document_word_vals[wordidx[docword.word_id]] = docword.count
     return document_word_vals
-
-
-if __name__ == '__main__':
-    parser = OptionParser()
-    parser.add_option('-d', '--dataset-name',
-            dest='dataset_name',
-            help='The name of the dataset for which to add this topic metric',
-            )
-    parser.add_option('-a', '--analysis-name',
-            dest='analysis_name',
-            help='The name of the analysis for which to add this topic metric',
-            )
-    parser.add_option('-f', '--force-import',
-            dest='force_import',
-            action='store_true',
-            help='Force the import of this metric even if the script thinks the'
-            ' metric is already in the database',
-            )
-    options, args = parser.parse_args()
-    dataset = options.dataset_name
-    analysis = options.analysis_name
-    force_import = options.force_import
-    add_metric(dataset, analysis, force_import)
 
 # vim: et sw=4 sts=4
