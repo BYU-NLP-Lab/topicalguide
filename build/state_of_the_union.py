@@ -71,23 +71,22 @@ def task_extract_data():
 
 
 chron_entry_regex = r"\[\[(?P<title>(?P<president_name>.+)'s? .*State of the Union (?:Address|Speech))\|(?P<address_number>\w+) State of the Union Address\]\] - \[\[author:(?P<author_name>.+)\|.+\]\], \((?P<day>\d+) (?P<month>\w+) \[\[w:(?P<year>\d+)\|(?P=year)\]\]\)"
-
 def metadata(chron_list_wiki_file):
     text = codecs.open(chron_list_wiki_file,'r','utf-8').read()
     return [m for m in re.finditer(chron_entry_regex, text, re.IGNORECASE)]
-
-tokenizer = TreebankWordTokenizer()
-def lines_to_string(lines):
-    raw_txt = u' '.join(lines)
-    tokens = tokenizer.tokenize(raw_txt)
-    tokenized_txt = u' '.join(tokens)
-    return tokenized_txt
 
 ordinal_to_cardinal = {'First':1,'Second':2,'Third':3,'Fourth':4,'Fifth':5,'Sixth':6,'Seventh':7,'Eighth':8,'Ninth':9,'Tenth':10,'Eleventh':11,'Twelfth':12}
 def filename(metadata):
     return metadata.group('president_name').replace(' ','_') + "_" + str(ordinal_to_cardinal[metadata.group('address_number')]) + '.txt'
 
 def extract_state_of_the_union(chron_list_filename, addresses_filename, dest_dir):
+    tokenizer = TreebankWordTokenizer()
+    def lines_to_string(lines):
+        raw_txt = u' '.join(lines)
+        tokens = tokenizer.tokenize(raw_txt)
+        tokenized_txt = u' '.join(tokens)
+        return tokenized_txt
+    
     print "extract_state_of_the_union({0},{1},{2})".format(chron_list_filename, addresses_filename, dest_dir)
 #    titles = [m.group('title') for m in meta]
     titles = dict()
