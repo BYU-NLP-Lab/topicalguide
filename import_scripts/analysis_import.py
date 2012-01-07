@@ -29,7 +29,7 @@ from collections import defaultdict
 from datetime import datetime
 
 import topic_modeling.anyjson as anyjson
-from build.common.util import create_dirs_and_open
+from build import create_dirs_and_open
 
 from django.db import connection, transaction
 
