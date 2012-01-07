@@ -801,9 +801,6 @@ def task_hash_java():
     def _cmd_output(cmd):
         return Popen(cmd, shell=True, bufsize=512, stdout=PIPE).stdout.read()
     
-    def _directory_timestamp(dir_):
-        return str(os.path.getmtime(dir_))
-    
     def _hash(txt):
         hasher = hashlib.md5()
         hasher.update(txt)

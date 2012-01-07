@@ -22,38 +22,102 @@
 
 #Congressional Record Dataset build settings
 import os
-from build.govtrack.cr.clean_cr import clean_cr
-from build.govtrack.cr.generate_attributes_file import generate_attributes_file
+from string import punctuation, digits
+from build import Cleaner
+from xml.dom.minidom import parseString
+from nltk.tokenize import TreebankWordTokenizer
 
-dataset_name = "congressional_record"
-dataset_description = "Floor debate from the Congressional Record of the 111th United States Congress"
-token_regex = r"\\w+"
 
-data_dir = os.environ['HOME'] + "/Data"
-govtrack_dir = data_dir + "/govtrack.us"
-rsync_dest_dir = govtrack_dir + "/111"
-cr_dir = rsync_dest_dir + "/cr"
 
-def task_attributes():
-    task = dict()
-    task['targets'] = [attributes_file]
-    task['actions'] = [(generate_attributes_file, [mallet_input, attributes_file])]
-    task['file_dep'] = [mallet_input]
-    task['clean'] = ["rm -f "+attributes_file]
-    return task
+def initialize_config(c):
+    c['dataset_name'] = "congressional_record"
+    c['dataset_description'] = "Floor debate from the Congressional Record of the 111th United States Congress"
+    c['token_regex'] = r"\\w+"
+    
+    c['data_dir'] = os.environ['HOME'] + "/Data"
+    c['govtrack_dir'] = c['data_dir'] + "/govtrack.us"
+    c['rsync_dest_dir'] = c['govtrack_dir'] + "/111"
+    c['cr_dir'] = c['rsync_dest_dir'] + "/cr"
+
+from backend import c
+
+#def task_attributes():
+#    task = dict()
+#    task['targets'] = [attributes_file]
+#    task['actions'] = [(generate_attributes_file, [mallet_input, attributes_file])]
+#    task['file_dep'] = [mallet_input]
+#    task['clean'] = ["rm -f "+attributes_file]
+#    return task
 
 def task_download_congressional_record():
     task = dict()
-    task['actions'] = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/111/cr "+rsync_dest_dir]
-    task['clean'] = ["rm -rf " + cr_dir]
-    task['uptodate'] = [os.path.exists(rsync_dest_dir)]
+    task['actions'] = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/111/cr "+c['rsync_dest_dir']]
+    task['clean'] = ["rm -rf " + c['cr_dir']]
+    task['uptodate'] = [os.path.exists(c['rsync_dest_dir'])]
     return task
 
 def task_extract_data():
     task = dict()
-    task['targets'] = [files_dir]
-    task['actions'] = [(clean_cr, [cr_dir,files_dir])]
-    task['clean'] = ['rm -rf '+files_dir]
+    task['targets'] = [c['files_dir']]
+    task['actions'] = [(clean_cr, [c['cr_dir'],c['files_dir']])]
+    task['clean'] = ['rm -rf '+c['files_dir']]
     task['task_dep'] = ['download_congressional_record']
-    task['uptodate'] = [os.path.exists(files_dir)]
+    task['uptodate'] = [os.path.exists(c['files_dir'])]
     return task
+
+#def generate_attributes_file(mallet_input_file, output_file):
+#    print "Building attributes file {0} using {1}".format(output_file, mallet_input_file)
+#    
+#    f = open(mallet_input_file)
+#    w = open(output_file, 'w')
+#    
+#    w.write('[\n')
+#    lines = f.readlines()
+#    for i in range(0,len(lines)):
+#        arr = lines[i].split(None)
+#        
+#        w.write('\t{\n')
+#        w.write('\t\t"attributes": {\n')
+#        w.write('\t\t},\n')
+#        w.write('\t\t"path": "' + arr[0] + '"\n')
+#        
+#        w.write('\t}')
+#        
+#        if i < len(lines)-1: w.write(',')
+#        
+#        w.write('\n')
+#    w.write(']')
+
+class CRCleaner(Cleaner):
+    def __init__(self, input_dir, output_dir):
+        super(CRCleaner,self).__init__(input_dir, output_dir, u"-\n'", punctuation+digits)
+        self.t = TreebankWordTokenizer()
+    
+    def cleaned_text(self, text):
+        if len(text) == 0:
+            return u""
+        sans_xml = self.xml_to_txt(text)
+        arr = self.t.tokenize(sans_xml)
+        return self.reconstruct_arr(arr)
+    
+    def xml_to_txt(self, xml):
+        arr = []
+        dom = parseString(xml)
+        for node in (dom.firstChild.getElementsByTagName('speaking')+dom.firstChild.getElementsByTagName('speaking-unknown-id')):
+            paragraphs = node.getElementsByTagName('paragraph')
+            if len(paragraphs) > 0:
+                for node2 in paragraphs:
+                    if node2.hasChildNodes():
+                        child = node2.firstChild
+                        if child.nodeType == child.TEXT_NODE:
+                            arr += [child.data.replace('&nbsp;',' ')]
+        return ' '.join(arr)
+    
+    def new_filename(self, old_filename):
+        return old_filename.replace('.xml', '.txt')
+
+def clean_cr(src_dir, dest_dir):
+    if not os.path.exists(dest_dir):
+        os.mkdir(dest_dir)
+        c = CRCleaner(src_dir, dest_dir)
+        c.clean()
