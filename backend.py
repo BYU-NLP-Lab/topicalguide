@@ -229,9 +229,7 @@ def dataset():
 def analysis():
     return Analysis.objects.get(name=c['analysis_name'], dataset__name=c['dataset_name'])
 
-#If no existing attributes task exists, and if suppress_default_attributes_task is not set to True,
-#then define a default attributes task that generates an empty attributes file
-#TODO(josh): make the attributes file optional for the import scripts
+#TODO(josh): get rid of the default document_metadata task---it's a total kludge
 if not 'task_document_metadata' in locals() and not ('suppress_default_document_metadata_task' in c and c['suppress_default_document_metadata_task']):
     def make_document_metadata():
         attrs = open(c['metadata_filenames']['documents'], "w")
