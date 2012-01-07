@@ -20,10 +20,14 @@
 # If you have inquiries regarding any further use of the Topical Guide, please
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+
+import codecs
 import os
+import re
 
 from backend import c
-        
+from topic_modeling import anyjson
+
 def initialize_config(config):
     config['num_topics'] = 10
     config['mallet_num_iterations'] = 500

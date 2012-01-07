@@ -22,8 +22,8 @@
 
 import topic_modeling.anyjson as anyjson
 
-from build.common.cleaner import Cleaner
-from build.common.util import create_dirs_and_open
+from build import Cleaner
+from build import create_dirs_and_open
 
 data_dir = '/aml/data/mjg82/gc++'
 

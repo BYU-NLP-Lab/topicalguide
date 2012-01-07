@@ -23,7 +23,7 @@
 import os
 from sys import argv
 from string import punctuation, digits
-from build.common.cleaner import Cleaner
+from build import Cleaner
 from xml.dom.minidom import parseString
 from nltk.tokenize import TreebankWordTokenizer
 
