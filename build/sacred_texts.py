@@ -30,7 +30,7 @@ from topic_modeling import anyjson
 
 def initialize_config(config):
     config['num_topics'] = 10
-    config['mallet_num_iterations'] = 500
+    config['num_iterations'] = 500
     config['token_regex'] = '[A-Za-zÂâ]+'.decode('utf-8') # Not sure why it's necessary to use .decode('utf-8'), but it doesn't work otherwise
     config['suppress_default_document_metadata_task'] = True
     config['extra_stopwords_file'] = lambda c: '%s/early-modern-english-extra-stopwords.txt' % c['raw_data_dir']
@@ -135,7 +135,7 @@ def task_extract_data():
     task = dict()
     task['targets'] = [c['files_dir'], c['metadata_filenames']['documents']]
     task['actions'] = [
-        (_extract, [c['raw_data_dir']+'/sacred_texts', c['files_dir'], c['metadata_filenames']['documents']]
+        (_extract, [c['raw_data_dir'], c['files_dir'], c['metadata_filenames']['documents']]
         )
     ]
     task['clean'] = ['rm -rf '+c['files_dir'], 'rm -rf '+c['metadata_filenames']['documents']]
