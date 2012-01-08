@@ -20,13 +20,13 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-import datetime
 import random
+import time
+from datetime import datetime
 
 from django.db import models
 
 from topic_modeling.anyjson import deserialize
-
 
 ##############################################################################
 # Tables just to hold information about data and documents
@@ -506,6 +506,8 @@ class MetaInfoValue(models.Model):
             self.bool_value = value
         elif isinstance(value, datetime):
             self.datetime_value = value
+        elif isinstance(value, time.struct_time):
+            self.datetime_value = datetime(*value[0:6])
         else:
             raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(type(value)))
     
@@ -583,7 +585,7 @@ class WordMetaInfoValue(MetaInfoValue):
 ## Favorites
 class Favorite(models.Model):
     session_key = models.CharField(max_length=40, db_index=True)
-    timestamp = models.DateTimeField(default=datetime.datetime.now)
+    timestamp = models.DateTimeField(default=datetime.now)
     
     class Meta:
         abstract = True
