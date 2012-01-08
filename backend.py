@@ -42,19 +42,22 @@
 #
 
 import codecs
+import datetime
 import hashlib
 import os
 import sys
 
 from collections import defaultdict
-from datetime import datetime
 from subprocess import Popen, PIPE
 
-from django.db.utils import DatabaseError
+
+
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 from topic_modeling import settings
 settings.DEBUG = False # Disable debugging to prevent the database layer from caching queries and thus hogging memory
+
+from django.db.utils import DatabaseError
 
 from import_scripts.metadata import Metadata, import_dataset_metadata,\
     import_document_metadata, import_word_metadata, import_analysis_metadata,\
@@ -79,7 +82,6 @@ from topic_modeling.visualize.models import TopicNameScheme
 build = "state_of_the_union"
 #build = "kcna/kcna"
 #build = "congressional_record"
-
 
 #If this file is invoked directly, pass it in to the doit system for processing.
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
@@ -127,9 +129,9 @@ c.default('dataset_readable_name', c['dataset_name'])
 c.default('dataset_description', '')
 
 
-c.default('analysis_name', lambda c: "lda%stopics" % c['mallet_num_topics'])
-c.default('analysis_readable_name', lambda c: "LDA %s Topics" % c['mallet_num_topics'])
-c.default('analysis_description', lambda c: "Mallet LDA with %s topics" % c['mallet_num_topics'])
+c.default('analysis_name', lambda c: "lda%stopics" % c['num_topics'])
+c.default('analysis_readable_name', lambda c: "LDA %s Topics" % c['num_topics'])
+c.default('analysis_description', lambda c: "Mallet LDA with %s topics" % c['num_topics'])
 c.default('base_dir', os.curdir)
 c.default('raw_data_base_dir', c['base_dir'] + "/raw-data")
 c.default('raw_data_dir', c['raw_data_base_dir'] + "/" + c['dataset_name'])
@@ -141,7 +143,7 @@ c.default('token_regex', r'[A-Za-z]+')
 
 # Mallet
 c.default('mallet', c['base_dir'] + "/tools/mallet/mallet")
-c.default('mallet_num_topics', 50)
+c.default('num_topics', 50)
 c.default('mallet_input_file_name', "mallet_input.txt")
 c.default('mallet_input', c['dataset_dir'] + '/' + c['mallet_input_file_name'])
 c.default('mallet_imported_data', c['dataset_dir'] + "/imported_data.mallet")
@@ -149,7 +151,7 @@ c.default('mallet_output_gz', "%s/%s.outputstate.gz" % (c['dataset_dir'], c['ana
 c.default('mallet_output', "%s/%s.outputstate" % (c['dataset_dir'], c['analysis_name']))
 c.default('mallet_doctopics_output', "%s/%s.doctopics" % (c['dataset_dir'], c['analysis_name']))
 c.default('mallet_optimize_interval', 10)
-c.default('mallet_num_iterations', 500)
+c.default('num_iterations', 500)
 
 # For dynamically generated metadata file, define task_attributes_file with
 # targets [$ENTITYTYPE$_metadata_file]
@@ -272,7 +274,8 @@ if 'task_metadata_import' not in locals():
                 pass
         def clean_documents():
             try:
-                dataset().document_set.documentmetainfovalue_set.all().delete()
+                for doc in dataset().document_set.all():
+                    doc.documentmetainfovalue_set.all().delete()
             except Dataset.DoesNotExist:
                 pass
         def documents_done(_task, _values):
@@ -290,7 +293,8 @@ if 'task_metadata_import' not in locals():
                 pass
         def clean_words():
             try:
-                dataset().word_set.wordmetainfovalue_set.all().delete()
+                for word in dataset().word_set.all():
+                    word.wordmetainfovalue_set.all().delete()
             except Dataset.DoesNotExist:
                 pass
         def words_done(_task, _values):
@@ -336,7 +340,8 @@ if 'task_metadata_import' not in locals():
                 pass
         def clean_topics():
             try:
-                analysis().topic_set.topicmetainfovalue_set.all().delete()
+                for topic in analysis().topic_set.all():
+                    topic.topicmetainfovalue_set.all().delete()
             except Analysis.DoesNotExist:
                 pass
         def topics_done(_task, _values):
@@ -408,7 +413,7 @@ if 'task_mallet_output_gz' not in locals():
         task = dict()
         task['targets'] = [c['mallet_output_gz'], c['mallet_doctopics_output']]
         task['actions'] = ['%s train-topics --input %s --optimize-interval %s --num-iterations %s --num-topics %s --output-state %s --output-doc-topics %s' \
-                   % (c['mallet'], c['mallet_imported_data'], c['mallet_optimize_interval'], c['mallet_num_iterations'], c['num_topics'], c['mallet_output_gz'], c['mallet_doctopics_output'])]
+                   % (c['mallet'], c['mallet_imported_data'], c['mallet_optimize_interval'], c['num_iterations'], c['num_topics'], c['mallet_output_gz'], c['mallet_doctopics_output'])]
         task['file_dep'] = [c['mallet_imported_data']]
         task['clean'] = ["rm -f " + c['mallet_output_gz'], "rm -f " + c['mallet_doctopics_output']]
         return task
@@ -441,7 +446,7 @@ if 'task_dataset_import' not in locals():
         def remove_dataset():
             print "remove_dataset(%s)" % c['dataset_name']
             try:
-                dataset.delete()
+                dataset().delete()
             except Dataset.DoesNotExist:
                 pass
         
@@ -519,15 +524,15 @@ if 'task_dataset_metrics' not in locals():
             return True
         
         def import_metric(dataset_metric):
-            start_time = datetime.now()
+            start_time = datetime.datetime.now()
             print 'Adding %s...' % dataset_metric,
             sys.stdout.flush()
             
-            dataset = dataset()
+            dataset_ = dataset()
             
             try:
-                metrics[dataset_metric].add_metric(dataset)
-                end_time = datetime.now()
+                metrics[dataset_metric].add_metric(dataset_)
+                end_time = datetime.datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
             except KeyError as e:
@@ -565,13 +570,13 @@ if 'task_analysis_metrics' not in locals():
             return True
         
         def import_metric(analysis_metric):
-            start_time = datetime.now()
+            start_time = datetime.datetime.now()
             print 'Adding %s...' % analysis_metric,
             sys.stdout.flush()
             
             try:
                 metrics[analysis_metric].add_metric(analysis())
-                end_time = datetime.now()
+                end_time = datetime.datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
             except KeyError as e:
@@ -613,13 +618,13 @@ if 'task_topic_metrics' not in locals():
                 return False
 
         def import_metric(topic_metric):
-            start_time = datetime.now()
+            start_time = datetime.datetime.now()
             print 'Adding %s...' % topic_metric,
             sys.stdout.flush()
             try:
                 metrics[topic_metric].add_metric(c['dataset_name'], c['analysis_name'],
                         **c['topic_metric_args'][topic_metric])
-                end_time = datetime.now()
+                end_time = datetime.datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
             except KeyError as e:
@@ -665,12 +670,12 @@ if 'task_pairwise_topic_metrics' not in locals():
                 return False
 
         def import_metric(metric):
-            start_time = datetime.now()
+            start_time = datetime.datetime.now()
             print 'Adding %s...' % metric,
             sys.stdout.flush()
             try:
                 pairwise_metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
-                end_time = datetime.now()
+                end_time = datetime.datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
             except KeyError as e:
@@ -714,12 +719,12 @@ if 'task_document_metrics' not in locals():
                 return False
 
         def import_metric(metric):
-            start_time = datetime.now()
+            start_time = datetime.datetime.now()
             print 'Adding %s...' % metric,
             sys.stdout.flush()
             try:
                 metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
-                end_time = datetime.now()
+                end_time = datetime.datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
             except KeyError as e:
@@ -760,12 +765,12 @@ if 'task_pairwise_document_metrics' not in locals():
                 return False
 
         def import_metric(metric):
-            start_time = datetime.now()
+            start_time = datetime.datetime.now()
             print 'Adding %s...' % metric,
             sys.stdout.flush()
             try:
                 pairwise_metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
-                end_time = datetime.now()
+                end_time = datetime.datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
             except KeyError as e:
@@ -807,8 +812,8 @@ def task_hash_java():
         return hasher.hexdigest()
     
     def _directory_recursive_hash(dir_):
-        if not os.path.exists(dir): return "0"
-        return hash(_cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir_)))
+        if not os.path.exists(dir_): return "0"
+        return str(hash(_cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir_))))
     
     return {'actions': [(_directory_recursive_hash, [c['java_base']])]}
 
