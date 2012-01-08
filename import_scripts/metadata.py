@@ -10,6 +10,8 @@ from topic_modeling.visualize.models import DatasetMetaInfo,\
     Word, WordMetaInfo, WordMetaInfoValue, AnalysisMetaInfo,\
     AnalysisMetaInfoValue, TopicMetaInfo, TopicMetaInfoValue
 
+datetime_format = "%Y-%m-%dT%H:%M:%S"
+
 def import_dataset_metadata(dataset, dataset_metadata):
     print >> sys.stderr, 'Importing dataset metadata...  ',
     sys.stdout.flush()
@@ -105,18 +107,18 @@ class MetadataWrapper(dict):
             return value
         return self._parse_type(self.types[key], value)
     
-    def _parse_type(self, type, value):
-        if type=='float':
+    def _parse_type(self, type_, value):
+        if type_=='float':
             return float(value)
-        elif type=='text':
+        elif type_=='text':
             return str(value)
-        elif type=='int':
+        elif type_=='int':
             return int(value)
-        elif type=='bool':
+        elif type_=='bool':
             return bool(value)
-        elif type=='datetime':
+        elif type_=='datetime':
             #Example: "2004-06-03T00:44:35"
-            return time.strptime(str(value), "%Y-%m-%dT%H:%M:%S")
+            return time.strptime(str(value), datetime_format)
         else:
             raise Exception("Type '{0}' is not recognized.".format(type))
     
