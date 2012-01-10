@@ -21,6 +21,7 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 import os
+import codecs
 
 class Cleaner(object):
     def __init__(self, input_dir, output_dir, replace_with_space, delete,
@@ -85,7 +86,7 @@ def create_dirs_and_open(filename):
     make much sense to create directories if you are not going to open for
     writing."""
     try:
-        return open(filename, 'w')
+        return codecs.open(filename, 'w', 'utf-8')
     except IOError as e:
         import errno
         if e.errno != errno.ENOENT:

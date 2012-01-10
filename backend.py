@@ -116,7 +116,10 @@ class Config(dict):
     def required(self, key):
         if key not in self: raise Exception("Configuration key '%s' is required")
 
-c = Config()
+'''The configuration dictionary'''
+config = Config()
+'''A shorthand alias for the config dictionary'''
+c = config
 
 filename = "build/{0}.py".format(build)
 ast = compile(open(filename).read(), filename, 'exec')

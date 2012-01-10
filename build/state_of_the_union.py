@@ -26,107 +26,64 @@ import os
 import re
 from nltk.tokenize import TreebankWordTokenizer
 
-from backend import c
+from build import create_dirs_and_open
+from topic_modeling import anyjson
 
-def initialize_config(config):
-    config['num_topics'] = 100
-    config['chron_list_filename'] = 'chronological_list.wiki'
-    config['addresses_filename'] = 'state_of_the_union_addresses.txt'
-    config['dataset_name'] = 'state_of_the_union'
-    config['dataset_readable_name'] = 'State of the Union Addresses 1790-2010'
-    config['dataset_description'] = \
-    '''State of the Union Addresses taken from WikiSource by adding all
-     addresses to a "book" and downloading it. Created by Josh Hansen.'''
-    config['suppress_default_document_metadata_task'] = True
-    config['metadata_filenames'] = lambda c: {
-          'datasets': '%s/datasets.json' % c['raw_data_dir']
-    }
+from backend import config as c
+c['num_topics'] = 100
+c['chron_list_filename'] = 'chronological_list.wiki'
+c['addresses_filename'] = 'state_of_the_union_addresses.txt'
+c['dataset_name'] = 'state_of_the_union'
+c['dataset_readable_name'] = 'State of the Union Addresses 1790-2010'
+c['suppress_default_document_metadata_task'] = True
+c['metadata_filenames'] = lambda c: {'datasets': '%s/datasets.json' % c['raw_data_dir']}
 
-def task_document_metadata():
-    doc_meta_filename = c['metadata_filenames']['documents']
-    task = dict()
-    task['targets'] = [doc_meta_filename]
-    task['actions'] = [(generate_attributes_file,
-                ['%s/%s' % (c['raw_data_dir'], c['chron_list_filename']), doc_meta_filename])]
-    task['clean'] = ['rm -f '+doc_meta_filename]
-    return task
-
+NUMBER_OF_ADDRESSES = 223
 def task_extract_data():
-    def utd(_task, _vals): return os.path.exists(c['files_dir'])
-        
+    index_filename = '%s/%s' % (c['raw_data_dir'], c['chron_list_filename'])
+    data_filename = '%s/%s' % (c['raw_data_dir'], c['addresses_filename'])
+    dest_dir = c['files_dir']
+    doc_meta_filename = c['metadata_filenames']['documents']
+    
+    def utd(_task, _vals): return len(os.listdir(dest_dir))==NUMBER_OF_ADDRESSES and os.path.exists(doc_meta_filename)
+    
     task = dict()
-    task['targets'] = [c['files_dir']]
-    task['actions'] = [
-        (extract_state_of_the_union,
-         ['%s/%s' % (c['raw_data_dir'], c['chron_list_filename']),
-          '%s/%s' % (c['raw_data_dir'], c['addresses_filename']),
-          c['files_dir']]
-        )
-    ]
-    task['clean'] = ['rm -rf '+c['files_dir']]
+    task['targets'] = [dest_dir, doc_meta_filename]
+    task['actions'] = [(_extract, [index_filename, data_filename, dest_dir, doc_meta_filename])]
+    task['clean'] = ['rm -rf '+dest_dir]
     task['uptodate'] = [utd]
     return task
 
+chron_entry_rgx_s = r"\[\[(?P<title>(?P<president_name>.+)'s? .*State of the Union (?:Address|Speech))\|(?P<address_number>\w+) State of the Union Address\]\] - \[\[author:(?P<author_name>.+)\|.+\]\], \((?P<day>\d+) (?P<month>\w+) \[\[w:(?P<year>\d+)\|(?P=year)\]\]\)"
+chron_entry_rgx = re.compile(chron_entry_rgx_s, re.I)
+nums = {'First':'1', 'Second':'2', 'Third':'3', 'Fourth':'4', 'Fifth':'5', 'Sixth':'6', 'Seventh':'7', 'Eighth':'8',
+        'Ninth':'9', 'Tenth':'10', 'Eleventh':'11', 'Twelfth':'12'}
+def _filename(chron_entry_d):
+    prez = chron_entry_d['president_name'].replace(' ','_')
+    num = chron_entry_d['address_number']
+    return '%s_%s.txt' % (prez, num)
 
+_tokenizer = TreebankWordTokenizer()
+def _lines_to_string(lines):
+    raw_txt = u' '.join(lines)
+    tokens = _tokenizer.tokenize(raw_txt)
+    tokenized_txt = u' '.join(tokens)
+    return tokenized_txt
 
+def _extract_metadata(chron_list_filename):
+    metadata_text = codecs.open(chron_list_filename,'r','utf-8').read()
+    metadata_data = {}
+    titles_to_filenames = {}
+    for m in chron_entry_rgx.finditer(metadata_text):
+        d = m.groupdict()
+        d['address_number'] = int(nums[d['address_number']])
+        filename = _filename(d)
+        titles_to_filenames[d['title']] = filename
+        metadata_data[filename] = d
+    return metadata_data, titles_to_filenames
 
-chron_entry_regex = r"\[\[(?P<title>(?P<president_name>.+)'s? .*State of the Union (?:Address|Speech))\|(?P<address_number>\w+) State of the Union Address\]\] - \[\[author:(?P<author_name>.+)\|.+\]\], \((?P<day>\d+) (?P<month>\w+) \[\[w:(?P<year>\d+)\|(?P=year)\]\]\)"
-def metadata(chron_list_wiki_file):
-    text = codecs.open(chron_list_wiki_file,'r','utf-8').read()
-    return [m for m in re.finditer(chron_entry_regex, text, re.IGNORECASE)]
-
-ordinal_to_cardinal = {'First':1,'Second':2,'Third':3,'Fourth':4,'Fifth':5,'Sixth':6,'Seventh':7,'Eighth':8,'Ninth':9,'Tenth':10,'Eleventh':11,'Twelfth':12}
-def filename(metadata):
-    return metadata.group('president_name').replace(' ','_') + "_" + str(ordinal_to_cardinal[metadata.group('address_number')]) + '.txt'
-
-def extract_state_of_the_union(chron_list_filename, addresses_filename, dest_dir):
-    tokenizer = TreebankWordTokenizer()
-    def lines_to_string(lines):
-        raw_txt = u' '.join(lines)
-        tokens = tokenizer.tokenize(raw_txt)
-        tokenized_txt = u' '.join(tokens)
-        return tokenized_txt
-    
-    print "extract_state_of_the_union({0},{1},{2})".format(chron_list_filename, addresses_filename, dest_dir)
-#    titles = [m.group('title') for m in meta]
-    titles = dict()
-    for m in metadata(chron_list_filename):
-        titles[m.group('title')] = m
-    
-    print 'Addresses in index: ' + str(len(titles))
-    extracted_count = 0
-    if not os.path.exists(dest_dir): os.mkdir(dest_dir)
-    
-    
-    current_speech_title = None
-    lines = []
-    for line in codecs.open(addresses_filename,'r','utf-8'):
-        line = line.strip()
-        if line in titles:
-            if current_speech_title is not None:
-                m = titles[current_speech_title]
-                w = codecs.open(dest_dir+'/'+filename(m),'w','utf-8')
-                w.write(lines_to_string(lines))
-                lines = []
-                print 'Extracted "{0}"'.format(current_speech_title)
-                extracted_count += 1
-            current_speech_title = line
-        else:
-            lines += [line]
-    
-    m = titles[current_speech_title]
-    w = codecs.open(dest_dir+'/'+filename(m),'w','utf-8')
-    w.write(lines_to_string(lines))
-    print 'Extracted "{0}"'.format(current_speech_title)
-    extracted_count += 1
-    print 'Addresses extracted: ' + str(extracted_count)
-    print 'Missed: ' + str(len(titles)-extracted_count)
-
-
-
-
-head = '''{
-    "types": {
+def _write_metadata(metadata_data, dest_filename):
+    metadata_types = {
         "address_number": "int",
         "title": "text",
         "author_name": "text",
@@ -134,35 +91,41 @@ head = '''{
         "president_name": "text",
         "year": "int",
         "day": "int"
-    },
-    "data": {'''
+    }
+    metadata = {'types':metadata_types, 'data':metadata_data}
+    w = create_dirs_and_open(dest_filename)
+    w.write(anyjson.serialize(metadata))
+    w.close()
 
-tail = '''\t}
-}'''
+def _extract_doc(doc_filename, title, lines):
+    w = create_dirs_and_open(doc_filename)
+    w.write(_lines_to_string(lines))
+    w.close()
+    print 'Extracted "{0}"'.format(title)
 
-address_nums = {'First':1, 'Second':2, 'Third':3, 'Fourth':4, 'Fifth':5,
-    'Sixth':6, 'Seventh':7, 'Eighth':8, 'Ninth':9, 'Tenth':10, 'Eleventh':11,
-    'Twelfth':12}
-
-def generate_attributes_file(chron_list_file, output_file):
-    print "Building attributes file {0} using {1}".format(output_file, chron_list_file)
+def _extract(chron_list_filename, addresses_filename, dest_dir, doc_metadata_filename):
+    print "extract_state_of_the_union({0},{1},{2})".format(chron_list_filename, addresses_filename, dest_dir)
+    metadata_data, titles_to_filenames = _extract_metadata(chron_list_filename)
+    _write_metadata(metadata_data, doc_metadata_filename)
     
-    meta = metadata(chron_list_file)
-    w = open(output_file, 'w')
+    print 'Addresses in index: ' + str(len(titles_to_filenames))
+    count = 0
+    title = None
+    lines = []
+    for line in codecs.open(addresses_filename, 'r', 'utf-8'):
+        line = line.strip()
+        if line in titles_to_filenames:
+            if title is not None:
+                filename = '%s/%s' % (dest_dir, titles_to_filenames[title])
+                _extract_doc(filename, title, lines)
+                lines = []
+                count += 1
+            title = line
+        else:
+            lines += [line]
+    filename = '%s/%s' % (dest_dir, titles_to_filenames[title])
+    _extract_doc(filename, title, lines)
+    count += 1
     
-    w.write(head)
-    w.write('\n')
-    for i,m in enumerate(meta):
-        w.write('\t\t"%s": {\n' % filename(m))
-        
-        attr_entries = []
-        for attr,val in m.groupdict().items():
-            if attr=="address_number": val=address_nums[val]
-            attr_entries += ['\t\t\t"{0}": "{1}"'.format(attr,val)]
-        w.write(',\n'.join(attr_entries))
-        w.write('\n\t\t}')
-        
-        if i < len(meta)-1: w.write(',')
-        
-        w.write('\n')
-    w.write(tail)
+    print 'Addresses extracted: ' + str(count)
+    if count < len(titles_to_filenames): raise Exception('Some addresses were not extracted')
