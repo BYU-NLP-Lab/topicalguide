@@ -52,6 +52,7 @@ class Describable(models.Model):
 class Dataset(Describable):
     dataset_dir = models.CharField(max_length=128, db_index=True)
     files_dir = models.CharField(max_length=128, db_index=True)
+    visible = models.BooleanField(default=True)
 
     def __unicode__(self):
         return self.name

@@ -110,4 +110,5 @@ class AnalysisBaseView(DatasetBaseView):
         # on the name of the current analysis
         context['favorites']['documents'] = favorite_document_entries(request, kwargs['dataset'], kwargs['analysis']) + context['favorites']['documents']
         context['favids']['documents'] = [fav['fav'].document.id for fav in context['favorites']['documents']]
+        
         return context
