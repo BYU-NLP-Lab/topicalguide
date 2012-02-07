@@ -36,7 +36,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DBTYPE = 'sqlite3'
-#DATABASE = 'mysql'
+#DBTYPE = 'mysql'
 
 SQLITE_CONFIG = {
     'ENGINE': 'django.db.backends.sqlite3',
