@@ -204,19 +204,18 @@ c.default('graph_builder_class', "edu.byu.nlp.topicvis.TopicMapGraphBuilder")
 c.default('graphs_min_value', 1)
 c.default('graphs_pairwise_metric', "Document Correlation")
 
-db_type = settings.database_type()
-if db_type=='sqlite3':
-    c.default('yamba_file', c['base_dir'] + "/yamba")
+if settings.DBTYPE=='sqlite3':
+    c.default('yamba_file', c['base_dir'] + "/" + settings.SQLITE_CONFIG['NAME'])
     if not os.path.exists(c['yamba_file']):
         print "Initializing database..."
         os.system("python topic_modeling/manage.py syncdb --noinput > /dev/null")
     c.default('db_jar', 'sqlitejdbc-v056.jar')
     c.default('jdbc_path', "jdbc:sqlite:" + c['yamba_file'])
-elif db_type=='mysql':
-    c.default('mysql_server', 'localhost')
-    c.default('mysql_db', 'topicalguide')
-    c.default('mysql_user', 'topicalguide')
-    c.default('mysql_password', 'topicalguide')
+elif settings.DBTYPE=='mysql':
+    c.default('mysql_server', settings.MYSQL_CONFIG['SERVER'])
+    c.default('mysql_db', settings.MYSQL_CONFIG['NAME'])
+    c.default('mysql_user', settings.MYSQL_CONFIG['USER'])
+    c.default('mysql_password', settings.MYSQL_CONFIG['PASSWORD'])
     c.default('db_jar', 'mysql-connector-java-5.1.18-bin.jar')
     c.default('jdbc_path', 'jdbc:mysql://%s/%s?user=%s\&password=%s'
                % (c['mysql_server'], c['mysql_db'], c['mysql_user'], c['mysql_password']))
