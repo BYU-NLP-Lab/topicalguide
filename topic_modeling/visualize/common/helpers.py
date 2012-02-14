@@ -71,10 +71,10 @@ def get_word_cloud(words, open_='', close='', url=True):
     cloud = ''
     for word in words:
         if url:
-            cloud += '<a href="%s">' % word.url
+            cloud += '<a href="%s" title="%s%%">' % (word.url, word.percent)
         size = word.percent / scale * 100 + 50
         text = open_ + word.word.lower() + close
-        cloud += '<span style="font-size:%d%%">%s</span> ' % (size, text)
+        cloud += '<span style="font-size:%d%%" title="%s%%">%s</span> ' % (size, word.percent,text)
         if url:
             cloud += '</a>'
     return cloud

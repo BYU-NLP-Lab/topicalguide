@@ -58,11 +58,11 @@ class DatasetView(DatasetBaseView):
             attributes = dataset.attribute_set.all()
             
             if len(attributes) > 0 and dataset.analysis_set.count() > 0:
-                for i, analysis in enumerate(dataset.analysis_set.all()):
-                    
+                print len(attributes)
+                for i, analysis in enumerate(dataset.analysis_set.all()):                    
                     attribute = self._sample_list(attributes)
                     attrvalues = attribute.attributevalue_set.all()
-                    attrvalues = [attrval.value.id for attrval in attrvalues]
+                    attrvalues = [attrval.value.id for attrval in attrvalues[:15]]
                 
                     topics = analysis.topic_set.all()
                     topics = [self._sample_list(topics), self._sample_list(topics), self._sample_list(topics)]
@@ -73,7 +73,7 @@ class DatasetView(DatasetBaseView):
                     plot_img_url += "values/" + '.'.join([str(x) for x in attrvalues])
                     plot_img_url += "/topics/"
                     plot_img_url += '.'.join([str(x) for x in topics])
-                    plot_img_url += '?fmt=png'
+                    plot_img_url += '?fmt=json'
                     
                     analysis_img_urls[analysis] = plot_img_url
                     
