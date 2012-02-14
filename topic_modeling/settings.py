@@ -30,25 +30,30 @@ TEMPLATE_DEBUG = DEBUG
 PROFILE_LOG_BASE = 'topic_modeling/profiles'
 
 ADMINS = (
-    # ('Joshua Lutes', 'joshua@lutes.me'),
+    # ('Administrator', 'admin@example.com'),
 )
 
 MANAGERS = ADMINS
 
-DATABASES = {
-	'default': {
-#		'ENGINE': 'django.db.backends.sqlite3',
-#		'NAME': 'yamba'
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': 'topicalguide',
-        'SERVER': 'localhost',
-        'PASSWORD': 'topicalguide',
-        'NAME': 'topicalguide'
-	}
+DBTYPE = 'sqlite3'
+#DBTYPE = 'mysql'
+
+SQLITE_CONFIG = {
+    'ENGINE': 'django.db.backends.sqlite3',
+    'NAME': 'tg.sqlite3'
+}
+MYSQL_CONFIG = {
+    'ENGINE': 'django.db.backends.mysql',
+    'USER': 'topicalguide',
+    'SERVER': 'localhost',
+    'PASSWORD': 'topicalguide',
+    'NAME': 'topicalguide'
 }
 
+DATABASES = {'default': SQLITE_CONFIG if DBTYPE=='sqlite3' else MYSQL_CONFIG}
+
 def database_type():
-    return DATABASES['default']['ENGINE'].split('.')[-1]
+    return DBTYPE
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
