@@ -29,12 +29,35 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     {{block.super}}
     <link rel="stylesheet" href="{{STYLES}}/datasets.css" type="text/css" />
     <link href='http://fonts.googleapis.com/css?family=Caudex:400' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{STYLES}}/plot.css" type="text/css" />
+    <link rel="stylesheet" href="{{SCRIPTS}}/charts/jqplot/css/jquery.jqplot.min.css" type="text/css" />    
 {% endblock %}
 
 {% block google_font_families %}{{block.super}}Caudex:400{% endblock %}
 
 {% block scripts %}
     {{block.super}}
+	<script charset="utf=8" language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/js/jquery.jqplot.min.js"></script>	
+	<script charset="utf=8" language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.cursor.js"></script>	
+	<script charset="utf=8" language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.highlighter.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.barRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+	
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/plots.js"></script>
+	<script charset="utf-8" type="text/javascript">
+		function set_loading_image() {
+		    $("img#plot_image").attr("src", "{{IMAGES}}/ajax-loader.gif");
+		}
+		$(document).ready(function() {
+			$(window).resize(function() {
+				update_plot();		
+			});	
+		});
+			
+	</script>    
     <script type="text/javascript" src="{{SCRIPTS}}/datasets.js"></script>
 {% endblock %}
 
@@ -62,7 +85,14 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     <div class="tab-content" dataset="{{dataset.name}}">
         <div class="main">
 	        {% if dataset.analysis_set.count > 0 %}
-		        <img id="{{dataset.name}}__plot" class="plot" src="{{dataset_info.initial_plot_img_url}}"/>
+		       <!-- <img id="{{dataset.name}}__plot" class="plot" src="{{dataset_info.initial_plot_img_url}}"/>-->		        
+			    <div class="ui-widget-content ui-corner-all">
+			        <div id="jqplot_container">
+					<div id="jqplot"></div>
+					<span id="jqplot_info"></span>
+			        </div>
+			    </div>
+			    <script>get_chart("{{dataset_info.initial_plot_img_url}}")</script>
 		        <div class="explore-wrapper"><button class="explore">Explore!</button></div>
 	        {% else %}
 	            <div class="ui-state-highlight">No analyses available for this dataset. Try importing one using <code>backend.py analysis_import</code>.</div>

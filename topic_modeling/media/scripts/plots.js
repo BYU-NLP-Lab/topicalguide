@@ -42,8 +42,75 @@ function update_topic_attribute_plot() {
 		added_query = true;
 	}
 	$("a#csv_data").attr("href", url_base + '?fmt=csv');
+	url_base += '?fmt=json';
+	added_query = true;
+	if ($('#id_histogram:checked').val() != null) {
+		if (!added_query) {
+			url_base += '?';
+		} else {
+			url_base += '&';
+		}
+		url_base += "histogram=true";		
+	}	
+		
+	get_chart(url_base);
+	
+	
+}
 
-	$.getJSON(url_base+'?fmt=json', function(data) {
+function update_plot(){
+	jqPlotChart.replot( { resetAxes: true } );
+	offset = 50;
+	containerHeight = $('#jqplot_container').height();
+	legendHeight = $('.jqplot-table-legend').height();
+	
+//	console.log(containerHeight);
+//	console.log(legendHeight);
+//	if(legendHeight > containerHeight){
+//		$('#jqplot_container').height(legendHeight);
+//	}else{
+//		$('#jqplot_container').height($('#jqplot').height());
+//	}
+	
+	$('#jqplot').unbind('jqplotDataClick');
+	$('#jqplot').bind('jqplotDataClick', function (ev, seriesIndex, pointIndex, data) {
+		//console.log(legends[seriesIndex]+"idx:"+seriesIndex);
+		//console.log(legends);
+		//console.log("idx:"+seriesIndex);
+		$('#jqplot_info').html(legends[seriesIndex].label+'<br/> ( '+ticks[pointIndex]+', '+parseFloat(data[1]).toFixed(5) +" )");
+		$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-220 });
+	 });
+	$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-220 });
+	var fontSize = '';
+	containerWidth = $('#jqplot_container').width();
+	if(containerWidth < 600){
+		fontSize = '12px';
+	}else if(containerWidth < 1000){
+		fontSize = '14px';
+	}else{
+		fontSize = '18px';
+	}	
+	$('#jqplot_info').css("font-size", fontSize);
+	//$('#jqplot_container').height($('.jqplot-table-legend').height());
+	//console.log("container.height: "+$('#jqplot_container').height());
+	//console.log("legends.height: "+$('.jqplot-table-legend').height());
+}
+
+function get_chart(url){
+	
+	var histogram = 0;
+	var uri = url.split('?');
+	if(uri.length > 1){
+		query = uri[1].split('&');
+		for(var i = 0; i < query.length; i++){
+			//console.log(query[i]);
+			if(query[i].indexOf("histogram") != -1){
+				histogram = 1;
+			}
+		}
+	}
+	
+	$.getJSON(url, function(data) {
 		// key is the data title
 		// data[key] is the string
 		var linedata = [];
@@ -95,17 +162,11 @@ function update_topic_attribute_plot() {
 			cursor: {},
 			highlighter: {}
 		};		
-
+	
 		jqplot_options.axes.xaxis.label = data['x-axis-label'];
 		jqplot_options.axes.yaxis.label = data['y-axis-label'];		
 		
-		if ($('#id_histogram:checked').val() != null) {
-			if (!added_query) {
-				url_base += '?';
-			} else {
-				url_base += '&';
-			}
-			url_base += "histogram=true";
+		if (histogram == 1) {
 			jqplot_options.stackSeries = true;
 			jqplot_options.seriesDefaults.renderer = $.jqplot.BarRenderer;
 			jqplot_options.seriesDefaults.rendererOptions = [];
@@ -115,37 +176,8 @@ function update_topic_attribute_plot() {
 		
 		$('#jqplot').html("");
 		jqPlotChart = $.jqplot('jqplot', linedata, jqplot_options);		
-		
-	});		
-	update_plot();
-}
-
-function update_plot(){
-	jqPlotChart.replot( { resetAxes: true } );
-	offset = 50;
-	containerHeight = $('#jqplot_container').height();
-	legendHeight = $('.jqplot-table-legend').height();
-	
-//	console.log(containerHeight);
-//	console.log(legendHeight);
-//	if(legendHeight > containerHeight){
-//		$('#jqplot_container').height(legendHeight);
-//	}else{
-//		$('#jqplot_container').height($('#jqplot').height());
-//	}
-	
-	$('#jqplot').unbind('jqplotDataClick');
-	$('#jqplot').bind('jqplotDataClick', function (ev, seriesIndex, pointIndex, data) {
-		//console.log(legends[seriesIndex]+"idx:"+seriesIndex);
-		//console.log(legends);
-		//console.log("idx:"+seriesIndex);
-		$('#jqplot_info').html(legends[seriesIndex].label+'<br/> ( '+ticks[pointIndex]+', '+parseFloat(data[1]).toFixed(5) +" )");
-		$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-197 });
-	 });
-	$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-197 });
-	//$('#jqplot_container').height($('.jqplot-table-legend').height());
-	//console.log("container.height: "+$('#jqplot_container').height());
-	//console.log("legends.height: "+$('.jqplot-table-legend').height());
+		update_plot();
+	});
 }
 
 /*
