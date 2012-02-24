@@ -5,7 +5,7 @@ Tasks
 Intro
 -------
 
-`doit` is all about automating the execution of tasks. Tasks can execute external shell commands/scripts or python functions (actually any callable). So a task can be anything you can code :)
+`doit` is all about automating task dependency management and execution. Tasks can execute external shell commands/scripts or python functions (actually any callable). So a task can be anything you can code :)
 
 Tasks are defined using `python <http://python.org/>`_, in a plain python file with some conventions. A function that starts with the name `task_` defines a *task generator* recognized by `doit`. These functions must return (or yield) dictionaries representing a *task*. A python module/file that defines *tasks* for `doit` is called **dodo** file (that is something like a `Makefile` for `make`).
 
@@ -31,9 +31,11 @@ On the output it displays which tasks were executed. In this case the `dodo` fil
 Actions
 --------
 
-Every *task* must define **actions**. It can optionally defines other attributes like `targets`, `dependencies`, `doc` ...
+Every *task* must define **actions**. It can optionally defines other attributes like `targets`, `file_dep`, `verbosity`, `doc` ...
 
-Actions define what the task actually do. A task can define any number of actions. There 2 kinds of `actions`: *cmd-action* and *python-action*.
+Actions define what the task actually do. A task can define any number of actions. The action "result" is used to determine if task execution was successful or not.
+
+There 2 kinds of `actions`: *cmd-action* and *python-action*.
 
 cmd-action
 ^^^^^^^^^^^
@@ -57,7 +59,7 @@ It is easy to include dynamic (on-the-fly) behavior to your tasks with python co
 
 .. literalinclude:: tutorial/tutorial_02.py
 
-The function `task_hello` is a *task generator* not the task itself. The body of the task generator function is always executed when the dodo file is loaded.
+The function `task_hello` is a *task generator*, not the task itself. The body of the task generator function is always executed when the dodo file is loaded.
 
 .. note::
  The body of task generators are executed even if the task is not going to be executed. So in this example the line `msg = 3 * "hi! "` will always be executed. The body of task generators should be used to create task metadata only, not execute tasks! From now on when it said that a *task* is executed, read the task's actions are executed.
@@ -151,3 +153,28 @@ You can also select tasks to be executed using a `glob <http://docs.python.org/l
     .  create_file:file1.txt
     .  create_file:file2.txt
     .  create_file:file3.txt
+
+
+command line variables (*doit.get_var*)
+-----------------------------------------
+
+It is possible to pass variable values to be used in dodo.py from the command line.
+
+.. literalinclude:: tutorial/get_var.py
+
+.. code-block:: console
+
+    $ doit
+    .  echo
+    hi {abc: NO}
+    $ doit abc=xyz x=3
+    .  echo
+    hi {abc: xyz}
+
+
+
+private/hidden tasks
+---------------------
+
+If task name starts with an underscore '_', it will not be included in the output.
+

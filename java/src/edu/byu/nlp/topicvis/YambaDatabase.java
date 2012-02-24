@@ -31,25 +31,44 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * WARNING: This class constructs queries in a horribly unsafe fashion that's begging for a SQL
+ * injection attack. Need to use prepared statements with parameter substitution rather than
+ * concatenating strings.
+ * 
+ * @author Josh Hansen
+ *
+ */
 public class YambaDatabase {
 	private final Connection connection;
-	public YambaDatabase(final String yambaFilename) {
-		this.connection = connect(yambaFilename);
+	
+	public YambaDatabase(final String jdbcPath) {
+		this.connection = connect(jdbcPath);
 	}
-
-	private static Connection connect(final String yambaFilename) {
+	
+	private static String connectionClassName(final String jdbcPath) {
+		if(jdbcPath.contains("sqlite")) {
+			return "org.sqlite.JDBC";
+		}
+		if(jdbcPath.contains("mysql")) {
+			return "com.mysql.jdbc.Driver";
+		}
+		throw new IllegalArgumentException("Unrecognized JDBC path type: " + jdbcPath);
+	}
+	
+	private static Connection connect(final String jdbcPath) {
 		Connection connection = null;
 		try {
-			Class.forName("org.sqlite.JDBC");
+			Class.forName(connectionClassName(jdbcPath));
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-
+		
 		try {
-			connection = DriverManager.getConnection("jdbc:sqlite:" + yambaFilename);
+			connection = DriverManager.getConnection(jdbcPath);
 		} catch(SQLException e) {
 			e.printStackTrace();
-			System.err.println("Couldn't create database. Exiting.");
+			System.err.println("Couldn't connect to database at " + jdbcPath + ". Exiting.");
 			System.exit(-1);
 		}
 		return connection;
@@ -63,6 +82,7 @@ public class YambaDatabase {
 	public int pairwiseMetricID(final String pairwiseMetricName, final int analysisID) throws SQLException {
 		final String sql = "select id from visualize_pairwisetopicmetric where name='" + pairwiseMetricName + "' and analysis_id='" + analysisID + "';";
 		final ResultSet rs = connection.createStatement().executeQuery(sql);
+		rs.next();
 		return rs.getInt("id");
 	}
 
@@ -83,6 +103,7 @@ public class YambaDatabase {
 
 	public int analysisIDfromPairwiseMetricName(final String pairwiseMetricName) throws SQLException {
 		ResultSet rs = connection.createStatement().executeQuery("select analysis_id from visualize_pairwisetopicmetric where name='" + pairwiseMetricName + "';");
+		rs.next();
 		return rs.getInt("analysis_id");
 	}
 
@@ -117,24 +138,29 @@ public class YambaDatabase {
 
 	public int topicNumber(final int topicID) throws SQLException {
 		final ResultSet rs = connection.createStatement().executeQuery("select number from visualize_topic where id=" + topicID + ";");
+		rs.next();
 		return rs.getInt("number");
 	}
 
 	public double pairwiseMetricValue(final int topic1_id, final int topic2_id, final int metric_id) throws SQLException {
 		final String sql = "select value from visualize_pairwisetopicmetricvalue where topic1_id=" + topic1_id + " and topic2_id=" + topic2_id + " and metric_id=" + metric_id + ";";
 		ResultSet rs = connection.createStatement().executeQuery(sql);
+		rs.next();
 		return rs.getDouble("value") * 100;
 	}
 
 	public String wordType(final int wordID) throws SQLException {
 		final String sql = "select type from visualize_word where id=" + wordID + ";";
 		final ResultSet rs = connection.createStatement().executeQuery(sql);
+		rs.next();
 		return rs.getString("type");
 	}
 
 	public int topicMetricID(final String name, final int analysisID) throws SQLException {
 		final String sql = "select id from visualize_topicmetric where name='" + name + "' and analysis_id=" + analysisID + ";";
-		return connection.createStatement().executeQuery(sql).getInt("id");
+		ResultSet rs = connection.createStatement().executeQuery(sql);
+		rs.next();
+		return rs.getInt("id");
 	}
 
 	public int createTopicMetric(final String name, final int analysisID) throws SQLException {
@@ -152,7 +178,9 @@ public class YambaDatabase {
 		final String sql = "select count(*) as count from visualize_topicmetricvalue where topic_id=" + topicID + " and metric_id=" + metricID + ";";
 		boolean result = false;
 		try {
-			result = connection.createStatement().executeQuery(sql).getInt("count") > 0;
+			ResultSet rs = connection.createStatement().executeQuery(sql);
+			rs.next();
+			result = rs.getInt("count") > 0;
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

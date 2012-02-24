@@ -25,7 +25,7 @@
 ##########################
 
 
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage
 from topic_modeling.visualize.models import Dataset, Analysis, Word
 from django.shortcuts import get_object_or_404
 from topic_modeling.visualize.common.ui import Widget
@@ -49,7 +49,10 @@ def paginate_list(list_, page, num_per_page, obj=None):
             list_ = paginator.page(page).object_list
             if obj in list_:
                 return list_, paginator.num_pages, page
-    return paginator.page(page).object_list, paginator.num_pages, None
+    try:
+        return paginator.page(page).object_list, paginator.num_pages, page
+    except EmptyPage:
+        return paginator.page(1).object_list, paginator.num_pages, 1
 
 
 # TODO(matt): is there a better way to do this?
@@ -68,10 +71,10 @@ def get_word_cloud(words, open_='', close='', url=True):
     cloud = ''
     for word in words:
         if url:
-            cloud += '<a href="%s">' % word.url
+            cloud += '<a href="%s" title="%s%%">' % (word.url, word.percent)
         size = word.percent / scale * 100 + 50
         text = open_ + word.word.lower() + close
-        cloud += '<span style="font-size:%d%%">%s</span> ' % (size, text)
+        cloud += '<span style="font-size:%d%%" title="%s%%">%s</span> ' % (size, word.percent,text)
         if url:
             cloud += '</a>'
     return cloud

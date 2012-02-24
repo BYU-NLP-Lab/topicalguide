@@ -31,7 +31,7 @@ from django.views.decorators.http import require_http_methods, require_GET
 from topic_modeling import anyjson
 from topic_modeling.visualize.common.http_responses import JsonResponse
 from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis, AnalysisFavorite, TopicFavorite, Topic, \
-    TopicViewFavorite, DocumentViewFavorite, Document
+    TopicViewFavorite, DocumentViewFavorite, Document, DocumentFavorite
 from topic_modeling.visualize.topics.names import current_name_scheme, topic_name_with_ns
 
 
@@ -122,6 +122,47 @@ def analysis(request, dataset, analysis):
     
     def create():
         AnalysisFavorite.objects.create(analysis=analysis, session_key=request.session.session_key)
+    
+    return _favorites_ajax_handler(request, get, create)
+
+## Document Favorites
+@require_GET
+def documents(request, dataset=None):
+    return JsonResponse([fav.document.id for fav in _document_favorites(request, dataset)])
+
+def _document_favorites(request, dataset=None):
+    if dataset:
+        return DocumentFavorite.objects.filter(document__dataset__name=dataset, session_key=request.session.session_key)
+    else:
+        return DocumentFavorite.objects.filter(session_key=request.session.session_key)
+
+def favorite_document_entries(request, dataset, analysis):
+    entries = list()
+    for fav in _document_favorites(request, dataset):
+        doc = fav.document
+        dataset = doc.dataset
+        kwargs = {'dataset': dataset.name,
+                  'analysis': analysis,
+                  'document': doc.id}
+        entries.append({
+                     'text': doc.get_title(),
+                     'url': reverse('tg-doc', kwargs=kwargs),
+                     'favurl': reverse('tg-favs-doc', kwargs=kwargs),
+                     'fav': fav})
+    return entries
+
+@require_http_methods(['GET', 'PUT', 'DELETE'])
+def document(request, dataset, analysis, document):
+    doc = Document.objects.get(id=int(document))
+    
+    def get():
+        try:
+            return DocumentFavorite.objects.get(document=doc, session_key=request.session.session_key)
+        except DocumentFavorite.DoesNotExist:
+            return None
+    
+    def create():
+        DocumentFavorite.objects.create(document=doc, session_key=request.session.session_key)
     
     return _favorites_ajax_handler(request, get, create)
 

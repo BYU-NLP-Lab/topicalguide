@@ -83,7 +83,7 @@ def topic_page(request, dataset, analysis, number):
 #                analysis__dataset__name=dataset)
     num_per_page = request.session.get('topics-per-page', 20)
     page = int(number)
-    topics, num_pages, _ = paginate_list(topics, page, num_per_page)
+    topics, num_pages, page = paginate_list(topics, page, num_per_page)
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
@@ -106,10 +106,10 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
 
 
 def similar_topics(request, dataset, analysis, topic, measure):
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
     request.session['topic-similarity-measure'] = measure
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     topic = analysis.topic_set.get(number=topic)
     measure = analysis.pairwisetopicmetric_set.get(name=measure)
     similar_topics = topic.pairwisetopicmetricvalue_originating.\

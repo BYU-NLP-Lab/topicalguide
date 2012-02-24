@@ -27,8 +27,7 @@ import os, sys
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
-from import_scripts.metadata import Metadata, import_document_metadata,\
-    import_dataset_metadata, import_word_metadata
+from import_scripts.metadata import Metadata
 
 from topic_modeling import settings
 settings.DEBUG = False
@@ -61,13 +60,15 @@ def import_dataset(name, readable_name, description, state_file, metadata_filena
     
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
-    # These are some attempts to make the database access a little faster
-    cursor = connection.cursor()
-    cursor.execute('PRAGMA temp_store=MEMORY')
-    cursor.execute('PRAGMA synchronous=OFF')
-    cursor.execute('PRAGMA cache_size=2000000')
-    cursor.execute('PRAGMA journal_mode=MEMORY')
-    cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
+    
+    if settings.database_type()=='sqlite3':
+        # These are some attempts to make the database access a little faster
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA temp_store=MEMORY')
+        cursor.execute('PRAGMA synchronous=OFF')
+        cursor.execute('PRAGMA cache_size=2000000')
+        cursor.execute('PRAGMA journal_mode=MEMORY')
+        cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
 
     dataset, created = _create_dataset(name, readable_name, description, dataset_dir, files_dir)
     if created:
@@ -90,17 +91,10 @@ def import_dataset(name, readable_name, description, state_file, metadata_filena
         _create_attrvalword_table(attrvalword, attr_index, value_index,
                 word_index)
         
-        # --- Import Metadata ---
-        import_document_metadata(dataset, document_metadata)
-        
-        dataset_metadata = Metadata(metadata_filenames['datasets'])
-        import_dataset_metadata(dataset, dataset_metadata)
-        
-        word_metadata = Metadata(metadata_filenames['words'])
-        import_word_metadata(dataset, word_metadata)
-
-        cursor.execute('PRAGMA journal_mode=DELETE')
-        cursor.execute('PRAGMA locking_mode=NORMAL')
+        if settings.database_type()=='sqlite3':
+            cursor = connection.cursor()
+            cursor.execute('PRAGMA journal_mode=DELETE')
+            cursor.execute('PRAGMA locking_mode=NORMAL')
         end_time = datetime.now()
         print >> sys.stderr, 'Finishing time:', end_time
         print >> sys.stderr, 'It took', end_time - start_time,

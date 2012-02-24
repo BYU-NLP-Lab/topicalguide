@@ -1,4 +1,4 @@
-import py.test
+import pytest
 
 from doit.exceptions import InvalidDodoFile, InvalidCommand
 from doit.task import InvalidTask, Task
@@ -30,26 +30,26 @@ class TestTaskControlInit(object):
     def test_targetDependency(self):
         t1 = Task("taskX", None,[],['intermediate'])
         t2 = Task("taskY", None,['intermediate'],[])
-        TaskControl([t1,t2])
+        TaskControl([t1, t2])
         assert ['taskX'] == t2.task_dep
 
     # 2 tasks can not have the same name
     def test_addTaskSameName(self):
         t1 = Task("taskX", None)
         t2 = Task("taskX", None)
-        py.test.raises(InvalidDodoFile, TaskControl, [t1, t2])
+        pytest.raises(InvalidDodoFile, TaskControl, [t1, t2])
 
     def test_addInvalidTask(self):
-        py.test.raises(InvalidTask, TaskControl, [666])
+        pytest.raises(InvalidTask, TaskControl, [666])
 
     def test_userErrorTaskDependency(self):
         tasks = [Task('wrong', None, task_dep=["typo"])]
-        py.test.raises(InvalidTask, TaskControl, tasks)
+        pytest.raises(InvalidTask, TaskControl, tasks)
 
     def test_sameTarget(self):
         tasks = [Task('t1',None,[],["fileX"]),
                  Task('t2',None,[],["fileX"])]
-        py.test.raises(InvalidTask, TaskControl, tasks)
+        pytest.raises(InvalidTask, TaskControl, tasks)
 
 
     def test_wild(self):
@@ -58,6 +58,12 @@ class TestTaskControlInit(object):
         TaskControl(tasks)
         assert 'foo4' in tasks[0].task_dep
 
+    def test_bug770150_task_dependency_from_target(self):
+        t1 = Task("taskX", None,[],['intermediate'])
+        t2 = Task("taskY", None,['intermediate'], task_dep=['taskZ'])
+        t3 = Task("taskZ", None)
+        TaskControl([t1, t2, t3])
+        assert ['taskZ', 'taskX'] == t2.task_dep
 
 
 TASKS_SAMPLE = [Task("t1", [""], doc="t1 doc string"),
@@ -99,7 +105,7 @@ class TestTaskControlCmdOptions(object):
     # filter a non-existent task raises an error
     def testFilterWrongName(self):
         tc =  TaskControl(TASKS_SAMPLE)
-        py.test.raises(InvalidCommand, tc._filter_tasks, ['no'])
+        pytest.raises(InvalidCommand, tc._filter_tasks, ['no'])
 
     def testFilterEmptyList(self):
         filter_ = []
@@ -136,7 +142,7 @@ class TestAddTask(object):
         tc = TaskControl(tasks)
         tc.process(None)
         gen = tc._add_task(0, "taskX", False)
-        py.test.raises(InvalidDodoFile, gen.next)
+        pytest.raises(InvalidDodoFile, gen.next)
 
     def testParallel(self):
         tasks = [Task("taskX",None,task_dep=["taskY"]),
@@ -147,7 +153,7 @@ class TestAddTask(object):
         assert tasks[1] == gen1.next()
         # gen2 wont get any task, because it was already being processed
         gen2 = tc._add_task(1, "taskY", False)
-        py.test.raises(StopIteration, gen2.next)
+        pytest.raises(StopIteration, gen2.next)
 
     def testSetupTasksDontRun(self):
         tasks = [Task("taskX",None,setup=["taskY"]),
@@ -158,7 +164,7 @@ class TestAddTask(object):
         assert tasks[0] == gen.next()
         # X is up-to-date
         tasks[0].run_status = 'up-to-date'
-        py.test.raises(StopIteration, gen.next)
+        pytest.raises(StopIteration, gen.next)
 
     def testIncludeSetup(self):
         # with include_setup yield all tasks without waiting for setup tasks to
@@ -171,7 +177,7 @@ class TestAddTask(object):
         assert tasks[0] == gen.next() # tasks with setup are yield twice
         assert tasks[1] == gen.next() # execute setup before
         assert tasks[0] == gen.next() # second time, ok
-        py.test.raises(StopIteration, gen.next) # nothing left
+        pytest.raises(StopIteration, gen.next) # nothing left
 
     def testSetupTasksRun(self):
         tasks = [Task("taskX",None,setup=["taskY"]),
@@ -183,7 +189,7 @@ class TestAddTask(object):
         tasks[0].run_status = 'run' # should be executed
         assert tasks[1] == gen.next() # execute setup before
         assert tasks[0] == gen.next() # second time, ok
-        py.test.raises(StopIteration, gen.next) # nothing left
+        pytest.raises(StopIteration, gen.next) # nothing left
 
     def testWaitSetup(self):
         tasks = [Task("taskX",None,setup=["taskY"]),
@@ -199,7 +205,7 @@ class TestAddTask(object):
         tasks[0].run_status = 'run' # should be executed
         assert tasks[1] == gen.next() # execute setup before
         assert tasks[0] == gen.next() # second time, ok
-        py.test.raises(StopIteration, gen.next) # nothing left
+        pytest.raises(StopIteration, gen.next) # nothing left
 
     def testSetupInvalid(self):
         tasks = [Task("taskX",None,setup=["taskZZZZZZZZ"]),
@@ -209,7 +215,7 @@ class TestAddTask(object):
         gen = tc._add_task(0, 'taskX', False)
         assert tasks[0] == gen.next() # tasks with setup are yield twice
         tasks[0].run_status = 'run' # should be executed
-        py.test.raises(InvalidTask, gen.next) # execute setup before
+        pytest.raises(InvalidTask, gen.next) # execute setup before
 
     def testCalcDep(self):
         def get_deps():
@@ -247,7 +253,7 @@ class TestGetNext(object):
         tasks[0].run_status = 'run' # should be executed
         assert tasks[1] == gen.next() # execute setup before
         assert tasks[0] == gen.next() # second time, ok
-        py.test.raises(StopIteration, gen.next) # nothing left
+        pytest.raises(StopIteration, gen.next) # nothing left
 
 # TODO get task from waiting queue before new gen
 

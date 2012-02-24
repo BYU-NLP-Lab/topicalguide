@@ -29,7 +29,7 @@ from collections import defaultdict
 from datetime import datetime
 
 import topic_modeling.anyjson as anyjson
-from build.common.util import create_dirs_and_open
+from build import create_dirs_and_open
 
 from django.db import connection, transaction
 
@@ -41,25 +41,26 @@ from topic_modeling.visualize.models import DocumentTopicWord
 from topic_modeling.visualize.models import MarkupFile
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import TopicWord
-from import_scripts.metadata import Metadata, import_topic_metadata,\
-    import_analysis_metadata
+from import_scripts.metadata import Metadata
+from topic_modeling import settings
 
 NUM_DOTS = 100
 
 def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, metadata_filenames, token_regex):
-    print >> sys.stderr, "analysis_import({0})".\
-            format(', '.join([dataset_name, analysis_name, analysis_readable_name, analysis_description,
+    print >> sys.stderr, u"analysis_import({0})".\
+            format(u', '.join([dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, str(metadata_filenames), token_regex]))
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
-    # These are some attempts to make the database access a little faster
-    cursor = connection.cursor()
-    cursor.execute('PRAGMA temp_store=MEMORY')
-    cursor.execute('PRAGMA synchronous=OFF')
-    cursor.execute('PRAGMA cache_size=2000000')
-    cursor.execute('PRAGMA journal_mode=MEMORY')
-    cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
+    if settings.database_type()=='sqlite3':
+        # These are some attempts to make the database access a little faster
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA temp_store=MEMORY')
+        cursor.execute('PRAGMA synchronous=OFF')
+        cursor.execute('PRAGMA cache_size=2000000')
+        cursor.execute('PRAGMA journal_mode=MEMORY')
+        cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
     
     dataset, _ = Dataset.objects.get_or_create(name=dataset_name)
     analysis, created = _create_analysis(dataset, analysis_name, analysis_readable_name, analysis_description)
@@ -88,22 +89,15 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
         _create_topicword_table(topic_word_counts, topic_index, word_index)
         _create_doctopicword_table(doc_topic_word_counts, doc_index, topic_index, word_index)
         _create_attrvaltopic_table(dataset, attr_val_topic_counts, topic_index)
-        
-        
-        # --- Import Metadata ---
-        analysis_metadata = Metadata(metadata_filenames['analyses'])
-        import_analysis_metadata(analysis, analysis_metadata)
-        
-        topic_metadata = Metadata(metadata_filenames['topics'])
-        import_topic_metadata(analysis, topic_metadata)
 
         end_time = datetime.now()
         print >> sys.stderr, 'Finishing time:', end_time
         print >> sys.stderr, 'It took', end_time - start_time,
         print >> sys.stderr, 'to import the analysis'
-
-    cursor.execute('PRAGMA journal_mode=DELETE')
-    cursor.execute('PRAGMA locking_mode=NORMAL')
+    
+    if settings.database_type()=='sqlite3':
+        cursor.execute('PRAGMA journal_mode=DELETE')
+        cursor.execute('PRAGMA locking_mode=NORMAL')
 
 
 #############################################################################

@@ -1,3 +1,7 @@
+var jqPlotChart;
+var legends;
+var ticks;
+
 function numerical_sort_function(a, b) {
 	return (a - b)
 }
@@ -12,41 +16,106 @@ function highlight_all_topic_attribute_values(refresh) {
 }
 
 function update_topic_attribute_plot() {
-    var url_base = "";
-    attribute = $("select#id_attribute").val();
-    url_base += 'attributes/' + attribute + '/';
-    // Now get selected values and make a list of them
-    var selected = $("select#id_values").val();
-    selected = selected.sort(numerical_sort_function);
-    url_base += "values/" + selected[0];
-    for ( var i = 1; i < selected.length; i++) {
-        url_base += "." + selected[i];
-    }
-    url_base += "/topics";
+	var url_base = "/feeds/topic-attribute-plot/";
+	attribute = $("select#id_attribute").val();
+	url_base += 'attributes/' + attribute + '/';
+	// Now get selected values and make a list of them
+	var selected = $("select#id_values").val();
+	selected = selected.sort(numerical_sort_function);
+	url_base += "values/" + selected[0];
+	for ( var i = 1; i < selected.length; i++) {
+		url_base += "." + selected[i];
+	}
+	url_base += "/topics";
 
-    // Now get selected topics and make a list of them
-    var selected = $("select#id_topics").val()
-    url_base += '/';
-    selected = selected.sort(numerical_sort_function)
-    url_base += selected[0];
-    for ( var i = 1; i < selected.length; i++) {
-        url_base += "." + selected[i];
-    }
-    var added_query = false;
-    if ($('#id_by_frequency:checked').val() != null) {
-        url_base += "?frequency=true";
-        added_query = true;
-    }
-    
-    $("a#csv_data").attr("href", "/feeds/topic-attribute-csv/" + url_base);
-    url_base = "/feeds/topic-attribute-plot/" + url_base;
-    
-	$.getJSON(url_base, function(data) {
+	// Now get selected topics and make a list of them
+	var selected = $("select#id_topics").val()
+	url_base += '/';
+	selected = selected.sort(numerical_sort_function)
+	url_base += selected[0];
+	for ( var i = 1; i < selected.length; i++) {
+		url_base += "." + selected[i];
+	}
+	var added_query = false;
+	if ($('#id_by_frequency:checked').val() != null) {
+		url_base += "?frequency=true";
+		added_query = true;
+	}
+	$("a#csv_data").attr("href", url_base + '?fmt=csv');
+	url_base += '?fmt=json';
+	added_query = true;
+	if ($('#id_histogram:checked').val() != null) {
+		if (!added_query) {
+			url_base += '?';
+		} else {
+			url_base += '&';
+		}
+		url_base += "histogram=true";		
+	}	
+		
+	get_chart(url_base);
+	
+	
+}
+
+function update_plot(){
+	jqPlotChart.replot( { resetAxes: true } );
+	offset = 50;
+	containerHeight = $('#jqplot_container').height();
+	legendHeight = $('.jqplot-table-legend').height();
+	
+//	console.log(containerHeight);
+//	console.log(legendHeight);
+//	if(legendHeight > containerHeight){
+//		$('#jqplot_container').height(legendHeight);
+//	}else{
+//		$('#jqplot_container').height($('#jqplot').height());
+//	}
+	
+	$('#jqplot').unbind('jqplotDataClick');
+	$('#jqplot').bind('jqplotDataClick', function (ev, seriesIndex, pointIndex, data) {
+		//console.log(legends[seriesIndex]+"idx:"+seriesIndex);
+		//console.log(legends);
+		//console.log("idx:"+seriesIndex);
+		$('#jqplot_info').html(legends[seriesIndex].label+'<br/> ( '+ticks[pointIndex]+', '+parseFloat(data[1]).toFixed(5) +" )");
+		$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-220 });
+	 });
+	$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-220 });
+	var fontSize = '';
+	containerWidth = $('#jqplot_container').width();
+	if(containerWidth < 600){
+		fontSize = '12px';
+	}else if(containerWidth < 1000){
+		fontSize = '14px';
+	}else{
+		fontSize = '18px';
+	}	
+	$('#jqplot_info').css("font-size", fontSize);
+	//$('#jqplot_container').height($('.jqplot-table-legend').height());
+	//console.log("container.height: "+$('#jqplot_container').height());
+	//console.log("legends.height: "+$('.jqplot-table-legend').height());
+}
+
+function get_chart(url){
+	
+	var histogram = 0;
+	var uri = url.split('?');
+	if(uri.length > 1){
+		query = uri[1].split('&');
+		for(var i = 0; i < query.length; i++){
+			//console.log(query[i]);
+			if(query[i].indexOf("histogram") != -1){
+				histogram = 1;
+			}
+		}
+	}
+	
+	$.getJSON(url, function(data) {
 		// key is the data title
 		// data[key] is the string
 		var linedata = [];
-		var legends = [];
-		var ticks = data['x-data'].toString().split(',');
+		legends = [];
+		ticks = data['x-data'].toString().split(',');
 		
 		$.each(data['y-data'], function(key, val) {
 			legends.push({'label':key});
@@ -82,44 +151,32 @@ function update_topic_attribute_plot() {
 					renderer : $.jqplot.CategoryAxisRenderer
 				}
 			},
-			seriesDefaults : {
-				
+			seriesDefaults : {				
 			},
 			series : legends,
 			legend : {
 				show : true,
-				placement: 'outside'
+				placement: 'outsideGrid',
+				location: 'ne',								
 			},
 			cursor: {},
 			highlighter: {}
 		};		
+	
 		jqplot_options.axes.xaxis.label = data['x-axis-label'];
 		jqplot_options.axes.yaxis.label = data['y-axis-label'];		
 		
-		if ($('#id_histogram:checked').val() != null) {
-			if (!added_query) {
-				url_base += '?';
-			} else {
-				url_base += '&';
-			}
-			url_base += "histogram=true";
+		if (histogram == 1) {
 			jqplot_options.stackSeries = true;
 			jqplot_options.seriesDefaults.renderer = $.jqplot.BarRenderer;
 			jqplot_options.seriesDefaults.rendererOptions = [];
-			jqplot_options.seriesDefaults.rendererOptions.push({'barMargin': 30, 'highlightMouseDown': true});
+			jqplot_options.seriesDefaults.rendererOptions.push({'barMargin': 10, 'highlightMouseDown': true});
 			jqplot_options.captureRightClick = true;
 		}			
 		
 		$('#jqplot').html("");
-		$.jqplot('jqplot', linedata, jqplot_options);
-		$('#jqplot').unbind('jqplotDataClick');
-		$('#jqplot').bind('jqplotDataClick', function (ev, seriesIndex, pointIndex, data) {
-			//console.log(legends[seriesIndex]+"idx:"+seriesIndex);
-			console.log(legends);
-			console.log("idx:"+seriesIndex);
-			$('#jqplot_info').html(legends[seriesIndex].label+'<br/> ( '+ticks[pointIndex]+', '+parseFloat(data[1]).toFixed(5) +" )");
-			$('#jqplot_info').offset({ top: $('#jqplot').offset().top + 20, left: $('#jqplot').offset().left + $('#jqplot').width() - $('#jqplot_info').width()-25 });
-		 });
+		jqPlotChart = $.jqplot('jqplot', linedata, jqplot_options);		
+		update_plot();
 	});
 }
 
@@ -152,6 +209,50 @@ function update_topic_metric_plot(dataset, analysis) {
 	url_base += second_metric;
 	if ($('#id_linear_fit:checked').val() != null) {
 		url_base += "?linear_fit=true";
+	}
+
+	// When the URL is ready, change the source of the
+	// image to point to the correct one
+	$("img#plot_image").attr("src", url_base);
+}
+
+// From http://www.stainlessvision.com/collapsible-box-jquery
+function boxToggle(box) {
+	// Get the first and highest heading (prioritising highest over first)
+	var firstHeading = box.find("label")[0];
+	var firstHeadingJq = $(firstHeading);
+
+	// Select the heading's ancestors
+	var headingAncestors = firstHeadingJq.parents();
+	// Add in the heading
+	var headingAncestors = headingAncestors.add(firstHeading);
+	// Restrict the ancestors to the box
+	headingAncestors = headingAncestors.not(box.parents());
+	headingAncestors = headingAncestors.not(box);
+	// Get the siblings of ancestors (uncle, great uncle, ...)
+	var boxContents = headingAncestors.siblings();
+
+	// *** TOGGLE FUNCTIONS ***
+	var hideBox = function() {
+		firstHeadingJq.one("click", function() {
+			showBox();
+			return false;
+		})
+		// toggleLink.text("Show")
+		firstHeadingJq.attr("class", "box-toggle-show");
+
+		boxContents.attr("style", "display:none");
+	}
+
+	var showBox = function() {
+		firstHeadingJq.one("click", function() {
+			hideBox();
+			return false;
+		})
+		// toggleLink.text("Hide");
+		firstHeadingJq.attr("class", "box-toggle-hide");
+
+		boxContents.removeAttr("style");
 	}
 
 	// When the URL is ready, change the source of the

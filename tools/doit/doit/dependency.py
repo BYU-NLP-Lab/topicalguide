@@ -1,43 +1,29 @@
 """Manage (save/check) task dependency-on-files data."""
 
 import os
-import anydbm
+import hashlib
+import dumbdbm
+import anydbm as ddbm
 
-#FIXME move json import to __init__.py
-# Use simplejson or Python 2.6 json
-# simplejson is much faster that py26:json. so use simplejson if available
-try:
-    import simplejson
-    json = simplejson
-except ImportError: # pragma: no cover
-    import json
+# uncomment imports below to run tests on all dbm backends...
+#import dbhash as ddbm # ok (removed from python3)
+#import dumbdbm as ddbm # test_corrupted_file fails
+#import dbm as ddbm # test_corrupted_file fails
+#import gdbm as ddbm # ok <= TODO make this the default
 
-
-############ md5
-def get_md5_py5(input_data):
-    """return md5 from string (python 2.5 and above)"""
-    return hashlib.md5(input_data).hexdigest()
-
-def get_md5_py4(input_data): # pragma: no cover
-    """return md5 from string"""
-    out = md5.new()
-    out.update(input_data)
-    return out.hexdigest()
-
-## use different md5 libraries depending on python version
-get_md5 = None # function return md5 from a string
-try:
-    import hashlib
-    get_md5 = get_md5_py5
-# support python 2.4
-except ImportError: # pragma: no cover
-    import md5
-    get_md5 = get_md5_py4
-#########################################################
-
+from doit import json
 
 
 USE_FILE_TIMESTAMP = True
+
+
+def get_md5(input_data):
+    """return md5 from string or unicode"""
+    if isinstance(input_data, unicode):
+        byte_data = input_data.encode("utf-8")
+    else:
+        byte_data = input_data
+    return hashlib.md5(byte_data).hexdigest()
 
 def md5sum(path):
     """Calculate the md5 sum from file content.
@@ -51,9 +37,10 @@ def md5sum(path):
     return result
 
 
-def check_modified(file_path, state):
+def check_modified(file_path, file_stat, state):
     """check if file in file_path is modified from previous "state"
     @param file_path (string): file path
+    @param file_stat: the value returned from os.stat(file_path)
     @param state (tuple), timestamp, size, md5
     @returns (bool):
     """
@@ -62,10 +49,10 @@ def check_modified(file_path, state):
 
     timestamp, size, file_md5 = state
     # 1 - if timestamp is not modified file is the same
-    if USE_FILE_TIMESTAMP and os.path.getmtime(file_path) == timestamp:
+    if USE_FILE_TIMESTAMP and file_stat.st_mtime == timestamp:
         return False
     # 2 - if size is different file is modified
-    if os.path.getsize(file_path) != size:
+    if file_stat.st_size != size:
         return True
     # 3 - check md5
     return file_md5 != md5sum(file_path)
@@ -153,11 +140,29 @@ class DbmDB(object):
     @ivar _db: (dict) items with python-dict as value
     @ivar dirty: (set) id of modified tasks
     """
+    DBM_CONTENT_ERROR_MSG = 'db type could not be determined'
 
     def __init__(self, name):
         """Open/create a DB file"""
         self.name = name
-        self._dbm = anydbm.open(self.name, 'c')
+        try:
+            self._dbm = ddbm.open(self.name, 'c')
+        except ddbm.error, exception:
+            message = str(exception)
+            if message == self.DBM_CONTENT_ERROR_MSG:
+                # When a corrupted/old format database is found
+                # suggest the user to just remove the file
+                new_message = (
+                    'Dependencies file in %(filename)s seems to use '
+                    'an old format or is corrupted.\n'
+                    'To fix the issue you can just remove the database file(s) '
+                    'and a new one will be generated.'
+                    % {'filename': repr(self.name)})
+                raise exception.__class__, new_message
+            else:
+                # Re-raise any other exceptions
+                raise
+
         self._db = {}
         self.dirty = set()
 
@@ -174,32 +179,40 @@ class DbmDB(object):
         self._db[task_id][dependency] = value
         self.dirty.add(task_id)
 
+    def _in_dbm(self, key):
+        """python3: when for get/set key is convert to bytes but not for 'in'"""
+        # should be just
+        # return key in self._dbm
+        return key.encode('utf-8') in self._dbm
+
 
     def get(self, task_id, dependency):
         """Get value stored in the DB.
 
         @return: (string) or (None) if entry not found
         """
-        # optimization. check this after reduce call count
+        # optimization, just try to get it without checking it exists
         if task_id in self._db:
             return self._db[task_id].get(dependency, None)
-
-        if task_id not in self._db and task_id in self._dbm:
-            self._db[task_id] = json.loads(self._dbm[task_id])
-        if task_id in self._db:
+        else:
+            try:
+                task_data = self._dbm[task_id]
+            except KeyError:
+                return
+            self._db[task_id] = json.loads(task_data.decode('utf-8'))
             return self._db[task_id].get(dependency, None)
 
 
     def in_(self, task_id):
         """@return bool if task_id is in DB"""
-        return task_id in self._dbm or task_id in self.dirty
+        return self._in_dbm(task_id) or task_id in self.dirty
 
 
     def remove(self, task_id):
         """remove saved dependecies from DB for taskId"""
         if task_id in self._db:
             del self._db[task_id]
-        if task_id in self._dbm:
+        if self._in_dbm(task_id):
             del self._dbm[task_id]
         if task_id in self.dirty:
             self.dirty.remove(task_id)
@@ -207,7 +220,11 @@ class DbmDB(object):
     def remove_all(self):
         """remove saved dependecies from DB for all tasks"""
         self._db = {}
-        self._dbm = anydbm.open(self.name, 'n')
+        # dumb dbm always opens file in update mode
+        if isinstance(self._dbm, dumbdbm._Database): # pragma: no cover
+            self._dbm._index = {}
+            self._dbm.close()
+        self._dbm = ddbm.open(self.name, 'n')
         self.dirty = set()
 
 
@@ -215,7 +232,7 @@ class DbmDB(object):
 class DependencyBase(object):
     """Manage tasks dependencies (abstract class)
 
-    Each dependency is a saved in "db". the "db" is a text file using json
+    Each dependency is a saved in "db". the "db" can have json or dbm
     format where there is a dictionary for every task. each task has a
     dictionary where key is a dependency (abs file path), and the value is the
     dependency signature.
@@ -235,6 +252,7 @@ class DependencyBase(object):
         self.remove = self.backend.remove
         self.remove_all = self.backend.remove_all
         self._in = self.backend.in_
+        self.name = self.backend.name
 
     def close(self):
         """Write DB in file"""
@@ -253,11 +271,6 @@ class DependencyBase(object):
         # save task result md5
         if task.result:
             self._set(task.name, "result:", get_md5(task.result))
-
-        # run-once
-        if task.run_once:
-            # string value could be anything
-            self._set(task.name, 'run-once:', '1')
 
         # file-dep
         for dep in task.file_dep:
@@ -279,13 +292,14 @@ class DependencyBase(object):
 
     def get_values(self, task_name):
         """get all saved values from a task"""
-        return self._get(task_name, '_values_:')
+        values = self._get(task_name, '_values_:')
+        return values or {}
 
     def get_value(self, name):
         """get saved value from task
         @param name (str): taskid.argument-name
         """
-        parts = name.split('.')
+        parts = name.rsplit('.', 1)
         assert len(parts) == 2
         taskid, arg_name = parts
         if not self._in(taskid):
@@ -305,6 +319,7 @@ class DependencyBase(object):
         self._set(task.name, 'ignore:', '1')
 
 
+    # TODO add option to log this
     def get_status(self, task):
         """Check if task is up to date. set task.dep_changed
 
@@ -323,23 +338,26 @@ class DependencyBase(object):
 
         # check uptodate bool/callables
         checked_uptodate = False
-        for uptodate in task.uptodate:
+        for utd, utd_args, utd_kwargs in task.uptodate:
+            # FIXME control verbosity, check error messages
+            if hasattr(utd, '__call__'):
+                args = [task, self.get_values(task.name)] + utd_args
+                uptodate_result = utd(*args, **utd_kwargs)
+            else:
+                uptodate_result = utd
+
             # None means uptodate was not really calculated and should be
             # just ignored
-            if uptodate is None:
+            if uptodate_result is None:
                 continue
-            if uptodate:
+            if uptodate_result:
                 checked_uptodate = True
             else:
                 return 'run'
 
         # no dependencies means it is never up to date.
         if ((not task.file_dep) and (not task.result_dep)
-            and (not task.run_once) and (not checked_uptodate)):
-            return 'run'
-
-        # user managed dependency not up-to-date if it doesnt exist
-        if task.run_once and not self._get(task.name, 'run-once:'):
+            and (not checked_uptodate)):
             return 'run'
 
         # if target file is not there, task is not up to date
@@ -352,9 +370,11 @@ class DependencyBase(object):
         changed = []
         status = 'up-to-date' # initial assumption
         for dep in tuple(task.file_dep):
-            if not os.path.exists(dep):
+            try:
+                file_stat = os.stat(dep)
+            except os.error:
                 raise Exception("Dependent file '%s' does not exist." % dep)
-            if check_modified(dep, self._get(task.name, dep)):
+            if check_modified(dep, file_stat, self._get(task.name, dep)):
                 changed.append(dep)
                 status = 'run'
 
@@ -379,5 +399,11 @@ class DbmDependency(DependencyBase):
     def __init__(self, name):
         DependencyBase.__init__(self, DbmDB(name))
 
-# default "Dependency" implementation to be used
-Dependency = DbmDependency
+import platform
+python_version = platform.python_version().split('.')
+if python_version[0] == '2' and python_version[1] == '5': # pragma: no cover
+    # use json by default on python2.5 because gdbm in python2.5 is broken
+    Dependency = JsonDependency
+else:
+    Dependency = DbmDependency
+

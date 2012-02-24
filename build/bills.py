@@ -22,54 +22,43 @@
 
 #Congressional Bills Dataset build settings
 import os
-from build.govtrack.bills import clean_bills
-from build.govtrack.cr.generate_attributes_file import generate_attributes_file
 
-data_dir = os.environ['HOME'] + "/Data"
-govtrack_dir = data_dir + "/govtrack.us"
-rsync_dest_dir = govtrack_dir + "/111"
-bills_dir = rsync_dest_dir + "/bills"
+def directory_timestamp(dir_):
+    return str(os.path.getmtime(dir_))
 
-def get_dataset_name(locals):
-    return "bills"
+def initialize_config(c):
+    c['data_dir'] = os.environ['HOME'] + "/Data"
+    c['govtrack_dir'] = c['data_dir'] + "/govtrack.us"
+    c['rsync_dest_dir'] = c['govtrack_dir'] + "/111"
+    c['bills_dir'] = c['rsync_dest_dir'] + "/bills"
+    c['dataset_name'] = "bills"
+    c['dataset_description'] = "Text of legislation from the 111th United States Congress"
+    c['token_regex'] = r"[a-zA-Z]+"
 
-def get_dataset_description(locals):
-    return "Text of legislation from the 111th United States Congress"
-
-def get_copy_dataset(locals):
-    return True
-
-def get_mallet_token_regex(locals):
-    return r"\\[a-zA-Z]+"
-
-def get_attributes_file(locals):
-    return "{0}/attributes.json".format(locals['dataset_dir'])
-
-def get_files_dir(locals):
-    return locals['dataset_dir'] + "/files"
+from backend import c
 
 def task_hash_cr():
-    return {'actions': [(directory_timestamp, [bills_dir])],
+    return {'actions': [(directory_timestamp, [c['bills_dir']])],
             'task_dep':['download_congressional_record']}
 
-def task_attributes_file():
-    targets = [attributes_file]
-    actions = [(generate_attributes_file, [mallet_input, attributes_file])]
-    file_deps = [mallet_input]
-    clean = ["rm -f "+attributes_file]
-    return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
+#def task_attributes_file():
+#    targets = [attributes_file]
+#    actions = [(generate_attributes_file, [mallet_input, attributes_file])]
+#    file_deps = [mallet_input]
+#    clean = ["rm -f "+attributes_file]
+#    return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
 
 def task_download_congressional_record():
-    actions = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/bills.txt/111 "+rsync_dest_dir]
-    clean = ["rm -rf " + bills_dir]
+    actions = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/bills.txt/111 "+c['rsync_dest_dir']]
+    clean = ["rm -rf " + c['bills_dir']]
     return {'actions':actions, 'clean':clean}
 
-def task_copy_and_transform_dataset():
+def task_extract_data():
     actions = [
-        (clean_bills, [bills_dir,files_dir])
+        (clean_bills, [c['bills_dir'],c['files_dir']])
     ]
     clean = [
-        'rm -rf '+files_dir
+        'rm -rf '+c['files_dir']
     ]
     
     result_deps = ['hash_cr']

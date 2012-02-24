@@ -1,8 +1,12 @@
+# coding=UTF-8
+
 import os
 import sys
 import StringIO
+import tempfile
 
-import py.test
+import pytest
+from mock import Mock
 
 from doit import action
 from doit.exceptions import TaskError, TaskFailed
@@ -12,10 +16,13 @@ TEST_PATH = os.path.dirname(__file__)
 PROGRAM = "python %s/sample_process.py" % TEST_PATH
 
 
+def create_tempfile():
+    return tempfile.TemporaryFile('w+b')
+
 def pytest_funcarg__tmpfile(request):
     """crate a temporary file"""
     return request.cached_setup(
-        setup=os.tmpfile,
+        setup=create_tempfile,
         teardown=(lambda tmpfile: tmpfile.close()),
         scope="function")
 
@@ -33,7 +40,8 @@ class TestCmdAction(object):
     # if nothing is raised it is successful
     def test_success(self):
         my_action = action.CmdAction(PROGRAM)
-        my_action.execute()
+        got = my_action.execute()
+        assert got is None
 
     def test_error(self):
         my_action = action.CmdAction("%s 1 2 3" % PROGRAM)
@@ -48,6 +56,11 @@ class TestCmdAction(object):
     def test_str(self):
         my_action = action.CmdAction(PROGRAM)
         assert "Cmd: %s" % PROGRAM == str(my_action)
+
+    def test_unicode(self):
+        action_str = unicode(PROGRAM) + u"中文"
+        my_action = action.CmdAction(action_str)
+        assert "Cmd: %s" % action_str == unicode(my_action)
 
     def test_repr(self):
         my_action = action.CmdAction(PROGRAM)
@@ -64,6 +77,12 @@ class TestCmdAction(object):
         my_action = action.CmdAction("%s 1 2" % PROGRAM)
         my_action.execute()
         assert {} == my_action.values
+
+    def test_clone(self):
+        my_action = action.CmdAction("%s 1 2" % PROGRAM, "x")
+        clone = my_action.clone('y')
+        assert my_action.action == clone.action
+        assert 'y' == clone.task
 
 
 class TestCmdVerbosity(object):
@@ -90,7 +109,7 @@ class TestCmdVerbosity(object):
         action_result = my_action.execute(err=tmpfile)
         assert isinstance(action_result, TaskFailed)
         tmpfile.seek(0)
-        got = tmpfile.read()
+        got = tmpfile.read().decode('utf-8')
         assert "err output on failure" == got, repr(got)
         assert "err output on failure" == my_action.err, repr(my_action.err)
 
@@ -99,7 +118,7 @@ class TestCmdVerbosity(object):
         my_action = action.CmdAction("%s hi_stdout hi2" % PROGRAM)
         my_action.execute(out=tmpfile)
         tmpfile.seek(0)
-        got = tmpfile.read()
+        got = tmpfile.read().decode('utf-8')
         assert "hi_stdout" == got, repr(got)
         assert "hi_stdout" == my_action.out, repr(my_action.out)
 
@@ -129,6 +148,31 @@ class TestCmdExpandAction(object):
 
         got = my_action.out.strip()
         assert "3 - abc def" == got, repr(got)
+
+
+
+class TestCmd_print_process_output(object):
+    def test_non_unicode_string(self):
+        my_action = action.CmdAction("")
+        not_unicode = StringIO.StringIO('\xc0')
+        pytest.raises(Exception, my_action._print_process_output,
+                       Mock(), not_unicode, Mock(), Mock())
+
+    def test_unicode_string(self, tmpfile):
+        my_action = action.CmdAction("")
+        unicode_in = create_tempfile()
+        unicode_in.write(u" 中文".encode('utf-8'))
+        unicode_in.seek(0)
+        my_action._print_process_output(Mock(), unicode_in, Mock(), tmpfile)
+
+    def test_unicode_string2(self, tmpfile):
+        # this \uXXXX has a different behavior!
+        my_action = action.CmdAction("")
+        unicode_in = create_tempfile()
+        unicode_in.write(u" 中文 \u2018".encode('utf-8'))
+        unicode_in.seek(0)
+        my_action._print_process_output(Mock(), unicode_in, Mock(), tmpfile)
+
 
 
 class TestWriter(object):
@@ -214,11 +258,11 @@ class TestPythonAction(object):
         assert action1.kwargs == {}
 
         # not a callable
-        py.test.raises(action.InvalidTask, action.PythonAction, "abc")
+        pytest.raises(action.InvalidTask, action.PythonAction, "abc")
         # args not a list
-        py.test.raises(action.InvalidTask, action.PythonAction, self._func_par, "c")
+        pytest.raises(action.InvalidTask, action.PythonAction, self._func_par, "c")
         # kwargs not a list
-        py.test.raises(action.InvalidTask, action.PythonAction,
+        pytest.raises(action.InvalidTask, action.PythonAction,
                       self._func_par, None, "a")
 
 
@@ -264,6 +308,15 @@ class TestPythonAction(object):
         my_action.execute()
         assert {'x': 5, 'y':10} == my_action.values
 
+    def test_clone(self):
+        def aaa(): return 1
+        my_action = action.PythonAction(aaa, (3,), {'1':2}, 'x')
+        clone = my_action.clone('y')
+        assert my_action.py_callable == clone.py_callable
+        assert my_action.args == clone.args
+        assert my_action.kwargs == clone.kwargs
+        assert 'y' == clone.task
+
 
 class TestPythonVerbosity(object):
     def write_stderr(self):
@@ -295,7 +348,7 @@ class TestPythonVerbosity(object):
         assert "this is stdout S\n" == got, repr(got)
 
     def test_redirectStderr(self):
-        tmpfile = os.tmpfile()
+        tmpfile = tempfile.TemporaryFile('w+')
         my_action = action.PythonAction(self.write_stderr)
         my_action.execute(err=tmpfile)
         tmpfile.seek(0)
@@ -304,7 +357,7 @@ class TestPythonVerbosity(object):
         assert "this is stderr S\n" == got, got
 
     def test_redirectStdout(self):
-        tmpfile = os.tmpfile()
+        tmpfile = tempfile.TemporaryFile('w+')
         my_action = action.PythonAction(self.write_stdout)
         my_action.execute(out=tmpfile)
         tmpfile.seek(0)
@@ -386,7 +439,7 @@ class TestPythonActionPrepareKwargsMeta(object):
         def py_callable(a, b, changed=None): pass
         my_action = action.PythonAction(py_callable, ('a', 'b'),
                                         task=task_depchanged)
-        py.test.raises(action.InvalidTask, my_action.execute)
+        pytest.raises(action.InvalidTask, my_action.execute)
 
 class TestPythonActionOptions(object):
     def test_task_options(self):
@@ -412,6 +465,7 @@ class TestCreateAction(object):
         class Sample(action.BaseAction): pass
         my_action = action.create_action(Sample(), self.mytask)
         assert isinstance(my_action, Sample)
+        assert self.mytask == my_action.task
 
     def testStringAction(self):
         my_action = action.create_action("xpto 14 7", self.mytask)
@@ -429,14 +483,14 @@ class TestCreateAction(object):
 
     def testTupleActionMoreThanThreeElements(self):
         def dumb(): return
-        py.test.raises(action.InvalidTask, action.create_action,
+        pytest.raises(action.InvalidTask, action.create_action,
                        (dumb,[1,2],{'a':5},'oo'), self.mytask)
 
     def testInvalidActionNone(self):
-        py.test.raises(action.InvalidTask, action.create_action,
+        pytest.raises(action.InvalidTask, action.create_action,
                        None, self.mytask)
 
     def testInvalidActionObject(self):
-        py.test.raises(action.InvalidTask, action.create_action,
+        pytest.raises(action.InvalidTask, action.create_action,
                        self, self.mytask)
 

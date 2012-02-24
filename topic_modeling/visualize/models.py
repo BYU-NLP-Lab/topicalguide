@@ -21,9 +21,12 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 import random
+import time
+from datetime import datetime
+
 from django.db import models
+
 from topic_modeling.anyjson import deserialize
-import datetime
 
 ##############################################################################
 # Tables just to hold information about data and documents
@@ -32,6 +35,7 @@ import datetime
 # Basic things in the database
 ##############################
 
+# FIXME: readable_name and description should be deprecated in favor of the meta info system
 class Describable(models.Model):
     '''A unique identifier. For URLs.'''
     name = models.SlugField(unique=True)
@@ -51,6 +55,17 @@ class Dataset(Describable):
 
     def __unicode__(self):
         return self.name
+    
+    def delete(self, *args, **kwargs):
+        for analysis in self.analysis_set.all():
+            print "\tremove analysis " + str(analysis)
+            analysis.delete()
+        
+        for doc in self.document_set.all():
+            print "\tremove doc " + str(doc)
+            doc.delete()
+        
+        super(Dataset, self).delete(*args, **kwargs)
 
 
 LEFT_CONTEXT_SIZE = 40
@@ -279,6 +294,13 @@ class Analysis(Describable):
 
     def __unicode__(self):
         return self.name
+    
+    def delete(self, *args, **kwargs):
+        for topic in self.topic_set.all():
+            print "\tremove topic " + str(topic)
+            topic.delete()
+        
+        super(Analysis, self).delete(*args, **kwargs)
 
 
 class MarkupFile(models.Model):
@@ -450,12 +472,19 @@ class AttributeValueTopic(models.Model):
     count = models.IntegerField(default=0)
 
 # Metadata
+
+# TODO: rename MetaInfo -> MetaInfoField
+# TODO: also rename children
+# TODO: keep track of the field type. Use the 'choices' parameter to specify possible types.
+# TODO: Update the set, value, and type methods
 class MetaInfo(models.Model):
     name = models.CharField(max_length=128, db_index=True)
     
     class Meta:
         abstract = True
 
+# TODO: Use a consistent related_name in the children of this model.
+# TODO: Create class MetaInfoTarget with a value method that references the consistent metainfo related_name
 class MetaInfoValue(models.Model):
     bool_value = models.NullBooleanField(null=True)
     float_value = models.FloatField(null=True)
@@ -477,6 +506,8 @@ class MetaInfoValue(models.Model):
             self.bool_value = value
         elif isinstance(value, datetime):
             self.datetime_value = value
+        elif isinstance(value, time.struct_time):
+            self.datetime_value = datetime(*value[0:6])
         else:
             raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(type(value)))
     
@@ -554,7 +585,7 @@ class WordMetaInfoValue(MetaInfoValue):
 ## Favorites
 class Favorite(models.Model):
     session_key = models.CharField(max_length=40, db_index=True)
-    timestamp = models.DateTimeField(default=datetime.datetime.now)
+    timestamp = models.DateTimeField(default=datetime.now)
     
     class Meta:
         abstract = True
@@ -567,6 +598,9 @@ class AnalysisFavorite(Favorite):
 
 class TopicFavorite(Favorite):
     topic = models.ForeignKey(Topic)
+
+class DocumentFavorite(Favorite):
+    document = models.ForeignKey(Document)
 
 class ViewFavorite(Favorite):
     '''A unique identifier. For URLs.'''

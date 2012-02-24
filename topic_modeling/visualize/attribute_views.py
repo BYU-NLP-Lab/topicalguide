@@ -68,7 +68,7 @@ class AttributeView(AnalysisBaseView):
         values = attribute.value_set.all()
         page_num = request.session.get('attribute-page', 1)
         num_per_page = request.session.get('attributes-per-page', 20)
-        values, num_pages, _ = paginate_list(values, page_num, num_per_page)
+        values, num_pages, page_num = paginate_list(values, page_num, num_per_page)
         context['num_pages'] = num_pages
         context['page_num'] = page_num
         context['values'] = [v.value for v in values]

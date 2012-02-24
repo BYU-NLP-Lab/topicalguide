@@ -17,6 +17,9 @@ Developers / contributors
  * Philipp Tölke - https://launchpad.net/~toelke+lp
  * Daniel Hjelm - doit-d at hjelm dot eu
  * Damiro - https://launchpad.net/~damiro
+ * Charlie Guo - https://launchpad.net/~charlie.guo
+ * Michael Gliwinski - https://launchpad.net/~tzeentch-gm
+
 
 Project Details
 ===============
@@ -29,7 +32,7 @@ Project Details
 INSTALL
 =======
 
-doit is tested on python 2.4, 2.5, 2.6.
+doit is tested on python 2.5, 2.6, 2.7, 3.2.
 
 ``python setup.py install``
 
@@ -37,28 +40,34 @@ doit is tested on python 2.4, 2.5, 2.6.
 DEPENDENCIES
 ============
 
-- simplejson [python 2.4 & 2.5]
-- multiprocessing [python 2.4 & 2.5]
-- pyinotify (linux) [all python versions] (requires ctypes - not in python2.4 stdlib)
+- simplejson [python 2.5]
+- multiprocessing [python 2.5]
+- pyinotify (linux) [all python versions]
 - macfsevents (mac)
 
 Tools required for development:
 
+- bazaar * VCS
 - py.test * unit-tests
 - mock * unit-tests
-- bazaar * VCS
+- coverage * code coverage
 - epydoc * API doc generator
 - sphinx * doc tool
 - pyflakes * syntax checker
-- pychecker * syntax checker
+
 
 
 TESTS
 =====
 
-`py.test <http://codespeak.net/py/dist/test/index.html>`_ is required to run the test suite.
+You can use a standalone script::
 
-``py.test``
+  python runtests.py
+
+or use `py.test <http://codespeak.net/py/dist/test/index.html>`_ ::
+
+  py.test
+
 
 DOCUMENTATION
 =============
@@ -66,7 +75,7 @@ DOCUMENTATION
 ``doc`` folder contains ReST documentation. They are the base for creating the website.
 To create it (after installing doit):
 
-``doit -f website.py``
+``doit website``
 
 It includes epydoc generated API documentation.
 
@@ -75,6 +84,6 @@ LICENSE
 =======
 
 The MIT License
-Copyright (c) 2008-2010 Eduardo Naufel Schettino
+Copyright (c) 2008-2011 Eduardo Naufel Schettino
 
 see LICENSE file

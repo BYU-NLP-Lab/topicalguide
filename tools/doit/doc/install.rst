@@ -33,7 +33,7 @@ Installing
 
 .. note::
   * `doit` dependends on the packages `pyinotify <http://trac.dbzteam.org/pyinotify>`_ (for linux). `macfsevents <http://pypi.python.org/pypi/MacFSEvents>`_ (mac)
-  * for python2.4 and python2.5 users `doit` depends on the packages `simplejson` and `multiprocessing`. On python 2.6 the stdlib `json` and `multiprocessing` are used.
+  * for python2.5 users `doit` depends on the packages `simplejson` and `multiprocessing`. On python 2.6 the stdlib `json` and `multiprocessing` are used.
 
 .. warning::
 
@@ -41,5 +41,5 @@ Installing
 
    * New releases are not tested on Windows.
 
-   * There is a bug on setup tools. Check this `bug <http://bugs.launchpad.net/doit/+bug/218276>`_ for instructions.
+   * There is a bug on setuptools. Check this `bug <http://bugs.launchpad.net/doit/+bug/218276>`_ for instructions.
 
