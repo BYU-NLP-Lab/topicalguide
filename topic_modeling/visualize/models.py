@@ -289,8 +289,16 @@ class DocumentWord(models.Model):
 ##################################
 
 # This is assuming perhaps several different runs of different kinds of LDA
-class Analysis(Describable):
+class Analysis(models.Model):
     dataset = models.ForeignKey(Dataset)
+
+    name = models.SlugField()
+
+    '''A short, human-readable name'''
+    readable_name = models.TextField(max_length=128)
+
+    '''A longer, human-readable description'''
+    description = models.TextField()
 
     def __unicode__(self):
         return self.name
