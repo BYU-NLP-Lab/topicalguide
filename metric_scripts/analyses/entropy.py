@@ -35,7 +35,12 @@ def add_metric(analysis):
         prob = float(count) / total
         entropy -= prob * log(prob) / log(2)
     
-    AnalysisMetricValue.objects.create(metric=metric, analysis=analysis, value=entropy)
+    try:
+        mv = metric.analysismetricvalue_set.get(analysis=analysis)
+        mv.value = entropy
+        mv.save()
+    except AnalysisMetricValue.DoesNotExist:
+        AnalysisMetricValue.objects.create(metric=metric, analysis=analysis, value=entropy)
 
 def metric_names_generated(_analysis):
     return ["Topic Entropy"]

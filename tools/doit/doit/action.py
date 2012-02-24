@@ -30,14 +30,41 @@ class CmdAction(BaseAction):
     @ivar task(Task): reference to task that contains this action
     """
 
-    def __init__(self, action, task=None):
-        assert isinstance(action, str), "CmdAction must be a string."
+    def __init__(self, action, task=None): #pylint: disable=W0231
+        assert isinstance(action, basestring), "CmdAction must be a string."
         self.action = action
         self.task = task
         self.out = None
         self.err = None
         self.result = None
         self.values = {}
+
+
+    def _print_process_output(self, process, input_, capture, realtime):
+        """read 'input_' untill process is terminated
+        write 'input_' content to 'capture' and 'realtime' streams
+        """
+        if realtime:
+            if hasattr(realtime, 'encoding'):
+                encoding = realtime.encoding or 'utf-8'
+            else:
+                encoding = 'utf-8'
+
+        while True:
+            # line buffered
+            try:
+                line = input_.readline().decode('utf-8')
+            except:
+                process.terminate()
+                input_.read()
+                raise
+            # unbuffered ? process.stdout.read(1)
+            if line:
+                capture.write(line)
+                if realtime:
+                    realtime.write(line.encode(encoding))
+            if not line and process.poll() != None:
+                break
 
 
     def execute(self, out=None, err=None):
@@ -61,26 +88,11 @@ class CmdAction(BaseAction):
         process = subprocess.Popen(action, shell=True,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        def print_process_output(process, input_, capture, realtime):
-            """read 'input_' untill process is terminated
-            write 'input_' content to 'capture' and 'realtime' streams
-            """
-            while True:
-                # line buffered
-                line = input_.readline()
-                # unbuffered ? process.stdout.read(1)
-                if line:
-                    capture.write(line)
-                    if realtime:
-                        realtime.write(line)
-                if not line and process.poll() != None:
-                    break
-
         output = StringIO.StringIO()
         errput = StringIO.StringIO()
-        t_out = Thread(target=print_process_output,
+        t_out = Thread(target=self._print_process_output,
                        args=(process, process.stdout, output, out))
-        t_err = Thread(target=print_process_output,
+        t_err = Thread(target=self._print_process_output,
                        args=(process, process.stderr, errput, err))
         t_out.start()
         t_err.start()
@@ -90,6 +102,9 @@ class CmdAction(BaseAction):
         self.out = output.getvalue()
         self.err = errput.getvalue()
         self.result = self.out + self.err
+
+        # make sure process really terminated
+        process.wait()
 
         # task error - based on:
         # http://www.gnu.org/software/bash/manual/bashref.html#Exit-Status
@@ -120,6 +135,9 @@ class CmdAction(BaseAction):
         subs_dict.update(self.task.options)
         return self.action % subs_dict
 
+
+    def clone(self, task):
+        return self.__class__(self.action, task)
 
     def __str__(self):
         return "Cmd: %s" % self.expand_action()
@@ -156,7 +174,7 @@ class PythonAction(BaseAction):
     @ivar task(Task): reference to task that contains this action
     """
     def __init__(self, py_callable, args=None, kwargs=None, task=None):
-
+        #pylint: disable=W0231
         self.py_callable = py_callable
         self.task = task
         self.out = None
@@ -176,13 +194,14 @@ class PythonAction(BaseAction):
 
         # check valid parameters
         if not hasattr(self.py_callable, '__call__'):
-            raise InvalidTask("PythonAction must be a 'callable'.")
+            msg = "%r PythonAction must be a 'callable' got %r."
+            raise InvalidTask(msg % (self.task, self.py_callable))
         if type(self.args) is not tuple and type(self.args) is not list:
-            msg = "args must be a 'tuple' or a 'list'. got '%s'."
-            raise InvalidTask(msg % self.args)
+            msg = "%r args must be a 'tuple' or a 'list'. got '%s'."
+            raise InvalidTask(msg % (self.task, self.args))
         if type(self.kwargs) is not dict:
-            msg = "kwargs must be a 'dict'. got '%s'"
-            raise InvalidTask(msg % self.kwargs)
+            msg = "%r kwargs must be a 'dict'. got '%s'"
+            raise InvalidTask(msg % (self.task, self.kwargs))
 
 
     def _prepare_kwargs(self):
@@ -269,15 +288,9 @@ class PythonAction(BaseAction):
 
         # execute action / callable
         try:
-            # Python2.4
-            try:
-                returned_value = self.py_callable(*self.args, **kwargs)
-            # in python 2.4 SystemExit and KeyboardInterrupt subclass
-            # from Exception.
-            except (SystemExit, KeyboardInterrupt), exception:
-                raise
-            except Exception, exception:
-                return TaskError("PythonAction Error", exception)
+            returned_value = self.py_callable(*self.args, **kwargs)
+        except Exception, exception:
+            return TaskError("PythonAction Error", exception)
         finally:
             # restore std streams /log captured streams
             sys.stdout = old_stdout
@@ -291,7 +304,7 @@ class PythonAction(BaseAction):
                               (self.py_callable, returned_value))
         elif returned_value is True or returned_value is None:
             pass
-        elif isinstance(returned_value, str):
+        elif isinstance(returned_value, basestring):
             self.result = returned_value
         elif isinstance(returned_value, dict):
             self.values = returned_value
@@ -302,6 +315,9 @@ class PythonAction(BaseAction):
                              "returned %s (%s)" %
                              (self.py_callable, returned_value,
                               type(returned_value)))
+
+    def clone(self, task):
+        return self.__class__(self.py_callable, self.args, self.kwargs, task)
 
     def __str__(self):
         # get object description excluding runtime memory address
@@ -320,12 +336,13 @@ def create_action(action, task_ref):
     @raise InvalidTask: If action parameter type isn't valid
     """
     if isinstance(action, BaseAction):
+        action.task = task_ref
         return action
 
-    if type(action) is str:
+    if isinstance(action, basestring):
         return CmdAction(action, task_ref)
 
-    if type(action) is tuple:
+    if isinstance(action, tuple):
         if len(action) > 3:
             msg = "Task '%s': invalid 'actions' tuple length. got:%r %s"
             raise InvalidTask(msg % (task_ref.name, action, type(action)))

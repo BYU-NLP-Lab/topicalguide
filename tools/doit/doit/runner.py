@@ -163,7 +163,7 @@ class Runner(object):
 
     def teardown(self):
         """run teardown from all tasks"""
-        for task in self.teardown_list:
+        for task in reversed(self.teardown_list):
             self.reporter.teardown_task(task)
             catched = task.execute_teardown(sys.stdout, sys.stderr,
                                             self.verbosity)
@@ -186,12 +186,10 @@ class Runner(object):
 
     def run_all(self, task_control):
         """entry point to run tasks"""
-        # Python2.4 (remove double try)
         try:
-            try:
-                self.run_tasks(task_control)
-            except InvalidTask, exception:
-                self.reporter.runtime_error(str(exception))
+            self.run_tasks(task_control)
+        except InvalidTask, exception:
+            self.reporter.runtime_error(str(exception))
         finally:
             self.finish()
         return self.final_result
@@ -224,6 +222,9 @@ class MRunner(Runner):
                                           'reporter':method_name})
             return rep_method
 
+        def complete_run(self):
+            """ignore this on MReporter"""
+            pass
 
     def __init__(self, dependency_file, reporter, continue_=False,
                  always_execute=False, verbosity=0, num_process=1):
@@ -276,7 +277,7 @@ class MRunner(Runner):
 
 
             # task with setup must be selected twice...
-            wait_for = task.task_dep + task.calc_dep
+            wait_for = task.task_dep + list(task.calc_dep)
             # must wait for setup_tasks too if on second select.
             if not (task.setup_tasks and task.run_status is None):
                 wait_for += task.setup_tasks
@@ -325,12 +326,12 @@ class MRunner(Runner):
             if next_task is None:
                 break # do not start more processes than tasks
             if isinstance(next_task, Task):
-                task_q.put((next_task.name, next_task.file_dep))
+                task_q.put(next_task)
             else: # next_task is Hold
                 # no task ready to be executed but some are on the queue
                 # awaiting to be executed
-                task_q.put((next_task, None))
-            process = Process(target=self.execute_task,
+                task_q.put(next_task)
+            process = Process(target=self.execute_task_subprocess,
                               args=(task_q, result_q))
             process.start()
             proc_list.append(process)
@@ -377,9 +378,9 @@ class MRunner(Runner):
                 if next_task is None:
                     proc_count -= 1
                 if isinstance(next_task, Task):
-                    task_q.put((next_task.name, next_task.file_dep))
+                    task_q.put(next_task)
                 else:
-                    task_q.put((next_task, None))
+                    task_q.put(next_task)
             # check for cyclic dependencies
             assert len(proc_list) > self.free_proc
 
@@ -395,7 +396,7 @@ class MRunner(Runner):
             getattr(self.reporter, result['reporter'])(task)
 
 
-    def execute_task(self, task_q, result_q):
+    def execute_task_subprocess(self, task_q, result_q):
         """executed on child processes
         @param task_q: task queue,
             * None elements indicate process can terminate
@@ -406,22 +407,25 @@ class MRunner(Runner):
         self.reporter = self.MReporter(self, self.reporter)
         try:
             while True:
-                task_name, file_dep = task_q.get()
-                if task_name is None:
+                recv_task = task_q.get()
+                if recv_task is None:
                     self.teardown()
                     return # no more tasks to execute finish this process
 
                 # do nothing. this used to start the subprocess even if no task
                 # is available when process is created.
-                if isinstance(task_name, Hold):
+                if isinstance(recv_task, Hold):
                     continue
 
-                task = self.tasks[task_name]
-                # FIXME why is this required? to update calc-deps?
-                # what about other dependencies?
-                task.file_dep = file_dep
+                # recv_task is an incomplete obj. when pickled, attrbiutes
+                # that might contain unpickleble data were removed.
+                # so we need to get task from this process and update it
+                # to get dynamic task attributes.
+                task = self.tasks[recv_task.name]
+                task.update_from_pickle(recv_task)
+
                 result = {'name': task.name}
-                t_result = Runner.execute_task(self, task)
+                t_result = self.execute_task(task)
 
                 if t_result is None:
                     result['result'] = task.result
@@ -431,7 +435,7 @@ class MRunner(Runner):
                 result_q.put(result)
         except (SystemExit, KeyboardInterrupt, Exception), exception:
             # error, blow-up everything. send exception info to master process
-            result_q.put({'name': task_name,
+            result_q.put({'name': task.name,
                           'exit': exception.__class__,
                           'exception': str(exception)})
 

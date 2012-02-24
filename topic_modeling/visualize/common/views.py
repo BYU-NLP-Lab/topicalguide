@@ -25,11 +25,10 @@ from datetime import timedelta
 from django.shortcuts import get_object_or_404
 from django.template.context import Context
 from django.views.generic.base import TemplateResponseMixin, View
-from django.conf import settings
 
 from topic_modeling.visualize.models import Dataset, Analysis
 from topic_modeling.visualize.favorites import dataset_favorite_entries, analysis_favorite_entries, favorite_topic_entries, \
-    topic_view_favorite_entries, document_view_favorite_entries
+    topic_view_favorite_entries, document_view_favorite_entries, favorite_document_entries
 
 '''
 Like TemplateView, but better
@@ -76,6 +75,9 @@ class RootView(TemplateResponseMixin, View):
         context = self.get_context_data(request, **kwargs)
         return self.render_to_response(context)
 
+class TermsView(RootView):
+    template_name = 'terms.html'
+
 class DatasetBaseView(RootView):
     def get_context_data(self, request, **kwargs):
         context = super(DatasetBaseView, self).get_context_data(request, **kwargs)
@@ -104,7 +106,9 @@ class AnalysisBaseView(DatasetBaseView):
         context['plots_url'] = context['analysis_url'] + "/plots"
         context['topics_url'] = context['analysis_url'] + "/topics"
         context['words_url'] = context['analysis_url'] + "/words"
-
-#        context['favorites']['topics'] = favorites.favorite_topic_entries(request, context['dataset'], analysis.name)
+        # Set up entity-level document favorites. We do this in AnalysisBaseView because our document URLs still rely
+        # on the name of the current analysis
+        context['favorites']['documents'] = favorite_document_entries(request, kwargs['dataset'], kwargs['analysis']) + context['favorites']['documents']
+        context['favids']['documents'] = [fav['fav'].document.id for fav in context['favorites']['documents']]
 
         return context

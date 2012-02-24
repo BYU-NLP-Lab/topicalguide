@@ -45,6 +45,12 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		function set_loading_image() {
 		    $("img#plot_image").attr("src", "{{IMAGES}}/ajax-loader.gif");
 		}
+		$(document).ready(function() {
+			$(window).resize(function() {
+				update_plot();		
+			});	
+		});
+			
 	</script>
 	
 	<!--[if lt IE 9]><script language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/js/excanvas.min.js"></script><![endif]-->	
@@ -64,9 +70,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block presentation_area %}
 <div class="ui-widget">
     <div class="ui-widget-header ui-corner-all">Title</div>
-    <div class="ui-widget-content ui-corner-all">   		                     
+    <div class="ui-widget-content ui-corner-all">
+        <div id="jqplot_container">
 		<div id="jqplot"></div>
-		<span id="jqplot_info"></span>   
+		<span id="jqplot_info"></span>
+        </div>
     </div>
     <div class="ui-widget-content ui-corner-all">
         <a name="csv_data" id="csv_data" href="{{ csv_address }}">
@@ -99,6 +107,8 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     
     {# Weird method call using name of function from a context variable #}
 	{{update_function}}("{{dataset}}","{{analysis}}");
+	
+
 </script>
 
 {% endblock %}

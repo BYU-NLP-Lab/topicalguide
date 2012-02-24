@@ -24,72 +24,79 @@
 
 /* Style specific to the home page (aka datasets page) */
 
-@font-face {
-  font-family: 'Caudex';
-  font-style: normal;
-  font-weight: 400;
-  src: local('Caudex'), url('/site-media/fonts/caudex/Caudex-Regular.woff') format('woff');
+/** Fonts **/
+/** Masthead images **/
+img.lab-logo {
+	height: 80px;
+	float: right;
+    margin-right: 10px;
 }
 
-h1 {
+img.lab-logo.invisible {
+    float: left;
+    margin-left: 10px;
+    visibility: hidden;
+}
+
+/** Headers **/
+h1.title {
 	font-style: normal;
-	font-size: 50px;
+	font-size: 48px;
 	font-family: 'Caudex', arial, serif;
-	font-weight: normal;
+	font-weight: 400;
+	color: #222;
     text-align: center;
-    margin: 1em 0em .6em 0em;
+    /*margin: 1em 0em .6em 0em;*/
+    margin: 1em 0 0 0;
 }
 
-h2 {
+h2.subtitle {
 	font-family: 'Caudex', arial, serif;
     font-weight: normal;
 	text-align: center;
+	margin-top: 0.2em;
 }
 
-img#lab-logo-invisible {
+h2:not(.subtitle) {
+	font-size: 1em;
+	margin-bottom: 0.2em;
+}
+
+/** Page Structure **/
+div.main {
 	float: left;
-	margin-left: 10px;
-	visibility: hidden;
+	width: 35%;
 }
 
-img#lab-logo {
-    float: right;
-    margin-right: 10px
+div.sidebar {
+	float:left;
+	width: 60%;
+	margin-left: 5%;
 }
 
-div#analysis-container {
-	margin-top: 10px;
-}
-
-ul.analyses {
-	display: table-row;
-    list-style-type: none;
-    margin: 0;
-    padding: 10px;
-    height: 140px;
-    /*padding: 4px;*/
-}
-
-ul.analyses li {
+div.description-container {
 	float: left;
-	display: table-cell;
-	position: relative;
-    /*margin: 0;*/
-    padding: 5px;
-    margin: 4px;
+	clear: both;
+	width: 100%;
 }
 
-ul.analyses li img.plot {
-    width: 150px; height: 150px; /* Set the small thumbnail size */
+.explore-wrapper {
+	margin: 0 auto 1em auto;
+	width: 100%;
+}
+button.explore {
+	width: 100%;
+}
+
+/** Plots **/
+img.plot {
+	width: 96%;
+	padding: 2%;
     -ms-interpolation-mode: bicubic; /* IE Fix for Bicubic Scaling */
     border: 1px solid #ddd;
-    padding: 5px;
     background: #f0f0f0;
-    position: relative;
-    left: 0; top: 0;
 }
 
-ul.analyses li img.plot.hover {
-    background:url(thumb_bg.png) no-repeat center center;  /* Image used as background on hover effect */
-    /*border: none;*/ /* Get rid of border on hover */
+img.plot:hover {
+    background: #f3f3f3;
 }

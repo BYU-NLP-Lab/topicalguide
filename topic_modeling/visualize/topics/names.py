@@ -31,14 +31,25 @@ def name_schemes(analysis):
         raise TypeError("Can only get name schemes for Analysis objects")
 
 def current_name_scheme_id(session, analysis):
+    key = 'current_name_scheme_id'
     schemes = name_schemes(analysis)
+    def default():
+        return schemes[0].id
+        
     
-    if 'current_name_scheme_id' not in session:
-        current_name_scheme_id = schemes[0].id
-        session['current_name_scheme_id'] = current_name_scheme_id
+    if key not in session:
+        session[key] = default()
     else:
-        current_name_scheme_id = session['current_name_scheme_id']
-    return current_name_scheme_id
+        if not analysis.topicnamescheme_set.filter(id=session[key]):
+            session[key] = default()
+    return session[key]
+    
+#    if 'current_name_scheme_id' not in session:
+#        current_name_scheme_id = schemes[0].id
+#        session['current_name_scheme_id'] = current_name_scheme_id
+#    else:
+#        current_name_scheme_id = session['current_name_scheme_id']
+#    return current_name_scheme_id
 
 def current_name_scheme(session, analysis):
     ns_id = current_name_scheme_id(session, analysis)

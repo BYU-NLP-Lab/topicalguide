@@ -28,158 +28,146 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% block stylesheets %}
     {{block.super}}
     <link rel="stylesheet" href="{{STYLES}}/datasets.css" type="text/css" />
+    <link href='http://fonts.googleapis.com/css?family=Caudex:400' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{STYLES}}/plot.css" type="text/css" />
+    <link rel="stylesheet" href="{{SCRIPTS}}/charts/jqplot/css/jquery.jqplot.min.css" type="text/css" />    
 {% endblock %}
+
+{% block google_font_families %}{{block.super}}Caudex:400{% endblock %}
 
 {% block scripts %}
     {{block.super}}
+	<script charset="utf=8" language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/js/jquery.jqplot.min.js"></script>	
+	<script charset="utf=8" language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.cursor.js"></script>	
+	<script charset="utf=8" language="javascript" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.highlighter.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.barRenderer.min.js"></script>
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/charts/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+	
+	<script charset="utf=8" type="text/javascript" src="{{SCRIPTS}}/plots.js"></script>
+	<script charset="utf-8" type="text/javascript">
+		function set_loading_image() {
+		    $("img#plot_image").attr("src", "{{IMAGES}}/ajax-loader.gif");
+		}
+		$(document).ready(function() {
+			$(window).resize(function() {
+				update_plot();		
+			});	
+		});
+			
+	</script>    
     <script type="text/javascript" src="{{SCRIPTS}}/datasets.js"></script>
-    <script charset="utf=8" type="text/javascript">
-        $(document).ready(function() {
-            $("#accordion").accordion();
-            image_preview();
-            $(".analysis-link").click(function(){
-                $("html").hide("fade", {}, 250);
-            });
-        });
-	</script>
 {% endblock %}
 
 {% block fav-this-button %}{% endblock %}
 
 {% block body %}
-<img id="lab-logo-invisible" src="{{nlp_lab_logo_url|safe}}"/>
-<a href="{{nlp_lab_url|safe}}"><img id="lab-logo" src="{{nlp_lab_logo_url|safe}}"/></a>
+<img class="lab-logo invisible" src="{{nlp_lab_logo_url|safe}}"/>
+<a href="{{nlp_lab_url|safe}}"><img class="lab-logo" src="{{nlp_lab_logo_url|safe}}"/></a>
 <header>
-	<h1><a href="{{topical_guide_project_url|safe}}">The Topical Guide</a></h1>
-	<h2>Available Datasets</h2>
+	<h1 class="title"><a href="{{topical_guide_project_url|safe}}">The Topical Guide</a></h1>
+	<h2 class="subtitle">Available Datasets</h2>
 </header>
 
 {% if datasets %}
 <div id="accordion">
-    {% for dataset,analyses in plot_img_urls.items %}
-    <div><a>{{dataset.readable_name}}<img type="dataset" text="{{dataset.readable_name}}" class="star{% if dataset.id in favids.datasets %} fav{% endif %}" url="{% url 'tg-dataset' dataset=dataset.name %}" favurl="{% url 'tg-favs-dataset' dataset=dataset.name %}" /></a></div>
-    <div>
-    
+    {% for dataset,dataset_info in plot_img_urls.iteritems %}
+    <h1>
+        <a>{% if dataset_info.readable_name %}{{dataset_info.readable_name}}{% else %}{{dataset.name}}{% endif %}<img type="dataset"
+                text="{{dataset.readable_name}}"
+                class="star{% if dataset.id in favids.datasets %} fav{% endif %}"
+                url="{% url 'tg-dataset' dataset=dataset.name %}"
+                favurl="{% url 'tg-favs-dataset' dataset=dataset.name %}" />
+        </a>
+    </h1>
+    <div class="tab-content" dataset="{{dataset.name}}">
+        <div class="main">
+	        {% if dataset.analysis_set.count > 0 %}
+		       <!-- <img id="{{dataset.name}}__plot" class="plot" src="{{dataset_info.initial_plot_img_url}}"/>-->		        
+			    <div class="ui-widget-content ui-corner-all">
+			        <div id="jqplot_container">
+					<div id="jqplot"></div>
+					<span id="jqplot_info"></span>
+			        </div>
+			    </div>
+			    <script>get_chart("{{dataset_info.initial_plot_img_url}}")</script>
+		        <div class="explore-wrapper"><button class="explore">Explore!</button></div>
+	        {% else %}
+	            <div class="ui-state-highlight">No analyses available for this dataset. Try importing one using <code>backend.py analysis_import</code>.</div>
+	        {% endif %}
+        </div>
         
-        <p class="description">{{dataset.description|linebreaks}}</p>
-        {% with dataset.datasetmetricvalue_set as metricval_mgr %}
-	        {% if metricval_mgr.count > 0 %}
-	            <table class="ui-widget metrics">
-	                <thead>
-	                    <tr class="ui-widget-header">
-	                        <th>Metric</th><th>Value</th>
+        <div class="sidebar">
+            <h2>Settings</h2>
+            <div id="analyses-selector">
+                <span><em>Analysis:</em></span>
+                <select class="analysis">
+                {% for analysis,plot_img_url in dataset_info.analysis_img_urls.iteritems %}
+                    <option value="{{analysis.name}}" img_url="{{plot_img_url}}" url="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}">{{analysis.name}}</option>
+                {% endfor %}
+                </select>
+            </div>{# end settings #}
+	        
+	        <h2>Metadata</h2>
+            <div id="metadata">
+            {% if metadata %}
+                <table class="ui-widget metadata">
+                    <thead>
+                        <tr class="ui-widget-header">
+                            <th>Key</th><th>Value</th><th>Type</th>
                         </tr>
                     </thead>
                     <tbody class="ui-widget-content">
-		                {% for metricvalue in metricval_mgr.all %}
-		                <tr>
-		                    <td class="key">{{metricvalue.metric.name}}</td>
-		                    <td class="value">{{metricvalue.value}}</td>
-		                </tr>
-		                {% endfor %}
-	                </tbody>
-	            </table>
-	        {% else %}
-	            <div class="ui-state-highlight">No metrics available for this dataset.</div>
-	        {% endif %}
-        {% endwith %}
-        
-        {% with dataset.datasetmetainfovalue_set as metadataval_mgr %}
-	        {% if metadataval_mgr.count > 0 %}
-	            <table class="ui-widget metadata">
-	                <thead>
-	                    <tr="ui-widget-header">
-	                        <th>Key</th><th>Value</th><th>Type</th>
+                        {% for name,value,type in metadata %}
+                        <tr>
+                            <td class="key">{{name}}</td>
+                            <td class="value">{{value}}</td>
+                            <td class="value">{{type}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="ui-state-highlight">No metadata available for this dataset.</div>
+            {% endif %}
+	        </div>{# end metadata #}
+	        
+            <h2>Metrics</h2>
+            <div id="metrics">
+			{% if metrics %}
+                <table class="ui-widget metrics">
+                    <thead>
+                        <tr class="ui-widget-header">
+                            <th>Metric</th><th>Value</th>
                         </tr>
                     </thead>
                     <tbody class="ui-widget-content">
-		                {% for metadatavalue in metadataval_mgr.all %}
-		                <tr>
-		                    <td class="key">{{metadatavalue.info_type.name}}</td>
-		                    <td class="value">{{metadatavalue.value}}</td>
-		                    <td class="value">{{metadatavalue.type}}</td>
-		                </tr>
-		                {% endfor %}
-	                </tbody>
-	            </table>
-	        {% else %}
-	            <div class="ui-state-highlight">No metadata available for this dataset.</div>
-	        {% endif %}
-        {% endwith %}
+                        {% for name,value in metrics %}
+                        <tr>
+                            <td class="key">{{name}}</td>
+                            <td class="value">{{value}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="ui-state-highlight">No metrics available for this dataset.</div>
+            {% endif %}
+	        </div>{# end metrics #}
+        </div>{# end sidebar #}
         
-        {% if dataset.analysis_set.count > 0 %}
-	        <div id="analysis-container">
-		        Analyses
-		        <ul class="analyses">
-		        {% for analysis,plot_img_url in analyses.items %}
-			        
-			            <li class="ui-widget{% ifequal analysis curanalysis %} current_analysis{% endifequal %}">
-			            	<div class="ui-widget-content ui-corner-all	">
-				                <div class="ui-widget-header ui-corner-all">
-				                    <a href="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}" class="analysis-link">{{analysis.readable_name}}</a>
-				                    <img class="star{% if analysis.id in favids.analyses %} fav{% endif %}" type="analyses" text="{{dataset.readable_name}}: {{analysis.name}}" url="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}" favurl="{% url 'tg-favs-analysis' dataset=dataset.name analysis=analysis.name %}" />
-			                    </div>
-				                <a href="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}" class="analysis-link">
-					                {% with analysis.analysismetricvalue_set as metricval_mgr %}
-						                {% if metricval_mgr.count > 0 %}
-								            <table class="ui-widget metrics">
-								                <thead>
-								                    <tr class="ui-widget-header">
-								                        <th>Metric</th><th>Value</th>
-						                            </tr>
-					                            </thead>
-					                            <tbody class="ui-widget-content">
-									                {% for metricvalue in analysis.analysismetricvalue_set.all %}
-									                <tr>
-									                    <td class="key">{{metricvalue.metric.name}}</td>
-									                    <td class="value">{{metricvalue.value}}</td>
-									                </tr>
-									                {% endfor %}
-								                </tbody>
-								            </table>
-								        {% else %}
-								            <div class="ui-state-highlight">No metrics were found for this analysis.</div>
-								        {% endif %}
-							        {% endwith %}{# end with metricval_mgr #}
-							        
-							        {% with analysis.analysismetainfovalue_set as metadataval_mgr %}
-								        {% if metadataval_mgr.count > 0 %}
-								            <table class="ui-widget metrics">
-								                <thead>
-								                    <tr class="ui-widget-header">
-								                        <th>Key</th><th>Value</th><th>Type</th>
-								                    </tr>
-								                </thead>
-								                <tbody class="ui-widget-content">
-								                {% for metadatavalue in metadataval_mgr.all %}
-									                <tr>
-									                    <td class="key">{{metadatavalue.info_type.name}}</td>
-									                    <td class="value">{{metadatavalue.value}}</td>
-									                    <td class="value">{{metadatavalue.type}}</td>
-									                </tr>
-									                {% endfor %}
-								                </tbody>
-								            </table>
-								        {% else %}
-								            <div class="ui-state-highlight">No metadata found for this analysis.</div>
-								        {% endif %}
-					                {% endwith %}{# end with metadataval_mgr #}
-					                <div class="description">{{analysis.description|linebreaks}}</div>
-					                <img id="plot_{{dataset.name}}__{{analysis.name}}" class="plot" src="{{plot_img_url}}"/>
-				                </a>
-			                </div>
-			            </li>{# end analysis list item #}
-		            </a>{# end a.analysis-link #}
-		        {% endfor %}
-		        </ul>{# end ul.analyses #}
-	        </div>{# end div.analysis-container #}
-        {% else %}
-            <div class="ui-state-highlight">No analyses available for this dataset.</div>
+    	{% if dataset_info.description %}
+        <div class="description-container">
+	        <h2>About This Dataset</h2>
+	        <div>{{dataset_info.description}}</div>
+        </div>
         {% endif %}
-    </div>{# end accordion item content div #}
+    </div>{# end #content #}
     {% endfor %}
-</div>{# end div#accordion #}
+</div>{# end #accordion #}
 {% else %}
-    <div class="ui-state-highlight">No datasets yet. Try importing one using backend.py.</div>
+    <div class="ui-state-highlight">No datasets yet. Try importing one using <code>backend.py dataset_import</code>.</div>
 {% endif %}
 {% endblock %}{# end block body #}

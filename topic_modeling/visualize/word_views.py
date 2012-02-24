@@ -43,7 +43,7 @@ class WordView(AnalysisBaseView):
         
         num_per_page = request.session.get('words-per-page', 30)
         page_num = request.session.get('word-page', 1)
-        words, num_pages, _ = paginate_list(words, page_num, num_per_page)
+        words, num_pages, page_num = paginate_list(words, page_num, num_per_page)
             
         context['words'] = words
         context['num_pages'] = num_pages

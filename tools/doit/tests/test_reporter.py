@@ -22,6 +22,13 @@ class TestConsoleReporter(object):
         rep.execute_task(t1)
         assert ".  with_action\n" == rep.outstream.getvalue()
 
+    def test_executeHidden(self):
+        rep = reporter.ConsoleReporter(StringIO.StringIO(), {})
+        def do_nothing():pass
+        t1 = Task("_hidden",[(do_nothing,)])
+        rep.execute_task(t1)
+        assert "" == rep.outstream.getvalue()
+
     def test_executeGroupTask(self):
         rep = reporter.ConsoleReporter(StringIO.StringIO(), {})
         rep.execute_task(Task("t_name", None))
@@ -112,7 +119,7 @@ class TestTaskResult(object):
         result = reporter.TaskResult(t1)
         result.start()
         t1.execute()
-        result._set_result('success')
+        result.set_result('success')
         got = result.to_dict()
         assert t1.name == got['name'], got
         assert 'success' == got['result'], got

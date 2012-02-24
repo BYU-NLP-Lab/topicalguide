@@ -96,17 +96,17 @@ def topic_attribute_plot(request, attribute, topic, value):
             chart_parameters['histogram'] = 'True'
         chart = TopicAttributeChart(chart_parameters)
         return HttpResponse(chart.get_chart_image(), mimetype="image/png")
+    elif fmt == 'csv':
+        chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
+        if request.GET.get('frequency', False):
+            chart_parameters['frequency'] = 'True'
+        if request.GET.get('histogram', False):
+            chart_parameters['histogram'] = 'True'
+        chart = TopicAttributeChart(chart_parameters)
+        return HttpResponse(chart.get_csv_file(), mimetype="text/csv")
     else:
         raise ValueError("Format '%' is not supported" % fmt)
 
-def topic_attribute_csv(request, attribute, topic, value):
-    chart_parameters = {'attribute': attribute, 'topic': topic, 'value': value}
-    if request.GET.get('frequency', False):
-        chart_parameters['frequency'] = 'True'
-    if request.GET.get('histogram', False):
-        chart_parameters['histogram'] = 'True'
-    chart = TopicAttributeChart(chart_parameters)
-    return HttpResponse(chart.get_csv_file(), mimetype="text/csv")
 
 def topic_metric_plot(request, dataset, analysis, metric):
     chart_parameters = {'dataset': dataset, 'analysis': analysis}
@@ -134,7 +134,7 @@ def get_attribute_page(request, dataset, analysis, attribute, number):
 
     num_per_page = request.session.get('attributes-per-page', 20)
     page = int(number)
-    values, num_pages, _ = paginate_list(values, page, num_per_page)
+    values, num_pages, page = paginate_list(values, page, num_per_page)
     ret_val['values'] = [vars(AjaxValue(val.value)) for val in values]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
@@ -162,7 +162,7 @@ def get_word_page(request, dataset, analysis, number):
 
     num_per_page = request.session.get('words-per-page', 30)
     page = int(number)
-    words, num_pages, _ = paginate_list(words, page, num_per_page)
+    words, num_pages, page = paginate_list(words, page, num_per_page)
 
     ret_val['words'] = [vars(AjaxWord(word.type)) for word in words]
     ret_val['num_pages'] = num_pages

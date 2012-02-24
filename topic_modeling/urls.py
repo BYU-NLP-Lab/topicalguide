@@ -34,6 +34,7 @@ from topic_modeling.visualize.attribute_views import AttributeDocumentView, \
 from topic_modeling.cssmin import cssmin
 from django.http import HttpResponse
 from topic_modeling.visualize.plot_views import PlotView
+from topic_modeling.visualize.common.views import TermsView
 
 def render_style(request, style_path):
     css = open(settings.STYLES_ROOT + '/' + style_path).read()
@@ -122,8 +123,6 @@ urlpatterns = patterns('',
     url(analysis_base + '/' + plot + '$', PlotView.as_view(), name='tg-plot')
 )
 
-feeds_base = 'feeds'
-
 urlpatterns += patterns(prefix + '.ajax_calls',
 # AJAX Calls
     (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + word + '$',
@@ -133,12 +132,8 @@ urlpatterns += patterns(prefix + '.ajax_calls',
     (r'^feeds/set-current-name-scheme/(?P<name_scheme>[^/]*)$',
         'set_current_name_scheme'),
 # Topic-Attribute Plots
-    (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '$',
-        'topic_attribute_plot'),
-    (r'^feeds/topic-attribute-csv/' + attribute + '/' + value + '/' + topic + '$',
-        'topic_attribute_csv'),
-    (r'^feeds/attribute-values/' + dataset_nc + '/' + attribute + '$',
-        'attribute_values'),
+    (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '$', 'topic_attribute_plot'),
+    (r'^feeds/attribute-values/' + dataset_nc + '/' + attribute + '$', 'attribute_values'),
 # Topic-Metric Plots
     (r'^feeds/topic-metric-plot/' + dataset + '/' + analysis + '/' + metric + '$',
         'topic_metric_plot'),
@@ -242,6 +237,8 @@ item_id = r'/(?P<item_id>[^/]+)'
 urlpatterns += patterns(favs_prefix,
     url('^datasets.favs$', 'datasets', name='tg-favs-datasets'),
     url(r'^' + dataset + '/fav$', 'dataset', name='tg-favs-dataset'),
+    url(r'^' + dataset + '/documents.favs$', 'documents', name='tg-favs-docs'),
+    url(r'^' + dataset + '/' + analysis + '/' + document + '/fav$', 'document', name='tg-favs-doc'),
     url(r'^' + dataset + '/analyses.favs$', 'analyses', name='tg-favs-analyses'),
     url(r'^' + dataset + '/' + analysis + '/fav$', 'analysis', name='tg-favs-analysis'),
     url(r'^' + dataset + '/' + analysis + '/topics.favs$', 'topics', name='tg-favs-topics'),
@@ -265,3 +262,6 @@ urlpatterns += patterns('',
     (r'^site-media/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': settings.STATICFILES_ROOT, 'show_indexes': True}),
 )
+
+#Terms of Use
+urlpatterns += patterns('', url(r'^terms/?$', TermsView.as_view(), name='tg-terms'))

@@ -32,8 +32,19 @@ def add_metric(dataset):
         token_count += doc.word_count
         type_count += doc.words.count()
     
-    DatasetMetricValue.objects.create(metric=token_metric, dataset=dataset, value=token_count)
-    DatasetMetricValue.objects.create(metric=type_metric, dataset=dataset, value=type_count)
+    try:
+        mv = token_metric.datasetmetricvalue_set.get(dataset=dataset)
+        mv.value = token_count
+        mv.save()
+    except DatasetMetricValue.DoesNotExist:
+        DatasetMetricValue.objects.create(metric=token_metric, dataset=dataset, value=token_count)
+    
+    try:
+        mv = type_metric.datasetmetricvalue_set.get(dataset=dataset)
+        mv.value = type_count
+        mv.save()
+    except DatasetMetricValue.DoesNotExist:
+        DatasetMetricValue.objects.create(metric=type_metric, dataset=dataset, value=type_count)
 
 def metric_names_generated(_dataset):
     return ["Token Count", "Type Count"]

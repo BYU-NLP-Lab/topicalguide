@@ -58,12 +58,11 @@ def clean_docs_from_session(documents, session, doc=None):
     documents, filter_form = filter_documents(documents, filters)
     sort_by = session.get('document-sort', 'filename')
     documents = sort_documents(documents, sort_by)
-    #session['documents-list'] = documents
+    
     page_num = session.get('document-page', 1)
     per_page = session.get('documents-per-page', 20)
-    docs, num_pages, page = paginate_list(documents, page_num, per_page, doc)
-    if page:
-        session['document-page'] = page
+    docs, num_pages, page_num = paginate_list(documents, page_num, per_page, doc)
+    session['document-page'] = page_num
     return docs, filter_form, num_pages
 
 

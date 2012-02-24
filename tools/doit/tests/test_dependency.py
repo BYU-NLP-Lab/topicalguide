@@ -1,18 +1,25 @@
+# coding=UTF-8
+
 import os
 import time
 import anydbm
 
-import py.test
+import pytest
 
 from doit.task import Task
 from doit.dependency import get_md5, md5sum, check_modified
-from doit.dependency import JsonDependency, DbmDependency
+from doit.dependency import JsonDependency, DbmDependency, DbmDB
 
 
 def get_abspath(relativePath):
     """ return abs file path relative to this file"""
     return os.path.join(os.path.dirname(__file__), relativePath)
 
+
+def test_unicode_md5():
+    data = u"我"
+    # no exception is raised
+    assert get_md5(data)
 
 
 def test_md5():
@@ -36,24 +43,6 @@ def test_md5():
 # save in db (task - dependency - (timestamp, size, signature))
 # taskId_dependency => signature(dependency)
 # taskId is md5(CmdTask.task)
-
-TESTDB = "testdb"
-
-# fixture for "doit.db". create/remove for every test
-def pytest_funcarg__depfile(request):
-    def create_depfile():
-        dep_class = request.param
-        if os.path.exists(TESTDB): os.remove(TESTDB)
-        return dep_class(TESTDB)
-    def remove_depfile(depfile):
-        if not depfile._closed:
-            depfile.close()
-        if os.path.exists(TESTDB):
-            os.remove(TESTDB)
-    return request.cached_setup(
-        setup=create_depfile,
-        teardown=remove_depfile,
-        scope="function")
 
 
 # fixture to create a sample file to be used as file_dep
@@ -81,7 +70,12 @@ def pytest_funcarg__dependency(request):
 def pytest_generate_tests(metafunc):
     if "depfile" in metafunc.funcargnames:
         metafunc.addcall(id='JsonDependency', param=JsonDependency)
-        metafunc.addcall(id='DbmDependency', param=DbmDependency)
+        # gdbm is broken on python2.5
+        import platform
+        python_version = platform.python_version().split('.')
+        if python_version[0] != '2' or python_version[1] != '5':
+            metafunc.addcall(id='DbmDependency', param=DbmDependency)
+
 
 
 class TestDependencyDb(object):
@@ -99,16 +93,28 @@ class TestDependencyDb(object):
         depfile.close()
 
         # open it again and check the value
-        d2 = depfile.__class__(TESTDB)
+        d2 = depfile.__class__(depfile.name)
         value = d2._get("taskId_X","dependency_A")
         assert "da_md5" == value, value
 
     def test_corrupted_file(self, depfile):
-        fd = open(TESTDB, 'w')
+        fd = open(depfile.name, 'w')
         fd.write("""{"x": y}""")
         fd.close()
-        py.test.raises((ValueError, anydbm.error), depfile.__class__, TESTDB)
+        if isinstance(anydbm.error, Exception): # pragma: no cover
+            exceptions = (ValueError, anydbm.error)
+        else:
+            exceptions = (ValueError,) + anydbm.error
+        pytest.raises(exceptions, depfile.__class__, depfile.name)
 
+    def test_corrupted_file_unrecognized_excep(self, monkeypatch, depfile):
+        if isinstance(depfile, JsonDependency):
+            return # this is specific to DbmDependency
+        fd = open(depfile.name, 'w')
+        fd.write("""{"x": y}""")
+        fd.close()
+        monkeypatch.setattr(DbmDB, 'DBM_CONTENT_ERROR_MSG', 'xxx')
+        pytest.raises(anydbm.error, depfile.__class__, depfile.name)
 
     # _get must return None if entry doesnt exist.
     def test_getNonExistent(self, depfile):
@@ -138,11 +144,11 @@ class TestDependencyDb(object):
         depfile._set("taskId_YYY", "dep_1", "x")
         depfile.close()
         # 2 - re-open and remove one task
-        reopened = depfile.__class__(TESTDB)
+        reopened = depfile.__class__(depfile.name)
         reopened.remove("taskId_YYY")
         reopened.close()
         # 3 - re-open again and check task was really removed
-        reopened2 = depfile.__class__(TESTDB)
+        reopened2 = depfile.__class__(depfile.name)
         assert reopened2._in("taskId_XXX")
         assert not reopened2._in("taskId_YYY")
 
@@ -170,11 +176,6 @@ class TestSaveSuccess(object):
         t1 = Task('t_name', None)
         depfile.save_success(t1)
         assert None is depfile._get(t1.name, "result:")
-
-    def test_save_runonce(self, depfile):
-        t1 = Task('t_name', None, run_once=True)
-        depfile.save_success(t1)
-        assert depfile._get(t1.name, "run-once:")
 
     def test_save_file_md5(self, depfile):
         # create a test dependency file
@@ -250,23 +251,30 @@ class TestGetValue(object):
         depfile.save_success(t1)
         assert 5 == depfile.get_value('t1.x')
 
+    def test_ok_dot_on_task_name(self, depfile):
+        t1 = Task('t1:a.ext', None)
+        t1.values = {'x':5, 'y':10}
+        depfile.save_success(t1)
+        assert 5 == depfile.get_value('t1:a.ext.x')
+
     def test_invalid_string(self, depfile):
         t1 = Task('t1', None)
         t1.values = {'x':5, 'y':10}
         depfile.save_success(t1)
-        py.test.raises(Exception, depfile.get_value, 'nono')
+        pytest.raises(Exception, depfile.get_value, 'nono')
 
     def test_invalid_taskid(self, depfile):
         t1 = Task('t1', None)
         t1.values = {'x':5, 'y':10}
         depfile.save_success(t1)
-        py.test.raises(Exception, depfile.get_value, 'nonono.x')
+        pytest.raises(Exception, depfile.get_value, 'nonono.x')
 
     def test_invalid_arg(self, depfile):
         t1 = Task('t1', None)
         t1.values = {'x':5, 'y':10}
         depfile.save_success(t1)
-        py.test.raises(Exception, depfile.get_value, 't1.z')
+        pytest.raises(Exception, depfile.get_value, 't1.z')
+
 
 
 class TestRemoveSuccess(object):
@@ -288,22 +296,24 @@ class TestIgnore(object):
 
 class TestCheckModified(object):
     def test_None(self, dependency):
-        assert check_modified(dependency, None)
+        assert check_modified(dependency, os.stat(dependency),  None)
 
     def test_timestamp(self, dependency):
         timestamp = os.path.getmtime(dependency)
-        assert not check_modified(dependency, (timestamp, 0, ''))
-        assert check_modified(dependency, (timestamp+1, 0, ''))
+        dep_stat = os.stat(dependency)
+        assert not check_modified(dependency, dep_stat, (timestamp, 0, ''))
+        assert check_modified(dependency, dep_stat, (timestamp+1, 0, ''))
 
     def test_size_md5(self, dependency):
         timestamp = os.path.getmtime(dependency)
         size = os.path.getsize(dependency)
         md5 = md5sum(dependency)
+        dep_stat = os.stat(dependency)
         # incorrect size dont check md5
-        assert check_modified(dependency, (timestamp+1, size+1, ''))
+        assert check_modified(dependency, dep_stat, (timestamp+1, size+1, ''))
         # correct size check md5
-        assert not check_modified(dependency, (timestamp+1, size, md5))
-        assert check_modified(dependency, (timestamp+1, size, ''))
+        assert not check_modified(dependency, dep_stat, (timestamp+1, size, md5))
+        assert check_modified(dependency, dep_stat, (timestamp+1, size, ''))
 
 
 
@@ -338,7 +348,7 @@ class TestGetStatus(object):
         assert 'up-to-date' == depfile.get_status(t1)
         assert [] == t1.dep_changed
 
-        os.stat_float_times(True) # for python2.4
+        # FIXME - mock timestamp
         time.sleep(1) # required otherwise timestamp is not modified!
         # a small change on the file
         ff = open(filePath,"a")
@@ -353,7 +363,7 @@ class TestGetStatus(object):
     def test_file_dependency_not_exist(self, depfile):
         filePath = get_abspath("data/dependency_not_exist")
         t1 = Task("t1", None, [filePath])
-        py.test.raises(Exception, depfile.get_status, t1)
+        pytest.raises(Exception, depfile.get_status, t1)
 
 
     # if there is no dependency the task is always executed
@@ -367,14 +377,6 @@ class TestGetStatus(object):
         assert 'run' == depfile.get_status(t1)
         assert [] == t1.dep_changed
 
-
-    def test_runOnce(self, depfile):
-        t1 = Task("t1", None, run_once=True)
-        assert 'run' == depfile.get_status(t1)
-        assert [] == t1.dep_changed
-        depfile.save_success(t1)
-        assert 'up-to-date' == depfile.get_status(t1)
-        assert [] == t1.dep_changed
 
     def test_UptodateFalse(self, depfile):
         filePath = get_abspath("data/dependency1")
@@ -413,6 +415,31 @@ class TestGetStatus(object):
         # second time execute too
         depfile.save_success(t1)
         assert 'up-to-date' == depfile.get_status(t1)
+
+
+    def test_UptodateCallable_True(self, depfile):
+        def check(task, values): return True
+        t1 = Task("t1", None, uptodate=[check])
+        depfile.save_success(t1)
+        assert 'up-to-date' == depfile.get_status(t1)
+
+    def test_UptodateCallable_False(self, depfile):
+        filePath = get_abspath("data/dependency1")
+        ff = open(filePath,"w")
+        ff.write("part1")
+        ff.close()
+
+        def check(task, values): return False
+        t1 = Task("t1", None, file_dep=[filePath], uptodate=[check])
+
+        # first time execute
+        assert 'run' == depfile.get_status(t1)
+        assert [] == t1.dep_changed
+
+        # second time execute too
+        depfile.save_success(t1)
+        assert 'run' == depfile.get_status(t1)
+        assert [] == t1.dep_changed
 
 
     # if target file does not exist, task is outdated.
