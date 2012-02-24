@@ -24,6 +24,7 @@
 from django import forms
 from django.db.models import Min, Max
 
+from topic_modeling.visualize import get_session_var
 from topic_modeling.visualize.common.ui import FilterForm
 from topic_modeling.visualize.common.helpers import paginate_list
 from topic_modeling.visualize.documents.common import sort_documents
@@ -54,7 +55,9 @@ def get_doc_filter_by_name(name):
 def clean_docs_from_session(documents, session, doc=None):
     # This method takes an original list of documents, then filters, sorts, and
     # paginates them from the given session object.
-    filters = session.get('document-filters', [])
+    
+    dataset = documents[0].dataset
+    filters = get_session_var(session, dataset, 'document-filters', [])
     documents, filter_form = filter_documents(documents, filters)
     sort_by = session.get('document-sort', 'filename')
     documents = sort_documents(documents, sort_by)

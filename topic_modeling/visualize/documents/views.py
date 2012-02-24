@@ -20,6 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
+from topic_modeling.visualize import put_session_var
 from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common.ui import BreadCrumb
 from topic_modeling.visualize.common.views import AnalysisBaseView
@@ -35,35 +36,29 @@ class DocumentView(AnalysisBaseView):
     
     def get_context_data(self, request, **kwargs):
         context = super(DocumentView, self).get_context_data(request, **kwargs)
-        document_num = kwargs.get('document', None)
-        
-        if 'document_filters' in kwargs:
-            request.session['document-filters'] = kwargs['document_filters']
         
         context['highlight'] = 'documents_tab'
         context['tab'] = 'document'
         dataset, analysis = context['dataset'], context['analysis']
+        
+        if 'document_filters' in kwargs:
+            put_session_var(request.session, dataset, 'document-filters', kwargs['document_filters'])
     
         context['sort_form'] = SortDocumentForm(analysis)
     
         sort_by = request.session.get('document-sort', 'filename')
         context['sort_form'].fields['sort'].initial = sort_by
     
-        if document_num:
-            document = Document.objects.get(pk=document_num)
-        else:
-            document = None
-        documents = dataset.document_set
+        documents = dataset.document_set.all()
         documents, filter_form, num_pages = clean_docs_from_session(documents,
-                request.session, document)
+                request.session)
         page_num = request.session.get('document-page', 1)
         context['documents'] = documents
         context['filter'] = filter_form
         context['num_pages'] = num_pages
         context['page_num'] = page_num
     
-        if not document:
-            document = context['documents'][0]
+        document = context['documents'][0]
     
         context['document_url'] = context['documents_url'] + '/' + str(document.id)
         context['document'] = document

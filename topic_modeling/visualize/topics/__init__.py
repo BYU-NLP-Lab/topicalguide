@@ -1,5 +1,3 @@
-
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -22,3 +20,19 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
+from topic_modeling.visualize.models import Attribute
+from topic_modeling.visualize import get_session_var, put_session_var
+class NoAttributes(Exception): pass
+
+def topic_attribute(dataset, session):
+    key = 'topic-attribute'
+    attributes = dataset.attribute_set.all()
+    if len(attributes)==0: raise NoAttributes
+    try:
+        current_attribute = get_session_var(session, dataset, key)
+        attribute = dataset.attribute_set.get(name=current_attribute)
+    except (KeyError, Attribute.DoesNotExist):
+        attribute = attributes[0]
+
+    put_session_var(session, dataset, key, attribute.name)
+    return attribute
