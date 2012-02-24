@@ -23,6 +23,8 @@
 
 from django.http import HttpResponse
 
+from topic_modeling.visualize import get_session_var, put_session_var
+from topic_modeling.visualize.common.http_responses import JsonResponse
 from topic_modeling.visualize.common.ui import FilterForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
 from topic_modeling.visualize.documents.filters import get_doc_filter_by_name
@@ -88,7 +90,10 @@ def similar_documents(request, dataset, analysis, document, measure):
 def new_document_filter(request, dataset, analysis, document, name):
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    filters = request.session.get('document-filters', [])
+    
+    #filters = request.session.get('document-filters', [])
+    filters = get_session_var(request.session, dataset.name, 'document-filters', [])
+    
     filter_form = FilterForm(possible_document_filters())
     id = 0
     for filter in filters:
@@ -98,19 +103,27 @@ def new_document_filter(request, dataset, analysis, document, name):
     new_filter = get_doc_filter_by_name(name)(dataset, analysis, id)
     filter_form.add_filter(new_filter)
     filters.append(new_filter)
+<<<<<<< HEAD
     request.session['document-filters'] = filters
+=======
+    
+    #request.session['document-filters'] = filters
+    put_session_var(request.session, dataset.name, 'document-filters', filters)
+    
+    request.session.modified = True
+>>>>>>> d9a297a... Resolve issue #226 by keying a session variable by dataset as well as variable name
     return HttpResponse(filter_form.__unicode__())
 
 
 def remove_document_filter(request, dataset, analysis, document, number):
-    request.session['document-filters'].pop(int(number))
+    get_session_var(request.session, dataset.name, 'document-filters').pop(int(number))
     request.session.modified = True
     return filtered_documents_response(request, dataset, analysis)
 
 
 def filtered_documents_response(request, dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
-    documents = dataset.document_set
+    documents = dataset.document_set.all()
     request.session['document-page'] = 1
     documents, filter_form, num_pages = clean_docs_from_session(documents,
             request.session)
@@ -124,7 +137,7 @@ def filtered_documents_response(request, dataset, analysis):
 
 def update_document_topic_filter(request, dataset, analysis, document, number,
         topic):
-    filter = request.session['document-filters'][int(number)]
+    filter = get_session_var(request.session, dataset, 'document-filters')[int(number)]
     if topic == 'None':
         filter.current_topic = None
     else:
@@ -136,7 +149,7 @@ def update_document_topic_filter(request, dataset, analysis, document, number,
 
 def update_document_attribute_filter(request, dataset, analysis, document,
         number, attribute, value=None):
-    filter = request.session['document-filters'][int(number)]
+    filter = get_session_var(request.session, dataset, 'document-filters')[int(number)]
     if attribute == 'None':
         filter.current_attribute = None
     else:
@@ -152,7 +165,7 @@ def update_document_attribute_filter(request, dataset, analysis, document,
 
 def update_document_metric_filter(request, dataset, analysis, document, number,
         metric, comp=None, value=None):
-    filter = request.session['document-filters'][int(number)]
+    filter = get_session_var(request.session, dataset, 'document-filters')[int(number)]
     if metric == 'None':
         filter.current_metric = None
     else:
