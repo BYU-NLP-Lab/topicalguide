@@ -20,7 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from topic_modeling.visualize import put_session_var
+from topic_modeling.visualize import sess_key
 from topic_modeling.visualize.charts import get_chart
 from topic_modeling.visualize.common.ui import BreadCrumb
 from topic_modeling.visualize.common.views import AnalysisBaseView
@@ -42,17 +42,17 @@ class DocumentView(AnalysisBaseView):
         dataset, analysis = context['dataset'], context['analysis']
         
         if 'document_filters' in kwargs:
-            put_session_var(request.session, dataset, 'document-filters', kwargs['document_filters'])
+            request.session[sess_key(dataset,'document-filters')] = kwargs['document_filters']
     
         context['sort_form'] = SortDocumentForm(analysis)
     
-        sort_by = request.session.get('document-sort', 'filename')
+        sort_by = request.session.get(sess_key(dataset,'document-sort'), 'filename')
         context['sort_form'].fields['sort'].initial = sort_by
     
         documents = dataset.document_set.all()
         documents, filter_form, num_pages = clean_docs_from_session(documents,
                 request.session)
-        page_num = request.session.get('document-page', 1)
+        page_num = request.session.get(sess_key(dataset,'document-page'), 1)
         context['documents'] = documents
         context['filter'] = filter_form
         context['num_pages'] = num_pages
@@ -153,7 +153,7 @@ def similar_documents_widget(request, analysis, document):
     w = Widget("Similar Documents", "documents/similar_documents")
     similarity_measures = analysis.pairwisedocumentmetric_set.all()
     if similarity_measures:
-        measure = request.session.get('similarity_measure', None)
+        measure = request.session.get(sess_key(analysis.dataset,'similarity_measure'), None)
         if measure:
             measure = similarity_measures.get(name=measure)
         else:

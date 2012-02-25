@@ -39,6 +39,7 @@ from topic_modeling.visualize.topics.common import RenameForm, SortTopicForm, to
 from topic_modeling.visualize.topics.filters import TopicFilterByDocument, TopicFilterByWord, clean_topics_from_session
 from topic_modeling.visualize.topics.names import name_schemes, current_name_scheme, topic_name_with_ns
 from topic_modeling.visualize.word_views import words_tab
+from topic_modeling.visualize import sess_key
 
 
 class TopicView(AnalysisBaseView):
@@ -47,14 +48,13 @@ class TopicView(AnalysisBaseView):
     def get_context_data(self, request, **kwargs):
         context = super(TopicView, self).get_context_data(request, **kwargs)
         
-        if 'topic_filters' in kwargs:
-            request.session['topic-filters'] = kwargs['topic_filters']
-        
         dataset = context['dataset']
         analysis = context['analysis']
         topic = kwargs.get('topic', None)
         extra_filters = kwargs.get('extra_filters', [])
         
+        if 'topic_filters' in kwargs:
+            request.session[sess_key(dataset,'topic-filters')] = kwargs['topic_filters']
         
         #TODO: clean up this context by moving widget-specific entries into widget contexts
         
@@ -65,7 +65,7 @@ class TopicView(AnalysisBaseView):
     
         context['sort_form'] = SortTopicForm(analysis)
     
-        sort_by = request.session.get('topic-sort', 'name')
+        sort_by = request.session.get(sess_key(dataset,'topic-sort'), 'name')
         context['sort_form'].fields['sort'].initial = sort_by
     
     
@@ -76,9 +76,8 @@ class TopicView(AnalysisBaseView):
         if topic:
             topic = get_object_or_404(Topic, number=topic, analysis=analysis)
         topics = analysis.topic_set
-        topics, filter_form, num_pages = clean_topics_from_session(topics,
-                request.session, extra_filters, topic)
-        page_num = request.session.get('topic-page', 1)
+        topics, filter_form, num_pages = clean_topics_from_session(dataset, topics, request.session, extra_filters, topic)
+        page_num = request.session.get(sess_key(dataset,'topic-page'), 1)
         context['topics'] = topics
         context['filter'] = filter_form
         context['num_pages'] = num_pages
@@ -332,9 +331,10 @@ def similar_topics_tab(request, topic, name_scheme_name):
 def similar_topic_list_widget(request, topic):
     w = Widget("Most Similar Topics", "topics/similar_topics")
     similarity_measures = topic.analysis.pairwisetopicmetric_set.all()
+    dataset = topic.analysis.dataset
     if similarity_measures:
         ns = current_name_scheme(request.session, topic.analysis)
-        measure = request.session.get('topic-similarity-measure', None)
+        measure = request.session.get(sess_key(dataset,'topic-similarity-measure'), None)
         if measure:
             measure = similarity_measures.get(name=measure)
         else:
@@ -428,7 +428,7 @@ def top_values_widget(request, topic):
     attribute = topic_attribute(topic.analysis.dataset, request.session)
     
     attributes = topic.analysis.dataset.attribute_set.all()
-    current_attribute = request.session.get('topic-attribute', None)
+    current_attribute = request.session.get(sess_key(topic.analysis.dataset,'topic-attribute'), None)
     
     try:
         if current_attribute is None: raise NoValidCurrentAttribute

@@ -34,6 +34,7 @@ from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word
+from topic_modeling.visualize import sess_key
 
 
 
@@ -124,9 +125,9 @@ def topic_metric_plot(request, dataset, analysis, metric):
 ###########################
 
 def get_attribute_page(request, dataset, analysis, attribute, number):
-    request.session['attribute-page'] = int(number)
+    request.session[sess_key(dataset,'attribute-page')] = int(number)
     ret_val = dict()
-    values = request.session.get('values-list', None)
+    values = request.session.get(sess_key(dataset,'values-list'), None)
     if not values:
         attribute = Attribute.objects.get(dataset__name=dataset,
                                           name=attribute)
@@ -155,7 +156,7 @@ class AjaxWord:
 
 
 def get_word_page(request, dataset, analysis, number):
-    request.session['word-page'] = int(number)
+    request.session[sess_key(dataset,'word-page')] = int(number)
     ret_val = dict()
 
     words = get_word_list(request, dataset)
@@ -171,10 +172,11 @@ def get_word_page(request, dataset, analysis, number):
 
 
 def update_word_page(request, dataset, analysis, word):
-    request.session['word-find-base'] = word
+    request.session[sess_key(dataset,'word-find-base')] = word
     return get_word_page(request, dataset, analysis, 1)
 
 def set_current_name_scheme(request, name_scheme):
+    return NotImplemented
     request.session['current_name_scheme_id'] = name_scheme
     return HttpResponse('Name scheme set to ' + name_scheme)
 # vim: et sw=4 sts=4

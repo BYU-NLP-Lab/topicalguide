@@ -26,6 +26,7 @@ from topic_modeling.visualize.common.ui import BreadCrumb, WordSummary, \
     WordFindForm, Tab, Widget
 from topic_modeling.visualize.common.helpers import get_word_list, paginate_list
 from topic_modeling.visualize.models import Word
+from topic_modeling.visualize import sess_key
 
 
 class WordView(AnalysisBaseView):
@@ -42,7 +43,7 @@ class WordView(AnalysisBaseView):
         words = get_word_list(request, dataset.name)
         
         num_per_page = request.session.get('words-per-page', 30)
-        page_num = request.session.get('word-page', 1)
+        page_num = request.session.get(sess_key(dataset,'word-page'), 1)
         words, num_pages, page_num = paginate_list(words, page_num, num_per_page)
             
         context['words'] = words
@@ -58,7 +59,7 @@ class WordView(AnalysisBaseView):
         context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).item(word)
         
         word_url = context['words_url'] + '/' + word.type
-        word_base = request.session.get('word-find-base', '')
+        word_base = request.session.get(sess_key(dataset,'word-find-base'), '')
         context['word_find_form'] = WordFindForm(word_base)
         
         context['view_description'] = "Word '{0}'".format(word.type)

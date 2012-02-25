@@ -34,6 +34,7 @@ from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.models import Value
 from topic_modeling.visualize.models import Word
+from topic_modeling.visualize import sess_key
 
 class AttributeView(AnalysisBaseView):
     template_name = "attributes.html"
@@ -55,7 +56,7 @@ class AttributeView(AnalysisBaseView):
         if attribute:
             attribute = get_object_or_404(Attribute, dataset=dataset,
                     name=attribute)
-            prev_attribute = request.session.get('attribute-name', '')
+            prev_attribute = request.session.get(sess_key(dataset,'attribute-name'), '')
             if prev_attribute != attribute.name:
                 request.session['attribute-name'] = attribute.name
                 request.session['attribute-page'] = 1
@@ -66,7 +67,7 @@ class AttributeView(AnalysisBaseView):
         context['attribute'] = attribute
     
         values = attribute.value_set.all()
-        page_num = request.session.get('attribute-page', 1)
+        page_num = request.session.get(sess_key(dataset,'attribute-page'), 1)
         num_per_page = request.session.get('attributes-per-page', 20)
         values, num_pages, page_num = paginate_list(values, page_num, num_per_page)
         context['num_pages'] = num_pages
