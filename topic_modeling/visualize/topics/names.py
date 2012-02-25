@@ -45,8 +45,8 @@ def current_name_scheme_id(session, analysis):
             session[key] = default()
     return session[key]
 
-def set_current_name_scheme_id(session, analysis, name_scheme):
-    key = sess_key(analysis.dataset,'current_name_scheme_id')
+def set_current_name_scheme_id(session, dataset, name_scheme):
+    key = sess_key(dataset,'current_name_scheme_id')
     session[key] = name_scheme
 
 def current_name_scheme(session, analysis):

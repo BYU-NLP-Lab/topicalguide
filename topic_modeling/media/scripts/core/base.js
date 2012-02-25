@@ -7,7 +7,7 @@ function cursor_default() {
 }
 function set_name_scheme() {
     cursor_wait();
-    var link = "/feeds/set-current-name-scheme/" + $("#namescheme-dropdown-select").val();
+    var link = "/feeds/set-current-name-scheme/dataset/" + $.fn.dataset + "/" + $("#namescheme-dropdown-select").val();
     $.get(link, {}, function() {
         cursor_default();
     });
