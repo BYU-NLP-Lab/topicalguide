@@ -81,7 +81,7 @@ class TermsView(RootView):
 class DatasetBaseView(RootView):
     def get_context_data(self, request, **kwargs):
         context = super(DatasetBaseView, self).get_context_data(request, **kwargs)
-        context['datasets'] = Dataset.objects.all()
+	context['datasets'] = Dataset.objects.filter(visible=True)
         try:
             dataset = get_object_or_404(Dataset, name=kwargs['dataset'])
         except KeyError:
@@ -110,5 +110,4 @@ class AnalysisBaseView(DatasetBaseView):
         # on the name of the current analysis
         context['favorites']['documents'] = favorite_document_entries(request, kwargs['dataset'], kwargs['analysis']) + context['favorites']['documents']
         context['favids']['documents'] = [fav['fav'].document.id for fav in context['favorites']['documents']]
-
         return context
