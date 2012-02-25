@@ -29,7 +29,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods, require_GET
 
 from topic_modeling import anyjson
-from topic_modeling.visualize import get_session_var
+from topic_modeling.visualize import sess_key
 from topic_modeling.visualize.common.http_responses import JsonResponse
 from topic_modeling.visualize.models import DatasetFavorite, Dataset, Analysis, AnalysisFavorite, TopicFavorite, Topic, \
     TopicViewFavorite, DocumentViewFavorite, Document, DocumentFavorite
@@ -252,7 +252,7 @@ def topic_view(request, favid):
         topic = Topic.objects.get(analysis=analysis,number=params['topic'])
         name = params['name']
 #        favid = params.get('favid', slugify(name))
-        filters =  base64.b64encode(pickle.dumps(request.session.get('topic-filters', list())))
+        filters =  base64.b64encode(pickle.dumps(request.session.get(sess_key(dataset,'topic-filters'), list())))
         TopicViewFavorite.objects.create(session_key=request.session.session_key, topic=topic, name=name, favid=favid, filters=filters)
         return HttpResponse(status=201)
     elif request.method=='DELETE':
@@ -289,7 +289,7 @@ def document_view(request, favid):
         dataset = Dataset.objects.get(name=params['dataset'])
         analysis = Analysis.objects.get(dataset=dataset, name=params['analysis'])
         document = Document.objects.get(id=params['document'], dataset=dataset)
-        rawfilters = get_session_var(request.session, dataset, 'document-filters', list())
+        rawfilters = request.session.get(sess_key(dataset,'document-filters'), list())
         filters =  base64.b64encode(pickle.dumps(rawfilters))
         DocumentViewFavorite.objects.create(session_key=request.session.session_key, document=document,analysis=analysis, name=params['name'], favid=favid, filters=filters)
         return HttpResponse(status=201)

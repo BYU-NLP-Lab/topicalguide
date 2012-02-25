@@ -26,6 +26,7 @@
 from django import forms
 from django.db.models import Max, Min
 
+from topic_modeling.visualize import sess_key
 from topic_modeling.visualize.models import Document
 from topic_modeling.visualize.topics.common import sort_topics
 from topic_modeling.visualize.common.ui import FilterForm
@@ -67,21 +68,21 @@ def filter_topics(topics, filters):
     return topics, filter_form
 
 
-def clean_topics_from_session(topics, session, extra_filters=[], topic=None):
+def clean_topics_from_session(dataset, topics, session, extra_filters=[], topic=None):
     # This method takes an original list of topics, then filters, sorts, and
     # paginates them from the given session object.  If topic is given, we find
     # the page for that topic
-    filters = session.get('topic-filters', [])
+    filters = session.get(sess_key(dataset,'topic-filters'), [])
     topics, filter_form = filter_topics(topics, filters)
     for filter in extra_filters:
         topics = filter.apply(topics)
-    sort_by = session.get('topic-sort', 'name')
+    sort_by = session.get(sess_key(dataset,'topic-sort'), 'name')
     topics = sort_topics(topics, sort_by, session)
-    session['topics-list'] = topics
-    page_num = session.get('topic-page', 1)
+    session[sess_key(dataset,'topics-list')] = topics
+    page_num = session.get(sess_key(dataset,'topic-page'), 1)
     per_page = session.get('topics-per-page', 20)
     topics, num_pages, page_num = paginate_list(topics, page_num, per_page, topic)
-    session['topic-page'] = page_num
+    session[sess_key(dataset,'topic-page')] = page_num
     return topics, filter_form, num_pages
 
 

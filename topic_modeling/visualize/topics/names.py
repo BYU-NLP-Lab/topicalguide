@@ -21,6 +21,7 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 from topic_modeling.visualize.models import TopicNameScheme, TopicName, Analysis
+from topic_modeling.visualize import sess_key
 
 def name_schemes(analysis):
 #    if isinstance(analysis, basestring):
@@ -31,7 +32,7 @@ def name_schemes(analysis):
         raise TypeError("Can only get name schemes for Analysis objects")
 
 def current_name_scheme_id(session, analysis):
-    key = 'current_name_scheme_id'
+    key = sess_key(analysis.dataset,'current_name_scheme_id')
     schemes = name_schemes(analysis)
     def default():
         return schemes[0].id
@@ -43,13 +44,10 @@ def current_name_scheme_id(session, analysis):
         if not analysis.topicnamescheme_set.filter(id=session[key]):
             session[key] = default()
     return session[key]
-    
-#    if 'current_name_scheme_id' not in session:
-#        current_name_scheme_id = schemes[0].id
-#        session['current_name_scheme_id'] = current_name_scheme_id
-#    else:
-#        current_name_scheme_id = session['current_name_scheme_id']
-#    return current_name_scheme_id
+
+def set_current_name_scheme_id(session, analysis, name_scheme):
+    key = sess_key(analysis.dataset,'current_name_scheme_id')
+    session[key] = name_scheme
 
 def current_name_scheme(session, analysis):
     ns_id = current_name_scheme_id(session, analysis)

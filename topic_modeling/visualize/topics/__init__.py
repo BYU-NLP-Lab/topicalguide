@@ -21,7 +21,7 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 from topic_modeling.visualize.models import Attribute
-from topic_modeling.visualize import get_session_var, put_session_var
+from topic_modeling.visualize import sess_key
 class NoAttributes(Exception): pass
 
 def topic_attribute(dataset, session):
@@ -29,10 +29,10 @@ def topic_attribute(dataset, session):
     attributes = dataset.attribute_set.all()
     if len(attributes)==0: raise NoAttributes
     try:
-        current_attribute = get_session_var(session, dataset, key)
+        current_attribute = session[sess_key(dataset, key)]
         attribute = dataset.attribute_set.get(name=current_attribute)
     except (KeyError, Attribute.DoesNotExist):
         attribute = attributes[0]
 
-    put_session_var(session, dataset, key, attribute.name)
+    session[sess_key(dataset, key)] = attribute.name
     return attribute

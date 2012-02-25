@@ -42,6 +42,7 @@ from topic_modeling.visualize.topics.names import current_name_scheme,\
     topic_name_with_ns
 from django.views.decorators.http import require_GET
 from topic_modeling.visualize.common.http_responses import JsonResponse
+from topic_modeling.visualize import sess_key
 
 # General and Sidebar stuff
 ###########################
@@ -58,12 +59,12 @@ def rename_topic(request, dataset, analysis, topic, name):
 def topic_ordering(request, dataset, analysis, order_by):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     
-    request.session['topic-sort'] = order_by
-    request.session['topic-page'] = 1
+    request.session[sess_key(dataset,'topic-sort')] = order_by
+    request.session[sess_key(dataset,'topic-page')] = 1
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
     topics = analysis.topic_set
-    topics, _, num_pages = clean_topics_from_session(topics, request.session)
+    topics, _, num_pages = clean_topics_from_session(dataset, topics, request.session)
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = 1
@@ -73,10 +74,10 @@ def topic_ordering(request, dataset, analysis, order_by):
 @require_GET
 def topic_page(request, dataset, analysis, number):
     analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)
-    request.session['topic-page'] = int(number)
+    request.session[sess_key(dataset,'topic-page')] = int(number)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
-    topics = request.session.get('topics-list', None)
+    topics = request.session.get(sess_key(dataset,'topics-list'), None)
     if not topics:
         topics = analysis.topic_set()
 #        topics = Topic.objects.filter(analysis__name=analysis,
@@ -95,7 +96,7 @@ def topic_page(request, dataset, analysis, number):
 
 def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
     ret_val = dict()
-    request.session['topic-attribute'] = attribute
+    request.session[sess_key(dataset,'topic-attribute')] = attribute
     attribute = Attribute.objects.get(dataset__name=dataset, name=attribute)
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     topic = analysis.topic_set.get(number=topic)
@@ -109,7 +110,7 @@ def similar_topics(request, dataset, analysis, topic, measure):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
-    request.session['topic-similarity-measure'] = measure
+    request.session[sess_key(dataset,'topic-similarity-measure')] = measure
     topic = analysis.topic_set.get(number=topic)
     measure = analysis.pairwisetopicmetric_set.get(name=measure)
     similar_topics = topic.pairwisetopicmetricvalue_originating.\
@@ -132,7 +133,7 @@ def similar_topics(request, dataset, analysis, topic, measure):
 
 def new_topic_filter(request, dataset, analysis, topic, name):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    filters = request.session.get('topic-filters', [])
+    filters = request.session.get(sess_key(dataset,'topic-filters'), [])
     filter_form = FilterForm(possible_topic_filters(analysis))
     id = 0
     for filter in filters:
@@ -142,12 +143,12 @@ def new_topic_filter(request, dataset, analysis, topic, name):
     new_filter = get_topic_filter_by_name(name)(analysis, id)
     filter_form.add_filter(new_filter)
     filters.append(new_filter)
-    request.session['topic-filters'] = filters
+    request.session[sess_key(dataset,'topic-filters')] = filters
     return HttpResponse(filter_form.__unicode__())
 
 
 def remove_topic_filter(request, dataset, analysis, topic, number):
-    request.session['topic-filters'].pop(int(number))
+    request.session[sess_key(dataset,'topic-filters')].pop(int(number))
     request.session.modified = True
     return filtered_topics_response(request, dataset, analysis)
 
@@ -156,20 +157,19 @@ def filtered_topics_response(request, dataset, analysis):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
     topics = analysis.topic_set
-    request.session['topic-page'] = 1
-    topics, filter_form, num_pages = clean_topics_from_session(topics,
-            request.session)
+    request.session[sess_key(dataset,'topic-page')] = 1
+    topics, filter_form, num_pages = clean_topics_from_session(dataset, topics, request.session)
     ret_val = dict()
     ret_val['filter_form'] = filter_form.__unicode__()
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
-    ret_val['page'] = request.session.get('topic-page', 1)
+    ret_val['page'] = request.session.get(sess_key(dataset,'topic-page'), 1)
     return JsonResponse(ret_val)
 
 
 def update_topic_attribute_filter(request, dataset, analysis, topic, number,
         attribute, value=None):
-    filter = request.session['topic-filters'][int(number)]
+    filter = request.session[sess_key(dataset,'topic-filters')][int(number)]
     if attribute == 'None':
         filter.current_attribute = None
     else:
@@ -185,7 +185,7 @@ def update_topic_attribute_filter(request, dataset, analysis, topic, number,
 
 def update_topic_metric_filter(request, dataset, analysis, topic, number,
         metric, comp=None, value=None):
-    filter = request.session['topic-filters'][int(number)]
+    filter = request.session[sess_key(dataset,'topic-filters')][int(number)]
     if metric == 'None':
         filter.current_metric = None
     else:
@@ -201,7 +201,7 @@ def update_topic_metric_filter(request, dataset, analysis, topic, number,
 
 def update_topic_document_filter(request, dataset, analysis, topic, number,
         document):
-    filter = request.session['topic-filters'][int(number)]
+    filter = request.session[sess_key(dataset,'topic-filters')][int(number)]
     if document == 'None':
         filter.current_document_id = None
     else:
@@ -212,7 +212,7 @@ def update_topic_document_filter(request, dataset, analysis, topic, number,
 
 
 def update_topic_word_filter(request, dataset, analysis, topic, number, word):
-    filter = request.session['topic-filters'][int(number)]
+    filter = request.session[sess_key(dataset,'topic-filters')][int(number)]
     if word == 'None':
         filter.current_word = None
     else:

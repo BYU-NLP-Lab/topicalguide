@@ -21,16 +21,21 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 from topic_modeling.visualize.models import Dataset
+from django.http import HttpRequest
+
+def sess_key(dataset, varname):
+    if isinstance(dataset, Dataset): dataset = dataset.name
+    return dataset+':'+varname
 
 def get_session_var(session, dataset, varname, default_value=None):
-    if isinstance(dataset, Dataset): dataset = dataset.name
+    if isinstance(session, HttpRequest): session = session.session
     
-    key = dataset+':'+varname
+    key = sess_key(dataset, varname)
     if default_value is not None:
         return session.get(key, default_value)
     else:
         return session[key]
 
 def put_session_var(session, dataset, varname, value):
-    if isinstance(dataset, Dataset): dataset = dataset.name
-    session[dataset+':'+varname] = value
+    if isinstance(session, HttpRequest): session = session.session
+    session[sess_key(dataset, varname)] = value
