@@ -129,7 +129,7 @@ urlpatterns += patterns(prefix + '.ajax_calls',
         'word_in_context'),
     (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + topic + '/' + word + '$',
         'word_in_context'),
-    (r'^feeds/set-current-name-scheme/(?P<name_scheme>[^/]*)$',
+    (r'^feeds/set-current-name-scheme/' + dataset + '/(?P<name_scheme>[^/]*)$',
         'set_current_name_scheme'),
 # Topic-Attribute Plots
     (r'^feeds/topic-attribute-plot/' + attribute + '/' + value + '/' + topic + '$', 'topic_attribute_plot'),

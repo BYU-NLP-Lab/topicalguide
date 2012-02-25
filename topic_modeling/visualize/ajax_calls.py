@@ -35,6 +35,7 @@ from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word
 from topic_modeling.visualize import sess_key
+from topic_modeling.visualize.topics.names import set_current_name_scheme_id
 
 
 
@@ -175,8 +176,7 @@ def update_word_page(request, dataset, analysis, word):
     request.session[sess_key(dataset,'word-find-base')] = word
     return get_word_page(request, dataset, analysis, 1)
 
-def set_current_name_scheme(request, name_scheme):
-    return NotImplemented
-    request.session['current_name_scheme_id'] = name_scheme
+def set_current_name_scheme(request, dataset, name_scheme):
+    set_current_name_scheme_id(request, dataset, name_scheme)
     return HttpResponse('Name scheme set to ' + name_scheme)
 # vim: et sw=4 sts=4
