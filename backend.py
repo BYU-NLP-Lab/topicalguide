@@ -300,7 +300,7 @@ if 'task_metadata_import' not in locals():
             except Dataset.DoesNotExist:
                 pass
         def word_types_done(_task, _values):
-            if not os.path.exists(c['metadata_filenames']['words']): return True
+            if not os.path.exists(c['metadata_filenames']['word_types']): return True
             try:
                 return WordTypeMetaInfoValue.objects.filter(word_type__tokens__doc__dataset=dataset()).count() > 0
             except Dataset.DoesNotExist:
