@@ -502,22 +502,22 @@ class DatasetMetaInfo(MetaInfo):
     pass
 
 class DatasetMetaInfoValue(MetaInfoValue):
-    info_type = models.ForeignKey(DatasetMetaInfo)
-    dataset = models.ForeignKey(Dataset)
+    info_type = models.ForeignKey(DatasetMetaInfo, related_name='values')
+    dataset = models.ForeignKey(Dataset, related_name='metainfovalues')
 
 class AnalysisMetaInfo(MetaInfo):
     pass
 
 class AnalysisMetaInfoValue(MetaInfoValue):
-    info_type = models.ForeignKey(AnalysisMetaInfo)
-    analysis = models.ForeignKey(Analysis)
+    info_type = models.ForeignKey(AnalysisMetaInfo, related_name='values')
+    analysis = models.ForeignKey(Analysis, related_name='metainfovalues')
 
 class TopicMetaInfo(MetaInfo):
     pass
 
 class TopicMetaInfoValue(MetaInfoValue):
-    info_type = models.ForeignKey(TopicMetaInfo)
-    topic = models.ForeignKey(Topic)
+    info_type = models.ForeignKey(TopicMetaInfo, related_name='values')
+    topic = models.ForeignKey(Topic, related_name='metainfovalues')
 
 class DocumentMetaInfo(MetaInfo):
     pass
@@ -530,15 +530,15 @@ class WordTypeMetaInfo(MetaInfo):
     pass
 
 class WordTypeMetaInfoValue(MetaInfoValue):
-    info_type = models.ForeignKey(WordTypeMetaInfo)
-    word_type = models.ForeignKey(WordType)
+    info_type = models.ForeignKey(WordTypeMetaInfo, related_name='values')
+    word_type = models.ForeignKey(WordType, related_name='metainfovalues')
 
 class WordTokenMetaInfo(MetaInfo):
     pass
 
 class WordTokenMetaInfoValue(MetaInfoValue):
-    info_type = models.ForeignKey(WordTokenMetaInfo)
-    word_token = models.ForeignKey(WordToken)
+    info_type = models.ForeignKey(WordTokenMetaInfo, related_name='values')
+    word_token = models.ForeignKey(WordToken, related_name='metainfovalues')
     analysis = models.ForeignKey(Analysis, null=True)
 
 ## Favorites

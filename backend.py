@@ -57,8 +57,8 @@ settings.DEBUG = False # Disable debugging to prevent the database layer from ca
 from django.db.utils import DatabaseError
 
 from import_scripts.metadata import Metadata, import_dataset_metadata,\
-    import_document_metadata, import_word_metadata, import_analysis_metadata,\
-    import_topic_metadata
+    import_document_metadata, import_word_type_metadata, import_word_token_metadata, \
+    import_analysis_metadata, import_topic_metadata
 from import_scripts.dataset_import import import_dataset
 from import_scripts.analysis_import import import_analysis
 
@@ -67,7 +67,8 @@ from helper_scripts.name_schemes.top_n import TopNTopicNamer
 
 from topic_modeling.visualize.models import Analysis, DatasetMetric, AnalysisMetric, DatasetMetricValue,\
     AnalysisMetricValue, DatasetMetaInfoValue, DocumentMetaInfoValue,\
-    WordMetaInfoValue, AnalysisMetaInfoValue, TopicMetaInfoValue
+    WordTypeMetaInfoValue, WordTokenMetaInfoValue, AnalysisMetaInfoValue, TopicMetaInfoValue,\
+    WordType, WordToken
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import TopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetric
@@ -217,7 +218,7 @@ elif settings.DBTYPE=='mysql':
     c.default('db_jar', 'mysql-connector-java-5.1.18-bin.jar')
     c.default('jdbc_path', 'jdbc:mysql://%s/%s?user=%s\&password=%s'
                % (c['mysql_server'], c['mysql_db'], c['mysql_user'], c['mysql_password']))
-else: raise Exception("Unknown database type '" + db_type + "'")
+else: raise Exception("Unknown database type '" + settings.DBTYPE + "'")
 
 
 print "----- Topical Guide Data Import System -----"
@@ -256,7 +257,7 @@ if 'task_metadata_import' not in locals():
                 pass
         def clean_datasets():
             try:
-                dataset().datasetmetainfovalue_set.all().delete()
+                dataset().metainfovalues.all().delete()
             except Dataset.DoesNotExist:
                 pass
         def datasets_done(_task, _values):
@@ -275,7 +276,7 @@ if 'task_metadata_import' not in locals():
         def clean_documents():
             try:
                 for doc in dataset().document_set.all():
-                    doc.documentmetainfovalue_set.all().delete()
+                    doc.metainfovalues.all().delete()
             except Dataset.DoesNotExist:
                 pass
         def documents_done(_task, _values):
@@ -285,26 +286,46 @@ if 'task_metadata_import' not in locals():
             except Dataset.DoesNotExist:
                 return False
         
-        def import_words():
+        def import_word_types():
             try:
-                word_metadata = Metadata(c['metadata_filenames']['words'])
-                import_word_metadata(dataset(), word_metadata)
+                word_type_metadata = Metadata(c['metadata_filenames']['word_types'])
+                import_word_type_metadata(dataset(), word_type_metadata)
             except Dataset.DoesNotExist:
                 pass
-        def clean_words():
+        def clean_word_types():
+            
             try:
-                for word in dataset().word_set.all():
-                    word.wordmetainfovalue_set.all().delete()
+                for word_type in WordType.objects.filter(tokens__doc__dataset=dataset()):
+                    word_type.metainfovalues.all().delete()
             except Dataset.DoesNotExist:
                 pass
-        def words_done(_task, _values):
+        def word_types_done(_task, _values):
             if not os.path.exists(c['metadata_filenames']['words']): return True
             try:
-                return WordMetaInfoValue.objects.filter(word__dataset=dataset()).count() > 0
+                return WordTypeMetaInfoValue.objects.filter(word_type__tokens__doc__dataset=dataset()).count() > 0
             except Dataset.DoesNotExist:
                     return False
         
-        for entity in ('datasets','documents','words'):#metadata_entities:
+        def import_word_tokens():
+            try:
+                word_token_metadata = Metadata(c['metadata_filenames']['word_tokens'])
+                import_word_token_metadata(dataset(), word_token_metadata)
+            except Dataset.DoesNotExist:
+                pass
+        def clean_word_tokens():
+            try:
+                for word_token in WordToken.objects.filter(doc__dataset=dataset()):
+                    word_token.metainfovalues.all().delete()
+            except Dataset.DoesNotExist:
+                pass
+        def word_tokens_done(_task, _values):
+            if not os.path.exists(c['metadata_filenames']['word_tokens']): return True
+            try:
+                return WordTokenMetaInfoValue.objects.filter(word_token__doc__dataset=dataset()).count() > 0
+            except Dataset.DoesNotExist:
+                    return False
+        
+        for entity in ('datasets','documents','word_types','word_tokens'):#metadata_entities:
             task = dict()
             task['name'] = entity
             task['task_dep'] = ['dataset_import']
@@ -322,7 +343,7 @@ if 'task_metadata_import' not in locals():
                 pass
         def clean_analyses():
             try:
-                analysis().analysismetainfovalue_set.all().delete()
+                analysis().metainfovalues.all().delete()
             except Analysis.DoesNotExist:
                 pass
         def analyses_done(_task, _values):
@@ -341,7 +362,7 @@ if 'task_metadata_import' not in locals():
         def clean_topics():
             try:
                 for topic in analysis().topic_set.all():
-                    topic.topicmetainfovalue_set.all().delete()
+                    topic.metainfovalues.all().delete()
             except Analysis.DoesNotExist:
                 pass
         def topics_done(_task, _values):

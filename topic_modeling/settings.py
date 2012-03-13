@@ -35,8 +35,8 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DBTYPE = 'sqlite3'
-#DBTYPE = 'mysql'
+#DBTYPE = 'sqlite3'
+DBTYPE = 'mysql'
 
 SQLITE_CONFIG = {
     'ENGINE': 'django.db.backends.sqlite3',
@@ -47,7 +47,7 @@ MYSQL_CONFIG = {
     'USER': 'topicalguide',
     'SERVER': 'localhost',
     'PASSWORD': 'topicalguide',
-    'NAME': 'topicalguide'
+    'NAME': 'topicalguide_newimport'
 }
 
 DATABASES = {'default': SQLITE_CONFIG if DBTYPE=='sqlite3' else MYSQL_CONFIG}
