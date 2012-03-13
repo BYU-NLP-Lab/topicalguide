@@ -33,6 +33,7 @@ from topic_modeling.visualize.models import Document
 from django.db import connection, transaction
 
 from datetime import datetime
+from topic_modeling import settings
 
 NUM_DOTS = 100
 

@@ -22,21 +22,14 @@
 
 import codecs
 import os
-import re
 import sys
 
 from collections import defaultdict
 from datetime import datetime
 
-import topic_modeling.anyjson as anyjson
-from build import create_dirs_and_open
-
-from django.db import connection, transaction
+from django.db import connection
 
 from topic_modeling.visualize.models import Analysis, Dataset, WordType
-from topic_modeling.visualize.models import Document
-from topic_modeling.visualize.models import Topic
-from topic_modeling.visualize.models import TopicWord
 from import_scripts.metadata import Metadata
 from topic_modeling import settings
 
