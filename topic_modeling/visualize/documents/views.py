@@ -30,6 +30,7 @@ from topic_modeling.visualize.common.ui import WordSummary
 from topic_modeling.visualize.documents.common import SortDocumentForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
 from topic_modeling.visualize.models import Document
+from django.shortcuts import get_object_or_404
 
 class DocumentView(AnalysisBaseView):
     template_name = 'documents.html'
@@ -58,7 +59,10 @@ class DocumentView(AnalysisBaseView):
         context['num_pages'] = num_pages
         context['page_num'] = page_num
     
-        document = context['documents'][0]
+        try:
+            document = get_object_or_404(Document, id=kwargs['document'])
+        except KeyError:
+            document = context['documents'][0]
     
         context['document_url'] = context['documents_url'] + '/' + str(document.id)
         context['document'] = document
