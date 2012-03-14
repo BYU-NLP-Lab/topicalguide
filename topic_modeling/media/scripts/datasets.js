@@ -1,6 +1,10 @@
 $(document).ready(function() {
-    $("#accordion").accordion({autoHeight: false});
+    $("#accordion").accordion({autoHeight: false, collapsible: true, active: false})
+                   .bind('accordionchange', function(event, ui) {
+                      update_plot(ui.newHeader.attr('dataset_name'));
+                   });
     
+
     //Event handlers
     $("button.explore").button().click(explore);
     $("img.plot").click(explore);

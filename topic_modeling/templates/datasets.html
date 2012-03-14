@@ -51,13 +51,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		function set_loading_image() {
 		    $("img#plot_image").attr("src", "{{IMAGES}}/ajax-loader.gif");
 		}
-		$(document).ready(function() {
-			$(window).resize(function() {
-				update_plot();		
-			});	
-		});
-			
-	</script>    
+	</script>
     <script type="text/javascript" src="{{SCRIPTS}}/datasets.js"></script>
 {% endblock %}
 
@@ -74,7 +68,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% if datasets %}
 <div id="accordion">
     {% for dataset,dataset_info in plot_img_urls.iteritems %}
-    <h1>
+    <h1 dataset_name="{{dataset.name}}">
         <a>{% if dataset_info.readable_name %}{{dataset_info.readable_name}}{% else %}{{dataset.name}}{% endif %}<img type="dataset"
                 text="{{dataset.readable_name}}"
                 class="star{% if dataset.id in favids.datasets %} fav{% endif %}"
@@ -87,12 +81,12 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	        {% if dataset.analysis_set.count > 0 %}
 		       <!-- <img id="{{dataset.name}}__plot" class="plot" src="{{dataset_info.initial_plot_img_url}}"/>-->		        
 			    <div class="ui-widget-content ui-corner-all">
-			        <div id="jqplot_container">
-					<div id="jqplot"></div>
-					<span id="jqplot_info"></span>
+			        <div id="{{dataset.name}}_jqplot_container">
+					<div id="{{dataset.name}}_jqplot"></div>
+					<span id="{{dataset.name}}_jqplot_info"></span>
 			        </div>
 			    </div>
-			    <script>get_chart("{{dataset_info.initial_plot_img_url}}")</script>
+			    <script>get_chart("{{dataset_info.initial_plot_img_url}}", "{{dataset.name}}")</script>
 		        <div class="explore-wrapper"><button class="explore">Explore!</button></div>
 	        {% else %}
 	            <div class="ui-state-highlight">No analyses available for this dataset. Try importing one using <code>backend.py analysis_import</code>.</div>
