@@ -47,8 +47,8 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 		}
 		$(document).ready(function() {
 			$(window).resize(function() {
-				update_plot();		
-			});	
+				update_plot("main");
+			});
 		});
 			
 	</script>
@@ -71,9 +71,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 <div class="ui-widget">
     <div class="ui-widget-header ui-corner-all">Title</div>
     <div class="ui-widget-content ui-corner-all">
-        <div id="jqplot_container">
-		<div id="jqplot"></div>
-		<span id="jqplot_info"></span>
+        <div id="main_jqplot_container">
+		<div id="main_jqplot"></div>
+		<span id="main_jqplot_info"></span>
         </div>
     </div>
     <div class="ui-widget-content ui-corner-all">
