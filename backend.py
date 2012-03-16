@@ -293,7 +293,6 @@ if 'task_metadata_import' not in locals():
             except Dataset.DoesNotExist:
                 pass
         def clean_word_types():
-            
             try:
                 for word_type in WordType.objects.filter(tokens__doc__dataset=dataset()):
                     word_type.metainfovalues.all().delete()
