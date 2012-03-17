@@ -33,8 +33,6 @@ from topic_modeling.visualize.models import Analysis, Dataset, WordType
 from import_scripts.metadata import Metadata
 from topic_modeling import settings
 
-NUM_DOTS = 100
-
 def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, metadata_filenames, token_regex):
     print >> sys.stderr, u"analysis_import({0})".\
@@ -60,7 +58,7 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
     
     if created:
         document_metadata = Metadata(metadata_filenames['documents'])
-        _load_analysis(analysis, state_file, document_metadata, tokenized_file, token_regex)
+        _load_analysis2(analysis, state_file, document_metadata, tokenized_file, token_regex)
 
         end_time = datetime.now()
         print >> sys.stderr, 'Finishing time:', end_time
@@ -165,56 +163,98 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
 def _state_file_iterator(analysis, state_file):
     files_dir = analysis.dataset.files_dir
     prior_docpath = None
-    token_num = None
+    prev_token_idx = None
     
     f = codecs.open(state_file, 'r', 'utf-8')
     for _count, line in enumerate(f):
         line = line.strip()
         if line[0] != "#":
-            print line
-            print str(token_num)
+#            print line
+#            print str(token_num)
             _, docpath, __, ___, word, topic_num = line.split()
             word = word.lower()
             docpath = '%s/%s' % (files_dir, docpath)
             
             if prior_docpath is None or prior_docpath != docpath:
-                token_num = 0
+                prev_token_idx = 0
                 prior_docpath = docpath
+                doc = analysis.dataset.docs.get(filename=docpath)
             
-            doc = analysis.dataset.docs.get(filename=docpath)
             topic, _topic_created = analysis.topics.get_or_create(number=topic_num)
             word_type = WordType.objects.get(type=word)
-            word_token = doc.tokens.filter(type=word_type, token_index__gte=token_num).order_by('token_index')[0]
+            word_token = doc.tokens.filter(type=word_type, token_index__gte=prev_token_idx).order_by('token_index')[0]
+            prev_token_idx = word_token.token_index
             yield (doc,topic,word_type,word_token)
-            token_num = word_token.token_index
-            print str(token_num)
             
+#            print str(token_num)
+            
+WINDOW_SIZE = 30
+class TokenNotFound(Exception):
+    def __init__(self, word_type, tokens, start_idx, limit):
+        self.word_type = word_type
+        self.tokens = tokens
+        self.start_idx = start_idx
+        self.limit = limit
+        self.search_window = _search_window(tokens, start_idx, limit)
+    
+    def __unicode__(self):
+        
+        return '%s: %s starting at %i with context %s' % \
+            (self.__class__.__name__, self.word_type, self.start_idx,
+             self.search_window)
+
+
+_search_range = lambda tokens, start_idx, limit: (start_idx,min(start_idx+limit,len(tokens)))  
+def _search_window(tokens, start_idx, limit):
+    range_ = _search_range(tokens, start_idx, limit)
+    return tokens[range_[0]:range[1]]
+
+def _find_token(word_type, tokens, start_idx):
+    range_ = _search_range(tokens, start_idx, WINDOW_SIZE)
+    for token_idx in range(*range_):
+        token = tokens[token_idx]
+        if token.type.type == word_type:
+            return token_idx + 1, token
+    
+    raise TokenNotFound(word_type, tokens, start_idx, WINDOW_SIZE)
 
 def _load_analysis2(analysis, state_file, document_metadata, tokenized_file, token_regex):
-    doc = None
-    prior_docpath = None
-    tokens = None
+    prev_docpath = None
+    topics = {}
     
-    it = _state_file_iterator2(state_file, analysis.dataset.files_dir)
-    
-    for docpath, topic_num, word in _state_file_iterator2(state_file, analysis.dataset.files_dir):
-        if prior_docpath is None or prior_docpath != docpath:
-            doc = analysis.dataset.docs.get(filename=docpath)
-            tokens = doc.tokens.order_by('token_index').all()
-            prior_docpath = docpath
+    for i, (docpath, topic_num, word) in enumerate(_state_file_iterator2(state_file, analysis.dataset.files_dir)):
+        if prev_docpath is None or prev_docpath != docpath:
+            print '\nImporting %s...' % docpath,
+            
+            doc = analysis.dataset.documents.get(filename=docpath)
+#            tokens = [(token,token.type.type) for token in doc.tokens.order_by('token_index').all()]
+            tokens = doc.tokens.order_by('token_index').select_related('type').all()
+            prev_docpath = docpath
+            next_token_idx = 0
+            
+        try:
+            topic = topics[topic_num]
+        except KeyError:
+            topic, _topic_created = analysis.topics.get_or_create(number=topic_num)
+            topics[topic_num] = topic
+        
+        next_token_idx, token = _find_token(word, tokens, next_token_idx)
+
+        token.topics.add(topic)
+        if i % 100 == 0: sys.stdout.write('.')
 
 '''Just parse the text and yield it as a tuple per line'''
 def _state_file_iterator2(state_file, files_dir):
-    f = codecs.open(state_file, 'r', 'utf-8')
-    for _count, line in enumerate(f):
-        line = line.strip()
-        if line[0] != "#":
-            print line
-            _, docpath, __, ___, word, topic_num = line.split()
-            word = word.lower()
-            docpath = '%s/%s' % (files_dir, docpath)
-            
-            yield (docpath, topic_num, word)
+    with codecs.open(state_file, 'r', 'utf-8') as r:
+        for _count, line in enumerate(r):
+            line = line.rstrip()
+            if line[0] != "#":
+#                print line
+                _, docpath, __, ___, word, topic_num = line.split()
+                word = word.lower()
+                docpath = '%s/%s' % (files_dir, docpath)
+                
+                yield (docpath, topic_num, word)
 
 def _default_topic_names(topic_word_counts):
     indexed_topic_word_counts = defaultdict(list)
