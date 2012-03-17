@@ -62,7 +62,7 @@ class Dataset(Describable):
             print "\tremove analysis " + str(analysis)
             analysis.delete()
         
-        for doc in self.document_set.all():
+        for doc in self.documents.all():
             print "\tremove doc " + str(doc)
             doc.delete()
         
@@ -73,7 +73,7 @@ LEFT_CONTEXT_SIZE = 40
 RIGHT_CONTEXT_SIZE = 40
 class Document(models.Model):
     filename = models.CharField(max_length=128, db_index=True)
-    dataset = models.ForeignKey(Dataset, related_name='docs')
+    dataset = models.ForeignKey(Dataset, related_name='documents')
 #    word_count = models.IntegerField(default=0)
 
     def __unicode__(self):
@@ -220,6 +220,9 @@ class WordToken(models.Model):
 #    '''The form of this type instance. If null, it defers to type.value'''
 #    token = models.CharField(max_length=128, db_index=True, null=True)
     topics = models.ManyToManyField('Topic', related_name='tokens')
+    
+    def __unicode__(self):
+        return '[%s,%s]' % (self.type.type, self.token_index)
 
 ## Links between the basic things in the database
 #################################################
@@ -271,7 +274,7 @@ class Analysis(models.Model):
         return self.name
     
     def delete(self, *args, **kwargs):
-        for topic in self.topic_set.all():
+        for topic in self.topics.all():
             print "\tremove topic " + str(topic)
             topic.delete()
         

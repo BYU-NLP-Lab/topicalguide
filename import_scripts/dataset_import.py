@@ -60,7 +60,6 @@ def import_dataset(name, readable_name, description, metadata_filenames,
     dataset, created = _create_dataset(name, readable_name, description, dataset_dir, files_dir)
     if created:
         _load_documents(dataset, token_regex)
-        document_metadata = Metadata(metadata_filenames['documents'])
         
         if settings.database_type()=='sqlite3':
             cursor = connection.cursor()
@@ -74,23 +73,26 @@ def import_dataset(name, readable_name, description, metadata_filenames,
 @transaction.commit_manually
 def _load_documents(dataset, token_regex):
     print >> sys.stderr, 'Loading documents...  ',
+    word_types = dict()
     for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
         for filename in filenames:
             filename = '%s/%s' % (dirpath, filename)
             doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
             print >> sys.stderr, filename
             
-            file = open(filename)
-            content = file.read()
-            file.close()
-            del file
+            with open(filename) as r:
+                content = r.read()
             
             for token_index,match in enumerate(re.finditer(token_regex, content)):
                 token = match.group()
                 token_lc = token.lower()
-                type, type_created = WordType.objects.get_or_create(type=token_lc)
-                if type_created: transaction.commit()
-                WordToken.objects.create(type=type, doc=doc, token_index=token_index, start=match.start())
+                try:
+                    word_type = word_types[token_lc]
+                except KeyError:
+                    word_type, type_created = WordType.objects.get_or_create(type=token_lc)
+                    if type_created: transaction.commit()
+                    word_types[token_lc] = word_type
+                WordToken.objects.create(type=word_type, doc=doc, token_index=token_index, start=match.start())
             del content
             transaction.commit()
 
