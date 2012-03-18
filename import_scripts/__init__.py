@@ -1,5 +1,3 @@
-
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -21,4 +19,3 @@
 # If you have inquiries regarding any further use of the Topical Guide, please
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
-

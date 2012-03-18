@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -30,15 +28,6 @@ import type_count
 import topic_entropy
 
 metrics = MetricSet()
-metrics['token count'] = token_count
-metrics['type count'] = type_count
-metrics['topic entropy'] = topic_entropy
-
-from pairwise import topic_correlation
-from pairwise import word_correlation
-
-pairwise_metrics = MetricSet()
-pairwise_metrics['topic correlation'] = topic_correlation
-pairwise_metrics['word correlation'] = word_correlation
-
-# vim: et sw=4 sts=4
+metrics['token_count'] = token_count
+metrics['type_count'] = type_count
+metrics['topic_entropy'] = topic_entropy

@@ -157,7 +157,7 @@ class TopicAttributePlotForm(forms.Form):
         super(TopicAttributePlotForm, self).__init__(*args, **kwargs)
 
         #The list of topics
-        topics = analysis.topic_set.all()
+        topics = analysis.topics.all()
         self.fields['topics'] = forms.ModelMultipleChoiceField(topics,
                 initial=topics[0:3])
         self.fields['topics'].widget.attrs['onchange'] = \
@@ -384,7 +384,7 @@ class TopicMetricChart(object):
 
         x = []
         y = []
-        for topic in self.analysis.topic_set.all():
+        for topic in self.analysis.topics.all():
             x.append(topic.topicmetricvalue_set.get(
                     metric=self.first_metric).value)
             y.append(topic.topicmetricvalue_set.get(

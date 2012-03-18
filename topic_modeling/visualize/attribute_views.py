@@ -170,7 +170,7 @@ def get_words(attribute, value, attributes_url, token_count):
 
 def get_topics(analysis, attribute, value, analysis_url, token_count):
     topics = []
-    topic_set = analysis.topic_set.all()
+    topic_set = analysis.topics.all()
     attrvaltopics = attribute.attributevaluetopic_set.filter(value=value,
             topic__in=topic_set).order_by('-count')
     for attrvaltopic in attrvaltopics[:10]:

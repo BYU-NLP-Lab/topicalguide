@@ -51,7 +51,7 @@ def add_metric(dataset, analysis):
         metric = PairwiseDocumentMetric(name=metric_name, analysis=analysis)
         metric.save()
     
-    topics = analysis.topic_set.all()
+    topics = analysis.topics.all()
     topic_idx = {}
     for i, topic in enumerate(topics):
         topic_idx[topic.id] = i

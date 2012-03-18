@@ -59,7 +59,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     c.execute("select cooccurrences from total_counts")
     for row in c:
         total_cooccurrences = float(row[0])
-    topics = analysis.topic_set.all()
+    topics = analysis.topics.all()
     for topic in topics:
         topicwords = topic.topicword_set.filter(
                 word__ngram=False).order_by('-count')

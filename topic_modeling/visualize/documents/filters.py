@@ -94,7 +94,7 @@ class DocumentFilterByTopic(object):
     def apply(self, document_set):
         if not self.current_topic:
             return document_set
-        topic = self.analysis.topic_set.get(number=self.current_topic)
+        topic = self.analysis.topics.get(number=self.current_topic)
         return document_set.filter(documenttopic__topic=topic)
 
     def remake_form(self):
@@ -119,7 +119,7 @@ class DocumentFilterByTopicForm(forms.Form):
     # Should be nested...
     def __init__(self, analysis, id, topic, *args, **kwargs):
         super(DocumentFilterByTopicForm, self).__init__(*args, **kwargs)
-        topics = [(str(t.number), t.name) for t in analysis.topic_set.all()]
+        topics = [(str(t.number), t.name) for t in analysis.topics.all()]
         topics = [('None', 'All')] + topics
         self.fields['topic'] = forms.ChoiceField(topics, label='Topic',
                 initial=topic)

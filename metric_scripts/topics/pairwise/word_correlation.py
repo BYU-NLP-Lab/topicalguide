@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -25,17 +23,10 @@
 
 from __future__ import division
 
-import os, sys
-
-sys.path.append(os.curdir)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
-
 from django.db import transaction
 
-from math import log
 from numpy import dot, zeros
 from numpy.linalg import norm
-from optparse import OptionParser
 
 from topic_modeling.visualize.models import Analysis, WordType
 from topic_modeling.visualize.models import PairwiseTopicMetric
@@ -43,26 +34,23 @@ from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
 metric_name = "Word Correlation"
 @transaction.commit_manually
-def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
+def add_metric(dataset, analysis):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     try:
         metric = PairwiseTopicMetric.objects.get(name=metric_name,
                 analysis=analysis)
-        if not force_import:
-            raise RuntimeError("%s is already in the database for this"
-                    " analysis" % metric_name)
+        raise RuntimeError("%s is already in the database for this"
+                " analysis" % metric_name)
     except PairwiseTopicMetric.DoesNotExist:
         metric = PairwiseTopicMetric(name=metric_name, analysis=analysis)
         metric.save()
-
-    word_types = WordType.objects.filter(tokens__topics__analysis=analysis).all()
-    num_types = word_types.count()
-#    num_words = Word.objects.order_by('-pk')[0].id + 1
-    topics = list(analysis.topic_set.all().order_by('number'))
+    
+    word_types = WordType.objects.filter(tokens__topics__analysis=analysis).distinct()
+    topics = analysis.topics.order_by('number').all()
 
     topicwordvectors = []
     for topic in topics:
-        topicwordvectors.append(topic_word_vector(topic, num_types))
+        topicwordvectors.append(topic_word_vector(topic, word_types))
 
     for i, topic1 in enumerate(topics):
         topic1_word_vals = topicwordvectors[i]
@@ -73,46 +61,16 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
                     topic2=topic2, metric=metric, value=correlation_coeff)
     transaction.commit()
 
-
 def metric_names_generated(dataset, analysis):
     return [metric_name]
-
 
 def pmcc(topic1_word_vals, topic2_word_vals):
     return float(dot(topic1_word_vals, topic2_word_vals) /
             (norm(topic1_word_vals) * norm(topic2_word_vals)))
 
-
-def topic_word_vector(word_types, topic):
+def topic_word_vector(topic, word_types):
     topic_word_vals = zeros(len(word_types))
     for i, word_type in enumerate(word_types):
         topic_word_vals[i] = topic.tokens.filter(type=word_type).count()
         
-#    for topicword in topic.topicword_set.all():
-#        topic_word_vals[topicword.word_id] = topicword.count
     return topic_word_vals
-
-
-if __name__ == '__main__':
-    parser = OptionParser()
-    parser.add_option('-d', '--dataset-name',
-            dest='dataset_name',
-            help='The name of the dataset for which to add this topic metric',
-            )
-    parser.add_option('-a', '--analysis-name',
-            dest='analysis_name',
-            help='The name of the analysis for which to add this topic metric',
-            )
-    parser.add_option('-f', '--force-import',
-            dest='force_import',
-            action='store_true',
-            help='Force the import of this metric even if the script thinks the'
-            ' metric is already in the database',
-            )
-    options, args = parser.parse_args()
-    dataset = options.dataset_name
-    analysis = options.analysis_name
-    force_import = options.force_import
-    add_metric(dataset, analysis, force_import)
-
-# vim: et sw=4 sts=4

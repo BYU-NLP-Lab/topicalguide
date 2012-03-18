@@ -53,7 +53,7 @@ class PlotView(AnalysisBaseView):
         #--Attribute Values plot
     #    attributes = Attribute.objects.filter(dataset=dataset)
     #    
-    #    topics = [analysis.topic_set.all()[0]]
+    #    topics = [analysis.topics.all()[0]]
     #    attribute = attributes[0]
     #    values = attributes[0].value_set.all()
         #--Topics plot

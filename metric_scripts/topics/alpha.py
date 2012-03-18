@@ -58,7 +58,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     alpha_vector = state_file.readline()
     alphas = alpha_vector.split(': ')[1].split()
     for number, alpha in enumerate(alphas):
-        topic = analysis.topic_set.get(number=number)
+        topic = analysis.topics.get(number=number)
         tmv = TopicMetricValue(topic=topic, metric=metric,
                 value=float(alpha))
         tmv.save()

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -27,28 +25,29 @@ from __future__ import division
 
 from django.db import transaction
 from math import log
-from optparse import OptionParser
 
 from topic_modeling.visualize.models import Analysis, TopicMetric
 from topic_modeling.visualize.models import TopicMetricValue
+from django.db.models.aggregates import Count
 
 metric_name = 'Word Entropy'
-@transaction.commit_manually
-def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
+#@transaction.commit_manually
+def add_metric(dataset, analysis):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     try:
         metric = TopicMetric.objects.get(name=metric_name, analysis=analysis)
-        if not force_import:
-            raise RuntimeError('Word Entropy is already in the database '
-                    'for this analysis!')
+        raise RuntimeError('Word Entropy is already in the database '
+                'for this analysis!')
     except TopicMetric.DoesNotExist:
         metric = TopicMetric(name='Word Entropy', analysis=analysis)
         metric.save()
-    topics = analysis.topic_set.all()
+    topics = analysis.topics.all()
     for topic in topics:
+        total_count = float(topic.tokens.count())
+        topictokencounts = topic.tokens.values('type__type').annotate(count=Count('type__type'))
         entropy = 0
-        for tw in topic.topicword_set.all():
-            prob = tw.count / topic.total_count
+        for tw in topictokencounts:
+            prob = float(tw['count']) / total_count
             entropy -= prob * (log(prob) / log(2))
         tmv = TopicMetricValue(topic=topic, metric=metric, value=entropy)
         tmv.save()
@@ -57,29 +56,3 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]
-
-
-if __name__ == '__main__':
-    parser = OptionParser()
-    parser.add_option('-d', '--dataset-name',
-            dest='dataset_name',
-            help='The name of the dataset for which to add this topic metric',
-            )
-    parser.add_option('-a', '--analysis-name',
-            dest='analysis_name',
-            help='The name of the analysis for which to add this topic metric',
-            )
-    parser.add_option('-f', '--force-import',
-            dest='force_import',
-            action='store_true',
-            help='Force the import of this metric even if the script thinks the'
-            ' metric is already in the database',
-            )
-    options, args = parser.parse_args()
-    options, args = parser.parse_args()
-    dataset = options.dataset_name
-    analysis = options.analysis_name
-    force_import = options.force_import
-    add_metric(dataset, analysis, force_import)
-
-# vim: et sw=4 sts=4

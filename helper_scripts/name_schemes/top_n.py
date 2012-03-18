@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -25,15 +23,9 @@
 
 from __future__ import division
 
-import os
-import sys
 from django.db.models.aggregates import Count
 
-sys.path.append(os.curdir)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
-
 from django.db import transaction
-from optparse import OptionParser
 
 from topic_modeling.visualize.models import Analysis, Dataset
 from topic_modeling.visualize.models import TopicNameScheme,TopicName,Topic
@@ -77,45 +69,17 @@ class TopNTopicNamer:
     def topic_name(self,topic):
         name = u""
         rankings = self.ranked_topic_terms(topic)
-#        print rankings
+
         i = 0
         # Protect against topics with small numbers of words
         while i < min(self.n, len(rankings)):
-            name += rankings[i].word.type
+            name += rankings[i].type.type
             if i < self.n-1: name += u' '
             i += 1
         return name
     
     def ranked_topic_terms(self,topic):
-        return topic.tokens.annotate(count=Count()).order_by('-count')
-#        return  TopicWord.objects.filter(topic=topic).order_by('-count')
+        return topic.tokens.annotate(count=Count('id')).order_by('-count')
 
-if __name__ == '__main__':
-    parser = OptionParser()
-    parser.add_option('-d', '--dataset-name',
-        dest='dataset_name',
-        help='The name of the dataset for which to add this topic metric',
-    )
-    parser.add_option('-a', '--analysis-name',
-        dest='analysis_name',
-        help='The name of the analysis for which to add this topic metric',
-    )
-    parser.add_option('-n', '--top-n',
-        dest='top_n',
-        default=2,
-        help='How many of the top terms by P(w|z) to include in the name',
-        type='int'
-    )
-#    parser.add_option('-f', '--force-naming',
-#            dest='force_naming',
-#            action='store_true',
-#            help='Force naming the topics in the analysis according to this name scheme'
-#            ' even if ',
-#            )
-    
-    options, args = parser.parse_args()
-    namer = TopNTopicNamer(options.dataset_name, options.analysis_name,
-            options.top_n)
-    namer.name_all_topics()
     
 # vim: et sw=4 sts=4

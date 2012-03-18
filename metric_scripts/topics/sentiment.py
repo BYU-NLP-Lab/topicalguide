@@ -56,7 +56,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     # parse_dependencies.py
 
     data_root = analysis.dataset.dataset_dir
-    topics = analysis.topic_set.all()
+    topics = analysis.topics.all()
     for topic in topics:
         positive = 0;
         negative = 0;

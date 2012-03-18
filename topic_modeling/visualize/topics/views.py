@@ -75,7 +75,7 @@ class TopicView(AnalysisBaseView):
         # Filter, sort, and paginate the topics
         if topic:
             topic = get_object_or_404(Topic, number=topic, analysis=analysis)
-        topics = analysis.topic_set
+        topics = analysis.topics
         topics, filter_form, num_pages = clean_topics_from_session(dataset, topics, request.session, extra_filters, topic)
         page_num = request.session.get(sess_key(dataset,'topic-page'), 1)
         context['topics'] = topics
