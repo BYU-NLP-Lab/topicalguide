@@ -53,7 +53,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
             except TopicMetric.DoesNotExist:
                 metric = TopicMetric(name=metric_name, analysis=analysis)
                 metric.save()
-            topics = analysis.topic_set.all()
+            topics = analysis.topics.all()
             docs = [d.id for d in analysis.dataset.document_set.filter(
                     attributevaluedocument__attribute=attr,
                     attributevaluedocument__value=val)]

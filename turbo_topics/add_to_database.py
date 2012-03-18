@@ -66,7 +66,7 @@ def add_information(dataset, analysis, force_import=False, *args, **kwargs):
                 else:
                     output += line
             topic_num = int(file.split('.')[0][5:])
-            topic = analysis.topic_set.get(number=topic_num)
+            topic = analysis.topics.get(number=topic_num)
             eti_value = TopicMetaInfoValue(topic=topic, info_type=info,
                     text_value=output)
             eti_value.save()

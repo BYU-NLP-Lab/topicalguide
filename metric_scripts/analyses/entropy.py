@@ -27,7 +27,7 @@ def add_metric(analysis):
     metric, _ = AnalysisMetric.objects.get_or_create(name="Topic Entropy")
     
     # Get normalized topic counts
-    counts = [topic.total_count for topic in analysis.topic_set.all()]
+    counts = [topic.tokens.count() for topic in analysis.topics.all()]
     total = float(sum(counts))
     
     entropy = 0.0

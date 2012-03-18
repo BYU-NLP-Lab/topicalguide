@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -28,36 +26,40 @@ from __future__ import division
 from django.db import transaction
 
 from math import isnan
-from math import log
 from numpy import dot, zeros
 from numpy.linalg import norm
-from optparse import OptionParser
 
-from topic_modeling.visualize.models import Analysis, Document
+from topic_modeling.visualize.models import Analysis, Document, Dataset
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
 metric_name = "Document Correlation"
 @transaction.commit_manually
-def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    try:
-        metric = PairwiseTopicMetric.objects.get(name=metric_name,
+def add_metric(dataset_name, analysis_name):
+    dataset = Dataset.objects.get(name=dataset_name)
+    analysis = dataset.analyses.get(name=analysis_name)
+    
+    metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name,
                 analysis=analysis)
-        if not force_import:
-            raise RuntimeError("%s is already in the database for this"
-                    " analysis" % metric_name)
-    except PairwiseTopicMetric.DoesNotExist:
-        metric = PairwiseTopicMetric(name=metric_name, analysis=analysis)
-        metric.save()
+    
+    if created:
+        raise RuntimeError("%s is already in the database for this analysis" % metric_name)
 
-    num_docs = Document.objects.filter(dataset=analysis.dataset).order_by(
-            '-pk')[0].id + 1
-    topics = list(analysis.topic_set.all().order_by('number'))
+    docs = dataset.documents.all()
+    next_idx = 0
+    doc_idx = dict()
+    for doc in docs:
+        doc_idx[doc] = next_idx
+        next_idx += 1
+    
+#    num_docs = dataset.documents.count()
+#    num_docs = Document.objects.filter(dataset=analysis.dataset).order_by(
+#            '-pk')[0].id + 1
+    topics = analysis.topics.order_by('number').all()
 
     doctopicvectors = []
     for topic in topics:
-        doctopicvectors.append(document_topic_vector(topic, num_docs))
+        doctopicvectors.append(document_topic_vector(topic, doc_idx))
 
     for i, topic1 in enumerate(topics):
         topic1_doc_vals = doctopicvectors[i]
@@ -81,34 +83,11 @@ def pmcc(topic1_doc_vals, topic2_doc_vals):
     return float(dot(topic1_doc_vals, topic2_doc_vals) / (norm(topic1_doc_vals)
         * norm(topic2_doc_vals)))
 
-
-def document_topic_vector(topic, num_docs):
-    document_topic_vals = zeros(num_docs)
-    for doctopic in topic.documenttopic_set.all():
-        document_topic_vals[doctopic.document_id] = doctopic.count
+#t.tokens.filter(doc=d).count()
+def document_topic_vector(topic, doc_idx):
+    document_topic_vals = zeros(len(doc_idx))
+    for i,doc in doc_idx.items():
+        document_topic_vals[i] = topic.tokens.filter(doc=doc).count()
+#    for doctopic in topic.documenttopic_set.all():
+#        document_topic_vals[doctopic.document_id] = doctopic.count
     return document_topic_vals
-
-
-if __name__ == '__main__':
-    parser = OptionParser()
-    parser.add_option('-d', '--dataset-name',
-            dest='dataset_name',
-            help='The name of the dataset for which to add this topic metric',
-            )
-    parser.add_option('-a', '--analysis-name',
-            dest='analysis_name',
-            help='The name of the analysis for which to add this topic metric',
-            )
-    parser.add_option('-f', '--force-import',
-            dest='force_import',
-            action='store_true',
-            help='Force the import of this metric even if the script thinks the'
-            ' metric is already in the database',
-            )
-    options, args = parser.parse_args()
-    dataset = options.dataset_name
-    analysis = options.analysis_name
-    force_import = options.force_import
-    add_metric(dataset, analysis, force_import)
-
-# vim: et sw=4 sts=4

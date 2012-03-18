@@ -63,7 +63,7 @@ def topic_ordering(request, dataset, analysis, order_by):
     request.session[sess_key(dataset,'topic-page')] = 1
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
-    topics = analysis.topic_set
+    topics = analysis.topics
     topics, _, num_pages = clean_topics_from_session(dataset, topics, request.session)
     ret_val['topics'] = [vars(AjaxTopic(topic, topic_name_with_ns(topic, ns))) for topic in topics]
     ret_val['num_pages'] = num_pages
@@ -79,7 +79,7 @@ def topic_page(request, dataset, analysis, number):
     ret_val = dict()
     topics = request.session.get(sess_key(dataset,'topics-list'), None)
     if not topics:
-        topics = analysis.topic_set()
+        topics = analysis.topics()
 #        topics = Topic.objects.filter(analysis__name=analysis,
 #                analysis__dataset__name=dataset)
     num_per_page = request.session.get('topics-per-page', 20)
@@ -99,7 +99,7 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
     request.session[sess_key(dataset,'topic-attribute')] = attribute
     attribute = Attribute.objects.get(dataset__name=dataset, name=attribute)
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    topic = analysis.topic_set.get(number=topic)
+    topic = analysis.topics.get(number=topic)
     top_values = top_values_for_attr_topic(topic=topic, attribute=attribute, order_by=order_by)
     ret_val['attribute'] = attribute.name
     ret_val['values'] = [vars(v) for v in top_values]
@@ -111,7 +111,7 @@ def similar_topics(request, dataset, analysis, topic, measure):
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
     request.session[sess_key(dataset,'topic-similarity-measure')] = measure
-    topic = analysis.topic_set.get(number=topic)
+    topic = analysis.topics.get(number=topic)
     measure = analysis.pairwisetopicmetric_set.get(name=measure)
     similar_topics = topic.pairwisetopicmetricvalue_originating.\
             select_related().filter(metric=measure).order_by('-value')[1:11]
@@ -156,7 +156,7 @@ def remove_topic_filter(request, dataset, analysis, topic, number):
 def filtered_topics_response(request, dataset, analysis):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
-    topics = analysis.topic_set
+    topics = analysis.topics
     request.session[sess_key(dataset,'topic-page')] = 1
     topics, filter_form, num_pages = clean_topics_from_session(dataset, topics, request.session)
     ret_val = dict()
@@ -330,8 +330,8 @@ def reaggregate_topicgroup(topic_group):
 
 def add_topic_to_group(request, dataset, analysis, number, addnumber):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    topic_group = analysis.topic_set.get(number=number).topicgroup
-    topic = analysis.topic_set.get(number=addnumber)
+    topic_group = analysis.topics.get(number=number).topicgroup
+    topic = analysis.topics.get(number=addnumber)
     if topic not in topic_group.subtopics:
         TopicGroupTopic(topic=topic, group=topic_group).save()
         reaggregate_topicgroup(topic_group)
@@ -339,8 +339,8 @@ def add_topic_to_group(request, dataset, analysis, number, addnumber):
 
 def remove_topic_from_group(request, dataset, analysis, number, addnumber):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    topic_group = analysis.topic_set.get(number=number).topicgroup
-    topic = analysis.topic_set.get(number=addnumber)
+    topic_group = analysis.topics.get(number=number).topicgroup
+    topic = analysis.topics.get(number=addnumber)
     if topic in topic_group.subtopics:
         TopicGroupTopic.objects.get(topic=topic, group=topic_group).delete()
         reaggregate_topicgroup(topic_group)

@@ -170,14 +170,14 @@ c.default('markup_dir', '%s/%s-markup' % (c['dataset_dir'], c['analysis_name']))
 # Metrics
 # See the documentation or look in metric_scripts for a complete list of
 # available metrics
-c.default('topic_metrics', ["token count", "type count", "document entropy", "word entropy"])
+c.default('topic_metrics', ["token_count", "type_count", "document_entropy", "word_entropy"])
 if 'topic_metric_args' in c:
     tmp_topic_metric_args = defaultdict(dict)
     tmp_topic_metric_args.update(c['topic_metric_args'])
     c['topic_metric_args'] = tmp_topic_metric_args
 else:
     c['topic_metric_args'] = defaultdict(dict)
-c.default('pairwise_topic_metrics', ["document correlation", "word correlation"])
+c.default('pairwise_topic_metrics', ["document_correlation", "word_correlation"])
 
 if 'pairwise_topic_metric_args' in c:
     tmp_pairwise_topic_metric_args = defaultdict(dict)
@@ -192,8 +192,8 @@ if 'cooccurrence_counts' in c:
     c['pairwise_topic_metrics'].append('pairwise coherence')
     c['pairwise_topic_metric_args']['pairwise coherence'].update(
             {'counts': c['cooccurrence_counts']})
-c.default('document_metrics', ['token count', 'type count', 'topic entropy'])
-c.default('pairwise_document_metrics', ['word correlation', 'topic correlation'])
+c.default('document_metrics', ['token_count', 'type_count', 'topic_entropy'])
+c.default('pairwise_document_metrics', ['word_correlation', 'topic_correlation'])
 c.default('name_schemes', [TopNTopicNamer(c['dataset_name'], c['analysis_name'], 3)])
 
 # Graph-based Visualization
@@ -511,9 +511,9 @@ if 'task_analysis_import' not in locals():
 
 if 'task_name_schemes' not in locals():
     def task_name_schemes():
-        def scheme_in_database(ns):
+        def scheme_in_database(name_scheme_name):
             try:
-                TopicNameScheme.objects.get(analysis=analysis(), name=ns.scheme_name())
+                TopicNameScheme.objects.get(analysis=analysis(), name=name_scheme_name)
                 return True
             except (Dataset.DoesNotExist, Analysis.DoesNotExist, TopicNameScheme.DoesNotExist):
                 return False
@@ -524,7 +524,7 @@ if 'task_name_schemes' not in locals():
 
         print "Available topic name schemes: " + u', '.join([ns.scheme_name() for ns in c['name_schemes']])
         for ns in c['name_schemes']:
-            def utd(_task, _values): return scheme_in_database(ns)
+            utd = lambda task,vals: scheme_in_database(task.name.split(':')[-1])
             task = dict()
             task['name'] = ns.scheme_name()
             task['actions'] = [(generate_names, [ns])]
@@ -536,8 +536,8 @@ if 'task_name_schemes' not in locals():
 if 'task_dataset_metrics' not in locals():
     def task_dataset_metrics():
         from metric_scripts.datasets import metrics
-        def metric_in_database(dataset_metric):
-            for name in dataset_metric.metric_names_generated(c['dataset_name']):
+        def metric_in_database(metric_name):
+            for name in metrics[metric_name].metric_names_generated(c['dataset_name']):
                 try:
                     DatasetMetricValue.objects.get(metric__name=name, dataset__name=c['dataset_name'])
                 except DatasetMetricValue.DoesNotExist:
@@ -569,8 +569,8 @@ if 'task_dataset_metrics' not in locals():
                 DatasetMetric.objects.get(name=name).delete()
         
         print "Available dataset metrics: " + u', '.join(metrics)
-        for metric_name,metric in metrics.iteritems():
-            def utd(_task, _values): return metric_in_database(metric)
+        for metric_name in metrics:
+            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
             task = dict()
             task['name'] = metric_name.replace(' ', '_')
             task['actions'] = [(import_metric, [metric_name])]
@@ -582,8 +582,8 @@ if 'task_dataset_metrics' not in locals():
 if 'task_analysis_metrics' not in locals():
     def task_analysis_metrics():
         from metric_scripts.analyses import metrics
-        def metric_in_database(analysis_metric):
-            for name in analysis_metric.metric_names_generated(c['analysis_name']):
+        def metric_in_database(metric_name):
+            for name in metrics[metric_name].metric_names_generated(c['analysis_name']):
                 try:
                     AnalysisMetricValue.objects.get(metric__name=name, analysis__name=c['analysis_name'])
                 except AnalysisMetricValue.DoesNotExist:
@@ -613,8 +613,8 @@ if 'task_analysis_metrics' not in locals():
                 AnalysisMetric.objects.get(name=name).delete()
         
         print "Available analysis metrics: " + u', '.join(metrics)
-        for metric_name, metric in metrics.iteritems():
-            def utd(_task, _values): return metric_in_database(metric)
+        for metric_name in metrics:
+            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
             task = dict()
             task['name'] = metric_name.replace(' ', '_')
             task['actions'] = [(import_metric, [metric_name])]
@@ -629,13 +629,11 @@ if 'task_topic_metrics' not in locals():
 
         def metric_in_database(topic_metric):
             try:
-                names = metrics[topic_metric].metric_names_generated(
-                        c['dataset_name'], c['analysis_name'])
+                names = metrics[topic_metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
                 for name in names:
                     TopicMetric.objects.get(analysis=analysis, name=name)
                 return True
-            except (Dataset.DoesNotExist, Analysis.DoesNotExist,
-                    TopicMetric.DoesNotExist):
+            except (Dataset.DoesNotExist, Analysis.DoesNotExist, TopicMetric.DoesNotExist):
                 return False
 
         def import_metric(topic_metric):
@@ -665,7 +663,7 @@ if 'task_topic_metrics' not in locals():
 
         print "Available topic metrics: " + u', '.join(c['topic_metrics'])
         for topic_metric in c['topic_metrics']:
-            def utd(_task, _values): return metric_in_database(topic_metric)
+            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
             task = dict()
             task['name'] = topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [topic_metric])]
@@ -676,11 +674,11 @@ if 'task_topic_metrics' not in locals():
 
 if 'task_pairwise_topic_metrics' not in locals():
     def task_pairwise_topic_metrics():
-        from metric_scripts.topics import pairwise_metrics
+        from metric_scripts.topics.pairwise import metrics
 
         def metric_in_database(metric):
             try:
-                names = pairwise_metrics[metric].metric_names_generated(
+                names = metrics[metric].metric_names_generated(
                         c['dataset_name'], c['analysis_name'])
                 for name in names:
                     PairwiseTopicMetric.objects.get(analysis=analysis,
@@ -695,7 +693,7 @@ if 'task_pairwise_topic_metrics' not in locals():
             print 'Adding %s...' % metric,
             sys.stdout.flush()
             try:
-                pairwise_metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
+                metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
                 end_time = datetime.datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
@@ -708,7 +706,7 @@ if 'task_pairwise_topic_metrics' not in locals():
 
         def clean_metric(metric):
             print "Removing pairwise topic metric: " + metric
-            names = pairwise_metrics[metric].metric_names_generated(
+            names = metrics[metric].metric_names_generated(
                     c['dataset_name'], c['analysis_name'])
             for metric_name in names:
                 PairwiseTopicMetric.objects.get(analysis=analysis,
@@ -717,7 +715,7 @@ if 'task_pairwise_topic_metrics' not in locals():
         print "Available pairwise topic metrics: " + u', '.join(
                 c['pairwise_topic_metrics'])
         for pairwise_topic_metric in c['pairwise_topic_metrics']:
-            def utd(_task, _values): return metric_in_database(pairwise_topic_metric)
+            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
             task = dict()
             task['name'] = pairwise_topic_metric.replace(' ', '_')
             task['actions'] = [(import_metric, [pairwise_topic_metric])]
@@ -763,7 +761,7 @@ if 'task_document_metrics' not in locals():
 
         print "Available document metrics: " + u', '.join(metrics)
         for metric in metrics:
-            def utd(_task, _values): return metric_in_database(metric)
+            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
             task = dict()
             task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]
@@ -774,11 +772,11 @@ if 'task_document_metrics' not in locals():
 
 if 'task_pairwise_document_metrics' not in locals():
     def task_pairwise_document_metrics():
-        from metric_scripts.documents import pairwise_metrics
+        from metric_scripts.documents.pairwise import metrics
 
         def metric_in_database(metric):
             try:
-                names = pairwise_metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
+                names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
                 for name in names:
                     PairwiseDocumentMetric.objects.get(analysis=analysis, name=name)
                 return True
@@ -790,7 +788,7 @@ if 'task_pairwise_document_metrics' not in locals():
             print 'Adding %s...' % metric,
             sys.stdout.flush()
             try:
-                pairwise_metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
+                metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
                 end_time = datetime.datetime.now()
                 print '  Done', end_time - start_time
                 sys.stdout.flush()
@@ -803,14 +801,14 @@ if 'task_pairwise_document_metrics' not in locals():
 
         def clean_metric(metric):
             print "Removing pairwise document metric: " + metric
-            names = pairwise_metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
+            names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
             if isinstance(names, basestring): names = [names]
             for metric_name in names:
                 PairwiseDocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
 
-        print "Available pairwise document metrics: " + u', '.join(pairwise_metrics)
+        print "Available pairwise document metrics: " + u', '.join(metrics)
         for metric in c['pairwise_document_metrics']:
-            def utd(_task, _values): return metric_in_database(metric)
+            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
             task = dict()
             task['name'] = metric.replace(' ', '_')
             task['actions'] = [(import_metric, [metric])]

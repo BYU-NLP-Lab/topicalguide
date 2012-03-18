@@ -64,7 +64,7 @@ class DatasetView(DatasetBaseView):
                     attrvalues = attribute.attributevalue_set.all()
                     attrvalues = [attrval.value.id for attrval in attrvalues[:15]]
                 
-                    topics = analysis.topic_set.all()
+                    topics = analysis.topics.all()
                     topics = [self._sample_list(topics), self._sample_list(topics), self._sample_list(topics)]
                     topics = [topic.id for topic in topics]
                     

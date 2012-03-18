@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -26,14 +24,12 @@
 from __future__ import division
 
 from django.db import transaction
-from math import log
-from optparse import OptionParser
 
-from topic_modeling.visualize.models import Analysis, TopicMetric
+from topic_modeling.visualize.models import Analysis, TopicMetric, WordType
 from topic_modeling.visualize.models import TopicMetricValue
 
 metric_name = 'Number of types'
-@transaction.commit_manually
+#@transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     try:
@@ -45,10 +41,12 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     except TopicMetric.DoesNotExist:
         metric = TopicMetric(name='Number of types', analysis=analysis)
         metric.save()
-    topics = analysis.topic_set.all()
+    topics = analysis.topics.all()
     for topic in topics:
+#        types = WordType.objects.filter(tokens__topics__contains=topic).all()
+        types = set(x[0] for x in topic.tokens.values_list('type__type'))
         tmv = TopicMetricValue(topic=topic, metric=metric,
-                value=topic.topicword_set.count())
+                value=len(types))
         tmv.save()
     transaction.commit()
 
@@ -56,27 +54,3 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
 def metric_names_generated(dataset, analysis):
     return [metric_name]
 
-
-if __name__ == '__main__':
-    parser = OptionParser()
-    parser.add_option('-d', '--dataset-name',
-            dest='dataset_name',
-            help='The name of the dataset for which to add this topic metric',
-            )
-    parser.add_option('-a', '--analysis-name',
-            dest='analysis_name',
-            help='The name of the analysis for which to add this topic metric',
-            )
-    parser.add_option('-f', '--force-import',
-            dest='force_import',
-            action='store_true',
-            help='Force the import of this metric even if the script thinks the'
-            ' metric is already in the database',
-            )
-    options, args = parser.parse_args()
-    dataset = options.dataset_name
-    analysis = options.analysis_name
-    force_import = options.force_import
-    add_metric(dataset, analysis, force_import)
-
-# vim: et sw=4 sts=4

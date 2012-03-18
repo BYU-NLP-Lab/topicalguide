@@ -50,7 +50,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         except TopicMetric.DoesNotExist:
             metric = TopicMetric(name=name, analysis=analysis)
             metric.save()
-        topics = analysis.topic_set.all()
+        topics = analysis.topics.all()
         for topic in topics:
             entropy = 0
             for avt in topic.attributevaluetopic_set.filter(attribute=attr):

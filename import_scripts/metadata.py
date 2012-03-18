@@ -90,7 +90,7 @@ def import_topic_metadata(analysis, topic_metadata):
     sys.stdout.flush()
     start = datetime.now()
     
-    for topic in analysis.topic_set.all():
+    for topic in analysis.topics.all():
         topic_num = unicode(topic.number)
         if topic_num in topic_metadata:
             metadata = topic_metadata[topic_num]

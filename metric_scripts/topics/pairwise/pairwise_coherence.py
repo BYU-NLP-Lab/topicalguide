@@ -70,7 +70,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     for row in c:
         total_cooccurrences = float(row[0])
 
-    topics = list(analysis.topic_set.all().order_by('number'))
+    topics = list(analysis.topics.all().order_by('number'))
 
     num_words = 10
     topicwords = []

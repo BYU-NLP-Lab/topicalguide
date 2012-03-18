@@ -36,23 +36,12 @@ import word_entropy
 
 metrics = MetricSet()
 metrics['alpha'] = alpha
-metrics['attribute entropy'] = attribute_entropy
+metrics['attribute_entropy'] = attribute_entropy
 metrics['coherence'] = coherence
-metrics['document entropy'] = document_entropy
+metrics['document_entropy'] = document_entropy
 metrics['sentiment'] = sentiment
-metrics['subset document entropy'] = subset_document_entropy
-metrics['subset token count'] = subset_token_count
-metrics['token count'] = token_count
-metrics['type count'] = type_count
-metrics['word entropy'] = word_entropy
-
-from pairwise import document_correlation
-from pairwise import pairwise_coherence
-from pairwise import word_correlation
-
-pairwise_metrics = MetricSet()
-pairwise_metrics['document correlation'] = document_correlation
-pairwise_metrics['pairwise coherence'] = pairwise_coherence
-pairwise_metrics['word correlation'] = word_correlation
-
-# vim: et sw=4 sts=4
+metrics['subset_document_entropy'] = subset_document_entropy
+metrics['subset_token_count'] = subset_token_count
+metrics['token_count'] = token_count
+metrics['type_count'] = type_count
+metrics['word_entropy'] = word_entropy
