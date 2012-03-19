@@ -24,45 +24,39 @@
 from __future__ import division
 from math import isnan
 
-import os, sys
-#from django.db.models.aggregates import Count
+import sys
 
 from django.db import transaction
 
-#from datetime import datetime
 from numpy import dot, zeros
 from numpy.linalg import norm
 
-from topic_modeling.visualize.models import Analysis, Dataset, WordType
+from topic_modeling.visualize.models import Dataset, WordType
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetricValue
+from django.db.models.aggregates import Count
 
 metric_name = "Word Correlation"
 
 @transaction.commit_manually
 def add_metric(dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
-    analysis = dataset.analysis_set.get(name=analysis)
-    try:
-        metric = analysis.pairwisedocumentmetric_set.get(name=metric_name)
+    analysis = dataset.analyses.get(name=analysis)
+    metric, created = analysis.pairwisedocumentmetrics.get_or_create(name=metric_name, analysis=analysis)
+    if not created:
         raise RuntimeError("%s is already in the database for this analysis" % metric_name)
-    except PairwiseDocumentMetric.DoesNotExist:
-        metric = PairwiseDocumentMetric(name=metric_name, analysis=analysis)
-        metric.save()
    
     word_types = WordType.objects.filter(tokens__doc__dataset=dataset).all()
-    num_types = word_types.count()
-    documents = list(dataset.document_set.all())
+    type_idx = dict((word_type,i) for i,word_type in enumerate(word_types))
+#    num_types = word_types.count()
+    documents = dataset.documents.all()
 
-    docwordvectors = [document_word_vector(word_types, doc) for doc in documents]
+    docwordvectors = [document_word_vector(type_idx, doc) for doc in documents]
     vectornorms = [norm(vector) for vector in docwordvectors]
     
 #    start = datetime.now()
     for i, doc1 in enumerate(documents):
         write('.')
-#        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
-#        print >> sys.stderr, 'Time for last document:', datetime.now() - start
-#        start = datetime.now()
         doc1_word_vals = docwordvectors[i]
         doc1_norm = vectornorms[i]
         for j, doc2 in enumerate(documents):
@@ -71,11 +65,11 @@ def add_metric(dataset, analysis):
             correlation_coeff = pmcc(doc1_word_vals, doc2_word_vals, doc1_norm,
                     doc2_norm)
             if not isnan(correlation_coeff):
-                mv = PairwiseDocumentMetricValue(document1=doc1, 
-                    document2=doc2, metric=metric, value=correlation_coeff)
-                mv.save()
-            else:
-                pass
+                PairwiseDocumentMetricValue.objects.create(document1=doc1, document2=doc2, metric=metric,
+                                                           value=correlation_coeff)
+#                mv = PairwiseDocumentMetricValue(document1=doc1, 
+#                    document2=doc2, metric=metric, value=correlation_coeff)
+#                mv.save()
         transaction.commit()
     write('\n')
 
@@ -92,14 +86,11 @@ def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
             (doc1_norm * doc2_norm))
 
 
-def document_word_vector(word_types, document):
-    document_word_vals = zeros(len(word_types))
-    
-    for i, word_type in enumerate(word_types):
-        document_word_vals[i] = document.tokens.filter(type=word_type).count()
-    
-#    for x in document.tokens.values('type__id').annotate(count=Count('id')):
-#        document_word_vals[x['type__id']] = x['count']
+def document_word_vector(type_idx, document):
+    document_word_vals = zeros(len(type_idx))
+    for doc_wordtype_count in document.tokens.values('type__type').annotate(count=Count('type__type')):
+        document_word_vals[type_idx[doc_wordtype_count['type__type']]] = doc_wordtype_count['count']
+#    for i, word_type in enumerate(word_types):
+#        document_word_vals[i] = document.tokens.filter(type=word_type).count()
+        
     return document_word_vals
-
-# vim: et sw=4 sts=4

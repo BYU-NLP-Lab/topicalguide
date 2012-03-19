@@ -29,7 +29,7 @@ from math import isnan
 from numpy import dot, zeros
 from numpy.linalg import norm
 
-from topic_modeling.visualize.models import Analysis, Document, Dataset
+from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue
 

@@ -50,7 +50,7 @@ def sort_topics(topics, sort_by, session):
         metric_name = sort_by[7:]
         topic_list = list(topics.all())
         topic_list.sort(key=lambda x:
-                - x.topicmetricvalue_set.get(metric__name=metric_name).value)
+                - x.topicmetricvalues.get(metric__name=metric_name).value)
         return topic_list
     else:
         raise ValueError("We don't current support ordering by %s" % sort_by)
@@ -81,7 +81,7 @@ class SortTopicForm(forms.Form):
         choices = []
         choices.append(('name', 'Name'))
         choices.append(('number', 'Number'))
-        for metric in analysis.topicmetric_set.all():
+        for metric in analysis.topicmetrics.all():
             choices.append(('metric:%s' % metric.name, metric.name))
         self.fields['sort'] = forms.ChoiceField(choices, label='Sort by')
         self.fields['sort'].widget.attrs['onchange'] = 'sort_topics()'

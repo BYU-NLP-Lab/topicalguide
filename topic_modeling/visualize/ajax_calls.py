@@ -56,7 +56,7 @@ def word_in_context(request, dataset, analysis, word, topic=None):
 #from visualize_wordtype as type, visualize_wordtoken as token, visualize_document as doc, visualize_dataset as dataset
 #where type.type='abandon' and type.id=token.type_id
 #and exists (select * from visualize_wordtoken_topics as wttopics where wttopics.wordtoken_id=token.id);
-        analysis = dataset.analysis_set.get(name=analysis)
+        analysis = dataset.analyses.get(name=analysis)
         topic = analysis.topics.get(number=int(topic))
         tokens = WordToken.objects.filter(doc__dataset=dataset, topics__contains=topic).all()
     

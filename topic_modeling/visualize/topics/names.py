@@ -27,7 +27,7 @@ def name_schemes(analysis):
 #    if isinstance(analysis, basestring):
 #        return TopicNameScheme.objects.filter(analysis__name=analysis).order_by('name')
     if isinstance(analysis, Analysis):
-        return analysis.topicnamescheme_set.order_by('name')
+        return analysis.topicnameschemes.order_by('name')
     else:
         raise TypeError("Can only get name schemes for Analysis objects")
 
@@ -41,7 +41,7 @@ def current_name_scheme_id(session, analysis):
     if key not in session:
         session[key] = default()
     else:
-        if not analysis.topicnamescheme_set.filter(id=session[key]):
+        if not analysis.topicnameschemes.filter(id=session[key]):
             session[key] = default()
     return session[key]
 

@@ -73,8 +73,8 @@ def similar_documents(request, dataset, analysis, document, measure):
     request.session[sess_key(dataset,'document-similarity-measure')] = measure
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    document = dataset.document_set.get(pk=document)
-    measure = analysis.pairwisedocumentmetric_set.get(name=measure)
+    document = dataset.documents.get(pk=document)
+    measure = analysis.pairwisedocumentmetrics.get(name=measure)
     similar_documents = document.pairwisedocumentmetricvalue_originating.\
             select_related().filter(metric=measure).order_by('-value')[1:11]
     documents = [d.document2 for d in similar_documents]
@@ -117,7 +117,7 @@ def remove_document_filter(request, dataset, analysis, document, number):
 
 def filtered_documents_response(request, dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
-    documents = dataset.document_set.all()
+    documents = dataset.documents.all()
     request.session[sess_key(dataset,'document-page')] = 1
     documents, filter_form, num_pages = clean_docs_from_session(documents,
             request.session)

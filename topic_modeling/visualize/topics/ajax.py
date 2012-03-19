@@ -112,7 +112,7 @@ def similar_topics(request, dataset, analysis, topic, measure):
     ret_val = dict()
     request.session[sess_key(dataset,'topic-similarity-measure')] = measure
     topic = analysis.topics.get(number=topic)
-    measure = analysis.pairwisetopicmetric_set.get(name=measure)
+    measure = analysis.pairwisetopicmetrics.get(name=measure)
     similar_topics = topic.pairwisetopicmetricvalue_originating.\
             select_related().filter(metric=measure).order_by('-value')[1:11]
     

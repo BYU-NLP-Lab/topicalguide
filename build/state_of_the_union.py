@@ -37,6 +37,7 @@ c['dataset_name'] = 'state_of_the_union'
 c['dataset_readable_name'] = 'State of the Union Addresses 1790-2010'
 c['suppress_default_document_metadata_task'] = True
 c['metadata_filenames'] = lambda c: {'datasets': '%s/datasets.json' % c['raw_data_dir']}
+c['pairwise_document_metrics'] = ['topic_correlation']
 
 NUMBER_OF_ADDRESSES = 223
 def task_extract_data():

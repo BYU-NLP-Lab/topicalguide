@@ -42,23 +42,18 @@ metric_name = "Topic Correlation"
 def add_metric(dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    try:
-        metric = PairwiseDocumentMetric.objects.get(name=metric_name,
-                analysis=analysis)
+    metric,created = PairwiseDocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
+    if not created:
         raise RuntimeError("%s is already in the database for this"
                 " analysis" % metric_name)
-    except PairwiseDocumentMetric.DoesNotExist:
-        metric = PairwiseDocumentMetric(name=metric_name, analysis=analysis)
-        metric.save()
     
     topics = analysis.topics.all()
     topic_idx = {}
     for i, topic in enumerate(topics):
-        topic_idx[topic.id] = i
+        topic_idx[topic] = i
     
-    documents = list(dataset.document_set.all())
-    doctopicvectors = [document_topic_vector(doc, topic_idx)
-            for doc in documents]
+    documents = dataset.documents.all()
+    doctopicvectors = [document_topic_vector(doc, topic_idx) for doc in documents]
     vectornorms = [norm(vector) for vector in doctopicvectors]
     
 #    start = datetime.now()
@@ -97,10 +92,13 @@ def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
 
 def document_topic_vector(document, topic_idx):
     document_topic_vals = zeros(len(topic_idx))
-    for doctopic in document.documenttopic_set.all():
-        if doctopic.topic_id not in topic_idx:
-            continue
-        document_topic_vals[topic_idx[doctopic.topic_id]] = doctopic.count
+    for topic in topic_idx:
+        doctopic_count = document.tokens.filter(topics=topic).count()
+        document_topic_vals[topic_idx[topic]] = doctopic_count
+#    for doctopic in document.documenttopic_set.all():
+#        if doctopic.topic_id not in topic_idx:
+#            continue
+#        document_topic_vals[topic_idx[doctopic.topic_id]] = doctopic.count
     return document_topic_vals
 
 # vim: et sw=4 sts=4

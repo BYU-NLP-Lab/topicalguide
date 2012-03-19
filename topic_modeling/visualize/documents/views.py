@@ -50,7 +50,7 @@ class DocumentView(AnalysisBaseView):
         sort_by = request.session.get(sess_key(dataset,'document-sort'), 'filename')
         context['sort_form'].fields['sort'].initial = sort_by
     
-        documents = dataset.document_set.all()
+        documents = dataset.documents.all()
         documents, filter_form, num_pages = clean_docs_from_session(documents,
                 request.session)
         page_num = request.session.get(sess_key(dataset,'document-page'), 1)
@@ -121,13 +121,13 @@ def extra_information_tab(analysis, document):
 
 def metrics_widget(document):
     w = Widget('Metrics', 'documents/metrics')
-    w['metrics'] = document.documentmetricvalue_set.all()
+    w['metrics'] = document.documentmetricvalues.all()
     return w
 
 def metadata_widget(document):
     w = Widget('Metadata', 'documents/metadata_backcompat')
     w['docattrval_mgr'] = document.attributevaluedocument_set
-    w['metadataval_mgr'] = document.documentmetainfovalue_set
+    w['metadataval_mgr'] = document.documentmetainfovalues
     return w
 
 def top_topics_widget(analysis, document):
@@ -155,7 +155,7 @@ def similar_documents_tab(request, analysis, document):
 
 def similar_documents_widget(request, analysis, document):
     w = Widget("Similar Documents", "documents/similar_documents")
-    similarity_measures = analysis.pairwisedocumentmetric_set.all()
+    similarity_measures = analysis.pairwisedocumentmetrics.all()
     if similarity_measures:
         measure = request.session.get(sess_key(analysis.dataset,'similarity_measure'), None)
         if measure:

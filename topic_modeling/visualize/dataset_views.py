@@ -57,9 +57,9 @@ class DatasetView(DatasetBaseView):
             analysis_img_urls = dict()
             attributes = dataset.attribute_set.all()
             
-            if len(attributes) > 0 and dataset.analysis_set.count() > 0:
+            if len(attributes) > 0 and dataset.analyses.count() > 0:
                 print len(attributes)
-                for i, analysis in enumerate(dataset.analysis_set.all()):                    
+                for i, analysis in enumerate(dataset.analyses.all()):                    
                     attribute = self._sample_list(attributes)
                     attrvalues = attribute.attributevalue_set.all()
                     attrvalues = [attrval.value.id for attrval in attrvalues[:15]]
@@ -103,29 +103,29 @@ class DatasetView(DatasetBaseView):
         return list[randint(0, len(list) - 1)]
     
     def _metrics(self, dataset):
-        metrics = [(mv.metric.name, mv.value) for mv in dataset.datasetmetricvalue_set.iterator()]
+        metrics = [(mv.metric.name, mv.value) for mv in dataset.datasetmetricvalues.iterator()]
         
-        for analysis in dataset.analysis_set.iterator():
-            metrics += [(mv.metric.name + ' (' + analysis.name + ')', mv.value) for mv in analysis.analysismetricvalue_set.iterator()]
+        for analysis in dataset.analyses.iterator():
+            metrics += [(mv.metric.name + ' (' + analysis.name + ')', mv.value) for mv in analysis.analysismetricvalues.iterator()]
         
         return metrics
     
     def _metadata(self, dataset):
         ignored_fields = ('description','readable_name')
         metadata = [(miv.info_type.name, miv.value(), miv.type())
-                    for miv in dataset.datasetmetainfovalue_set.iterator()
+                    for miv in dataset.metainfovalues.iterator()
                     if miv.info_type.name not in ignored_fields]
         
-        for analysis in dataset.analysis_set.iterator():
+        for analysis in dataset.analyses.iterator():
             metadata += [(miv.info_type.name + ' (' + analysis.name + ')', miv.value(), miv.type())
-                         for miv in analysis.analysismetainfovalue_set.iterator()
+                         for miv in analysis.analysismetainfovalues.iterator()
                          if miv.info_type.name not in ignored_fields]
         
         return metadata
     
     def _description(self, dataset):
-        return dataset.datasetmetainfovalue_set.get(info_type__name='description').value()
+        return dataset.metainfovalues.get(info_type__name='description').value()
     
     def _readable_name(self, dataset):
-        return dataset.datasetmetainfovalue_set.get(info_type__name='readable_name').value()
+        return dataset.metainfovalues.get(info_type__name='readable_name').value()
 # vim: et sw=4 sts=4

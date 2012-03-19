@@ -45,7 +45,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     except DocumentMetric.DoesNotExist:
         metric = DocumentMetric(name=metric_name, analysis=analysis)
         metric.save()
-    documents = dataset.document_set.all()
+    documents = dataset.documents.all()
     for document in documents:
         dmv = DocumentMetricValue(document=document, metric=metric,
                 value=document.word_count)
