@@ -88,7 +88,7 @@ class TopicView(AnalysisBaseView):
         
         context['topic_url'] = context['topics_url'] + '/' + str(topic.number)
     
-        context['metrics'] = topic.topicmetricvalue_set.all()
+        context['metrics'] = topic.topicmetricvalues.all()
     
         topic_name = topic_name_with_ns(topic, context['currentnamescheme'])
     
@@ -179,7 +179,7 @@ class TopicDocumentView(TopicView):
         document = Document.objects.get(dataset=dataset, id=document_id)
         context['document'] = document
         text = document.get_highlighted_text([topic.number], analysis)
-        context['metrics'] = document.documentmetricvalue_set.all()
+        context['metrics'] = document.documentmetricvalues.all()
         context['document_title'] = document.filename
         context['document_text'] = text
         context['breadcrumb'].document(document)
@@ -276,7 +276,7 @@ def ngram_cloud_widget(topic, word_url):
 def turbo_topics_cloud_widget(topic):
     try:
         turbo_topics = TopicMetaInfo.objects.get(name="Turbo Topics Cloud")
-        value = turbo_topics.topicmetainfovalue_set.get(topic=topic)
+        value = turbo_topics.topicmetainfovalues.get(topic=topic)
 #        turbo_topics = analysis.extratopicinformation_set.get(
 #                name="Turbo Topics Cloud")
 #        value = turbo_topics.extratopicinformationvalue_set.get(topic=topic)
@@ -302,7 +302,7 @@ def turbo_topics_cloud_widget(topic):
         pass
     try:
         turbo_topics = TopicMetaInfo.objects.get(name="Turbo Topics N-Grams")
-        value = turbo_topics.topicmetainfovalue_set.get(topic=topic)
+        value = turbo_topics.topicmetainfovalues.get(topic=topic)
         text = value.value
         first_ten = text.split('\n')[:10]
         rest = text.split('\n')[10:]
@@ -330,7 +330,7 @@ def similar_topics_tab(request, topic, name_scheme_name):
 
 def similar_topic_list_widget(request, topic):
     w = Widget("Most Similar Topics", "topics/similar_topics")
-    similarity_measures = topic.analysis.pairwisetopicmetric_set.all()
+    similarity_measures = topic.analysis.pairwisetopicmetrics.all()
     dataset = topic.analysis.dataset
     if similarity_measures:
         ns = current_name_scheme(request.session, topic.analysis)
@@ -399,18 +399,18 @@ def metrics_widget(topic):
     w = Widget('Metrics', 'topics/metrics')
     Metric = namedtuple('Metric', 'name value average')
     metrics = []
-    for topicmetricvalue in topic.topicmetricvalue_set.select_related().all():
+    for topicmetricvalue in topic.topicmetricvalues.select_related().all():
         metric = topicmetricvalue.metric
         name = metric.name
         value = topicmetricvalue.value
-        average = metric.topicmetricvalue_set.aggregate(Avg('value'))
+        average = metric.topicmetricvalues.aggregate(Avg('value'))
         metrics.append(Metric(name, value, average['value__avg']))
     w['metrics'] = metrics
     return w
 
 def metadata_widget(topic):
     w = Widget('Metadata', 'common/metadata')
-    w['metadataval_mgr'] = topic.topicmetainfovalue_set
+    w['metadataval_mgr'] = topic.topicmetainfovalues
     return w
 
 def top_documents_widget(topic, topic_url):

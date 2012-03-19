@@ -36,7 +36,7 @@ def add_metric(analysis):
         entropy -= prob * log(prob) / log(2)
     
     try:
-        mv = metric.analysismetricvalue_set.get(analysis=analysis)
+        mv = metric.values.get(analysis=analysis)
         mv.value = entropy
         mv.save()
     except AnalysisMetricValue.DoesNotExist:

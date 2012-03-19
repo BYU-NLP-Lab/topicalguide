@@ -58,7 +58,7 @@ class Dataset(Describable):
         return self.name
     
     def delete(self, *args, **kwargs):
-        for analysis in self.analysis_set.all():
+        for analysis in self.analyses.all():
             print "\tremove analysis " + str(analysis)
             analysis.delete()
         
@@ -200,7 +200,7 @@ class Document(models.Model):
     
     def get_title(self):
         try:
-            return self.documentmetainfovalue_set.get(info_type__name='title').value
+            return self.documentmetainfovalues.get(info_type__name='title').value
         except DocumentMetaInfoValue.DoesNotExist:
             return self.filename
 
@@ -259,7 +259,7 @@ class WordToken(models.Model):
 
 # This is assuming perhaps several different runs of different kinds of LDA
 class Analysis(models.Model):
-    dataset = models.ForeignKey(Dataset)
+    dataset = models.ForeignKey(Dataset, related_name='analyses')
     stopwords = models.ManyToManyField(WordToken)
 
     name = models.SlugField()
@@ -313,15 +313,15 @@ class TopicGroupTopic(models.Model):
     group = models.ForeignKey(TopicGroup, related_name='group')
 
 class TopicNameScheme(models.Model):
-    analysis = models.ForeignKey(Analysis)
+    analysis = models.ForeignKey(Analysis, related_name='topicnameschemes')
     name = models.CharField(max_length=128)
 
     def __unicode__(self):
         return self.name
 
 class TopicName(models.Model):
-    topic = models.ForeignKey(Topic)
-    name_scheme = models.ForeignKey(TopicNameScheme)
+    topic = models.ForeignKey(Topic, related_name='names')
+    name_scheme = models.ForeignKey(TopicNameScheme, related_name='names')
     name = models.CharField(max_length=128)
 
 ### Metrics ###
@@ -344,28 +344,28 @@ class DatasetMetric(Metric):
     pass
 
 class DatasetMetricValue(MetricValue):
-    dataset = models.ForeignKey(Dataset)
-    metric = models.ForeignKey(DatasetMetric)
+    dataset = models.ForeignKey(Dataset, related_name='datasetmetricvalues')
+    metric = models.ForeignKey(DatasetMetric, related_name='values')
 
 class AnalysisMetric(Metric):
     pass
 
 class AnalysisMetricValue(MetricValue):
-    analysis = models.ForeignKey(Analysis)
-    metric = models.ForeignKey(AnalysisMetric)
+    analysis = models.ForeignKey(Analysis, related_name='analysismetricvalues')
+    metric = models.ForeignKey(AnalysisMetric, related_name='values')
 
 class TopicMetric(Metric):
-    analysis = models.ForeignKey(Analysis)
+    analysis = models.ForeignKey(Analysis, related_name='topicmetrics')
 
     def __unicode__(self):
         return self.name
 
 class TopicMetricValue(MetricValue):
-    topic = models.ForeignKey(Topic)
-    metric = models.ForeignKey(TopicMetric)
+    topic = models.ForeignKey(Topic, related_name='topicmetricvalues')
+    metric = models.ForeignKey(TopicMetric, related_name='values')
 
 class PairwiseTopicMetric(PairwiseMetric):
-    analysis = models.ForeignKey(Analysis)
+    analysis = models.ForeignKey(Analysis, related_name='pairwisetopicmetrics')
 
     def __unicode__(self):
         return self.name + ': ' + self.analysis.name
@@ -375,7 +375,7 @@ class PairwiseTopicMetricValue(MetricValue):
             related_name='pairwisetopicmetricvalue_originating')
     topic2 = models.ForeignKey(Topic,
             related_name='pairwisetopicmetricvalue_ending')
-    metric = models.ForeignKey(PairwiseTopicMetric)
+    metric = models.ForeignKey(PairwiseTopicMetric, related_name='values')
 
     def __unicode__(self):
         return '%s(%s, %s) = %d' % (self.metric.name, self.topic1.name,
@@ -385,17 +385,17 @@ class PairwiseTopicMetricValue(MetricValue):
 # only make sense with a corresponding Analysis, so we will just put them all
 # in the same class here, even if some of the metrics ignore the analysis.
 class DocumentMetric(Metric):
-    analysis = models.ForeignKey(Analysis)
+    analysis = models.ForeignKey(Analysis, related_name='documentmetrics')
 
     def __unicode__(self):
         return self.name
 
 class DocumentMetricValue(MetricValue):
-    document = models.ForeignKey(Document)
-    metric = models.ForeignKey(DocumentMetric)
+    document = models.ForeignKey(Document, related_name='documentmetricvalues')
+    metric = models.ForeignKey(DocumentMetric, related_name='values')
 
 class PairwiseDocumentMetric(PairwiseMetric):
-    analysis = models.ForeignKey(Analysis)
+    analysis = models.ForeignKey(Analysis, related_name='pairwisedocumentmetrics')
 
     def __unicode__(self):
         return self.name + ': ' + self.analysis.name
@@ -405,7 +405,7 @@ class PairwiseDocumentMetricValue(MetricValue):
             related_name='pairwisedocumentmetricvalue_originating')
     document2 = models.ForeignKey(Document,
             related_name='pairwisedocumentmetricvalue_ending')
-    metric = models.ForeignKey(PairwiseDocumentMetric)
+    metric = models.ForeignKey(PairwiseDocumentMetric, related_name='values')
 
     def __unicode__(self):
         return '%s(%s, %s) = %d' % (self.metric.name, self.document1.filename,
@@ -415,15 +415,15 @@ class WordTypeMetric(Metric):
     pass
 
 class WordTypeMetricValue(MetricValue):
-    type = models.ForeignKey(WordType)
-    metric = models.ForeignKey(WordTypeMetric)
+    type = models.ForeignKey(WordType, related_name='wordtypemetricvalues')
+    metric = models.ForeignKey(WordTypeMetric, related_name='values')
 
 class WordTokenMetric(Metric):
     pass
 
 class WordTokenMetricValue(MetricValue):
-    token = models.ForeignKey(WordToken)
-    metric = models.ForeignKey(WordTokenMetric)
+    token = models.ForeignKey(WordToken, related_name='wordtokenmetricvalues')
+    metric = models.ForeignKey(WordTokenMetric, related_name='values')
 
 # Metadata
 

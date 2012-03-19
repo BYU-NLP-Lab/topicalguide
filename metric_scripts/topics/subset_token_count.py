@@ -54,7 +54,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
                 metric = TopicMetric(name=metric_name, analysis=analysis)
                 metric.save()
             topics = analysis.topics.all()
-            docs = [d.id for d in analysis.dataset.document_set.filter(
+            docs = [d.id for d in analysis.dataset.documents.filter(
                     attributevaluedocument__attribute=attr,
                     attributevaluedocument__value=val)]
             for topic in topics:

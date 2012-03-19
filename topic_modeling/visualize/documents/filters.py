@@ -266,7 +266,7 @@ class MetricForm(forms.Form):
         # Build the select box for metrics
         self.min_value = None
         metric_choices = [('None', '-------')]
-        for m in analysis.documentmetric_set.all():
+        for m in analysis.documentmetrics.all():
             metric_choices.append((m.name, m.name))
         self.fields['metric'] = forms.ChoiceField(metric_choices,
                 label='Metric', initial=metric)
@@ -280,10 +280,10 @@ class MetricForm(forms.Form):
             self.fields['comp'].widget.attrs['onchange'] = \
                     'update_metric_filter(%d)' % id
             # Build the select box for values
-            metric = analysis.documentmetric_set.get(name=metric)
-            max_value = metric.documentmetricvalue_set.aggregate(
+            metric = analysis.documentmetrics.get(name=metric)
+            max_value = metric.documentmetricvalues.aggregate(
                     Max('value'))['value__max']
-            min_value = metric.documentmetricvalue_set.aggregate(
+            min_value = metric.documentmetricvalues.aggregate(
                     Min('value'))['value__min']
             if value == 'None':
                 value = min_value

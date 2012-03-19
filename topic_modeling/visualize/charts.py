@@ -345,7 +345,7 @@ class TopicMetricForm(forms.Form):
     def __init__(self, dataset, analysis, *args, **kwargs):
         super(TopicMetricForm, self).__init__(*args, **kwargs)
 
-        metrics = analysis.topicmetric_set.all()
+        metrics = analysis.topicmetrics.all()
         first = None
         second = None
         if metrics.count() != 0:
@@ -385,9 +385,9 @@ class TopicMetricChart(object):
         x = []
         y = []
         for topic in self.analysis.topics.all():
-            x.append(topic.topicmetricvalue_set.get(
+            x.append(topic.topicmetricvalues.get(
                     metric=self.first_metric).value)
-            y.append(topic.topicmetricvalue_set.get(
+            y.append(topic.topicmetricvalues.get(
                     metric=self.second_metric).value)
         pylab.scatter(x, y, label='Topics')
         if self.linear_fit:

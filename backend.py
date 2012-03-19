@@ -275,7 +275,7 @@ if 'task_metadata_import' not in locals():
                 pass
         def clean_documents():
             try:
-                for doc in dataset().document_set.all():
+                for doc in dataset().documents.all():
                     doc.metainfovalues.all().delete()
             except Dataset.DoesNotExist:
                 pass
@@ -360,7 +360,7 @@ if 'task_metadata_import' not in locals():
                 pass
         def clean_topics():
             try:
-                for topic in analysis().topic_set.all():
+                for topic in analysis().topics.all():
                     topic.metainfovalues.all().delete()
             except Analysis.DoesNotExist:
                 pass
