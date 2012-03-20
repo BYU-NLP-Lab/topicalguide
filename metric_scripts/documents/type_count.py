@@ -37,11 +37,9 @@ def add_metric(dataset, analysis):
     if not created:
         raise RuntimeError('%s is already in the database for this analysis!' % metric_name)
     
-    documents = dataset.documents.all()
-    for document in documents:
+    for document in dataset.documents.all():
         type_count = WordType.objects.filter(tokens__doc=document).distinct().count()
-        dmv = DocumentMetricValue(document=document, metric=metric, value=type_count)
-        dmv.save()
+        DocumentMetricValue.objects.create(document=document, metric=metric, value=type_count)
     transaction.commit()
 
 def metric_names_generated(dataset, analysis):
