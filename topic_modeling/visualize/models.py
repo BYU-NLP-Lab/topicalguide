@@ -201,7 +201,7 @@ class Document(models.Model):
     
     def get_title(self):
         try:
-            return self.documentmetainfovalues.get(info_type__name='title').value
+            return self.metainfovalues.get(info_type__name='title').value
         except DocumentMetaInfoValue.DoesNotExist:
             return self.filename
 
