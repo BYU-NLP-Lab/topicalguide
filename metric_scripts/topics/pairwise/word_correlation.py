@@ -24,6 +24,7 @@
 from __future__ import division
 
 from django.db import transaction
+from django.db.models.aggregates import Count
 
 from numpy import dot, zeros
 from numpy.linalg import norm
@@ -32,25 +33,24 @@ from topic_modeling.visualize.models import Analysis, WordType
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
+
 metric_name = "Word Correlation"
 @transaction.commit_manually
 def add_metric(dataset, analysis):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    try:
-        metric = PairwiseTopicMetric.objects.get(name=metric_name,
-                analysis=analysis)
-        raise RuntimeError("%s is already in the database for this"
-                " analysis" % metric_name)
-    except PairwiseTopicMetric.DoesNotExist:
-        metric = PairwiseTopicMetric(name=metric_name, analysis=analysis)
-        metric.save()
+    metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name, analysis=analysis)
+    if not created:
+        raise RuntimeError("%s is already in the database for this analysis" % metric_name)
     
     word_types = WordType.objects.filter(tokens__topics__analysis=analysis).distinct()
     topics = analysis.topics.order_by('number').all()
 
+    word_idx = dict((word_type.type, i) for i,word_type in enumerate(word_types))
+    
+    #TODO might be good to make this matrix sparse
     topicwordvectors = []
     for topic in topics:
-        topicwordvectors.append(topic_word_vector(topic, word_types))
+        topicwordvectors.append(topic_word_vector(topic, word_idx))
 
     for i, topic1 in enumerate(topics):
         topic1_word_vals = topicwordvectors[i]
@@ -68,9 +68,8 @@ def pmcc(topic1_word_vals, topic2_word_vals):
     return float(dot(topic1_word_vals, topic2_word_vals) /
             (norm(topic1_word_vals) * norm(topic2_word_vals)))
 
-def topic_word_vector(topic, word_types):
-    topic_word_vals = zeros(len(word_types))
-    for i, word_type in enumerate(word_types):
-        topic_word_vals[i] = topic.tokens.filter(type=word_type).count()
-        
+def topic_word_vector(topic, word_idx):
+    topic_word_vals = zeros(len(word_idx))
+    for count_obj in topic.tokens.values('type__type').annotate(count=Count('type__type')):
+        topic_word_vals[word_idx[count_obj['type__type']]] = count_obj['count']
     return topic_word_vals

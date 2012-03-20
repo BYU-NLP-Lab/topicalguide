@@ -32,6 +32,7 @@ from numpy.linalg import norm
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue
+from django.db.models.aggregates import Count
 
 metric_name = "Document Correlation"
 @transaction.commit_manually
@@ -42,15 +43,11 @@ def add_metric(dataset_name, analysis_name):
     metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name,
                 analysis=analysis)
     
-    if created:
+    if not created:
         raise RuntimeError("%s is already in the database for this analysis" % metric_name)
 
     docs = dataset.documents.all()
-    next_idx = 0
-    doc_idx = dict()
-    for doc in docs:
-        doc_idx[doc] = next_idx
-        next_idx += 1
+    doc_idx = dict((doc.id, i) for i,doc in enumerate(docs))
     
 #    num_docs = dataset.documents.count()
 #    num_docs = Document.objects.filter(dataset=analysis.dataset).order_by(
@@ -78,16 +75,12 @@ def add_metric(dataset_name, analysis_name):
 def metric_names_generated(dataset, analysis):
     return [metric_name]
 
-
 def pmcc(topic1_doc_vals, topic2_doc_vals):
     return float(dot(topic1_doc_vals, topic2_doc_vals) / (norm(topic1_doc_vals)
         * norm(topic2_doc_vals)))
 
-#t.tokens.filter(doc=d).count()
 def document_topic_vector(topic, doc_idx):
     document_topic_vals = zeros(len(doc_idx))
-    for i,doc in doc_idx.items():
-        document_topic_vals[i] = topic.tokens.filter(doc=doc).count()
-#    for doctopic in topic.documenttopic_set.all():
-#        document_topic_vals[doctopic.document_id] = doctopic.count
+    for count_obj in topic.tokens.values('doc__id').annotate(count=Count('type__type')):
+        document_topic_vals[doc_idx[count_obj['doc__id']]] = count_obj['count']
     return document_topic_vals

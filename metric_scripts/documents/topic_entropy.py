@@ -28,6 +28,7 @@ from math import log
 
 from topic_modeling.visualize.models import Analysis, Dataset, DocumentMetric
 from topic_modeling.visualize.models import DocumentMetricValue
+from django.db.models.aggregates import Count
 
 metric_name = 'Topic Entropy'
 @transaction.commit_manually
@@ -39,18 +40,20 @@ def add_metric(dataset, analysis):
         raise RuntimeError('%s is already in the database for this analysis!' % metric_name)
 
     topics = analysis.topics.all()
-    documents = dataset.documents.all()
-    for document in documents:
+    topic_ids = [topic.id for topic in topics]
+    for document in dataset.documents.all():
         doc_token_count = document.tokens.count()
         entropy = 0
         if doc_token_count > 0:
-            for topic in topics:
-                doctopic_count = document.tokens.filter(topics=topic).count()
-                if doctopic_count > 0:
-                    prob = doctopic_count / doc_token_count
-                    entropy -= prob * (log(prob) / log(2))
-        dmv = DocumentMetricValue(document=document, metric=metric, value=entropy)
-        dmv.save()
+            for count_obj in document.tokens.values('topics__id').annotate(count=Count('topics__id')):
+                topic_id = count_obj['topics__id']
+                if topic_id is not None and topic_id in topic_ids:
+                    doctopic_count = count_obj['count']
+                    if doctopic_count > 0:
+                        prob = doctopic_count / doc_token_count
+                        entropy -= prob * (log(prob) / log(2))
+                        #TODO Decide if we care about this entropy being in bits (log base of 2)
+        DocumentMetricValue.objects.create(document=document, metric=metric, value=entropy)
     transaction.commit()
 
 def metric_names_generated(dataset, analysis):
