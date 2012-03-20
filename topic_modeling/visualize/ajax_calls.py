@@ -31,9 +31,9 @@ from topic_modeling.visualize.common.helpers import get_word_list
 from topic_modeling.visualize.common.helpers import paginate_list
 from topic_modeling.visualize.common.ui import WordSummary
 from topic_modeling.visualize.models import Analysis, WordToken, Dataset
-from topic_modeling.visualize.models import Attribute
+#from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
-from topic_modeling.visualize.models import Word
+#from topic_modeling.visualize.models import Word
 from topic_modeling.visualize import sess_key
 from topic_modeling.visualize.topics.names import set_current_name_scheme_id
 from django.views.decorators.http import require_GET

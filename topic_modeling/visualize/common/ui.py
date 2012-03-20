@@ -28,8 +28,8 @@ from django import forms, template
 from django.template.context import Context
 from django.template.defaultfilters import slugify
 
-from topic_modeling.visualize.models import Dataset, Analysis, WordType, Document,\
-    Attribute, Value
+from topic_modeling.visualize.models import Dataset, Analysis, WordType, Document#,\
+#    Attribute, Value
 from topic_modeling import settings
 
 class FilterForm(forms.Form):
