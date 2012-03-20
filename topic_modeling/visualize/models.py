@@ -27,6 +27,7 @@ from datetime import datetime
 from django.db import models
 
 from topic_modeling.anyjson import deserialize
+from django.db.models.aggregates import Count
 
 ##############################################################################
 # Tables just to hold information about data and documents
@@ -301,6 +302,22 @@ class Topic(models.Model):
 
     class Meta:
         ordering = ['name']
+    
+    def total_count(self):
+        return self.tokens.count()
+    
+    def topic_word_counts(self, sort=False):
+        topicwords = self.tokens.values('type__type').annotate(count=Count('type__type'))
+        if sort:
+            topicwords = topicwords.order_by('-count')
+        return topicwords
+    
+    def topic_document_counts(self, sort=False):
+        topicdocs = self.tokens.values('doc__id', 'doc__filename').annotate(count=Count('doc__id'))
+        if sort:
+            topicdocs = topicdocs.order_by('-count')
+        return topicdocs
+
 
 class TopicGroup(Topic):
     @property
