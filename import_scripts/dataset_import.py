@@ -24,8 +24,6 @@
 import os, sys
 import re
 
-from import_scripts.metadata import Metadata
-
 from topic_modeling.visualize.models import WordToken, WordType
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
@@ -35,15 +33,12 @@ from django.db import connection, transaction
 from datetime import datetime
 from topic_modeling import settings
 
-NUM_DOTS = 100
-
 def import_dataset(name, readable_name, description, metadata_filenames,
                    dataset_dir, files_dir, token_regex):
     
     print >> sys.stderr, "dataset_import({0})".format(
-        ', '.join([name, readable_name, description,
-        metadata_filenames['datasets'], metadata_filenames['documents'], metadata_filenames['word_types'], metadata_filenames['word_tokens'],
-        dataset_dir, files_dir]))
+        ', '.join([name, readable_name, description, metadata_filenames['datasets'], metadata_filenames['documents'],
+                   metadata_filenames['word_types'], metadata_filenames['word_tokens'], dataset_dir, files_dir]))
     
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
@@ -76,11 +71,11 @@ def _load_documents(dataset, token_regex):
     word_types = dict()
     for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
         for filename in filenames:
-            filename = '%s/%s' % (dirpath, filename)
+            full_filename = '%s/%s' % (dirpath, filename)
             doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
             print >> sys.stderr, filename
             
-            with open(filename) as r:
+            with open(full_filename) as r:
                 content = r.read()
             
             for token_index,match in enumerate(re.finditer(token_regex, content)):
@@ -95,10 +90,6 @@ def _load_documents(dataset, token_regex):
                 WordToken.objects.create(type=word_type, doc=doc, token_index=token_index, start=match.start())
             del content
             transaction.commit()
-
-#############################################################################
-# Database creation code (in the order it's called in main)
-#############################################################################
 
 def _create_dataset(name, readable_name, description, dataset_dir, files_dir):
     print >> sys.stderr, 'Creating the dataset...  ',
