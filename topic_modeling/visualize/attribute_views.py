@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # The Topical Guide
 # Copyright 2010-2011 Brigham Young University
 #
@@ -30,9 +28,9 @@ from topic_modeling.visualize.common.ui import BreadCrumb, Tab,\
     Widget, WordSummary
 from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.helpers import get_word_cloud, paginate_list, set_word_context
-from topic_modeling.visualize.models import Attribute, DocumentMetaInfo
+from topic_modeling.visualize.models import DocumentMetaInfo#, Attribute
 from topic_modeling.visualize.models import Document
-from topic_modeling.visualize.models import Value
+#from topic_modeling.visualize.models import Value
 from topic_modeling.visualize.models import WordType
 from topic_modeling.visualize import sess_key
 

@@ -20,19 +20,23 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from topic_modeling.visualize.models import Attribute
+#from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize import sess_key
 class NoAttributes(Exception): pass
 
-def topic_attribute(dataset, session):
-    key = 'topic-attribute'
-    attributes = dataset.attribute_set.all()
-    if len(attributes)==0: raise NoAttributes
-    try:
-        current_attribute = session[sess_key(dataset, key)]
-        attribute = dataset.attribute_set.get(name=current_attribute)
-    except (KeyError, Attribute.DoesNotExist):
-        attribute = attributes[0]
+#def topic_attribute(dataset, session):
+#    key = 'topic-attribute'
+#    attributes = dataset.attribute_set.all()
+#    if len(attributes)==0: raise NoAttributes
+#    try:
+#        current_attribute = session[sess_key(dataset, key)]
+#        attribute = dataset.attribute_set.get(name=current_attribute)
+#    except (KeyError, Attribute.DoesNotExist):
+#        attribute = attributes[0]
+#
+#    session[sess_key(dataset, key)] = attribute.name
+#    return attribute
 
-    session[sess_key(dataset, key)] = attribute.name
-    return attribute
+#def current_topic_metainfo_field(topic, session):
+#    key = 'topic-metainfo-field'
+#    fields = topic.

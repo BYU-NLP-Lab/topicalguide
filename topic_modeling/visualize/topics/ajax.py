@@ -25,14 +25,14 @@ from django.db.models.aggregates import Min
 
 from topic_modeling.visualize.common.ui import FilterForm
 from topic_modeling.visualize.common.helpers import paginate_list
-from topic_modeling.visualize.models import Analysis, DocumentTopicWord
-from topic_modeling.visualize.models import Attribute
+from topic_modeling.visualize.models import Analysis#, DocumentTopicWord
+#from topic_modeling.visualize.models import Attribute
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import TopicGroup
 from topic_modeling.visualize.models import TopicGroupTopic
-from topic_modeling.visualize.models import TopicWord
-from topic_modeling.visualize.models import DocumentTopic
-from topic_modeling.visualize.models import AttributeValueTopic
+#from topic_modeling.visualize.models import TopicWord
+#from topic_modeling.visualize.models import DocumentTopic
+#from topic_modeling.visualize.models import AttributeValueTopic
 from topic_modeling.visualize.topics.common import top_values_for_attr_topic
 from topic_modeling.visualize.topics.filters import clean_topics_from_session
 from topic_modeling.visualize.topics.filters import get_topic_filter_by_name

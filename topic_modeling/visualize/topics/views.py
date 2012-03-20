@@ -34,7 +34,7 @@ from topic_modeling.visualize.common.helpers import word_cloud_widget, set_word_
                                                     get_dataset_and_analysis
 from topic_modeling.visualize.documents.views import tabs as doc_tabs
 from topic_modeling.visualize.models import Analysis, Document, Topic, TopicMetaInfo, TopicMetaInfoValue, WordType
-from topic_modeling.visualize.topics import topic_attribute
+#from topic_modeling.visualize.topics import topic_attribute
 from topic_modeling.visualize.topics.common import RenameForm, SortTopicForm, top_values_for_attr_topic
 from topic_modeling.visualize.topics.filters import TopicFilterByDocument, TopicFilterByWord, clean_topics_from_session
 from topic_modeling.visualize.topics.names import name_schemes, current_name_scheme, topic_name_with_ns
@@ -425,26 +425,26 @@ class NoValidCurrentAttribute(Exception): pass
 def top_values_widget(request, topic):
     w = Widget('Top Values', 'topics/top_values')
     
-    attribute = topic_attribute(topic.analysis.dataset, request.session)
-    
-    attributes = topic.analysis.dataset.attribute_set.all()
-    current_attribute = request.session.get(sess_key(topic.analysis.dataset,'topic-attribute'), None)
-    
-    try:
-        if current_attribute is None: raise NoValidCurrentAttribute
-        try:
-            attribute = topic.analysis.dataset.attribute_set.get(name=current_attribute)
-        except Attribute.DoesNotExist:
-            raise NoValidCurrentAttribute
-    except NoValidCurrentAttribute:
-        if len(attributes)==0: return
-        attribute = attributes[0]
- 
-    top_values = top_values_for_attr_topic(topic, attribute)
-    
-    w['attributes'] = attributes
-    w['attribute'] = attribute
-    w['top_values'] = top_values
+#    attribute = topic_attribute(topic.analysis.dataset, request.session)
+#    
+#    attributes = topic.analysis.dataset.attribute_set.all()
+#    current_attribute = request.session.get(sess_key(topic.analysis.dataset,'topic-attribute'), None)
+#    
+#    try:
+#        if current_attribute is None: raise NoValidCurrentAttribute
+#        try:
+#            attribute = topic.analysis.dataset.attribute_set.get(name=current_attribute)
+#        except Attribute.DoesNotExist:
+#            raise NoValidCurrentAttribute
+#    except NoValidCurrentAttribute:
+#        if len(attributes)==0: return
+#        attribute = attributes[0]
+# 
+#    top_values = top_values_for_attr_topic(topic, attribute)
+#    
+#    w['attributes'] = attributes
+#    w['attribute'] = attribute
+#    w['top_values'] = top_values
     return w
 
 

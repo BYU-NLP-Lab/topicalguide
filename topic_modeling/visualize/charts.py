@@ -27,8 +27,8 @@ from django.forms.widgets import Input
 from numpy import arange, zeros
 from scipy import linspace, stats
 from scipy.stats.kde import gaussian_kde
-from topic_modeling.visualize.models import Analysis, Attribute, AttributeValue, \
-    AttributeValueTopic, Dataset, Topic, TopicMetric, Value
+from topic_modeling.visualize.models import Analysis, \
+    Dataset, Topic, TopicMetric#Attribute, AttributeValue, AttributeValueTopic, Value,
 import StringIO
 import math
 import csv
