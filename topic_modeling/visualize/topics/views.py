@@ -40,6 +40,7 @@ from topic_modeling.visualize.topics.filters import TopicFilterByDocument, Topic
 from topic_modeling.visualize.topics.names import name_schemes, current_name_scheme, topic_name_with_ns
 from topic_modeling.visualize.word_views import words_tab
 from topic_modeling.visualize import sess_key
+from django.db.models.aggregates import Count
 
 
 class TopicView(AnalysisBaseView):
@@ -220,13 +221,18 @@ def top_words_tab(topic, topic_url, images_url):
     tab = Tab("Top Words", path='topics/top_words')
     
     word_url = '%s/words/' % topic_url
-    topicwords = topic.topicword_set.filter(
-            word__ngram=False).order_by('-count')
+    
+#    topicwords = topic.tokens.values('type__type').annotate(count=Count('type__type')).order_by('-count').all()
+#    topicwords = topic.topicword_set.filter(
+#            word__ngram=False).order_by('-count')
+#    total_count = topic.tokens.count()
+    topicwords = topic.topic_word_counts(sort=True)
+    total_count = topic.total_count()
     words = []
     for topicword in topicwords[:100]:
-        percent = float(topicword.count) / topic.total_count
-        w = WordSummary(topicword.word.type, percent)
-        w.url = word_url + topicword.word.type
+        percent = float(topicword['count']) / total_count
+        w = WordSummary(topicword['type__type'], percent)
+        w.url = word_url + topicword['type__type']
         words.append(w)
     
     tab.add(word_chart_widget(words))
@@ -237,8 +243,8 @@ def top_words_tab(topic, topic_url, images_url):
     ttcloud = turbo_topics_cloud_widget(topic)
     if ttcloud: tab.add(ttcloud)
     
-    ngcloud = ngram_cloud_widget(topic, word_url)
-    if ngcloud: tab.add(ngcloud)
+#    ngcloud = ngram_cloud_widget(topic, word_url)
+#    if ngcloud: tab.add(ngcloud)
     
     tab.add(words_in_context_widget(images_url, words))
     
@@ -258,19 +264,19 @@ def word_chart_widget(words):
 def unigram_cloud(words):
     return get_word_cloud(words)
 
-def ngram_cloud_widget(topic, word_url):
-    topicngrams = topic.topicword_set.filter(
-            word__ngram=True).order_by('-count')
-    ngrams = []
-    for topicngram in topicngrams[:10]:
-        percent = float(topicngram.count) / topic.total_count
-        w = WordSummary(topicngram.word.type, percent)
-        w.url = word_url + topicngram.word.type
-        ngrams.append(w)
-    if ngrams:
-        # Name must not contain spaces!
-        return word_cloud_widget(ngrams, title='N-grams')
-    return None
+#def ngram_cloud_widget(topic, word_url):
+#    topicngrams = topic.topicword_set.filter(
+#            word__ngram=True).order_by('-count')
+#    ngrams = []
+#    for topicngram in topicngrams[:10]:
+#        percent = float(topicngram.count) / topic.total_count
+#        w = WordSummary(topicngram.word.type, percent)
+#        w.url = word_url + topicngram.word.type
+#        ngrams.append(w)
+#    if ngrams:
+#        # Name must not contain spaces!
+#        return word_cloud_widget(ngrams, title='N-grams')
+#    return None
 
 
 def turbo_topics_cloud_widget(topic):
@@ -403,20 +409,20 @@ def metrics_widget(topic):
         metric = topicmetricvalue.metric
         name = metric.name
         value = topicmetricvalue.value
-        average = metric.topicmetricvalues.aggregate(Avg('value'))
+        average = metric.values.aggregate(Avg('value'))
         metrics.append(Metric(name, value, average['value__avg']))
     w['metrics'] = metrics
     return w
 
 def metadata_widget(topic):
     w = Widget('Metadata', 'common/metadata')
-    w['metadataval_mgr'] = topic.topicmetainfovalues
+    w['metadataval_mgr'] = topic.metainfovalues
     return w
 
 def top_documents_widget(topic, topic_url):
     w = Widget('Top Documents', 'topics/top_documents')
-    topicdocs = topic.documenttopic_set.order_by('-count')[:10]
-    w['top_docs'] = topicdocs
+#    topicdocs = topic.documenttopic_set.order_by('-count')[:10]
+    w['topic_doc_counts'] = topic.topic_document_counts()[:10]
     w['topic_url'] = topic_url
     return w
 
