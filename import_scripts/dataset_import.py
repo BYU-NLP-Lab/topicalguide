@@ -78,7 +78,7 @@ def _load_documents(dataset, token_regex):
             with open(full_filename) as r:
                 content = r.read()
             
-            for token_index,match in enumerate(re.finditer(token_regex, content)):
+            for position,match in enumerate(re.finditer(token_regex, content)):
                 token = match.group()
                 token_lc = token.lower()
                 try:
@@ -87,7 +87,7 @@ def _load_documents(dataset, token_regex):
                     word_type, type_created = WordType.objects.get_or_create(type=token_lc)
                     if type_created: transaction.commit()
                     word_types[token_lc] = word_type
-                WordToken.objects.create(type=word_type, doc=doc, token_index=token_index, start=match.start())
+                WordToken.objects.create(type=word_type, doc=doc, position=position, start=match.start())
             del content
             transaction.commit()
 

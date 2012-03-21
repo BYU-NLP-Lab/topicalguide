@@ -123,7 +123,7 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
             
             doc = analysis.dataset.documents.get(filename=docpath)
 #            tokens = [(token,token.type.type) for token in doc.tokens.order_by('token_index').all()]
-            tokens = doc.tokens.order_by('token_index').select_related('type').all()
+            tokens = doc.tokens.order_by('position').select_related('type').all()
             prev_docpath = docpath
             next_token_idx = 0
             
