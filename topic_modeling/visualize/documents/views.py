@@ -126,22 +126,24 @@ def metrics_widget(document):
 
 def metadata_widget(document):
     w = Widget('Metadata', 'documents/metadata_backcompat')
-    w['docattrval_mgr'] = document.attributevaluedocument_set
-    w['metadataval_mgr'] = document.documentmetainfovalues
+    #FIXME
+#    w['docattrval_mgr'] = document.attributevaluedocument_set
+    w['metadataval_mgr'] = document.metainfovalues
     return w
 
 def top_topics_widget(analysis, document):
     w = Widget('Top Topics', 'documents/top_topics')
-    topicdocs = document.documenttopic_set.filter(topic__analysis=analysis)
-    total = 0
-    topics = []
-    for topicdoc in topicdocs:
-        total += topicdoc.count
-    for topicdoc in topicdocs:
-        t = WordSummary(topicdoc.topic.name, float(topicdoc.count) / total)
-        topics.append(t)
-    topics.sort()
-    w['chart_address'] = get_chart(topics)
+    #FIXME
+#    topicdocs = document.documenttopic_set.filter(topic__analysis=analysis)
+#    total = 0
+#    topics = []
+#    for topicdoc in topicdocs:
+#        total += topicdoc.count
+#    for topicdoc in topicdocs:
+#        t = WordSummary(topicdoc.topic.name, float(topicdoc.count) / total)
+#        topics.append(t)
+#    topics.sort()
+#    w['chart_address'] = get_chart(topics)
     return w
 
 

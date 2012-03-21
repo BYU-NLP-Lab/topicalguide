@@ -272,7 +272,8 @@ class TopicFilterByDocument(object):
         if not self.current_document_id:
             return topic_set
         doc = Document.objects.get(pk=self.current_document_id)
-        return topic_set.filter(documenttopic__document=doc)
+        return topic_set.filter(tokens__doc=doc)
+#        return topic_set.filter(documenttopic__document=doc)
 
     def remake_form(self):
         if self.current_document_id:

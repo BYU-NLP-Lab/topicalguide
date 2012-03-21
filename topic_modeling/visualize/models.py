@@ -124,24 +124,37 @@ class Document(models.Model):
         
         return left_context, raw_word, right_context
 
+    before_text = '<span style="color: blue;">'
+    after_text = '</span>'
     def get_highlighted_text(self, topics, analysis):
-        markup = self.get_markup(analysis)
-        indices = []
-        for i, word in enumerate(markup):
-            if word['topic'] in topics:
-                indices.append(i)
-        text = open(self.dataset.files_dir + '/' +
-                self.filename).read().decode('utf-8')
-        before_text = '<span style="color: blue;">'
-        after_text = '</span>'
-        numchars = len(before_text) + len(after_text)
-        for i, index in enumerate(indices):
-            start_index = markup[index]['start'] + i * numchars
-            end_index = start_index + len(markup[index]['word'])
-            word = text[start_index:end_index]
-            text = text[:start_index] + before_text + word + after_text + \
-                    text[end_index:]
-        return text
+#        return ''
+        parts = list()
+        highlight_me = self.tokens.filter(topics__in=topics).all()
+        
+        for token in self.tokens.all():
+            highlight = token in highlight_me
+            if highlight:
+                parts.append(self.before_text)
+            parts.append(token.type.type)
+            if highlight:
+                parts.append(self.after_text)
+        return ' '.join(parts)
+#        markup = self.get_markup(analysis)
+#        indices = []
+#        for i, word in enumerate(markup):
+#            if word['topic'] in topics:
+#                indices.append(i)
+#        text = open(self.dataset.files_dir + '/' +
+#                self.filename).read().decode('utf-8')
+#        
+#        numchars = len(before_text) + len(after_text)
+#        for i, index in enumerate(indices):
+#            start_index = markup[index]['start'] + i * numchars
+#            end_index = start_index + len(markup[index]['word'])
+#            word = text[start_index:end_index]
+#            text = text[:start_index] + before_text + word + after_text + \
+#                    text[end_index:]
+#        return text
 
     def text(self, kwic=None):
         text = open(self.dataset.files_dir + "/" +

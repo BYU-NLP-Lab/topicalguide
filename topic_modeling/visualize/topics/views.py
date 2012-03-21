@@ -161,6 +161,7 @@ class TopicWordView(TopicView):
     def _top_documents_widget(self):
         pass
 
+#FIXME Slow view
 class TopicDocumentView(TopicView):
     template_name = 'topics.html'
     
