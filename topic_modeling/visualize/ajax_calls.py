@@ -58,7 +58,7 @@ def word_in_context(request, dataset, analysis, word, topic=None):
     
     token = tokens[random.randint(0, len(tokens)-1)]
     doc = token.doc
-    context = token.doc.tokens.all()[token.token_index-5:token.token_index+5]
+    context = doc.tokens.all()[max(0,token.token_index-5):token.token_index+5]
     
     word_in_context = dict()
     word_in_context['word'] = token.type.type
