@@ -29,10 +29,11 @@ from topic_modeling.visualize.common.ui import BreadCrumb, Tab,\
 from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.helpers import get_word_cloud, paginate_list, set_word_context
 from topic_modeling.visualize.models import DocumentMetaInfo#, Attribute
-from topic_modeling.visualize.models import Document
+from topic_modeling.visualize.models import Document, DocumentMetaInfoValue, WordToken
 #from topic_modeling.visualize.models import Value
 from topic_modeling.visualize.models import WordType
 from topic_modeling.visualize import sess_key
+from django.db.models.aggregates import Count
 
 class AttributeView(AnalysisBaseView):
     template_name = "attributes.html"
@@ -50,9 +51,10 @@ class AttributeView(AnalysisBaseView):
         
         context['highlight'] = 'attributes_tab'
         context['tab'] = 'attribute'
-        context['attributes'] = dataset.attribute_set.all()
+        context['attributes'] = DocumentMetaInfo.objects.filter(values__document__dataset=dataset)
+#        context['attributes'] = dataset.attribute_set.all()
         if attribute:
-            attribute = get_object_or_404(Attribute, dataset=dataset,
+            attribute = get_object_or_404(DocumentMetaInfo, dataset=dataset,
                     name=attribute)
             prev_attribute = request.session.get(sess_key(dataset,'attribute-name'), '')
             if prev_attribute != attribute.name:
@@ -64,7 +66,7 @@ class AttributeView(AnalysisBaseView):
     
         context['attribute'] = attribute
     
-        values = attribute.value_set.all()
+        values = attribute.values.all()
         page_num = request.session.get(sess_key(dataset,'attribute-page'), 1)
         num_per_page = request.session.get('attributes-per-page', 20)
         values, num_pages, page_num = paginate_list(values, page_num, num_per_page)
@@ -73,7 +75,7 @@ class AttributeView(AnalysisBaseView):
         context['values'] = [v.value for v in values]
     
         if value:
-            value = get_object_or_404(Value, attribute=attribute, value=value)
+            value = get_object_or_404(DocumentMetaInfoValue, attribute=attribute, value=value)
         else:
             value = values[0]
         context['value'] = value
@@ -136,10 +138,13 @@ class AttributeDocumentView(AttributeView):
 def attribute_info_tab(analysis, attribute, value, analysis_url, attributes_url):
     tab = Tab('Attribute Information', 'attributes/attribute_info')
     
-    token_count = attribute.attributevalue_set.get(value=value).token_count
+    token_count = WordToken.objects.filter(
+        document__metainfovalues__info_type=attribute,
+        document__metainfovalues__text_value=value).count()
+#    token_count = attribute.attributevalue_set.get(value=value).token_count
     words = get_words(attribute, value, attributes_url, token_count)
     
-    tab.add(metrics_widget(attribute, value, token_count))
+    tab.add(metrics_widget(analysis.dataset, attribute, value, token_count))
     tab.add(top_words_chart_widget(words))
     tab.add(word_cloud_widget(words))
     ngram_widget = ngram_word_cloud_widget(attribute, value, attributes_url, token_count)
@@ -148,11 +153,14 @@ def attribute_info_tab(analysis, attribute, value, analysis_url, attributes_url)
     
     return tab
 
+#FIXME Only works with text values
 def get_attrvalwords(attribute, value):
-    attrvalwords = attribute.attributevalueword_set.filter(
-            value=value).order_by('-count')
-    attrvalwords = attrvalwords.filter(word__ngram=False)
-    return attrvalwords
+    return attribute.values.filter(text_value=value).values('document__tokens__type__type')\
+        .annotate(count=Count("text_value")).order_by('-count')
+#    attrvalwords = attribute.attributevalueword_set.filter(
+#            value=value).order_by('-count')
+#    attrvalwords = attrvalwords.filter(word__ngram=False)
+#    return attrvalwords
 
 def get_words(attribute, value, attributes_url, token_count):
     words = []
@@ -193,13 +201,16 @@ def get_ngrams(attribute, value, attributes_url, tokens):
         ngrams.append(w)
     return ngrams
 
-def metrics_widget(attribute, value, token_count):
+def metrics_widget(dataset, attribute, value, token_count):
     w = Widget('Metrics', 'attributes/metrics')
-    attrvaldocs = attribute.attributevaluedocument_set.filter(value=value)
-    attrvalwords = get_attrvalwords(attribute, value)
+    w['num_types'] = WordType.objects.filter(tokens__document__metainfovalues__info_type=attribute,
+                                             tokens__document__metainfovalues__text_value=value).distinct().count()
+    w['num_docs'] = dataset.documents.filter(metainfovalues__info_type=attribute,metainfovalues__text_value=value).count()
+#    attrvaldocs = attribute.attributevaluedocument_set.filter(value=value)
+#    attrvalwords = get_attrvalwords(attribute, value)
     w['num_tokens'] = token_count
-    w['num_types'] = attrvalwords.count()
-    w['num_docs'] = attrvaldocs.count()
+#    w['num_types'] = attrvalwords.count()
+#    w['num_docs'] = attrvaldocs.count()
     return w
 
 def top_words_chart_widget(words):
