@@ -25,8 +25,10 @@ from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.ui import BreadCrumb, WordSummary, \
     WordFindForm, Tab, Widget
 from topic_modeling.visualize.common.helpers import get_word_list, paginate_list
-from topic_modeling.visualize.models import WordType, Document
+from topic_modeling.visualize.models import WordType, Document, Topic
 from topic_modeling.visualize import sess_key
+from django.db.models.aggregates import Count
+from topic_modeling.visualize.topics.names import current_name_scheme, topic_name_with_ns
 
 
 class WordView(AnalysisBaseView):
@@ -64,15 +66,15 @@ class WordView(AnalysisBaseView):
         
         context['view_description'] = "Word Type '{0}'".format(word.type)
         
-        context['tabs'] = [words_tab(analysis, word, word_url, context['IMAGES'])]
+        context['tabs'] = [words_tab(request.session, analysis, word, word_url, context['IMAGES'])]
         
         return context
 
-def words_tab(analysis, word, word_url, images_url):
+def words_tab(session, analysis, word, word_url, images_url):
     tab = Tab('Word Information', 'words/word_information')
     
     tab.add(top_documents_widget(analysis.dataset, word))
-    tab.add(top_topics_widget(analysis, word))
+    tab.add(top_topics_widget(session, analysis, word))
     tab.add(total_count_widget(word))
     tab.add(word_in_context_widget(word, word_url, images_url))
     
@@ -98,14 +100,27 @@ def top_documents_widget(dataset, word):
     w['chart_url'] = get_chart(doc_summaries)
     return w
 
-def top_topics_widget(analysis, word):
+def top_topics_widget(session, analysis, word):
     w = Widget('Top Topics', 'words/top_topics')
-    topicwords = word.topicword_set.filter(
-            topic__analysis=analysis)
-    total = reduce(lambda x, tw: x + tw.count, topicwords, 0)
-    topics = sorted([WordSummary(tw.topic.name, float(tw.count) / total)
-            for tw in topicwords])
-    topics.sort()
+    analysis_tokens = word.tokens.filter(topics__analysis=analysis)
+    total = float(analysis_tokens.count())
+    topicwords = analysis_tokens.values('topics').annotate(count=Count('topics')).order_by('-count')
+    
+    ns = current_name_scheme(session, analysis)
+    topics = list()
+    for count_obj in topicwords:
+        pct = count_obj['count'] / total
+        topic = Topic.objects.get(id=count_obj['topics'])
+        name = topic_name_with_ns(topic, ns)
+        topics.append(WordSummary(name,pct))
+#    topics = [WordSummary(Topic.objects.get(id=x['topics']).name, x['count']/total) for x in topicwords]
+    
+#    topicwords = word.topicword_set.filter(
+#            topic__analysis=analysis)
+#    total = reduce(lambda x, tw: x + tw.count, topicwords, 0)
+#    topics = sorted([WordSummary(tw.topic.name, float(tw.count) / total)
+#            for tw in topicwords])
+#    topics.sort()
     w['chart_url'] = get_chart(topics)
     return w
 
