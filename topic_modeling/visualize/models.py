@@ -223,12 +223,12 @@ class Document(models.Model):
 
 
 class WordType(models.Model):
-    type = models.CharField(max_length=128, db_index=True)
+    type = models.CharField(max_length=128, db_index=True) #@ReservedAssignment
 
 class WordToken(models.Model):
-    type = models.ForeignKey(WordType, related_name='tokens')
-    doc = models.ForeignKey(Document, related_name='tokens')
-    token_index = models.IntegerField()
+    type = models.ForeignKey(WordType, related_name='tokens') #@ReservedAssignment
+    document = models.ForeignKey(Document, related_name='tokens')
+    position = models.IntegerField()
     start = models.IntegerField()
     
 #    '''The form of this type instance. If null, it defers to type.value'''
@@ -236,7 +236,7 @@ class WordToken(models.Model):
     topics = models.ManyToManyField('Topic', related_name='tokens')
     
     def __unicode__(self):
-        return '[%s,%s]' % (self.type.type, self.token_index)
+        return '[%s,%s]' % (self.type.type, self.position)
 
 ## Links between the basic things in the database
 #################################################
@@ -303,7 +303,7 @@ class MarkupFile(models.Model):
 
 class Topic(models.Model):
     number = models.IntegerField()
-    name = models.CharField(max_length=128)
+#    name = models.CharField(max_length=128)
 #    total_count = models.IntegerField()
     analysis = models.ForeignKey(Analysis, related_name='topics')
 #    documents = models.ManyToManyField(Document, through='DocumentTopic')
@@ -313,8 +313,8 @@ class Topic(models.Model):
     def __unicode__(self):
         return '%d: %s' % (self.number, self.name)
 
-    class Meta:
-        ordering = ['name']
+#    class Meta:
+#        ordering = ['name']
     
     def total_count(self):
         return self.tokens.count()
