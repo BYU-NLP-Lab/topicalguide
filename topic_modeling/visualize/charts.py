@@ -35,7 +35,7 @@ import csv
 
 import matplotlib
 #Avoid using X windows by setting a backend that doesn't use it. This is necessary for headless setups
-matplotlib.use("Cairo")
+#matplotlib.use("Cairo")
 import pylab
 
 # General python imports

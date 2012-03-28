@@ -189,10 +189,6 @@ public class TopicMapGraphBuilder {
 		
 		
 
-		//Interpolator splines = new BezierInterpolator((float) control1.getX(),
-		//(float) control1.getY(),
-		//(float) control2.getX(), (float) control2.getY());
-		//sizeTransformer.setInterpolator(splines);
 
 		rankingController.transform(sizeTransformer);
 	}
@@ -207,23 +203,6 @@ public class TopicMapGraphBuilder {
 		PreviewModel model = Lookup.getDefault().lookup(PreviewController.class).getModel();
 		model.getNodeSupervisor().setShowNodeLabels(Boolean.TRUE);
 		model.getGlobalEdgeSupervisor().setShowFlag(Boolean.FALSE);
-//		ColorizerFactory colorizerFactory = Lookup.getDefault().lookup(ColorizerFactory.class);
-//		model.getUndirectedEdgeSupervisor().setColorizer((EdgeColorizer) colorizerFactory.createParentColorMode());
-//		model.getUndirectedEdgeSupervisor().setColorizer((EdgeColorizer) colorizerFactory.createEdgeBothBColorMode());
-//		model.getUndirectedEdgeSupervisor().setColorizer(new EdgeColorizer(){
-//			@Override
-//			public void color(EdgeColorizerClient client) {
-//				
-//			}
-//		});
-//		colorizerFactory.createNodeOriginalColorMode()
-		//model.getNodeSupervisor().setNodeColorizer((NodeColorizer) colorizerFactory.createCustomColorMode(Color.BLUE));
-//		model.getUniEdgeSupervisor().setColorizer((EdgeColorizer) colorizerFactory.createCustomColorMode(Color.LIGHT_GRAY));
-		//model.getBiEdgeSupervisor().setColorizer((EdgeColorizer) colorizerFactory.createCustomColorMode(Color.GRAY));
-		
-		//model.getUniEdgeSupervisor().setEdgeScale(0.1f);
-		//model.getBiEdgeSupervisor().setEdgeScale(0.1f);
-//		model.getUndirectedEdgeSupervisor().setEdgeScale(10f);
 		model.getNodeSupervisor().setProportionalLabelSize(Boolean.FALSE);
 		model.getNodeSupervisor().setBaseNodeLabelFont(model.getNodeSupervisor().getBaseNodeLabelFont().deriveFont(28f));
 
@@ -234,6 +213,7 @@ public class TopicMapGraphBuilder {
 			Integer[] topicIDs = db.topicIDs(datasetName, analysisName).toArray(new Integer[0]);
 			Arrays.sort(topicIDs);
 			for(final int topicID : topicIDs) {
+                System.out.println("in top of for, and topicID is " + topicID);
 				final int topicNumber = db.topicNumber(topicID);
 				final String topicNodeID = topicNodeID(topicNumber);
 
@@ -244,12 +224,18 @@ public class TopicMapGraphBuilder {
 				currentModel().setVisibleView(view);
 
 				ExportController ec = Lookup.getDefault().lookup(ExportController.class);
+                //System.out.println("in middle of for");
 				try {
 					ec.exportFile(new File(imgDir + "/" + topicNodeID + ".svg"), ec.getExporter("svg"));
 				} catch (IOException ex) {
 					ex.printStackTrace();
 					return;
-				}
+                }
+				//} catch (NullPointerException e) {
+                    //e.printStackTrace();
+                    //System.exit(1);
+                //}
+                
 
 				final String svgFile = imgDir + "/" + topicNodeID + ".svg";
 				final String linkedSvgFile = linkedImgDir + "/" + topicNodeID + ".svg";

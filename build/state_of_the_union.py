@@ -33,6 +33,7 @@ from backend import config as c
 c['num_topics'] = 100
 c['chron_list_filename'] = 'chronological_list.wiki'
 c['addresses_filename'] = 'state_of_the_union_addresses.txt'
+# subdir for the state of the union files
 c['dataset_name'] = 'state_of_the_union'
 c['dataset_readable_name'] = 'State of the Union Addresses 1790-2010'
 c['suppress_default_document_metadata_task'] = True

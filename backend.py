@@ -79,7 +79,8 @@ from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import TopicNameScheme
 
 #build = "twitter"
-build = "state_of_the_union"
+#build = "state_of_the_union"
+build = 'stack_overflow'
 #build = "kcna/kcna"
 #build = "congressional_record"
 
@@ -402,9 +403,10 @@ if 'task_mallet_imported_data' not in locals():
         if 'extra_stopwords_file' in c:
             cmd += ' --extra-stopwords ' + c['extra_stopwords_file']
         
-        if 'token_regex' in c:
+        if 'token_regex' in c and c['token_regex']:
             cmd += " --token-regex " + c['token_regex']
         
+        print(cmd)
         task['actions'] = [cmd]
         task['file_dep'] = [c['mallet_input']]
         task['clean'] = ["rm -f " + c['mallet_imported_data']]
@@ -414,8 +416,11 @@ if 'task_mallet_output_gz' not in locals():
     def task_mallet_output_gz():
         task = dict()
         task['targets'] = [c['mallet_output_gz'], c['mallet_doctopics_output']]
-        task['actions'] = ['%s train-topics --input %s --optimize-interval %s --num-iterations %s --num-topics %s --output-state %s --output-doc-topics %s' \
+        tmp = ['%s train-topics --input %s --optimize-interval %s --num-iterations %s --num-topics %s --output-state %s --output-doc-topics %s' \
                    % (c['mallet'], c['mallet_imported_data'], c['mallet_optimize_interval'], c['num_iterations'], c['num_topics'], c['mallet_output_gz'], c['mallet_doctopics_output'])]
+
+        task['actions'] = tmp
+        print('mallet command is %s' % tmp)
         task['file_dep'] = [c['mallet_imported_data']]
         task['clean'] = ["rm -f " + c['mallet_output_gz'], "rm -f " + c['mallet_doctopics_output']]
         return task
@@ -424,7 +429,7 @@ if 'task_mallet_output' not in locals():
     def task_mallet_output():
         task = dict()
         task['targets'] = [c['mallet_output']]
-        task['actions'] = ["zcat %s > %s" % (c['mallet_output_gz'], c['mallet_output'])]
+        task['actions'] = ["gunzip -c %s > %s" % (c['mallet_output_gz'], c['mallet_output'])]
         task['file_dep'] = [c['mallet_output_gz']]
         task['clean'] = ["rm -f " + c['mallet_output']]
         return task

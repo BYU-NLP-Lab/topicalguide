@@ -209,7 +209,7 @@ def _create_doctopicword_table(doctopicword, doc_index, topic_index, word_index)
     print >> sys.stderr, '  Done', end-start
 
 
-@transaction.commit_manually
+#@transaction.commit_manually
 def _create_attrvaltopic_table(dataset, attrvaltopic, topic_index):
     attr_index = _attribute_index(dataset)
     val_index = _value_index(dataset)
@@ -226,7 +226,7 @@ def _create_attrvaltopic_table(dataset, attrvaltopic, topic_index):
             print >> sys.stderr, '.',
             sys.stdout.flush()
         attr = attr_index[attribute]
-        val = val_index[(str(value), attribute)] #FIXME? Is there a better way than this str() call?
+        val = val_index[(unicode(value), attribute)] #FIXME? Is there a better way than this str() call?
         t = topic_index[topic]
         avt = AttributeValueTopic(attribute=attr, value=val, topic=t,
                 count=count)
@@ -259,7 +259,7 @@ def _value_index(dataset):
             value_index[(val.value, attr.name)] = val
     return value_index
 
-@transaction.commit_manually
+#@transaction.commit_manually
 def _parse_mallet_file(analysis, state_file, document_metadata, tokenized_file, token_regex):
     """ Parses the state output file from mallet
 
@@ -301,7 +301,7 @@ def _parse_mallet_file(analysis, state_file, document_metadata, tokenized_file, 
                 if markup_state.initialized:
                     markup_state.markup_stop_words()
                     markup_state.output_file(analysis)
-                markup_state.initialize(analysis.dataset.files_dir, docpath)
+                markup_state.initialize(analysis.dataset.files_dir, docpath, analysis)
             markup_state.markup_stop_words(word)
             markup_state.markup_word(word, topic)
             # Now other database stuff
@@ -367,7 +367,7 @@ class MarkupState(object):
         self.initialized = False
         self.token_regex = token_regex
 
-    def initialize(self, files_dir, path):
+    def initialize(self, files_dir, path, analysis=None):
         self.initialized = True
         self.markup = []
         self.doc_index = 0
@@ -383,7 +383,10 @@ class MarkupState(object):
             self.doc_string = self.read_original_file(files_dir + '/' +
                     token_filename)
             self.markup_stop_words()
-            self.output_file()
+            # This line is a problem. Throwing an error b/c there is no analysis file
+            # being passed in. What needs to be passed in here?
+            if analysis:
+                self.output_file(analysis)
             token_filename, self.tokens = self.read_token_file()
             self.doc_string = old_doc_string
             self.path = old_path
