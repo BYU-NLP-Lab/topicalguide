@@ -97,8 +97,8 @@ class CentroidFinder(AbstractCentroidFinder):
                                 previous_sum = 0.0
                             weighted_sums[word] = previous_sum + weighted_pmi
             print
-            print 'Pairs skipped for lack of word counts: ' + str(skipped_words)
-            print 'Pairs skipped for lack of cocounts: ' + str(skipped_cocounts)
+            print 'Pairs skipped for lack of word counts: ' + unicode(skipped_words)
+            print 'Pairs skipped for lack of cocounts: ' + unicode(skipped_cocounts)
             self.print_status(weighted_sums)
             print
         self.save(topic, weighted_sums)
@@ -161,8 +161,8 @@ class UnifiedPassCentroidFinder(AbstractCentroidFinder):
                             pmi = log(p_joint) - log(p_word1) - log(p_word2)
                             count_pair(word1, word2, pmi)
         print
-        print 'Pairs skipped for lack of word counts: ' + str(skipped_words)
-        print 'Pairs skipped for lack of cocounts: ' + str(skipped_cocounts)
+        print 'Pairs skipped for lack of word counts: ' + unicode(skipped_words)
+        print 'Pairs skipped for lack of cocounts: ' + unicode(skipped_cocounts)
         self.save(topic, weighted_sums)
         print
 

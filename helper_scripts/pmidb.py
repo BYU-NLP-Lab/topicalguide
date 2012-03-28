@@ -72,7 +72,7 @@ class PmiDb(object):
     def words(self, min_count=None):
         sql = 'select word from word_counts'
         if min_count:
-            sql += ' where count >= '+str(min_count)
+            sql += ' where count >= '+unicode(min_count)
         sql += ';'
         print sql
         z = self.conn.cursor().execute(sql)

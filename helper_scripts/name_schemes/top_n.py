@@ -52,7 +52,7 @@ class TopNTopicNamer:
     def scheme_name(self):
         return "Top" + str(self.n)
     
-    @transaction.commit_manually
+    #@transaction.commit_manually
     def name_all_topics(self):
         _,analysis,name_scheme,created = self.init()
         
@@ -78,7 +78,8 @@ class TopNTopicNamer:
         rankings = self.ranked_topic_terms(topic)
 #        print rankings
         i = 0
-        while i < self.n:
+        while i < min(self.n, len(rankings)):
+            print("self.n is %s, i is %s, rankings is %s" % (self.n, i, rankings))
             name += rankings[i].word.type
             if i < self.n-1: name += u' '
             i += 1
