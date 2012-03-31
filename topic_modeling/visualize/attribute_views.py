@@ -147,8 +147,8 @@ def attribute_info_tab(analysis, attribute, value, analysis_url, attributes_url)
     tab.add(metrics_widget(analysis.dataset, attribute, value, token_count))
     tab.add(top_words_chart_widget(words))
     tab.add(word_cloud_widget(words))
-    ngram_widget = ngram_word_cloud_widget(attribute, value, attributes_url, token_count)
-    if ngram_widget: tab.add(ngram_widget)
+#    ngram_widget = ngram_word_cloud_widget(attribute, value, attributes_url, token_count)
+#    if ngram_widget: tab.add(ngram_widget)
     tab.add(topic_cloud_widget(analysis, attribute, value, analysis_url, token_count))
     
     return tab
