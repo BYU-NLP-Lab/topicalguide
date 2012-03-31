@@ -48,13 +48,11 @@ def add_metric(dataset, analysis):
    
     word_types = WordType.objects.filter(tokens__doc__dataset=dataset).all()
     type_idx = dict((word_type,i) for i,word_type in enumerate(word_types))
-#    num_types = word_types.count()
     documents = dataset.documents.all()
 
     docwordvectors = [document_word_vector(type_idx, doc) for doc in documents]
     vectornorms = [norm(vector) for vector in docwordvectors]
     
-#    start = datetime.now()
     for i, doc1 in enumerate(documents):
         write('.')
         doc1_word_vals = docwordvectors[i]
@@ -65,11 +63,8 @@ def add_metric(dataset, analysis):
             correlation_coeff = pmcc(doc1_word_vals, doc2_word_vals, doc1_norm,
                     doc2_norm)
             if not isnan(correlation_coeff):
-                PairwiseDocumentMetricValue.objects.create(document1=doc1, document2=doc2, metric=metric,
-                                                           value=correlation_coeff)
-#                mv = PairwiseDocumentMetricValue(document1=doc1, 
-#                    document2=doc2, metric=metric, value=correlation_coeff)
-#                mv.save()
+                PairwiseDocumentMetricValue.objects.create(
+                    document1=doc1, document2=doc2, metric=metric, value=correlation_coeff)
         transaction.commit()
     write('\n')
 
