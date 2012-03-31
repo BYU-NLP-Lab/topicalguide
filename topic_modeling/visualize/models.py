@@ -326,7 +326,7 @@ class Topic(models.Model):
         return topicwords
     
     def topic_document_counts(self, sort=False):
-        topicdocs = self.tokens.values('doc__id', 'doc__filename').annotate(count=Count('doc__id'))
+        topicdocs = self.tokens.values('document__id', 'document__filename').annotate(count=Count('document__id'))
         if sort:
             topicdocs = topicdocs.order_by('-count')
         return topicdocs

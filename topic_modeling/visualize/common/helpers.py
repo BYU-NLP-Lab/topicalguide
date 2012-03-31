@@ -105,5 +105,5 @@ def word_cloud_widget(words, title='Word Cloud', open_=None, close=None, url=Tru
 def get_word_list(request, dataset_name):
     dataset = Dataset.objects.get(name=dataset_name)
     word_base = request.session.get(sess_key(dataset_name,'word-find-base'), '')
-    word_types = WordType.objects.filter(tokens__doc__dataset=dataset, type__startswith=word_base).distinct().order_by('type')
+    word_types = WordType.objects.filter(tokens__document__dataset=dataset, type__startswith=word_base).distinct().order_by('type')
     return word_types

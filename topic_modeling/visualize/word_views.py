@@ -94,7 +94,7 @@ def top_documents_widget(dataset, word):
     w = Widget('Top Documents', 'words/top_documents')
     docs = Document.objects.raw('''select doc.*,count(*) as count
     from visualize_wordtype as type, visualize_wordtoken as token, visualize_document as doc
-    where type.type=%s and token.type_id=type.id and token.doc_id=doc.id group by doc.id order by count desc''', [word.type])
+    where type.type=%s and token.type_id=type.id and token.document_id=doc.id group by doc.id order by count desc''', [word.type])
     total = float(sum([doc.count for doc in docs]))
     doc_summaries = [WordSummary(doc.filename, float(doc.count) / total) for doc in docs]
     w['chart_url'] = get_chart(doc_summaries)
