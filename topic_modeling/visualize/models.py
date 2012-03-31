@@ -228,7 +228,7 @@ class WordType(models.Model):
 class WordToken(models.Model):
     type = models.ForeignKey(WordType, related_name='tokens') #@ReservedAssignment
     document = models.ForeignKey(Document, related_name='tokens')
-    position = models.IntegerField()
+    token_index = models.IntegerField()
     start = models.IntegerField()
     
 #    '''The form of this type instance. If null, it defers to type.value'''
@@ -236,7 +236,7 @@ class WordToken(models.Model):
     topics = models.ManyToManyField('Topic', related_name='tokens')
     
     def __unicode__(self):
-        return '[%s,%s]' % (self.type.type, self.position)
+        return '[%s,%s]' % (self.type.type, self.token_index)
 
 ## Links between the basic things in the database
 #################################################
