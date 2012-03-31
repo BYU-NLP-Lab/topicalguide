@@ -11,3 +11,4 @@ yamba
 *.backup
 *.directory
 *.kilepr
+datasets/
