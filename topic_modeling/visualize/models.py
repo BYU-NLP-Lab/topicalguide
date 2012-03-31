@@ -559,6 +559,9 @@ class DocumentMetaInfo(MetaInfo):
 class DocumentMetaInfoValue(MetaInfoValue):
     info_type = models.ForeignKey(DocumentMetaInfo, related_name='values')
     document = models.ForeignKey(Document, related_name='metainfovalues')
+    
+    def __unicode__(self):
+        return '[%s(%s)=%s]' % (self.info_type.name, self.document.filename, self.value())
 
 class WordTypeMetaInfo(MetaInfo):
     pass
