@@ -513,6 +513,7 @@ class MetaInfoValue(models.Model):
             result = self.datetime_value
         return result
     
+    #TODO Store the data type as a field in the MetaInfo class
     def type(self):
         type = None
         if self.float_value:
