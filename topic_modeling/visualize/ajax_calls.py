@@ -50,7 +50,7 @@ def word_in_context(request, dataset, analysis, word, topic=None):
     word_type = WordType.objects.get(type=word)
     
     if topic is None:
-        tokens = WordToken.objects.filter(type=word_type, doc__dataset=dataset).all()
+        tokens = WordToken.objects.filter(type=word_type, document__dataset=dataset).all()
     else:
         analysis = dataset.analyses.get(name=analysis)
         topic = analysis.topics.get(number=int(topic))
