@@ -37,6 +37,7 @@ from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetricValue
 
 metric_name = "Word Correlation"
+
 @transaction.commit_manually
 def add_metric(dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
