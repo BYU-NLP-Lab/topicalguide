@@ -80,6 +80,7 @@ from topic_modeling.visualize.models import TopicNameScheme
 
 #build = "twitter"
 build = "state_of_the_union"
+#build = 'stack_overflow'
 #build = "kcna/kcna"
 #build = "congressional_record"
 
