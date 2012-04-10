@@ -78,7 +78,8 @@ class TopNTopicNamer:
         rankings = self.ranked_topic_terms(topic)
 #        print rankings
         i = 0
-        while i < self.n:
+        # Protect against topics with small numbers of words
+        while i < min(self.n, len(rankings)):
             name += rankings[i].word.type
             if i < self.n-1: name += u' '
             i += 1
