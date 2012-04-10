@@ -338,7 +338,7 @@ def _import_document_attributes(document_metadata):
             sys.stdout.flush()
         documents.add(document_name)
         for attribute,value in metadata.items():
-            value = str(value)#Because Attribute only handles string types
+            value = unicode(value)#Because Attribute only handles string types
             attributes.add(attribute)
             if isinstance(value, basestring):
                 values_set = [value]
@@ -383,7 +383,7 @@ def _parse_mallet_file(state_file, document_metadata):
             words[word] += 1
             docword[(docpath, word)] += 1
             for attr,value in document_metadata[docpath].items():
-                value = str(value)#FIXME This conversion is for backwards compatibility with Attribute
+                value = unicode(value)#FIXME This conversion is for backwards compatibility with Attribute
                 if isinstance(value, basestring):
                     values_set = [value]
                 else:

@@ -226,7 +226,7 @@ def _create_attrvaltopic_table(dataset, attrvaltopic, topic_index):
             print >> sys.stderr, '.',
             sys.stdout.flush()
         attr = attr_index[attribute]
-        val = val_index[(str(value), attribute)] #FIXME? Is there a better way than this str() call?
+        val = val_index[(unicode(value), attribute)] #FIXME? Is there a better way than this str() call?
         t = topic_index[topic]
         avt = AttributeValueTopic(attribute=attr, value=val, topic=t,
                 count=count)
