@@ -424,7 +424,7 @@ if 'task_mallet_output' not in locals():
     def task_mallet_output():
         task = dict()
         task['targets'] = [c['mallet_output']]
-        task['actions'] = ["zcat %s > %s" % (c['mallet_output_gz'], c['mallet_output'])]
+        task['actions'] = ["gunzip -c %s > %s" % (c['mallet_output_gz'], c['mallet_output'])]
         task['file_dep'] = [c['mallet_output_gz']]
         task['clean'] = ["rm -f " + c['mallet_output']]
         return task
