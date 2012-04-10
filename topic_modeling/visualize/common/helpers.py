@@ -88,7 +88,7 @@ def word_cloud_widget(words, title='Word Cloud', open_=None, close=None, url=Tru
     #note that this only works if words is presorted by percent
     if len(words) > 3: scale = words[3].percent
     elif len(words) == 0: scale = 1.0
-    else: scale = words[-1:].percent
+    else: scale = words[-1].percent
 
     words = sorted(words, cmp=lambda x,y: cmp(x.word.lower(), y.word.lower()))
     
