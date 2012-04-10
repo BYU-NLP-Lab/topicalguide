@@ -76,7 +76,7 @@ def import_topic_metadata(analysis, topic_metadata):
     start = datetime.now()
     
     for topic in analysis.topic_set.all():
-        topic_num = str(topic.number)
+        topic_num = unicode(topic.number)
         if topic_num in topic_metadata:
             metadata = topic_metadata[topic_num]
             for attribute, value in metadata.items():
@@ -111,14 +111,14 @@ class MetadataWrapper(dict):
         if type_=='float':
             return float(value)
         elif type_=='text':
-            return str(value)
+            return unicode(value)
         elif type_=='int':
             return int(value)
         elif type_=='bool':
             return bool(value)
         elif type_=='datetime':
             #Example: "2004-06-03T00:44:35"
-            return time.strptime(str(value), datetime_format)
+            return time.strptime(unicode(value), datetime_format)
         else:
             raise Exception("Type '{0}' is not recognized.".format(type))
     
