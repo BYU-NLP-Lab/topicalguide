@@ -416,6 +416,7 @@ if 'task_mallet_output_gz' not in locals():
         task['targets'] = [c['mallet_output_gz'], c['mallet_doctopics_output']]
         task['actions'] = ['%s train-topics --input %s --optimize-interval %s --num-iterations %s --num-topics %s --output-state %s --output-doc-topics %s' \
                    % (c['mallet'], c['mallet_imported_data'], c['mallet_optimize_interval'], c['num_iterations'], c['num_topics'], c['mallet_output_gz'], c['mallet_doctopics_output'])]
+
         task['file_dep'] = [c['mallet_imported_data']]
         task['clean'] = ["rm -f " + c['mallet_output_gz'], "rm -f " + c['mallet_doctopics_output']]
         return task
