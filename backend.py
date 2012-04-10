@@ -402,7 +402,7 @@ if 'task_mallet_imported_data' not in locals():
         if 'extra_stopwords_file' in c:
             cmd += ' --extra-stopwords ' + c['extra_stopwords_file']
         
-        if 'token_regex' in c:
+        if 'token_regex' in c and c['token_regex']:
             cmd += " --token-regex " + c['token_regex']
         
         task['actions'] = [cmd]
