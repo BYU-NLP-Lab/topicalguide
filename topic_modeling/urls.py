@@ -34,6 +34,7 @@ from topic_modeling.visualize.attribute_views import AttributeDocumentView, \
 from topic_modeling.cssmin import cssmin
 from django.http import HttpResponse
 from topic_modeling.visualize.plot_views import PlotView
+from topic_modeling.visualize.treemap_views import TreemapView
 
 def render_style(request, style_path):
     css = open(settings.STYLES_ROOT + '/' + style_path).read()
@@ -56,12 +57,14 @@ dataset = r'datasets/(?P<dataset>[^/]+)'
 dataset_nc = r'datasets/[^/]+'
 analysis = r'analyses/(?P<analysis>[^/]+)'
 topic = r'topics/(?P<topic>[^/]*)'
+cmpTopicId = r'cmp_topic_id/(?P<cmpTopicId>[^/]*)'
 word = r'words/(?P<word>[^/]*)'
 map = r'maps/(?P<namescheme>[^/]*)'
 attribute = r'attributes/(?P<attribute>[^/]*)'
 value = r'values/(?P<value>[^/]*)'
 plot = r'plots/(?P<plot>[^/]*)'
 chart_type = r'chart-types/(?P<chart_type>[^/]*)'
+docId = r'doc_id/(?P<docId>[^/]*)'
 document = r'documents/(?P<document>[^/]*)'
 num_words = r'num-words/(?P<num_words>[^/]*)'
 order_by = r'order-by/(?P<order_by>[^/]*)'
@@ -82,6 +85,12 @@ analyses_base = dataset_base + '/analyses'
 analysis_base = dataset_base + '/' + analysis
 
 urlpatterns = patterns('',
+
+# Treemap View
+    url(r'^' + dataset + '/treemap/$', TreemapView.as_view(), name='tg-datasets'),
+    url(r'^treemap/$', TreemapView.as_view(), name='tg-datasets'),
+
+
 # Dataset View
     url(r'^$', DatasetView.as_view(), name='tg-datasets'),
     url(r'^' + dataset + '$', DatasetView.as_view(), name='tg-dataset'),
@@ -124,6 +133,12 @@ urlpatterns = patterns('',
 
 urlpatterns += patterns(prefix + '.ajax_calls',
 # AJAX Calls
+    (r'^feeds/document-token-counts/' + dataset + '$',
+        'document_token_counts'),
+    (r'^feeds/topic-token-counts/' + dataset + '/' + analysis + '/' + docId + '$',
+        'topic_token_counts'),
+    (r'^feeds/topic-token-counts/' + dataset + '/' + analysis + '/' + docId + '/' + cmpTopicId + '$',
+        'topic_token_counts'),
     (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + word + '$',
         'word_in_context'),
     (r'^feeds/word-in-context/' + dataset + '/' + analysis + '/' + topic + '/' + word + '$',

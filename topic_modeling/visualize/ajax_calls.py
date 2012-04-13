@@ -23,15 +23,21 @@
 import random
 
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 
 from topic_modeling import anyjson
+from topic_modeling.visualize.common.http_responses import JsonResponse
 from topic_modeling.visualize.charts import TopicAttributeChart
 from topic_modeling.visualize.charts import TopicMetricChart
 from topic_modeling.visualize.common.helpers import get_word_list
 from topic_modeling.visualize.common.helpers import paginate_list
 from topic_modeling.visualize.common.ui import WordSummary
-from topic_modeling.visualize.models import Analysis
+from topic_modeling.visualize.models import Analysis, Document, \
+    PairwiseDocumentMetric, PairwiseTopicMetric
 from topic_modeling.visualize.models import Attribute
+from topic_modeling.visualize.models import AttributeValueDocument
+from topic_modeling.visualize.models import Dataset
+from topic_modeling.visualize.models import Value
 from topic_modeling.visualize.models import Topic
 from topic_modeling.visualize.models import Word
 
@@ -39,6 +45,74 @@ from topic_modeling.visualize.models import Word
 
 # General ajax calls
 ####################
+
+
+def topic_token_counts(request, dataset, analysis, docId, cmpTopicId=None, attribute_name = u"author_name"):
+    '''
+        Returns a JSON representation of a treemap of depth 1. For each child of the parent node, we return its name,
+        id, size, and similarity to the topic with id cmpTopicId.
+        
+        If no cmpTopicId is given, then we use the topic with the largest number of tokens in this document.
+        This default behavior may be changed in the future.
+    '''
+    
+    analysis = get_object_or_404(Analysis, dataset__name=dataset, name=analysis)
+    document = analysis.dataset.document_set.get(id=docId);
+    attr = AttributeValueDocument.objects.get(document=document, attribute__name=attribute_name)
+    
+    # choose a compared topic
+    if cmpTopicId is None:
+        maxTopicId = document.documenttopic_set.order_by('-count')[0].topic.id
+    else:
+        maxTopicId = cmpTopicId;
+        
+    # add size factors, #token and similarity
+    children = []        
+    for dt in document.documenttopic_set.filter(topic__analysis=analysis).all():
+        child = {"name": str(dt.topic.name), "size" : dt.count, "similarity" : topics_similarity(dt.topic_id, maxTopicId), "tid":dt.topic_id}
+        children.append(child)
+
+    return JsonResponse({'name':str(attr.value), 'children':children})
+    
+def document_token_counts(request, dataset, attribute_name = u"author_name"):
+    '''
+        Returns a JSON representation of a topic treemap of depth 1 given an attribute.
+        
+        The root of the tree is the dataset, the first layer  
+    '''
+    
+    dataset = get_object_or_404(Dataset, name=dataset)
+    
+    # get the actual instances      
+    attr = get_object_or_404(Attribute, dataset__name=dataset, name=attribute_name)
+    
+    value_nodes = []                
+    for value in attr.value_set.all():
+        
+        # get all document ids in this attribute
+        docIds = [attrvaldoc.document_id for attrvaldoc in value.attributevaluedocument_set.all()]
+        
+        value_node = {}
+        value_node["isDoc"] = 1 # Sets color
+        value_node["children"] = [{"name":str(value), 
+                              "size":attr.attributevalue_set.get(value=value).token_count, 
+                              "child_doc_ids":docIds}]
+        value_nodes.append(value_node)
+    
+    return JsonResponse({'name':str(dataset.readable_name), 'children':value_nodes})        
+
+def documents_similarity(doc1Id, doc2Id):
+    doc1 = Document.objects.get(id=doc1Id)
+    doc2 = Document.objects.get(id=doc2Id)
+    # [1] topic Correlation
+    return float(PairwiseDocumentMetric.objects.all()[1].pairwisedocumentmetricvalue_set.get(document1=doc1, document2=doc2).value)
+
+def topics_similarity(tid1, tid2):
+    t1 = Topic.objects.get(id=tid1)
+    t2 = Topic.objects.get(id=tid2)
+    # [0] document correlation
+    return round(float(PairwiseTopicMetric.objects.all()[0].pairwisetopicmetricvalue_set.get(topic1=t1, topic2=t2).value), 3)
+
 
 def word_in_context(request, dataset, analysis, word, topic=None):
     analysis = Analysis.objects.get(name=analysis, dataset__name=dataset)

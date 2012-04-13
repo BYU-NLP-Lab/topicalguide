@@ -1,0 +1,67 @@
+{% comment %} The Topical Guide Copyright 2010-2011 Brigham Young
+University This file is part of the Topical Guide
+<http: //nlp.cs.byu.edu/topic_browser>.
+
+The Topical Guide is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+The Topical Guide is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with the Topical Guide.  If not, see <http: //www.gnu.org/licenses />.
+
+If you have inquiries regarding any further use of the Topical Guide, please
+contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+{% endcomment %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<title>Treemap</title>
+<script type="text/javascript" src="{{SCRIPTS}}/d3.v2.js"></script>
+<script type="text/javascript" src="{{SCRIPTS}}/treemap.js"></script>
+<link type="text/css" rel="stylesheet" href="{{STYLES}}/treemap.css" />
+<script type="text/javascript"
+	src="{{STYLES}}/colorbrewer/colorbrewer.js"></script>
+<link type="text/css" rel="stylesheet" href="{{STYLES}}/button.css" />
+</head>
+{% block body %}
+<body>
+	<div class="doc_menu">
+		<div class="content_header">Datasets:</div>
+		<ul>
+			{% if datasets %} 
+				{% for dataset in datasets %}
+					<li id='id_{{dataset.dataset_name}}' class="active"><a href="#" onClick="createDocTreemap('{{dataset.dataset_name}}')">{{dataset.title}}</a></li>					
+				{% endfor %}
+			{% else %}
+				<li>No dataset is available</li> 
+			{% endif %}
+			<li id="id_d2" class="normal"><a href="#" onClick="createDocTreemap('d2')" >d2</a></li>
+		</ul>
+	</div>
+	<div class="treemap_content">
+		<div class="content_header">
+			<span id="curTopic"><span>
+		</div>
+		<div id="chart">
+			<div id="titleDiv"></div>
+			<div id="colorDiv"></div>
+		</div>
+		<script>
+			{% if default_dataset %}
+				createDefaultTreemap('{{default_dataset.dataset_name}}');
+			{% else %}
+				createDefaultTreemap('');
+			{% endif %}
+		</script>
+	</div>
+	{% endblock %}{# end block body #}
+</body>
+</html>

@@ -1,0 +1,78 @@
+.cell {
+	border: solid 1px black;
+	font-size: 80%;
+	line-height: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	position: absolute;
+	cursor: pointer;
+	line-height: 120%;
+	line-height: 12px;
+}
+
+.cell .caption {
+	font-weight: bold;
+	text-decoration: none;
+	color: white;
+	font-size: 100%;
+}
+
+#colorDiv div {
+	width: 50px;
+	height: 15px;
+	margin-bottom: 5px;
+	font-size: 11px;
+	padding: 5px 5px 5px 15px;
+}
+
+.content_header {
+	padding: 5px 5px 5px 15px;
+}
+
+#chart {
+	float: left;
+	width: 100%;
+}
+
+#colorDef {
+	margin-right: 10px;
+	font-size: 12px;
+	float: left;
+}
+
+#curTopic {
+	font-size: 14px;
+}
+
+.doc_menu {
+	float: left;
+	padding: 0;
+	margin: 0 10px 0 0;
+}
+
+.doc_menu div {
+	padding: 0;
+	margin: 0;
+}
+
+.doc_menu a {
+	text-decoration: none;
+}
+
+.doc_menu ul {
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+}
+
+.doc_menu .active {
+	background: #b0c4de;
+}
+
+.doc_menu .normal {
+	
+}
+
+.treemap_content {
+	float: left;
+}
