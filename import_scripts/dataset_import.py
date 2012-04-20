@@ -65,10 +65,41 @@ def import_dataset(name, readable_name, description, metadata_filenames,
         print >> sys.stderr, 'It took', end_time - start_time,
         print >> sys.stderr, 'to import the dataset'
 
+#@transaction.commit_manually
+#def _load_documents(dataset, token_regex):
+#    print >> sys.stderr, 'Loading documents...  ',
+#    word_types = dict()
+#    for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
+#        for filename in filenames:
+#            full_filename = '%s/%s' % (dirpath, filename)
+#            doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
+#            print >> sys.stderr, filename
+#            
+#            with open(full_filename) as r:
+#                content = r.read()
+#            
+#            for position,match in enumerate(re.finditer(token_regex, content)):
+#                token = match.group()
+#                token_lc = token.lower()
+#                try:
+#                    word_type = word_types[token_lc]
+#                except KeyError:
+#                    word_type, type_created = WordType.objects.get_or_create(type=token_lc)
+#                    if type_created: transaction.commit()
+#                    word_types[token_lc] = word_type
+#                WordToken.objects.create(type=word_type, document=doc, token_index=position, start=match.start())
+#            del content
+#            transaction.commit()
+
+def _create_documents(files_dir):
+    pass
+
 @transaction.commit_manually
 def _load_documents(dataset, token_regex):
-    print >> sys.stderr, 'Loading documents...  ',
-    word_types = dict()
+    word_types = _types(dataset.files_dir, token_regex)
+    
+    print >> sys.stderr, 'Creating documents and tokens...  ',
+    
     for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
         for filename in filenames:
             full_filename = '%s/%s' % (dirpath, filename)
@@ -87,9 +118,37 @@ def _load_documents(dataset, token_regex):
                     word_type, type_created = WordType.objects.get_or_create(type=token_lc)
                     if type_created: transaction.commit()
                     word_types[token_lc] = word_type
-                WordToken.objects.create(type=word_type, doc=doc, position=position, start=match.start())
+                WordToken.objects.create(type=word_type, document=doc, token_index=position, start=match.start())
             del content
             transaction.commit()
+
+def _types(files_dir, token_regex):
+    print >> sys.stderr, 'Ensuring word types...  ',
+    type_objs = dict((wtype.type, wtype) for wtype in WordType.objects.all())
+    
+    types_in_dataset = set(wtype for _filename, _token_idx, wtype in _token_iterator(files_dir, token_regex))
+    types_to_create = types_in_dataset.difference(type_objs.keys())
+    
+    types_dict = type_objs.fromkeys(types_in_dataset)
+    for wtype in types_to_create:
+        types_dict[wtype] = WordType.objects.create(type=wtype)
+    
+    return types_dict
+    
+    
+
+def _token_iterator(files_dir, token_regex):
+    for (dirpath, _dirnames, filenames) in os.walk(files_dir):
+        for filename in filenames:
+            full_filename = '%s/%s' % (dirpath, filename)
+            
+            with open(full_filename) as r:
+                content = r.read()
+            
+            for token_idx,match in enumerate(re.finditer(token_regex, content)):
+                token = match.group()
+                token_lc = token.lower()
+                yield filename, token_idx, token_lc
 
 def _create_dataset(name, readable_name, description, dataset_dir, files_dir):
     print >> sys.stderr, 'Creating the dataset...  ',
