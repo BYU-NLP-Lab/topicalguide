@@ -174,16 +174,48 @@ def get_words(attribute, value, attributes_url, token_count):
         words.append(w)
     return words
 
+import datetime, time
+def attr_type(value):
+    if type(value) == int:
+        return 'int_'
+    elif type(value) == float:
+        return 'float_'
+    elif isinstance(value, basestring):
+        return 'text_'
+    elif isinstance(value, datetime.datetime):
+        return 'datetime_'
+    elif isinstance(value, time.struct_time):
+        return 'datetime_'
+    elif type(value) == bool:
+        return 'bool_'
+    else:
+        raise Exception('Bad attr type: %s' % value)
+    
+
 def get_topics(analysis, attribute, value, analysis_url, token_count):
     topics = []
     topic_set = analysis.topics.all()
-    attrvaltopics = attribute.attributevaluetopic_set.filter(value=value,
-            topic__in=topic_set).order_by('-count')
-    for attrvaltopic in attrvaltopics[:10]:
-        type = attrvaltopic.topic.name
-        percent = float(attrvaltopic.count) / token_count
-        t = WordSummary(type, percent)
-        t.url = analysis_url + '/topics/%s' % (attrvaltopic.topic.number)
+
+    '''I want to count the number of wordtokens that have a certain  documents
+    that have the metaattribute "value"'''
+    data = []
+    for topic in topic_set:
+
+        count = WordToken.objects.filter(document__metainfovalues=value, topics=topic).count()
+        data.append((count, topic))
+    data.sort()
+    # vtype = attr_type(value)
+    # attrvalue = getattr(value, vtype+'_value')
+    # mytopics = analysis.topics.filter(topics__tokens__
+    # attrvaltopics = attribute.values.filter(value=value)
+    # attrvaltopics = attribute.attributevaluetopic_set.filter(value=value,
+            # topic__in=topic_set).order_by('-count')
+    for count, topic in data[:10]:
+        # type = topic.name
+        topicName = topic.names.filter(name_scheme__analysis=analysis).all()[0]
+        percent = float(count) / token_count
+        t = WordSummary(topicName, percent)
+        t.url = analysis_url + '/topics/%s' % (topic.number)
         topics.append(t)
     return topics
 
