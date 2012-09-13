@@ -38,17 +38,24 @@ class TopNTopicNamer:
     
     @transaction.commit_manually
     def name_all_topics(self):
-        analysis = Analysis.objects.get(dataset__name=self.dataset_name, name=self.analysis_name)
-        name_scheme,created = analysis.topicnameschemes.get_or_create(name=self.scheme_name())
-        
-        if created:
-            for i, topic in enumerate(analysis.topics.all()):
-                name = self.topic_name(topic)
-                print 'topic #%i: %s' % (i, name.encode('utf-8'))
-                name_scheme.names.create(topic=topic, name=name)
-            transaction.commit()
-        else:
-            print "Name scheme %s already exists for analysis %s. Skipping." % (name_scheme, analysis)
+        try:
+            analysis = Analysis.objects.get(dataset__name=self.dataset_name, name=self.analysis_name)
+            name_scheme,created = analysis.topicnameschemes.get_or_create(name=self.scheme_name())
+            
+            if created:
+                for i, topic in enumerate(analysis.topics.all()):
+                    name = self.topic_name(topic)
+                    print 'topic #%i: %s' % (i, name.encode('utf-8'))
+                    name_scheme.names.create(topic=topic, name=name)
+                #name_scheme.save()
+                transaction.commit()
+            else:
+                print "Name scheme %s already exists for analysis %s. Skipping." % (name_scheme, analysis)
+                transaction.rollback()
+        except:
+            transaction.rollback()
+            raise
+
     
     @transaction.commit_manually
     def unname_all_topics(self):
