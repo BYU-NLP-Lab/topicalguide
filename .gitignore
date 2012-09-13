@@ -12,3 +12,5 @@ yamba
 *.directory
 *.kilepr
 datasets/
+/Main.vim.sess
+/tg.sqlite3
