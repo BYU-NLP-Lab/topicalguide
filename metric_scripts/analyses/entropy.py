@@ -25,16 +25,16 @@ from topic_modeling.visualize.models import AnalysisMetric, AnalysisMetricValue
 
 def add_metric(analysis):
     metric, _ = AnalysisMetric.objects.get_or_create(name="Topic Entropy")
-    
+
     # Get normalized topic counts
     counts = [topic.tokens.count() for topic in analysis.topics.all()]
     total = float(sum(counts))
-    
+
     entropy = 0.0
     for count in counts:
         prob = float(count) / total
         entropy -= prob * log(prob) / log(2)
-    
+
     try:
         mv = metric.values.get(analysis=analysis)
         mv.value = entropy
