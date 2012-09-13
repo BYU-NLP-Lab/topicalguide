@@ -120,7 +120,7 @@ else:
     for modspec in _modules:
         try:
             implementation = _JsonImplementation(modspec)
-            print 'anyjson is wrapping ' + modspec[0]
+            # print 'anyjson is wrapping ' + modspec[0]
             break
         except ImportError:
             pass
