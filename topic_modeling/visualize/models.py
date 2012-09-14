@@ -230,6 +230,7 @@ class WordToken(models.Model):
     document = models.ForeignKey(Document, related_name='tokens')
     token_index = models.IntegerField()
     start = models.IntegerField()
+
     
 #    '''The form of this type instance. If null, it defers to type.value'''
 #    token = models.CharField(max_length=128, db_index=True, null=True)
@@ -238,6 +239,8 @@ class WordToken(models.Model):
     def __unicode__(self):
         return '[%s,%s]' % (self.type.type, self.token_index)
 
+'''We want to go through the WordTokenTopis table for the foreignkey, to
+optimize queries in the attributes tab'''
 ## Links between the basic things in the database
 #################################################
 #
