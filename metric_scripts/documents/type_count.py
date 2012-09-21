@@ -31,16 +31,20 @@ from topic_modeling.visualize.models import DocumentMetricValue
 metric_name = 'Number of types'
 @transaction.commit_manually
 def add_metric(dataset, analysis):
-    dataset = Dataset.objects.get(name=dataset)
-    analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    metric, created = DocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
-    if not created:
-        raise RuntimeError('%s is already in the database for this analysis!' % metric_name)
-    
-    for document in dataset.documents.all():
-        type_count = WordType.objects.filter(tokens__doc=document).distinct().count()
-        DocumentMetricValue.objects.create(document=document, metric=metric, value=type_count)
-    transaction.commit()
+    try:
+        dataset = Dataset.objects.get(name=dataset)
+        analysis = Analysis.objects.get(dataset=dataset, name=analysis)
+        metric, created = DocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
+        if not created:
+            raise RuntimeError('%s is already in the database for this analysis!' % metric_name)
+        
+        for document in dataset.documents.all():
+            type_count = WordType.objects.filter(tokens__document=document).distinct().count()
+            DocumentMetricValue.objects.create(document=document, metric=metric, value=type_count)
+        transaction.commit()
+    except:
+        transaction.rollback()
+        raise
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]
