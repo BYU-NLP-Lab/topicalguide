@@ -37,39 +37,44 @@ from django.db.models.aggregates import Count
 metric_name = "Document Correlation"
 @transaction.commit_manually
 def add_metric(dataset_name, analysis_name):
-    dataset = Dataset.objects.get(name=dataset_name)
-    analysis = dataset.analyses.get(name=analysis_name)
-    
-    metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name,
-                analysis=analysis)
-    
-    if not created:
-        raise RuntimeError("%s is already in the database for this analysis" % metric_name)
+    try:
+        dataset = Dataset.objects.get(name=dataset_name)
+        analysis = dataset.analyses.get(name=analysis_name)
+        
+        metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name,
+                    analysis=analysis)
+        
+        if not created:
+            transaction.rollback()
+            raise RuntimeError("%s is already in the database for this analysis" % metric_name)
 
-    docs = dataset.documents.all()
-    doc_idx = dict((doc.id, i) for i,doc in enumerate(docs))
-    
-#    num_docs = dataset.documents.count()
-#    num_docs = Document.objects.filter(dataset=analysis.dataset).order_by(
-#            '-pk')[0].id + 1
-    topics = analysis.topics.order_by('number').all()
+        docs = dataset.documents.all()
+        doc_idx = dict((doc.id, i) for i,doc in enumerate(docs))
+        
+    #    num_docs = dataset.documents.count()
+    #    num_docs = Document.objects.filter(dataset=analysis.dataset).order_by(
+    #            '-pk')[0].id + 1
+        topics = analysis.topics.order_by('number').all()
 
-    doctopicvectors = []
-    for topic in topics:
-        doctopicvectors.append(document_topic_vector(topic, doc_idx))
+        doctopicvectors = []
+        for topic in topics:
+            doctopicvectors.append(document_topic_vector(topic, doc_idx))
 
-    for i, topic1 in enumerate(topics):
-        topic1_doc_vals = doctopicvectors[i]
-        for j, topic2 in enumerate(topics):
-            topic2_doc_vals = doctopicvectors[j]
-            correlation_coeff = pmcc(topic1_doc_vals, topic2_doc_vals)
-            if not isnan(correlation_coeff):
-                PairwiseTopicMetricValue.objects.create(topic1=topic1,
-                    topic2=topic2, metric=metric, value=correlation_coeff)
-            else:
-                print "Error computing metric between {0} and {1}".format(
-                        topic1,topic2)
-        transaction.commit()
+        for i, topic1 in enumerate(topics):
+            topic1_doc_vals = doctopicvectors[i]
+            for j, topic2 in enumerate(topics):
+                topic2_doc_vals = doctopicvectors[j]
+                correlation_coeff = pmcc(topic1_doc_vals, topic2_doc_vals)
+                if not isnan(correlation_coeff):
+                    PairwiseTopicMetricValue.objects.create(topic1=topic1,
+                        topic2=topic2, metric=metric, value=correlation_coeff)
+                else:
+                    print "Error computing metric between {0} and {1}".format(
+                            topic1,topic2)
+            transaction.commit()
+    except:
+        transaction.rollback()
+        raise
 
 
 def metric_names_generated(dataset, analysis):

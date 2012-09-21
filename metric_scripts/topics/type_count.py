@@ -29,26 +29,29 @@ from topic_modeling.visualize.models import Analysis, TopicMetric, WordType
 from topic_modeling.visualize.models import TopicMetricValue
 
 metric_name = 'Number of types'
-#@transaction.commit_manually
+@transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     try:
-        metric = TopicMetric.objects.get(name=metric_name,
-                analysis=analysis)
-        if not force_import:
-            raise RuntimeError('Number of types is already in the database '
-                    'for this analysis!')
-    except TopicMetric.DoesNotExist:
-        metric = TopicMetric(name='Number of types', analysis=analysis)
-        metric.save()
-    topics = analysis.topics.all()
-    for topic in topics:
-#        types = WordType.objects.filter(tokens__topics__contains=topic).all()
-        types = set(x[0] for x in topic.tokens.values_list('type__type'))
-        tmv = TopicMetricValue(topic=topic, metric=metric,
-                value=len(types))
-        tmv.save()
-    transaction.commit()
+        analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+        try:
+            metric = TopicMetric.objects.get(name=metric_name,
+                    analysis=analysis)
+            if not force_import:
+                raise RuntimeError('Number of types is already in the database '
+                        'for this analysis!')
+        except TopicMetric.DoesNotExist:
+            metric = TopicMetric(name='Number of types', analysis=analysis)
+            metric.save()
+        topics = analysis.topics.all()
+        for topic in topics:
+    #        types = WordType.objects.filter(tokens__topics__contains=topic).all()
+            types = set(x[0] for x in topic.tokens.values_list('type__type'))
+            tmv = TopicMetricValue(topic=topic, metric=metric,
+                    value=len(types))
+            tmv.save()
+        transaction.commit()
+    finally:
+        transaction.commit()
 
 
 def metric_names_generated(dataset, analysis):
