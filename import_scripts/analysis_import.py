@@ -32,6 +32,7 @@ from django.db import connection
 from topic_modeling.visualize.models import Analysis, Dataset
 from import_scripts.metadata import Metadata
 from topic_modeling import settings
+from topic_modeling.visualize.models import Document
 
 def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, metadata_filenames, token_regex):
@@ -64,6 +65,8 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
         print >> sys.stderr, 'Finishing time:', end_time
         print >> sys.stderr, 'It took', end_time - start_time,
         print >> sys.stderr, 'to import the analysis'
+    else:
+        print >> sys.stderr, '[] analysis already exists in DB, skipping'
     
     if settings.database_type()=='sqlite3':
         cursor.execute('PRAGMA journal_mode=DELETE')
@@ -114,16 +117,25 @@ def _find_token(word_type, tokens, start_idx):
     raise TokenNotFound(word_type, tokens, start_idx, WINDOW_SIZE)
 
 def _load_analysis(analysis, state_file, document_metadata, tokenized_file, token_regex):
+    '''state_file == the mallet output file'''
+    print >> sys.stderr, 'importing analysis'
     prev_docpath = None
     topics = {}
     
     for i, (docpath, topic_num, word) in enumerate(_state_file_iterator(state_file, analysis.dataset.files_dir)):
         if prev_docpath is None or prev_docpath != docpath:
-            print '\nImporting %s...' % docpath,
+            print >>sys.stderr, '\nImporting %s...' % docpath,
             
-            doc = analysis.dataset.documents.get(filename=docpath)
+            try:
+                filename = os.path.basename(docpath)
+                ## TODO: are we losing data here? should we store the full filename
+                ## over in dataset_import?
+                doc = analysis.dataset.documents.get(filename=filename)
+            except Document.DoesNotExist:
+                print >>sys.stderr, 'fail! no document by that name: %s' % docpath
+                break
 #            tokens = [(token,token.type.type) for token in doc.tokens.order_by('token_index').all()]
-            tokens = doc.tokens.order_by('position').select_related('type').all()
+            tokens = doc.tokens.order_by('start').select_related('type').all()
             prev_docpath = docpath
             next_token_idx = 0
             

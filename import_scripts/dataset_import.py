@@ -35,14 +35,24 @@ from topic_modeling import settings
 
 def import_dataset(name, readable_name, description, metadata_filenames,
                    dataset_dir, files_dir, token_regex):
-    
+    '''Import the dataset into the Database
+
+    1) create a Dataset object
+    2) create WorkType objects for each unique word in the entire directory
+    @todo: we iterate through all the words *twice*, once to make wordtypes,
+            and again to make the wordtokens!
+    3) create Document objects for each file in the dataset directory
+    4) create WordToken objects for each "word" (found by c['token_regex'])
+
+    '''
+
     print >> sys.stderr, "dataset_import({0})".format(
         ', '.join([name, readable_name, description, metadata_filenames['datasets'], metadata_filenames['documents'],
                    metadata_filenames['word_types'], metadata_filenames['word_tokens'], dataset_dir, files_dir]))
-    
+
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
-    
+
     if settings.database_type()=='sqlite3':
         # These are some attempts to make the database access a little faster
         cursor = connection.cursor()
@@ -55,7 +65,7 @@ def import_dataset(name, readable_name, description, metadata_filenames,
     dataset, created = _create_dataset(name, readable_name, description, dataset_dir, files_dir)
     if created:
         _load_documents(dataset, token_regex)
-        
+
         if settings.database_type()=='sqlite3':
             cursor = connection.cursor()
             cursor.execute('PRAGMA journal_mode=DELETE')
@@ -74,10 +84,10 @@ def import_dataset(name, readable_name, description, metadata_filenames,
 #            full_filename = '%s/%s' % (dirpath, filename)
 #            doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
 #            print >> sys.stderr, filename
-#            
+#
 #            with open(full_filename) as r:
 #                content = r.read()
-#            
+#
 #            for position,match in enumerate(re.finditer(token_regex, content)):
 #                token = match.group()
 #                token_lc = token.lower()
@@ -97,18 +107,18 @@ def _create_documents(files_dir):
 @transaction.commit_manually
 def _load_documents(dataset, token_regex):
     word_types = _types(dataset.files_dir, token_regex)
-    
+
     print >> sys.stderr, 'Creating documents and tokens...  ',
-    
+
     for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
         for filename in filenames:
             full_filename = '%s/%s' % (dirpath, filename)
             doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
             print >> sys.stderr, filename
-            
+
             with open(full_filename) as r:
                 content = r.read()
-            
+
             for position,match in enumerate(re.finditer(token_regex, content)):
                 token = match.group()
                 token_lc = token.lower()
@@ -125,26 +135,24 @@ def _load_documents(dataset, token_regex):
 def _types(files_dir, token_regex):
     print >> sys.stderr, 'Ensuring word types...  ',
     type_objs = dict((wtype.type, wtype) for wtype in WordType.objects.all())
-    
+
     types_in_dataset = set(wtype for _filename, _token_idx, wtype in _token_iterator(files_dir, token_regex))
     types_to_create = types_in_dataset.difference(type_objs.keys())
-    
+
     types_dict = type_objs.fromkeys(types_in_dataset)
     for wtype in types_to_create:
         types_dict[wtype] = WordType.objects.create(type=wtype)
-    
+
     return types_dict
-    
-    
 
 def _token_iterator(files_dir, token_regex):
     for (dirpath, _dirnames, filenames) in os.walk(files_dir):
         for filename in filenames:
             full_filename = '%s/%s' % (dirpath, filename)
-            
+
             with open(full_filename) as r:
                 content = r.read()
-            
+
             for token_idx,match in enumerate(re.finditer(token_regex, content)):
                 token = match.group()
                 token_lc = token.lower()
@@ -155,6 +163,6 @@ def _create_dataset(name, readable_name, description, dataset_dir, files_dir):
     dataset,created = Dataset.objects.get_or_create(name=name, readable_name=readable_name, description=description,
                     dataset_dir=dataset_dir, files_dir=files_dir)
     print >> sys.stderr, 'Done'
-    return dataset,created
+    return dataset, created
 
 # vim: et sw=4 sts=4
