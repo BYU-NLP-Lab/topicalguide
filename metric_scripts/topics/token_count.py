@@ -30,14 +30,14 @@ from topic_modeling.visualize.models import TopicMetricValue
 
 metric_name='Number of tokens'
 #@transaction.commit_manually
-def add_metric(dataset, analysis):
+def add_metric(dataset, analysis, force_import=False):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     try:
         metric = TopicMetric.objects.get(name=metric_name,
                 analysis=analysis)
-#        if not force_import:
-        raise RuntimeError('Number of tokens is already in the database '
-                'for this analysis!')
+        if not force_import:
+            raise RuntimeError('Number of tokens is already in the database '
+                    'for this analysis!')
     except TopicMetric.DoesNotExist:
         metric = TopicMetric(name='Number of tokens', analysis=analysis)
         metric.save()
@@ -46,7 +46,7 @@ def add_metric(dataset, analysis):
         tmv = TopicMetricValue(topic=topic, metric=metric,
                 value=topic.tokens.count())
         tmv.save()
-    transaction.commit()
+    # transaction.commit()
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]
