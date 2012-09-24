@@ -44,7 +44,7 @@ def add_metric(dataset_name, analysis_name):
         metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name,
                     analysis=analysis)
         
-        if not created:
+        if not created and PairwiseTopicMetricValue.objects.filter(metric=metric).count():
             transaction.rollback()
             raise RuntimeError("%s is already in the database for this analysis" % metric_name)
 
@@ -86,6 +86,6 @@ def pmcc(topic1_doc_vals, topic2_doc_vals):
 
 def document_topic_vector(topic, doc_idx):
     document_topic_vals = zeros(len(doc_idx))
-    for count_obj in topic.tokens.values('doc__id').annotate(count=Count('type__type')):
-        document_topic_vals[doc_idx[count_obj['doc__id']]] = count_obj['count']
+    for count_obj in topic.tokens.values('document__id').annotate(count=Count('type__type')):
+        document_topic_vals[doc_idx[count_obj['document__id']]] = count_obj['count']
     return document_topic_vals
