@@ -46,9 +46,12 @@ def import_dataset(name, readable_name, description, metadata_filenames,
 
     '''
 
-    print >> sys.stderr, "dataset_import({0})".format(
-        ', '.join([name, readable_name, description, metadata_filenames['datasets'], metadata_filenames['documents'],
-                   metadata_filenames['word_types'], metadata_filenames['word_tokens'], dataset_dir, files_dir]))
+    print >> sys.stderr, "dataset_import({0})".format(', '.join(
+        [name, readable_name, description,
+         metadata_filenames['datasets'], metadata_filenames['documents'],
+         metadata_filenames['word_types'], metadata_filenames['word_tokens'],
+         dataset_dir, files_dir]
+    ))
 
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time

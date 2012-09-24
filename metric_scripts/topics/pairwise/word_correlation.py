@@ -39,7 +39,8 @@ metric_name = "Word Correlation"
 def add_metric(dataset, analysis):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name, analysis=analysis)
-    if not created:
+    if not created and PairwiseTopicMetricValue.objects.filter(metric=metric).count():
+        transaction.rollback()
         raise RuntimeError("%s is already in the database for this analysis" % metric_name)
     
     word_types = WordType.objects.filter(tokens__topics__analysis=analysis).distinct()

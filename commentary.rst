@@ -28,6 +28,30 @@ Ok! we're done with that custom script. Now back to our backend.py
    the script)
 8. setup the database (mysql or sqlite)
 
+
+Empty Chairs at Empty Tables
+----------------------------
+
+- analysis_favorite
+- datasetfavorite
+- documentfavorite
+- topicfavorite
+- topicviewfavorite
+- documentviewfavorite
+
+- analysis_stopwords
+- markupfile
+- topicsgroup
+- topicgrouptopic
+
+- analysis_metainfo/value
+- topicmetainfo/value
+- wordtokenmetainfo/value
+- wordtokenmetric/value
+- wordtypemetainfo/value
+- wordtypemetric/value
+
+
 Now we get to the task definitions!
 
 IMPORT THINGS
