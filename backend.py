@@ -65,10 +65,12 @@ from import_scripts.analysis_import import import_analysis
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
 
-from topic_modeling.visualize.models import Analysis, DatasetMetric, AnalysisMetric, DatasetMetricValue,\
-    AnalysisMetricValue, DatasetMetaInfoValue, DocumentMetaInfoValue,\
-    WordTypeMetaInfoValue, WordTokenMetaInfoValue, AnalysisMetaInfoValue, TopicMetaInfoValue,\
-    WordType, WordToken
+from topic_modeling.visualize.models import (Analysis, DatasetMetric,
+        AnalysisMetric, DatasetMetricValue, AnalysisMetricValue,
+        DatasetMetaInfoValue, DocumentMetaInfoValue, WordTypeMetaInfoValue,
+        WordTokenMetaInfoValue, AnalysisMetaInfoValue, TopicMetaInfoValue,
+        WordType, WordToken, Document, Topic, PairwiseTopicMetricValue,
+        DocumentMetricValue)
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import TopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetric
@@ -122,8 +124,6 @@ let it pollute our namespace. Then we go through and set up an aggregious
 number of config options, making sure not to override any options that may
 have been set by our config script.
 '''
-
-
 
 '''The configuration dictionary'''
 config = Config()
@@ -260,138 +260,189 @@ if not 'task_document_metadata' in locals() and not ('suppress_default_document_
         task['actions'] = [(make_document_metadata)]
         return task
 
+class DoitTask:
+    '''A class to organize our tasks more sanely'''
+    name = None
+    task_dep = []
+
+    def action(self):
+        '''Perform the data'''
+        raise NotImplemented
+
+    def clean(self):
+        '''Clean up data'''
+        raise NotImplemented
+
+    def uptodate(self):
+        '''Return a boolean, indicating whether this task has been done already
+        '''
+        return False
+
+    def actions(self):
+        '''Returns all of the action items'''
+        return [self.action]
+
+    def to_dict(self):
+        '''Serve up a nice dictionary that doit wants'''
+        return {'name': self.name,
+                'task_dep': self.task_dep,
+                'actions': self.actions(),
+                'clean': [self.clean],
+                'uptodate': [self.uptodate]}
+
 if 'task_metadata_import' not in locals():
     def task_metadata_import():
-        def import_datasets():
-            try:
-                dataset_metadata = Metadata(c['metadata_filenames']['datasets'])
-                import_dataset_metadata(dataset(), dataset_metadata)
-            except Dataset.DoesNotExist:
-                pass
-        def clean_datasets():
-            try:
-                dataset().metainfovalues.all().delete()
-            except Dataset.DoesNotExist:
-                pass
-        def datasets_done(_task, _values):
-            if not os.path.exists(c['metadata_filenames']['datasets']): return True
-            try:
-                return DatasetMetaInfoValue.objects.filter(dataset=dataset()).count() > 0
-            except Dataset.DoesNotExist:
-                return False
 
-        def import_documents():
-            try:
-                document_metadata = Metadata(c['metadata_filenames']['documents'])
-                import_document_metadata(dataset(), document_metadata)
-            except Dataset.DoesNotExist:
-                pass
-        def clean_documents():
-            try:
-                for doc in dataset().documents.all():
-                    doc.metainfovalues.all().delete()
-            except Dataset.DoesNotExist:
-                pass
-        def documents_done(_task, _values):
-            if not os.path.exists(c['metadata_filenames']['documents']): return True
-            try:
-                return DocumentMetaInfoValue.objects.filter(document__dataset=dataset()).count() > 0
-            except Dataset.DoesNotExist:
-                return False
+        class ImportTask(DoitTask):
+            task_dep = ['analysis_import']
 
-        def import_word_types():
-            try:
-                word_type_metadata = Metadata(c['metadata_filenames']['word_types'])
-                import_word_type_metadata(dataset(), word_type_metadata)
-            except Dataset.DoesNotExist:
-                pass
-        def clean_word_types():
-            try:
-                for word_type in WordType.objects.filter(tokens__doc__dataset=dataset()):
-                    word_type.metainfovalues.all().delete()
-            except Dataset.DoesNotExist:
-                pass
-        def word_types_done(_task, _values):
-            if not os.path.exists(c['metadata_filenames']['word_types']): return True
-            try:
-                return WordTypeMetaInfoValue.objects.filter(word_type__tokens__doc__dataset=dataset()).count() > 0
-            except Dataset.DoesNotExist:
+            def action(self):
+                try:
+                    metadata = Metadata(c['metadata_filenames'][self.name])
+                    self.fn(dataset(), metadata)
+                except Dataset.DoesNotExist:
+                    raise Exception('Trying to run a metadata import for '
+                            '%s, and the dataset doesn\'t exist!' % self.name)
+
+        class ImportDatasets(ImportTask):
+            '''A task to import all the meta info for the dataset'''
+
+            name = 'datasets'
+            fn = import_dataset_metadata
+
+            def clean(self):
+                try:
+                    dataset().metainfovalues.all().delete()
+                except Dataset.DoesNotExist:
+                    pass
+
+            def uptodate(self, _task, _values):
+                if not os.path.exists(c['metadata_filenames']['datasets']):
+                    return True
+                try:
+                    return DatasetMetaInfoValue.objects.filter(dataset=dataset()).count() > 0
+                except Dataset.DoesNotExist:
                     return False
 
-        def import_word_tokens():
-            try:
-                word_token_metadata = Metadata(c['metadata_filenames']['word_tokens'])
-                import_word_token_metadata(dataset(), word_token_metadata)
-            except Dataset.DoesNotExist:
-                pass
-        def clean_word_tokens():
-            try:
-                for word_token in WordToken.objects.filter(doc__dataset=dataset()):
-                    word_token.metainfovalues.all().delete()
-            except Dataset.DoesNotExist:
-                pass
-        def word_tokens_done(_task, _values):
-            if not os.path.exists(c['metadata_filenames']['word_tokens']): return True
-            try:
-                return WordTokenMetaInfoValue.objects.filter(word_token__doc__dataset=dataset()).count() > 0
-            except Dataset.DoesNotExist:
+        class ImportDocuments(ImportTask):
+            '''A task to import all the metainfo for all documents in the dataset'''
+
+            name = 'documents'
+            fn = import_document_metadata
+
+            def clean(self):
+                try:
+                    for doc in dataset().documents.all():
+                        doc.metainfovalues.all().delete()
+                except Dataset.DoesNotExist:
+                    pass
+
+            def uptodate(self, _task, _values):
+                if not os.path.exists(c['metadata_filenames']['documents']): return True
+                try:
+                    return DocumentMetaInfoValue.objects.filter(
+                            document__dataset=dataset()
+                        ).count() > 0
+                except Dataset.DoesNotExist:
                     return False
 
-        for entity in ('datasets','documents','word_types','word_tokens'):#metadata_entities:
-            task = dict()
-            task['name'] = entity
-            task['task_dep'] = ['dataset_import']
-            task['actions'] = [(locals()['import_'+entity])]
-            task['clean'] = [(locals()['clean_'+entity])]
-            task['uptodate'] = [locals()[entity+'_done']]
-            yield task
+        class ImportWordTypes(ImportTask):
+            '''A task to import all the metainfo for all the word types'''
 
+            name = 'word_types'
+            fn = import_word_type_metadata
 
-        def import_analyses():
-            try:
-                analysis_metadata = Metadata(c['metadata_filenames']['analyses'])
-                import_analysis_metadata(analysis(), analysis_metadata)
-            except Analysis.DoesNotExist:
-                pass
-        def clean_analyses():
-            try:
-                analysis().metainfovalues.all().delete()
-            except Analysis.DoesNotExist:
-                pass
-        def analyses_done(_task, _values):
-            if not os.path.exists(c['metadata_filenames']['analyses']): return True
-            try:
-                return AnalysisMetaInfoValue.objects.filter(analysis=analysis()).count() > 0
-            except Dataset.DoesNotExist,Analysis.DoesNotExist:
-                return False
+            def clean(self):
+                try:
+                    for word_type in WordType.objects.filter(tokens__doc__dataset=dataset()):
+                        word_type.metainfovalues.all().delete()
+                except Dataset.DoesNotExist:
+                    pass
 
-        def import_topics():
-            try:
-                topic_metadata = Metadata(c['metadata_filenames']['topics'])
-                import_topic_metadata(analysis(), topic_metadata)
-            except Analysis.DoesNotExist:
-                pass
-        def clean_topics():
-            try:
-                for topic in analysis().topics.all():
-                    topic.metainfovalues.all().delete()
-            except Analysis.DoesNotExist:
-                pass
-        def topics_done(_task, _values):
-            if not os.path.exists(c['metadata_filenames']['topics']): return True
-            try:
-                return TopicMetaInfoValue.objects.filter(topic__analysis=analysis()).count() > 0
-            except Dataset.DoesNotExist,Analysis.DoesNotExist:
+            def uptodate(self, _task, _values):
+                if not os.path.exists(c['metadata_filenames']['word_types']):
+                    return True
+                try:
+                    return WordTypeMetaInfoValue.objects.filter(word_type__tokens__doc__dataset=dataset()).count() > 0
+                except Dataset.DoesNotExist:
+                        return False
+
+        class ImportWordTokens(ImportTask):
+            '''A task to import all the metainfo for all the word tokens'''
+
+            name = 'word_tokens'
+            fn = import_word_token_metadata
+
+            def clean(self):
+                try:
+                    for word_token in WordToken.objects.filter(doc__dataset=dataset()):
+                        word_token.metainfovalues.all().delete()
+                except Dataset.DoesNotExist:
+                    pass
+
+            def uptodate(self, _task, _values):
+                if not os.path.exists(c['metadata_filenames']['word_tokens']):
+                    return True
+                try:
+                    return WordTokenMetaInfoValue.objects.filter(word_token__doc__dataset=dataset()).count() > 0
+                except Dataset.DoesNotExist:
+                        return False
+
+        yield ImportDatasets().to_dict()
+        yield ImportDocuments().to_dict()
+        yield ImportWordTypes().to_dict()
+        yield ImportWordTokens().to_dict()
+
+        class ImportATask(DoitTask):
+            task_dep = ['analysis_import']
+
+            def action(self):
+                try:
+                    metadata = Metadata(c['metadata_filenames'][self.name])
+                    self.fn(analysis(), metadata)
+                except Analysis.DoesNotExist:
+                    raise Exception('Trying to run a metadata import for '
+                            '%s, and the analysis doesn\'t exist!' % self.name)
+
+        class ImportAnalysis(ImportATask):
+
+            name = 'analysis'
+            fn = import_analysis_metadata
+
+            def clean(self):
+                try:
+                    analysis().metainfovalues.all().delete()
+                except Analysis.DoesNotExist:
+                    pass
+
+            def uptodate(self, _task, _values):
+                if not os.path.exists(c['metadata_filenames']['analyses']): return True
+                try:
+                    return AnalysisMetaInfoValue.objects.filter(analysis=analysis()).count() > 0
+                except Dataset.DoesNotExist,Analysis.DoesNotExist:
                     return False
 
-        for entity in ('analyses','topics'):
-            task = dict()
-            task['name'] = entity
-            task['task_dep'] = ['analysis_import']
-            task['actions'] = [(locals()['import_'+entity])]
-            task['clean'] = [(locals()['clean_'+entity])]
-            task['uptodate'] = [locals()[entity+'_done']]
-            yield task
+        class ImportTopics(ImportATask):
+
+            name = 'topics'
+            fn = import_topic_metadata
+
+            def clean_topics(self):
+                try:
+                    for topic in analysis().topics.all():
+                        topic.metainfovalues.all().delete()
+                except Analysis.DoesNotExist:
+                    pass
+
+            def uptodate(self, _task, _values):
+                if not os.path.exists(c['metadata_filenames']['topics']): return True
+                try:
+                    return TopicMetaInfoValue.objects.filter(topic__analysis=analysis()).count() > 0
+                except Dataset.DoesNotExist,Analysis.DoesNotExist:
+                        return False
+
+        yield ImportAnalysis().to_dict()
+        yield ImportTopics().to_dict()
 
 #--------------------------------MALLET TASKS--------------------------------#
 '''Next we have several tasks that deal with mallet
@@ -418,7 +469,9 @@ if 'task_mallet_input' not in locals():
                     w.write(u'{0} all {1}'.format(mallet_path, text))
                     w.write(u'\n')
 
-        def utd(_task, _values): return os.path.exists(c['mallet_input'])
+        def utd(_task, _values):
+            return os.path.exists(c['mallet_input'])
+
         task = dict()
         task['targets'] = [c['mallet_input']]
         task['actions'] = [(make_token_file, [c['files_dir'], c['mallet_input']])]
@@ -473,8 +526,8 @@ if 'task_mallet' not in locals():
         return {'actions':None, 'task_dep': ['mallet_input', 'mallet_imported_data', 'mallet_output_gz', 'mallet_output']}
 
 #------------------------------Import things---------------------------------#
-'''Here we import stuff into the database!
-'''
+'''Here we import stuff into the database!  '''
+
 sys.stdout = sys.stderr
 ## it looks like this is working
 if 'task_dataset_import' not in locals():
@@ -492,9 +545,9 @@ if 'task_dataset_import' not in locals():
 
         def utd(_task, _values):
             try:
-                dataset()
+                _dataset = dataset()
                 print 'dataset ' + c['dataset_name'] + ' in database'
-                return True
+                return Document.objects.filter(dataset=_dataset).count() > 0
             except (Dataset.DoesNotExist,DatabaseError):
                 print 'dataset ' + c['dataset_name'] + ' NOT in database'
                 return False
@@ -527,9 +580,8 @@ if 'task_analysis_import' not in locals():
         4) parse the mallet_output file, '''
         def utd(_task, _values):
             try:
-                analysis()
-                print 'It\'s been imported'
-                return True
+                _analysis = analysis()
+                return Topic.objects.filter(analysis = _analysis)
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
 
@@ -731,8 +783,11 @@ if 'task_pairwise_topic_metrics' not in locals():
                 names = metrics[metric].metric_names_generated(
                         c['dataset_name'], c['analysis_name'])
                 for name in names:
-                    PairwiseTopicMetric.objects.get(analysis=analysis,
-                            name=name)
+                    metric = PairwiseTopicMetric.objects.get(analysis=analysis,
+                                name=name)
+                    values = PairwiseTopicMetricValue.objects.filter(metric=metric)
+                    if not values.count():
+                        return False
                 return True
             except (Dataset.DoesNotExist, Analysis.DoesNotExist,
                     PairwiseTopicMetric.DoesNotExist):
@@ -772,7 +827,7 @@ if 'task_pairwise_topic_metrics' not in locals():
             task['actions'] = [(import_metric, [pairwise_topic_metric])]
             task['clean'] = [(clean_metric, [pairwise_topic_metric])]
             task['task_dep'] = ['analysis_import']
-            # task['uptodate'] = [utd]
+            task['uptodate'] = [utd]
             yield task
 
 if 'task_document_metrics' not in locals():
@@ -783,7 +838,9 @@ if 'task_document_metrics' not in locals():
             try:
                 names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
                 for name in names:
-                    DocumentMetric.objects.get(analysis=analysis, name=name)
+                    metric = DocumentMetric.objects.get(analysis=analysis, name=name)
+                    if not DocumentMetricValue.objects.filter(metric=metric).count():
+                        return False
                 return True
             except (Dataset.DoesNotExist, Analysis.DoesNotExist, DocumentMetric.DoesNotExist):
                 return False
@@ -829,7 +886,9 @@ if 'task_pairwise_document_metrics' not in locals():
             try:
                 names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
                 for name in names:
-                    PairwiseDocumentMetric.objects.get(analysis=analysis, name=name)
+                    metric = PairwiseDocumentMetric.objects.get(analysis=analysis, name=name)
+                    if not PairwiseTopicMetricValue.objects.filter(metric=metric).count():
+                        return False
                 return True
             except (Dataset.DoesNotExist, Analysis.DoesNotExist, PairwiseDocumentMetric.DoesNotExist):
                 return False

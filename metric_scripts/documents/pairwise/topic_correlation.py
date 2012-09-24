@@ -43,7 +43,8 @@ def add_metric(dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(dataset=dataset, name=analysis)
     metric,created = PairwiseDocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
-    if not created:
+    if not created and PairwiseDocumentMetricValue.objects.filter(metric=metric).count():
+        transaction.rollback()
         raise RuntimeError("%s is already in the database for this"
                 " analysis" % metric_name)
     
