@@ -119,6 +119,53 @@ class Config(dict):
     def required(self, key):
         if key not in self: raise Exception("Configuration key '%s' is required")
 
+class DoitTask:
+    '''A class to organize our tasks more sanely'''
+    name = None
+    basename = None
+    task_dep = []
+    targets = []
+
+    def __init__(self, *args):
+        self.args = args
+
+    def __call__(self):
+        def meta():
+            return self.to_dict()
+        return meta
+
+    def action(self):
+        '''Perform the data'''
+        raise NotImplemented
+
+    def clean(self):
+        '''Clean up data'''
+        raise NotImplemented
+
+    def uptodate(self):
+        '''Return a boolean, indicating whether this task has been done already
+        '''
+        return False
+
+    def actions(self):
+        '''Returns all of the action items'''
+        if self.args:
+            return [(self.action, self.args)]
+        return [self.action]
+
+    def to_dict(self):
+        '''Serve up a nice dictionary that doit wants'''
+        task = {'targets': self.targets,
+                'task_dep': self.task_dep,
+                'actions': self.actions(),
+                'clean': [self.clean],
+                'uptodate': [self.uptodate]}
+        if self.name:
+            task['name'] = self.name
+        if self.basename:
+            task['basename'] = self.basename
+        return task
+
 '''Ok, so to start out we import a config script (that lives in build/) and
 let it pollute our namespace. Then we go through and set up an aggregious
 number of config options, making sure not to override any options that may
@@ -259,36 +306,6 @@ if not 'task_document_metadata' in locals() and not ('suppress_default_document_
         task['targets'] = [c['metadata_filenames']['documents']]
         task['actions'] = [(make_document_metadata)]
         return task
-
-class DoitTask:
-    '''A class to organize our tasks more sanely'''
-    name = None
-    task_dep = []
-
-    def action(self):
-        '''Perform the data'''
-        raise NotImplemented
-
-    def clean(self):
-        '''Clean up data'''
-        raise NotImplemented
-
-    def uptodate(self):
-        '''Return a boolean, indicating whether this task has been done already
-        '''
-        return False
-
-    def actions(self):
-        '''Returns all of the action items'''
-        return [self.action]
-
-    def to_dict(self):
-        '''Serve up a nice dictionary that doit wants'''
-        return {'name': self.name,
-                'task_dep': self.task_dep,
-                'actions': self.actions(),
-                'clean': [self.clean],
-                'uptodate': [self.uptodate]}
 
 if 'task_metadata_import' not in locals():
     def task_metadata_import():
@@ -452,8 +469,15 @@ if 'task_metadata_import' not in locals():
 '''
 
 if 'task_mallet_input' not in locals():
-    def task_mallet_input():
-        def make_token_file(docs_dir, output_file):
+    class MalletInput(DoitTask):
+
+        basename = 'mallet_input'
+        clean = 'rm -f '+c['mallet_input']
+        targets = [c['mallet_input']]
+        if 'task_extract_data' in globals():
+            task_dep = ['extract_data']
+
+        def make_token_file(self, docs_dir, output_file):
             w = codecs.open(output_file, 'w', 'utf-8')
 
             for root, dirs, files in os.walk(docs_dir):
@@ -469,18 +493,10 @@ if 'task_mallet_input' not in locals():
                     w.write(u'{0} all {1}'.format(mallet_path, text))
                     w.write(u'\n')
 
-        def utd(_task, _values):
+        def uptodate(self, _task, _values):
             return os.path.exists(c['mallet_input'])
 
-        task = dict()
-        task['targets'] = [c['mallet_input']]
-        task['actions'] = [(make_token_file, [c['files_dir'], c['mallet_input']])]
-        task['clean']   = ["rm -f "+c['mallet_input']]
-        if 'task_extract_data' in globals():
-            task['task_dep'] = ['extract_data']
-        task['uptodate'] = [utd]
-#        task['file_dep'] = [files_dir]
-        return task
+    task_mallet_input = MalletInput(c['files_dir'], c['mallet_input'])()
 
 if 'task_mallet_imported_data' not in locals():
     def task_mallet_imported_data():
