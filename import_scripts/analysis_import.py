@@ -72,7 +72,6 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
         cursor.execute('PRAGMA journal_mode=DELETE')
         cursor.execute('PRAGMA locking_mode=NORMAL')
 
-
 #############################################################################
 # Database creation code (in the order it's called in main)
 #############################################################################
