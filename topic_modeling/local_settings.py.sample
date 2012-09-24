@@ -1,0 +1,15 @@
+
+# this is the directory to store the metadata and database stuff we create
+TMP_DIR = '/local/jared'
+
+# and this is the path of the sqlite database
+DB_FILE = os.path.join(TMP_DIR, 'tg.sqlite3')
+
+# this is the name of the dataset you want to build
+
+#build = "twitter"
+build = "state_of_the_union"
+#build = 'stack_overflow'
+#build = "kcna/kcna"
+#build = "congressional_record"
+

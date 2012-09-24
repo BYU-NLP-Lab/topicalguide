@@ -23,6 +23,7 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 import os
+import sys
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -33,6 +34,13 @@ ADMINS = (
     # ('Administrator', 'admin@example.com'),
 )
 
+try:
+    from local_settings import DB_FILE
+except ImportError:
+    print >> sys.stderr, "Import error looking for local_settings.py."\
+            "Look at local_settings.py.sample for help"
+    raise
+
 MANAGERS = ADMINS
 
 DBTYPE = 'sqlite3'
@@ -40,7 +48,7 @@ DBTYPE = 'sqlite3'
 
 SQLITE_CONFIG = {
     'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': 'tg.sqlite3'
+    'NAME': DB_FILE
 }
 MYSQL_CONFIG = {
     'ENGINE': 'django.db.backends.mysql',
