@@ -45,9 +45,10 @@ def task_extract_data():
     data_filename = '%s/%s' % (c['raw_data_dir'], c['addresses_filename'])
     dest_dir = c['files_dir']
     doc_meta_filename = c['metadata_filenames']['documents']
-    
-    def utd(_task, _vals): return len(os.listdir(dest_dir))==NUMBER_OF_ADDRESSES and os.path.exists(doc_meta_filename)
-    
+
+    def utd(_task, _vals):
+        return len(os.listdir(dest_dir))==NUMBER_OF_ADDRESSES and os.path.exists(doc_meta_filename)
+
     task = dict()
     task['targets'] = [dest_dir, doc_meta_filename]
     task['actions'] = [(_extract, [index_filename, data_filename, dest_dir, doc_meta_filename])]
@@ -108,7 +109,7 @@ def _extract(chron_list_filename, addresses_filename, dest_dir, doc_metadata_fil
     print "extract_state_of_the_union({0},{1},{2})".format(chron_list_filename, addresses_filename, dest_dir)
     metadata_data, titles_to_filenames = _extract_metadata(chron_list_filename)
     _write_metadata(metadata_data, doc_metadata_filename)
-    
+
     print 'Addresses in index: ' + str(len(titles_to_filenames))
     count = 0
     title = None
@@ -127,6 +128,7 @@ def _extract(chron_list_filename, addresses_filename, dest_dir, doc_metadata_fil
     filename = '%s/%s' % (dest_dir, titles_to_filenames[title])
     _extract_doc(filename, title, lines)
     count += 1
-    
+
     print 'Addresses extracted: ' + str(count)
     if count < len(titles_to_filenames): raise Exception('Some addresses were not extracted')
+
