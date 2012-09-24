@@ -76,30 +76,32 @@ from topic_modeling.visualize.models import DocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import TopicNameScheme
 
-#build = "twitter"
-build = "state_of_the_union"
-#build = 'stack_overflow'
-#build = "kcna/kcna"
-#build = "congressional_record"
+try:
+    from topic_modeling.local_settings import TMP_DIR, build
+except ImportError:
+    print >> sys.stderr, "Import error looking for local_settings.py."\
+            "Look at local_settings.py.sample for help"
+    raise
 
 #If this file is invoked directly, pass it in to the doit system for processing.
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
 # cleaned up when we have time.
 if __name__ == "__main__":
-    if not os.path.exists(".dbs"): os.mkdir(".dbs")
+    DB_BASE = os.path.join(TMP_DIR, '.dbs')
+    if not os.path.exists(DB_BASE): os.mkdir(DB_BASE)
     sys.path.append("tools/doit")
     from doit.doit_cmd import cmd_main
     path = os.path.abspath(sys.argv[0])
 
     #The database file where we'll store info about this build
-    db_name = ".dbs/{0}.db".format(build.replace('/','_'))
+    db_name = os.path.join(DB_BASE, "{0}.db".format(build.replace('/','_')))
 
     args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
     sys.exit(cmd_main(args))
 
 class Config(dict):
     overrides = {}
-    
+
     def __getitem__(self, key):
         value = super(Config, self).__getitem__(key)
         try:
@@ -108,12 +110,20 @@ class Config(dict):
             return value
         except TypeError:
             return value
-#    
+#
     def default(self, key, value):
         if key not in self: self[key] = value
-    
+
     def required(self, key):
         if key not in self: raise Exception("Configuration key '%s' is required")
+
+'''Ok, so to start out we import a config script (that lives in build/) and
+let it pollute our namespace. Then we go through and set up an aggregious
+number of config options, making sure not to override any options that may
+have been set by our config script.
+'''
+
+
 
 '''The configuration dictionary'''
 config = Config()
@@ -134,8 +144,8 @@ c.default('dataset_description', '')
 c.default('analysis_name', lambda c: "lda%stopics" % c['num_topics'])
 c.default('analysis_readable_name', lambda c: "LDA %s Topics" % c['num_topics'])
 c.default('analysis_description', lambda c: "Mallet LDA with %s topics" % c['num_topics'])
-c.default('base_dir', os.curdir)
-c.default('raw_data_base_dir', c['base_dir'] + "/raw-data")
+c.default('base_dir', TMP_DIR)
+c.default('raw_data_base_dir', os.curdir + "/raw-data")
 c.default('raw_data_dir', c['raw_data_base_dir'] + "/" + c['dataset_name'])
 c.default('datasets_dir', c['base_dir'] + "/datasets")
 c.default('dataset_dir', c['datasets_dir'] + "/" + c['dataset_name'])
@@ -144,7 +154,7 @@ if not os.path.exists(c['files_dir']): os.makedirs(c['files_dir'])
 c.default('token_regex', r'[A-Za-z]+')
 
 # Mallet
-c.default('mallet', c['base_dir'] + "/tools/mallet/mallet")
+c.default('mallet', os.curdir + "/tools/mallet/mallet")
 c.default('num_topics', 50)
 c.default('mallet_input_file_name', "mallet_input.txt")
 c.default('mallet_input', c['dataset_dir'] + '/' + c['mallet_input_file_name'])
@@ -197,14 +207,14 @@ c.default('pairwise_document_metrics', ['word_correlation', 'topic_correlation']
 c.default('name_schemes', [TopNTopicNamer(c['dataset_name'], c['analysis_name'], 3)])
 
 # Graph-based Visualization
-c.default('java_base', c['base_dir'] + "/java")
+c.default('java_base', os.curdir + "/java")
 c.default('java_bin', c['java_base'] + "/bin")
 c.default('graph_builder_class', "edu.byu.nlp.topicvis.TopicMapGraphBuilder")
 c.default('graphs_min_value', 1)
 c.default('graphs_pairwise_metric', "Document Correlation")
 
 if settings.DBTYPE=='sqlite3':
-    c.default('yamba_file', c['base_dir'] + "/" + settings.SQLITE_CONFIG['NAME'])
+    c.default('yamba_file', os.path.join(c['base_dir'], settings.SQLITE_CONFIG['NAME']))
     if not os.path.exists(c['yamba_file']):
         print "Initializing database..."
         os.system("python topic_modeling/manage.py syncdb --noinput > /dev/null")
@@ -231,6 +241,9 @@ def dataset():
 
 def analysis():
     return Analysis.objects.get(name=c['analysis_name'], dataset__name=c['dataset_name'])
+
+#-----------------------------------IMPORT THINGS----------------------------#
+'''To start things off, we have a number of tasks whose main job is to import things.'''
 
 #TODO(josh): get rid of the default document_metadata task---it's a total kludge
 if not 'task_document_metadata' in locals() and not ('suppress_default_document_metadata_task' in c and c['suppress_default_document_metadata_task']):
@@ -266,7 +279,7 @@ if 'task_metadata_import' not in locals():
                 return DatasetMetaInfoValue.objects.filter(dataset=dataset()).count() > 0
             except Dataset.DoesNotExist:
                 return False
-                
+
         def import_documents():
             try:
                 document_metadata = Metadata(c['metadata_filenames']['documents'])
@@ -285,7 +298,7 @@ if 'task_metadata_import' not in locals():
                 return DocumentMetaInfoValue.objects.filter(document__dataset=dataset()).count() > 0
             except Dataset.DoesNotExist:
                 return False
-        
+
         def import_word_types():
             try:
                 word_type_metadata = Metadata(c['metadata_filenames']['word_types'])
@@ -304,7 +317,7 @@ if 'task_metadata_import' not in locals():
                 return WordTypeMetaInfoValue.objects.filter(word_type__tokens__doc__dataset=dataset()).count() > 0
             except Dataset.DoesNotExist:
                     return False
-        
+
         def import_word_tokens():
             try:
                 word_token_metadata = Metadata(c['metadata_filenames']['word_tokens'])
@@ -323,7 +336,7 @@ if 'task_metadata_import' not in locals():
                 return WordTokenMetaInfoValue.objects.filter(word_token__doc__dataset=dataset()).count() > 0
             except Dataset.DoesNotExist:
                     return False
-        
+
         for entity in ('datasets','documents','word_types','word_tokens'):#metadata_entities:
             task = dict()
             task['name'] = entity
@@ -332,8 +345,8 @@ if 'task_metadata_import' not in locals():
             task['clean'] = [(locals()['clean_'+entity])]
             task['uptodate'] = [locals()[entity+'_done']]
             yield task
-        
-        
+
+
         def import_analyses():
             try:
                 analysis_metadata = Metadata(c['metadata_filenames']['analyses'])
@@ -351,7 +364,7 @@ if 'task_metadata_import' not in locals():
                 return AnalysisMetaInfoValue.objects.filter(analysis=analysis()).count() > 0
             except Dataset.DoesNotExist,Analysis.DoesNotExist:
                 return False
-        
+
         def import_topics():
             try:
                 topic_metadata = Metadata(c['metadata_filenames']['topics'])
@@ -370,7 +383,7 @@ if 'task_metadata_import' not in locals():
                 return TopicMetaInfoValue.objects.filter(topic__analysis=analysis()).count() > 0
             except Dataset.DoesNotExist,Analysis.DoesNotExist:
                     return False
-        
+
         for entity in ('analyses','topics'):
             task = dict()
             task['name'] = entity
@@ -380,11 +393,18 @@ if 'task_metadata_import' not in locals():
             task['uptodate'] = [locals()[entity+'_done']]
             yield task
 
+#--------------------------------MALLET TASKS--------------------------------#
+'''Next we have several tasks that deal with mallet
+- preparing + importing the data
+- running mallet train-topics
+- extracting the output
+'''
+
 if 'task_mallet_input' not in locals():
     def task_mallet_input():
         def make_token_file(docs_dir, output_file):
             w = codecs.open(output_file, 'w', 'utf-8')
-            
+
             for root, dirs, files in os.walk(docs_dir):
                 for f in files:
                     path = '{0}/{1}'.format(root, f)
@@ -397,7 +417,7 @@ if 'task_mallet_input' not in locals():
                     text = open(path).read().decode('utf-8').strip().replace('\n',' ').replace('\r',' ')
                     w.write(u'{0} all {1}'.format(mallet_path, text))
                     w.write(u'\n')
-        
+
         def utd(_task, _values): return os.path.exists(c['mallet_input'])
         task = dict()
         task['targets'] = [c['mallet_input']]
@@ -413,16 +433,16 @@ if 'task_mallet_imported_data' not in locals():
     def task_mallet_imported_data():
         task = dict()
         task['targets'] = [c['mallet_imported_data']]
-        
+
         cmd = '%s import-dir --input %s --output %s --keep-sequence --set-source-by-name --source-name-prefix "file:%s/%s/" --remove-stopwords' \
             % (c['mallet'], c['files_dir'], c['mallet_imported_data'], os.getcwd(), c['files_dir'])
-        
+
         if 'extra_stopwords_file' in c:
             cmd += ' --extra-stopwords ' + c['extra_stopwords_file']
-        
+
         if 'token_regex' in c and c['token_regex']:
             cmd += " --token-regex " + c['token_regex']
-        
+
         task['actions'] = [cmd]
         task['file_dep'] = [c['mallet_input']]
         task['clean'] = ["rm -f " + c['mallet_imported_data']]
@@ -452,9 +472,24 @@ if 'task_mallet' not in locals():
     def task_mallet():
         return {'actions':None, 'task_dep': ['mallet_input', 'mallet_imported_data', 'mallet_output_gz', 'mallet_output']}
 
-
+#------------------------------Import things---------------------------------#
+'''Here we import stuff into the database!
+'''
+sys.stdout = sys.stderr
+## it looks like this is working
 if 'task_dataset_import' not in locals():
     def task_dataset_import():
+        '''Import the dataset into the Database
+
+        1) create a Dataset object
+        2) create WorkType objects for each unique word in the entire directory
+        @todo: we iterate through all the words *twice*, once to make wordtypes,
+               and again to make the wordtokens!
+        3) create Document objects for each file in the dataset directory
+        4) create WordToken objects for each "word" (found by c['token_regex'])
+
+        '''
+
         def utd(_task, _values):
             try:
                 dataset()
@@ -463,14 +498,14 @@ if 'task_dataset_import' not in locals():
             except (Dataset.DoesNotExist,DatabaseError):
                 print 'dataset ' + c['dataset_name'] + ' NOT in database'
                 return False
-        
+
         def remove_dataset():
             print "remove_dataset(%s)" % c['dataset_name']
             try:
                 dataset().delete()
             except Dataset.DoesNotExist:
                 pass
-        
+
         # TODO(matt): clean up and possibly rename dataset_import.py and
         # analysis_import.py, now that we are using this build script - we don't
         #  need standalone scripts anymore for that stuff
@@ -481,22 +516,30 @@ if 'task_dataset_import' not in locals():
         task['uptodate'] = [utd]
         return task
 
+## and now this is working too!
 if 'task_analysis_import' not in locals():
     def task_analysis_import():
+        '''Here we wrap import_analysis. And we import the analysis
+        
+        1) get (or create) a dataset object
+        2) create an Analysis DB object
+        3) create a Metadata dictionary
+        4) parse the mallet_output file, '''
         def utd(_task, _values):
             try:
                 analysis()
+                print 'It\'s been imported'
                 return True
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
-        
+
         def remove_analysis():
             try:
                 print 'remove_analysis(%s)' % c['analysis_name']
                 analysis().delete()
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 pass
-            
+
         task = dict()
         task['actions'] = [(import_analysis, [c['dataset_name'], c['analysis_name'], c['analysis_readable_name'], c['analysis_description'],
                           c['markup_dir'], c['mallet_output'], c['mallet_input'], c['metadata_filenames'], c['token_regex']])]
@@ -509,8 +552,10 @@ if 'task_analysis_import' not in locals():
         task['uptodate'] = [utd]
         return task
 
+## works!
 if 'task_name_schemes' not in locals():
     def task_name_schemes():
+        '''This names all of our topics based on a particular scheme'''
         def scheme_in_database(name_scheme_name):
             try:
                 TopicNameScheme.objects.get(analysis=analysis(), name=name_scheme_name)
@@ -533,8 +578,10 @@ if 'task_name_schemes' not in locals():
             task['uptodate'] = [utd]
             yield task
 
+# this looks fine
 if 'task_dataset_metrics' not in locals():
     def task_dataset_metrics():
+        '''Runs metrics on the dataset. This wraps metrics from the helper_scripts'''
         from metric_scripts.datasets import metrics
         def metric_in_database(metric_name):
             for name in metrics[metric_name].metric_names_generated(c['dataset_name']):
@@ -543,14 +590,14 @@ if 'task_dataset_metrics' not in locals():
                 except DatasetMetricValue.DoesNotExist:
                     return False
             return True
-        
+
         def import_metric(dataset_metric):
             start_time = datetime.datetime.now()
             print 'Adding %s...' % dataset_metric,
             sys.stdout.flush()
-            
+
             dataset_ = dataset()
-            
+
             try:
                 metrics[dataset_metric].add_metric(dataset_)
                 end_time = datetime.datetime.now()
@@ -562,12 +609,12 @@ if 'task_dataset_metrics' not in locals():
             except RuntimeError as e:
                 print "\nThere was an error importing the specified metric:", e
                 sys.stdout.flush()
-        
+
         def clean_metric(dataset_metric):
             names = metrics[dataset_metric].metric_names_generated(dataset)
             for name in names:
                 DatasetMetric.objects.get(name=name).delete()
-        
+
         print "Available dataset metrics: " + u', '.join(metrics)
         for metric_name in metrics:
             utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
@@ -579,6 +626,7 @@ if 'task_dataset_metrics' not in locals():
             task['uptodate'] = [utd]
             yield task
 
+# doing well
 if 'task_analysis_metrics' not in locals():
     def task_analysis_metrics():
         from metric_scripts.analyses import metrics
@@ -589,12 +637,12 @@ if 'task_analysis_metrics' not in locals():
                 except AnalysisMetricValue.DoesNotExist:
                     return False
             return True
-        
+
         def import_metric(analysis_metric):
             start_time = datetime.datetime.now()
             print 'Adding %s...' % analysis_metric,
             sys.stdout.flush()
-            
+
             try:
                 metrics[analysis_metric].add_metric(analysis())
                 end_time = datetime.datetime.now()
@@ -606,12 +654,12 @@ if 'task_analysis_metrics' not in locals():
             except RuntimeError as e:
                 print "\nThere was an error importing the specified metric:", e
                 sys.stdout.flush()
-        
+
         def clean_metric(analysis_metric):
             names = metrics[analysis_metric].metric_names_generated(analysis())
             for name in names:
                 AnalysisMetric.objects.get(name=name).delete()
-        
+
         print "Available analysis metrics: " + u', '.join(metrics)
         for metric_name in metrics:
             utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
@@ -623,8 +671,10 @@ if 'task_analysis_metrics' not in locals():
             task['uptodate'] = [utd]
             yield task
 
+# these are looking fine
 if 'task_topic_metrics' not in locals():
     def task_topic_metrics():
+        '''Do metrics on functions!'''
         from metric_scripts.topics import metrics
 
         def metric_in_database(topic_metric):
@@ -693,6 +743,7 @@ if 'task_pairwise_topic_metrics' not in locals():
             print 'Adding %s...' % metric,
             sys.stdout.flush()
             try:
+                print 'yeah...'
                 metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
                 end_time = datetime.datetime.now()
                 print '  Done', end_time - start_time
@@ -721,7 +772,7 @@ if 'task_pairwise_topic_metrics' not in locals():
             task['actions'] = [(import_metric, [pairwise_topic_metric])]
             task['clean'] = [(clean_metric, [pairwise_topic_metric])]
             task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [utd]
+            # task['uptodate'] = [utd]
             yield task
 
 if 'task_document_metrics' not in locals():
@@ -824,16 +875,16 @@ if 'task_metrics' not in locals():
 def task_hash_java():
     def _cmd_output(cmd):
         return Popen(cmd, shell=True, bufsize=512, stdout=PIPE).stdout.read()
-    
+
     def _hash(txt):
         hasher = hashlib.md5()
         hasher.update(txt)
         return hasher.hexdigest()
-    
+
     def _directory_recursive_hash(dir_):
         if not os.path.exists(dir_): return "0"
         return str(hash(_cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir_))))
-    
+
     return {'actions': [(_directory_recursive_hash, [c['java_base']])]}
 
 if 'task_compile_java' not in locals():
@@ -846,16 +897,16 @@ if 'task_compile_java' not in locals():
 if 'task_graphs' not in locals():
     def task_graphs():
         classpath = '{0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/{2}'.format(c['java_bin'], c['java_base'], c['db_jar'])
-        
-        
+
+
         for ns in c['name_schemes']:
             def utd(_task, _values): return os.path.exists(graphs_img_dir)
-                
+
             task = dict()
             graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(c['dataset_dir'], c['analysis_name'], ns.scheme_name())
             graphs_unlinked_img_dir = graphs_img_dir + "-unlinked"
             gexf_file_name = "{0}/full_graph.gexf".format(graphs_img_dir)
-            
+
             task['actions'] = [
                 'java -cp {0} {1} {2} {3} {4} {5} "{6}" {7} {8} {9} {10}'
                 .format(classpath,c['graph_builder_class'],c['graphs_min_value'],c['dataset_name'],c['analysis_name'],ns.scheme_name(),c['graphs_pairwise_metric'], c['jdbc_path'], graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
@@ -868,7 +919,7 @@ if 'task_graphs' not in locals():
             task['name'] = ns.scheme_name()
             task['uptodate'] = [utd]
             yield task
-        
+
 #
 #def task_reset_db():
 #    actions = ['yes "yes" | python topic_modeling/manage.py reset visualize']
