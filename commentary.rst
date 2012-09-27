@@ -1,3 +1,79 @@
+Here we have a list of the issues
++++++++++++++++++++++++++++++++++++
+
+Front Page
+----------
+
+1.1 the graph doesn't happen
+    file: visualize/dataset_views/py
+
+    function: DatasetView/get_context_data
+
+    Basically we are disabling this. If we try to enable it, there's an error
+    about a lack of Dataset.attribute_set
+
+Analysis / Topics Page
+----------------------
+
+2.1 add filter by: attribute
+    file: visualize/topics/filters.py :145
+
+    When you select it from the dropdown, we get a 500. Again, Dataset.attribute_set
+
+2.2.1  add filter by: Metric, select metric "Word Entropy"
+    file: visualize/topics/ajax.py :189
+
+    Our session seems not to have been correctly populated... I don't know
+    where that should have happened.
+
+2.2.2 add filter: metric:number of tokens fails
+    file: visualize/topivs/filters.py :246
+
+    TopicMetric has no attribute topicmetricvalues
+
+2.3 add filter by Word
+    file: visualize/topics/filters
+
+    Dataset has no attribute word_set
+
+Similar Topics Subpage
+''''''''''''''''''''''
+
+2.4.1 clicking on a topic link takes you to a broken {base}/topic_num
+    the ajax request populates it correctly, but the stock html doesn't
+
+
+Extra Information
+'''''''''''''''''
+
+2.5.1 Top documents - file name and % are missing
+
+2.5.2 Top Values for attribute - broken
+
+Analysis/Documents
+------------------
+
+3.1 Add filter by Topic
+    file: --/filters.py :122
+
+    Filter has no attribute name
+
+3.1.2 Dataset no attribute_set
+
+3.1.3 Metrics broken too
+
+Analysis/Words
+--------------
+
+4.1 plots look a little off
+
+    
+Things to refactor
+++++++++++++++++++
+
+r2.1 from visualize/topics/ajax.py:new_topic_filter is returning HTML!!!
+
+
 An Annotated Commentary on the State of Things [e.g. backend.py]
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

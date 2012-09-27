@@ -140,6 +140,7 @@ def new_topic_filter(request, dataset, analysis, topic, name):
         filter.id = id
         filter_form.add_filter(filter)
         id += 1
+    ## ISSUE 2.1 this is breaking on no Dataset.attribute_set
     new_filter = get_topic_filter_by_name(name)(analysis, id)
     filter_form.add_filter(new_filter)
     filters.append(new_filter)
