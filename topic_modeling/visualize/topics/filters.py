@@ -142,6 +142,7 @@ class AttributeValueForm(forms.Form):
     def __init__(self, dataset, id, attribute, value, *args, **kwargs):
         super(AttributeValueForm, self).__init__(*args, **kwargs)
         attribute_choices = [('None', 'All')]
+        ## ISSUE 2.1 this is breaking on no Dataset.attribute_set
         attributes = dataset.attribute_set.all()
         for a in attributes:
             attribute_choices.append((a.name, a.name))
@@ -171,7 +172,7 @@ class TopicFilterByMetric(object):
         self.remake_form()
 
     def apply(self, topic_set):
-        if not self.current_metric:
+        if not self.current_metric or not self.current_value:
             return topic_set
         if self.current_comparator == 'gt':
             return topic_set.filter(
@@ -208,7 +209,7 @@ class TopicFilterByMetric(object):
                 self._form.fields['metric'], 'metric_filter_%d' % self.id)
         ret_val += '</td><td>'
         ret_val += metric.as_widget()
-        if self.current_metric:
+        if self.current_metric and self.current_value:
             comp = forms.forms.BoundField(self._form, self._form.fields['comp'],
                     'metric_filter_comp_%d' % self.id)
             ret_val += comp.as_widget()
@@ -272,7 +273,7 @@ class TopicFilterByDocument(object):
         if not self.current_document_id:
             return topic_set
         doc = Document.objects.get(pk=self.current_document_id)
-        return topic_set.filter(tokens__doc=doc)
+        return topic_set.filter(tokens__document=doc).distinct()
 #        return topic_set.filter(documenttopic__document=doc)
 
     def remake_form(self):

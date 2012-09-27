@@ -55,34 +55,37 @@ class DatasetView(DatasetBaseView):
         for dataset in context['datasets']:
             img_urls[dataset] = dict()
             analysis_img_urls = dict()
+            ## ISSUE 1.1 - this disables the plots that we like
+            '''
+            attributes = dataset.attribute_set.all()
+            
+            if len(attributes) > 0 and dataset.analyses.count() > 0:
+                print len(attributes)
+                for i, analysis in enumerate(dataset.analyses.all()):
+                    attribute = self._sample_list(attributes)
+                    attrvalues = attribute.attributevalue_set.all()
+                    attrvalues = [attrval.value.id for attrval in attrvalues[:15]]
+                
+                    topics = analysis.topics.all()
+                    topics = [self._sample_list(topics), self._sample_list(topics), self._sample_list(topics)]
+                    topics = [topic.id for topic in topics]
+                    
+                    plot_img_url = "/feeds/topic-attribute-plot/"
+                    plot_img_url += 'attributes/'+str(attribute.id)+'/'
+                    plot_img_url += "values/" + '.'.join([str(x) for x in attrvalues])
+                    plot_img_url += "/topics/"
+                    plot_img_url += '.'.join([str(x) for x in topics])
+                    plot_img_url += '?fmt=json'
+                    
+                    analysis_img_urls[analysis] = plot_img_url
+                    
+                    if i == 0: img_urls[dataset]['initial_plot_img_url'] = plot_img_url
+            else:
+                img_urls[dataset]['initial_plot_img_url'] = None
+            '''
+            ## this creates ISSUE 1.1
             for i, analysis in enumerate(dataset.analyses.all()):
                 analysis_img_urls[analysis] = ""
-#            attributes = dataset.attribute_set.all()
-#            
-#            if len(attributes) > 0 and dataset.analyses.count() > 0:
-#                print len(attributes)
-#                for i, analysis in enumerate(dataset.analyses.all()):
-#                    attribute = self._sample_list(attributes)
-#                    attrvalues = attribute.attributevalue_set.all()
-#                    attrvalues = [attrval.value.id for attrval in attrvalues[:15]]
-#                
-#                    topics = analysis.topics.all()
-#                    topics = [self._sample_list(topics), self._sample_list(topics), self._sample_list(topics)]
-#                    topics = [topic.id for topic in topics]
-#                    
-#                    plot_img_url = "/feeds/topic-attribute-plot/"
-#                    plot_img_url += 'attributes/'+str(attribute.id)+'/'
-#                    plot_img_url += "values/" + '.'.join([str(x) for x in attrvalues])
-#                    plot_img_url += "/topics/"
-#                    plot_img_url += '.'.join([str(x) for x in topics])
-#                    plot_img_url += '?fmt=json'
-#                    
-#                    analysis_img_urls[analysis] = plot_img_url
-#                    
-#                    if i == 0: img_urls[dataset]['initial_plot_img_url'] = plot_img_url
-#            else:
-#                img_urls[dataset]['initial_plot_img_url'] = None
-#            
             img_urls[dataset]['analysis_img_urls'] = analysis_img_urls
             
             try:
