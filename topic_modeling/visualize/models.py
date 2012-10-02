@@ -225,6 +225,12 @@ class Document(models.Model):
 class WordType(models.Model):
     type = models.CharField(max_length=128, db_index=True) #@ReservedAssignment
 
+    def __unicode__(self):
+        return unicode(self.type)
+
+    def __str__(self):
+        return self.type
+
 class WordToken(models.Model):
     type = models.ForeignKey(WordType, related_name='tokens') #@ReservedAssignment
     document = models.ForeignKey(Document, related_name='tokens')
@@ -356,6 +362,9 @@ class TopicName(models.Model):
     topic = models.ForeignKey(Topic, related_name='names')
     name_scheme = models.ForeignKey(TopicNameScheme, related_name='names')
     name = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.name
 
 ### Metrics ###
 class Metric(models.Model):

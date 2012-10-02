@@ -30,7 +30,7 @@ from topic_modeling.visualize.charts import TopicMetricChart
 from topic_modeling.visualize.common.helpers import get_word_list
 from topic_modeling.visualize.common.helpers import paginate_list
 #from topic_modeling.visualize.common.ui import WordSummary
-from topic_modeling.visualize.models import WordToken, Dataset, WordType#Analysis, 
+from topic_modeling.visualize.models import WordToken, Dataset, WordType, DocumentMetaInfo
 #from topic_modeling.visualize.models import Attribute
 #from topic_modeling.visualize.models import Topic
 #from topic_modeling.visualize.models import Word
@@ -136,14 +136,21 @@ def get_attribute_page(request, dataset, analysis, attribute, number):
     ret_val = dict()
     values = request.session.get(sess_key(dataset,'values-list'), None)
     if not values:
-        attribute = Attribute.objects.get(dataset__name=dataset,
-                                          name=attribute)
-        values = attribute.value_set.all()
+        attributes = DocumentMetaInfo.objects.filter(
+                values__document__dataset__name=dataset, name=attribute).distinct()
+        if not attributes:
+            raise NotFound
+        attribute = attributes[0]
+        #attribute = Attribute.objects.get(dataset__name=dataset,
+                                          #name=attribute)
+        values = attribute.values.distinct()
 
     num_per_page = request.session.get('attributes-per-page', 20)
     page = int(number)
     values, num_pages, page = paginate_list(values, page, num_per_page)
-    ret_val['values'] = [vars(AjaxValue(val.value)) for val in values]
+    uniques = set(val.value() for val in values)
+    dcts = [{'value': val} for val in sorted(uniques)]
+    ret_val['values'] = dcts #[vars(AjaxValue(val.value())) for val in values]
     ret_val['num_pages'] = num_pages
     ret_val['page'] = page
     return HttpResponse(anyjson.dumps(ret_val))
