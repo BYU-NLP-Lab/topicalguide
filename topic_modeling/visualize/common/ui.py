@@ -28,7 +28,8 @@ from django import forms, template
 from django.template.context import Context
 from django.template.defaultfilters import slugify
 
-from topic_modeling.visualize.models import Dataset, Analysis, WordType, Document#,\
+from topic_modeling.visualize.models import (Dataset, Analysis,
+        WordType, Document, DocumentMetaInfo, DocumentMetaInfoValue)
 #    Attribute, Value
 from topic_modeling import settings
 
@@ -83,10 +84,15 @@ class BreadCrumb(object):
             self.word_type(obj)
         elif isinstance(obj, Document):
             self.document(obj)
-        elif isinstance(obj, Attribute):
-            self.attribute(obj)
-        elif isinstance(obj, Value):
-            self.value(obj)
+        elif isinstance(obj, DocumentMetaInfo):
+            self.text(obj.name)
+        elif isinstance(obj, DocumentMetaInfoValue):
+            self.text(str(obj.value()))
+            # TODO fix this
+        #elif isinstance(obj, Attribute):
+            #self.attribute(obj)
+        #elif isinstance(obj, Value):
+            #self.value(obj)
         else:
             raise Exception("The breadcrumb doesn't know how to handle that type of object")
         return self

@@ -87,7 +87,7 @@ def get_chart(words):
 
     for word in words[:10]:
         data += "%f," % word.percent
-        axislabel = "|" + word.word + axislabel
+        axislabel = "|" + str(word.word) + axislabel
     axislabel = "&chxl=1:" + axislabel
 
     max_ = math.ceil(float(words[0].percent))

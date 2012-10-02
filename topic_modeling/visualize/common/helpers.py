@@ -57,14 +57,14 @@ def paginate_list(list_, page, num_per_page, obj=None):
 
 # TODO(matt): is there a better way to do this?
 def get_word_cloud(words, open_='', close='', url=True):
-    #note that this only works if words is presorted by percent
+    #note that this only works if words is presorted by percent largest to smallest
     idx = 3 if len(words) > 3 else len(words) - 1
     if idx == -1:
         return ""
     scale = words[idx].percent
 
     def cmpWord(x, y):
-        return cmp(x.word.lower(), y.word.lower())
+        return cmp(str(x.word).lower(), str(y.word).lower())
 #        return cmp(str(x.word).lower(), str(y.word).lower())
     words = sorted(words, cmpWord)
 
@@ -73,7 +73,7 @@ def get_word_cloud(words, open_='', close='', url=True):
         if url:
             cloud += '<a href="%s" title="%s%%">' % (word.url, word.percent)
         size = word.percent / scale * 100 + 50
-        text = open_ + word.word.lower() + close
+        text = open_ + str(word.word).lower() + close
         cloud += '<span style="font-size:%d%%" title="%s%%">%s</span> ' % (size, word.percent,text)
         if url:
             cloud += '</a>'

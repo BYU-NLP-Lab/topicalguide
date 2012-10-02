@@ -51,11 +51,17 @@ class AttributeView(AnalysisBaseView):
         
         context['highlight'] = 'attributes_tab'
         context['tab'] = 'attribute'
-        context['attributes'] = DocumentMetaInfo.objects.filter(values__document__dataset=dataset)
+        context['attributes'] = DocumentMetaInfo.objects.filter(values__document__dataset=dataset).distinct()
 #        context['attributes'] = dataset.attribute_set.all()
         if attribute:
-            attribute = get_object_or_404(DocumentMetaInfo, dataset=dataset,
-                    name=attribute)
+            ## why do we have duplicates??? in the db
+            attributes_ = DocumentMetaInfo.objects.filter(
+                    values__document__dataset=dataset, name=attribute).distinct()
+            if not attributes_:
+                raise NotFound
+            attribute = attributes_[0]
+            #attribute = get_object_or_404(DocumentMetaInfo, values__document__dataset=dataset,
+                    #name=attribute)
             prev_attribute = request.session.get(sess_key(dataset,'attribute-name'), '')
             if prev_attribute != attribute.name:
                 request.session['attribute-name'] = attribute.name
@@ -75,7 +81,14 @@ class AttributeView(AnalysisBaseView):
         context['values'] = [v.value for v in values]
     
         if value:
-            value = get_object_or_404(DocumentMetaInfoValue, attribute=attribute, value=value)
+            ## remove once we've killed the crazy typeness
+            tmp = attribute.values.all()[0]
+            getvals = {tmp.type() + '_value': value, 'info_type': attribute}
+            ## TODO: why can we have this return multiple objects?
+            value = DocumentMetaInfoValue.objects.filter(**getvals)
+            if not value:
+                raise NotFound
+            value = value[0]
         else:
             value = values[0]
         context['value'] = value
@@ -140,11 +153,12 @@ def attribute_info_tab(analysis, attribute, value, analysis_url, attributes_url)
     
     token_count = WordToken.objects.filter(
         document__metainfovalues__info_type=attribute,
-        document__metainfovalues__text_value=value).count()
+        document__metainfovalues=value).count()
 #    token_count = attribute.attributevalue_set.get(value=value).token_count
     words = get_words(attribute, value, attributes_url, token_count)
     
-    tab.add(metrics_widget(analysis.dataset, attribute, value, token_count))
+    value_type = attribute.values.all()[0].type() + '_value'
+    tab.add(metrics_widget(analysis.dataset, attribute, value, value_type, token_count))
     tab.add(top_words_chart_widget(words))
     tab.add(word_cloud_widget(words))
 #    ngram_widget = ngram_word_cloud_widget(attribute, value, attributes_url, token_count)
@@ -155,8 +169,10 @@ def attribute_info_tab(analysis, attribute, value, analysis_url, attributes_url)
 
 #FIXME Only works with text values
 def get_attrvalwords(attribute, value):
-    return attribute.values.filter(text_value=value).values('document__tokens__type__type')\
-        .annotate(count=Count("text_value")).order_by('-count')
+    attrname = value.type() + '_value'
+    dct = {attrname: value.value()}
+    return attribute.values.filter(**dct).values('document__tokens__type__type')\
+        .annotate(count=Count(attrname)).order_by('-count')
 #    attrvalwords = attribute.attributevalueword_set.filter(
 #            value=value).order_by('-count')
 #    attrvalwords = attrvalwords.filter(word__ngram=False)
@@ -166,11 +182,11 @@ def get_words(attribute, value, attributes_url, token_count):
     words = []
     attrvalwords = get_attrvalwords(attribute, value)
     for attrvalword in attrvalwords[:100]:
-        type = attrvalword.word.type
-        percent = float(attrvalword.count) / token_count
-        w = WordSummary(type, percent)
-        w.url = (attributes_url+'/'+attribute.name+'/values/'+
-                value.value+'/words/'+type)
+        type = attrvalword['document__tokens__type__type']
+        percent = float(attrvalword['count']) / token_count
+        w = WordSummary(WordType.objects.get(type=type), percent)
+        w.url = (attributes_url + '/' + attribute.name + '/values/' + 
+                str(value.value()) + '/words/' + type)
         words.append(w)
     return words
 
@@ -200,7 +216,6 @@ def get_topics(analysis, attribute, value, analysis_url, token_count):
     that have the metaattribute "value"'''
     data = []
     for topic in topic_set:
-
         count = WordToken.objects.filter(document__metainfovalues=value, topics=topic).count()
         data.append((count, topic))
     data.sort()
@@ -210,7 +225,7 @@ def get_topics(analysis, attribute, value, analysis_url, token_count):
     # attrvaltopics = attribute.values.filter(value=value)
     # attrvaltopics = attribute.attributevaluetopic_set.filter(value=value,
             # topic__in=topic_set).order_by('-count')
-    for count, topic in data[:10]:
+    for count, topic in list(reversed(data))[:10]:
         # type = topic.name
         topicName = topic.names.filter(name_scheme__analysis=analysis).all()[0]
         percent = float(count) / token_count
@@ -233,11 +248,16 @@ def get_ngrams(attribute, value, attributes_url, tokens):
         ngrams.append(w)
     return ngrams
 
-def metrics_widget(dataset, attribute, value, token_count):
+def metrics_widget(dataset, attribute, value, value_type, token_count):
     w = Widget('Metrics', 'attributes/metrics')
-    w['num_types'] = WordType.objects.filter(tokens__document__metainfovalues__info_type=attribute,
-                                             tokens__document__metainfovalues__text_value=value).distinct().count()
-    w['num_docs'] = dataset.documents.filter(metainfovalues__info_type=attribute,metainfovalues__text_value=value).count()
+    w['num_types'] = WordType.objects.filter(**{
+        'tokens__document__metainfovalues__info_type': attribute,
+        'tokens__document__metainfovalues__' + value_type: value.value()
+        }).distinct().count()
+    w['num_docs'] = dataset.documents.filter(**{
+        'metainfovalues__info_type': attribute,
+        'metainfovalues__' + value_type: value.value()
+        }).count()
 #    attrvaldocs = attribute.attributevaluedocument_set.filter(value=value)
 #    attrvalwords = get_attrvalwords(attribute, value)
     w['num_tokens'] = token_count
