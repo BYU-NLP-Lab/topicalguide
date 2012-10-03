@@ -35,6 +35,8 @@ from topic_modeling.visualize.models import WordType
 from topic_modeling.visualize import sess_key
 from django.db.models.aggregates import Count
 
+from backend import c
+
 class AttributeView(AnalysisBaseView):
     template_name = "attributes.html"
     
@@ -178,10 +180,20 @@ def get_attrvalwords(attribute, value):
 #    attrvalwords = attrvalwords.filter(word__ngram=False)
 #    return attrvalwords
 
+def filterout(words, stopwords, max=-1):
+    count = 0
+    for word in words:
+        if not word['document__tokens__type__type'] in stopwords:
+            count+=1
+            yield word
+            if count >= max:
+                return
+
 def get_words(attribute, value, attributes_url, token_count):
     words = []
     attrvalwords = get_attrvalwords(attribute, value)
-    for attrvalword in attrvalwords[:100]:
+    stopwords = open(c['stopwords_file']).read().split('\n')
+    for attrvalword in filterout(attrvalwords, stopwords, 100):
         type = attrvalword['document__tokens__type__type']
         percent = float(attrvalword['count']) / token_count
         w = WordSummary(WordType.objects.get(type=type), percent)

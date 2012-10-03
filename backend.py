@@ -188,6 +188,7 @@ c.default('dataset_readable_name', c['dataset_name'])
 c.default('dataset_description', '')
 
 
+c.default('stopwords_file', '/aml/data/stopwords/english.txt')
 c.default('analysis_name', lambda c: "lda%stopics" % c['num_topics'])
 c.default('analysis_readable_name', lambda c: "LDA %s Topics" % c['num_topics'])
 c.default('analysis_description', lambda c: "Mallet LDA with %s topics" % c['num_topics'])
