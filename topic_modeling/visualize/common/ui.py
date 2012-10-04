@@ -85,9 +85,11 @@ class BreadCrumb(object):
         elif isinstance(obj, Document):
             self.document(obj)
         elif isinstance(obj, DocumentMetaInfo):
-            self.text(obj.name)
+            self.document_meta_info(obj)
+            # self.text(obj.name)
         elif isinstance(obj, DocumentMetaInfoValue):
-            self.text(str(obj.value()))
+            self.document_meta_info_value(obj)
+            # self.text(str(obj.value()))
             # TODO fix this
         #elif isinstance(obj, Attribute):
             #self.attribute(obj)
@@ -99,6 +101,20 @@ class BreadCrumb(object):
     
     def text(self, text):
         self.items.append(BreadCrumbItem(None, text, text))
+
+    def document_meta_info(self, info):
+        url = '/attributes/' + info.name
+        text = info.name # TODO: do we have a readable name for MetaInfo?
+        tooltip = "Attribute '%s' (id=%d)" % (text, info.id)
+        self._add_item(url, text, tooltip)
+        return self
+
+    def document_meta_info_value(self, value):
+        url = '/values/%s' % value.value()
+        text = str(value.value())
+        tooltip = "Value '%s'" % text
+        self._add_item(url, text, tooltip)
+        return self
     
     def dataset(self, dataset):
         url = '/datasets/'+dataset.name
@@ -122,6 +138,8 @@ class BreadCrumb(object):
         return self
 
     def word_type(self, word_type):
+        if not word_type.type:
+            raise Exception
         url = '/words/' + word_type.type
         text = "Word '"+word_type.type+"'"
         tooltip = text + " (id={0})".format(word_type.id)
