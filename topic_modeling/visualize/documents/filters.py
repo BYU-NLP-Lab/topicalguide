@@ -210,16 +210,16 @@ class DocumentFilterByMetric(object):
         self.remake_form()
 
     def apply(self, document_set):
-        if not self.current_metric:
+        if not self.current_metric or not self.current_value:
             return document_set
         if self.current_comparator == 'gt':
             return document_set.filter(
-                    documentmetricvalue__metric__name=self.current_metric,
-                    documentmetricvalue__value__gt=self.current_value)
+                    documentmetricvalues__metric__name=self.current_metric,
+                    documentmetricvalues__value__gt=self.current_value)
         if self.current_comparator == 'lt':
             return document_set.filter(
-                    documentmetricvalue__metric__name=self.current_metric,
-                    documentmetricvalue__value__lt=self.current_value)
+                    documentmetricvalues__metric__name=self.current_metric,
+                    documentmetricvalues__value__lt=self.current_value)
         raise ValueError('Current comparator is not supported: %s' %
                 self.current_comparator)
 
@@ -247,7 +247,7 @@ class DocumentFilterByMetric(object):
                 self._form.fields['metric'], 'metric_filter_%d' % self.id)
         ret_val += '</td><td>'
         ret_val += metric.as_widget()
-        if self.current_metric:
+        if self.current_metric and self.current_value:
             comp = forms.forms.BoundField(self._form, self._form.fields['comp'],
                     'metric_filter_comp_%d' % self.id)
             ret_val += comp.as_widget()
