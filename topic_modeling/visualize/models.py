@@ -86,7 +86,38 @@ class Document(models.Model):
 #                markup_file.path).read())
 #        return markup
 
+    def raw_text(self):
+        '''Get the document's raw text from the ... what?'''
+
     def get_context_for_word(self, word_to_find, analysis, topic=None):
+        '''Get the word in context
+
+        Args:
+            word_to_find: str
+            analysis:     Analysis
+            topic:      Topic or None
+
+        Return:
+            (leftofword:str, word:str, rightofword:str)
+
+        '''
+        word_type = WordType.objects.get(type=word_to_find)
+        if topic is None:
+            tokens = self.tokens.filter(type=word_type)
+        else:
+            topic = analysis.topics.get(number=int(topic))
+            tokens = topic.tokens.filter(type=word_type, document=self)
+        tokens = list(tokens)
+        token = random.choice(tokens)
+        context = self.tokens.all()[max(0, token.token_index - LEFT_CONTEXT_SIZE):token.token_index + RIGHT_CONTEXT_SIZE]
+        left_context = ' '.join([tok.type.type for tok in context[:LEFT_CONTEXT_SIZE]])
+        right_context = ' '.join([tok.type.type for tok in context[LEFT_CONTEXT_SIZE + 1:]])
+
+        return left_context, token.type.type, right_context
+
+        '''
+        text = self.raw_text()
+        ## so...
         markup = self.get_markup(analysis)
         indices = []
         for i, word in enumerate(markup):
@@ -123,6 +154,7 @@ class Document(models.Model):
         left_context = text[left_end_position:left_start_position]
         
         return left_context, raw_word, right_context
+        '''
 
     before_text = '<span style="color: blue;">'
     after_text = '</span>'

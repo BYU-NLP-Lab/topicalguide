@@ -104,6 +104,10 @@ class AttributeView(AnalysisBaseView):
 
 
 class AttributeWordView(AttributeView):
+    '''For this view, we want to list this word in the context of each
+    document in which it is found
+    
+    '''
     template_name = "attribute_word.html"
     
     def get_context_data(self, request, **kwargs):
@@ -112,13 +116,16 @@ class AttributeWordView(AttributeView):
         analysis = context['analysis']
         attribute = context['attribute']
         value = context['value']
-        mi = DocumentMetaInfo.objects.get(name=kwargs['attribute'])
-        mivs = mi.values.filter()
-        documents = dataset.docs.filter(metainfovalues)
-        
+        ## get all documents that match the currently selected meta attribute and value.
+        ## this this word in context
         word = WordType.objects.get(type=kwargs['word'])
-        documents = word.document_set.filter(attribute=attribute,#FIXME
-                attributevaluedocument__value=value)
+        # get a list of all documents which contain a wordtoken corresponding
+        # to the wordtype.
+        attrname = 'metainfovalues__' + value.type() + '_value'
+        dct = {attrname: value.value(),
+               'metainfovalues__info_type__name': attribute.name}
+        documents = analysis.dataset.documents.filter(tokens__type=word, **dct)
+
         words = []
         for document in documents:
             w = WordSummary(word.type)
@@ -131,7 +138,7 @@ class AttributeWordView(AttributeView):
             w.doc_id = document.id
     
         context['words'] = words
-        context['breadcrumb'].word(word)
+        context['breadcrumb'].word_type(word)
         context['attribute_post_link'] = '/words/%s' % word.type
     
         return context
