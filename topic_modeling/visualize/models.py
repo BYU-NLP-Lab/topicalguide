@@ -352,7 +352,7 @@ class Topic(models.Model):
 #    words = models.ManyToManyField(Word, through='TopicWord')
 
     def __unicode__(self):
-        return '%d: %s' % (self.number, self.name)
+        return '%d: %s' % (self.number, 'No Name')
 
 #    class Meta:
 #        ordering = ['name']
@@ -404,6 +404,9 @@ class Metric(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return self.name
+
 class PairwiseMetric(Metric):
     pass
     class Meta:
@@ -413,6 +416,9 @@ class MetricValue(models.Model):
     value = models.FloatField()
     class Meta:
         abstract = True
+
+    def __str__(self):
+        return str(self.value)
 
 class DatasetMetric(Metric):
     pass
@@ -507,6 +513,9 @@ class WordTokenMetricValue(MetricValue):
 # TODO: Update the set, value, and type methods
 class MetaInfo(models.Model):
     name = models.CharField(max_length=128, db_index=True)
+
+    def __str__(self):
+        return self.name
     
     class Meta:
         abstract = True
@@ -538,6 +547,9 @@ class MetaInfoValue(models.Model):
             self.datetime_value = datetime(*value[0:6])
         else:
             raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(type(value)))
+
+    def __str__(self):
+        return str(self.value())
     
     def value(self):
         result = None
