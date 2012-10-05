@@ -27,8 +27,10 @@ from django.forms.widgets import Input
 from numpy import arange, zeros
 from scipy import linspace, stats
 from scipy.stats.kde import gaussian_kde
-from topic_modeling.visualize.models import Analysis, \
-    Dataset, Topic, TopicMetric#Attribute, AttributeValue, AttributeValueTopic, Value,
+from topic_modeling.visualize.models import (Analysis, 
+    Dataset, Topic, TopicMetric, #Attribute, AttributeValue, AttributeValueTopic, Value,
+    DatasetMetaInfo, DatasetMetaInfoValue,
+    TopicMetaInfo, TopicMetaInfoValue)
 import StringIO
 import math
 import csv
@@ -165,7 +167,9 @@ class TopicAttributePlotForm(forms.Form):
         self.fields['topics'].widget.attrs['class'] = 'under-label'
 
         #Available attributes
-        attributes = dataset.attribute_set.all()
+        attributes = DatasetMetaInfo.objects.filter(values__dataset=dataset).distinct()
+        # attributes = list(value.info_type for value in dataset.metainfovalues.all())
+        # attributes = dataset.attribute_set.all()
         self.fields['attribute'] = forms.ModelChoiceField(attributes,
                 initial=attributes[0], widget=forms.Select())
         self.fields['attribute'].widget.attrs['onchange'] = \
@@ -185,9 +189,9 @@ class TopicAttributePlotForm(forms.Form):
         self.fields['histogram'].widget.attrs['class'] = 'beside-label'
 
         #List of values the current attribute can take
-        if attributes.count() != 0:
+        if attributes:
             attribute = attributes[0]
-            values = attribute.value_set.all()
+            values = attribute.values.all()
             self.fields['values'] = forms.ModelMultipleChoiceField(values,
                     initial=values)
             self.fields['values'].widget.attrs['onchange'] = \
@@ -210,9 +214,9 @@ class TopicAttributeChart(object):
         parameters.
         """
         self.chart_parameters = chart_parameters
-        self.attribute = Attribute.objects.get(id=chart_parameters['attribute'])
+        self.attribute = TopicMetaInfo.objects.get(id=chart_parameters['attribute'])
         value_ids = chart_parameters['value'].split('.')
-        self.values = Value.objects.filter(id__in=value_ids)
+        self.values = TopicMetaInfoValue.objects.filter(id__in=value_ids)
         topic_ids = chart_parameters['topic'].split('.')
         self.topics = Topic.objects.filter(id__in=topic_ids)
         self.frequency = 'frequency' in chart_parameters
@@ -222,6 +226,10 @@ class TopicAttributeChart(object):
             if self.frequency:
                 total_count = 1
             else:
+                total_count = TopicMetaInfoValue.objects.filter(
+                        info_type = self.attribute,
+                        **TopicMetaInfoValue.filter_value(value)
+                        )
                 total_count = AttributeValue.objects.get(
                         attribute=self.attribute, value=value).token_count
             for topic in self.topics:
