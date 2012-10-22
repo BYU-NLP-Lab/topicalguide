@@ -78,32 +78,6 @@ def import_dataset(name, readable_name, description, metadata_filenames,
         print >> sys.stderr, 'It took', end_time - start_time,
         print >> sys.stderr, 'to import the dataset'
 
-#@transaction.commit_manually
-#def _load_documents(dataset, token_regex):
-#    print >> sys.stderr, 'Loading documents...  ',
-#    word_types = dict()
-#    for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
-#        for filename in filenames:
-#            full_filename = '%s/%s' % (dirpath, filename)
-#            doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
-#            print >> sys.stderr, filename
-#
-#            with open(full_filename) as r:
-#                content = r.read()
-#
-#            for position,match in enumerate(re.finditer(token_regex, content)):
-#                token = match.group()
-#                token_lc = token.lower()
-#                try:
-#                    word_type = word_types[token_lc]
-#                except KeyError:
-#                    word_type, type_created = WordType.objects.get_or_create(type=token_lc)
-#                    if type_created: transaction.commit()
-#                    word_types[token_lc] = word_type
-#                WordToken.objects.create(type=word_type, document=doc, token_index=position, start=match.start())
-#            del content
-#            transaction.commit()
-
 def _create_documents(files_dir):
     pass
 
@@ -114,27 +88,36 @@ def _load_documents(dataset, token_regex):
     print >> sys.stderr, 'Creating documents and tokens...  ',
 
     try:
+        all_files = []
         for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
             for filename in filenames:
-                full_filename = '%s/%s' % (dirpath, filename)
-                doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
-                print >> sys.stderr, filename
+                all_files.append([dirpath, filename])
+        for i, (dirpath, filename) in enumerate(all_files):
+            full_filename = '%s/%s' % (dirpath, filename)
+            doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
+            if i % 10 == 0:
+                print>>sys.stderr, ".",
+                sys.stderr.flush()
+            if i % 100 == 0:
+                print >> sys.stderr, "%d%% done (%d of %d)" % (i*100//len(all_files),
+                        i, len(all_files))
 
-                with open(full_filename) as r:
-                    content = r.read()
+            with open(full_filename) as r:
+                content = r.read()
 
-                for position,match in enumerate(re.finditer(token_regex, content)):
-                    token = match.group()
-                    token_lc = token.lower()
-                    try:
-                        word_type = word_types[token_lc]
-                    except KeyError:
-                        word_type, type_created = WordType.objects.get_or_create(type=token_lc)
-                        if type_created: transaction.commit()
-                        word_types[token_lc] = word_type
-                    WordToken.objects.create(type=word_type, document=doc, token_index=position, start=match.start())
-                del content
-                transaction.commit()
+            for position,match in enumerate(re.finditer(token_regex, content)):
+                token = match.group()
+                token_lc = token.lower()
+                try:
+                    word_type = word_types[token_lc]
+                except KeyError:
+                    word_type, type_created = WordType.objects.get_or_create(type=token_lc)
+                    if type_created: transaction.commit()
+                    word_types[token_lc] = word_type
+                WordToken.objects.create(type=word_type, document=doc,
+                        token_index=position, start=match.start())
+            del content
+            transaction.commit()
     except:
         transaction.rollback()
         raise
