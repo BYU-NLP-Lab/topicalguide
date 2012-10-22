@@ -23,15 +23,15 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 
 from topic_modeling.visualize.models import Analysis, TopicMetric, WordType
 from topic_modeling.visualize.models import TopicMetricValue
 
 metric_name = 'Number of types'
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
-    try:
+    # try:
         analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
         try:
             metric = TopicMetric.objects.get(name=metric_name,
@@ -49,9 +49,9 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
             tmv = TopicMetricValue(topic=topic, metric=metric,
                     value=len(types))
             tmv.save()
-        transaction.commit()
-    finally:
-        transaction.commit()
+        # transaction.commit()
+    # finally:
+        # transaction.commit()
 
 
 def metric_names_generated(dataset, analysis):

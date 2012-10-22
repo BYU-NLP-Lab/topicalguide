@@ -27,13 +27,13 @@ import os, sys
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
-from django.db import transaction
+# from django.db import transaction
 from optparse import OptionParser
 
 from topic_modeling.visualize.models import Analysis, TopicMetaInfo
 from topic_modeling.visualize.models import TopicMetaInfoValue
 
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_information(dataset, analysis, force_import=False, *args, **kwargs):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     if 'ngrams' in kwargs and kwargs['ngrams']:
@@ -70,7 +70,7 @@ def add_information(dataset, analysis, force_import=False, *args, **kwargs):
             eti_value = TopicMetaInfoValue(topic=topic, info_type=info,
                     text_value=output)
             eti_value.save()
-    transaction.commit()
+    # transaction.commit()
 
 
 if __name__ == '__main__':

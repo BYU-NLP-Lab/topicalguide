@@ -31,7 +31,7 @@ from django.db.models.aggregates import Count
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
-from django.db import transaction
+# from django.db import transaction
 
 import sqlite3
 
@@ -43,7 +43,7 @@ from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
 metric_name = "Pairwise Coherence"
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     try:
@@ -91,7 +91,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
                     total_words, total_cooccurrences)
             PairwiseTopicMetricValue.objects.create(topic1=topic1,
                     topic2=topic2, metric=metric, value=coherence)
-    transaction.commit()
+    # transaction.commit()
 
 
 def pairwise_coherence(words1, words2, c, total_words, total_cooccurrences):

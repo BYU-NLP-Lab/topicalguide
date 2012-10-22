@@ -23,7 +23,7 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 from django.db.models.aggregates import Count
 
 from numpy import dot, zeros
@@ -33,21 +33,21 @@ from topic_modeling.visualize.models import Analysis, WordType
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
-
 metric_name = "Word Correlation"
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name, analysis=analysis)
+    metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name,
+                        analysis=analysis)
     if not created and PairwiseTopicMetricValue.objects.filter(metric=metric).count():
-        transaction.rollback()
+        # transaction.rollback()
         raise RuntimeError("%s is already in the database for this analysis" % metric_name)
-    
+
     word_types = WordType.objects.filter(tokens__topics__analysis=analysis).distinct()
     topics = analysis.topics.order_by('number').all()
 
     word_idx = dict((word_type.type, i) for i,word_type in enumerate(word_types))
-    
+
     #TODO might be good to make this matrix sparse
     topicwordvectors = []
     for topic in topics:
@@ -60,7 +60,7 @@ def add_metric(dataset, analysis):
             correlation_coeff = pmcc(topic1_word_vals, topic2_word_vals)
             PairwiseTopicMetricValue.objects.create(topic1=topic1,
                     topic2=topic2, metric=metric, value=correlation_coeff)
-    transaction.commit()
+    # transaction.commit()
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]

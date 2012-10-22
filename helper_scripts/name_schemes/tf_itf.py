@@ -25,7 +25,7 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 from optparse import OptionParser
 from operator import itemgetter
 
@@ -51,7 +51,7 @@ class TfitfTopicNamer:
     def scheme_name(self):
         return 'TF-ITF_top' + str(self.n)
     
-    @transaction.commit_manually
+    # @transaction.commit_manually
     def name_all_topics(self):
         _,analysis,name_scheme,created,self.total_number_of_topics = self.init()
         if created:
@@ -61,15 +61,15 @@ class TfitfTopicNamer:
                 name = self.topic_name(topic)
                 print name.encode('utf-8')
                 TopicName.objects.create(topic=topic,name_scheme=name_scheme,name=name)
-            transaction.commit()
+            # transaction.commit()
         else:
             print "Name scheme {0} already exists for analysis {1}. Skipping.".format(name_scheme, analysis)
     
-    @transaction.commit_manually
+    # @transaction.commit_manually
     def unname_all_topics(self):
         _,_,name_scheme,_,_ = self.init()
         name_scheme.delete()
-        transaction.commit()
+        # transaction.commit()
     
     def topic_name(self,topic):
         name = u""

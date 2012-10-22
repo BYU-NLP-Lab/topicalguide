@@ -37,7 +37,7 @@ from topic_modeling.visualize.topics.common import top_values_for_attr_topic
 from topic_modeling.visualize.topics.filters import clean_topics_from_session
 from topic_modeling.visualize.topics.filters import get_topic_filter_by_name
 from topic_modeling.visualize.topics.filters import possible_topic_filters
-from django.db import transaction
+# from django.db import transaction
 from topic_modeling.visualize.topics.names import current_name_scheme,\
     topic_name_with_ns
 from django.views.decorators.http import require_GET
@@ -250,7 +250,7 @@ def remove_topic_group(request, number):
     topic_group.delete()
     return HttpResponse('Group %d removed.' % number)
 
-@transaction.commit_manually
+# @transaction.commit_manually
 def clear_topic_group(topic_group):
     topic_group.total_count = 0
     for topic_word in topic_group.topicword_set.all():
@@ -262,9 +262,9 @@ def clear_topic_group(topic_group):
     for doctopword in topic_group.documenttopicword_set.all():
         doctopword.delete()
 
-    transaction.commit()
+    # transaction.commit()
 
-@transaction.commit_manually
+# @transaction.commit_manually
 def reaggregate_words(topic_group):
     words = {}
     for topic in topic_group.subtopics:
@@ -276,9 +276,9 @@ def reaggregate_words(topic_group):
         TopicWord(topic=topic_group, word=word, count=count).save()
     topic_group.save()
 
-    transaction.commit()
+    # transaction.commit()
 
-@transaction.commit_manually
+# @transaction.commit_manually
 def reaggregate_docs(topic_group):
     docs = {}
     for topic in topic_group.subtopics:
@@ -288,9 +288,9 @@ def reaggregate_docs(topic_group):
     for doc, count in docs.iteritems():
         DocumentTopic(topic=topic_group, document=doc, count=count).save()
 
-    transaction.commit()
+    # transaction.commit()
 
-@transaction.commit_manually
+# @transaction.commit_manually
 def reaggregate_attrs(topic_group):
     attrs = {}
     for topic in topic_group.subtopics:
@@ -303,9 +303,9 @@ def reaggregate_attrs(topic_group):
                             attribute=val.attribute,
                             count=count).save()
 
-    transaction.commit()
+    # transaction.commit()
 
-@transaction.commit_manually
+# @transaction.commit_manually
 def reaggregate_doctopicword(topic_group):
     doctopwords = {}
     for topic in topic_group.subtopics:
@@ -320,7 +320,7 @@ def reaggregate_doctopicword(topic_group):
                           document=doc,
                           count=count).save()
 
-    transaction.commit()
+    # transaction.commit()
 
 def reaggregate_topicgroup(topic_group):
     clear_topic_group(topic_group)

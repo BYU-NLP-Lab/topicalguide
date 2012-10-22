@@ -23,13 +23,13 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 
 from topic_modeling.visualize.models import Analysis, Dataset, DocumentMetric
 from topic_modeling.visualize.models import DocumentMetricValue
 
 metric_name = 'Number of tokens'
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(dataset=dataset, name=analysis)
@@ -39,7 +39,7 @@ def add_metric(dataset, analysis):
     
     for document in dataset.documents.all():
         DocumentMetricValue.objects.create(document=document, metric=metric, value=document.tokens.count())
-    transaction.commit()
+    # transaction.commit()
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]

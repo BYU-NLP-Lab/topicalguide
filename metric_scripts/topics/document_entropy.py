@@ -23,7 +23,7 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 from math import log
 import sys
 
@@ -32,31 +32,31 @@ from topic_modeling.visualize.models import TopicMetricValue
 from django.db.models.aggregates import Count
 
 metric_name = 'Document Entropy'
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
+    # try:
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     try:
-        analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-        try:
-            metric = TopicMetric.objects.get(name=metric_name,
-                    analysis=analysis)
-            if not force_import:
-                raise RuntimeError('%s is already in the database for this '
-                        'analysis!' % metric_name)
-        except TopicMetric.DoesNotExist:
-            metric = TopicMetric(name=metric_name, analysis=analysis)
-            metric.save()
-        topics = analysis.topics.all()
-        for topic in topics:
-            total_count = float(topic.tokens.count())
-            entropy = 0
-            doctopic_counts = topic.tokens.values('document__id').annotate(count=Count('document__id'))
-            for dt in doctopic_counts:
-                prob = float(dt['count']) / total_count
-                entropy -= prob * (log(prob) / log(2))
-            tmv = TopicMetricValue(topic=topic, metric=metric, value=entropy)
-            tmv.save()
-    finally:
-        transaction.commit()
+        metric = TopicMetric.objects.get(name=metric_name,
+                analysis=analysis)
+        if not force_import:
+            raise RuntimeError('%s is already in the database for this '
+                    'analysis!' % metric_name)
+    except TopicMetric.DoesNotExist:
+        metric = TopicMetric(name=metric_name, analysis=analysis)
+        metric.save()
+    topics = analysis.topics.all()
+    for topic in topics:
+        total_count = float(topic.tokens.count())
+        entropy = 0
+        doctopic_counts = topic.tokens.values('document__id').annotate(count=Count('document__id'))
+        for dt in doctopic_counts:
+            prob = float(dt['count']) / total_count
+            entropy -= prob * (log(prob) / log(2))
+        tmv = TopicMetricValue(topic=topic, metric=metric, value=entropy)
+        tmv.save()
+    # finally:
+        # transaction.commit()
 
 
 def metric_names_generated(dataset, analysis):

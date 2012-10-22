@@ -30,7 +30,7 @@ import os, sys, sqlite3
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
-from django.db import transaction
+# from django.db import transaction
 from math import log
 from optparse import OptionParser
 
@@ -38,7 +38,7 @@ from topic_modeling.visualize.models import Analysis, TopicMetric
 from topic_modeling.visualize.models import TopicMetricValue
 
 metric_name = 'Coherence'
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     try:
@@ -75,7 +75,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
         average_pmi = total_pmi / (len(words)**2)
         tmv = TopicMetricValue(topic=topic, metric=metric, value=average_pmi)
         tmv.save()
-    transaction.commit()
+    # transaction.commit()
 
 
 def metric_names_generated(dataset, analysis):
