@@ -44,6 +44,8 @@ def task_extract_data():
     task['clean'] = ['rm -rf {} {}'.format(dest_dir, metadata_filename)]
 
     def utd(_task, _vals):
+        print>>sys.stderr, dest_dir, metadata_filename
+        # fail
         return len(os.listdir(dest_dir)) > 0 and os.path.exists(metadata_filename)
 
     task['uptodate'] = [utd]
@@ -59,21 +61,25 @@ def _extract(dest_dir, metadata_filename, raw_data):
             if filename.endswith('.txt'):
                 all_files.append([root, filename])
     num_files = len(all_files)
-    print "Extracting %d files" % num_files
+    print>>sys.stderr, "Extracting %d files" % num_files
     for i, (root, filename) in enumerate(all_files):
-        if i % 10 == 0:
-            print ".",
-            sys.stdout.flush()
-        _extract_doc(root, filename, dest_dir)
+        if i % 50 == 0:
+            print>>sys.stderr, ".",
+            sys.stderr.flush()
+        if i % 1000 == 0:
+            print>>sys.stderr, ": %d%% done (%d of %d)" % (i*100//num_files, i, num_files), root, filename, dest_dir
+        
+        _extract_doc(root, os.path.relpath(root, raw_data), filename, dest_dir)
         meta_name = os.path.join(root, filename[:-len('.txt')] + '.meta')
         metadata[filename] = {
                 'dirname': root,
                 'title': filename,
                 'date': open(meta_name).read()
             }
+    print>>sys.stderr, "Done Extracting"
     _write_metadata(metadata, metadata_filename)
 
-def _extract_doc(root, filename, dest_dir):
+def _extract_doc(root, rel_root, filename, dest_dir):
     raw_text = open(os.path.join(root, filename)).read()
     try:
         raw_text = raw_text.decode('cp1252')
@@ -87,8 +93,12 @@ def _extract_doc(root, filename, dest_dir):
 
     tokens = _tokenizer.tokenize(raw_text)
     out_text = ' '.join(tokens)
-    out_file = create_dirs_and_open(os.path.join(dest_dir, root, filename))
-    out_file.write(out_text)
+    out_file = create_dirs_and_open(os.path.join(dest_dir, rel_root, filename))
+    try:
+        out_file.write(out_text)
+    except Exception as e:
+        print "Failed?", e, out_file, rel_root, filename
+        raise e
     out_file.close()
 
 def _write_metadata(data, filename):
