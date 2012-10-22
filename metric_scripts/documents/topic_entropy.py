@@ -23,7 +23,7 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 from math import log
 
 from topic_modeling.visualize.models import Analysis, Dataset, DocumentMetric
@@ -31,7 +31,7 @@ from topic_modeling.visualize.models import DocumentMetricValue
 from django.db.models.aggregates import Count
 
 metric_name = 'Topic Entropy'
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
     analysis = Analysis.objects.get(dataset=dataset, name=analysis)
@@ -54,7 +54,7 @@ def add_metric(dataset, analysis):
                         entropy -= prob * (log(prob) / log(2))
                         #TODO Decide if we care about this entropy being in bits (log base of 2)
         DocumentMetricValue.objects.create(document=document, metric=metric, value=entropy)
-    transaction.commit()
+    # transaction.commit()
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]

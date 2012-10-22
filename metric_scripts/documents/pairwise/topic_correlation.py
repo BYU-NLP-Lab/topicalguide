@@ -26,7 +26,7 @@ from math import isnan
 
 import sys
 
-from django.db import transaction
+# from django.db import transaction
 
 #from datetime import datetime
 from numpy import dot, zeros
@@ -38,46 +38,50 @@ from topic_modeling.visualize.models import PairwiseDocumentMetricValue
 
 metric_name = "Topic Correlation"
 
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis):
-    dataset = Dataset.objects.get(name=dataset)
-    analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    metric,created = PairwiseDocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
-    if not created and PairwiseDocumentMetricValue.objects.filter(metric=metric).count():
-        transaction.rollback()
-        raise RuntimeError("%s is already in the database for this"
-                " analysis" % metric_name)
-    
-    topics = analysis.topics.all()
-    topic_idx = {}
-    for i, topic in enumerate(topics):
-        topic_idx[topic] = i
-    
-    documents = dataset.documents.all()
-    doctopicvectors = [document_topic_vector(doc, topic_idx) for doc in documents]
-    vectornorms = [norm(vector) for vector in doctopicvectors]
-    
-#    start = datetime.now()
-    for i, doc1 in enumerate(documents):
-        write('.')
-#        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
-#        print >> sys.stderr, 'Time for last document:', datetime.now() - start
-#        start = datetime.now()
-        doc1_topic_vals = doctopicvectors[i]
-        doc1_norm = vectornorms[i]
-        for j, doc2 in enumerate(documents):
-            doc2_topic_vals = doctopicvectors[j]
-            doc2_norm = vectornorms[j]
-            correlation_coeff = pmcc(doc1_topic_vals, doc2_topic_vals,
-                    doc1_norm, doc2_norm)
-            if not isnan(correlation_coeff):
-                mv = PairwiseDocumentMetricValue(document1=doc1, 
-                    document2=doc2, metric=metric, value=correlation_coeff)
-                mv.save()
-            else:
-                pass
-        transaction.commit()
-    write('\n')
+    try:
+        dataset = Dataset.objects.get(name=dataset)
+        analysis = Analysis.objects.get(dataset=dataset, name=analysis)
+        metric,created = PairwiseDocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
+        if not created and PairwiseDocumentMetricValue.objects.filter(metric=metric).count():
+            # transaction.rollback()
+            raise RuntimeError("%s is already in the database for this"
+                    " analysis" % metric_name)
+        
+        topics = analysis.topics.all()
+        topic_idx = {}
+        for i, topic in enumerate(topics):
+            topic_idx[topic] = i
+        
+        documents = dataset.documents.all()
+        doctopicvectors = [document_topic_vector(doc, topic_idx) for doc in documents]
+        vectornorms = [norm(vector) for vector in doctopicvectors]
+        
+    #    start = datetime.now()
+        for i, doc1 in enumerate(documents):
+            write('.')
+    #        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
+    #        print >> sys.stderr, 'Time for last document:', datetime.now() - start
+    #        start = datetime.now()
+            doc1_topic_vals = doctopicvectors[i]
+            doc1_norm = vectornorms[i]
+            for j, doc2 in enumerate(documents):
+                doc2_topic_vals = doctopicvectors[j]
+                doc2_norm = vectornorms[j]
+                correlation_coeff = pmcc(doc1_topic_vals, doc2_topic_vals,
+                        doc1_norm, doc2_norm)
+                if not isnan(correlation_coeff):
+                    mv = PairwiseDocumentMetricValue(document1=doc1, 
+                        document2=doc2, metric=metric, value=correlation_coeff)
+                    mv.save()
+                else:
+                    pass
+            # transaction.commit()
+        write('\n')
+    except:
+        # transaction.rollback()
+        raise
 
 def metric_names_generated(_dataset, _analysis):
     return [metric_name]

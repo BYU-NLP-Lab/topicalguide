@@ -23,15 +23,15 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 
 from topic_modeling.visualize.models import Analysis, Dataset, DocumentMetric, WordType
 from topic_modeling.visualize.models import DocumentMetricValue
 
 metric_name = 'Number of types'
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis):
-    try:
+    # try:
         dataset = Dataset.objects.get(name=dataset)
         analysis = Analysis.objects.get(dataset=dataset, name=analysis)
         metric, created = DocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
@@ -41,10 +41,10 @@ def add_metric(dataset, analysis):
         for document in dataset.documents.all():
             type_count = WordType.objects.filter(tokens__document=document).distinct().count()
             DocumentMetricValue.objects.create(document=document, metric=metric, value=type_count)
-        transaction.commit()
-    except:
-        transaction.rollback()
-        raise
+        # transaction.commit()
+    # except:
+        # transaction.rollback()
+        # raise
 
 def metric_names_generated(dataset, analysis):
     return [metric_name]

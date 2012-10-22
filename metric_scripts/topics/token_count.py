@@ -23,7 +23,7 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 
 from topic_modeling.visualize.models import Analysis, TopicMetric
 from topic_modeling.visualize.models import TopicMetricValue

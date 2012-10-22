@@ -30,14 +30,14 @@ import os, sys
 sys.path.append(os.curdir)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
-from django.db import transaction
+# from django.db import transaction
 from math import log
 from optparse import OptionParser
 
 from topic_modeling.visualize.models import Analysis, TopicMetric
 from topic_modeling.visualize.models import TopicMetricValue
 
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     for attr in analysis.dataset.attribute_set.all():
@@ -58,7 +58,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
                 entropy -= prob * (log(prob) / log(2))
             tmv = TopicMetricValue(topic=topic, metric=metric, value=entropy)
             tmv.save()
-        transaction.commit()
+        # transaction.commit()
 
 
 def metric_names_generated(dataset, analysis):

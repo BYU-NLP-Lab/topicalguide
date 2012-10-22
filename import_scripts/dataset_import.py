@@ -113,27 +113,31 @@ def _load_documents(dataset, token_regex):
 
     print >> sys.stderr, 'Creating documents and tokens...  ',
 
-    for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
-        for filename in filenames:
-            full_filename = '%s/%s' % (dirpath, filename)
-            doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
-            print >> sys.stderr, filename
+    try:
+        for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
+            for filename in filenames:
+                full_filename = '%s/%s' % (dirpath, filename)
+                doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
+                print >> sys.stderr, filename
 
-            with open(full_filename) as r:
-                content = r.read()
+                with open(full_filename) as r:
+                    content = r.read()
 
-            for position,match in enumerate(re.finditer(token_regex, content)):
-                token = match.group()
-                token_lc = token.lower()
-                try:
-                    word_type = word_types[token_lc]
-                except KeyError:
-                    word_type, type_created = WordType.objects.get_or_create(type=token_lc)
-                    if type_created: transaction.commit()
-                    word_types[token_lc] = word_type
-                WordToken.objects.create(type=word_type, document=doc, token_index=position, start=match.start())
-            del content
-            transaction.commit()
+                for position,match in enumerate(re.finditer(token_regex, content)):
+                    token = match.group()
+                    token_lc = token.lower()
+                    try:
+                        word_type = word_types[token_lc]
+                    except KeyError:
+                        word_type, type_created = WordType.objects.get_or_create(type=token_lc)
+                        if type_created: transaction.commit()
+                        word_types[token_lc] = word_type
+                    WordToken.objects.create(type=word_type, document=doc, token_index=position, start=match.start())
+                del content
+                transaction.commit()
+    except:
+        transaction.rollback()
+        raise
 
 def _types(files_dir, token_regex):
     print >> sys.stderr, 'Ensuring word types...  ',

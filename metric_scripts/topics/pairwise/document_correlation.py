@@ -23,7 +23,7 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 
 from math import isnan
 from numpy import dot, zeros
@@ -35,7 +35,6 @@ from topic_modeling.visualize.models import PairwiseTopicMetricValue
 from django.db.models.aggregates import Count
 
 metric_name = "Document Correlation"
-@transaction.commit_manually
 def add_metric(dataset_name, analysis_name):
     try:
         dataset = Dataset.objects.get(name=dataset_name)
@@ -45,7 +44,7 @@ def add_metric(dataset_name, analysis_name):
                     analysis=analysis)
         
         if not created and PairwiseTopicMetricValue.objects.filter(metric=metric).count():
-            transaction.rollback()
+            # transaction.rollback()
             raise RuntimeError("%s is already in the database for this analysis" % metric_name)
 
         docs = dataset.documents.all()
@@ -71,9 +70,9 @@ def add_metric(dataset_name, analysis_name):
                 else:
                     print "Error computing metric between {0} and {1}".format(
                             topic1,topic2)
-            transaction.commit()
+            # transaction.commit()
     except:
-        transaction.rollback()
+        # transaction.rollback()
         raise
 
 

@@ -23,13 +23,13 @@
 
 from __future__ import division
 
-from django.db import transaction
+# from django.db import transaction
 
 from topic_modeling.visualize.models import Analysis, TopicMetric
 from topic_modeling.visualize.models import TopicMetricValue
 
 metric_name = 'Alpha'
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis, **kwargs):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     metric, created = TopicMetric.objects.get_or_create(name=metric_name, analysis=analysis)
@@ -46,7 +46,7 @@ def add_metric(dataset, analysis, **kwargs):
     for number, alpha in enumerate(alphas):
         topic = analysis.topics.get(number=number)
         TopicMetricValue.objects.create(topic=topic, metric=metric, value=float(alpha))
-    transaction.commit()
+    # transaction.commit()
 
 
 def metric_names_generated(dataset, analysis):

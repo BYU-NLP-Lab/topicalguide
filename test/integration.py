@@ -3,6 +3,7 @@
 This contains our selenium integration tests. The only user interaction we are
 testing here is navigation and data display.
 '''
+
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait # available since 2.4.0

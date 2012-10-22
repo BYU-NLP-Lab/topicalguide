@@ -134,7 +134,7 @@ class DoitTask:
             return self.to_dict()
         return meta
 
-    def action(self):
+    def action(self, *args, **kwds):
         '''Perform the data'''
         raise NotImplemented
 
@@ -243,6 +243,7 @@ if 'pairwise_topic_metric_args' in c:
     c['pairwise_topic_metric_args'] = tmp_pairwise_topic_metric_args
 else:
     c['pairwise_topic_metric_args'] = defaultdict(dict)
+
 if 'cooccurrence_counts' in c:
     c['topic_metrics'].append('coherence')
     c['topic_metric_args']['coherence'].update(
@@ -317,7 +318,7 @@ if 'task_metadata_import' not in locals():
             def action(self):
                 try:
                     metadata = Metadata(c['metadata_filenames'][self.name])
-                    self.fn(dataset(), metadata)
+                    self.fn[0](dataset(), metadata)
                 except Dataset.DoesNotExist:
                     raise Exception('Trying to run a metadata import for '
                             '%s, and the dataset doesn\'t exist!' % self.name)
@@ -326,7 +327,7 @@ if 'task_metadata_import' not in locals():
             '''A task to import all the meta info for the dataset'''
 
             name = 'datasets'
-            fn = import_dataset_metadata
+            fn = [import_dataset_metadata]
 
             def clean(self):
                 try:
@@ -346,7 +347,7 @@ if 'task_metadata_import' not in locals():
             '''A task to import all the metainfo for all documents in the dataset'''
 
             name = 'documents'
-            fn = import_document_metadata
+            fn = [import_document_metadata]
 
             def clean(self):
                 try:
@@ -368,7 +369,7 @@ if 'task_metadata_import' not in locals():
             '''A task to import all the metainfo for all the word types'''
 
             name = 'word_types'
-            fn = import_word_type_metadata
+            fn = [import_word_type_metadata]
 
             def clean(self):
                 try:
@@ -389,7 +390,7 @@ if 'task_metadata_import' not in locals():
             '''A task to import all the metainfo for all the word tokens'''
 
             name = 'word_tokens'
-            fn = import_word_token_metadata
+            fn = [import_word_token_metadata]
 
             def clean(self):
                 try:
@@ -425,7 +426,7 @@ if 'task_metadata_import' not in locals():
         class ImportAnalysis(ImportATask):
 
             name = 'analysis'
-            fn = import_analysis_metadata
+            fn = [import_analysis_metadata]
 
             def clean(self):
                 try:
@@ -443,7 +444,7 @@ if 'task_metadata_import' not in locals():
         class ImportTopics(ImportATask):
 
             name = 'topics'
-            fn = import_topic_metadata
+            fn = [import_topic_metadata]
 
             def clean_topics(self):
                 try:
@@ -478,7 +479,7 @@ if 'task_mallet_input' not in locals():
         if 'task_extract_data' in globals():
             task_dep = ['extract_data']
 
-        def make_token_file(self, docs_dir, output_file):
+        def action(self, docs_dir, output_file):
             w = codecs.open(output_file, 'w', 'utf-8')
 
             for root, dirs, files in os.walk(docs_dir):

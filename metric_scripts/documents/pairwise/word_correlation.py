@@ -26,7 +26,7 @@ from math import isnan
 
 import sys
 
-from django.db import transaction
+# from django.db import transaction
 
 from numpy import dot, zeros
 from numpy.linalg import norm
@@ -38,7 +38,7 @@ from django.db.models.aggregates import Count
 
 metric_name = "Word Correlation"
 
-@transaction.commit_manually
+# @transaction.commit_manually
 def add_metric(dataset, analysis):
     dataset = Dataset.objects.get(name=dataset)
     analysis = dataset.analyses.get(name=analysis)
@@ -46,7 +46,7 @@ def add_metric(dataset, analysis):
     if not created:
         raise RuntimeError("%s is already in the database for this analysis" % metric_name)
    
-    word_types = WordType.objects.filter(tokens__doc__dataset=dataset).all()
+    word_types = WordType.objects.filter(tokens__document__dataset=dataset).all()
     type_idx = dict((word_type,i) for i,word_type in enumerate(word_types))
     documents = dataset.documents.all()
 
@@ -65,7 +65,7 @@ def add_metric(dataset, analysis):
             if not isnan(correlation_coeff):
                 PairwiseDocumentMetricValue.objects.create(
                     document1=doc1, document2=doc2, metric=metric, value=correlation_coeff)
-        transaction.commit()
+        # transaction.commit()
     write('\n')
 
 def write(s):

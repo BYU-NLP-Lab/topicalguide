@@ -23,7 +23,7 @@
 
 from django.db.models.aggregates import Count
 
-from django.db import transaction
+# from django.db import transaction
 
 from topic_modeling.visualize.models import Analysis, TopicNameScheme
 
@@ -36,9 +36,9 @@ class TopNTopicNamer:
     def scheme_name(self):
         return "Top" + str(self.n)
     
-    @transaction.commit_manually
+    # @transaction.commit_manually
     def name_all_topics(self):
-        try:
+        # try:
             analysis = Analysis.objects.get(dataset__name=self.dataset_name, name=self.analysis_name)
             name_scheme,created = analysis.topicnameschemes.get_or_create(name=self.scheme_name())
             
@@ -48,22 +48,22 @@ class TopNTopicNamer:
                     print 'topic #%i: %s' % (i, name.encode('utf-8'))
                     name_scheme.names.create(topic=topic, name=name)
                 #name_scheme.save()
-                transaction.commit()
+                # transaction.commit()
             else:
                 print "Name scheme %s already exists for analysis %s. Skipping." % (name_scheme, analysis)
-                transaction.rollback()
-        except:
-            transaction.rollback()
-            raise
+                # transaction.rollback()
+        # except:
+            # transaction.rollback()
+            # raise
 
     
-    @transaction.commit_manually
+    # @transaction.commit_manually
     def unname_all_topics(self):
         try:
             analysis = Analysis.objects.get(dataset__name=self.dataset_name, name=self.analysis_name)
             name_scheme = analysis.topicnameschemes.get(name=self.scheme_name())
             name_scheme.delete()
-            transaction.commit()
+            # transaction.commit()
         except TopicNameScheme.DoesNotExist:
             pass
     
