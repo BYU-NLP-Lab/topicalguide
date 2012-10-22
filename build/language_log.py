@@ -24,7 +24,7 @@ from backend import config as c
 from build import create_dirs_and_open
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from topic_modeling import anyjson
-import os
+import os, sys
 
 c['num_topics'] = 100
 c['dataset_name'] = 'language_log'
@@ -53,16 +53,24 @@ _tokenizer = TreebankWordTokenizer()
 
 def _extract(dest_dir, metadata_filename, raw_data):
     metadata = {}
+    all_files = []
     for root, _, files in os.walk(raw_data):
         for filename in files:
             if filename.endswith('.txt'):
-                _extract_doc(root, filename, dest_dir)
-                meta_name = os.path.join(root, filename[:-len('.txt')] + '.meta')
-                metadata[filename] = {
-                        'dirname': root,
-                        'title': filename,
-                        'date': open(meta_name).read()
-                    }
+                all_files.append([root, filename])
+    num_files = len(all_files)
+    print "Extracting %d files" % num_files
+    for i, (root, filename) in enumerate(all_files):
+        if i % 10 == 0:
+            print ".",
+            sys.stdout.flush()
+        _extract_doc(root, filename, dest_dir)
+        meta_name = os.path.join(root, filename[:-len('.txt')] + '.meta')
+        metadata[filename] = {
+                'dirname': root,
+                'title': filename,
+                'date': open(meta_name).read()
+            }
     _write_metadata(metadata, metadata_filename)
 
 def _extract_doc(root, filename, dest_dir):

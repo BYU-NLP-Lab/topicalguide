@@ -112,7 +112,6 @@ class Config(dict):
             return value
         except TypeError:
             return value
-#
     def default(self, key, value):
         if key not in self: self[key] = value
 

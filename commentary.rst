@@ -127,6 +127,15 @@ Empty Chairs at Empty Tables
 - wordtypemetainfo/value
 - wordtypemetric/value
 
+To Execute Everything Stepwise, do:
+
+- extract_data
+- mallet
+- dataset_import
+- analysis_import
+- metrics
+- graphs
+
 
 Now we get to the task definitions!
 
@@ -136,7 +145,8 @@ IMPORT THINGS
 
     - make a json file 'metadata.documents' with all of the filenames in files.dir
 
-    task_metadata_import [these rely on functions from import_scripts.metadata]
+    task_metadata_import --> depends "analysis_import" and "dataset_import"
+    [these rely on functions from import_scripts.metadata]
 
     - for each datasets, documents, word_types, word_tokens
 
@@ -149,7 +159,7 @@ IMPORT THINGS
 
 MALLET
 
-    task_mallet_input
+    task_mallet_input --> depends "extract data"
 
     - this takes all of the files and puts them into a single file...why?
 
@@ -210,6 +220,10 @@ METRICS
     task_pairwise_document_metrics
 
     - generate tasks for c['pairwise_document_metrics']
+
+    task_metrics
+
+    - aggregator for many
 
 JAVA STUFF
 
