@@ -31,6 +31,7 @@ c['dataset_name'] = 'language_log'
 c['dataset_readable_name'] = 'Language Log'
 c['suppress_default_document_metadata_task'] = True
 c['raw_data_base_dir'] = '/local/jared/raw-data'
+c['pairwise_document_metrics'] = [] # far too many documents
 
 def task_extract_data():
     dest_dir = c['files_dir']
