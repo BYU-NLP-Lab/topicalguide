@@ -27,6 +27,7 @@ import re
 from topic_modeling.visualize.models import WordToken, WordType
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
+from topic_modeling.tools import TimeLongThing
 
 from django.db import connection, transaction
 
@@ -92,15 +93,19 @@ def _load_documents(dataset, token_regex):
         for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
             for filename in filenames:
                 all_files.append([dirpath, filename])
+        timer = TimeLongThing(len(all_files))
         for i, (dirpath, filename) in enumerate(all_files):
             full_filename = '%s/%s' % (dirpath, filename)
             doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
+            timer.inc()
+            '''
             if i % 10 == 0:
                 print>>sys.stderr, ".",
                 sys.stderr.flush()
             if i % 100 == 0:
                 print >> sys.stderr, "%d%% done (%d of %d)" % (i*100//len(all_files),
                         i, len(all_files))
+            '''
 
             with open(full_filename) as r:
                 content = r.read()
