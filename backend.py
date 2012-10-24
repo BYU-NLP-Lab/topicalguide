@@ -99,7 +99,8 @@ if __name__ == "__main__":
     db_name = os.path.join(DB_BASE, "{0}.db".format(build.replace('/','_')))
 
     args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
-    sys.exit(cmd_main(args))
+    res = cmd_main(args)
+    sys.exit(res)
 
 class Config(dict):
     overrides = {}
@@ -570,10 +571,21 @@ if 'task_dataset_import' not in locals():
                 return False
 
         def remove_dataset():
-            print "remove_dataset(%s)" % c['dataset_name']
+            ## !!! This still doesn't work properly...
+            raise NotImplementedError('This needs to be fixed')
+            print>>sys.stderr, "remove_dataset(%s)" % c['dataset_name']
             try:
-                dataset().delete()
+                dataset_ = dataset()
+                for document in Document.objects.filter(dataset=dataset_):
+                    WordToken.objects.raw('DELETE from visualize_wordtoken WHERE document_id=%d'
+                            % document.id)
+                    document.delete()
+                # WordType.objects.filter(document__dataset=dataset_).delete()
+                # Document.objects.filter(dataset=dataset_).delete()
+                print>>sys.stderr, "dataset", [dataset_]
+                dataset_.delete()
             except Dataset.DoesNotExist:
+                print>>sys.stderr, "Dataset not found"
                 pass
 
         # TODO(matt): clean up and possibly rename dataset_import.py and
@@ -582,8 +594,9 @@ if 'task_dataset_import' not in locals():
         task = dict()
         task['actions'] = [(import_dataset, [c['dataset_name'], c['dataset_readable_name'], c['dataset_description'], c['metadata_filenames'], c['dataset_dir'], c['files_dir'], c['token_regex']])]
         task['file_dep'] = [c['metadata_filenames']['documents']]
-        task['clean'] = [(remove_dataset, [])]
+        task['clean'] = [remove_dataset]
         task['uptodate'] = [utd]
+        # remove_dataset()
         return task
 
 ## and now this is working too!
