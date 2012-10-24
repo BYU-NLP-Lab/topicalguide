@@ -36,6 +36,8 @@ from topic_modeling.visualize.models import Analysis, Dataset
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetricValue
 
+from topic_modeling.tools import TimeLongThing
+
 metric_name = "Topic Correlation"
 
 # @transaction.commit_manually
