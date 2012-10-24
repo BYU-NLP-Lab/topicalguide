@@ -33,6 +33,7 @@ from topic_modeling.visualize.models import Analysis, Dataset
 from import_scripts.metadata import Metadata
 from topic_modeling import settings
 from topic_modeling.visualize.models import Document
+from topic_modeling.tools import TimeLongThing
 
 def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, metadata_filenames, token_regex):
@@ -104,7 +105,7 @@ class TokenNotFound(Exception):
 _search_range = lambda tokens, start_idx, limit: (start_idx,min(start_idx+limit,len(tokens)))  
 def _search_window(tokens, start_idx, limit):
     range_ = _search_range(tokens, start_idx, limit)
-    return tokens[range_[0]:range[1]]
+    return tokens[range_[0]:range_[1]]
 
 def _find_token(word_type, tokens, start_idx):
     range_ = _search_range(tokens, start_idx, WINDOW_SIZE)
@@ -112,6 +113,7 @@ def _find_token(word_type, tokens, start_idx):
         token = tokens[token_idx]
         if token.type.type == word_type:
             return token_idx + 1, token
+    print>>sys.stderr, word_type, len(tokens), start_idx, WINDOW_SIZE
     
     raise TokenNotFound(word_type, tokens, start_idx, WINDOW_SIZE)
 
@@ -121,9 +123,12 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
     prev_docpath = None
     topics = {}
     
-    for i, (docpath, topic_num, word) in enumerate(_state_file_iterator(state_file, analysis.dataset.files_dir)):
+    iterator = _state_file_iterator(state_file, analysis.dataset.files_dir)
+    timer = TimeLongThing(iterator.next(), minor=500, major=10000)
+    for i, (docpath, topic_num, word) in enumerate(iterator):
+        timer.inc()
         if prev_docpath is None or prev_docpath != docpath:
-            print >>sys.stderr, '\nImporting %s...' % docpath,
+            # print >>sys.stderr, '\nImporting %s...' % docpath,
             
             try:
                 filename = os.path.basename(docpath)
@@ -144,15 +149,19 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
             topic, _topic_created = analysis.topics.get_or_create(number=topic_num)
             topics[topic_num] = topic
         
-        next_token_idx, token = _find_token(word, tokens, next_token_idx)
+        try: # HACK!!
+            next_token_idx, token = _find_token(word, tokens, next_token_idx)
+        except TokenNotFound as e:
+            continue
 
         token.topics.add(topic)
-        if i % 100 == 0: sys.stdout.write('.')
 
 '''Just parse the text and yield it as a tuple per line'''
 def _state_file_iterator(state_file, files_dir):
     with codecs.open(state_file, 'r', 'utf-8') as r:
-        for _count, line in enumerate(r):
+        lines = list(r)
+        yield len(lines)
+        for _count, line in enumerate(lines):
             line = line.rstrip()
             if line[0] != "#":
 #                print line
