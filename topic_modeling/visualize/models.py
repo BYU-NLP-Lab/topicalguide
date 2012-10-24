@@ -50,6 +50,7 @@ class Describable(models.Model):
     class Meta:
         abstract = True
 
+from django.db.backends.sqlite3.base import DatabaseError
 class Dataset(Describable):
     dataset_dir = models.CharField(max_length=128, db_index=True)
     files_dir = models.CharField(max_length=128, db_index=True)
@@ -59,6 +60,7 @@ class Dataset(Describable):
         return self.name
     
     def delete(self, *args, **kwargs):
+        '''
         for analysis in self.analyses.all():
             print "\tremove analysis " + str(analysis)
             analysis.delete()
@@ -66,8 +68,20 @@ class Dataset(Describable):
         for doc in self.documents.all():
             print "\tremove doc " + str(doc)
             doc.delete()
+            '''
         
+        import sys
         super(Dataset, self).delete(*args, **kwargs)
+        '''
+        except DatabaseError as e:
+            ## dumb sql - can't have more than 1000 items in a query
+            print >> sys.stderr, "Argh", e
+            pass
+            pass
+        except Exception as e:
+            print >> sys.stderr, e
+            pass
+            '''
 
 
 LEFT_CONTEXT_SIZE = 40
