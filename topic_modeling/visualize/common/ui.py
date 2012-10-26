@@ -285,7 +285,7 @@ class Widget(object):
         
         self.context = context if context else Context()
         self.context['widget'] = self
-        
+
     
     def __unicode__(self):
         return self.render(None)
