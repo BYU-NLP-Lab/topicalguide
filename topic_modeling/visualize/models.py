@@ -94,12 +94,6 @@ class Document(models.Model):
     def __unicode__(self):
         return unicode(self.filename)
 
-#    def get_markup(self, analysis):
-#        markup_file = MarkupFile.objects.get(document=self, analysis=analysis)
-#        markup = deserialize(open(self.dataset.dataset_dir + '/' +
-#                markup_file.path).read())
-#        return markup
-
     def raw_text(self):
         '''Get the document's raw text from the ... what?'''
 
@@ -129,51 +123,10 @@ class Document(models.Model):
 
         return left_context, token.type.type, right_context
 
-        '''
-        text = self.raw_text()
-        ## so...
-        markup = self.get_markup(analysis)
-        indices = []
-        for i, word in enumerate(markup):
-            if word['word'] == word_to_find:
-                if not topic or word['topic'] == topic:
-                    indices.append(i)
-        word_index = random.choice(indices)
-        word_to_use = markup[word_index]
-        text = open(self.dataset.files_dir + '/' +
-                self.filename).read().decode('utf-8', 'replace')
-        text = text.replace(u'\uFFFD', ' ')
-        raw_word = text[word_to_use['start']:word_to_use['start']+len(word_to_find)]
-        
-        #Right Context
-        right_start_position = word_to_use['start'] + len(word_to_find)
-        right_end_position = right_start_position
-        for word in markup[word_index+1:]:
-            new_position = word['start'] + len(word['word'])
-            length = new_position - right_start_position
-            if length > RIGHT_CONTEXT_SIZE:
-                break
-            right_end_position = new_position
-        right_context = text[right_start_position:right_end_position]
-        
-        #Left Context
-        left_start_position = word_to_use['start']
-        left_end_position = left_start_position
-        for word in reversed(markup[:word_index]):
-            new_position = word['start']
-            length = left_start_position - new_position
-            if length > LEFT_CONTEXT_SIZE:
-                break
-            left_end_position = new_position
-        left_context = text[left_end_position:left_start_position]
-        
-        return left_context, raw_word, right_context
-        '''
-
     before_text = '<span style="color: blue;">'
     after_text = '</span>'
+
     def get_highlighted_text(self, topics, analysis):
-#        return ''
         parts = list()
         highlight_me = self.tokens.filter(topics__in=topics).all()
         
@@ -185,22 +138,6 @@ class Document(models.Model):
             if highlight:
                 parts.append(self.after_text)
         return ' '.join(parts)
-#        markup = self.get_markup(analysis)
-#        indices = []
-#        for i, word in enumerate(markup):
-#            if word['topic'] in topics:
-#                indices.append(i)
-#        text = open(self.dataset.files_dir + '/' +
-#                self.filename).read().decode('utf-8')
-#        
-#        numchars = len(before_text) + len(after_text)
-#        for i, index in enumerate(indices):
-#            start_index = markup[index]['start'] + i * numchars
-#            end_index = start_index + len(markup[index]['word'])
-#            word = text[start_index:end_index]
-#            text = text[:start_index] + before_text + word + after_text + \
-#                    text[end_index:]
-#        return text
 
     def text(self, kwic=None):
         text = open(self.dataset.files_dir + "/" +
@@ -214,13 +151,8 @@ class Document(models.Model):
                         text[end_context:]
 
         text = unicode(text)
-        text = text.replace(' ;', ';')
-        text = text.replace(' .', '.')
-        text = text.replace(' ,', ',')
-        text = text.replace(' )', ')')
-        text = text.replace('( ', '(')
-        text = text.replace(' !', '!')
-        text = text.replace(' :', ':')
+        for item in (' ;', ' .', ' ,', ' )', '( ', ' !', ' :'):
+            text = text.replace(item, item.strip())
 
         text = text.splitlines()
         text = [line for line in text if line]
