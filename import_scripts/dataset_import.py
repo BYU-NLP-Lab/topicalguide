@@ -27,7 +27,7 @@ import re
 from topic_modeling.visualize.models import WordToken, WordType
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
-from topic_modeling.tools import TimeLongThing
+from topic_modeling.tools import TimeLongThing, logger
 
 from django.db import connection, transaction
 
@@ -35,8 +35,10 @@ from datetime import datetime
 from topic_modeling import settings
 
 def import_dataset(name, readable_name, description, metadata_filenames,
-                   dataset_dir, files_dir, token_regex):
+                   dataset_dir, files_dir, token_regex, dont_overwrite=False):
     '''Import the dataset into the Database
+
+    !! This will overwrite existing datasets unless dont_overwrite is True
 
     1) create a Dataset object
     2) create WorkType objects for each unique word in the entire directory
@@ -67,7 +69,7 @@ def import_dataset(name, readable_name, description, metadata_filenames,
         cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
 
     dataset, created = _create_dataset(name, readable_name, description, dataset_dir, files_dir)
-    if created:
+    if not dont_overwrite or created:
         _load_documents(dataset, token_regex)
 
         if settings.database_type()=='sqlite3':
@@ -78,6 +80,8 @@ def import_dataset(name, readable_name, description, metadata_filenames,
         print >> sys.stderr, 'Finishing time:', end_time
         print >> sys.stderr, 'It took', end_time - start_time,
         print >> sys.stderr, 'to import the dataset'
+    else:
+        print >> sys.stderr, 'Skipping', name, readable_name
 
 def _create_documents(files_dir):
     pass
@@ -91,21 +95,15 @@ def _load_documents(dataset, token_regex):
     try:
         all_files = []
         for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
+            relname = os.path.relpath(dirpath, dataset.files_dir)
             for filename in filenames:
-                all_files.append([dirpath, filename])
+                all_files.append([dataset.files_dir, os.path.join(relname, filename)])
+
         timer = TimeLongThing(len(all_files))
         for i, (dirpath, filename) in enumerate(all_files):
             full_filename = '%s/%s' % (dirpath, filename)
             doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
             timer.inc()
-            '''
-            if i % 10 == 0:
-                print>>sys.stderr, ".",
-                sys.stderr.flush()
-            if i % 100 == 0:
-                print >> sys.stderr, "%d%% done (%d of %d)" % (i*100//len(all_files),
-                        i, len(all_files))
-            '''
 
             with open(full_filename) as r:
                 content = r.read()
