@@ -27,7 +27,7 @@ import re
 from topic_modeling.visualize.models import WordToken, WordType
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
-from topic_modeling.tools import TimeLongThing, logger
+from topic_modeling.tools import TimeLongThing
 
 from django.db import connection, transaction
 
