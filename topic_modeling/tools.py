@@ -2,17 +2,14 @@
 import datetime
 import sys
 import logging
+import json
 
-def create_main_logger():
-    '''setup the default logger'''
-    logger = logging.getLogger('main')
-    sh = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    sh.setFormatter(formatter)
-    sh.setLevel(logging.DEBUG)
-    logger.addHandler(sh)
-
-logger = create_main_logger()
+def setup_logging():
+    '''load the configuration file.'''
+    basedir = os.path.dirname(__file__)
+    text = open(os.path.join(basedir, 'logging.conf')).read()
+    config = json.loads(text)
+    logging.config.dictConfig(config)
 
 def pseconds(seconds):
     '''Format some number of seconds prettily:
@@ -47,15 +44,18 @@ class TimeLongThing:
         self.minor = minor
         self.major = major
         self.target = target
+        self.maxwait = maxwait
         self.start()
 
-    def start(self):
+    def start(self, starttime=None):
         '''Initialize the time counters'''
-        self.starttime = datetime.datetime.now()
+        if starttime is None:
+            starttime = datetime.datetime.now()
+        self.starttime = starttime
         self.lasttime = self.starttime
         self.lastreporttime = self.starttime
 
-    def inc(self, num=1, output=True):
+    def inc(self, num=1, output=True, newtime=None):
         '''Increment the counter by num (default 1).
 
         Pass output=False to suppress the output and
@@ -64,9 +64,10 @@ class TimeLongThing:
         self.done += num
         if not output:
             return
-        newtime = datetime.datetime.now()
+        if newtime is None:
+            newtime = datetime.datetime.now()
         if self.done % self.major == 0:
-            self.target.write(self.output_major(newtime))
+            self.target.write(self.format_major(newtime))
         elif self.done % self.minor == 0:
             print >> self.target, '.',
             self.lastreporttime = newtime

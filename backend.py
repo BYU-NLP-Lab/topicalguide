@@ -78,11 +78,14 @@ from topic_modeling.visualize.models import DocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import TopicNameScheme
 
+from topic_modeling.tools import setup_logging
+setup_logging()
+
 try:
     from topic_modeling.local_settings import TMP_DIR, build
 except ImportError:
     print >> sys.stderr, "Import error looking for local_settings.py."\
-            "Look at local_settings.py.sample for help"
+            "Look at topic_modeling/local_settings.py.sample for help"
     raise
 
 #If this file is invoked directly, pass it in to the doit system for processing.
