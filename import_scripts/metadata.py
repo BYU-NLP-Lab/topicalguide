@@ -10,10 +10,15 @@ from topic_modeling.visualize.models import DatasetMetaInfo,\
     AnalysisMetaInfo, AnalysisMetaInfoValue, TopicMetaInfo, TopicMetaInfoValue, WordType,\
     WordTypeMetaInfo, WordTypeMetaInfoValue, WordTokenMetaInfoValue, WordTokenMetaInfo
 
+from topic_modeling.tools import TimeLongThing
+import logging
+
+logger = logging.getLogger('console')
+
 datetime_format = "%Y-%m-%dT%H:%M:%S"
 
 def import_dataset_metadata(dataset, dataset_metadata):
-    print >> sys.stderr, 'Importing dataset metadata...  ',
+    logger.info('Importing dataset metadata...  ')
     sys.stdout.flush()
     start = datetime.now()
 
@@ -23,10 +28,10 @@ def import_dataset_metadata(dataset, dataset_metadata):
         miv.set(value)
         miv.save()
     end = datetime.now()
-    print >> sys.stderr, '  Done', end - start
+    logger.info(' Done %s' % end - start)
 
 def import_document_metadata(dataset, document_metadata):
-    print >> sys.stderr, 'Importing document metadata...  ',
+    logger.info('Importing document metadata...  ')
     sys.stdout.flush()
     start = datetime.now()
 
@@ -38,10 +43,10 @@ def import_document_metadata(dataset, document_metadata):
             miv.set(value)
             miv.save()
     end = datetime.now()
-    print >> sys.stderr, '  Done', end - start
+    logger.info('  Done %s' % end - start)
 
 def import_word_type_metadata(dataset, word_type_metadata):
-    print >> sys.stderr, 'Importing word type metadata...  ',
+    logger.info('Importing word type metadata...  ')
     sys.stdout.flush()
     start = datetime.now()
 
@@ -53,10 +58,10 @@ def import_word_type_metadata(dataset, word_type_metadata):
             miv.set(value)
             miv.save()
     end = datetime.now()
-    print >> sys.stderr, '  Done', end - start
+    logger.info('  Done %s' % end - start)
 
 def import_word_token_metadata(dataset, word_token_metadata):
-    print >> sys.stderr, 'Importing word token metadata...  ',
+    logger.info('Importing word token metadata...  ')
     sys.stdout.flush()
     start = datetime.now()
 
@@ -68,10 +73,10 @@ def import_word_token_metadata(dataset, word_token_metadata):
             miv.set(value)
             miv.save()
     end = datetime.now()
-    print >> sys.stderr, '  Done', end - start
+    logger.info('  Done %s' % end - start)
 
 def import_analysis_metadata(analysis, analysis_metadata):
-    print >> sys.stderr, 'Importing analysis metadata...  ',
+    logger.info('Importing analysis metadata...  ',
     sys.stdout.flush()
     start = datetime.now()
 
@@ -83,10 +88,10 @@ def import_analysis_metadata(analysis, analysis_metadata):
             miv.save()
 
     end = datetime.now()
-    print >> sys.stderr, '  Done', end - start
+    logger.info('  Done %s' % end - start)
 
 def import_topic_metadata(analysis, topic_metadata):
-    print >> sys.stderr, 'Importing topic metadata...  ',
+    logger.info('Importing topic metadata...  ')
     sys.stdout.flush()
     start = datetime.now()
 
@@ -101,7 +106,7 @@ def import_topic_metadata(analysis, topic_metadata):
                 miv.save()
 
     end = datetime.now()
-    print >> sys.stderr, '  Done', end - start
+    logger.info('  Done %s' % end - start)
 
 class MetadataWrapper(dict):
     def __init__(self, types, copy=None):
