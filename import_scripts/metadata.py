@@ -28,7 +28,7 @@ def import_dataset_metadata(dataset, dataset_metadata):
         miv.set(value)
         miv.save()
     end = datetime.now()
-    logger.info(' Done %s' % end - start)
+    logger.info(' Done %s' % (end - start))
 
 def import_document_metadata(dataset, document_metadata):
     logger.info('Importing document metadata...  ')
@@ -43,7 +43,7 @@ def import_document_metadata(dataset, document_metadata):
             miv.set(value)
             miv.save()
     end = datetime.now()
-    logger.info('  Done %s' % end - start)
+    logger.info('  Done %s' % (end - start))
 
 def import_word_type_metadata(dataset, word_type_metadata):
     logger.info('Importing word type metadata...  ')
@@ -58,7 +58,7 @@ def import_word_type_metadata(dataset, word_type_metadata):
             miv.set(value)
             miv.save()
     end = datetime.now()
-    logger.info('  Done %s' % end - start)
+    logger.info('  Done %s' % (end - start))
 
 def import_word_token_metadata(dataset, word_token_metadata):
     logger.info('Importing word token metadata...  ')
@@ -73,10 +73,10 @@ def import_word_token_metadata(dataset, word_token_metadata):
             miv.set(value)
             miv.save()
     end = datetime.now()
-    logger.info('  Done %s' % end - start)
+    logger.info('  Done %s' % (end - start))
 
 def import_analysis_metadata(analysis, analysis_metadata):
-    logger.info('Importing analysis metadata...  ',
+    logger.info('Importing analysis metadata...  ')
     sys.stdout.flush()
     start = datetime.now()
 
@@ -88,7 +88,7 @@ def import_analysis_metadata(analysis, analysis_metadata):
             miv.save()
 
     end = datetime.now()
-    logger.info('  Done %s' % end - start)
+    logger.info('  Done %s' % (end - start))
 
 def import_topic_metadata(analysis, topic_metadata):
     logger.info('Importing topic metadata...  ')
@@ -106,7 +106,7 @@ def import_topic_metadata(analysis, topic_metadata):
                 miv.save()
 
     end = datetime.now()
-    logger.info('  Done %s' % end - start)
+    logger.info('  Done %s' % (end - start))
 
 class MetadataWrapper(dict):
     def __init__(self, types, copy=None):
