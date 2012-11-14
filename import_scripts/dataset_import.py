@@ -117,6 +117,8 @@ def _load_documents(dataset, token_regex):
                     word_type, type_created = WordType.objects.get_or_create(type=token_lc)
                     if type_created: transaction.commit()
                     word_types[token_lc] = word_type
+                if not word_type:
+                    raise Exception("somehow failed to make a word type: %s %s %s %s" % (token_lc, token, word_type, str(word_types)[:100]))
                 WordToken.objects.create(type=word_type, document=doc,
                         token_index=position, start=match.start())
             del content
@@ -129,12 +131,15 @@ def _types(files_dir, token_regex):
     print >> sys.stderr, 'Ensuring word types...  ',
     type_objs = dict((wtype.type, wtype) for wtype in WordType.objects.all())
 
-    types_in_dataset = set(wtype for _filename, _token_idx, wtype in _token_iterator(files_dir, token_regex))
-    types_to_create = types_in_dataset.difference(type_objs.keys())
+    types_in_dataset = set(wtype for _filename, _token_idx, wtype
+            in _token_iterator(files_dir, token_regex))
 
-    types_dict = type_objs.fromkeys(types_in_dataset)
-    for wtype in types_to_create:
-        types_dict[wtype] = WordType.objects.create(type=wtype)
+    types_dict = {}
+    for wtype in types_in_dataset:
+        if wtype in type_objs:
+            types_dict[wtype] = type_objs[wtype]
+        else:
+            types_dict[wtype] = WordType.objects.create(type=wtype)
 
     return types_dict
 
