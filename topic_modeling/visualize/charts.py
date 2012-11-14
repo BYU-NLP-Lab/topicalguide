@@ -43,6 +43,8 @@ import matplotlib
 matplotlib.use("Cairo")
 import pylab
 
+from topic_modeling.tools import BackendError
+
 # General python imports
 
 # Django imports
@@ -170,6 +172,9 @@ class TopicAttributePlotForm(forms.Form):
         attributes = DatasetMetaInfo.objects.filter(values__dataset=dataset).distinct()
         # attributes = list(value.info_type for value in dataset.metainfovalues.all())
         # attributes = dataset.attribute_set.all()
+        if not attributes:
+            raise BackendError('No DatasetMetaInfo objects found for '
+                    'the current dataset: %s' % dataset)
         self.fields['attribute'] = forms.ModelChoiceField(attributes,
                 initial=attributes[0], widget=forms.Select())
         self.fields['attribute'].widget.attrs['onchange'] = \

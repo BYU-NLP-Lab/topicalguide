@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 import datetime
 import sys
+import os
 import logging
 import json
+
+class BackendError(Exception):
+    '''A signal that the backend import messed up'''
 
 def setup_logging():
     '''load the configuration file.'''
