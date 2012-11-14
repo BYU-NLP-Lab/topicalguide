@@ -298,7 +298,12 @@ class Topic(models.Model):
 #    words = models.ManyToManyField(Word, through='TopicWord')
 
     def __unicode__(self):
-        return '%d: %s' % (self.number, 'No Name')
+        names = TopicName.objects.filter(topic=self)
+        if names.count():
+            name = names[0].name
+        else:
+            name = ' -- '
+        return '%d: %s' % (self.number, name)
 
 #    class Meta:
 #        ordering = ['name']

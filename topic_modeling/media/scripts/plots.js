@@ -16,17 +16,23 @@ function highlight_all_topic_attribute_values(refresh) {
 }
 
 function update_topic_attribute_plot() {
-	var url_base = "/feeds/topic-attribute-plot/";
-	attribute = $("select#id_attribute").val();
-	url_base += 'attributes/' + attribute + '/';
-	// Now get selected values and make a list of them
-	var selected = $("select#id_values").val();
-	selected = selected.sort(numerical_sort_function);
-	url_base += "values/" + selected[0];
-	for ( var i = 1; i < selected.length; i++) {
-		url_base += "." + selected[i];
-	}
-	url_base += "/topics";
+    var url_base = "/feeds/topic-attribute-plot";
+    attribute = $("select#id_attribute").val();
+    url_base += '/attributes/';
+    if (attribute) {
+        url_base +=  attribute;
+    }
+    // Now get selected values and make a list of them
+    var selected = $("select#id_values").val();
+    url_base += '/values/';
+    if (selected) {
+        selected = selected.sort(numerical_sort_function);
+        url_base += selected[0];
+        for ( var i = 1; i < selected.length; i++) {
+            url_base += "." + selected[i];
+        }
+    }
+    url_base += "/topics";
 
 	// Now get selected topics and make a list of them
 	var selected = $("select#id_topics").val()
