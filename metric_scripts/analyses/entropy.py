@@ -23,17 +23,25 @@
 from math import log
 from topic_modeling.visualize.models import AnalysisMetric, AnalysisMetricValue
 
+import logging
+logger = logging.getLogger('console')
+
 def add_metric(analysis):
     metric, _ = AnalysisMetric.objects.get_or_create(name="Topic Entropy")
+    logger.info('starting analysis entropy metric')
 
     # Get normalized topic counts
     counts = [topic.tokens.count() for topic in analysis.topics.all()]
     total = float(sum(counts))
 
+    logger.info('got counts')
+
     entropy = 0.0
     for count in counts:
         prob = float(count) / total
         entropy -= prob * log(prob) / log(2)
+    
+    logger.info('Now saving')
 
     try:
         mv = metric.values.get(analysis=analysis)
@@ -44,3 +52,4 @@ def add_metric(analysis):
 
 def metric_names_generated(_analysis):
     return ["Topic Entropy"]
+
