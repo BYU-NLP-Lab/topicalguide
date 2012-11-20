@@ -30,29 +30,29 @@ from topic_modeling.visualize.common.views import AnalysisBaseView
 
 class PlotView(AnalysisBaseView):
     template_name = "plots.html"
-    
+
     def get_context_data(self, request, **kwargs):
         context = super(PlotView, self).get_context_data(request, **kwargs)
-        
+
         dataset = context['dataset']
         analysis = context['analysis']
-        
-        
+
+
         plots = plot_types.keys()
         plots.sort(key=lambda x: plot_types[x][1])
         plot = kwargs['plot'] if 'plot' in kwargs else plots[0]
-        
+
         context['view_description'] = "Plots"
         context['highlight'] = 'plots_tab'
         context['tab'] = 'plot'
         context['plot'] = plot
-    
+
         context['breadcrumb'] = BreadCrumb().item(dataset).item(analysis).plots()
-    
+
         #Dan's broken plots:
         #--Attribute Values plot
     #    attributes = Attribute.objects.filter(dataset=dataset)
-    #    
+    #
     #    topics = [analysis.topics.all()[0]]
     #    attribute = attributes[0]
     #    values = attributes[0].value_set.all()
@@ -66,22 +66,22 @@ class PlotView(AnalysisBaseView):
     #                  (str(attribute), str(value)) for value in values]
     #    attr_names = [value.value for value in values]
     #    context['attr_links'] = zip(attr_links, attr_names)
-    
-    
-    
+
+
+
         context['plots'] = plots
         # Needs to be fixed if we ever have lots of kinds of plots
         context['num_pages'] = 1
         context['page_num'] = 1
         context['update_function'] = plot_types[plot][0].update_function
-    
+
         context['curplot'] = plot
-        
+
         plot_forms = list()
         for plot_name,plot_type in sorted(plot_types.items(), key=lambda x: x[1][1]):
             plot_forms += [(plot_name, plot_type[0].form(dataset, analysis))]
         context['plot_forms'] = plot_forms
-    
+
         return context
 
 

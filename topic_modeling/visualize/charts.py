@@ -27,10 +27,10 @@ from django.forms.widgets import Input
 from numpy import arange, zeros
 from scipy import linspace, stats
 from scipy.stats.kde import gaussian_kde
-from topic_modeling.visualize.models import (Analysis, 
+from topic_modeling.visualize.models import (Analysis,
     Dataset, Topic, TopicMetric, #Attribute, AttributeValue, AttributeValueTopic, Value,
-    DatasetMetaInfo, DatasetMetaInfoValue,
-    TopicMetaInfo, TopicMetaInfoValue)
+    DatasetMetaInfo, DatasetMetaInfoValue, DocumentMetaInfo,
+    DocumentMetaInfoValue, TopicMetaInfo, TopicMetaInfoValue, WordToken)
 import StringIO
 import math
 import csv
@@ -169,11 +169,12 @@ class TopicAttributePlotForm(forms.Form):
         self.fields['topics'].widget.attrs['class'] = 'under-label'
 
         #Available attributes
-        attributes = DatasetMetaInfo.objects.filter(values__dataset=dataset).distinct()
+        attributes = DocumentMetaInfo.objects.filter(values__document__dataset=dataset).distinct()
+        # attributes = DatasetMetaInfo.objects.filter(values__dataset=dataset).distinct()
         # attributes = list(value.info_type for value in dataset.metainfovalues.all())
         # attributes = dataset.attribute_set.all()
         if not attributes:
-            raise BackendError('No DatasetMetaInfo objects found for '
+            raise BackendError('No DocumentMetaInfo objects found for '
                     'the current dataset: %s' % dataset)
         self.fields['attribute'] = forms.ModelChoiceField(attributes,
                 initial=attributes[0], widget=forms.Select())
@@ -197,8 +198,9 @@ class TopicAttributePlotForm(forms.Form):
         if attributes:
             attribute = attributes[0]
             values = attribute.values.all()
-            self.fields['values'] = forms.ModelMultipleChoiceField(values,
-                    initial=values)
+            values = set((value.value(), value.value()) for value in values)
+            self.fields['values'] = forms.MultipleChoiceField(values,
+                    initial=tuple(v for l, v in values))
             self.fields['values'].widget.attrs['onchange'] = \
                     'update_topic_attribute_plot()'
             self.fields['values'].widget.attrs['class'] = 'under-label hideable'
@@ -219,31 +221,44 @@ class TopicAttributeChart(object):
         parameters.
         """
         self.chart_parameters = chart_parameters
-        self.attribute = TopicMetaInfo.objects.get(id=chart_parameters['attribute'])
-        value_ids = chart_parameters['value'].split('.')
-        self.values = TopicMetaInfoValue.objects.filter(id__in=value_ids)
+        self.attribute = DocumentMetaInfo.objects.get(id=chart_parameters['attribute'])
+        value_vals = chart_parameters['value'].split('.')
+        val_dict = dict((val, []) for val in value_vals)
+        for val in self.attribute.values.all():
+            # HACK!~
+            raw = str(val.value())
+            if raw in val_dict:
+                val_dict[raw].append(val.document)
+        self.values = tuple(val for val in self.attribute.values.all() if str(val.value())
+                in value_vals)
         topic_ids = chart_parameters['topic'].split('.')
         self.topics = Topic.objects.filter(id__in=topic_ids)
         self.frequency = 'frequency' in chart_parameters
         self.histogram = 'histogram' in chart_parameters
         self.chartdata = defaultdict(list)
-        for value in self.values:
+        '''For each value in the list of potential values for the given
+        document metadata attribute:
+        Go through the topics. Find out the
+        - percentage of (topic + this attribute) / (all topics + this
+          attribute)
+          '''
+        for raw, documents in val_dict.iteritems():
+            '''select topics.id from topics join tokens on tokens.tid =
+            topics.id join documents on documents.id = tokects.did join
+            metainfovalues on metainfovalues.did = documents.id'''
+
             if self.frequency:
-                total_count = 1
+                total_token_count = 1
             else:
-                total_count = TopicMetaInfoValue.objects.filter(
-                        info_type = self.attribute,
-                        **TopicMetaInfoValue.filter_value(value)
-                        )
-                total_count = AttributeValue.objects.get(
-                        attribute=self.attribute, value=value).token_count
-            for topic in self.topics:
-                try:
-                    count = AttributeValueTopic.objects.get(value=value,
-                            attribute=self.attribute, topic=topic).count
-                except AttributeValueTopic.DoesNotExist:
-                    count = 0
-                self.chartdata[topic].append(float(count) / total_count)
+                total_token_count = WordToken.objects.filter(document__in=documents).count()
+
+            if not total_token_count:
+                for topic in self.topics:
+                    self.chartdata[topic].append(0)
+            else:
+                for topic in self.topics:
+                    topic_token_count = WordToken.objects.filter(document__in=documents, topics=topic).count()
+                    self.chartdata[topic].append(float(topic_token_count) / total_token_count)
 
     def get_chart_image(self):
         if self.histogram:
@@ -253,32 +268,32 @@ class TopicAttributeChart(object):
 
     def get_source_data(self):
         return self.get_chart_json()
-    
+
     def get_chart_json(self):
 
         thinned_labels = self.values
         labels = []
         for i in thinned_labels :
-            labels.append(i.value)            
-                            
+            labels.append(i.value())
+
         d = {}
         d['y-data'] = {}
-        for topic in self.chartdata:                    
-            d['y-data'].setdefault(topic.name, []).append(self.chartdata[topic])
-                   
-        d['x-data'] = [labels]              
+        for topic in self.chartdata:
+            d['y-data'].setdefault(str(topic), []).append(self.chartdata[topic])
+
+        d['x-data'] = [labels]
         d['x-axis-label'] = self.attribute.name
-        
+
         if self.frequency:
             d['y-axis-label'] = 'Frequency'
         else:
-            d['y-axis-label'] = 'Percent' 
-        
-        return d         
-        
+            d['y-axis-label'] = 'Percent'
+
+        return d
+
     def get_bar_chart(self):
         """ Creates a Bar chart and writes it as a png, returning the data.
-        
+
         Returns:
             The created png data.
         """
@@ -314,7 +329,7 @@ class TopicAttributeChart(object):
         """
         Creates a Line chart based on the contents of chart_topics and
         chart attribute, writing the output as a png.
-        
+
         """
         fig = pylab.figure()
 

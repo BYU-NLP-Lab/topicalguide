@@ -117,7 +117,7 @@ function get_chart(url, plot_name){
 		// data[key] is the string
 		var linedata = [];
 		legends = [];
-		ticks = data['x-data'].toString().split(',');
+		ticks = data['x-data'][0];
 		
 		$.each(data['y-data'], function(key, val) {
 			legends.push({'label':key});
