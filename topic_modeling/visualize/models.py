@@ -40,13 +40,13 @@ from django.db.models.aggregates import Count
 class Describable(models.Model):
     '''A unique identifier. For URLs.'''
     name = models.SlugField(unique=True)
-    
+
     '''A short, human-readable name'''
     readable_name = models.TextField(max_length=128)
-    
+
     '''A longer, human-readable description'''
     description = models.TextField()
-    
+
     class Meta:
         abstract = True
 
@@ -58,18 +58,18 @@ class Dataset(Describable):
 
     def __unicode__(self):
         return self.name
-    
+
     def delete(self, *args, **kwargs):
         '''
         for analysis in self.analyses.all():
             print "\tremove analysis " + str(analysis)
             analysis.delete()
-        
+
         for doc in self.documents.all():
             print "\tremove doc " + str(doc)
             doc.delete()
             '''
-        
+
         import sys
         super(Dataset, self).delete(*args, **kwargs)
         '''
@@ -129,7 +129,7 @@ class Document(models.Model):
     def get_highlighted_text(self, topics, analysis):
         parts = list()
         highlight_me = self.tokens.filter(topics__in=topics).all()
-        
+
         for token in self.tokens.all():
             highlight = token in highlight_me
             if highlight:
@@ -189,7 +189,7 @@ class Document(models.Model):
             return beg_context, end_context
         else:
             return - 1, -1
-    
+
     def get_title(self):
         try:
             return self.metainfovalues.get(info_type__name='title').value
@@ -215,11 +215,11 @@ class WordToken(models.Model):
     token_index = models.IntegerField()
     start = models.IntegerField()
 
-    
+
 #    '''The form of this type instance. If null, it defers to type.value'''
 #    token = models.CharField(max_length=128, db_index=True, null=True)
     topics = models.ManyToManyField('Topic', related_name='tokens')
-    
+
     def __unicode__(self):
         return '[%s,%s]' % (self.type.type, self.token_index)
 
@@ -273,12 +273,12 @@ class Analysis(models.Model):
 
     def __unicode__(self):
         return self.name
-    
+
     def delete(self, *args, **kwargs):
         for topic in self.topics.all():
             print "\tremove topic " + str(topic)
             topic.delete()
-        
+
         super(Analysis, self).delete(*args, **kwargs)
 
 
@@ -307,16 +307,16 @@ class Topic(models.Model):
 
 #    class Meta:
 #        ordering = ['name']
-    
+
     def total_count(self):
         return self.tokens.count()
-    
+
     def topic_word_counts(self, sort=False):
         topicwords = self.tokens.values('type__type').annotate(count=Count('type__type'))
         if sort:
             topicwords = topicwords.order_by('-count')
         return topicwords
-    
+
     def topic_document_counts(self, sort=False):
         topicdocs = self.tokens.values('document__id', 'document__filename').annotate(count=Count('document__id'))
         if sort:
@@ -467,7 +467,7 @@ class MetaInfo(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
         abstract = True
 
@@ -479,10 +479,10 @@ class MetaInfoValue(models.Model):
     int_value = models.IntegerField(null=True)
     text_value = models.TextField(null=True)
     datetime_value = models.DateTimeField(null=True)
-    
+
     class Meta:
         abstract = True
-    
+
     def set(self, value):
         if isinstance(value, float):
             self.float_value = value
@@ -501,7 +501,7 @@ class MetaInfoValue(models.Model):
 
     def __str__(self):
         return str(self.value())
-    
+
     def value(self):
         result = None
         if self.float_value:
@@ -519,7 +519,7 @@ class MetaInfoValue(models.Model):
             if result: raise Exception("MetaInfoValues cannot be of more than one type.")
             result = self.datetime_value
         return result
-    
+
     #TODO Store the data type as a field in the MetaInfo class
     def type(self):
         type = None
@@ -566,7 +566,7 @@ class DocumentMetaInfo(MetaInfo):
 class DocumentMetaInfoValue(MetaInfoValue):
     info_type = models.ForeignKey(DocumentMetaInfo, related_name='values')
     document = models.ForeignKey(Document, related_name='metainfovalues')
-    
+
     def __unicode__(self):
         return '[%s(%s)=%s]' % (self.info_type.name, self.document.filename, self.value())
 
@@ -589,10 +589,10 @@ class WordTokenMetaInfoValue(MetaInfoValue):
 class Favorite(models.Model):
     session_key = models.CharField(max_length=40, db_index=True)
     timestamp = models.DateTimeField(default=datetime.now)
-    
+
     class Meta:
         abstract = True
-    
+
 class DatasetFavorite(Favorite):
     dataset = models.ForeignKey(Dataset)
 
@@ -608,13 +608,13 @@ class DocumentFavorite(Favorite):
 class ViewFavorite(Favorite):
     '''A unique identifier. For URLs.'''
     favid = models.SlugField(primary_key=True)
-    
+
     '''A short, human-readable name'''
     name = models.TextField(max_length=128)
-    
+
     '''Serialization of the filter set'''
     filters = models.TextField()
-    
+
     class Meta:
         abstract = True
 
@@ -625,7 +625,7 @@ class TopicViewFavorite(ViewFavorite):
 class DocumentViewFavorite(ViewFavorite):
     '''The document we'll be viewing'''
     document = models.ForeignKey(Document)
-    
+
     '''And the analysis we're using'''
     analysis = models.ForeignKey(Analysis)
 
