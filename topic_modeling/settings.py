@@ -50,6 +50,7 @@ SQLITE_CONFIG = {
     'ENGINE': 'django.db.backends.sqlite3',
     'NAME': DB_FILE
 }
+
 MYSQL_CONFIG = {
     'ENGINE': 'django.db.backends.mysql',
     'USER': 'topicalguide',
@@ -116,6 +117,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 ROOT_URLCONF = 'topic_modeling.urls'
@@ -132,7 +134,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
 #    'django.contrib.sites',
     'django_extensions',
+    'debug_toolbar',
 )
+
+INTERNAL_IPS = '127.0.0.1',
 
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
