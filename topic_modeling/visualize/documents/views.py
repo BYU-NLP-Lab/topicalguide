@@ -105,9 +105,11 @@ def text_tab(document):
 def plain_text_widget(document):
     w = Widget("Text", "documents/document_text")
     w['title'] = document.get_title()
-    w['document_text'] = document.text()
+    try:
+        w['document_text'] = document.text()
+    except IOError:
+        w['document_text'] = '[ error - file not found ]'
     return w
-
 
 # Extra Information Widgets
 ###########################
@@ -125,10 +127,11 @@ def metrics_widget(document):
     return w
 
 def metadata_widget(document):
-    w = Widget('Metadata', 'documents/metadata_backcompat')
-    #FIXME
+    w = Widget('Metadata ars Cool', 'documents/metadata_backcompat')
+    # FIXME
 #    w['docattrval_mgr'] = document.attributevaluedocument_set
-    w['metadataval_mgr'] = document.metainfovalues
+    w['metainfovalues'] = document.metainfovalues.all()
+    w['metainfos'] = document.metainfovalues.count()
     return w
 
 def top_topics_widget(analysis, document):
