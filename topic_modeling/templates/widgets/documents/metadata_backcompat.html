@@ -26,26 +26,21 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {# A version of the metadata widget that also incorporates any old-style document attributes #}
 
 {% block widget %}
-{% if metadataval_mgr.count > 0 or docattrval_mgr.count > 0 %}
+{% if metainfovalues %}
     <table class="ui-widget">
         <thead>
             <tr class="ui-widget-header">
                 <th class="key">Key</th>
                 <th class="value">Value</th>
-                <th class="type">Type</th></tr>
-        <tbody class="ui-widget-content">
-        {% for docattrval in docattrval_mgr.all %}
-            <tr>
-                <td class="key">{{docattrval.attribute.name}}</td>
-                <td class="value">{{docattrval.value.value}}</td>
-                <td class="type">text</td>
+                <th class="type">Type</th>
             </tr>
-        {% endfor %}
-        {% for metadatavalue in metainfoval_mgr.all %}
+        </thead>
+        <tbody class="ui-widget-content">
+        {% for value in metainfovalues %}
             <tr>
-                <td class="key">{{metadatavalue.info_type.name}}</td>
-                <td class="value">{{metadatavalue.value}}</td>
-                <td class="type">{{metadatavalue.type}}</td>
+                <td class="key">{{ value.info_type.name }}</td>
+                <td class="value">{{ value.value }}</td>
+                <td class="type">{{ value.type }}</td>
             </tr>
         {% endfor %}
         </tbody>
