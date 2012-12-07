@@ -146,16 +146,20 @@ class TestTopics(PageTest):
 
         url = SOU
 
+        @xfail
         def test_attribute(self):
             ## create an attribute filter and expect it to work
             raise NotImplemented
 
+        @xfail
         def test_metric(self):
             raise NotImplemented
 
+        @xfail
         def test_word(self):
             raise NotImplemented
 
+        @xfail
         def test_document(self):
             raise NotImplemented
 
@@ -163,21 +167,27 @@ class TestTopics(PageTest):
 
         url = SOU
 
+        @xfail
         def test_name(self):
             raise NotImplemented
         
+        @xfail
         def test_number(self):
             raise NotImplemented
 
+        @xfail
         def test_word_entropy(self):
             raise NotImplemented
 
+        @xfail
         def test_document_entropy(self):
             raise NotImplemented
 
+        @xfail
         def test_num_tokens(self):
             raise NotImplemented
 
+        @xfail
         def test_num_types(self):
             raise NotImplemented
 
@@ -188,6 +198,7 @@ class TestTopics(PageTest):
         assert len(words), 'Word Cloud'
         assert words[0].text, 'Word Cloud text'
 
+    @xfail
     def test_word_cloud_click(self):
         '''Clicking a word should take us to the word page'''
         word = driver.findall('#widget-word_cloud div.ui-widget-content a')[0]
@@ -206,6 +217,7 @@ class TestTopics(PageTest):
 
         # TODO test the filters
 
+    @xfail
     def test_wic_click(self):
         '''Click a word in WIC should take you to the words page'''
         wic = driver.find('#widget-words_in_context')
