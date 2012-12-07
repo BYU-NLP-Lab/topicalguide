@@ -142,12 +142,58 @@ class TestTopics(PageTest):
         assert len(topics), 'Topic List'
         assert topics[0].find('a').text, 'Topic Name'
 
+    class TestTopicFilters(PageTest):
+
+        url = SOU
+
+        def test_attribute(self):
+            ## create an attribute filter and expect it to work
+            raise NotImplemented
+
+        def test_metric(self):
+            raise NotImplemented
+
+        def test_word(self):
+            raise NotImplemented
+
+        def test_document(self):
+            raise NotImplemented
+
+    class TestTopicSort(PageTest):
+
+        url = SOU
+
+        def test_name(self):
+            raise NotImplemented
+        
+        def test_number(self):
+            raise NotImplemented
+
+        def test_word_entropy(self):
+            raise NotImplemented
+
+        def test_document_entropy(self):
+            raise NotImplemented
+
+        def test_num_tokens(self):
+            raise NotImplemented
+
+        def test_num_types(self):
+            raise NotImplemented
+
     def test_word_cloud(self):
         '''The word cloud should be populated'''
         # Word Cloud
         words = driver.findall('#widget-word_cloud div.ui-widget-content a')
         assert len(words), 'Word Cloud'
         assert words[0].text, 'Word Cloud text'
+
+    def test_word_cloud_click(self):
+        '''Clicking a word should take us to the word page'''
+        word = driver.findall('#widget-word_cloud div.ui-widget-content a')[0]
+        word.click()
+        assert driver.href == 'FAIL : fix this'
+        raise NotImplemented
 
     def test_words_in_context(self):
         '''The words_in_context should be loaded'''
@@ -159,6 +205,27 @@ class TestTopics(PageTest):
         assert row.get_attribute('word') == row.find('td.word a').text
 
         # TODO test the filters
+
+    def test_wic_click(self):
+        '''Click a word in WIC should take you to the words page'''
+        wic = driver.find('#widget-words_in_context')
+        rows = wic.findall('tbody tr')
+        assert len(rows) == 5
+        row = rows[0]
+        row('td.word a').click()
+        assert driver.href == 'FAIL'
+        raise NotImplemented
+
+    def test_wic_reload(self):
+        '''Clicking reload on a WIC line should load another context'''
+        wic = driver.find('#widget-words_in_context')
+        rows = wic.findall('tbody tr')
+        assert len(rows) == 5
+        row = rows[0]
+        lcontext = row('td.lcontext').text
+        row('td.reload a').click()
+        driver.wait_until(finished_loading)
+        assert row('td.lcontext').text != lcontext
 
 def switch_to_tab(name):
     tab = driver.find('#tab-' + name)

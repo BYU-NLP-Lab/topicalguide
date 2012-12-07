@@ -20,6 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
+import os
 import random
 import time
 from datetime import datetime
@@ -140,8 +141,8 @@ class Document(models.Model):
         return ' '.join(parts)
 
     def text(self, kwic=None):
-        text = open(self.dataset.files_dir + "/" +
-                    self.filename, 'r').read().decode('utf-8')
+        file_dir = DocumentMetaInfo.objects.get(name='dirname').values.get(document=self).value()
+        text = open(os.path.join(file_dir, self.filename), 'r').read().decode('utf-8')
         if kwic:
             beg_context, end_context = self.get_kwic_context_ends(kwic, text)
             if beg_context >= 0:

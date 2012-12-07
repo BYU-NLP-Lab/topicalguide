@@ -79,10 +79,10 @@ def attribute_values(request, attribute):
     sub-attributes as the user selects attributes.
 
     """
-    attribute = Attribute.objects.get(pk=attribute)
-    values = [av.value for av in attribute.attributevalue_set.select_related().order_by('value__value')]
+    attribute = DocumentMetaInfo.objects.get(pk=attribute)
+    values = [av for av in attribute.values.all()]
     #values = attribute.value_set.all()
-    return HttpResponse(anyjson.dumps([(v.id, v.value) for v in values]))
+    return HttpResponse(anyjson.dumps([(v.id, v.value()) for v in values]))
 
 def topic_attribute_plot(request, attribute, topic, value):
     fmt = request.GET['fmt'] if 'fmt' in request.GET else 'json'
