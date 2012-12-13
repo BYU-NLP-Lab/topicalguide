@@ -1,0 +1,16 @@
+
+from os.path import abspath, join, dirname
+
+# this is the directory to store the metadata and database stuff we create
+LOCAL_DIR = abspath(join(dirname(__file__), '../working'))
+
+# and this is the path of the sqlite database
+DB_FILE = join(LOCAL_DIR, 'tg.sqlite3')
+
+# this is the name of the dataset you want to build
+build = "state_of_the_union"
+#build = "twitter"
+#build = 'stack_overflow'
+#build = "kcna/kcna"
+#build = "congressional_record"
+

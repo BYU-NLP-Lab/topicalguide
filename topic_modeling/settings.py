@@ -35,11 +35,11 @@ ADMINS = (
 )
 
 try:
-    from local_settings import DB_FILE
+    from import_tool.local_settings import DB_FILE
 except ImportError:
     print >> sys.stderr, "Import error looking for local_settings.py."\
             "Look at local_settings.py.sample for help"
-    raise
+    raise Exception("You need to set up your local_settings.py")
 
 MANAGERS = ADMINS
 
