@@ -165,8 +165,8 @@ class DoitTask:
                 'uptodate': [self.uptodate]}
         if self.name:
             task['name'] = self.name
-        if self.basename:
-            task['basename'] = self.basename
+        # if self.basename:
+            # task['basename'] = self.basename
         return task
 
 '''Ok, so to start out we import a config script (that lives in build/) and
