@@ -145,7 +145,7 @@ number of config options, making sure not to override any options that may
 have been set by our config script.
 '''
 
-from backend_config import config, build_script
+from .config import config, build_script
 c = config
 
 for task in build_script.create_tasks(c):

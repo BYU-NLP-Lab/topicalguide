@@ -32,28 +32,29 @@ dataset_description = "Student Ratings"
 
 mallet_num_iterations = 300
 
-def task_attributes():
-    task = dict()
-    task['targets'] = [attributes_file]
-    task['actions'] = [(gen_attr_file, [data_dir, attributes_file])]
-    task['clean'] = ["rm -f " + attributes_file]
-    task['uptodate'] = [os.path.exists(attributes_file)]
-    return task
+def create_tasks(c):
 
+    def task_attributes():
+        task = dict()
+        task['targets'] = [attributes_file]
+        task['actions'] = [(gen_attr_file, [data_dir, attributes_file])]
+        task['clean'] = ["rm -f " + attributes_file]
+        task['uptodate'] = [os.path.exists(attributes_file)]
+        return task
 
-def task_extract_data():
-    task = dict()
-    task['targets'] = [files_dir]
-    task['actions'] = [(clean_ratings, [data_dir, files_dir])]
-    task['clean'] = ['rm -rf '+files_dir]
-    task['uptodate'] = [os.path.exists(files_dir)]
-    return task
+    def task_extract_data():
+        task = dict()
+        task['targets'] = [files_dir]
+        task['actions'] = [(clean_ratings, [data_dir, files_dir])]
+        task['clean'] = ['rm -rf '+files_dir]
+        task['uptodate'] = [os.path.exists(files_dir)]
+        return task
 
+    return [task_attributes, task_extract_data]
 
 def clean_ratings(src_dir, dest_dir):
     c = SubsetRatingsCleaner(src_dir, dest_dir, '', '')
     c.clean()
-
 
 def skipping_condition(path):
     if 'MUSIC_101/002' not in path:
@@ -61,7 +62,6 @@ def skipping_condition(path):
     if '20095' not in path:
         return True
     return False
-
 
 def gen_attr_file(src_dir, output_file):
     file_dicts = []
@@ -89,7 +89,6 @@ def gen_attr_file(src_dir, output_file):
     w.write(anyjson.serialize(file_dicts))
     w.close()
 
-
 class SubsetRatingsCleaner(Cleaner):
     def clean(self):
         for root, dirs, files in os.walk(self.input_dir):
@@ -110,5 +109,6 @@ class SubsetRatingsCleaner(Cleaner):
                 if cleaned_text:
                     f = create_dirs_and_open(out_path)
                     f.write(cleaned_text.encode('utf-8'))
+
 
 

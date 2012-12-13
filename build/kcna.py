@@ -28,32 +28,36 @@ import re
 import sys
 import subprocess as sub
 
-from backend import c
 import topic_modeling.anyjson as anyjson
 
-c['dataset_name'] = "kcna"
-c['dataset_description'] = "News releases/propaganda from North Korea's Korean Central News Agency (KCNA)"
-c['url'] = "http://kcna.co.jp/"
-c['data_dir'] = os.environ['HOME'] + "/Data"
-c['kcna_dir'] = c['data_dir'] + "/kcna.co.jp"
-c['suppress_default_attributes_task'] = True
+def update_config(c):
+    c['dataset_name'] = "kcna"
+    c['dataset_description'] = "News releases/propaganda from North Korea's Korean Central News Agency (KCNA)"
+    c['url'] = "http://kcna.co.jp/"
+    c['data_dir'] = os.environ['HOME'] + "/Data"
+    c['kcna_dir'] = c['data_dir'] + "/kcna.co.jp"
+    c['suppress_default_attributes_task'] = True
 
-def task_download_kcna():
-    task = dict()
-    task['actions'] = ["mkdir -p {kcna_dir} && cd {kcna_dir}  && wget --mirror -nH {url}".format(kcna_dir=c['kcna_dir'],url=c['url'])]
-    task['clean'] = ["rm -rf " + c['kcna_dir']]
-    task['uptodate'] = [os.path.exists(c['kcna_dir'])]
-    return task
+def create_tasks(c):
 
-def task_extract_data():
-    task = dict()
-    task['targets'] = [c['files_dir'], c['metadata_filenames']['documents']]
-    task['actions'] = ["mkdir -p "+c['files_dir'],
-               (extract, [c['kcna_dir'], c['files_dir'], c['metadata_filenames']['documents']])]
-    task['clean'] = ['rm -rf '+c['files_dir'], 'rm -f '+c['metadata_filenames']['documents']]
-    task['task_dep'] = ['download_kcna']
-    task['uptodate'] = [os.path.exists(c['files_dir']) and os.path.exists(c['metadata_filenames']['documents'])]
-    return task
+    def task_download_kcna():
+        task = dict()
+        task['actions'] = ["mkdir -p {kcna_dir} && cd {kcna_dir}  && wget --mirror -nH {url}".format(kcna_dir=c['kcna_dir'],url=c['url'])]
+        task['clean'] = ["rm -rf " + c['kcna_dir']]
+        task['uptodate'] = [os.path.exists(c['kcna_dir'])]
+        return task
+
+    def task_extract_data():
+        task = dict()
+        task['targets'] = [c['files_dir'], c['metadata_filenames']['documents']]
+        task['actions'] = ["mkdir -p "+c['files_dir'],
+                (extract, [c['kcna_dir'], c['files_dir'], c['metadata_filenames']['documents']])]
+        task['clean'] = ['rm -rf '+c['files_dir'], 'rm -f '+c['metadata_filenames']['documents']]
+        task['task_dep'] = ['download_kcna']
+        task['uptodate'] = [os.path.exists(c['files_dir']) and os.path.exists(c['metadata_filenames']['documents'])]
+        return task
+    
+    return [task_download_kcna, task_extract_data]
 
 old_date_regex = r'.+item/(?P<year>\d\d(?P<year_short>\d\d))/(?:(?P=year)|(?P=year_short))(?P<month>\d(?P<month_digit_two>\d))/news(?:(?P=month)|(?P=month_digit_two))/(?P<day>\d\d)\.htm'
 new_date_regex_strict = r'.+item/(?P<year>\d\d\d\d)/(?P=year)(?P<month>\d\d)/news(?P<day>\d\d)/(?P=year)(?P=month)(?P=day)-(?P<item>\d\d)ee?\.html'
@@ -93,6 +97,7 @@ def extract(src_dir, dest_dir, attributes_file):
             p = sub.Popen(args,stdout=sub.PIPE,stderr=sub.PIPE)
             output, _errors = p.communicate()
             sections = output.split('===============================================================================')
+            # could use: output.split('=' * 79)
             if len(sections) > 1:
                 sections = sections[1:len(sections)-1]
             for num,section in enumerate(sections):
@@ -115,3 +120,4 @@ def extract(src_dir, dest_dir, attributes_file):
     f = codecs.open(attributes_file, mode='w', encoding='utf-8')
     f.write(anyjson.dumps(attributes))
     f.close()
+
