@@ -85,7 +85,10 @@ class DatasetBaseView(RootView):
         try:
             dataset = get_object_or_404(Dataset, name=kwargs['dataset'])
         except KeyError:
-            dataset = context['datasets'][0]
+	    try:
+		dataset = context['datasets'][0]
+	    except IndexError:
+		raise Exception('Misconfigured Database: you need to import a dataset first. Try running ./backend.py')
 
         context['dataset'] = dataset
         context['dataset_url'] = "/datasets/%s" % (dataset)
