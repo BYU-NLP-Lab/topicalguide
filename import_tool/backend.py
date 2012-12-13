@@ -63,7 +63,7 @@ from django.db.utils import DatabaseError
 from import_scripts.metadata import Metadata, import_dataset_metadata,\
     import_document_metadata, import_word_type_metadata, import_word_token_metadata, \
     import_analysis_metadata, import_topic_metadata
-from import_scripts.dataset_import import import_dataset
+from import_scripts import dataset_import
 from import_scripts.analysis_import import import_analysis
 
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
@@ -353,8 +353,10 @@ if 'task_mallet_input' not in locals():
         def action(self, docs_dir, output_file):
             w = codecs.open(output_file, 'w', 'utf-8')
 
+            count = 0
             for root, dirs, files in os.walk(docs_dir):
                 for f in files:
+                    count += 1
                     path = '{0}/{1}'.format(root, f)
                     # the [1:] takes off a leading /
                     partial_root = root.replace(docs_dir, '')[1:]
@@ -365,6 +367,9 @@ if 'task_mallet_input' not in locals():
                     text = open(path).read().decode('utf-8').strip().replace('\n',' ').replace('\r',' ')
                     w.write(u'{0} all {1}'.format(mallet_path, text))
                     w.write(u'\n')
+
+            if not count:
+                raise Exception('No files processed')
 
         def uptodate(self, _task, _values):
             return os.path.exists(c['mallet_input'])
@@ -424,7 +429,7 @@ if 'task_dataset_import' not in locals():
         '''Import the dataset into the Database
 
         1) create a Dataset object
-        2) create WorkType objects for each unique word in the entire directory
+        2) create WordType objects for each unique word in the entire directory
         @todo: we iterate through all the words *twice*, once to make wordtypes,
                and again to make the wordtokens!
         3) create Document objects for each file in the dataset directory
@@ -433,6 +438,8 @@ if 'task_dataset_import' not in locals():
         '''
 
         def utd(_task, _values):
+            return dataset_import.check_dataset(c['dataset_name'])
+        '''
             try:
                 _dataset = dataset()
                 print 'dataset ' + c['dataset_name'] + ' in database'
@@ -440,6 +447,7 @@ if 'task_dataset_import' not in locals():
             except (Dataset.DoesNotExist,DatabaseError):
                 print 'dataset ' + c['dataset_name'] + ' NOT in database'
                 return False
+        '''
 
         def remove_dataset():
             ## !!! This still doesn't work properly...
@@ -463,7 +471,8 @@ if 'task_dataset_import' not in locals():
         # analysis_import.py, now that we are using this build script - we don't
         #  need standalone scripts anymore for that stuff
         task = dict()
-        task['actions'] = [(import_dataset, [c['dataset_name'], c['dataset_readable_name'], c['dataset_description'], c['metadata_filenames'], c['dataset_dir'], c['files_dir'], c['token_regex']])]
+        task['actions'] = [(dataset_import.import_dataset, [c['dataset_name'], c['dataset_readable_name'],
+            c['dataset_description'], c['metadata_filenames'], c['dataset_dir'], c['files_dir'], c['token_regex']])]
         task['file_dep'] = [c['metadata_filenames']['documents']]
         task['clean'] = [remove_dataset]
         task['uptodate'] = [utd]
@@ -482,7 +491,7 @@ if 'task_analysis_import' not in locals():
         def utd(_task, _values):
             try:
                 _analysis = analysis()
-                return Topic.objects.filter(analysis = _analysis)
+                return Topic.objects.filter(analysis = _analysis).count()
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
 

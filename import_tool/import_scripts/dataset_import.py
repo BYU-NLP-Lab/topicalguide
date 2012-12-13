@@ -33,6 +33,21 @@ from django.db import connection, transaction
 
 from datetime import datetime
 from topic_modeling import settings
+import logging
+
+logger = logging.getLogger('console')
+
+def check_dataset(name):
+    try:
+        dataset = Dataset.objects.get(name=name)
+    except Database.DoesNotExist:
+        return False
+    if not dataset.documents.count():
+        return False
+    for document in dataset.documents.all():
+        if not document.tokens.count():
+            logging.warn('Dataset present, but not all documents are populated: %s %d' % (document.filename, document.pk))
+            return False
 
 def import_dataset(name, readable_name, description, metadata_filenames,
                    dataset_dir, files_dir, token_regex, dont_overwrite=False):
@@ -123,12 +138,15 @@ def _load_documents(dataset, token_regex):
                         token_index=position, start=match.start())
             del content
             transaction.commit()
+            if not doc.tokens.all().count():
+                raise Exception('Failed to import word tokens for %s %d'
+                        % (full_filename, doc.pk))
     except:
         transaction.rollback()
         raise
 
 def _types(files_dir, token_regex):
-    print >> sys.stderr, 'Ensuring word types...  ',
+    print >> sys.stderr, 'Ensuring word types...  '
     type_objs = dict((wtype.type, wtype) for wtype in WordType.objects.all())
 
     types_in_dataset = set(wtype for _filename, _token_idx, wtype
