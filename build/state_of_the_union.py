@@ -85,6 +85,8 @@ def _extract_metadata(chron_list_filename):
         filename = _filename(d)
         titles_to_filenames[d['title']] = filename
         metadata_data[filename] = d
+    if not len(metadata_data.keys()):
+        raise Exception('No Addresses Found! (empty metadata listing)')
     return metadata_data, titles_to_filenames
 
 def _write_metadata(metadata_data, dest_filename):
@@ -109,7 +111,8 @@ def _extract_doc(doc_filename, title, lines):
     print 'Extracted "{0}"'.format(title)
 
 def _extract(chron_list_filename, addresses_filename, dest_dir, doc_metadata_filename):
-    print "extract_state_of_the_union({0},{1},{2})".format(chron_list_filename, addresses_filename, dest_dir)
+    print "extract_state_of_the_union({0},{1},{2})".format(chron_list_filename,
+            addresses_filename, dest_dir)
     metadata_data, titles_to_filenames = _extract_metadata(chron_list_filename)
     _write_metadata(metadata_data, doc_metadata_filename)
 
@@ -133,5 +136,6 @@ def _extract(chron_list_filename, addresses_filename, dest_dir, doc_metadata_fil
     count += 1
 
     print 'Addresses extracted: ' + str(count)
-    if count < len(titles_to_filenames): raise Exception('Some addresses were not extracted')
+    if count < len(titles_to_filenames):
+        raise Exception('Some addresses were not extracted')
 

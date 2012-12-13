@@ -34,6 +34,9 @@ from import_scripts.metadata import Metadata
 from topic_modeling import settings
 from topic_modeling.visualize.models import Document
 from topic_modeling.tools import TimeLongThing
+import logging
+
+logger = logging.getLogger('console')
 
 def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, metadata_filenames, token_regex):
@@ -58,7 +61,7 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
         print >> sys.stderr, 'Creating markup directory ' + markup_dir
         os.mkdir(markup_dir)
     
-    if created:
+    if created or True:
         document_metadata = Metadata(metadata_filenames['documents'])
         _load_analysis(analysis, state_file, document_metadata, tokenized_file, token_regex)
 
@@ -80,10 +83,8 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
 def _create_analysis(dataset, analysis_name, analysis_readable_name, analysis_description):
     """Create the Analysis database object.
     """
-    print >> sys.stderr, 'Creating the analysis...  ',
     analysis, created = Analysis.objects.get_or_create(dataset=dataset, name=analysis_name,
                        readable_name=analysis_readable_name, description=analysis_description)
-    print >> sys.stderr, 'Done'
     return analysis, created
 
 WINDOW_SIZE = 30
@@ -113,7 +114,7 @@ def _find_token(word_type, tokens, start_idx):
         token = tokens[token_idx]
         if token.type.type == word_type:
             return token_idx + 1, token
-    print>>sys.stderr, word_type, len(tokens), start_idx, WINDOW_SIZE
+    # print>>sys.stderr, word_type, len(tokens), start_idx, WINDOW_SIZE
     
     raise TokenNotFound(word_type, tokens, start_idx, WINDOW_SIZE)
 
@@ -122,11 +123,17 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
     print >> sys.stderr, 'importing analysis'
     prev_docpath = None
     topics = {}
+    tokens = None
+    next_token_idx = 0
     
     iterator = _state_file_iterator(state_file, analysis.dataset.files_dir)
     timer = TimeLongThing(iterator.next(), minor=500, major=10000)
-    for i, (docpath, topic_num, word) in enumerate(iterator):
+    bad_docs = set()
+    for i, (docpath, topic_num, word, token_pos, word_type) in enumerate(iterator):
         timer.inc()
+        sys.stderr.flush()
+        if docpath in bad_docs:
+            continue
         if prev_docpath is None or prev_docpath != docpath:
             # print >>sys.stderr, '\nImporting %s...' % docpath,
             
@@ -139,7 +146,12 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
                 print >>sys.stderr, 'fail! no document by that name: %s' % docpath
                 break
 #            tokens = [(token,token.type.type) for token in doc.tokens.order_by('token_index').all()]
-            tokens = doc.tokens.order_by('start').select_related('type').all()
+            tokens = doc.tokens.order_by('start').all()
+            if not tokens.count():
+                # raise Exception('Document with no tokens: %s %d' % (docpath, doc.pk))
+                logger.warn('Document has no tokens: %s %d' % (docpath, doc.pk))
+                bad_docs.add(docpath)
+                continue
             prev_docpath = docpath
             next_token_idx = 0
             
@@ -148,11 +160,11 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
         except KeyError:
             topic, _topic_created = analysis.topics.get_or_create(number=topic_num)
             topics[topic_num] = topic
-        
-        try: # HACK!!
-            next_token_idx, token = _find_token(word, tokens, next_token_idx)
-        except TokenNotFound as e:
+
+        if token_pos >= len(tokens):
+            print >>sys.stderr, 'an incredible thing; more tokens than tokens %d %d %s' % (token_pos, len(tokens), tokens[-10:])
             continue
+        token = tokens[token_pos]
 
         token.topics.add(topic)
 
@@ -162,14 +174,15 @@ def _state_file_iterator(state_file, files_dir):
         lines = list(r)
         yield len(lines)
         for _count, line in enumerate(lines):
-            line = line.rstrip()
+            line = line.strip()
             if line[0] != "#":
 #                print line
-                _, docpath, __, ___, word, topic_num = line.split()
+                _, docpath, token_pos, word_type, word, topic_num = line.split()
                 word = word.lower()
+                token_pos = int(token_pos)
 #                docpath = '%s/%s' % (files_dir, docpath)
                 
-                yield (docpath, topic_num, word)
+                yield (docpath, topic_num, word, token_pos, word_type)
 
 def _default_topic_names(topic_word_counts):
     indexed_topic_word_counts = defaultdict(list)
@@ -184,3 +197,4 @@ def _default_topic_names(topic_word_counts):
         name = ' '.join([x[1] for x in top_words][:2])
         topic_names[topic] = name
     return topic_names
+
