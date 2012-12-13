@@ -1,0 +1,15 @@
+django == 1.4.3
+nltk == 2.0.4
+numpy>=1.4
+matplotlib == 1.2.0
+pytest
+scipy
+simplejson
+feedparser
+selenium
+django-debug-toolbar
+django-extensions
+BeautifulSoup4
+# twitter ; required by the nytimes_twitter
+
+
