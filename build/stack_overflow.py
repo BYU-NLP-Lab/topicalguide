@@ -9,38 +9,38 @@ from bs4 import BeautifulSoup
 from build import create_dirs_and_open
 from topic_modeling import anyjson
 
-from backend import config as c
-c['num_topics'] = 100
-c['dataset_name'] = 'stack_overflow'
-c['dataset_readable_name'] = 'Stack Overflow'
-c['suppress_default_document_metadata_task'] = True
+def update_config(c):
+    c['num_topics'] = 100
+    c['dataset_name'] = 'stack_overflow'
+    c['dataset_readable_name'] = 'Stack Overflow'
+    c['suppress_default_document_metadata_task'] = True
 
-def task_extract_data():
-    def utd(_tasks, _vals):
-        return os.path.exists(os.path.join(c['raw_data_dir'], 'data')) and os.path.exists(os.path.join(c['raw_data_dir'], 'metadata', 'documents.json'))
-    data_dir = os.path.join(c['raw_data_dir'], "data")
-    dest_dir = c['files_dir']
-    task = dict()
-    task['targets'] = [dest_dir]
-    task['actions'] = [(_extract, [data_dir, dest_dir])]
-    task['clean'] = ['rm -rf '+dest_dir]
-    return task
+def create_tasks(c):
 
+    def task_extract_data():
+        def utd(_tasks, _vals):
+            return os.path.exists(os.path.join(c['raw_data_dir'], 'data')) and os.path.exists(os.path.join(c['raw_data_dir'], 'metadata', 'documents.json'))
+        data_dir = os.path.join(c['raw_data_dir'], "data")
+        dest_dir = c['files_dir']
+        task = dict()
+        task['targets'] = [dest_dir]
+        task['actions'] = [(_extract, [data_dir, dest_dir])]
+        task['clean'] = ['rm -rf '+dest_dir]
+        return task
 
+    def task_mallet_imported_data():
+        task = dict()
+        task['targets'] = [c['mallet_imported_data']]
 
-def task_mallet_imported_data():
-    task = dict()
-    task['targets'] = [c['mallet_imported_data']]
+        cmd = '%s import-dir --input %s --output %s --keep-sequence --set-source-by-name --source-name-prefix "file:%s/%s/" ' \
+            % (c['mallet'], c['files_dir'], c['mallet_imported_data'], os.getcwd(), c['files_dir'])
 
-    cmd = '%s import-dir --input %s --output %s --keep-sequence --set-source-by-name --source-name-prefix "file:%s/%s/" ' \
-        % (c['mallet'], c['files_dir'], c['mallet_imported_data'], os.getcwd(), c['files_dir'])
+        cmd += ' --extra-stopwords %s' % os.path.join(c['raw_data_dir'], 'stopwords.txt')
 
-    cmd += ' --extra-stopwords %s' % os.path.join(c['raw_data_dir'], 'stopwords.txt')
-
-    task['actions'] = [cmd]
-    task['file_dep'] = [c['mallet_input']]
-    task['clean'] = ["rm -f " + c['mallet_imported_data']]
-    return task
+        task['actions'] = [cmd]
+        task['file_dep'] = [c['mallet_input']]
+        task['clean'] = ["rm -f " + c['mallet_imported_data']]
+        return task
 
 def _extract(data_dir, result_dir):
     print('getting stack overflow data! woot woot')
@@ -107,3 +107,4 @@ def _clean_questions_and_answers(base_dir, q_or_a, output_dir, counter):
         counter += 1
 
     return counter, metadata
+

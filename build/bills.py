@@ -26,7 +26,7 @@ import os
 def directory_timestamp(dir_):
     return str(os.path.getmtime(dir_))
 
-def initialize_config(c):
+def update_config(c):
     c['data_dir'] = os.environ['HOME'] + "/Data"
     c['govtrack_dir'] = c['data_dir'] + "/govtrack.us"
     c['rsync_dest_dir'] = c['govtrack_dir'] + "/111"
@@ -35,31 +35,34 @@ def initialize_config(c):
     c['dataset_description'] = "Text of legislation from the 111th United States Congress"
     c['token_regex'] = r"[a-zA-Z]+"
 
-from backend import c
+def create_tasks(c):
 
-def task_hash_cr():
-    return {'actions': [(directory_timestamp, [c['bills_dir']])],
-            'task_dep':['download_congressional_record']}
+    def task_hash_cr():
+        return {'actions': [(directory_timestamp, [c['bills_dir']])],
+                'task_dep':['download_congressional_record']}
 
-#def task_attributes_file():
-#    targets = [attributes_file]
-#    actions = [(generate_attributes_file, [mallet_input, attributes_file])]
-#    file_deps = [mallet_input]
-#    clean = ["rm -f "+attributes_file]
-#    return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
+    #def task_attributes_file():
+    #    targets = [attributes_file]
+    #    actions = [(generate_attributes_file, [mallet_input, attributes_file])]
+    #    file_deps = [mallet_input]
+    #    clean = ["rm -f "+attributes_file]
+    #    return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
 
-def task_download_congressional_record():
-    actions = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/bills.txt/111 "+c['rsync_dest_dir']]
-    clean = ["rm -rf " + c['bills_dir']]
-    return {'actions':actions, 'clean':clean}
+    def task_download_congressional_record():
+        actions = ["rsync -az --delete --delete-excluded govtrack.us::govtrackdata/us/bills.txt/111 "+c['rsync_dest_dir']]
+        clean = ["rm -rf " + c['bills_dir']]
+        return {'actions':actions, 'clean':clean}
 
-def task_extract_data():
-    actions = [
-        (clean_bills, [c['bills_dir'],c['files_dir']])
-    ]
-    clean = [
-        'rm -rf '+c['files_dir']
-    ]
-    
-    result_deps = ['hash_cr']
-    return {'actions': actions, 'clean': clean, 'result_dep':result_deps}
+    def task_extract_data():
+        actions = [
+            (clean_bills, [c['bills_dir'],c['files_dir']])
+        ]
+        clean = [
+            'rm -rf '+c['files_dir']
+        ]
+        
+        result_deps = ['hash_cr']
+        return {'actions': actions, 'clean': clean, 'result_dep':result_deps}
+
+    return [task_hash_cr, task_download_congressional_record, task_extract_data]
+

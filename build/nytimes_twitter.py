@@ -30,6 +30,8 @@ twitter_dir = data_dir + "/twitter.com"
 nytimes_dir = data_dir + "/nytimes.com"
 show_text = False
 
+raise Exception("It looks like this hasn't been updated in a while... broken")
+
 def get_dataset_name(locals):
     return "nytimes_twitter-politics"
 
@@ -51,28 +53,34 @@ def get_attributes_file(locals):
 def get_files_dir(locals):
     return locals['dataset_dir'] + "/files"
 
-def task_hash_twitter():
-    return {'actions': [(directory_timestamp, [twitter_dir])]}
+def create_tasks(c):
 
-def task_hash_nytimes():
-    return {'actions': [(directory_timestamp, [nytimes_dir])]}
+    def task_hash_twitter():
+        return {'actions': [(directory_timestamp, [twitter_dir])]}
 
-def task_attributes_file():
-    targets = [attributes_file]
-    actions = [(generate_attributes_file, [mallet_input, attributes_file])]
-    file_deps = [mallet_input]
-    clean = ["rm -f "+attributes_file]
-    return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
+    def task_hash_nytimes():
+        return {'actions': [(directory_timestamp, [nytimes_dir])]}
 
-def task_copy_and_transform_dataset():
-    actions = [
-        "mkdir -p " + files_dir,
-        (clean_tweets, [twitter_dir,files_dir]),
-        (clean_nyt,    [nytimes_dir,files_dir])
-    ]
-    clean = [
-        'rm -rf '+files_dir
-    ]
-    
-    result_deps = ['hash_twitter', 'hash_nytimes']
-    return {'actions': actions, 'clean': clean, 'result_dep':result_deps}
+    def task_attributes_file():
+        targets = [attributes_file]
+        actions = [(generate_attributes_file, [mallet_input, attributes_file])]
+        file_deps = [mallet_input]
+        clean = ["rm -f "+attributes_file]
+        return {'targets':targets, 'actions':actions, 'file_dep':file_deps, 'clean':clean}
+
+    def task_copy_and_transform_dataset():
+        actions = [
+            "mkdir -p " + files_dir,
+            (clean_tweets, [twitter_dir,files_dir]),
+            (clean_nyt,    [nytimes_dir,files_dir])
+        ]
+        clean = [
+            'rm -rf '+files_dir
+        ]
+        
+        result_deps = ['hash_twitter', 'hash_nytimes']
+        return {'actions': actions, 'clean': clean, 'result_dep':result_deps}
+
+    return [task_hash_twitter, task_hash_nytimes,
+            task_attributes_file, task_copy_and_transform_dataset]
+

@@ -36,32 +36,35 @@ though it is by no means exhaustive there.  And the data is a little noisy."""
 num_topics = 250
 mallet_num_iterations = 10000
 
-def task_attributes():
-    task = dict()
-    task['targets'] = [attributes_file]
-    task['actions'] = [(gen_attr_file, [data_dir, attributes_file])]
-    task['clean'] = ["rm -f " + attributes_file]
-    task['uptodate'] = [os.path.exists(attributes_file)]
-    return task
+def update_config(c):
+    pass
 
+def create_tasts(c):
 
-def task_extract_data():
-    task = dict()
-    task['targets'] = [files_dir]
-    task['actions'] = [(clean_gc, [data_dir, files_dir])]
-    task['clean'] = ['rm -rf '+files_dir]
-    task['uptodate'] = [os.path.exists(files_dir)]
-    return task
+    def task_attributes():
+        task = dict()
+        task['targets'] = [attributes_file]
+        task['actions'] = [(gen_attr_file, [data_dir, attributes_file])]
+        task['clean'] = ["rm -f " + attributes_file]
+        task['uptodate'] = [os.path.exists(attributes_file)]
+        return task
 
+    def task_extract_data():
+        task = dict()
+        task['targets'] = [files_dir]
+        task['actions'] = [(clean_gc, [data_dir, files_dir])]
+        task['clean'] = ['rm -rf '+files_dir]
+        task['uptodate'] = [os.path.exists(files_dir)]
+        return task
+
+    return [task_attributes, task_extract_data]
 
 def clean_gc(src_dir, dest_dir):
     c = GCCleaner(src_dir, dest_dir, '', '')
     c.clean()
 
-
 def skipping_condition(path):
     return False
-
 
 def gen_attr_file(src_dir, output_file):
     file_dicts = []
@@ -89,6 +92,7 @@ def gen_attr_file(src_dir, output_file):
 
 
 class GCCleaner(Cleaner):
+
     def clean(self):
         for root, dirs, files in os.walk(self.input_dir):
             if skipping_condition(root): continue

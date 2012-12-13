@@ -25,10 +25,9 @@ import codecs
 import os
 import re
 
-from backend import c
 from topic_modeling import anyjson
 
-def initialize_config(config):
+def update_config(config):
     config['num_topics'] = 10
     config['num_iterations'] = 500
     config['token_regex'] = '[A-Za-zÂâ]+'.decode('utf-8') # Not sure why it's necessary to use .decode('utf-8'), but it doesn't work otherwise
@@ -42,7 +41,21 @@ def initialize_config(config):
     config['metadata_filenames'] = lambda c: {
           'datasets': '%s/datasets.json' % c['raw_data_dir']
     }
+
+def create_tasks(c):
+
+    def task_extract_data():
+        task = dict()
+        task['targets'] = [c['files_dir'], c['metadata_filenames']['documents']]
+        task['actions'] = [
+            (_extract, [c['raw_data_dir'], c['files_dir'], c['metadata_filenames']['documents']]
+            )
+        ]
+        task['clean'] = ['rm -rf '+c['files_dir'], 'rm -rf '+c['metadata_filenames']['documents']]
+        task['uptodate'] = [os.path.exists(c['files_dir'])]
+        return task
     
+    return [task_extract_data]
 
 filename_abbrev = {
     'The New Testament of the King James Bible':'NT',
@@ -130,17 +143,6 @@ title_abbrev = {
     'The Song of Solomon':'Song of Solomon',
     'The Second Book of Samuel':'2nd Samuel'
 }
-
-def task_extract_data():
-    task = dict()
-    task['targets'] = [c['files_dir'], c['metadata_filenames']['documents']]
-    task['actions'] = [
-        (_extract, [c['raw_data_dir'], c['files_dir'], c['metadata_filenames']['documents']]
-        )
-    ]
-    task['clean'] = ['rm -rf '+c['files_dir'], 'rm -rf '+c['metadata_filenames']['documents']]
-    task['uptodate'] = [os.path.exists(c['files_dir'])]
-    return task
 
 def _extract(data_dir, output_dir, metadata_filename):
     metadata_types = {

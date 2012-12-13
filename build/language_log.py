@@ -20,37 +20,41 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from backend import config as c
 from build import create_dirs_and_open
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from topic_modeling import anyjson
 import os, sys
 
-c['num_topics'] = 100
-c['dataset_name'] = 'language_log'
-c['dataset_readable_name'] = 'Language Log'
-c['suppress_default_document_metadata_task'] = True
-c['raw_data_base_dir'] = '/local/jared/raw-data'
-c['pairwise_document_metrics'] = [] # far too many documents
+def update_config(c):
+    c['num_topics'] = 100
+    c['dataset_name'] = 'language_log'
+    c['dataset_readable_name'] = 'Language Log'
+    c['suppress_default_document_metadata_task'] = True
+    c['raw_data_base_dir'] = '/local/jared/raw-data'
+    c['pairwise_document_metrics'] = [] # far too many documents to do any pairwise
 
-def task_extract_data():
-    dest_dir = c['files_dir']
-    metadata_filename = c['metadata_filenames']['documents']
-    raw_data_dir = c['raw_data_dir']
-    print 'looking in', raw_data_dir
-    
-    task = {}
-    task['targets'] = [dest_dir, metadata_filename]
-    task['actions'] = [(_extract, [dest_dir, metadata_filename, raw_data_dir])]
-    task['clean'] = ['rm -rf {} {}'.format(dest_dir, metadata_filename)]
+def create_tasks(c):
 
-    def utd(_task, _vals):
-        print>>sys.stderr, dest_dir, metadata_filename
-        # fail
-        return len(os.listdir(dest_dir)) > 0 and os.path.exists(metadata_filename)
+    def task_extract_data():
+        dest_dir = c['files_dir']
+        metadata_filename = c['metadata_filenames']['documents']
+        raw_data_dir = c['raw_data_dir']
+        print 'looking in', raw_data_dir
+        
+        task = {}
+        task['targets'] = [dest_dir, metadata_filename]
+        task['actions'] = [(_extract, [dest_dir, metadata_filename, raw_data_dir])]
+        task['clean'] = ['rm -rf {} {}'.format(dest_dir, metadata_filename)]
 
-    task['uptodate'] = [utd]
-    return task
+        def utd(_task, _vals):
+            print>>sys.stderr, dest_dir, metadata_filename
+            # fail
+            return len(os.listdir(dest_dir)) > 0 and os.path.exists(metadata_filename)
+
+        task['uptodate'] = [utd]
+        return task
+
+    return [task_extract_data]
 
 _tokenizer = TreebankWordTokenizer()
 
