@@ -32,7 +32,8 @@ You can either use the pip `requirements.txt file`_::
 
 .. _`requirements.txt file`: http://www.pip-installer.org/en/latest/requirements.html
 
-Or you can install the python dependencies some other way (yum, by hand, etc.)
+Or you can install the python dependencies some other way (yum, by hand,
+etc.); they're listed in the `requirements.txt` file.
 
 .. include:: requirements.txt
    :literal:
