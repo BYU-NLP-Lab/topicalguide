@@ -29,32 +29,35 @@ from nltk.tokenize import TreebankWordTokenizer
 from build import create_dirs_and_open
 from topic_modeling import anyjson
 
-from backend import config as c
-c['num_topics'] = 100
-c['chron_list_filename'] = 'chronological_list.wiki'
-c['addresses_filename'] = 'state_of_the_union_addresses.txt'
-c['dataset_name'] = 'state_of_the_union'
-c['dataset_readable_name'] = 'State of the Union Addresses 1790-2010'
-c['suppress_default_document_metadata_task'] = True
-c['metadata_filenames'] = lambda c: {'datasets': '%s/datasets.json' % c['raw_data_dir']}
-c['pairwise_document_metrics'] = ['topic_correlation']
+def update_config(c):
+    c['num_topics'] = 100
+    c['chron_list_filename'] = 'chronological_list.wiki'
+    c['addresses_filename'] = 'state_of_the_union_addresses.txt'
+    c['dataset_name'] = 'state_of_the_union'
+    c['dataset_readable_name'] = 'State of the Union Addresses 1790-2010'
+    c['suppress_default_document_metadata_task'] = True
+    c['metadata_filenames'] = lambda c: {'datasets':
+            '%s/datasets.json' % c['raw_data_dir']}
+    c['pairwise_document_metrics'] = ['topic_correlation']
 
-NUMBER_OF_ADDRESSES = 223
-def task_extract_data():
-    index_filename = '%s/%s' % (c['raw_data_dir'], c['chron_list_filename'])
-    data_filename = '%s/%s' % (c['raw_data_dir'], c['addresses_filename'])
-    dest_dir = c['files_dir']
-    doc_meta_filename = c['metadata_filenames']['documents']
+def create_tasks(c):
+    NUMBER_OF_ADDRESSES = 223
+    def task_extract_data():
+        index_filename = '%s/%s' % (c['raw_data_dir'], c['chron_list_filename'])
+        data_filename = '%s/%s' % (c['raw_data_dir'], c['addresses_filename'])
+        dest_dir = c['files_dir']
+        doc_meta_filename = c['metadata_filenames']['documents']
 
-    def utd(_task, _vals):
-        return len(os.listdir(dest_dir))==NUMBER_OF_ADDRESSES and os.path.exists(doc_meta_filename)
+        def utd(_task, _vals):
+            return len(os.listdir(dest_dir))==NUMBER_OF_ADDRESSES and os.path.exists(doc_meta_filename)
 
-    task = dict()
-    task['targets'] = [dest_dir, doc_meta_filename]
-    task['actions'] = [(_extract, [index_filename, data_filename, dest_dir, doc_meta_filename])]
-    task['clean'] = ['rm -rf '+dest_dir]
-    task['uptodate'] = [utd]
-    return task
+        task = dict()
+        task['targets'] = [dest_dir, doc_meta_filename]
+        task['actions'] = [(_extract, [index_filename, data_filename, dest_dir, doc_meta_filename])]
+        task['clean'] = ['rm -rf '+dest_dir]
+        task['uptodate'] = [utd]
+        return task
+    return [task_extract_data]
 
 chron_entry_rgx_s = r"\[\[(?P<title>(?P<president_name>.+)'s? .*State of the Union (?:Address|Speech))\|(?P<address_number>\w+) State of the Union Address\]\] - \[\[author:(?P<author_name>.+)\|.+\]\], \((?P<day>\d+) (?P<month>\w+) \[\[w:(?P<year>\d+)\|(?P=year)\]\]\)"
 chron_entry_rgx = re.compile(chron_entry_rgx_s, re.I)
