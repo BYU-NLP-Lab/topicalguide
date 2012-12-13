@@ -57,6 +57,13 @@ instructions on how to run the code below.
 The program requires django, django-admin, matplotlib and numpy to be installed.
 django-admin needs to be installed for the django server to run.
 
+Requirements:
+
+django-extras
+django
+django-debug-toolbar
+django-
+
 Quick Start:
 
 1) Run backend.py as received in the code; it will run MALLET on a very small
