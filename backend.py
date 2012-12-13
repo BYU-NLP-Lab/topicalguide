@@ -82,7 +82,7 @@ from topic_modeling.tools import setup_logging
 setup_logging()
 
 try:
-    from topic_modeling.local_settings import TMP_DIR, build
+    from topic_modeling.local_settings import LOCAL_DIR, build
 except ImportError:
     print >> sys.stderr, "Import error looking for local_settings.py."\
             "Look at topic_modeling/local_settings.py.sample for help"
@@ -92,7 +92,7 @@ except ImportError:
 # TODO(matt): Pretty hackish, but it's a starting place.  This should be
 # cleaned up when we have time.
 if __name__ == "__main__":
-    DB_BASE = os.path.join(TMP_DIR, '.dbs')
+    DB_BASE = os.path.join(LOCAL_DIR, '.dbs')
     if not os.path.exists(DB_BASE): os.mkdir(DB_BASE)
     sys.path.append("tools/doit")
     from doit.doit_cmd import cmd_main
@@ -195,7 +195,7 @@ c.default('stopwords_file', '/aml/data/stopwords/english.txt')
 c.default('analysis_name', lambda c: "lda%stopics" % c['num_topics'])
 c.default('analysis_readable_name', lambda c: "LDA %s Topics" % c['num_topics'])
 c.default('analysis_description', lambda c: "Mallet LDA with %s topics" % c['num_topics'])
-c.default('base_dir', TMP_DIR)
+c.default('base_dir', LOCAL_DIR)
 c.default('raw_data_base_dir', os.curdir + "/raw-data")
 c.default('raw_data_dir', c['raw_data_base_dir'] + "/" + c['dataset_name'])
 c.default('datasets_dir', c['base_dir'] + "/datasets")
