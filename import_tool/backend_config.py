@@ -1,4 +1,25 @@
 #!/usr/bin/env python
+# The Topical Guide
+# Copyright 2010-2011 Brigham Young University
+#
+# This file is part of the Topical Guide <http://nlp.cs.byu.edu/topic_browser>.
+#
+# The Topical Guide is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# The Topical Guide is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+# for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with the Topical Guide.  If not, see <http://www.gnu.org/licenses/>.
+#
+# If you have inquiries regarding any further use of the Topical Guide, please
+# contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
+# Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 import os
 import imp
@@ -7,7 +28,7 @@ from collections import defaultdict
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
 
 from topic_modeling import settings
-from topic_modeling.local_settings import LOCAL_DIR, build
+from import_tool.local_settings import LOCAL_DIR, build
 
 class Config(dict):
     overrides = {}
@@ -28,7 +49,7 @@ class Config(dict):
         if key not in self: raise Exception("Configuration key '%s' is required")
 
 def get_buildscript(build):
-    path = join(os.path.dirname(__file__), 'build')
+    path = join(os.path.dirname(__file__), '../build')
     fname = join(path, '{0}.py'.format(build))
     fobj = open(fname)
     return imp.load_module(build, fobj, fname, ('.py', 'r', imp.PY_SOURCE))

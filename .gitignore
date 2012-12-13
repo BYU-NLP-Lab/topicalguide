@@ -3,7 +3,7 @@
 .project
 *.pyc
 *.swp
-java/bin
+import_tool/java/bin
 .dbs
 yamba
 *.nfs*
@@ -14,5 +14,5 @@ yamba
 datasets/
 /Main.vim.sess
 /tg.sqlite3
-/topic_modeling/local_settings.py
+/import_tool/local_settings.py
 /working/

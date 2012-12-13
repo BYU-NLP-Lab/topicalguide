@@ -41,6 +41,10 @@
 #  Allow specification of multiple num_topics
 #
 
+if __name__ == "__main__":
+    raise Exception("This file is only meant to be run by doit. "
+                    "use ./run_import.py to run the backend import")
+
 import codecs
 import datetime
 import hashlib
@@ -82,28 +86,11 @@ from topic_modeling.tools import setup_logging
 setup_logging()
 
 try:
-    from topic_modeling.local_settings import LOCAL_DIR, build
+    from import_tool.local_settings import LOCAL_DIR, build
 except ImportError:
     print >> sys.stderr, "Import error looking for local_settings.py."\
             "Look at topic_modeling/local_settings.py.sample for help"
     raise
-
-#If this file is invoked directly, pass it in to the doit system for processing.
-# TODO(matt): Pretty hackish, but it's a starting place.  This should be
-# cleaned up when we have time.
-if __name__ == "__main__":
-    DB_BASE = os.path.join(LOCAL_DIR, '.dbs')
-    if not os.path.exists(DB_BASE): os.mkdir(DB_BASE)
-    sys.path.append("tools/doit")
-    from doit.doit_cmd import cmd_main
-    path = os.path.abspath(sys.argv[0])
-
-    #The database file where we'll store info about this build
-    db_name = os.path.join(DB_BASE, "{0}.db".format(build.replace('/','_')))
-
-    args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
-    res = cmd_main(args)
-    sys.exit(res)
 
 class DoitTask:
     '''A class to organize our tasks more sanely'''
