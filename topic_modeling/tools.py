@@ -45,6 +45,10 @@ class TimeLongThing:
 
         self.total = total
         self.done = 0
+        if minor < 1:
+            minor = int(minor * total)
+        if major < 1:
+            major = int(major * total)
         self.minor = minor
         self.major = major
         self.target = target

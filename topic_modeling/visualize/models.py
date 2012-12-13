@@ -89,6 +89,7 @@ LEFT_CONTEXT_SIZE = 40
 RIGHT_CONTEXT_SIZE = 40
 class Document(models.Model):
     filename = models.CharField(max_length=128, db_index=True)
+    # full_path = models.TextField()
     dataset = models.ForeignKey(Dataset, related_name='documents')
 #    word_count = models.IntegerField(default=0)
 
