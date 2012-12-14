@@ -47,14 +47,21 @@ should be reasonable::
 
     cp import_tool/local_settings.py.sample import_tool/local_settings.py
 
-4. Import a dataset
+4. Create the Database
+----------------------
+
+Run::
+
+   python topic_modeling/manage.py syncdb
+
+5. Import a dataset
 -------------------
 
 In local settings you can configure what dataset to import (default is the
 'state of the union addresses'), and then run `./run_import.py` to run the
 import.
 
-5. Done!
+6. Done!
 --------
 
 Start up the web server with the following command::
