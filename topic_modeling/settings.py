@@ -34,12 +34,17 @@ ADMINS = (
     # ('Administrator', 'admin@example.com'),
 )
 
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+if not os.path.exists(os.path.join(BASE_DIR, 'import_tool/local_settings.py')):
+    print >> sys.stderr, "Import error looking for local_settings.py. "\
+            "Look at import_tool/local_settings.py.sample for help"
+    raise Exception("You need to set up your import_tool/local_settings.py")
+sys.path.append(BASE_DIR)
 try:
     from import_tool.local_settings import DB_FILE
-except ImportError:
-    print >> sys.stderr, "Import error looking for local_settings.py."\
-            "Look at local_settings.py.sample for help"
-    raise Exception("You need to set up your local_settings.py")
+except ImportError as e:
+    raise Exception("Error imporing import_tool/local_settings.py: %s" % e)
 
 MANAGERS = ADMINS
 

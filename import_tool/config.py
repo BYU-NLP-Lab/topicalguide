@@ -22,6 +22,7 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 import os
+import sys
 import imp
 from os.path import join, dirname
 from collections import defaultdict
@@ -152,7 +153,7 @@ def create_config(build_script):
         c.default('yamba_file', join(c['base_dir'], settings.SQLITE_CONFIG['NAME']))
         if not os.path.exists(c['yamba_file']):
             print "Initializing database..."
-            os.system("python %s syncdb --noinput > /dev/null" % join(BASE_DIR, 'topic_modeling/manage.py'))
+            os.system("python %s syncdb --noinput" % join(BASE_DIR, 'topic_modeling/manage.py'))
         c.default('db_jar', 'sqlitejdbc-v056.jar')
         c.default('jdbc_path', "jdbc:sqlite:" + c['yamba_file'])
     elif settings.DBTYPE=='mysql':

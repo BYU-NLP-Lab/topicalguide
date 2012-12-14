@@ -49,6 +49,10 @@ def check_analysis(analysis_name, dataset_name):
         analysis = Analysis.objects.get(name=analysis_name, dataset=dataset)
     except Analysis.DoesNotExist:
         return False
+    return check_analysis_good(analysis)
+
+def check_analysis_good(analysis):
+    return False
 
 def remove_analysis(analysis):
     '''Take care of removing the analyis'''
@@ -78,7 +82,7 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
     dataset = Dataset.objects.get(name=dataset_name)
     try:
         analysis = Analysis.objects.get(name=analysis_name, dataset=dataset)
-        if check_analysis(analysis):
+        if check_analysis_good(analysis):
             logger.info('Analysis %s already present and intact. aborting' % analysis_name)
             return False
         else:
