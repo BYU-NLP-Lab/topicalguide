@@ -27,9 +27,9 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 
-from django.db import connection
+from django.db import connection, transaction
 
-from topic_modeling.visualize.models import Analysis, Dataset
+from topic_modeling.visualize.models import Analysis, Dataset, Topic
 from import_scripts.metadata import Metadata
 from topic_modeling import settings
 from topic_modeling.visualize.models import Document
@@ -52,7 +52,14 @@ def check_analysis(analysis_name, dataset_name):
     return check_analysis_good(analysis)
 
 def check_analysis_good(analysis):
-    return False
+    if not analysis.topics.count():
+        logger.warn('No topics defined for this analysis')
+        return False
+    for topic in analysis.topics.all():
+        if not topic.tokens.count():
+            logger.warn('A Topic with no tokens: %s' % topic)
+            return False
+    return True
 
 def remove_analysis(analysis):
     '''Take care of removing the analyis'''
@@ -154,7 +161,7 @@ def _find_token(word_type, tokens, start_idx):
 def create_topics(analysis, num_topics):
     topics = [Topic(number=i, analysis=analysis) for i in range(num_topics)]
     Topic.objects.bulk_create(topics)
-    return topics
+    return Topic.objects.filter(analysis=analysis).order_by('number')
 
 def _load_analysis(analysis, state_file, document_metadata, tokenized_file, token_regex):
     '''state_file == the mallet output file'''
@@ -164,42 +171,44 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
     next_token_idx = 0
 
     # create the topics
+    logger.info('Creating all topics')
+    # analysis.topics.delete()
     topics = create_topics(analysis, config['num_topics'])
+    logger.info('Topics created')
 
     iterator = _state_file_iterator(state_file, analysis.dataset.files_dir)
     timer = TimeLongThing(iterator.next(), minor=500, major=10000)
     bad_docs = set()
-    for i, (docpath, topic_num, word, token_pos, word_type) in enumerate(iterator):
-        timer.inc()
-        sys.stderr.flush()
-        if docpath in bad_docs:
-            continue
-        if prev_docpath is None or prev_docpath != docpath:
-            # print >>sys.stderr, '\nImporting %s...' % docpath,
-            
-            filename = docpath
-            if docpath.startswith('file:'):
-                filename = docpath[len('file:'):]
-            try:
-                doc = analysis.dataset.documents.get(full_path=filename)
-            except Document.DoesNotExist:
-                print >>sys.stderr, 'fail! no document by that name: %s' % docpath
-                break
-            tokens = doc.tokens.order_by('token_index').all()
-            if not tokens.count():
-                # raise Exception('Document with no tokens: %s %d' % (docpath, doc.pk))
-                logger.warn('Document has no tokens: %s %d' % (docpath, doc.pk))
-                bad_docs.add(docpath)
+    with transaction.commit_on_success():
+        for i, (docpath, topic_num, word, token_pos, word_type) in enumerate(iterator):
+            timer.inc()
+            sys.stderr.flush()
+            if docpath in bad_docs:
                 continue
-            prev_docpath = docpath
-            next_token_idx = 0
+            if prev_docpath is None or prev_docpath != docpath:
+                filename = docpath
+                if docpath.startswith('file:'):
+                    filename = docpath[len('file:'):]
+                try:
+                    doc = analysis.dataset.documents.get(full_path=filename)
+                except Document.DoesNotExist:
+                    logger.err('fail! no document by that name: %s' % docpath)
+                    break
+                tokens = doc.tokens.order_by('token_index').all()
+                if not tokens.count():
+                    logger.warn('Document has no tokens: %s %d' % (docpath, doc.pk))
+                    bad_docs.add(docpath)
+                    continue
+                prev_docpath = docpath
+                next_token_idx = 0
 
-        topic = topics[topic_num]
-        if token_pos >= len(tokens):
-            print >>sys.stderr, 'an incredible thing; more tokens than tokens %d %d %s' % (token_pos, len(tokens), tokens[-10:])
-            continue
-        token = tokens[token_pos]
-        token.topics.add(topic)
+            topic = topics[topic_num]
+            if token_pos >= len(tokens):
+                logger.err('an incredible thing; more tokens than tokens %d %d %s'
+                        % (token_pos, len(tokens), tokens[-10:]))
+                continue
+            token = tokens[token_pos]
+            token.topics.add(topic)
 
 '''Just parse the text and yield it as a tuple per line'''
 def _state_file_iterator(state_file, files_dir):
@@ -213,6 +222,7 @@ def _state_file_iterator(state_file, files_dir):
                 _, docpath, token_pos, word_type, word, topic_num = line.split()
                 word = word.lower()
                 token_pos = int(token_pos)
+                topic_num = int(topic_num)
 #                docpath = '%s/%s' % (files_dir, docpath)
                 
                 yield (docpath, topic_num, word, token_pos, word_type)
