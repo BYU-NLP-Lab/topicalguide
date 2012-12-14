@@ -21,6 +21,6 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from helper_scripts.name_schemes.top_n import TopNTopicNamer
-from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
+from .top_n import TopNTopicNamer
+from .tf_itf import TfitfTopicNamer
 name_scheme_classes = [TopNTopicNamer, TfitfTopicNamer]

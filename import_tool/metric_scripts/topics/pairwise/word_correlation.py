@@ -28,6 +28,7 @@ from django.db.models.aggregates import Count
 
 from numpy import dot, zeros
 from numpy.linalg import norm
+import numpy
 
 from topic_modeling.visualize.models import Analysis, WordType
 from topic_modeling.visualize.models import PairwiseTopicMetric
@@ -58,6 +59,8 @@ def add_metric(dataset, analysis):
         for j, topic2 in enumerate(topics):
             topic2_word_vals = topicwordvectors[j]
             correlation_coeff = pmcc(topic1_word_vals, topic2_word_vals)
+            if not correlation_coeff or numpy.isnan(correlation_coeff):
+                raise Exception('Null correlation? %s %s %s %s' % (topic1, topic2, topic1_word_vals, topic2_word_vals))
             PairwiseTopicMetricValue.objects.create(topic1=topic1,
                     topic2=topic2, metric=metric, value=correlation_coeff)
     # transaction.commit()

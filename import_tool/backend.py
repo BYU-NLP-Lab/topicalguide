@@ -64,7 +64,7 @@ from import_scripts.metadata import Metadata, import_dataset_metadata,\
     import_document_metadata, import_word_type_metadata, import_word_token_metadata, \
     import_analysis_metadata, import_topic_metadata
 from import_scripts import dataset_import
-from import_scripts.analysis_import import import_analysis
+from import_scripts import analysis_import
 
 from helper_scripts.name_schemes.tf_itf import TfitfTopicNamer
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
@@ -489,21 +489,27 @@ if 'task_analysis_import' not in locals():
         3) create a Metadata dictionary
         4) parse the mallet_output file, '''
         def utd(_task, _values):
+            return analysis_import.check_analysis(c['analysis_name'], c['dataset_name'])
+        '''
             try:
                 _analysis = analysis()
                 return Topic.objects.filter(analysis = _analysis).count()
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 return False
+        '''
 
         def remove_analysis():
+            return analysis_import.delete_analysis(c['analysis_name'], c['dataset_name'])
+        '''
             try:
                 print 'remove_analysis(%s)' % c['analysis_name']
                 analysis().delete()
             except (Dataset.DoesNotExist, Analysis.DoesNotExist):
                 pass
+                '''
 
         task = dict()
-        task['actions'] = [(import_analysis, [c['dataset_name'], c['analysis_name'], c['analysis_readable_name'], c['analysis_description'],
+        task['actions'] = [(analysis_import.import_analysis, [c['dataset_name'], c['analysis_name'], c['analysis_readable_name'], c['analysis_description'],
                           c['markup_dir'], c['mallet_output'], c['mallet_input'], c['metadata_filenames'], c['token_regex']])]
         task['file_dep'] = [c['mallet_output'], c['mallet_input'], c['metadata_filenames']['documents']]
         task['clean'] = [

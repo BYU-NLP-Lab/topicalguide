@@ -36,12 +36,33 @@ from topic_modeling.visualize.models import Document
 from topic_modeling.tools import TimeLongThing
 import logging
 
+from import_tool.config import config
+
 logger = logging.getLogger('console')
+
+def check_analysis(analysis_name, dataset_name):
+    try:
+        dataset = Dataset.objects.get(name=dataset_name)
+    except Dataset.DoesNotExist:
+        return False
+    try:
+        analysis = Analysis.objects.get(name=analysis_name, dataset=dataset)
+    except Analysis.DoesNotExist:
+        return False
+
+def remove_analysis(analysis):
+    '''Take care of removing the analyis'''
+    try:
+        analysis.delete()
+        return True
+    except:
+        return Analysis.objects.raw('delete from visualize_analysis where id=%s', [analysis.pk])
 
 def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, metadata_filenames, token_regex):
     print >> sys.stderr, u"analysis_import({0})".\
-            format(u', '.join([dataset_name, analysis_name, analysis_readable_name, analysis_description,
+            format(u', '.join([dataset_name, analysis_name,
+                analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, unicode(metadata_filenames), token_regex]))
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
@@ -54,23 +75,30 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
         cursor.execute('PRAGMA journal_mode=MEMORY')
         cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
     
-    dataset, _ = Dataset.objects.get_or_create(name=dataset_name)
-    analysis, created = _create_analysis(dataset, analysis_name, analysis_readable_name, analysis_description)
+    dataset = Dataset.objects.get(name=dataset_name)
+    try:
+        analysis = Analysis.objects.get(name=analysis_name, dataset=dataset)
+        if check_analysis(analysis):
+            logger.info('Analysis %s already present and intact. aborting' % analysis_name)
+            return False
+        else:
+            remove_analysis(analysis)
+    except Analysis.DoesNotExist:
+        pass
+
+    analysis = create_analysis(dataset, analysis_name, analysis_readable_name, analysis_description)
     
     if not os.path.exists(markup_dir):
         print >> sys.stderr, 'Creating markup directory ' + markup_dir
         os.mkdir(markup_dir)
     
-    if created or True:
-        document_metadata = Metadata(metadata_filenames['documents'])
-        _load_analysis(analysis, state_file, document_metadata, tokenized_file, token_regex)
+    document_metadata = Metadata(metadata_filenames['documents'])
+    _load_analysis(analysis, state_file, document_metadata, tokenized_file, token_regex)
 
-        end_time = datetime.now()
-        print >> sys.stderr, 'Finishing time:', end_time
-        print >> sys.stderr, 'It took', end_time - start_time,
-        print >> sys.stderr, 'to import the analysis'
-    else:
-        print >> sys.stderr, '[] analysis already exists in DB, skipping'
+    end_time = datetime.now()
+    print >> sys.stderr, 'Finishing time:', end_time
+    print >> sys.stderr, 'It took', end_time - start_time,
+    print >> sys.stderr, 'to import the analysis'
     
     if settings.database_type()=='sqlite3':
         cursor.execute('PRAGMA journal_mode=DELETE')
@@ -80,12 +108,13 @@ def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysi
 # Database creation code (in the order it's called in main)
 #############################################################################
 
-def _create_analysis(dataset, analysis_name, analysis_readable_name, analysis_description):
+def create_analysis(dataset, analysis_name, analysis_readable_name, analysis_description):
     """Create the Analysis database object.
     """
-    analysis, created = Analysis.objects.get_or_create(dataset=dataset, name=analysis_name,
+    analysis = Analysis(dataset=dataset, name=analysis_name,
                        readable_name=analysis_readable_name, description=analysis_description)
-    return analysis, created
+    analysis.save()
+    return analysis
 
 WINDOW_SIZE = 30
 class TokenNotFound(Exception):
@@ -118,14 +147,21 @@ def _find_token(word_type, tokens, start_idx):
     
     raise TokenNotFound(word_type, tokens, start_idx, WINDOW_SIZE)
 
+def create_topics(analysis, num_topics):
+    topics = [Topic(number=i, analysis=analysis) for i in range(num_topics)]
+    Topic.objects.bulk_create(topics)
+    return topics
+
 def _load_analysis(analysis, state_file, document_metadata, tokenized_file, token_regex):
     '''state_file == the mallet output file'''
     print >> sys.stderr, 'importing analysis'
     prev_docpath = None
-    topics = {}
     tokens = None
     next_token_idx = 0
-    
+
+    # create the topics
+    topics = create_topics(analysis, config['num_topics'])
+
     iterator = _state_file_iterator(state_file, analysis.dataset.files_dir)
     timer = TimeLongThing(iterator.next(), minor=500, major=10000)
     bad_docs = set()
@@ -137,16 +173,15 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
         if prev_docpath is None or prev_docpath != docpath:
             # print >>sys.stderr, '\nImporting %s...' % docpath,
             
+            filename = docpath
+            if docpath.startswith('file:'):
+                filename = docpath[len('file:'):]
             try:
-                filename = os.path.basename(docpath)
-                ## TODO: are we losing data here? should we store the full filename
-                ## over in dataset_import?
-                doc = analysis.dataset.documents.get(filename=filename)
+                doc = analysis.dataset.documents.get(full_path=filename)
             except Document.DoesNotExist:
                 print >>sys.stderr, 'fail! no document by that name: %s' % docpath
                 break
-#            tokens = [(token,token.type.type) for token in doc.tokens.order_by('token_index').all()]
-            tokens = doc.tokens.order_by('start').all()
+            tokens = doc.tokens.order_by('token_index').all()
             if not tokens.count():
                 # raise Exception('Document with no tokens: %s %d' % (docpath, doc.pk))
                 logger.warn('Document has no tokens: %s %d' % (docpath, doc.pk))
@@ -154,18 +189,12 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
                 continue
             prev_docpath = docpath
             next_token_idx = 0
-            
-        try:
-            topic = topics[topic_num]
-        except KeyError:
-            topic, _topic_created = analysis.topics.get_or_create(number=topic_num)
-            topics[topic_num] = topic
 
+        topic = topics[topic_num]
         if token_pos >= len(tokens):
             print >>sys.stderr, 'an incredible thing; more tokens than tokens %d %d %s' % (token_pos, len(tokens), tokens[-10:])
             continue
         token = tokens[token_pos]
-
         token.topics.add(topic)
 
 '''Just parse the text and yield it as a tuple per line'''
