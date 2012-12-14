@@ -23,12 +23,14 @@
 
 import os
 import imp
-from os.path import join
+from os.path import join, dirname
 from collections import defaultdict
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
 
 from topic_modeling import settings
 from import_tool.local_settings import LOCAL_DIR, build
+
+BASE_DIR = os.path.abspath(dirname(dirname(__file__)))
 
 class Config(dict):
     overrides = {}
@@ -49,7 +51,7 @@ class Config(dict):
         if key not in self: raise Exception("Configuration key '%s' is required")
 
 def get_buildscript(build):
-    path = join(os.path.dirname(__file__), '../build')
+    path = join(BASE_DIR, 'build')
     fname = join(path, '{0}.py'.format(build))
     fobj = open(fname)
     return imp.load_module(build, fobj, fname, ('.py', 'r', imp.PY_SOURCE))
@@ -73,7 +75,7 @@ def create_config(build_script):
     c.default('analysis_readable_name', lambda c: "LDA %s Topics" % c['num_topics'])
     c.default('analysis_description', lambda c: "Mallet LDA with %s topics" % c['num_topics'])
     c.default('base_dir', LOCAL_DIR)
-    c.default('raw_data_base_dir', join(os.curdir, "../raw-data"))
+    c.default('raw_data_base_dir', join(BASE_DIR, 'raw-data'))
     c.default('raw_data_dir', join(c['raw_data_base_dir'], c['dataset_name']))
     c.default('datasets_dir', join(c['base_dir'], "datasets"))
     c.default('dataset_dir', join(c['datasets_dir'], c['dataset_name']))
@@ -83,7 +85,7 @@ def create_config(build_script):
     c.default('token_regex', r'[A-Za-z]+')
 
     # Mallet
-    c.default('mallet', join(os.curdir, "tools/mallet/mallet"))
+    c.default('mallet', join(BASE_DIR, "tools/mallet/mallet"))
     c.default('num_topics', 50)
     c.default('mallet_input_file_name', "mallet_input.txt")
     c.default('mallet_input', join(c['dataset_dir'], c['mallet_input_file_name']))
@@ -140,17 +142,17 @@ def create_config(build_script):
     c.default('name_schemes', [TopNTopicNamer(c['dataset_name'], c['analysis_name'], 3)])
 
     # Graph-based Visualization
-    c.default('java_base', os.curdir + "/java")
-    c.default('java_bin', c['java_base'] + "/bin")
+    c.default('java_base', join(BASE_DIR, 'java'))
+    c.default('java_bin', join(c['java_base'], 'bin'))
     c.default('graph_builder_class', "edu.byu.nlp.topicvis.TopicMapGraphBuilder")
     c.default('graphs_min_value', 1)
     c.default('graphs_pairwise_metric', "Document Correlation")
 
     if settings.DBTYPE=='sqlite3':
-        c.default('yamba_file', os.path.join(c['base_dir'], settings.SQLITE_CONFIG['NAME']))
+        c.default('yamba_file', join(c['base_dir'], settings.SQLITE_CONFIG['NAME']))
         if not os.path.exists(c['yamba_file']):
             print "Initializing database..."
-            os.system("python topic_modeling/manage.py syncdb --noinput > /dev/null")
+            os.system("python %s syncdb --noinput > /dev/null" % join(BASE_DIR, 'topic_modeling/manage.py'))
         c.default('db_jar', 'sqlitejdbc-v056.jar')
         c.default('jdbc_path', "jdbc:sqlite:" + c['yamba_file'])
     elif settings.DBTYPE=='mysql':
