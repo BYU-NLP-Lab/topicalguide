@@ -1,3 +1,36 @@
+Backend Running Sequence:
+
+-- extract_data
+-- mallet_input
+-- dataset_import
+-- mallet_imported_data
+-- mallet_output_gz
+-- mallet_output
+-- analysis_import
+-- metadata_import:word_tokens
+-- metadata_import:word_types
+-- metadata_import:datasets
+-- metadata_import:documents
+-- metadata_import:analysis
+-- metadata_import:topics
+-- name_schemes:Top3
+-- dataset_metrics:counts
+-- analysis_metrics:entropy
+-- topic_metrics:word_entropy
+-- topic_metrics:token_count
+-- topic_metrics:type_count
+-- topic_metrics:document_entropy
+-- pairwise_topic_metrics:document_correlation
+-- pairwise_topic_metrics:word_correlation
+-- document_metrics:topic_entropy
+-- document_metrics:token_count
+-- document_metrics:type_count
+-- pairwise_document_metrics:topic_correlation
+.  hash_java
+-- compile_java
+-- graphs:Top3
+
+
 Here we have a list of the issues
 +++++++++++++++++++++++++++++++++++
 
