@@ -73,7 +73,7 @@ def create_config(build_script):
     c.default('analysis_readable_name', lambda c: "LDA %s Topics" % c['num_topics'])
     c.default('analysis_description', lambda c: "Mallet LDA with %s topics" % c['num_topics'])
     c.default('base_dir', LOCAL_DIR)
-    c.default('raw_data_base_dir', join(os.curdir, "raw-data"))
+    c.default('raw_data_base_dir', join(os.curdir, "../raw-data"))
     c.default('raw_data_dir', join(c['raw_data_base_dir'], c['dataset_name']))
     c.default('datasets_dir', join(c['base_dir'], "datasets"))
     c.default('dataset_dir', join(c['datasets_dir'], c['dataset_name']))
