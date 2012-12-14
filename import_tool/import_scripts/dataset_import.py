@@ -24,12 +24,13 @@
 import os, sys
 import re
 
-from topic_modeling.visualize.models import WordToken, WordType
+from topic_modeling.visualize.models import WordToken, WordType, WordTokenMetricValue
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
 from topic_modeling.tools import TimeLongThing
 
 from django.db import connection, transaction
+from django.db.utils import DatabaseError
 
 from datetime import datetime
 from topic_modeling import settings
@@ -40,7 +41,7 @@ logger = logging.getLogger('console')
 def check_dataset(name):
     try:
         dataset = Dataset.objects.get(name=name)
-    except Database.DoesNotExist:
+    except (Dataset.DoesNotExist, DatabaseError):
         return False
     if not dataset.documents.count():
         return False
@@ -108,7 +109,15 @@ def _load_documents(dataset, token_regex):
     2) creates documents
     3) creates word tokens
     '''
+    if dataset.documents.all().count():
+        logger.info('Deleting old documents')
+        for document in dataset.documents.all():
+            WordTokenMetricValue.objects.raw('delete from visualize_wordtokenmetricvalue wtv join visualize_wordtoken wt on wtv.token_id=wt.id where wt.document_id=%s', [document.pk])
+            WordToken.objects.raw('delete from visualize_wordtoken where document_id=%d' % document.pk)
+            Document.objects.raw('delete from visualize_document where id=%s', [document.pk])
+        # dataset.documents.all().delete()
 
+    logger.info('Creating the Word Types')
     word_types = _types(dataset.files_dir, token_regex)
 
     print >> sys.stderr, 'Creating documents and tokens...  '
@@ -116,16 +125,16 @@ def _load_documents(dataset, token_regex):
     all_files = []
 
     for (dirpath, _dirnames, filenames) in os.walk(dataset.files_dir):
-        relname = os.path.relpath(dirpath, dataset.files_dir)
         for filename in filenames:
-            all_files.append([dataset.files_dir, os.path.join(relname, filename)])
+            all_files.append([dataset.files_dir, filename, os.path.join(dirpath, filename)])
+    all_files.sort()
 
     timer = TimeLongThing(len(all_files), .01, .1)
-    for i, (dirpath, filename) in enumerate(all_files):
+    for i, (dirpath, filename, full_path) in enumerate(all_files):
         full_filename = os.path.join(dirpath, filename)
         doc, _ = Document.objects.get_or_create(dataset=dataset,
-                filename=filename)
-                # full_path=full_filename)
+                filename=filename,
+                full_path=full_filename)
         timer.inc()
 
         with open(full_filename) as r:
