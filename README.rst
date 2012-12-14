@@ -41,17 +41,17 @@ etc.); they're listed in the `requirements.txt` file.
 3. Configure local settings
 ---------------------------
 
-Copy `topic_modeling/local_settings.py.sample` to
-`topic_modeling/local_settings.py` and make any changes you want. The defaults
+Copy `import_tool/local_settings.py.sample` to
+`import_tool/local_settings.py` and make any changes you want. The defaults
 should be reasonable::
 
-    cp topic_modeling/local_settings.py.sample topic_modeling/local_settings.py
+    cp import_tool/local_settings.py.sample import_tool/local_settings.py
 
 4. Import a dataset
 -------------------
 
 In local settings you can configure what dataset to import (default is the
-'state of the union addresses'), and then run `./backend.py` to run the
+'state of the union addresses'), and then run `./run_import.py` to run the
 import.
 
 5. Done!
