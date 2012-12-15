@@ -3,7 +3,7 @@
 .project
 *.pyc
 *.swp
-import_tool/java/bin
+java/bin
 .dbs
 yamba
 *.nfs*

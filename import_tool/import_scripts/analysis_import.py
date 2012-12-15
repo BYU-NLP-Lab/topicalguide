@@ -179,6 +179,7 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
     iterator = _state_file_iterator(state_file, analysis.dataset.files_dir)
     timer = TimeLongThing(iterator.next(), minor=500, major=10000)
     bad_docs = set()
+    current_token = 0
     with transaction.commit_on_success():
         for i, (docpath, topic_num, word, token_pos, word_type) in enumerate(iterator):
             timer.inc()
@@ -194,20 +195,28 @@ def _load_analysis(analysis, state_file, document_metadata, tokenized_file, toke
                 except Document.DoesNotExist:
                     logger.err('fail! no document by that name: %s' % docpath)
                     break
-                tokens = doc.tokens.order_by('token_index').all()
-                if not tokens.count():
+                tokens = list(doc.tokens.order_by('token_index').select_related())
+                if not tokens:
                     logger.warn('Document has no tokens: %s %d' % (docpath, doc.pk))
                     bad_docs.add(docpath)
                     continue
                 prev_docpath = docpath
-                next_token_idx = 0
+                current_token = 0
 
             topic = topics[topic_num]
+            '''
             if token_pos >= len(tokens):
                 logger.err('an incredible thing; more tokens than tokens %d %d %s'
                         % (token_pos, len(tokens), tokens[-10:]))
                 continue
             token = tokens[token_pos]
+            if token.type.type != word:
+                logger.warn('Wrong token found: %s %s %d %d' % (token.type.type, word, token_pos, token.token_index))
+            '''
+            while tokens[current_token].type.type != word:
+                current_token += 1
+            token = tokens[current_token]
+            current_token += 1
             token.topics.add(topic)
 
 '''Just parse the text and yield it as a tuple per line'''
