@@ -49,9 +49,9 @@ class RootView(TemplateResponseMixin, View):
         context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
 
         # Favorites Stuff
-        # Do what's necessary to keep the session from ever expiring (assuming the user checks in every 100 years or so
-        if request.session.get_expiry_age() < 3153600000: # If the session is expiring sometime in the next 100 years,
-            request.session.set_expiry(timedelta(365000)) # then reset the expiration to 1,000 years from now
+        # Do what's necessary to keep the session from ever expiring (assuming the user checks in every 10 years or so
+        if request.session.get_expiry_age() < 315360000: # If the session is expiring sometime in the next 10 years,
+            request.session.set_expiry(timedelta(3650)) # then reset the expiration to 10 years from now
 
         # Preload lists of favorites
         context['favorites'] = {
