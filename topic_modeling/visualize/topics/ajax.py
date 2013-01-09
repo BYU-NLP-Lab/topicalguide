@@ -105,6 +105,31 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
     ret_val['values'] = [vars(v) for v in top_values]
     return JsonResponse(ret_val)
 
+def similar_for_topic(analysis, topic, metric, max=10):
+    return topic.pairwisetopicmetricvalue_originating.\
+            select_related().filter(metric=metric).order_by('-value')[1:1 + max]
+
+def all_similar_topics(request, dataset, analysis, measure):
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    ns = current_name_scheme(request.session, analysis)
+    ret_val = dict()
+    topics = analysis.topics.all()
+    measure = analysis.pairwisetopicmetrics.get(name=measure)
+
+    for one in topics:
+        similar = similar_for_topic(analysis, one, measure)
+
+    topics = []
+    values = []
+    for t in similar_topics:
+        values += [t.value]
+        similar_topic = t.topic2
+        topic_name = topic_name_with_ns(similar_topic, ns)
+        topics += [vars(AjaxTopic(similar_topic, topic_name))]
+    ret_val['values'] = values
+    ret_val['topics'] = topics
+    return JsonResponse(ret_val)
+
 
 def similar_topics(request, dataset, analysis, topic, measure):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)

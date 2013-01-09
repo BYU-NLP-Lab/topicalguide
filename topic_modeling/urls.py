@@ -33,7 +33,7 @@ from topic_modeling.visualize.attribute_views import AttributeDocumentView, \
 
 from topic_modeling.cssmin import cssmin
 from django.http import HttpResponse
-from topic_modeling.visualize.plot_views import PlotView
+from topic_modeling.visualize.plot_views import PlotView, FancyView
 from topic_modeling.visualize.common.views import TermsView
 
 def render_style(request, style_path):
@@ -120,7 +120,10 @@ urlpatterns = patterns('',
 
 # Plot View
     url(analysis_base + '/plots$', PlotView.as_view(), name='tg-plots'),
-    url(analysis_base + '/' + plot + '$', PlotView.as_view(), name='tg-plot')
+    url(analysis_base + '/' + plot + '$', PlotView.as_view(), name='tg-plot'),
+
+# Fancy view
+    url(analysis_base + '/fancy$', FancyView.as_view(), name='tg-fancy')
 )
 
 urlpatterns += patterns(prefix + '.ajax_calls',
@@ -157,6 +160,8 @@ urlpatterns += patterns(prefix + '.topics.ajax',
         'top_attrvaltopic'),
     (r'^feeds/topic-page/' + dataset + '/' + analysis + '/' + number + '$',
         'topic_page'),
+    #(r'^feeds/similar-topics/' + dataset + '/' + analysis + '/' + measure + '$',
+        #'all_similar_topics'),
     (r'^feeds/similar-topics/' + dataset + '/' + analysis + '/' + topic + '/' + measure + '$',
         'similar_topics'),
     (r'^feeds/rename-topic/' + dataset + '/' + analysis + '/' + topic + '/' + name + '$',

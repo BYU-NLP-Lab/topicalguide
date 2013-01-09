@@ -60,6 +60,10 @@ class Dataset(Describable):
     def __unicode__(self):
         return self.name
 
+    def all_words(self):
+        # 'select * from visualize_
+        return WordType.objects.filter(tokens__document__dataset=self)
+
     def delete(self, *args, **kwargs):
         '''
         for analysis in self.analyses.all():
