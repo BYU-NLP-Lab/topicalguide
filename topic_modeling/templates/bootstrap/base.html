@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block headtitle %}{% endblock %}</title>
+    {% block extrahead %}{% endblock %}
+    <!-- Bootstrap -->
+    <link href="/site-media/bootstrap/css/bootstrap.min.css" rel="stylesheet"
+          media="screen"/>
+    {% block css %}
+    {% endblock %}
+  </head>
+  <body class="{% block bodyclass %}{% endblock %}">
+    {% block body %}
+    {% endblock %}
+    <script src="/scripts/jslibs/jquery-1.8.3.js"></script>
+    <script src="/scripts/jslibs/lodash.js"></script>
+    <script src="/scripts/jslibs/backbone.js"></script>
+    <script src="/site-media/bootstrap/js/bootstrap.min.js"></script>
+    {% block endjs %}
+    {% endblock %}
+  </body>
+</html>

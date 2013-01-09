@@ -348,7 +348,7 @@ class WordForm(forms.Form):
     def __init__(self, dataset, id, word, *args, **kwargs):
         super(WordForm, self).__init__(*args, **kwargs)
         word_choices = [('None', '-------')]
-        for w in dataset.word_set.all():
+        for w in dataset.all_words():
             word_choices.append((w.type, w.type))
         self.fields['word'] = forms.ChoiceField(word_choices,
                 label='Word', initial=word)

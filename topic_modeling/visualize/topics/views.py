@@ -119,8 +119,8 @@ class TopicWordView(TopicView):
         analysis = context['analysis']
         topic = context['topic']
         context['word'] = word
-        documents = word.documenttopicword_set.filter(topic=topic).order_by(
-                'document__filename')
+        
+        documents = Document.objects.filter(tokens__topic=topic).order_by('document__filename')
         docs = []
         for dtw in documents:
             d = dtw.document

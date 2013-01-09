@@ -28,6 +28,14 @@ from topic_modeling.visualize.charts import plot_types
 from topic_modeling.visualize.common.ui import BreadCrumb
 from topic_modeling.visualize.common.views import AnalysisBaseView
 
+class FancyView(AnalysisBaseView):
+    template_name = 'fancy.html'
+
+    '''
+    def get_context_data(self, request, **kwargs):
+        context = super(FancyView, self).get_context_data(request, **kwargs)
+    '''
+
 class PlotView(AnalysisBaseView):
     template_name = "plots.html"
 
