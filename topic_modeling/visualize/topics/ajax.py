@@ -113,8 +113,23 @@ def all_similar_topics(request, dataset, analysis, measure):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
-    topics = analysis.topics.all()
-    measure = analysis.pairwisetopicmetrics.get(name=measure)
+    topics = list(analysis.topics.all().order_by('number'))
+    measure = analysis.pairwisetopicmetrics.get(name__iexact=measure)
+
+    matrix = [[0 for x in range(len(topics))] for x in range(len(topics))]
+    for topic in topics:
+        for value in similar_for_topic(analysis, topic, measure):
+            matrix[topic.number][value.topic2.number] = value.value
+    '''
+    values = measure.values.select_related().all()
+
+    for value in values:
+        matrix[value.topic1.number][value.topic2.number] = value.value
+    #'''
+
+    return JsonResponse(matrix)
+
+'''
 
     for one in topics:
         similar = similar_for_topic(analysis, one, measure)
@@ -130,6 +145,7 @@ def all_similar_topics(request, dataset, analysis, measure):
     ret_val['topics'] = topics
     return JsonResponse(ret_val)
 
+'''
 
 def similar_topics(request, dataset, analysis, topic, measure):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
