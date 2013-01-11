@@ -43,6 +43,7 @@ from topic_modeling.visualize.topics.names import current_name_scheme,\
 from django.views.decorators.http import require_GET
 from topic_modeling.visualize.common.http_responses import JsonResponse
 from topic_modeling.visualize import sess_key
+from django.db.models import Avg, Min, Max
 
 # General and Sidebar stuff
 ###########################
@@ -109,6 +110,25 @@ def similar_for_topic(analysis, topic, metric, max=10):
     return topic.pairwisetopicmetricvalue_originating.\
             select_related().filter(metric=metric).order_by('-value')[1:1 + max]
 
+def get_topic_info(topic):
+    info = {
+        'names': [item.name for item in topic.names.all()],
+        'metrics': dict((m.metric.name, m.value) for m in topic.topicmetricvalues.all()),
+        'documents': list(topic.topic_document_counts(sort=True)[:10])
+    }
+    return info
+
+def get_metrics(analysis):
+    res = {}
+    for metric in analysis.topicmetrics.all():
+        data = metric.values.aggregate(Avg('value'), Min('value'), Max('value'))
+        res[metric.name] = {
+            'min': data['value__min'],
+            'max': data['value__max'],
+            'avg': data['value__avg']
+        }
+    return res
+
 def all_similar_topics(request, dataset, analysis, measure):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
@@ -117,9 +137,17 @@ def all_similar_topics(request, dataset, analysis, measure):
     measure = analysis.pairwisetopicmetrics.get(name__iexact=measure)
 
     matrix = [[0 for x in range(len(topics))] for x in range(len(topics))]
+    info = []
+    metrics = get_metrics(analysis)
+
     for topic in topics:
+        tinfo = get_topic_info(topic)
+        tinfo['topics'] = []
         for value in similar_for_topic(analysis, topic, measure):
             matrix[topic.number][value.topic2.number] = value.value
+            tinfo['topics'].append(value.topic2.number)
+        info.append(tinfo)
+
     '''
     values = measure.values.select_related().all()
 
@@ -127,7 +155,7 @@ def all_similar_topics(request, dataset, analysis, measure):
         matrix[value.topic1.number][value.topic2.number] = value.value
     #'''
 
-    return JsonResponse(matrix)
+    return JsonResponse({'matrix': matrix, 'topics': info, 'metrics': metrics})
 
 '''
 
