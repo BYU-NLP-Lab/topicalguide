@@ -19,15 +19,12 @@ function get_matrixminmax(matrix) {
   return [min, max];
 }
 
-var ChordViewer = Backbone.View.extend({
-  el: '#chord-diagram',
+var FancyViewer = Backbone.View.extend({
+  el: '#fancy',
+  url: '',
   defaults: {
     width: 720,
     height: 720,
-    outer_padding: 10,
-    inner_padding: 24,
-    padding: .04,
-    num_topics: 10
   },
   initialize: function () {
     this.options = _.extend(this.defaults, this.options);
@@ -47,13 +44,81 @@ var ChordViewer = Backbone.View.extend({
   },
   reload: function () {
     var that = this;
-    d3.json(URLS['pairwise'], function (data) {
+    d3.json(this.url, function (data) {
       if (Storage) {
         localStorage.topics_data = JSON.stringify(data);
       }
       that.onloaded(data);
     });
   },
+});
+
+var ForceViewer = FancyViewer.extend({
+  defaults: _.extend(FancyViewer.prototype.defaults, {
+    circle_r: 5,
+    charge: -120,
+    link_distance: 30,
+  }),
+  onloaded: function (data) {
+    this.matrix = data.matrix;
+    this.topics = data.topics;
+    this.metrics = data.metrics;
+    this.setup_d3();
+    this.load_all();
+  },
+  setup_d3: function () {
+    var color = d3.scale.category20();
+    var force = this.force = d3.layout.force()
+      .charge(this.options.charge)
+      .linkDistance(this.options.link_distance)
+      .size([this.options.width, this.options.height]);
+
+    var svg = this.svg = d3.select(this.el).append('svg')
+      .attr('width', this.options.width)
+      .attr('height', this.options.height);
+  },
+  make_links: function (nodes) {
+    var links = [], target;
+    for (var i=0; i<nodes.length; i++) {
+      for (var j=0; j<nodes[i].topics.length; j++) {
+        target = nodes[i].topics[j];
+        links.push({source: i, target: target, weight: this.matrix[i][target]});
+      }
+    }
+    return links;
+  },
+  load_all: function () {
+    var nodes = this.topics;
+    var links = this.make_links(nodes);
+    var minmax = get_matrixminmax(this.matrix);
+    var rng = minmax[1] - minmax[0];
+    var rel = function (x) {
+      return (x - minmax[0]) / rng;
+    };
+    var that = this;
+
+
+    this.force.nodes(nodes).links(links)
+              .linkStrength(function (d) { return rel(d.weight); }).start();
+
+    var link = this.link = this.svg.selectAll('line.link')
+      .data(links).enter().append('line')
+        .attr('class', 'link')
+        .style('stroke-width', function (d) { return that.options.line_width * rel(d.weight) });
+  }
+});
+
+
+
+var ChordViewer = FancyViewer.extend({
+  el: '#chord-diagram',
+  url: URLS['pairwise'],
+  defaults: _.extend(FancyViewer.prototype.defaults, {
+    outer_padding: 10,
+    inner_padding: 24,
+    padding: .04,
+    num_topics: 10
+  }),
   onloaded: function (data) {
     this.matrix = data.matrix;
     this.topics = data.topics;
@@ -84,13 +149,12 @@ var ChordViewer = Backbone.View.extend({
       .attr("height", this.options.height)
       .append("g")
       .attr("id", "circle")
-      .attr("transform", "translate(" + this.options.width / 2 + "," + this.options.height / 2 + ")");
-
+      .attr("transform",
+            "translate(" + this.options.width / 2 + "," + this.options.height / 2 + ")");
     svg.append("circle") .attr("r", outerRadius);
   },
   topic_row: function (tid) {
     var row = [];
-    // console.log('row', tid, this.topics.length);
     for (var i=0; i<this.options.num_topics; i++) {
       row.push(this.matrix[tid][this.topics[tid].topics[i]] * 100);
     }
@@ -170,7 +234,7 @@ var ChordViewer = Backbone.View.extend({
       };
     }
 
-        // Add the group arc.
+    // Add the group arc.
     g.append("svg:path")
         .style("fill", function(d) { return colors[d.index]; })
         .attr("id", function(d, i) { return "group" + d.index; })
