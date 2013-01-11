@@ -1,7 +1,18 @@
 {% extends "bootstrap/bootstrap.html" %}
 
+{% block navitems %}
+{{ block.super }}
+<li><a href="#" id="refresh-button" class="btn">Refresh</a></li>
+{% endblock %}
+
 {% block css %}
 <style>
+
+
+path.chord {
+  stroke-width: .75;
+  fill-opacity: .75;
+}
 
 #circle circle {
   fill: none;
@@ -14,7 +25,6 @@
 
 path.chord {
   stroke: #000;
-  stroke-width: .25px;
 }
 
 #circle:hover path.fade {
