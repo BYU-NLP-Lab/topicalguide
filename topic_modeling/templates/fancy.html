@@ -9,6 +9,17 @@
 <style>
 
 
+
+.node {
+    stroke: #fff;
+    stroke-width: 1.5px;
+}
+
+.link {
+    stroke: #999;
+    stroke-opacity: .6;
+}
+
 path.chord {
   stroke-width: .75;
   fill-opacity: .75;
@@ -96,6 +107,8 @@ path.arc {
 {% block container %}
 
 <div id="chord-diagram">
+</div>
+<div id="force-topics">
 </div>
 {% endblock %}
 
