@@ -54,12 +54,15 @@ var FancyViewer = Backbone.View.extend({
 });
 
 var ForceViewer = FancyViewer.extend({
+  el: '#force-topics',
   defaults: _.extend(FancyViewer.prototype.defaults, {
     circle_r: 5,
     charge: -120,
     link_distance: 30,
+    line_width: 5
   }),
   onloaded: function (data) {
+  console.log('loaded');
     this.matrix = data.matrix;
     this.topics = data.topics;
     this.metrics = data.metrics;
@@ -105,6 +108,27 @@ var ForceViewer = FancyViewer.extend({
       .data(links).enter().append('line')
         .attr('class', 'link')
         .style('stroke-width', function (d) { return that.options.line_width * rel(d.weight) });
+
+     var node = this.node = this.svg.selectAll("circle.node")
+        .data(nodes)
+      .enter().append("circle")
+        .attr("class", "node")
+        .attr("r", this.options.circle_r)
+        .style("fill", 'green');
+
+     node.append("title")
+      .text(function(d) { return d.names[0]; });
+
+
+     this.force.on("tick", function() {
+       link.attr("x1", function(d) { return d.source.x; })
+           .attr("y1", function(d) { return d.source.y; })
+           .attr("x2", function(d) { return d.target.x; })
+           .attr("y2", function(d) { return d.target.y; });
+
+       node.attr("cx", function(d) { return d.x; })
+           .attr("cy", function(d) { return d.y; });
+     });
   }
 });
 
@@ -265,68 +289,5 @@ var ChordViewer = FancyViewer.extend({
   }
 });
 
-var chords = new ChordViewer();
-
-/*
-d3.json(URLS['pairwise'], function (data) {
- layout.matrix(data.matrix);
-
- // Add a group per neighborhood.
- var group = svg.selectAll(".group")
- .data(layout.groups)
- .enter().append("g")
- .attr("class", "group")
- .on("mouseover", mouseover);
-
- // Add a mouseover title.
- group.append("title").text(function(d, i) {
- return cities[i].name + ": " + formatPercent(d.value) + " of origins";
- });
-
- // Add the group arc.
- var groupPath = group.append("path")
- .attr("id", function(d, i) { return "group" + i; })
- .attr("d", arc)
- .style("fill", function(d, i) { return cities[i].color; });
-
- // Add a text label.
- var groupText = group.append("text")
- .attr("x", 6)
- .attr("dy", 15);
-
- groupText.append("textPath")
- .attr("xlink:href", function(d, i) { return "#group" + i; })
- .text(function(d, i) { return cities[i].name; });
-
- // Remove the labels that don't fit. :(
- groupText.filter(function(d, i) { return groupPath[0][i].getTotalLength() / 2 - 16 < this.getComputedTextLength(); })
- .remove();
-
- // Add the chords.
- var chord = svg.selectAll(".chord")
- .data(layout.chords)
- .enter().append("path")
- .attr("class", "chord")
- // .style("fill", function(d) { return cities[d.source.index].color; })
- .attr("d", path);
-
- /*
- // Add an elaborate mouseover title for each chord.
- chord.append("title").text(function(d) {
- return cities[d.source.index].name
- + " → " + cities[d.target.index].name
- + ": " + formatPercent(d.source.value)
- + "\n" + cities[d.target.index].name
- + " → " + cities[d.source.index].name
- + ": " + formatPercent(d.target.value);
- });
-
- function mouseover(d, i) {
-  chord.classed("fade", function(p) {
-   return p.source.index != i
-   && p.target.index != i;
-  });
- }
-});
-*/
+var chords = new ForceViewer();
 
