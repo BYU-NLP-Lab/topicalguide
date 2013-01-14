@@ -56,10 +56,10 @@ var FancyViewer = Backbone.View.extend({
 var ForceViewer = FancyViewer.extend({
   el: '#force-topics',
   defaults: _.extend(FancyViewer.prototype.defaults, {
-    circle_r: 5,
-    charge: -120,
-    link_distance: 30,
-    line_width: 5
+    circle_r: 10,
+    charge: -360,
+    link_distance: 50,
+    line_width: 3
   }),
   onloaded: function (data) {
   console.log('loaded');
@@ -78,7 +78,19 @@ var ForceViewer = FancyViewer.extend({
 
     var svg = this.svg = d3.select(this.el).append('svg')
       .attr('width', this.options.width)
-      .attr('height', this.options.height);
+      .attr('height', this.options.height)
+      .attr("pointer-events", "all");
+
+    var maing;
+    var redraw = function () {
+      maing.attr("transform",
+            "translate(" + d3.event.translate + ")"
+            + " scale(" + d3.event.scale + ")");
+    };
+    
+    maing = this.maing = svg.append('svg:g')
+                    .call(d3.behavior.zoom().on("zoom", redraw))
+                      .append('svg:g');
   },
   make_links: function (nodes) {
     var links = [], target;
@@ -100,27 +112,66 @@ var ForceViewer = FancyViewer.extend({
     };
     var that = this;
 
+    this.maing.selectAll('*').remove();
+
+    this.maing.append('rect').attr('class', 'background')
+      .attr('width', this.options.width)
+      .attr('height', this.options.height);
 
     this.force.nodes(nodes).links(links)
               .linkStrength(function (d) { return rel(d.weight); }).start();
 
-    var link = this.link = this.svg.selectAll('line.link')
+    var link = this.link = this.maing.selectAll('line.link')
       .data(links).enter().append('line')
         .attr('class', 'link')
         .style('stroke-width', function (d) { return that.options.line_width * rel(d.weight) });
 
-     var node = this.node = this.svg.selectAll("circle.node")
+    var node = this.node = this.maing.selectAll("g.node")
         .data(nodes)
-      .enter().append("circle")
+      .enter().append('g')
+        .attr('class', function (d, i) { return 'node node-' + i; })
+        .on('mouseover', _.bind(this.mouseover, this))
+        .on('mouseout', _.bind(this.mouseout, this));
+    
+    var circles = this.circles = node.append("circle")
         .attr("class", "node")
         .attr("r", this.options.circle_r)
         .style("fill", 'green');
 
-     node.append("title")
-      .text(function(d) { return d.names[0]; });
+    var texts = this.texts = node.append('svg:text')
+      .attr('x', 10).attr('y', 10)
+      .append('svg:textPath')
+        .attr('xlink:href', function (d) { return '#group-' + d.index;})
+        .text(function(d) { return d.names[0]; });
 
+    circles.append("title")
+        .text(function(d) { return d.names[0]; });
 
-     this.force.on("tick", function() {
+    this.calc_layout();
+    this.update_positions();
+
+  },
+  mouseover: function (d, i) {
+    $('g.node-' + i).addClass('highlighted');
+  },
+  mouseout: function (d, i) {
+    $('g.node-' + i).removeClass('highlighted');
+  },
+  calc_layout: function () {
+     this.force.start();
+     for (var i = 0; i < 1000; ++i) this.force.tick();
+     this.force.stop();
+  },
+  update_positions: function () {
+     this.link.attr("x1", function(d) { return d.source.x; })
+         .attr("y1", function(d) { return d.source.y; })
+         .attr("x2", function(d) { return d.target.x; })
+         .attr("y2", function(d) { return d.target.y; });
+
+     this.circles.attr("cx", function(d) { return d.x; })
+         .attr("cy", function(d) { return d.y; });
+  },
+     /*this.force.on("tick", function() {
        link.attr("x1", function(d) { return d.source.x; })
            .attr("y1", function(d) { return d.source.y; })
            .attr("x2", function(d) { return d.target.x; })
@@ -128,8 +179,7 @@ var ForceViewer = FancyViewer.extend({
 
        node.attr("cx", function(d) { return d.x; })
            .attr("cy", function(d) { return d.y; });
-     });
-  }
+     });*/
 });
 
 
