@@ -1,0 +1,130 @@
+
+g.main-g {
+  transition-property: transform;
+  transition-duration: .5s;
+}
+
+g.zoom-out rect.bg, g.zoom-in rect.bg {
+  fill: white;
+  stroke: black;
+  stroke-width: 1;
+}
+
+g.zoom-in rect.cross, g.zoom-out rect.cross {
+  fill: black;
+}
+
+
+g.text {
+  pointer-events: none;
+}
+
+g.text text {
+  font-family: sans;
+  fill: #afc;
+  font-weight: bold;
+  font-size: 4px;
+  text-anchor: middle;
+}
+
+g.text text tspan.back {
+  stroke: black;
+  stroke-width: 1;
+}
+
+g.highlighted circle {
+    stroke-width: 2;
+    stroke: black;
+}
+
+.background {
+    fill: white;
+}
+
+.node {
+    stroke: none;
+}
+
+.link {
+    stroke: #999;
+    stroke-opacity: .6;
+}
+
+path.chord {
+  stroke-width: .75;
+  fill-opacity: .75;
+}
+
+#circle circle {
+  fill: none;
+  pointer-events: all;
+}
+
+.group path {
+  fill-opacity: .5;
+}
+
+path.chord {
+  stroke: #000;
+}
+
+#circle:hover path.fade {
+  display: none;
+}
+
+body {
+  /*font: 10px sans-serif;*/
+  margin-top: 40px;
+  padding: 20px;
+}
+
+/**
+.chord path {
+  fill-opacity: .67;
+  stroke: #000;
+  stroke-width: .5px;
+}
+
+path.arc {
+  cursor: move;
+  fill: #fff;
+}
+
+.node {
+  font-size: 10px;
+}
+
+.node:hover {
+  fill: #1f77b4;
+}
+
+.link {
+  fill: none;
+  stroke: #1f77b4;
+  stroke-opacity: .4;
+  pointer-events: none;
+}
+
+.link.source, .link.target {
+  stroke-opacity: 1;
+  stroke-width: 2px;
+}
+
+.node.target {
+  fill: #d62728 !important;
+}
+
+.link.source {
+  stroke: #d62728;
+}
+
+.node.source {
+  fill: #2ca02c;
+}
+
+.link.target {
+  stroke: #2ca02c;
+}
+**/
+
+

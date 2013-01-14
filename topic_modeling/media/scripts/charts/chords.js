@@ -36,6 +36,8 @@ var FancyViewer = Backbone.View.extend({
         console.log('loading error' + e);
         if (confirm('An error occurred loading cached data: reload?')) {
           this.reload();
+        } else {
+          throw e;
         }
       }
     } else {
@@ -59,7 +61,8 @@ var ForceViewer = FancyViewer.extend({
     circle_r: 10,
     charge: -360,
     link_distance: 50,
-    line_width: 3
+    line_width: 3,
+    full_scale: 3
   }),
   onloaded: function (data) {
   console.log('loaded');
@@ -82,15 +85,65 @@ var ForceViewer = FancyViewer.extend({
       .attr("pointer-events", "all");
 
     var maing;
-    var redraw = function () {
-      maing.attr("transform",
-            "translate(" + d3.event.translate + ")"
-            + " scale(" + d3.event.scale + ")");
-    };
-    
-    maing = this.maing = svg.append('svg:g')
-                    .call(d3.behavior.zoom().on("zoom", redraw))
-                      .append('svg:g');
+    this.zoom = d3.behavior.zoom().on("zoom", _.bind(this.redraw, this));
+    this.outer = svg.append('svg:g').call(this.zoom)
+    maing = this.maing = this.outer.append('svg:g')
+      .attr('class', 'main-g');
+    this.make_zoom_ctrl();
+  },
+  redraw: function () {
+    this.maing.attr("transform",
+          "translate(" + this.zoom.translate() + ")"
+          + " scale(" + this.zoom.scale() + ")");
+  },
+  make_zoom_ctrl: function () {
+    var that = this;
+    this.zoom_out = this.outer.append('g')
+      .attr('class', 'zoom-out')
+      .attr('pointer-events', 'all')
+      .on('click', function () {
+        console.log('zooming');
+        var pos = that.zoom.translate();
+        that.zoom.scale(that.zoom.scale() / 2);
+        that.zoom.translate([pos[0]/2+that.options.width/4, pos[1]/2+that.options.height/4]);
+        that.redraw();
+      })
+      .attr('transform', 'translate(10, 30)');
+    this.zoom_out.append('rect')
+      .attr('class', 'bg')
+      .attr('width', 20)
+      .attr('height', 20);
+    this.zoom_out.append('rect')
+      .attr('class', 'cross')
+      .attr('width', 16)
+      .attr('height', 4)
+      .attr('x', 2).attr('y', 8);
+
+    this.zoom_in = this.outer.append('g')
+      .attr('class', 'zoom-in')
+      .attr('pointer-events', 'all')
+      .on('click', function () {
+        console.log('zooming in');
+        var pos = that.zoom.translate();
+        that.zoom.scale(that.zoom.scale() * 2);
+        that.zoom.translate([pos[0]*2-that.options.width/2, pos[1]*2-that.options.height/2]);
+        that.redraw();
+      })
+      .attr('transform', 'translate(10, 10)');
+    this.zoom_in.append('rect')
+      .attr('class', 'bg')
+      .attr('width', 20)
+      .attr('height', 20);
+    this.zoom_in.append('rect')
+      .attr('class', 'cross')
+      .attr('width', 4)
+      .attr('height', 16)
+      .attr('x', 8).attr('y', 2);
+    this.zoom_in.append('rect')
+      .attr('class', 'cross')
+      .attr('width', 16)
+      .attr('height', 4)
+      .attr('x', 2).attr('y', 8);
   },
   make_links: function (nodes) {
     var links = [], target;
@@ -130,19 +183,58 @@ var ForceViewer = FancyViewer.extend({
         .data(nodes)
       .enter().append('g')
         .attr('class', function (d, i) { return 'node node-' + i; })
-        .on('mouseover', _.bind(this.mouseover, this))
-        .on('mouseout', _.bind(this.mouseout, this));
+        .attr('pointer-events', 'all')
+        .on('mouseover', mouseover, this)
+        .on('mouseout', mouseout, this);
+
+    var mouseover = function (d, i) {
+      console.log('over');
+      $(this).addClass('highlighted');
+    };
+    var mouseout = function (d, i) {
+      $(this).removeClass('highlighted');
+    };
+
+    node.on('click', function (d, i) {
+      console.log(d, i);
+      var s = that.options.full_scale;
+      that.zoom.translate([-s*d.x + that.options.width/2,
+                           -s*d.y + that.options.height/2]).scale(s);
+      that.redraw();
+    });
     
     var circles = this.circles = node.append("circle")
         .attr("class", "node")
         .attr("r", this.options.circle_r)
         .style("fill", 'green');
 
-    var texts = this.texts = node.append('svg:text')
-      .attr('x', 10).attr('y', 10)
-      .append('svg:textPath')
-        .attr('xlink:href', function (d) { return '#group-' + d.index;})
-        .text(function(d) { return d.names[0]; });
+    var texts = this.texts = this.maing.append('g')
+      .attr('class', 'all-texts').selectAll('g.text')
+        .data(nodes)
+      .enter().append('svg:g')
+        .attr('pointer-events', 'none')
+        .attr('class', 'text');
+
+    var the_texts = texts.append('svg:text')
+      .attr('transform', 'translate(0, -3)');
+
+    the_texts.each(function (d, i) {
+      var node = d3.select(this);
+      var parts = d.names[0].split(' ');
+      for (var i=0; i<parts.length; i++) {
+        node.append('tspan')
+          .attr('class', 'back')
+          .text(parts[i])
+          .attr('y', i*4)
+          .attr('x', 0);
+      }
+      for (var i=0; i<parts.length; i++) {
+        node.append('tspan')
+          .text(parts[i])
+          .attr('y', i*4)
+          .attr('x', 0);
+      }
+    });
 
     circles.append("title")
         .text(function(d) { return d.names[0]; });
@@ -150,12 +242,6 @@ var ForceViewer = FancyViewer.extend({
     this.calc_layout();
     this.update_positions();
 
-  },
-  mouseover: function (d, i) {
-    $('g.node-' + i).addClass('highlighted');
-  },
-  mouseout: function (d, i) {
-    $('g.node-' + i).removeClass('highlighted');
   },
   calc_layout: function () {
      this.force.start();
@@ -168,8 +254,8 @@ var ForceViewer = FancyViewer.extend({
          .attr("x2", function(d) { return d.target.x; })
          .attr("y2", function(d) { return d.target.y; });
 
-     this.circles.attr("cx", function(d) { return d.x; })
-         .attr("cy", function(d) { return d.y; });
+     this.node.attr('transform', function (d) {return 'translate(' + d.x + ',' + d.y + ')'; });
+     this.texts.attr('transform', function (d) {return 'translate(' + d.x + ',' + d.y + ')'; });
   },
      /*this.force.on("tick", function() {
        link.attr("x1", function(d) { return d.source.x; })
