@@ -130,6 +130,28 @@ def get_metrics(analysis):
     return res
 
 def all_similar_topics(request, dataset, analysis, measure):
+    '''An ajax view for listing a matrix of pairwise topic correlation
+    
+    @url /feeds/similar-topics/@dataset/@analysis/@measure$
+    @name all-similar-topics
+
+    measure = name of a pairwise topic matric
+    dataset = name of a dataset
+    analysis = name of an analysis for the dataset
+
+    Returns:
+        {
+            'matrix': m x m matrix (m = number of topics in the analysis)
+                      where matrix[i][j] = correlation between topic i and topic j,
+            'topics': [{
+                'names': list of topic names,
+                'metrics': dict of metric values,
+                'documents': list of top 10 documents,
+                'topics': list of top 10 correlated topics
+            }, ... for each topic (where index = topic.number)],
+            'metrics': get_metrics(analysis)
+        }
+    '''
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
