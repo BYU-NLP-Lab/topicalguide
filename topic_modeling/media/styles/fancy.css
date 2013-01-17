@@ -1,4 +1,20 @@
 
+line.link.highlighted {
+  stroke-opacity: 1;
+  stroke: black;
+}
+
+g.node.highlighted-main circle {
+  fill: #EED23D !important;
+  stroke: #EED23D;
+  stroke-width: 3px;
+}
+
+g.node.highlighted circle {
+  stroke: #EED23D;
+  stroke-width: 2px;
+}
+
 g.main-g {
   transition-property: transform;
   transition-duration: .5s;
@@ -21,20 +37,15 @@ g.text {
 
 g.text text {
   font-family: sans;
-  fill: #afc;
+  fill: #F3F1D7;
   font-weight: bold;
   font-size: 4px;
   text-anchor: middle;
 }
 
 g.text text tspan.back {
-  stroke: black;
+  stroke: #2C2B1C;
   stroke-width: 1;
-}
-
-g.highlighted circle {
-    stroke-width: 2;
-    stroke: black;
 }
 
 .background {
@@ -46,7 +57,7 @@ g.highlighted circle {
 }
 
 .link {
-    stroke: #999;
+    stroke: #2C2B1C;
     stroke-opacity: .6;
 }
 

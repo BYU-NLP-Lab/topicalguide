@@ -45,6 +45,16 @@ function get_matrixminmax(matrix) {
   return [min, max];
 }
 
+function get_topicsminmax(topics) {
+  var min, max;
+  min = max = topics[0].metrics['Number of tokens'];
+  for (var i=0; i<topics.length; i++) {
+    if (topics[i].metrics['Number of tokens'] > max) max = topics[i].metrics['Number of tokens'];
+    if (topics[i].metrics['Number of tokens'] < min) min = topics[i].metrics['Number of tokens'];
+  }
+  return [min, max];
+}
+
 /** This view manages the content of the page
  *
  * It also handles the request and storage of data.
@@ -69,18 +79,6 @@ var MainView = Backbone.View.extend({
     this.visualizations
   }
 });
-
-var ChordViewer = FancyViewer.extend({
-  el: '#chord-diagram',
-  url: URLS['pairwise'],
-  defaults: _.extend(FancyViewer.prototype.defaults, {
-    outer_padding: 10,
-    inner_padding: 24,
-    padding: .04,
-    num_topics: 10
-  })
-});
-
 
 var FancyViewer = Backbone.View.extend({
   el: '#fancy',
@@ -120,6 +118,7 @@ var FancyViewer = Backbone.View.extend({
 
 var ForceViewer = FancyViewer.extend({
   el: '#force-topics',
+  url: URLS['pairwise'],
   defaults: _.extend(FancyViewer.prototype.defaults, {
     circle_r: 10,
     charge: -360,
@@ -222,7 +221,12 @@ var ForceViewer = FancyViewer.extend({
     var nodes = this.topics;
     var links = this.make_links(nodes);
     var minmax = get_matrixminmax(this.matrix);
+    var tminmax = get_topicsminmax(this.topics);
     var rng = minmax[1] - minmax[0];
+    var trng = tminmax[1] - tminmax[0];
+    var trel = function (x) {
+      return (x - tminmax[0]) / trng;
+    };
     var rel = function (x) {
       return (x - minmax[0]) / rng;
     };
@@ -239,7 +243,9 @@ var ForceViewer = FancyViewer.extend({
 
     var link = this.link = this.maing.selectAll('line.link')
       .data(links).enter().append('line')
-        .attr('class', 'link')
+        .attr('class', 'link').attr('name', function (d) {
+          return 'link-' + d.source.index + '-' + d.target.index;
+        })
         .style('stroke-width', function (d) { return that.options.line_width * rel(d.weight) });
 
     var node = this.node = this.maing.selectAll("g.node")
@@ -259,17 +265,34 @@ var ForceViewer = FancyViewer.extend({
     };
 
     node.on('click', function (d, i) {
-      console.log(d, i);
+      console.log(i);
       var s = that.options.full_scale;
       that.zoom.translate([-s*d.x + that.options.width/2,
                            -s*d.y + that.options.height/2]).scale(s);
       that.redraw();
+      // d3.selectAll('line.link.highlighted').classed('highlighted', false);
+      d3.selectAll('g.node.highlighted').classed('highlighted', false);
+      d3.selectAll('g.node.highlighted-main').classed('highlighted-main', false);
+      var close = that.topics[d.index].topics;
+      d3.select(this).classed('highlighted-main', true);
+      console.log(this, this.className);
+      var circle, line;
+      for (var i=0; i<close.length; i++) {
+        d3.select('g.node-' + close[i]).classed('highlighted', true);
+      }
+      // d3.selectAll('line.link[name^=link-' + d.index + '-]').classed('highlighted', true);
+      // d3.selectAll('line.link[name$="-' + d.index + '"]').classed('highlighted', true);
     });
     
     var circles = this.circles = node.append("circle")
         .attr("class", "node")
-        .attr("r", this.options.circle_r)
-        .style("fill", 'green');
+        .attr("r", function (d) {
+          console.log(d.metrics['Number of tokens']);
+          var ret = 10 + that.options.circle_r * trel(d.metrics['Number of tokens']);
+          console.log(ret);
+          return parseInt(ret);
+        })
+        .style("fill", '#69984C');
 
     var texts = this.texts = this.maing.append('g')
       .attr('class', 'all-texts').selectAll('g.text')
