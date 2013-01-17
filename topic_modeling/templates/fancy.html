@@ -1,23 +1,16 @@
 {% extends "bootstrap/bootstrap.html" %}
 
-{% block navitems %}
-{{ block.super }}
-<li><a href="#" id="refresh-button" class="btn">Refresh</a></li>
-{% endblock %}
-
 {% block css %}
 <link href="/styles/fancy.css" rel="stylesheet">
 {% endblock %}
 
 {% block headtitle %}Topic Chord Diagrams{% endblock %}
 {% block bodytitle %}Topic Chord Diagrams{% endblock %}
-{% block projectname %}Topical Guide{% endblock %}
+{% block nav-title %}Topical Guide{% endblock %}
 
 {% block container %}
 
-<div id="chord-diagram">
-</div>
-<div id="force-topics">
+<div id="main">
 </div>
 {% endblock %}
 
