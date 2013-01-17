@@ -7,6 +7,32 @@ var dumb_matrix = [[11975,  5871, 8916, 2868],
                [ 8010, 16145, 8090, 8045],
                [ 1013,   990,  940, 6907]];
 
+/**
+ * Create a bootstrap button group
+ *
+ * Arguments:
+ *  - items: [['name', callback], ...]
+ *  - node : string or element to house it (will receive the class "btn-group"
+ */
+function create_button_group(items, node) {
+  node = $(node).addClass('btn-group').attr('data-toggle', 'buttons-radio');
+  node.empty();
+  var buttons = [];
+  for (var i=0; i<items.length; i++) {
+    buttons.push($('<button type="button" class="btn btn-primary">' + items[i][0] + '</button>')
+      .appendTo(node).click(items[i][1]));
+  }
+  return buttons;
+}
+
+/**
+ * Calculate the max and min values of a matrix.
+ *
+ * Arguments:
+ *  matrix: a list of lists of floats
+ *
+ * Returns [min, max];
+ */
 function get_matrixminmax(matrix) {
   var min, max;
   min = max = matrix[0][0];
@@ -18,6 +44,43 @@ function get_matrixminmax(matrix) {
   }
   return [min, max];
 }
+
+/** This view manages the content of the page
+ *
+ * It also handles the request and storage of data.
+ *
+ * - select the type of visualization
+ * - select the model to use (topic / document / wordtype?)
+ * - select the pairwise metric
+ */
+var MainView = Backbone.View.extend({
+  el: '#main',
+  initialize: function () {
+    
+    this.render();
+  },
+  render: function () {
+  }
+}, {
+  visualizations: {},
+  add: function (config) {
+    var cls = VisualizationView.extend(config);
+    //
+    this.visualizations
+  }
+});
+
+var ChordViewer = FancyViewer.extend({
+  el: '#chord-diagram',
+  url: URLS['pairwise'],
+  defaults: _.extend(FancyViewer.prototype.defaults, {
+    outer_padding: 10,
+    inner_padding: 24,
+    padding: .04,
+    num_topics: 10
+  })
+});
+
 
 var FancyViewer = Backbone.View.extend({
   el: '#fancy',
