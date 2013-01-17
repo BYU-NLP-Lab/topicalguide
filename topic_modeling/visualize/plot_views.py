@@ -40,6 +40,11 @@ class FancyView(TemplateResponseMixin, View):
         context = Context()
         context['analysis_name'] = kwargs['analysis']
         context['dataset_name'] = kwargs['dataset']
+        context['breadcrumb'] = [['/', 'home'],
+                ['/datasets/' + kwargs['dataset'], kwargs['dataset']],
+                ['/datasets/%s/analyses/%s' % (kwargs['dataset'], kwargs['analysis']),
+                    kwargs['analysis']],
+                ['#', 'fancy']]
         return context
 
         # context = super(FancyView, self).get_context_data(request, **kwargs)

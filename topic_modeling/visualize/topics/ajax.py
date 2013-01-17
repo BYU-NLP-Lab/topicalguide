@@ -170,34 +170,23 @@ def all_similar_topics(request, dataset, analysis, measure):
             tinfo['topics'].append(value.topic2.number)
         info.append(tinfo)
 
-    '''
-    values = measure.values.select_related().all()
-
-    for value in values:
-        matrix[value.topic1.number][value.topic2.number] = value.value
-    #'''
-
     return JsonResponse({'matrix': matrix, 'topics': info, 'metrics': metrics})
 
-'''
-
-    for one in topics:
-        similar = similar_for_topic(analysis, one, measure)
-
-    topics = []
-    values = []
-    for t in similar_topics:
-        values += [t.value]
-        similar_topic = t.topic2
-        topic_name = topic_name_with_ns(similar_topic, ns)
-        topics += [vars(AjaxTopic(similar_topic, topic_name))]
-    ret_val['values'] = values
-    ret_val['topics'] = topics
-    return JsonResponse(ret_val)
-
-'''
-
 def similar_topics(request, dataset, analysis, topic, measure):
+    '''And ajax view for listing topics similar to a given topic.
+
+    measure = name of a measure
+    topic   = (int) topic number
+    analysis= name of an analysis
+    dataset = name of a dataset
+
+    returns (json):
+    {
+        'values': [float, ...] # the correlation values
+        'topics': [info, ...]  # dicts of info about each topic
+    }
+    '''
+
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
