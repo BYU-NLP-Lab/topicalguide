@@ -20,6 +20,11 @@ function create_button_group(items, node) {
   return buttons;
 }
 
+function translate_node(d) {
+  return 'translate(' + d.x + ',' + d.y + ')'; 
+}
+
+
 /**
  * Calculate the max and min values of a matrix.
  *
@@ -76,7 +81,8 @@ var ForceViewer = MainView.add(ZoomableView, {
   name: 'force-topics',
   title: 'Force Diagram',
   defaults: {
-    circle_r: 10,
+    circle_r: 20,
+    circle_min: 2,
     charge: -360,
     link_distance: 50,
     line_width: 3,
@@ -88,6 +94,17 @@ var ForceViewer = MainView.add(ZoomableView, {
     this.ticking = false;
   },
 
+  setup_menu: function (menu) {
+    var that = this;
+    $('button[name=unfreeze]', menu).click(function () {
+      if ($(this).hasClass('active')) {
+        that.stop_ticking();
+      } else {
+        that.start_ticking();
+      }
+    });
+  },
+
   setup_d3: function () {
     this.force = d3.layout.force()
       .charge(this.options.charge)
@@ -95,11 +112,11 @@ var ForceViewer = MainView.add(ZoomableView, {
       .size([this.options.width, this.options.height]);
   },
 
-  load: function () {
-    var nodes = this.data.topics;
-    var links = force_links(nodes, this.data.matrix);
-    var minmax = get_matrixminmax(this.data.matrix);
-    var tminmax = get_topicsminmax(this.data.topics);
+  load: function (data) {
+    var nodes = data.topics;
+    var links = force_links(nodes, data.matrix);
+    var minmax = get_matrixminmax(data.matrix);
+    var tminmax = get_topicsminmax(data.topics);
     var rel = make_rel(minmax);
     var trel = make_rel(tminmax);
     var that = this;
@@ -109,47 +126,58 @@ var ForceViewer = MainView.add(ZoomableView, {
     this.calc_layout();
 
     this.maing.selectAll('*').remove();
-    // add a background so that click & drag works
-    this.maing.append('rect').attr('class', 'background')
-      .attr('width', this.options.width)
-      .attr('height', this.options.height);
-
     // create links first so they're behind everything
+    this.create_links(links, rel);
+    this.create_nodes(nodes, data, trel);
+    // update the positions of all the created nodes
+    this.update_positions();
+  },
+
+  create_links: function (links, rel) {
+    var that = this;
     this.link = this.maing.selectAll('line.link')
       .data(links).enter().append('line')
-        .attr('class', 'link').attr('name', function (d) {
-          return 'link-' + d.source.index + '-' + d.target.index;
-        })
-        .style('stroke-width', function (d) { return that.options.line_width * rel(d.weight) });
+      .attr('class', 'link').attr('name', function (d) {
+        return 'link-' + d.source.index + '-' + d.target.index;
+      }).style('stroke-width', function (d) {
+        return that.options.line_width * rel(d.weight)
+      });
+  },
 
-    // use create notes
-    this.node = this.maing.selectAll("g.node")
+  create_nodes: function (nodes, data, trel) {
+    var that = this;
+    this.node = this.maing.append('g')
+      .classed('all-nodes', true).selectAll("g.node")
         .data(nodes)
       .enter().append('g')
         .attr('class', function (d, i) { return 'node node-' + i; })
         .attr('pointer-events', 'all')
         .on('click', function (d, i) {
-          that.node_click(d, this);
+          that.node_click(d, this, data.topics[d.index]);
         });
+    this.create_circles(trel);
+    this.create_texts(nodes);
+  },
 
-    // create the circles
+  create_circles: function (trel) {
+    var that = this;
     this.node.append("circle")
         .attr("class", "node")
         .attr("r", function (d) {
-          console.log(d.metrics['Number of tokens']);
-          var ret = 10 + that.options.circle_r * trel(d.metrics['Number of tokens']);
-          console.log(ret);
+          var ret = that.options.circle_min + that.options.circle_r * trel(d.metrics['Number of tokens']);
           return parseInt(ret);
         });
+  },
 
-    // texts for the circles need to be above the circles
+  create_texts: function (nodes) {
+    /* texts for the circles need to be above the circles */
     this.texts = this.maing.append('g')
-      .attr('class', 'all-texts').selectAll('g.text')
+      .classed('all-texts', true).selectAll('g.text')
         .data(nodes)
       .enter().append('svg:g')
         .attr('pointer-events', 'none')
         .attr('class', 'text')
-      // add the texts
+    // add the lines of text
     this.texts.append('svg:text')
         .attr('transform', 'translate(0, -3)')
         .each(function (d, i) {
@@ -169,12 +197,9 @@ var ForceViewer = MainView.add(ZoomableView, {
               .attr('x', 0);
           }
         });
-
-    // update the positions of all the created nodes
-    this.update_positions();
   },
 
-  node_click: function (data, node) {
+  node_click: function (data, node, topic) {
     /* click callback for the nodes */
     console.log(i);
     var s = this.options.full_scale;
@@ -183,7 +208,7 @@ var ForceViewer = MainView.add(ZoomableView, {
     this.redraw_smooth();
     d3.selectAll('g.node.highlighted').classed('highlighted', false);
     d3.selectAll('g.node.highlighted-main').classed('highlighted-main', false);
-    var close = this.data.topics[data.index].topics;
+    var close = topic.topics;
     d3.select(node).classed('highlighted-main', true);
     var circle, line;
     for (var i=0; i<close.length; i++) {
@@ -192,21 +217,20 @@ var ForceViewer = MainView.add(ZoomableView, {
   },
 
   calc_layout: function () {
-     /* run 1000 ticks so that the layout settles down, then freeze it */
-     this.force.start();
-     for (var i = 0; i < 1000; ++i) this.force.tick();
-     this.force.stop();
+    /* run 1000 ticks so that the layout settles down, then freeze it */
+    this.force.start();
+    for (var i = 0; i < 1000; ++i) this.force.tick();
+    this.force.stop();
   },
 
   update_positions: function () {
     /* update the positions to match the force layout */
-     this.link.attr("x1", function(d) { return d.source.x; })
-         .attr("y1", function(d) { return d.source.y; })
-         .attr("x2", function(d) { return d.target.x; })
-         .attr("y2", function(d) { return d.target.y; });
-
-     this.node.attr('transform', function (d) {return 'translate(' + d.x + ',' + d.y + ')'; });
-     this.texts.attr('transform', function (d) {return 'translate(' + d.x + ',' + d.y + ')'; });
+    this.link.attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+    this.node.attr('transform', translate_node);
+    this.texts.attr('transform', translate_node);
   },
 
   start_ticking: function () {
@@ -220,8 +244,8 @@ var ForceViewer = MainView.add(ZoomableView, {
           .attr("x2", function(d) { return d.target.x; })
           .attr("y2", function(d) { return d.target.y; });
 
-      that.node.attr("cx", function(d) { return d.x; })
-          .attr("cy", function(d) { return d.y; });
+      that.node.attr("transform", translate_node);
+      that.texts.attr('transform', translate_node);
     });
     this.force.start();
   },

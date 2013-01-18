@@ -17,28 +17,43 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </a>
-      <a class="brand">Visualizations</a>
-      <div class="nav-collapse collapse">
+      <ul class="nav">
+        <li class="dropdown" id="viz-picker">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+          <span>Visualization</span>
+          <b class="caret"></b>
+        </a>
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+        </ul>
+        </li>
+      </ul>
+      <div id="menu-force-topics" class="nav-collapse collapse">
         <ul class="nav">
-          <li class="dropdown" id="viz-picker">
-            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-              <span>Visualization</span>
-              <b class="caret"></b>
-            </a>
-            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-              <li><a href="#">Hi</a></li>
-              <li><button type="button" class="btn btn-primary">ho</button></li>
-            </ul>
-          </li>
-          <li class="btn-group" data-toggle="buttons-radio">
-            <button type="button" class="btn btn-primary active">
+          <li><a>Node:</a></li>
+          <li name='node-type' class="btn-group" data-toggle="buttons-radio">
+            <button name='topics' type="button" class="btn btn-primary active">
               Topics
             </button>
-            <button type="button" class="btn btn-primary">
+            <button name='documents' type="button" class="btn btn-primary">
               Documents
             </button>
           </li>
-
+          <li><a>Compare By:</a></li>
+          <li name='metric' class="btn-group" data-toggle="buttons-radio">
+            <button name='Documents' type="button" class="btn btn-primary active">
+              Documents
+            </button>
+            <button name='Words' type="button" class="btn btn-primary">
+              Words
+            </button>
+          </li>
+        </ul>
+        <ul class="nav pull-right">
+          <li>
+            <button name='unfreeze' type="button" class="btn btn-primary" data-toggle="button">
+              Active
+            </button>
+          </li>
         </ul>
       </div><!--/.nav-collapse -->
     </div>
@@ -46,7 +61,20 @@
 </div>
 
 <div id="main">
-  <div id="force-topics">
+</div>
+<div id="info">
+  <div id="info-force-topics">
+    <h2 class="topic-name">Click a Topic</h2>
+    <table class="metrics table-striped">
+      <thead>
+        <th>Metric</th>
+        <th>Value</th>
+        <th>Min</th>
+        <th>Max</th>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}
