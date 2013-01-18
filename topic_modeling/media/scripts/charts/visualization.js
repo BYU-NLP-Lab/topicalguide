@@ -55,6 +55,7 @@ var MainView = Backbone.View.extend({
     this.showing = null;
     this.views = {};
     this.loaded = false;
+    this.setup_views();
     if (Storage && localStorage.topics_data) {
       try {
         this.load_data(JSON.parse(localStorage.topics_data));
@@ -69,7 +70,6 @@ var MainView = Backbone.View.extend({
     } else {
       this.reload();
     }
-    this.setup_views();
   },
   setup_views: function () {
     var items = [];
@@ -78,12 +78,15 @@ var MainView = Backbone.View.extend({
     this.$el.empty();
     _.forOwn(this.constructor.visualizations, function (value, key) {
       var node = $('<div></div>').attr('id', key).appendTo(that.$el).hide();
-      that.views[key] = new value({parent: that, el: node});
+      var menu = $('#menu-' + key);
+      var info = $('#info-' + key);
+      that.views[key] = new value({parent: that, el: node, menu_el: menu,
+        info_el: info
+      });
       items.push([key, that.views[key].title, _.bind(that.view, that, key)]);
     });
     this.vlist = new SelectUI('#viz-picker', items);
     this.showing = items[0][0];
-    this.views[this.showing].show();
   },
   reload: function () {
     var that = this;
@@ -96,9 +99,12 @@ var MainView = Backbone.View.extend({
   },
   load_data: function (data) {
     this.data = data;
+    this.views[this.showing].load(data);
+    this.views[this.showing].show();
   },
   view: function (name) {
     this.views[this.showing].hide();
+    this.views[name].load(this.data);
     this.views[name].show();
   }
 }, {
@@ -127,10 +133,22 @@ var VisualizationView = Backbone.View.extend({
     this.options = _.extend(this.base_defaults, this.defaults, this.options);
     if (!this.options.parent) throw new Error('No parent app given in options');
     if (!this.el) throw new Error('No element given in options');
+    if (!this.options.menu_el) throw new Error('No element given in options');
+    if (!this.options.info_el) throw new Error('No element given in options');
     this.main = this.options.parent;
     this.data = this.main.data;
+    this.setup_menu(this.options.menu_el);
+    this.setup_info(this.options.info_el);
     this.setup_base();
     this.setup_d3();
+  },
+
+  setup_menu: function (menu) {
+    /** setup the menu. Arg: $(this.options.menu_el) **/
+  },
+
+  setup_info: function (info) {
+    /** setup the info pane. Arg: $(this.options.info_el) **/
   },
 
   setup_base: function () {
@@ -140,6 +158,9 @@ var VisualizationView = Backbone.View.extend({
       .attr('height', this.options.height)
       .attr("pointer-events", "all");
     this.outer = this.svg.append('svg:g');
+    this.outer.append('rect').attr('class', 'background')
+      .attr('width', this.options.width)
+      .attr('height', this.options.height);
     this.maing = this.outer.append('svg:g').attr('class', 'main-g');
     this.zoom = d3.behavior.zoom().on("zoom", _.bind(this.redraw, this));
   },
@@ -148,15 +169,22 @@ var VisualizationView = Backbone.View.extend({
     /** create your layout, colors, etc. **/
   },
 
-  show: function () {
+  load: function (data) {
     if (!this.loaded) {
-      this.load();
+      this.load(data);
       this.loaded = true;
     }
+  },
+
+  show: function () {
     this.$el.show();
+    this.options.menu_el.show();
+    this.options.info_el.show();
   },
 
   hide: function () {
+    this.menu.hide();
+    this.info.hide();
     this.$el.hide();
   },
 

@@ -1,9 +1,38 @@
 
+/** CSS stuff **/
+
 body {
   /*font: 10px sans-serif;*/
   margin-top: 40px;
   padding: 20px;
 }
+
+svg {
+  border: 2px solid black;
+  border-radius: 3px;
+}
+
+ul.nav li, ul.nav li a {
+  outline: none;
+}
+
+#viz-picker a.dropdown-toggle {
+  font-size: 20px;
+}
+
+#main {
+  float: left;
+  width: 720px;
+}
+
+#info {
+  float: right;
+  width: 210px;
+}
+
+/*---------------------* 
+ ****** SVG stuff ****** 
+ *---------------------*/
 
 /** zoom controls **/
 
@@ -32,7 +61,7 @@ g.text {
 
   g.text text {
     font-family: sans;
-    fill: #F3F1D7;
+    fill: white;
     font-weight: bold;
     font-size: 4px;
     text-anchor: middle; }
@@ -43,6 +72,7 @@ g.text {
 
 g.node circle {
   fill: #3BC600;
+  cursor: pointer;
   stroke: none; }
 
   g.node.highlighted-main circle {
