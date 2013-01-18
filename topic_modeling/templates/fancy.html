@@ -9,7 +9,7 @@
 {% block nav-title %}Topical Guide{% endblock %}
 
 {% block container %}
-<div id="vis-navbar" class="navbar navbar-inverse navbar-fixed-top">
+<div id="vis-navbar" class="navbar">
   <div class="navbar-inner">
     <div class="container">
       <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
@@ -20,16 +20,24 @@
       <a class="brand">Visualizations</a>
       <div class="nav-collapse collapse">
         <ul class="nav">
-          <div class="btn-group" data-toggle="buttons-radio">
+          <li class="dropdown" id="viz-picker">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+              <span>Visualization</span>
+              <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+              <li><a href="#">Hi</a></li>
+              <li><button type="button" class="btn btn-primary">ho</button></li>
+            </ul>
+          </li>
+          <li class="btn-group" data-toggle="buttons-radio">
             <button type="button" class="btn btn-primary active">
               Topics
             </button>
             <button type="button" class="btn btn-primary">
               Documents
             </button>
-          </div>
-          <div id="metric-type" class="btn-group" data-toggle="buttons-radio">
-          </div>
+          </li>
 
         </ul>
       </div><!--/.nav-collapse -->
@@ -51,6 +59,8 @@ var URLS = {
   'pairwise': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="document correlation" %}',
 };
 </script>
+<script src="/scripts/charts/visualization.js"></script>
 <script src="/scripts/charts/chords.js"></script>
+<script src="/scripts/charts/main.js"></script>
 
 {% endblock %}

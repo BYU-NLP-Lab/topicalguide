@@ -2,11 +2,6 @@
  * Part of Topical Guide (c) BYU 2013
  */
 
-var dumb_matrix = [[11975,  5871, 8916, 2868],
-               [ 1951, 10048, 2060, 6171],
-               [ 8010, 16145, 8090, 8045],
-               [ 1013,   990,  940, 6907]];
-
 /**
  * Create a bootstrap button group
  *
@@ -55,286 +50,156 @@ function get_topicsminmax(topics) {
   return [min, max];
 }
 
-/** This view manages the content of the page
- *
- * It also handles the request and storage of data.
- *
- * - select the type of visualization
- * - select the model to use (topic / document / wordtype?)
- * - select the pairwise metric
- */
-var MainView = Backbone.View.extend({
-  el: '#main',
-  initialize: function () {
-    
-    this.render();
-  },
-  render: function () {
-  }
-}, {
-  visualizations: {},
-  add: function (config) {
-    var cls = VisualizationView.extend(config);
-    //
-    this.visualizations
-  }
-});
-
-var FancyViewer = Backbone.View.extend({
-  el: '#fancy',
-  url: '',
-  defaults: {
-    width: 720,
-    height: 720,
-  },
-  initialize: function () {
-    this.options = _.extend(this.defaults, this.options);
-    $('#refresh-button').click(_.bind(this.reload, this));
-    if (Storage && localStorage.topics_data) {
-      try {
-        this.onloaded(JSON.parse(localStorage.topics_data));
-      } catch (e) {
-        console.log('loading error' + e);
-        if (confirm('An error occurred loading cached data: reload?')) {
-          this.reload();
-        } else {
-          throw e;
-        }
-      }
-    } else {
-      this.reload();
+function force_links(nodes, matrix) {
+  /** create links for the force layout **/ 
+  var links = [], target;
+  for (var i=0; i<nodes.length; i++) {
+    for (var j=0; j<nodes[i].topics.length; j++) {
+      target = nodes[i].topics[j];
+      links.push({source: i, target: target, weight: matrix[i][target]});
     }
-  },
-  reload: function () {
-    var that = this;
-    d3.json(this.url, function (data) {
-      if (Storage) {
-        localStorage.topics_data = JSON.stringify(data);
-      }
-      that.onloaded(data);
-    });
-  },
-});
+  }
+  return links;
+}
 
-var ForceViewer = FancyViewer.extend({
-  el: '#force-topics',
-  url: URLS['pairwise'],
-  defaults: _.extend(FancyViewer.prototype.defaults, {
+function make_rel(minmax) {
+  var rng = minmax[1] - minmax[0];
+  return function (x) {
+    return (x - minmax[0]) / rng;
+  };
+}
+
+/**
+ * This is a Force visualization
+ */
+var ForceViewer = MainView.add(ZoomableView, {
+  name: 'force-topics',
+  title: 'Force Diagram',
+  defaults: {
     circle_r: 10,
     charge: -360,
     link_distance: 50,
     line_width: 3,
     full_scale: 3
-  }),
-  onloaded: function (data) {
-  console.log('loaded');
-    this.matrix = data.matrix;
-    this.topics = data.topics;
-    this.metrics = data.metrics;
-    this.setup_d3();
-    this.load_all();
   },
+
+  initialize: function () {
+    VisualizationView.prototype.initialize.apply(this, arguments);
+    this.ticking = false;
+  },
+
   setup_d3: function () {
-    var color = d3.scale.category20();
-    var force = this.force = d3.layout.force()
+    this.force = d3.layout.force()
       .charge(this.options.charge)
       .linkDistance(this.options.link_distance)
       .size([this.options.width, this.options.height]);
-
-    var svg = this.svg = d3.select(this.el).append('svg')
-      .attr('width', this.options.width)
-      .attr('height', this.options.height)
-      .attr("pointer-events", "all");
-
-    var maing;
-    this.zoom = d3.behavior.zoom().on("zoom", _.bind(this.redraw, this));
-    this.outer = svg.append('svg:g').call(this.zoom)
-    maing = this.maing = this.outer.append('svg:g')
-      .attr('class', 'main-g');
-    this.make_zoom_ctrl();
   },
-  redraw: function () {
-    this.maing.attr("transform",
-          "translate(" + this.zoom.translate() + ")"
-          + " scale(" + this.zoom.scale() + ")");
-  },
-  make_zoom_ctrl: function () {
+
+  load: function () {
+    var nodes = this.data.topics;
+    var links = force_links(nodes, this.data.matrix);
+    var minmax = get_matrixminmax(this.data.matrix);
+    var tminmax = get_topicsminmax(this.data.topics);
+    var rel = make_rel(minmax);
+    var trel = make_rel(tminmax);
     var that = this;
-    this.zoom_out = this.outer.append('g')
-      .attr('class', 'zoom-out')
-      .attr('pointer-events', 'all')
-      .on('click', function () {
-        console.log('zooming');
-        var pos = that.zoom.translate();
-        that.zoom.scale(that.zoom.scale() / 2);
-        that.zoom.translate([pos[0]/2+that.options.width/4, pos[1]/2+that.options.height/4]);
-        that.redraw();
-      })
-      .attr('transform', 'translate(10, 30)');
-    this.zoom_out.append('rect')
-      .attr('class', 'bg')
-      .attr('width', 20)
-      .attr('height', 20);
-    this.zoom_out.append('rect')
-      .attr('class', 'cross')
-      .attr('width', 16)
-      .attr('height', 4)
-      .attr('x', 2).attr('y', 8);
-
-    this.zoom_in = this.outer.append('g')
-      .attr('class', 'zoom-in')
-      .attr('pointer-events', 'all')
-      .on('click', function () {
-        console.log('zooming in');
-        var pos = that.zoom.translate();
-        that.zoom.scale(that.zoom.scale() * 2);
-        that.zoom.translate([pos[0]*2-that.options.width/2, pos[1]*2-that.options.height/2]);
-        that.redraw();
-      })
-      .attr('transform', 'translate(10, 10)');
-    this.zoom_in.append('rect')
-      .attr('class', 'bg')
-      .attr('width', 20)
-      .attr('height', 20);
-    this.zoom_in.append('rect')
-      .attr('class', 'cross')
-      .attr('width', 4)
-      .attr('height', 16)
-      .attr('x', 8).attr('y', 2);
-    this.zoom_in.append('rect')
-      .attr('class', 'cross')
-      .attr('width', 16)
-      .attr('height', 4)
-      .attr('x', 2).attr('y', 8);
-  },
-  make_links: function (nodes) {
-    var links = [], target;
-    for (var i=0; i<nodes.length; i++) {
-      for (var j=0; j<nodes[i].topics.length; j++) {
-        target = nodes[i].topics[j];
-        links.push({source: i, target: target, weight: this.matrix[i][target]});
-      }
-    }
-    return links;
-  },
-  load_all: function () {
-    var nodes = this.topics;
-    var links = this.make_links(nodes);
-    var minmax = get_matrixminmax(this.matrix);
-    var tminmax = get_topicsminmax(this.topics);
-    var rng = minmax[1] - minmax[0];
-    var trng = tminmax[1] - tminmax[0];
-    var trel = function (x) {
-      return (x - tminmax[0]) / trng;
-    };
-    var rel = function (x) {
-      return (x - minmax[0]) / rng;
-    };
-    var that = this;
+    // populate the force layout
+    this.force.nodes(nodes).links(links)
+              .linkStrength(function (d) { return rel(d.weight); }).start();
+    this.calc_layout();
 
     this.maing.selectAll('*').remove();
-
+    // add a background so that click & drag works
     this.maing.append('rect').attr('class', 'background')
       .attr('width', this.options.width)
       .attr('height', this.options.height);
 
-    this.force.nodes(nodes).links(links)
-              .linkStrength(function (d) { return rel(d.weight); }).start();
-
-    var link = this.link = this.maing.selectAll('line.link')
+    // create links first so they're behind everything
+    this.link = this.maing.selectAll('line.link')
       .data(links).enter().append('line')
         .attr('class', 'link').attr('name', function (d) {
           return 'link-' + d.source.index + '-' + d.target.index;
         })
         .style('stroke-width', function (d) { return that.options.line_width * rel(d.weight) });
 
-    var node = this.node = this.maing.selectAll("g.node")
+    // use create notes
+    this.node = this.maing.selectAll("g.node")
         .data(nodes)
       .enter().append('g')
         .attr('class', function (d, i) { return 'node node-' + i; })
         .attr('pointer-events', 'all')
-        .on('mouseover', mouseover, this)
-        .on('mouseout', mouseout, this);
+        .on('click', function (d, i) {
+          that.node_click(d, this);
+        });
 
-    var mouseover = function (d, i) {
-      console.log('over');
-      $(this).addClass('highlighted');
-    };
-    var mouseout = function (d, i) {
-      $(this).removeClass('highlighted');
-    };
-
-    node.on('click', function (d, i) {
-      console.log(i);
-      var s = that.options.full_scale;
-      that.zoom.translate([-s*d.x + that.options.width/2,
-                           -s*d.y + that.options.height/2]).scale(s);
-      that.redraw();
-      // d3.selectAll('line.link.highlighted').classed('highlighted', false);
-      d3.selectAll('g.node.highlighted').classed('highlighted', false);
-      d3.selectAll('g.node.highlighted-main').classed('highlighted-main', false);
-      var close = that.topics[d.index].topics;
-      d3.select(this).classed('highlighted-main', true);
-      console.log(this, this.className);
-      var circle, line;
-      for (var i=0; i<close.length; i++) {
-        d3.select('g.node-' + close[i]).classed('highlighted', true);
-      }
-      // d3.selectAll('line.link[name^=link-' + d.index + '-]').classed('highlighted', true);
-      // d3.selectAll('line.link[name$="-' + d.index + '"]').classed('highlighted', true);
-    });
-    
-    var circles = this.circles = node.append("circle")
+    // create the circles
+    this.node.append("circle")
         .attr("class", "node")
         .attr("r", function (d) {
           console.log(d.metrics['Number of tokens']);
           var ret = 10 + that.options.circle_r * trel(d.metrics['Number of tokens']);
           console.log(ret);
           return parseInt(ret);
-        })
-        .style("fill", '#69984C');
+        });
 
-    var texts = this.texts = this.maing.append('g')
+    // texts for the circles need to be above the circles
+    this.texts = this.maing.append('g')
       .attr('class', 'all-texts').selectAll('g.text')
         .data(nodes)
       .enter().append('svg:g')
         .attr('pointer-events', 'none')
-        .attr('class', 'text');
+        .attr('class', 'text')
+      // add the texts
+    this.texts.append('svg:text')
+        .attr('transform', 'translate(0, -3)')
+        .each(function (d, i) {
+          var node = d3.select(this);
+          var parts = d.names[0].split(' ');
+          for (var i=0; i<parts.length; i++) {
+            node.append('tspan')
+              .attr('class', 'back')
+              .text(parts[i])
+              .attr('y', i*4)
+              .attr('x', 0);
+          }
+          for (var i=0; i<parts.length; i++) {
+            node.append('tspan')
+              .text(parts[i])
+              .attr('y', i*4)
+              .attr('x', 0);
+          }
+        });
 
-    var the_texts = texts.append('svg:text')
-      .attr('transform', 'translate(0, -3)');
-
-    the_texts.each(function (d, i) {
-      var node = d3.select(this);
-      var parts = d.names[0].split(' ');
-      for (var i=0; i<parts.length; i++) {
-        node.append('tspan')
-          .attr('class', 'back')
-          .text(parts[i])
-          .attr('y', i*4)
-          .attr('x', 0);
-      }
-      for (var i=0; i<parts.length; i++) {
-        node.append('tspan')
-          .text(parts[i])
-          .attr('y', i*4)
-          .attr('x', 0);
-      }
-    });
-
-    circles.append("title")
-        .text(function(d) { return d.names[0]; });
-
-    this.calc_layout();
+    // update the positions of all the created nodes
     this.update_positions();
-
   },
+
+  node_click: function (data, node) {
+    /* click callback for the nodes */
+    console.log(i);
+    var s = this.options.full_scale;
+    this.zoom.translate([-s*data.x + this.options.width/2,
+                        -s*data.y + this.options.height/2]).scale(s);
+    this.redraw_smooth();
+    d3.selectAll('g.node.highlighted').classed('highlighted', false);
+    d3.selectAll('g.node.highlighted-main').classed('highlighted-main', false);
+    var close = this.data.topics[data.index].topics;
+    d3.select(node).classed('highlighted-main', true);
+    var circle, line;
+    for (var i=0; i<close.length; i++) {
+      d3.select('g.node-' + close[i]).classed('highlighted', true);
+    }
+  },
+
   calc_layout: function () {
+     /* run 1000 ticks so that the layout settles down, then freeze it */
      this.force.start();
      for (var i = 0; i < 1000; ++i) this.force.tick();
      this.force.stop();
   },
+
   update_positions: function () {
+    /* update the positions to match the force layout */
      this.link.attr("x1", function(d) { return d.source.x; })
          .attr("y1", function(d) { return d.source.y; })
          .attr("x2", function(d) { return d.target.x; })
@@ -343,19 +208,34 @@ var ForceViewer = FancyViewer.extend({
      this.node.attr('transform', function (d) {return 'translate(' + d.x + ',' + d.y + ')'; });
      this.texts.attr('transform', function (d) {return 'translate(' + d.x + ',' + d.y + ')'; });
   },
-     /*this.force.on("tick", function() {
-       link.attr("x1", function(d) { return d.source.x; })
-           .attr("y1", function(d) { return d.source.y; })
-           .attr("x2", function(d) { return d.target.x; })
-           .attr("y2", function(d) { return d.target.y; });
 
-       node.attr("cx", function(d) { return d.x; })
-           .attr("cy", function(d) { return d.y; });
-     });*/
+  start_ticking: function () {
+    /* start the simulation going */
+    if (this.ticking) return;
+    this.ticking = true;
+    var that = this;
+    this.force.on("tick", function() {
+      that.link.attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+
+      that.node.attr("cx", function(d) { return d.x; })
+          .attr("cy", function(d) { return d.y; });
+    });
+    this.force.start();
+  },
+
+  stop_ticking: function () {
+    /* disable the simulation */
+    if (!this.ticking) return;
+    this.ticking = false;
+    this.force.on('tick', null);
+    this.force.stop();
+  }
 });
 
-
-
+/*
 var ChordViewer = FancyViewer.extend({
   el: '#chord-diagram',
   url: URLS['pairwise'],
@@ -423,12 +303,6 @@ var ChordViewer = FancyViewer.extend({
     var did = d.target.index;
     var val = this.current_matrix[tid][did];
     var perc = (val - this.minmax[0]) / (this.minmax[1] - this.minmax[0]);
-    /**
-    var mn = 'Number of tokens';
-    console.log('topic color', tid, arguments.length);
-    var num = this.topics[tid].metrics[mn];
-    var perc = (num - this.metrics[mn].min)/(this.metrics[mn].max - this.metrics[mn].min);
-    **/
     return d3.hsl(120, 1, perc);
   },
   load_topic: function (tid, prevpos) {
@@ -510,6 +384,5 @@ var ChordViewer = FancyViewer.extend({
     }
   }
 });
-
-var chords = new ForceViewer();
+*/
 
