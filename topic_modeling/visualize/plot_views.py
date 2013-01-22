@@ -23,10 +23,31 @@
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
 from django.http import HttpResponse
+from django.template.context import Context
 
 from topic_modeling.visualize.charts import plot_types
 from topic_modeling.visualize.common.ui import BreadCrumb
-from topic_modeling.visualize.common.views import AnalysisBaseView
+from topic_modeling.visualize.common.views import AnalysisBaseView, TemplateResponseMixin, View
+
+class FancyView(TemplateResponseMixin, View):
+    template_name = 'fancy.html'
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(request, **kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, request, **kwargs):
+        context = Context()
+        context['analysis_name'] = kwargs['analysis']
+        context['dataset_name'] = kwargs['dataset']
+        context['breadcrumb'] = [['/', 'home'],
+                ['/datasets/' + kwargs['dataset'], kwargs['dataset']],
+                ['/datasets/%s/analyses/%s' % (kwargs['dataset'], kwargs['analysis']),
+                    kwargs['analysis']],
+                ['#', 'fancy']]
+        return context
+
+        # context = super(FancyView, self).get_context_data(request, **kwargs)
 
 class PlotView(AnalysisBaseView):
     template_name = "plots.html"

@@ -43,6 +43,7 @@ from topic_modeling.visualize.topics.names import current_name_scheme,\
 from django.views.decorators.http import require_GET
 from topic_modeling.visualize.common.http_responses import JsonResponse
 from topic_modeling.visualize import sess_key
+from django.db.models import Avg, Min, Max
 
 # General and Sidebar stuff
 ###########################
@@ -105,8 +106,87 @@ def top_attrvaltopic(request, dataset, analysis, topic, attribute, order_by):
     ret_val['values'] = [vars(v) for v in top_values]
     return JsonResponse(ret_val)
 
+def similar_for_topic(analysis, topic, metric, max=10):
+    return topic.pairwisetopicmetricvalue_originating.\
+            select_related().filter(metric=metric).order_by('-value')[1:1 + max]
+
+def get_topic_info(topic):
+    info = {
+        'names': [item.name for item in topic.names.all()],
+        'metrics': dict((m.metric.name, m.value) for m in topic.topicmetricvalues.all()),
+        'documents': list(topic.topic_document_counts(sort=True)[:10])
+    }
+    return info
+
+def get_metrics(analysis):
+    res = {}
+    for metric in analysis.topicmetrics.all():
+        data = metric.values.aggregate(Avg('value'), Min('value'), Max('value'))
+        res[metric.name] = {
+            'min': data['value__min'],
+            'max': data['value__max'],
+            'avg': data['value__avg']
+        }
+    return res
+
+def all_similar_topics(request, dataset, analysis, measure):
+    '''An ajax view for listing a matrix of pairwise topic correlation
+    
+    @url /feeds/similar-topics/@dataset/@analysis/@measure$
+    @name all-similar-topics
+
+    measure = name of a pairwise topic matric
+    dataset = name of a dataset
+    analysis = name of an analysis for the dataset
+
+    Returns:
+        {
+            'matrix': m x m matrix (m = number of topics in the analysis)
+                      where matrix[i][j] = correlation between topic i and topic j,
+            'topics': [{
+                'names': list of topic names,
+                'metrics': dict of metric values,
+                'documents': list of top 10 documents,
+                'topics': list of top 10 correlated topics
+            }, ... for each topic (where index = topic.number)],
+            'metrics': get_metrics(analysis)
+        }
+    '''
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    ns = current_name_scheme(request.session, analysis)
+    ret_val = dict()
+    topics = list(analysis.topics.all().order_by('number'))
+    measure = analysis.pairwisetopicmetrics.get(name__iexact=measure)
+
+    matrix = [[0 for x in range(len(topics))] for x in range(len(topics))]
+    info = []
+    metrics = get_metrics(analysis)
+
+    for topic in topics:
+        tinfo = get_topic_info(topic)
+        tinfo['topics'] = []
+        for value in similar_for_topic(analysis, topic, measure):
+            matrix[topic.number][value.topic2.number] = value.value
+            tinfo['topics'].append(value.topic2.number)
+        info.append(tinfo)
+
+    return JsonResponse({'matrix': matrix, 'topics': info, 'metrics': metrics})
 
 def similar_topics(request, dataset, analysis, topic, measure):
+    '''And ajax view for listing topics similar to a given topic.
+
+    measure = name of a measure
+    topic   = (int) topic number
+    analysis= name of an analysis
+    dataset = name of a dataset
+
+    returns (json):
+    {
+        'values': [float, ...] # the correlation values
+        'topics': [info, ...]  # dicts of info about each topic
+    }
+    '''
+
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()
