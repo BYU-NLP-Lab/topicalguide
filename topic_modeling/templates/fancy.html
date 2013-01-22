@@ -1,0 +1,94 @@
+{% extends "bootstrap/bootstrap.html" %}
+
+{% block css %}
+<link href="/styles/fancy.css" rel="stylesheet">
+{% endblock %}
+
+{% block headtitle %}Topic Chord Diagrams{% endblock %}
+{% block bodytitle %}Topic Chord Diagrams{% endblock %}
+{% block nav-title %}Topical Guide{% endblock %}
+
+{% block container %}
+<div id="vis-navbar" class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </a>
+      <ul class="nav">
+        <li class="dropdown" id="viz-picker">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+          <span>Visualization</span>
+          <b class="caret"></b>
+        </a>
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+        </ul>
+        </li>
+      </ul>
+      <div id="menu-force-topics" class="nav-collapse collapse">
+        <ul class="nav">
+          <li><a>Node:</a></li>
+          <li name='node-type' class="btn-group" data-toggle="buttons-radio">
+            <button name='topics' type="button" class="btn btn-primary active">
+              Topics
+            </button>
+            <button name='documents' type="button" class="btn btn-primary">
+              Documents
+            </button>
+          </li>
+          <li><a>Compare By:</a></li>
+          <li name='metric' class="btn-group" data-toggle="buttons-radio">
+            <button name='Documents' type="button" class="btn btn-primary active">
+              Documents
+            </button>
+            <button name='Words' type="button" class="btn btn-primary">
+              Words
+            </button>
+          </li>
+        </ul>
+        <ul class="nav pull-right">
+          <li>
+            <button name='unfreeze' type="button" class="btn btn-primary" data-toggle="button">
+              Active
+            </button>
+          </li>
+        </ul>
+      </div><!--/.nav-collapse -->
+    </div>
+  </div>
+</div>
+
+<div id="main">
+</div>
+<div id="info">
+  <div id="info-force-topics">
+    <h2 class="topic-name">Click a Topic</h2>
+    <table class="metrics table-striped">
+      <thead>
+        <th>Metric</th>
+        <th>Value</th>
+        <th>Min</th>
+        <th>Max</th>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block endjs %}
+
+<script src="/scripts/libs/d3.v3.min.js"></script>
+<script>
+var URLS = {
+  'pairwise': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="document correlation" %}',
+};
+</script>
+<script src="/scripts/charts/visualization.js"></script>
+<script src="/scripts/charts/chords.js"></script>
+<script src="/scripts/charts/main.js"></script>
+
+{% endblock %}
