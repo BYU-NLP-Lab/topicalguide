@@ -74,6 +74,22 @@ function make_rel(minmax) {
   };
 }
 
+var ForceInfo = Backbone.View.extend({
+  initialize: function () {
+  },
+  load_topic: function (info) {
+    this.$('.topic-name').text(info.name);
+    var mtable = this.$('table.metrics tbody');
+    mtable.empty();
+    var dtable = this.$('table.documents tbody');
+    dtable.empty();
+    _.each(info.documents, function (doc, i) {
+      $('<tr><td>' + doc.document__filename + '</td><td>' + doc.count + '</td></tr>')
+        .appendTo(dtable);
+    });
+  }
+});
+
 /**
  * This is a Force visualization
  */
@@ -92,6 +108,10 @@ var ForceViewer = MainView.add(ZoomableView, {
   initialize: function () {
     VisualizationView.prototype.initialize.apply(this, arguments);
     this.ticking = false;
+  },
+
+  setup_info: function (info) {
+    this.info = new ForceInfo({el: info});
   },
 
   setup_menu: function (menu) {
@@ -154,7 +174,7 @@ var ForceViewer = MainView.add(ZoomableView, {
         .attr('pointer-events', 'all')
         .on('click', function (d, i) {
           that.node_click(d, this, data.topics[d.index]);
-        });
+        }).call(this.force.drag);
     this.create_circles(trel);
     this.create_texts(nodes);
   },
@@ -169,8 +189,8 @@ var ForceViewer = MainView.add(ZoomableView, {
         });
   },
 
+  /* texts for the circles need to be above the circles */
   create_texts: function (nodes) {
-    /* texts for the circles need to be above the circles */
     this.texts = this.maing.append('g')
       .classed('all-texts', true).selectAll('g.text')
         .data(nodes)
@@ -199,9 +219,10 @@ var ForceViewer = MainView.add(ZoomableView, {
         });
   },
 
+  /* click callback for the nodes */
   node_click: function (data, node, topic) {
-    /* click callback for the nodes */
     console.log(i);
+    this.info.load_topic(topic);
     var s = this.options.full_scale;
     this.zoom.translate([-s*data.x + this.options.width/2,
                         -s*data.y + this.options.height/2]).scale(s);
@@ -216,15 +237,15 @@ var ForceViewer = MainView.add(ZoomableView, {
     }
   },
 
+  /* run 1000 ticks so that the layout settles down, then freeze it */
   calc_layout: function () {
-    /* run 1000 ticks so that the layout settles down, then freeze it */
     this.force.start();
     for (var i = 0; i < 1000; ++i) this.force.tick();
     this.force.stop();
   },
 
+  /* update the positions to match the force layout */
   update_positions: function () {
-    /* update the positions to match the force layout */
     this.link.attr("x1", function(d) { return d.source.x; })
       .attr("y1", function(d) { return d.source.y; })
       .attr("x2", function(d) { return d.target.x; })

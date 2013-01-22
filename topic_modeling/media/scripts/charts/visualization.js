@@ -143,16 +143,16 @@ var VisualizationView = Backbone.View.extend({
     this.setup_d3();
   },
 
+  /** setup the menu. Arg: $(this.options.menu_el) **/
   setup_menu: function (menu) {
-    /** setup the menu. Arg: $(this.options.menu_el) **/
   },
 
+  /** setup the info pane. Arg: $(this.options.info_el) **/
   setup_info: function (info) {
-    /** setup the info pane. Arg: $(this.options.info_el) **/
   },
 
+  /** this sets up the basic d3 svg scaffolding, zooming, etc. **/
   setup_base: function () {
-    /** this sets up the basic d3 svg scaffolding, zooming, etc. **/
     this.svg = d3.select(this.el).append('svg')
       .attr('width', this.options.width)
       .attr('height', this.options.height)
@@ -165,8 +165,8 @@ var VisualizationView = Backbone.View.extend({
     this.zoom = d3.behavior.zoom().on("zoom", _.bind(this.redraw, this));
   },
 
+  /** create your layout, colors, etc. **/
   setup_d3: function () {
-    /** create your layout, colors, etc. **/
   },
 
   load: function (data) {
@@ -188,19 +188,21 @@ var VisualizationView = Backbone.View.extend({
     this.$el.hide();
   },
 
+  /** override this. Data can be accessed through this.main.data **/
   load: function () {
-    /** override this. Data can be accessed through this.main.data **/
   },
+
+  /** updates the svg container to match this.zoom's transform and scale with a smooth
+  * transition */
   redraw_smooth: function () {
-    /** updates the svg container to match this.zoom's transform and scale with a smooth
-     * transition */
     this.maing.transition().attr("transform",
           "translate(" + this.zoom.translate() + ")"
           + " scale(" + this.zoom.scale() + ")");
   },
+
+  /** updates the svg container to match this.zoom's transform and scale
+    * without a transition */
   redraw: function () {
-    /** updates the svg container to match this.zoom's transform and scale
-     * without a transition */
     this.maing.attr("transform",
           "translate(" + this.zoom.translate() + ")"
           + " scale(" + this.zoom.scale() + ")");
