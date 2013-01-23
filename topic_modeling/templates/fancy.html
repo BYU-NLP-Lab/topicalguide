@@ -61,28 +61,53 @@
 </div>
 
 <div id="main">
+    <div id="loading-indicator"></div>
 </div>
-<div id="info">
-  <div id="info-force-topics">
-    <h2 class="topic-name">Click a Topic</h2>
-    <table class="metrics table-striped">
-      <thead>
-        <th>Metric</th>
-        <th>Value</th>
-        <th>Min</th>
-        <th>Max</th>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
-    <table class="documents table-striped">
-      <thead>
-        <th>Name</th>
-        <th>Count</th>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
+<div id="right-bar">
+  <div id="controls" class="bar-item">
+    <div class="topleft-label">Controls</div>
+    <div id="controls-force-topics">
+    </div>
+  </div>
+  <div id="info" class="bar-item">
+    <div class="topleft-label">Info</div>
+    <div id="info-force-topics">
+      <h3 class="topic-name">Click a Topic</h3>
+      <table class="metrics table-striped">
+        <thead>
+          <th>Metric</th>
+          <th>Value</th>
+          <th>Min</th>
+          <th>Max</th>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <h3>Top Documents</h3>
+      <table class="documents table-striped">
+        <thead>
+          <th>Name</th>
+          <th>Count</th>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <h3>Top Words</h3>
+      <table class="words table-striped">
+        <thead>
+          <th>Name</th>
+          <th>Count</th>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div> <!-- end of info -->
+  <div id="refresh">
+    <button name='refresh' type="button" class="btn btn-primary btn-mini">
+      Refresh
+    </button>
+    <time datetime=""></time>
   </div>
 </div>
 {% endblock %}
@@ -92,9 +117,13 @@
 <script src="/scripts/libs/d3.v3.min.js"></script>
 <script>
 var URLS = {
-  'pairwise': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="document correlation" %}',
+  'pairwise topics': {
+    'document correlation': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="document correlation" %}',
+    'word correlation': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="word correlation" %}',
+  }
 };
 </script>
+<script src="/scripts/libs/jquery.timeago.js"></script>
 <script src="/scripts/charts/visualization.js"></script>
 <script src="/scripts/charts/chords.js"></script>
 <script src="/scripts/charts/main.js"></script>
