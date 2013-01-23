@@ -115,8 +115,9 @@ var MainView = Backbone.View.extend({
       var node = $('<div></div>').attr('id', key).appendTo(that.$el).hide();
       var menu = $('#menu-' + key);
       var info = $('#info-' + key);
+      var controls = $('#controls-' + key);
       that.views[key] = new value({parent: that, el: node, menu_el: menu,
-        info_el: info
+        info_el: info, controls_el: controls
       });
       items.push([key, that.views[key].title, _.bind(that.view, that, key)]);
     });
@@ -190,6 +191,9 @@ var VisualizationView = Backbone.View.extend({
     width: 720,
     height: 720
   },
+  menu_class: null,
+  info_class: null,
+  controls_class: null,
   defaults: {},
 
   initialize: function () {
@@ -203,6 +207,7 @@ var VisualizationView = Backbone.View.extend({
     this.loading = false;
     this.setup_menu(this.options.menu_el);
     this.setup_info(this.options.info_el);
+    this.setup_controls(this.options.controls_el);
     this.setup_base();
     this.setup_d3();
   },
@@ -213,10 +218,23 @@ var VisualizationView = Backbone.View.extend({
 
   /** setup the menu. Arg: $(this.options.menu_el) **/
   setup_menu: function (menu) {
+    if (this.menu_class) {
+      this.menu = new this.menu_class({el: menu, parent: this});
+    }
   },
 
   /** setup the info pane. Arg: $(this.options.info_el) **/
   setup_info: function (info) {
+    if (this.info_class) {
+      this.info = new this.info_class({el: info, parent: this});
+    }
+  },
+
+  /** setup the controls pane. Arg: $(this.options.controls_el} **/
+  setup_controls: function (controls) {
+    if (this.controls_class) {
+      this.controls = new this.controls_class({el: controls, parent: this});
+    }
   },
 
   /** this sets up the basic d3 svg scaffolding, zooming, etc. **/
@@ -247,13 +265,15 @@ var VisualizationView = Backbone.View.extend({
 
   show: function () {
     this.$el.show();
-    this.options.menu_el.show();
-    this.options.info_el.show();
+    this.menu.show();
+    this.info.show();
+    this.controls.show();
   },
 
   hide: function () {
     this.menu.hide();
     this.info.hide();
+    this.controls.hide();
     this.$el.hide();
   },
 
