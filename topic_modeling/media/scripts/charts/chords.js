@@ -74,9 +74,43 @@ function make_rel(minmax) {
   };
 }
 
+var ForceMenu = Backbone.View.extend({
+  initialize: function (options) {
+    var parent = this.parent = options.parent;
+    this.$('button[name=unfreeze]').click(function () {
+      if ($(this).hasClass('active')) {
+        parent.stop_ticking();
+      } else {
+        parent.start_ticking();
+      }
+    });
+    this.$('li[name=metric] button[name=Words]').click(function () {
+      if (parent.main.loading) return false;
+      parent.options.pairwise = 'word correlation';
+      parent.reload();
+    });
+    this.$('li[name=metric] button[name=Documents]').click(function () {
+      if (parent.main.loading) return false;
+      parent.options.pairwise = 'document correlation';
+      parent.reload();
+    });
+  },
+  show: function () {
+    this.$el.show();
+  },
+  hide: function () {
+    this.$el.hide();
+  }
+});
+
 var ForceInfo = Backbone.View.extend({
   initialize: function () {
   },
+
+  clear: function () {
+    this.$('tbody').empty();
+  },
+
   load_topic: function (info) {
     this.$('.topic-name').text(info.name);
     var mtable = this.$('table.metrics tbody');
@@ -87,6 +121,18 @@ var ForceInfo = Backbone.View.extend({
       $('<tr><td>' + doc.document__filename + '</td><td>' + doc.count + '</td></tr>')
         .appendTo(dtable);
     });
+    var wtable = this.$('table.words tbody');
+    wtable.empty();
+    _.each(info.words, function (word, i) {
+      $('<tr><td>' + word.type__type + '</td><td>' + word.count + '</td></tr>')
+        .appendTo(wtable);
+    });
+  },
+  show: function () {
+    this.$el.show();
+  },
+  hide: function () {
+    this.$el.hide();
   }
 });
 
@@ -102,7 +148,8 @@ var ForceViewer = MainView.add(ZoomableView, {
     charge: -360,
     link_distance: 50,
     line_width: 3,
-    full_scale: 3
+    full_scale: 3,
+    pairwise: 'document correlation'
   },
 
   initialize: function () {
@@ -110,19 +157,16 @@ var ForceViewer = MainView.add(ZoomableView, {
     this.ticking = false;
   },
 
+  url: function () {
+    return URLS['pairwise topics'][this.options.pairwise];
+  },
+
   setup_info: function (info) {
     this.info = new ForceInfo({el: info});
   },
 
   setup_menu: function (menu) {
-    var that = this;
-    $('button[name=unfreeze]', menu).click(function () {
-      if ($(this).hasClass('active')) {
-        that.stop_ticking();
-      } else {
-        that.start_ticking();
-      }
-    });
+    this.menu = new ForceMenu({parent: this, el: menu});
   },
 
   setup_d3: function () {
@@ -140,6 +184,7 @@ var ForceViewer = MainView.add(ZoomableView, {
     var rel = make_rel(minmax);
     var trel = make_rel(tminmax);
     var that = this;
+    this.info.clear();
     // populate the force layout
     this.force.nodes(nodes).links(links)
               .linkStrength(function (d) { return rel(d.weight); }).start();

@@ -31,7 +31,7 @@ var SelectUI = function (el, items) {
     }
   };
   this.select = function (i) {
-    items[i][2]();
+    if (items[i][2]() === false) return;
     this.selected = i;
     this.render();
   };
@@ -49,28 +49,63 @@ var SelectUI = function (el, items) {
  */
 var MainView = Backbone.View.extend({
   el: '#main',
-  url: URLS['pairwise'],
+
   initialize: function () {
     // $('#refresh-button').click(_.bind(this.reload, this));
     this.showing = null;
     this.views = {};
     this.loaded = false;
+    this.loading_el = this.$('#loading-indicator');
     this.setup_views();
+    this.cache = {};
+    $('#refresh button').click(_.bind(function () {
+      this.view(this.showing, {refresh: true});
+    }, this));
+    this.last_refreshed = $('#refresh time');
+    this.last_refreshed.timeago();
+    this.refreshed_times = {};
+    if (Storage && localStorage.refreshed_times) {
+      this.refreshed_times = JSON.parse(localStorage.refreshed_times);
+    }
+    /**
     if (Storage && localStorage.topics_data) {
       try {
         this.load_data(JSON.parse(localStorage.topics_data));
       } catch (e) {
         console.log('loading error' + e);
         if (confirm('An error occurred loading cached data: reload?')) {
-          this.reload();
+          // this.reload();
         } else {
           throw e;
         }
       }
     } else {
-      this.reload();
+      // this.reload();
+    }
+    **/
+    this.view(this.showing, {dont_hide: true});
+  },
+
+  fetch_data: function (url, callback) {
+    if (this.cache[url]) {
+      return callback(this.cache[url]);
+    }
+    if (Storage && localStorage[url]) {
+      try {
+        return callback(JSON.parse(localStorage[url]));
+      } catch (e) {
+        console.log('loading error: ' + e);
+        if (confirm('An error occurred loading cached data: reload?')) {
+          this.reload(url, callback);
+        } else {
+          throw e;
+        }
+      }
+    } else {
+      this.reload(url, callback);
     }
   },
+
   setup_views: function () {
     var items = [];
     var that = this;
@@ -88,27 +123,54 @@ var MainView = Backbone.View.extend({
     this.vlist = new SelectUI('#viz-picker', items);
     this.showing = items[0][0];
   },
-  reload: function () {
+
+  reload: function (url, callback) {
     var that = this;
-    d3.json(this.url, function (data) {
+    var when_refreshed = new Date();
+    d3.json(url, function (data) {
+      that.cache[url] = data;
+      that.refreshed_times[url] = when_refreshed;
       if (Storage) {
-        localStorage.topics_data = JSON.stringify(data);
+        localStorage[url] = JSON.stringify(data);
+        localStorage.refreshed_times = JSON.stringify(that.refreshed_times);
       }
-      that.load_data(data);
+      callback(data);
     });
   },
-  load_data: function (data) {
-    this.data = data;
-    this.views[this.showing].load(data);
-    this.views[this.showing].show();
+
+  update_refreshed: function (date) {
+    this.last_refreshed.text(jQuery.timeago(date));
+    this.last_refreshed.attr('datetime', date);
   },
-  view: function (name) {
-    this.views[this.showing].hide();
-    this.views[name].load(this.data);
-    this.views[name].show();
-  }
+
+  view: function (name, options) {
+    if (this.loading) return false;
+    this.loading = true;
+    options = options || {};
+    if (!options.dont_hide) {
+      this.views[this.showing].hide();
+    }
+    this.loading_el.show();
+    var that = this;
+    var url = this.views[name].url();
+    var callb = function (data) {
+      that.loading = false;
+      that.update_refreshed(that.refreshed_times[url]);
+      that.views[name].load(data);
+      that.views[name].show();
+      that.loading_el.hide();
+    };
+    if (options.refresh) {
+      return this.reload(url, callb);
+    } else {
+      this.fetch_data(url, callb);
+    }
+  },
+
 }, {
+
   visualizations: {},
+
   add: function (base, config) {
     if (arguments.length === 1) {
       config = base;
@@ -117,6 +179,7 @@ var MainView = Backbone.View.extend({
     var cls = base.extend(config);
     this.visualizations[config.name] = cls;
   }
+
 });
 
 /**
@@ -137,10 +200,15 @@ var VisualizationView = Backbone.View.extend({
     if (!this.options.info_el) throw new Error('No element given in options');
     this.main = this.options.parent;
     this.data = this.main.data;
+    this.loading = false;
     this.setup_menu(this.options.menu_el);
     this.setup_info(this.options.info_el);
     this.setup_base();
     this.setup_d3();
+  },
+
+  url: function () {
+    throw new Error('url() should be overridden');
   },
 
   /** setup the menu. Arg: $(this.options.menu_el) **/
@@ -169,6 +237,7 @@ var VisualizationView = Backbone.View.extend({
   setup_d3: function () {
   },
 
+  /** populate your layout with the JSON data **/
   load: function (data) {
     if (!this.loaded) {
       this.load(data);
@@ -186,6 +255,14 @@ var VisualizationView = Backbone.View.extend({
     this.menu.hide();
     this.info.hide();
     this.$el.hide();
+  },
+
+  reload: function () {
+    this.main.view(this.name);
+  },
+
+  refresh: function () {
+    this.main.view(this.name, {refresh: true});
   },
 
   /** override this. Data can be accessed through this.main.data **/

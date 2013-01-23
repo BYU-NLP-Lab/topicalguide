@@ -25,10 +25,60 @@ ul.nav li, ul.nav li a {
   width: 720px;
 }
 
+#loading-indicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -10px;
+  margin-top: -10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  padding: 2px;
+  background-color: green;
+  background-color: whiteSmoke;
+  background-image: url('/site-media/images/ajax-loader.gif');
+}
+
+#refresh {
+  background-color: whiteSmoke;
+  padding: 2px 4px;
+  border-radius: 5px;
+}
+
 #info {
+  position: relative;
+}
+
+#right-bar {
   float: right;
   width: 210px;
 }
+
+#right-bar .bar-item {
+  border: 1px solid #ddd;
+  padding: 3px 7px;
+  border-radius: 4px;
+  padding-top: 14px;
+  margin-bottom: 5px;
+  min-height: 30px;
+}
+
+#controls {
+  position: relative;
+}
+
+div.topleft-label {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  border: 1px solid #DDD;
+  background-color: whiteSmoke;
+  padding: 3px 7px;
+  border-radius: 4px 0 4px 0;
+  font-size: 12px;
+  font-weight: bold;
+}.
 
 /*---------------------* 
  ****** SVG stuff ****** 
