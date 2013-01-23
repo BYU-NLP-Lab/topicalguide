@@ -49,19 +49,23 @@ function get_topicsminmax(topics) {
   var min, max;
   min = max = topics[0].metrics['Number of tokens'];
   for (var i=0; i<topics.length; i++) {
-    if (topics[i].metrics['Number of tokens'] > max) max = topics[i].metrics['Number of tokens'];
-    if (topics[i].metrics['Number of tokens'] < min) min = topics[i].metrics['Number of tokens'];
+    if (topics[i].metrics['Number of tokens'] > max)
+      max = topics[i].metrics['Number of tokens'];
+    if (topics[i].metrics['Number of tokens'] < min)
+      min = topics[i].metrics['Number of tokens'];
   }
+  
   return [min, max];
 }
 
-function force_links(nodes, matrix) {
+function force_links(nodes, matrix, threshhold) {
   /** create links for the force layout **/ 
   var links = [], target;
   for (var i=0; i<nodes.length; i++) {
     for (var j=0; j<nodes[i].topics.length; j++) {
       target = nodes[i].topics[j];
-      links.push({source: i, target: target, weight: matrix[i][target]});
+      if (matrix[i][target] <= threshhold[1] && matrix[i][target] >= threshhold[0])
+        links.push({source: i, target: target, weight: matrix[i][target]});
     }
   }
   return links;
@@ -136,19 +140,50 @@ var ForceInfo = Backbone.View.extend({
   }
 });
 
+var ForceControls = Backbone.View.extend({
+  initialize: function (options) {
+    var parent = this.parent = options.parent;
+    var t = parent.options.threshhold;
+    this.$('.threshhold').slider({
+      range: true,
+      min: 0,
+      max: 1,
+      values: parent.options.threshhold,
+      step: (t[1] - t[0]) / 20,
+      stop: function ( event, ui ) {
+        parent.set_threshhold(ui.values);
+      }
+    });
+  },
+
+  show: function () {
+    this.$el.show();
+  },
+
+  hide: function () {
+    this.$el.hide();
+  }
+});
+
 /**
  * This is a Force visualization
  */
 var ForceViewer = MainView.add(ZoomableView, {
   name: 'force-topics',
   title: 'Force Diagram',
+  menu_class: ForceMenu,
+  info_class: ForceInfo,
+  controls_class: ForceControls,
+
   defaults: {
     circle_r: 20,
     circle_min: 2,
-    charge: -360,
+    charge: -50,
     link_distance: 50,
+    max_link_strength: .1,
     line_width: 3,
     full_scale: 3,
+    threshhold: [0.7, 1],
     pairwise: 'document correlation'
   },
 
@@ -161,14 +196,6 @@ var ForceViewer = MainView.add(ZoomableView, {
     return URLS['pairwise topics'][this.options.pairwise];
   },
 
-  setup_info: function (info) {
-    this.info = new ForceInfo({el: info});
-  },
-
-  setup_menu: function (menu) {
-    this.menu = new ForceMenu({parent: this, el: menu});
-  },
-
   setup_d3: function () {
     this.force = d3.layout.force()
       .charge(this.options.charge)
@@ -177,8 +204,9 @@ var ForceViewer = MainView.add(ZoomableView, {
   },
 
   load: function (data) {
+    this.data = data;
     var nodes = data.topics;
-    var links = force_links(nodes, data.matrix);
+    var links = force_links(nodes, data.matrix, this.options.threshhold);
     var minmax = get_matrixminmax(data.matrix);
     var tminmax = get_topicsminmax(data.topics);
     var rel = make_rel(minmax);
@@ -187,10 +215,12 @@ var ForceViewer = MainView.add(ZoomableView, {
     this.info.clear();
     // populate the force layout
     this.force.nodes(nodes).links(links)
-              .linkStrength(function (d) { return rel(d.weight); }).start();
+              .linkStrength(function (d) { return that.options.max_link_strength * rel(d.weight); }).start();
     this.calc_layout();
 
     this.maing.selectAll('*').remove();
+    this.maing.append('g').classed('all-links', true);
+    this.maing.append('g').classed('all-nodes', true);
     // create links first so they're behind everything
     this.create_links(links, rel);
     this.create_nodes(nodes, data, trel);
@@ -200,19 +230,43 @@ var ForceViewer = MainView.add(ZoomableView, {
 
   create_links: function (links, rel) {
     var that = this;
-    this.link = this.maing.selectAll('line.link')
+    this.link = this.maing.select('g.all-links').selectAll('line.link')
       .data(links).enter().append('line')
       .attr('class', 'link').attr('name', function (d) {
         return 'link-' + d.source.index + '-' + d.target.index;
       }).style('stroke-width', function (d) {
-        return that.options.line_width * rel(d.weight)
+        return that.options.line_width * rel(d.weight);
       });
+  },
+
+  remove_links: function () {
+    this.link.remove();
+  },
+
+  set_threshhold: function (threshhold) {
+    var data = this.data;
+    this.options.threshhold = threshhold;
+    var minmax = get_matrixminmax(data.matrix);
+    if (minmax[0] < threshhold[0]) minmax[0] = threshhold[0];
+    if (minmax[1] > threshhold[1]) minmax[1] = threshhold[1];
+    var rel = make_rel(minmax);
+    this.remove_links();
+    var links = force_links(data.topics, data.matrix, this.options.threshhold);
+    this.create_links(links, rel);
+    if (this.ticking) {
+      this.force.stop()
+      this.force.links(links);
+      this.force.start();
+    } else {
+      this.force.links(links);
+      this.calc_layout();
+      this.update_positions();
+    }
   },
 
   create_nodes: function (nodes, data, trel) {
     var that = this;
-    this.node = this.maing.append('g')
-      .classed('all-nodes', true).selectAll("g.node")
+    this.node = this.maing.select('g.all-nodes').selectAll("g.node")
         .data(nodes)
       .enter().append('g')
         .attr('class', function (d, i) { return 'node node-' + i; })
@@ -230,7 +284,7 @@ var ForceViewer = MainView.add(ZoomableView, {
         .attr("class", "node")
         .attr("r", function (d) {
           var ret = that.options.circle_min + that.options.circle_r * trel(d.metrics['Number of tokens']);
-          return parseInt(ret);
+          return parseInt(ret, 10);
         });
   },
 
@@ -241,11 +295,11 @@ var ForceViewer = MainView.add(ZoomableView, {
         .data(nodes)
       .enter().append('svg:g')
         .attr('pointer-events', 'none')
-        .attr('class', 'text')
+        .attr('class', 'text');
     // add the lines of text
     this.texts.append('svg:text')
         .attr('transform', 'translate(0, -3)')
-        .each(function (d, i) {
+        .each(function (d, index) {
           var node = d3.select(this);
           var parts = d.names[0].split(' ');
           for (var i=0; i<parts.length; i++) {
@@ -255,7 +309,7 @@ var ForceViewer = MainView.add(ZoomableView, {
               .attr('y', i*4)
               .attr('x', 0);
           }
-          for (var i=0; i<parts.length; i++) {
+          for (i=0; i<parts.length; i++) {
             node.append('tspan')
               .text(parts[i])
               .attr('y', i*4)
