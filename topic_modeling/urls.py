@@ -36,6 +36,7 @@ from topic_modeling.cssmin import cssmin
 from django.http import HttpResponse
 from topic_modeling.visualize.plot_views import PlotView, FancyView
 from topic_modeling.visualize.common.views import TermsView
+import os
 
 def render_style(request, style_path):
     full_path = settings.STYLES_ROOT + '/' + style_path
