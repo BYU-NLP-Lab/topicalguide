@@ -64,8 +64,21 @@ ul.nav li, ul.nav li a {
   min-height: 30px;
 }
 
-#controls {
+#controls.bar-item {
   position: relative;
+  padding-top: 30px;
+}
+
+div.viz-menu {
+  display: none;
+}
+
+#info > div.topleft-label, #controls > div.topleft-label {
+  display: block;
+}
+
+#info > div, #controls > div {
+  display: none;
 }
 
 div.topleft-label {

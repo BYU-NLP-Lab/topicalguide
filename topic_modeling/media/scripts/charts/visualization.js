@@ -87,6 +87,7 @@ var MainView = Backbone.View.extend({
   },
 
   fetch_data: function (url, callback) {
+    if (!url) throw new Error('invalid URL specified');
     if (this.cache[url]) {
       return callback(this.cache[url]);
     }
@@ -153,6 +154,7 @@ var MainView = Backbone.View.extend({
     }
     this.loading_el.show();
     var that = this;
+    this.showing = name;
     var url = this.views[name].url();
     var callb = function (data) {
       that.loading = false;
@@ -265,15 +267,15 @@ var VisualizationView = Backbone.View.extend({
 
   show: function () {
     this.$el.show();
-    this.menu.show();
-    this.info.show();
-    this.controls.show();
+    if (this.menu) this.menu.show();
+    if (this.info) this.info.show();
+    if (this.controls) this.controls.show();
   },
 
   hide: function () {
-    this.menu.hide();
-    this.info.hide();
-    this.controls.hide();
+    if (this.menu) this.menu.hide();
+    if (this.info) this.info.hide();
+    if (this.controls) this.controls.hide();
     this.$el.hide();
   },
 
