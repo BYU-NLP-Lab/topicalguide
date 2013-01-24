@@ -28,7 +28,7 @@
         </ul>
         </li>
       </ul>
-      <div id="menu-force-topics" class="nav-collapse collapse">
+      <div id="menu-force-topics" class="nav-collapse collapse viz-menu">
         <ul class="nav">
           <li><a>Node:</a></li>
           <li name='node-type' class="btn-group" data-toggle="buttons-radio">
@@ -67,6 +67,10 @@
 <div id="right-bar">
   <div id="controls" class="bar-item">
     <div class="topleft-label">Controls</div>
+    <div id="controls-chords">
+      <label>Link Threshhold</label>
+      <div class="threshhold"></div>
+    </div>
     <div id="controls-force-topics">
       <label>Link Threshhold</label>
       <div class="threshhold"></div>
@@ -130,6 +134,7 @@ var URLS = {
 <script src="/scripts/libs/jquery.timeago.js"></script>
 <script src="/scripts/charts/visualization.js"></script>
 <script src="/scripts/charts/chords.js"></script>
+<script src="/scripts/charts/force.js"></script>
 <script src="/scripts/charts/main.js"></script>
 
 {% endblock %}
