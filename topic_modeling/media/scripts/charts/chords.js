@@ -6,12 +6,13 @@ var ChordControls = Backbone.View.extend({
   initialize: function (options) {
     var parent = this.parent = options.parent;
     var t = parent.options.threshhold;
+    var tb = parent.options.threshhold_bounds;
     this.$('.threshhold').slider({
       range: true,
-      min: 0,
-      max: 1,
+      min: tb[0],
+      max: tb[1],
       values: parent.options.threshhold,
-      step: .05,
+      step: (tb[1] - tb[0]) / 20,
       stop: function ( event, ui ) {
         parent.set_threshhold(ui.values);
       }
@@ -40,6 +41,7 @@ var ChordViewer = MainView.add({
     num_topics: 10,
     tid: 0,
     threshhold: [.7, 1],
+    threshhold_bounds: [.5, 1],
     pairwise: 'document correlation'
   },
 
