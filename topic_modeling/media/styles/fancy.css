@@ -31,13 +31,30 @@ ul.nav li, ul.nav li a {
   top: 50%;
   margin-left: -10px;
   margin-top: -10px;
-  width: 20px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
   border-radius: 5px;
   padding: 2px;
-  background-color: green;
-  background-color: whiteSmoke;
+  background-color: white;
   background-image: url('/site-media/images/ajax-loader.gif');
+  border: 2px solid black;
+  padding: 6px;
+  background-repeat: no-repeat;
+  background-position: 4px 4px;
+  display: none;
+}
+
+body.loading #loading-indicator {
+  display: block;
+}
+body.loading #viz-menus {
+  display: none;
+}
+body.loading #main {
+  visibility: hidden;
+}
+body.loading #right-bar {
+  visibility: hidden;
 }
 
 #refresh {

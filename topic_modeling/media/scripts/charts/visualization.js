@@ -55,7 +55,6 @@ var MainView = Backbone.View.extend({
     this.showing = null;
     this.views = {};
     this.loaded = false;
-    this.loading_el = this.$('#loading-indicator');
     this.setup_views();
     this.cache = {};
     $('#refresh button').click(_.bind(function () {
@@ -88,12 +87,18 @@ var MainView = Backbone.View.extend({
 
   fetch_data: function (url, callback) {
     if (!url) throw new Error('invalid URL specified');
+    var that = this;
     if (this.cache[url]) {
-      return callback(this.cache[url]);
+      // using a timeout so the loading indicator will show before any long
+      // JS processing freezes the UI
+      return setTimeout(function () {callback(that.cache[url])}, 100);
     }
     if (Storage && localStorage[url]) {
       try {
-        return callback(JSON.parse(localStorage[url]));
+        this.cache[url] = JSON.parse(localStorage[url]);
+        // using a timeout so the loading indicator will show before any long
+        // JS processing freezes the UI
+        return setTimeout(function () {callback(that.cache[url])}, 100);
       } catch (e) {
         console.log('loading error: ' + e);
         if (confirm('An error occurred loading cached data: reload?')) {
@@ -113,7 +118,7 @@ var MainView = Backbone.View.extend({
     this.views = {};
     this.$el.empty();
     _.forOwn(this.constructor.visualizations, function (value, key) {
-      var node = $('<div></div>').attr('id', key).appendTo(that.$el).hide();
+      var node = $('<div class="viz-main"></div>').attr('id', key).appendTo(that.$el).hide();
       var menu = $('#menu-' + key);
       var info = $('#info-' + key);
       var controls = $('#controls-' + key);
@@ -145,14 +150,23 @@ var MainView = Backbone.View.extend({
     this.last_refreshed.attr('datetime', date);
   },
 
+  start_loading: function () {
+    this.loading = true;
+    $(document.body).addClass('loading');
+  },
+
+  stop_loading: function () {
+    this.loading = false;
+    $(document.body).removeClass('loading');
+  },
+
   view: function (name, options) {
     if (this.loading) return false;
-    this.loading = true;
     options = options || {};
     if (!options.dont_hide) {
       this.views[this.showing].hide();
     }
-    this.loading_el.show();
+    this.start_loading();
     var that = this;
     this.showing = name;
     var url = this.views[name].url();
@@ -161,7 +175,7 @@ var MainView = Backbone.View.extend({
       that.update_refreshed(that.refreshed_times[url]);
       that.views[name].load(data);
       that.views[name].show();
-      that.loading_el.hide();
+      that.stop_loading()
     };
     if (options.refresh) {
       return this.reload(url, callb);
