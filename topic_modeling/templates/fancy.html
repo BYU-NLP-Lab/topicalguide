@@ -2,6 +2,7 @@
 
 {% block css %}
 <link href="/styles/fancy.css" rel="stylesheet">
+<link href="/styles/jquery-ui.css" rel="stylesheet">
 {% endblock %}
 
 {% block headtitle %}Topic Chord Diagrams{% endblock %}
@@ -27,54 +28,95 @@
         </ul>
         </li>
       </ul>
-      <div id="menu-force-topics" class="nav-collapse collapse">
-        <ul class="nav">
-          <li><a>Node:</a></li>
-          <li name='node-type' class="btn-group" data-toggle="buttons-radio">
+      <div id="viz-menus">
+        <div id="menu-force-topics" class="nav-collapse collapse viz-menu">
+          <ul class="nav">
+            <li><a>Node:</a></li>
+            <li name='node-type' class="btn-group" data-toggle="buttons-radio">
             <button name='topics' type="button" class="btn btn-primary active">
               Topics
             </button>
             <button name='documents' type="button" class="btn btn-primary">
               Documents
             </button>
-          </li>
-          <li><a>Compare By:</a></li>
-          <li name='metric' class="btn-group" data-toggle="buttons-radio">
+            </li>
+            <li><a>Compare By:</a></li>
+            <li name='metric' class="btn-group" data-toggle="buttons-radio">
             <button name='Documents' type="button" class="btn btn-primary active">
               Documents
             </button>
             <button name='Words' type="button" class="btn btn-primary">
               Words
             </button>
-          </li>
-        </ul>
-        <ul class="nav pull-right">
-          <li>
+            </li>
+          </ul>
+          <ul class="nav pull-right">
+            <li>
             <button name='unfreeze' type="button" class="btn btn-primary" data-toggle="button">
               Active
             </button>
-          </li>
-        </ul>
-      </div><!--/.nav-collapse -->
+            </li>
+          </ul>
+        </div><!--/menu-force-topics .nav-collapse -->
+      </div>
     </div>
   </div>
 </div>
 
+<div id="loading-indicator"></div>
 <div id="main">
 </div>
-<div id="info">
-  <div id="info-force-topics">
-    <h2 class="topic-name">Click a Topic</h2>
-    <table class="metrics table-striped">
-      <thead>
-        <th>Metric</th>
-        <th>Value</th>
-        <th>Min</th>
-        <th>Max</th>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
+<div id="right-bar">
+  <div id="controls" class="bar-item">
+    <div class="topleft-label">Controls</div>
+    <div id="controls-chords">
+      <label>Link Threshhold</label>
+      <div class="threshhold"></div>
+    </div>
+    <div id="controls-force-topics">
+      <label>Link Threshhold</label>
+      <div class="threshhold"></div>
+    </div>
+  </div>
+  <div id="info" class="bar-item">
+    <div class="topleft-label">Info</div>
+    <div id="info-force-topics">
+      <h3 class="topic-name">Click a Topic</h3>
+      <table class="metrics table-striped">
+        <thead>
+          <th>Metric</th>
+          <th>Value</th>
+          <th>Min</th>
+          <th>Max</th>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <h3>Top Documents</h3>
+      <table class="documents table-striped">
+        <thead>
+          <th>Name</th>
+          <th>Count</th>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <h3>Top Words</h3>
+      <table class="words table-striped">
+        <thead>
+          <th>Name</th>
+          <th>Count</th>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div> <!-- end of info -->
+  <div id="refresh">
+    <button name='refresh' type="button" class="btn btn-primary btn-mini">
+      Refresh
+    </button>
+    <time datetime=""></time>
   </div>
 </div>
 {% endblock %}
@@ -82,13 +124,19 @@
 {% block endjs %}
 
 <script src="/scripts/libs/d3.v3.min.js"></script>
+<script src="/scripts/jquery-ui.js"></script>
 <script>
 var URLS = {
-  'pairwise': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="document correlation" %}',
+  'pairwise topics': {
+    'document correlation': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="document correlation" %}',
+    'word correlation': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="word correlation" %}',
+  }
 };
 </script>
+<script src="/scripts/libs/jquery.timeago.js"></script>
 <script src="/scripts/charts/visualization.js"></script>
 <script src="/scripts/charts/chords.js"></script>
+<script src="/scripts/charts/force.js"></script>
 <script src="/scripts/charts/main.js"></script>
 
 {% endblock %}
