@@ -31,7 +31,7 @@ var SelectUI = function (el, items) {
     }
   };
   this.select = function (i) {
-    items[i][2]();
+    if (items[i][2]() === false) return;
     this.selected = i;
     this.render();
   };
@@ -49,66 +49,145 @@ var SelectUI = function (el, items) {
  */
 var MainView = Backbone.View.extend({
   el: '#main',
-  url: URLS['pairwise'],
+
   initialize: function () {
     // $('#refresh-button').click(_.bind(this.reload, this));
     this.showing = null;
     this.views = {};
     this.loaded = false;
     this.setup_views();
+    this.cache = {};
+    $('#refresh button').click(_.bind(function () {
+      this.view(this.showing, {refresh: true});
+    }, this));
+    this.last_refreshed = $('#refresh time');
+    this.last_refreshed.timeago();
+    this.refreshed_times = {};
+    if (Storage && localStorage.refreshed_times) {
+      this.refreshed_times = JSON.parse(localStorage.refreshed_times);
+    }
+    /**
     if (Storage && localStorage.topics_data) {
       try {
         this.load_data(JSON.parse(localStorage.topics_data));
       } catch (e) {
         console.log('loading error' + e);
         if (confirm('An error occurred loading cached data: reload?')) {
-          this.reload();
+          // this.reload();
         } else {
           throw e;
         }
       }
     } else {
-      this.reload();
+      // this.reload();
+    }
+    **/
+    this.view(this.showing, {dont_hide: true});
+  },
+
+  fetch_data: function (url, callback) {
+    if (!url) throw new Error('invalid URL specified');
+    var that = this;
+    if (this.cache[url]) {
+      // using a timeout so the loading indicator will show before any long
+      // JS processing freezes the UI
+      return setTimeout(function () {callback(that.cache[url])}, 100);
+    }
+    if (Storage && localStorage[url]) {
+      try {
+        this.cache[url] = JSON.parse(localStorage[url]);
+        // using a timeout so the loading indicator will show before any long
+        // JS processing freezes the UI
+        return setTimeout(function () {callback(that.cache[url])}, 100);
+      } catch (e) {
+        console.log('loading error: ' + e);
+        if (confirm('An error occurred loading cached data: reload?')) {
+          this.reload(url, callback);
+        } else {
+          throw e;
+        }
+      }
+    } else {
+      this.reload(url, callback);
     }
   },
+
   setup_views: function () {
     var items = [];
     var that = this;
     this.views = {};
     this.$el.empty();
     _.forOwn(this.constructor.visualizations, function (value, key) {
-      var node = $('<div></div>').attr('id', key).appendTo(that.$el).hide();
+      var node = $('<div class="viz-main"></div>').attr('id', key).appendTo(that.$el).hide();
       var menu = $('#menu-' + key);
       var info = $('#info-' + key);
+      var controls = $('#controls-' + key);
       that.views[key] = new value({parent: that, el: node, menu_el: menu,
-        info_el: info
+        info_el: info, controls_el: controls
       });
       items.push([key, that.views[key].title, _.bind(that.view, that, key)]);
     });
     this.vlist = new SelectUI('#viz-picker', items);
     this.showing = items[0][0];
   },
-  reload: function () {
+
+  reload: function (url, callback) {
     var that = this;
-    d3.json(this.url, function (data) {
+    var when_refreshed = new Date();
+    d3.json(url, function (data) {
+      that.cache[url] = data;
+      that.refreshed_times[url] = when_refreshed;
       if (Storage) {
-        localStorage.topics_data = JSON.stringify(data);
+        localStorage[url] = JSON.stringify(data);
+        localStorage.refreshed_times = JSON.stringify(that.refreshed_times);
       }
-      that.load_data(data);
+      callback(data);
     });
   },
-  load_data: function (data) {
-    this.data = data;
-    this.views[this.showing].load(data);
-    this.views[this.showing].show();
+
+  update_refreshed: function (date) {
+    this.last_refreshed.text(jQuery.timeago(date));
+    this.last_refreshed.attr('datetime', date);
   },
-  view: function (name) {
-    this.views[this.showing].hide();
-    this.views[name].load(this.data);
-    this.views[name].show();
-  }
+
+  start_loading: function () {
+    this.loading = true;
+    $(document.body).addClass('loading');
+  },
+
+  stop_loading: function () {
+    this.loading = false;
+    $(document.body).removeClass('loading');
+  },
+
+  view: function (name, options) {
+    if (this.loading) return false;
+    options = options || {};
+    if (!options.dont_hide) {
+      this.views[this.showing].hide();
+    }
+    this.start_loading();
+    var that = this;
+    this.showing = name;
+    var url = this.views[name].url();
+    var callb = function (data) {
+      that.loading = false;
+      that.update_refreshed(that.refreshed_times[url]);
+      that.views[name].load(data);
+      that.views[name].show();
+      that.stop_loading()
+    };
+    if (options.refresh) {
+      return this.reload(url, callb);
+    } else {
+      this.fetch_data(url, callb);
+    }
+  },
+
 }, {
+
   visualizations: {},
+
   add: function (base, config) {
     if (arguments.length === 1) {
       config = base;
@@ -117,6 +196,7 @@ var MainView = Backbone.View.extend({
     var cls = base.extend(config);
     this.visualizations[config.name] = cls;
   }
+
 });
 
 /**
@@ -127,6 +207,9 @@ var VisualizationView = Backbone.View.extend({
     width: 720,
     height: 720
   },
+  menu_class: null,
+  info_class: null,
+  controls_class: null,
   defaults: {},
 
   initialize: function () {
@@ -137,22 +220,41 @@ var VisualizationView = Backbone.View.extend({
     if (!this.options.info_el) throw new Error('No element given in options');
     this.main = this.options.parent;
     this.data = this.main.data;
+    this.loading = false;
     this.setup_menu(this.options.menu_el);
     this.setup_info(this.options.info_el);
+    this.setup_controls(this.options.controls_el);
     this.setup_base();
     this.setup_d3();
   },
 
+  url: function () {
+    throw new Error('url() should be overridden');
+  },
+
+  /** setup the menu. Arg: $(this.options.menu_el) **/
   setup_menu: function (menu) {
-    /** setup the menu. Arg: $(this.options.menu_el) **/
+    if (this.menu_class) {
+      this.menu = new this.menu_class({el: menu, parent: this});
+    }
   },
 
+  /** setup the info pane. Arg: $(this.options.info_el) **/
   setup_info: function (info) {
-    /** setup the info pane. Arg: $(this.options.info_el) **/
+    if (this.info_class) {
+      this.info = new this.info_class({el: info, parent: this});
+    }
   },
 
+  /** setup the controls pane. Arg: $(this.options.controls_el} **/
+  setup_controls: function (controls) {
+    if (this.controls_class) {
+      this.controls = new this.controls_class({el: controls, parent: this});
+    }
+  },
+
+  /** this sets up the basic d3 svg scaffolding, zooming, etc. **/
   setup_base: function () {
-    /** this sets up the basic d3 svg scaffolding, zooming, etc. **/
     this.svg = d3.select(this.el).append('svg')
       .attr('width', this.options.width)
       .attr('height', this.options.height)
@@ -165,10 +267,11 @@ var VisualizationView = Backbone.View.extend({
     this.zoom = d3.behavior.zoom().on("zoom", _.bind(this.redraw, this));
   },
 
+  /** create your layout, colors, etc. **/
   setup_d3: function () {
-    /** create your layout, colors, etc. **/
   },
 
+  /** populate your layout with the JSON data **/
   load: function (data) {
     if (!this.loaded) {
       this.load(data);
@@ -178,29 +281,41 @@ var VisualizationView = Backbone.View.extend({
 
   show: function () {
     this.$el.show();
-    this.options.menu_el.show();
-    this.options.info_el.show();
+    if (this.menu) this.menu.show();
+    if (this.info) this.info.show();
+    if (this.controls) this.controls.show();
   },
 
   hide: function () {
-    this.menu.hide();
-    this.info.hide();
+    if (this.menu) this.menu.hide();
+    if (this.info) this.info.hide();
+    if (this.controls) this.controls.hide();
     this.$el.hide();
   },
 
-  load: function () {
-    /** override this. Data can be accessed through this.main.data **/
+  reload: function () {
+    this.main.view(this.name);
   },
+
+  refresh: function () {
+    this.main.view(this.name, {refresh: true});
+  },
+
+  /** override this. Data can be accessed through this.main.data **/
+  load: function () {
+  },
+
+  /** updates the svg container to match this.zoom's transform and scale with a smooth
+  * transition */
   redraw_smooth: function () {
-    /** updates the svg container to match this.zoom's transform and scale with a smooth
-     * transition */
     this.maing.transition().attr("transform",
           "translate(" + this.zoom.translate() + ")"
           + " scale(" + this.zoom.scale() + ")");
   },
+
+  /** updates the svg container to match this.zoom's transform and scale
+    * without a transition */
   redraw: function () {
-    /** updates the svg container to match this.zoom's transform and scale
-     * without a transition */
     this.maing.attr("transform",
           "translate(" + this.zoom.translate() + ")"
           + " scale(" + this.zoom.scale() + ")");

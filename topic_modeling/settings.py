@@ -122,7 +122,6 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 ROOT_URLCONF = 'topic_modeling.urls'
@@ -138,9 +137,20 @@ INSTALLED_APPS = (
 #    'django.contrib.contenttypes',
     'django.contrib.sessions',
 #    'django.contrib.sites',
-    'django_extensions',
-    'debug_toolbar',
 )
+
+try:
+    import django_extensions
+    INSTALLED_APPS += ('django_extensions',)
+except ImportError:
+    print 'Notice: django_extensions not installed. runserver_plus not available'
+
+try:
+    import debug_toolbar
+    INSTALLED_APPS += ('debug_toolbar',)
+    MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+except ImportError:
+    print 'Notice: debug_toolbar not installed.'
 
 INTERNAL_IPS = '127.0.0.1',
 

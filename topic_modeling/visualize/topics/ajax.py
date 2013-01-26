@@ -114,7 +114,8 @@ def get_topic_info(topic):
     info = {
         'names': [item.name for item in topic.names.all()],
         'metrics': dict((m.metric.name, m.value) for m in topic.topicmetricvalues.all()),
-        'documents': list(topic.topic_document_counts(sort=True)[:10])
+        'documents': list(topic.topic_document_counts(sort=True)[:10]),
+        'words': list(topic.topic_word_counts(sort=True)[:10]),
     }
     return info
 
@@ -147,11 +148,13 @@ def all_similar_topics(request, dataset, analysis, measure):
                 'names': list of topic names,
                 'metrics': dict of metric values,
                 'documents': list of top 10 documents,
+                'words': list of the top 10 words,
                 'topics': list of top 10 correlated topics
             }, ... for each topic (where index = topic.number)],
             'metrics': get_metrics(analysis)
         }
     '''
+
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     ns = current_name_scheme(request.session, analysis)
     ret_val = dict()

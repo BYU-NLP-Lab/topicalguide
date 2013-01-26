@@ -22,6 +22,7 @@
 
 from django.conf.urls.defaults import patterns, url
 from django.conf import settings
+from django.http import Http404
 
 from topic_modeling.visualize.topics.views import TopicView, TopicWordView, \
     TopicDocumentView
@@ -35,9 +36,13 @@ from topic_modeling.cssmin import cssmin
 from django.http import HttpResponse
 from topic_modeling.visualize.plot_views import PlotView, FancyView
 from topic_modeling.visualize.common.views import TermsView
+import os
 
 def render_style(request, style_path):
-    css = open(settings.STYLES_ROOT + '/' + style_path).read()
+    full_path = settings.STYLES_ROOT + '/' + style_path
+    if not os.path.isfile(full_path):
+        raise Http404
+    css = open(full_path).read()
     css = cssmin(css)
 
     if style_path.endswith(".css"):

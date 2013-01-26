@@ -2,9 +2,9 @@
 /** CSS stuff **/
 
 body {
-  /*font: 10px sans-serif;*/
+  /*font: 10px sans-serif;
   margin-top: 40px;
-  padding: 20px;
+  padding: 20px;*/
 }
 
 svg {
@@ -25,9 +25,89 @@ ul.nav li, ul.nav li a {
   width: 720px;
 }
 
+#loading-indicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -10px;
+  margin-top: -10px;
+  width: 12px;
+  height: 12px;
+  border-radius: 5px;
+  padding: 2px;
+  background-color: white;
+  background-image: url('/site-media/images/ajax-loader.gif');
+  border: 2px solid black;
+  padding: 6px;
+  background-repeat: no-repeat;
+  background-position: 4px 4px;
+  display: none;
+}
+
+body.loading #loading-indicator {
+  display: block;
+}
+body.loading #viz-menus {
+  display: none;
+}
+body.loading #main {
+  visibility: hidden;
+}
+body.loading #right-bar {
+  visibility: hidden;
+}
+
+#refresh {
+  background-color: whiteSmoke;
+  padding: 2px 4px;
+  border-radius: 5px;
+}
+
 #info {
+  position: relative;
+}
+
+#right-bar {
   float: right;
   width: 210px;
+}
+
+#right-bar .bar-item {
+  border: 1px solid #ddd;
+  padding: 3px 7px;
+  border-radius: 4px;
+  padding-top: 14px;
+  margin-bottom: 5px;
+  min-height: 30px;
+}
+
+#controls.bar-item {
+  position: relative;
+  padding-top: 30px;
+}
+
+div.viz-menu {
+  display: none;
+}
+
+#info > div.topleft-label, #controls > div.topleft-label {
+  display: block;
+}
+
+#info > div, #controls > div {
+  display: none;
+}
+
+div.topleft-label {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  border: 1px solid #DDD;
+  background-color: whiteSmoke;
+  padding: 3px 7px;
+  border-radius: 4px 0 4px 0;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 /*---------------------* 
