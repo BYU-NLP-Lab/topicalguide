@@ -112,7 +112,7 @@ var ForceInfo = Backbone.View.extend({
   },
 
   load_topic: function (info) {
-    this.$('.topic-name').text(info.name);
+    this.$('.topic-name').text(info.names[0]);
     var mtable = this.$('table.metrics tbody');
     mtable.empty();
     var dtable = this.$('table.documents tbody');
