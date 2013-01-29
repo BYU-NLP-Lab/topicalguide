@@ -46,6 +46,9 @@ var NameInfo = Backbone.View.extend({
   }
 });
 
+/*****************************************************
+ * Data: [currently loaded, 
+
 /** The main visualization class
  *
  * Instance Variables:
@@ -73,7 +76,11 @@ var NameViewer = MainView.add(VisualizationView, {
   defaults: {
   },
 
-  /** return the url to grab your data (can be dependent on options) **/
+  /**
+    return the url to grab your data (can be dependent on options)
+    look in fancy.html (the template) to see what urls are available in the
+    global URLS variable (and you can add your own to that object).
+  **/
   url: function () {
   },
 
@@ -81,7 +88,9 @@ var NameViewer = MainView.add(VisualizationView, {
   setup_d3: function () {
   },
 
-  /** populate everything! data is the JSON response from your url().
+  /** populate everything! data is the JSON response from your url(). For
+   * information on the return values of specific urls, look at the docs for
+   * the function (probably in topic_modeling/visualize/topics/ajax.py)
    *
    * NOTE: this data is cached in localStorage unless you click "refresh" at
    * the bottom of the right-hand bar
