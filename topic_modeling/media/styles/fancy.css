@@ -176,6 +176,25 @@ line.link {
 
 /** chord diagram stuff **/
 
+g.group text {
+  display: none;
+}
+
+g.group:hover text {
+  display: block;
+}
+
+text.chord-title {
+  font-family: sans;
+  fill: #2C2B1C;
+  font-weight: bold;
+  font-size: 15px;
+  text-anchor: middle; }
+
+text.chord-title tspan.back {
+  stroke: white;
+  stroke-width: 1; }
+
 path.chord {
   stroke-width: .75;
   fill-opacity: .75;

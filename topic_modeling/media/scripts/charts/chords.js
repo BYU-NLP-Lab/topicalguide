@@ -2,6 +2,40 @@
  * Part of Topical Guide (c) BYU 2013
  */
 
+var ChordInfo = Backbone.View.extend({
+  initialize: function () {
+  },
+
+  clear: function () {
+    this.$('tbody').empty();
+  },
+
+  load_topic: function (info) {
+    this.$('.topic-name').text(info.names[0]);
+    var mtable = this.$('table.metrics tbody');
+    mtable.empty();
+    var dtable = this.$('table.documents tbody');
+    dtable.empty();
+    _.each(info.documents, function (doc, i) {
+      $('<tr><td>' + doc.document__filename + '</td><td>' + doc.count + '</td></tr>')
+        .appendTo(dtable);
+    });
+    var wtable = this.$('table.words tbody');
+    wtable.empty();
+    _.each(info.words, function (word, i) {
+      $('<tr><td>' + word.type__type + '</td><td>' + word.count + '</td></tr>')
+        .appendTo(wtable);
+    });
+  },
+  show: function () {
+    this.$el.show();
+  },
+  hide: function () {
+    this.$el.hide();
+  }
+});
+
+
 var ChordControls = Backbone.View.extend({
   initialize: function (options) {
     var parent = this.parent = options.parent;
@@ -33,6 +67,7 @@ var ChordViewer = MainView.add({
   name: 'chords',
   title: 'Chord Diagram',
   controls_class: ChordControls,
+  info_class: ChordInfo,
 
   defaults: {
     outer_padding: 10,
@@ -155,7 +190,7 @@ var ChordViewer = MainView.add({
     }
     **/
 
-    var chord = this.maing.selectAll("path.chord")
+    var chord = this.maing.append('g').classed('all-chords', true).selectAll("path.chord")
       .data(this.layout.chords)
       .enter().append("svg:path")
         .attr("class", "chord")
@@ -167,18 +202,19 @@ var ChordViewer = MainView.add({
                                    matrix[d.source.index][d.target.index]; });
       // */
 
-    var g = this.maing.selectAll("g.group")
+    var g = this.maing.append('g').classed('all-groups', true).selectAll("g.group")
       .data(this.layout.groups)
       .enter().append("svg:g")
       .attr("class", "group")
-      .on('mouseover', fade(.1))
-      .on('mouseout', fade(1));
+      .on('mouseover', fade(.1, true))
+      .on('mouseout', fade(1, false));
 
     var that = this;
 
     // Returns an event handler for fading a given chord group.
-    function fade(opacity) {
+    function fade(opacity, show) {
       return function(g, i) {
+        // d3.select(this).classed('hovered', show);
         that.svg.selectAll("path.chord")
         .filter(function(d) { return d.source.index != i && d.target.index != i; })
         .transition()
@@ -187,35 +223,50 @@ var ChordViewer = MainView.add({
     }
 
     // Add the group arc.
-    g.append("svg:path")
+    var paths = g.append("svg:path")
         // .style("fill", function(d) { return colors[d.index]; })
         .attr("id", function(d, i) { return "group" + d.index; })
-        .attr("d", this.arc)
-      .append("svg:title");
-        // .text(function(d) { return topics[d.index].names[0]; });
+        .attr("d", this.arc);
+    paths.append("svg:title")
+      .text(function(d) { return data.topics[d.index].names[0]; });
 
-    if (false) {
+    setTimeout(function () {
+    paths.each(function (d, i) {
+      var b = this.getBBox();
+      d.textnode = d3.select(this.parentNode).append('svg:text')
+        .attr('transform', 'translate(' + parseInt(b.x + b.width/2) + ' ' + (parseInt(b.y + b.height/2) - 15) + ')')
+        .classed('chord-title', true);
+      var parts = data.topics[i].names[0].split(' ');
+      for (var i=0; i<parts.length; i++) {
+        d.textnode.append('tspan')
+          .attr('class', 'back')
+          .text(parts[i])
+          .attr('y', i*15)
+          .attr('x', 0);
+      }
+      for (var i=0; i<parts.length; i++) {
+        d.textnode.append('tspan')
+          .text(parts[i])
+          .attr('y', i*15)
+          .attr('x', 0);
+      }
+    });
+    }, 100);
+    /*
     // Add the group label (but only for large groups, where it will fit).
     // An alternative labeling mechanism would be nice for the small groups.
     g.append("svg:text")
         .attr("x", 6)
         .attr("dy", 15)
-      .append("svg:textPath")
-        .attr("xlink:href", function(d) { return "#group" + d.index; })
-        .text(function(d) { return topics[d.index].names[0]; });
-    }
+      .append("svg:tspan")
+        // .attr("xlink:href", function(d) { return "#group" + d.index; })
+        .text(function(d) { return data.topics[d.index].names[0]; });
+    */
 
 
     g.on('click', function (g, i) {
-      that.load_topic(that.current_topics[i], i);
+      that.info.load_topic(data.topics[i]);
     });
-
-    function mouseover(d, i) {
-      chord.classed("fade", function(p) {
-      return p.source.index != i
-      && p.target.index != i;
-      });
-    }
   }
 });
 
