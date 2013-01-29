@@ -215,6 +215,9 @@ var ChordViewer = MainView.add({
     function fade(opacity, show) {
       return function(g, i) {
         // d3.select(this).classed('hovered', show);
+        that.svg.selectAll('g.group')
+          .filter(function (d) { return data.matrix[i][d.index] > that.options.threshhold[0]; })
+          .classed('hovering', show);
         that.svg.selectAll("path.chord")
         .filter(function(d) { return d.source.index != i && d.target.index != i; })
         .transition()
