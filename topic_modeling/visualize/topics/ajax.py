@@ -45,6 +45,8 @@ from topic_modeling.visualize.common.http_responses import JsonResponse
 from topic_modeling.visualize import sess_key
 from django.db.models import Avg, Min, Max
 
+from django.views.decorators.cache import cache_page
+
 # General and Sidebar stuff
 ###########################
 
@@ -130,6 +132,8 @@ def get_metrics(analysis):
         }
     return res
 
+# cache this for 12 hours
+@cache_page(60 * 60 * 12)
 def all_similar_topics(request, dataset, analysis, measure):
     '''An ajax view for listing a matrix of pairwise topic correlation
     
