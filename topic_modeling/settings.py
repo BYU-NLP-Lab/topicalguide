@@ -122,6 +122,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'topic_modeling.profiling_middleware.ProfileMiddleware',
 )
 
 ROOT_URLCONF = 'topic_modeling.urls'
