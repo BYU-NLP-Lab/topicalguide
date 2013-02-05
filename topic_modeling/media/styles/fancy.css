@@ -50,10 +50,10 @@ body.loading #loading-indicator {
 body.loading #viz-menus {
   display: none;
 }
-body.loading #main {
+body.loading #main > * {
   visibility: hidden;
 }
-body.loading #right-bar {
+body.loading #right-bar * {
   visibility: hidden;
 }
 
@@ -180,7 +180,7 @@ g.group text {
   display: none;
 }
 
-g.group:hover text {
+g.group.hovering text, g.group:hover text {
   display: block;
 }
 
@@ -193,7 +193,7 @@ text.chord-title {
 
 text.chord-title tspan.back {
   stroke: white;
-  stroke-width: 1; }
+  stroke-width: 4; }
 
 path.chord {
   stroke-width: .75;
