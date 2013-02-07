@@ -1,6 +1,6 @@
 
 //this is our trigger for updating the graph
-function update() {}
+//function update() {}
 
 /** The Controls **/
 var PlotControls = Backbone.View.extend({
@@ -53,6 +53,8 @@ var PlotMenu = Backbone.View.extend({
   initialize: function (options) {
     var parent = this.parent = options.parent;
     // setup elements. The el is #menu-[name]
+	 //Eventually we want to be able to switch between looking at documents
+	 //to looking at topics
   },
 
   show: function () {
@@ -108,18 +110,6 @@ var PlotViewer = MainView.add(VisualizationView, {
 	xRange : d3.scale.linear().range([MARGINS.left, WIDTH - MARGINS.right]), // x range function
 	yRange : d3.scale.linear().range([HEIGHT - MARGINS.top, MARGINS.bottom]), // y range function
 	rRange : d3.scale.linear().range([5, 20]), // radius range function - ensures the radius is between 5 and 20
-	colours : [	// array of colours for the data points. 
-		"#981C30",
-		"#989415",
-		"#1E4559",
-		"#7F7274",
-		"#4C4A12",
-		"#ffffff",
-		"#4B0612",
-		"#1EAAE4",
-		"#AD5E71",
-		"#000000"
-	],
 	xAxis : d3.svg.axis().scale(xRange).tickSize(16).tickSubdivide(true), // x axis function
 	yAxis : d3.svg.axis().scale(yRange).tickSize(10).orient("right").tickSubdivide(true), // y axis function
 	data : null,
@@ -135,6 +125,7 @@ var PlotViewer = MainView.add(VisualizationView, {
 			data should be in this format
 				{data : { documents : [{<document values: id, <metrics>, <attributes>>}]}}
 		return "url to get data I need";
+		*/
   },
 
   /** setup the d3 layout, etc. Everything you can do without data **/
@@ -152,7 +143,7 @@ var PlotViewer = MainView.add(VisualizationView, {
 		.call(yAxis); // add to the visualisation
 
 	// load data, process it and draw it
-	update ();
+	//update ();
 	
   },
 
