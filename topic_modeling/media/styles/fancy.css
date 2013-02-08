@@ -23,6 +23,24 @@ ul.nav li, ul.nav li a {
 #main {
   float: left;
   width: 720px;
+  position: relative;
+}
+
+.navbar-inner {
+  position: relative;
+}
+
+#disable-main, #disable-nav, #disable-right {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ddd;
+  opacity: .5;
+  border-radius: 3px;
+  z-index: 1000;
 }
 
 #loading-indicator {
@@ -48,13 +66,10 @@ body.loading #loading-indicator {
   display: block;
 }
 body.loading #viz-menus {
-  display: none;
 }
 body.loading #main > * {
-  visibility: hidden;
 }
 body.loading #right-bar * {
-  visibility: hidden;
 }
 
 #refresh {
@@ -68,6 +83,7 @@ body.loading #right-bar * {
 }
 
 #right-bar {
+  position: relative;
   float: right;
   width: 210px;
 }

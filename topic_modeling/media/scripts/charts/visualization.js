@@ -116,7 +116,7 @@ var MainView = Backbone.View.extend({
     var items = [];
     var that = this;
     this.views = {};
-    this.$el.empty();
+    // this.$el.empty();
     _.forOwn(this.constructor.visualizations, function (value, key) {
       var node = $('<div class="viz-main"></div>').attr('id', key).appendTo(that.$el).hide();
       var menu = $('#menu-' + key);
@@ -160,10 +160,24 @@ var MainView = Backbone.View.extend({
     $(document.body).removeClass('loading');
   },
 
+  disable: function () {
+    $('#disable-nav').show();
+    $('#disable-right').show();
+    $('#disable-main').show();
+  },
+
+  enable: function () {
+    $('#disable-nav').hide();
+    $('#disable-right').hide();
+    $('#disable-main').hide();
+  },
+
   view: function (name, options) {
     if (this.loading) return false;
     options = options || {};
-    if (!options.dont_hide) {
+    if (options.reload || options.refresh) {
+      this.disable();
+    } else if (!options.dont_hide) {
       this.views[this.showing].hide();
     }
     this.start_loading();
@@ -174,7 +188,11 @@ var MainView = Backbone.View.extend({
       that.loading = false;
       that.update_refreshed(that.refreshed_times[url]);
       that.views[name].load(data);
-      that.views[name].show();
+      if (options.reload || options.refresh) {
+        that.enable();
+      } else {
+        that.views[name].show();
+      }
       that.stop_loading()
     };
     if (options.refresh) {
@@ -294,7 +312,7 @@ var VisualizationView = Backbone.View.extend({
   },
 
   reload: function () {
-    this.main.view(this.name);
+    this.main.view(this.name, {reload: true});
   },
 
   refresh: function () {
