@@ -74,7 +74,13 @@ var PlotInfo = Backbone.View.extend({
   },
 
   clear: function () {
-  }
+  },
+
+  show: function () {
+  },
+  
+  hide: function () {
+  },
 });
 
 /*****************************************************
@@ -120,11 +126,7 @@ var PlotViewer = MainView.add(VisualizationView, {
     global URLS variable (and you can add your own to that object).
   **/
   url: function () {
-      /*
-      data should be in this format
-        {data : { documents : [{<document values: id, <metrics>, <attributes>>}]}}
-    return "url to get data I need";
-    */
+    return URLS['documents']['metrics'];
   },
 
   /** setup the d3 layout, etc. Everything you can do without data **/
@@ -161,6 +163,7 @@ var PlotViewer = MainView.add(VisualizationView, {
    * the bottom of the right-hand bar
    */
   load: function (data) {
+    console.log(data);
   },
 
 
@@ -169,3 +172,4 @@ var PlotViewer = MainView.add(VisualizationView, {
   }
 
 });
+

@@ -238,6 +238,9 @@ urlpatterns += patterns(prefix + '.documents.ajax',
     (r'^feeds/update-document-metric-filter/' + dataset + '/' + analysis + '/' + \
             document + '/' + number + '/' + metric + '/' + comp + '/' + value + '$',
         'update_document_metric_filter'),
+    url(r'^feeds/document-metrics/' + dataset + '/' + analysis + '$',
+        'all_document_metrics', name='ajax-all-document-metrics'),
+   
 )
 
 # Favorites
