@@ -172,6 +172,64 @@ def update_document_metric_filter(request, dataset, analysis, document, number,
     request.session.modified = True
     return filtered_documents_response(request, dataset, analysis)
 
+###Visualizaion###
+
+#cache the data for 12 hours
+#@cache_page(60 * 60 * 12)
+def all_document_metrics(request, dataset, analysis):
+    ''' Returns all of the metrics for each document
+
+    @url /feeds/similar-topics/@dataset/@analysis/@measure$
+    @name all-similar-topics
+
+    dataset = name of a dataset
+    analysis = name of an analysis for the dataset
+
+    Returns:
+    {
+        documents : [{
+                    'name' :
+                    'id' :
+                    'metrics' : dictionary of metric values
+                    }]
+        document metrics: get_metrics(analysis) 
+    }
+    '''
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    documents = analysis.dataset.documents.all()[:500]
+    result = {'test' : 'test value', 'documents' : {}, 'metrics' : [] }
+    for document in documents:
+        info = {}
+        info['name'] = document.filename
+        info['id'] = document.id
+        metricValues = document.documentmetricvalues.all()
+        if not metricValues:
+            info['test2'] = "No metric values"
+        for metricValue in metricValues:
+            name = metricValue.metric.name
+            value = metricValue.value
+            info[name] = value
+        result['documents'][str(document.id)] = info
+    ''' Why does the following not work?
+    metrics = analysis.documentmetrics.all() #this list is empty
+    if not metrics:
+        result['test2'] = 'No metrics'
+    for metric in metrics:
+        result['metrics'].append(metric.name)
+        metricValues = metric.values.all()
+        metricName = metric.name
+        for metricValue in metricValues:
+            doc_id = metricValue.document.id
+            fieldValue = metricValue.value
+            result['documents'][str(doc_id)][metricName] = fieldValue
+    '''
+        
+    #get all document metrics associated with the analysis
+    #for each metric, there is a set of values associated with each document
+    #we want 
+
+    return JsonResponse(result)
+
 
 class AjaxDocument(object):
     def __init__(self, document):
