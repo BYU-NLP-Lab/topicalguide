@@ -4,38 +4,44 @@
 
 /** The Controls **/
 var PlotControls = Backbone.View.extend({
+  xcontrol : null,
+  ycontrol : null,
+  rcontrol : null,
+  setUp : false,
 
   initialize: function (options) {
-    var parent = this.parent = options.parent;
-    // setup elements. The el is #controls-[name]
-   /*here we set up the controls for the various axis
-     The user is allowed to select what variable is put on what axis.
-    TODO Set up color controls
-    TODO Set up controls by attribute value
-   */
-   var displayNames = ['Number of tokens', 'Number of types', 'Topic Entropy'];
-   var values = ['tokens', 'types', 'tentropy'];
-   this.$('x-plot').append('<h2>X Axis</h2>');
-   this.$('y-plot').append('<h2>Y Axis</h2>');
-   this.$('r-plot').append('<h2>Radius</h2>');
-   this.setUpControl(this.$('x-plot'), 'x-plot', displayNames, values);
-   this.setUpControl(this.$('y-plot'), 'y-plot', displayNames, values);
-   this.setUpControl(this.$('r-plot'), 'r-plot', displayNames, values);
-  },
+   var parent = this.parent = options.parent;
+   this.xcontrol = this.$('#plot-document-x-control');
+   this.ycontrol = this.$('#plot-document-y-control');
+   this.rcontrol = this.$('#plot-document-r-control');
 
-  setUpControl: function(control, name,  displayNames, values) {
-      control.append('<ul id="' + name + '">');
-    //add in preselected value
-      for(var k = 0; k < displayNames.length; k++) {
-      control.append(
-        '<li><label><input type="radio" name="' + name + '"' +
-          'value="' + values[k] +'">' + displayNames[k] + '</label></li>');
+  },
+  
+  setUpControls: function(options, viewer) {
+    if(!this.setUp) {
+      this.setUpControl(this.xcontrol, 'X Axis', options, viewer);
+      this.setUpControl(this.ycontrol, 'Y Axis', options, viewer);
+      this.setUpControl(this.rcontrol, 'Radius', options, viewer);
+      this.setUp = true;
     }
-    control.append('</ul>');
+  },
+    
+
+  setUpControl: function(control, title, options, viewer) {
+    control.append('<h4>' + title + '</h4>');
+    control.append('<form class="plot-documents-select">');
+    //add in preselected value
+    for(var k = 0; k < options.length; k++) {
+    control.append(
+        '<input type="radio" name="' + title + '" value="' + options[k] + '" ' + 
+        (k == 0 ? 'checked' : '') + '>' + options[k] + '</br>');
+    }
+    control.append('</form>');
     //when we change the options here, make the changes in the graph
-    var update = _.bind(this.parent.update, this.parent);
-    control.on("click", update, false);
-    control.on("keyup", update, false);
+    //TODO:
+    //var update = _.bind(this.parent.update, this.parent);
+    control.on("click", function() { viewer.update(); });
+    //control.on("keyup", update_fn, false);
   },
 
   show: function () {
@@ -64,7 +70,8 @@ var PlotMenu = Backbone.View.extend({
 
   hide: function () {
     this.$el.hide();
-  }
+  },
+
 });
 
 /** The Info **/
@@ -77,10 +84,20 @@ var PlotInfo = Backbone.View.extend({
   },
 
   show: function () {
+    this.$el.show();
   },
   
   hide: function () {
+    this.$el.hide();
   },
+
+  populate: function(doc) {
+    var div = $('#info-plot-documents');
+    div.html('');
+    div.append('<h4>' + doc.name + '</h4>');
+    //TODO Correctly populate the info box
+
+  }
 });
 
 /*****************************************************
@@ -100,6 +117,7 @@ var PlotInfo = Backbone.View.extend({
  *   controls: the controls object
  *
  * **/
+  
 var PlotViewer = MainView.add(VisualizationView, {
   name: 'plot-documents',
   title: '2D Plots',
@@ -107,17 +125,20 @@ var PlotViewer = MainView.add(VisualizationView, {
   info_class: PlotInfo,
   controls_class: PlotControls,
 
+
   /** any defaults that you want. In the class, this.options will be populated
   * with these defaults + an options dictionary passed in when the object is
   * initialized **/
   defaults: {
-    width : 720, // width of the graph.  How do we make this variable.  We don't want zooming
-    height : 720, // height of the graph
-    margins : {top: 20, right: 20, bottom: 20, left: 60}, // margins around the graph
+    xRange : d3.scale.linear().range([60, 720 - 20]), // x range function, left and right padding
+    yRange : d3.scale.linear().range([30, 720 - 60]), // y range function
     rRange : d3.scale.linear().range([5, 20]), // radius range function - ensures the radius is between 5 and 20
+    drawingData : null,
+    width: 720,
+    height: 720,
+    margins : {top: 20, right: 20, bottom: 20, left: 60}, // margins around the graph
     /**
     **/
-    data : null
   },
 
   /**
@@ -131,15 +152,13 @@ var PlotViewer = MainView.add(VisualizationView, {
 
   /** setup the d3 layout, etc. Everything you can do without data **/
   setup_d3: function () {
-    var xRange = d3.scale.linear().range([this.options.margins.left, this.options.width - this.options.margins.right]); // x range function
-    var yRange = d3.scale.linear().range([this.options.height - this.options.margins.top, this.options.margins.bottom]); // y range function
-    var xAxis = d3.svg.axis().scale(xRange).tickSize(16).tickSubdivide(true); // x axis function
-    var yAxis = d3.svg.axis().scale(yRange).tickSize(10).orient("right").tickSubdivide(true); // y axis function
+    var xAxis = d3.svg.axis().scale(this.options.xRange).tickSize(16).tickSubdivide(true); // x axis function
+    var yAxis = d3.svg.axis().scale(this.options.yRange).tickSize(10).orient("right").tickSubdivide(true); // y axis function
 
   // add in the x axis
   this.maing.append("svg:g") // container element
     .attr("class", "x axis") // so we can style it with CSS
-    .attr("transform", "translate(0," + this.options.height + ")") // move into position
+    .attr("transform", "translate(0," + (this.options.height - this.options.margins.bottom - 20) + ")") // move into position
     .call(xAxis); // add to the visualisation
 
   // add in the y axis
@@ -147,12 +166,53 @@ var PlotViewer = MainView.add(VisualizationView, {
     .attr("class", "y axis") // so we can style it with CSS
     .call(yAxis); // add to the visualisation
 
-  // load data, process it and draw it
-  //update ();
+  //set up listeners for the controls
   
   },
 
   update: function () {
+    console.log("update()");
+    var documents = this.svg.selectAll("circle").data(this.drawingData, function (d) { return d.id;}),
+    axes = this.getAxes(),
+    xRange = this.options.xRange,
+    yRange = this.options.yRange,
+    rRange = this.options.rRange,
+    width = this.options.width,
+    height = this.options.height,
+    bottomMargin = this.options.margins.bottom,
+    info = this.info;
+    //console.log(this.drawingData);
+
+    documents.enter()
+      .insert("svg:circle")
+        .attr("cx", function (doc) { return xRange (doc.fields[axes.xAxis]); })
+        .attr("cy", function (doc) { return height - yRange (doc.fields[axes.yAxis]) - bottomMargin; })
+        .style("opacity", 0)
+        .style("fill", "0x0000FF")
+        .on("click", function (doc) { info.populate(doc); } );
+
+    xRange.domain([
+      d3.min(this.drawingData, function (doc) { return +doc.fields[axes.xAxis]; }),
+      d3.max(this.drawingData, function (doc) { return +doc.fields[axes.xAxis]; })
+    ]);
+    yRange.domain([
+      d3.min(this.drawingData, function (doc) { return +doc.fields[axes.yAxis]; }),
+      d3.max(this.drawingData, function (doc) { return +doc.fields[axes.yAxis]; })
+    ]);
+    rRange.domain([
+      d3.min(this.drawingData, function (doc) { return +doc.fields[axes.rAxis]; }),
+      d3.max(this.drawingData, function (doc) { return +doc.fields[axes.rAxis]; })
+    ]);
+
+    //TODO axis transformation
+
+    documents.transition().duration(1500).ease("exp-in-out")
+      .style("opacity", 1)
+      .style("fill", "0x000000")
+      .attr("r", function(doc) { return rRange (doc.fields[axes.rAxis]); })
+      .attr("cx", function (doc) { return xRange (doc.fields[axes.xAxis]); })
+      .attr("cy", function (doc) { return height - yRange (doc.fields[axes.yAxis]) - bottomMargin; });
+
   },
 
   /** populate everything! data is the JSON response from your url(). For
@@ -164,12 +224,50 @@ var PlotViewer = MainView.add(VisualizationView, {
    */
   load: function (data) {
     console.log(data);
+    documents = data.documents;
+    metrics = data.metrics;
+    metadata = data.metadata;
+    fields = Array();
+    fields = fields.concat(metrics);
+    for(var field in metadata) {
+      if(metadata[field] == 'int' || metadata[field] == 'float')
+        fields.push(field);
+    }
+
+    this.setUpControls(fields);
+
+    this.drawingData = [];
+    var k = 0;
+    for(var docid in documents) {
+      this.drawingData.push(documents[docid]);
+      if (k > 8)
+        break;
+      k++;
+    }
+    this.update();
+  },
+
+  setUpControls: function(fields) {
+    this.controls.setUpControls(fields, this);
+
   },
 
 
   redraw: function() {
 
-  }
+  },
+
+  getAxes: function() {
+    var x = $("#plot-document-x-control input:checked").val();
+    var y = $("#plot-document-y-control input:checked").val();
+    var r = $("#plot-document-r-control input:checked").val();
+    return {
+      xAxis: x,
+      yAxis: y,
+      rAxis: r
+    };
+  },
+
 
 });
 

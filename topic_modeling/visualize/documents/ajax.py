@@ -177,59 +177,71 @@ def update_document_metric_filter(request, dataset, analysis, document, number,
 #cache the data for 12 hours
 #@cache_page(60 * 60 * 12)
 def all_document_metrics(request, dataset, analysis):
-    ''' Returns all of the metrics for each document
-
-    @url /feeds/similar-topics/@dataset/@analysis/@measure$
-    @name all-similar-topics
+    ''' Returns all of the metrics for each document according to the analysis
 
     dataset = name of a dataset
     analysis = name of an analysis for the dataset
 
     Returns:
     {
-        documents : [{
-                    'name' :
-                    'id' :
-                    'metrics' : dictionary of metric values
-                    }]
-        document metrics: get_metrics(analysis) 
+        documents : {
+                        <doc id> :
+                        {
+                            'name' : <doc name>
+                            'fields' : { <field name> : <field value>,}
+                        }
+                    },
+        metrics: [<metric name>,],
+        metadata: [<metadata name>,]
     }
+    TODO: This needs to be able to handle not getting all the documents
+    This is currently broken
     '''
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    documents = analysis.dataset.documents.all()[:500]
-    result = {'test' : 'test value', 'documents' : {}, 'metrics' : [] }
+    documents = analysis.dataset.documents.all()
+    result = {'documents' : {}, 'metrics' : get_document_metric_names(analysis), 'metadata' : get_document_metadata_names(documents[0]) }
     for document in documents:
         info = {}
         info['name'] = document.filename
         info['id'] = document.id
-        metricValues = document.documentmetricvalues.all()
-        if not metricValues:
-            info['test2'] = "No metric values"
-        for metricValue in metricValues:
-            name = metricValue.metric.name
-            value = metricValue.value
-            info[name] = value
+        info['fields'] = get_document_metadata(document)
         result['documents'][str(document.id)] = info
-    ''' Why does the following not work?
-    metrics = analysis.documentmetrics.all() #this list is empty
-    if not metrics:
-        result['test2'] = 'No metrics'
+
+    metrics = analysis.documentmetrics.all() 
     for metric in metrics:
-        result['metrics'].append(metric.name)
         metricValues = metric.values.all()
         metricName = metric.name
         for metricValue in metricValues:
             doc_id = metricValue.document.id
             fieldValue = metricValue.value
-            result['documents'][str(doc_id)][metricName] = fieldValue
-    '''
+            result['documents'][str(doc_id)]['fields'][metricName] = fieldValue
         
-    #get all document metrics associated with the analysis
-    #for each metric, there is a set of values associated with each document
-    #we want 
-
     return JsonResponse(result)
 
+def get_document_metadata(document):
+    result = {}
+    metadata_values = document.metainfovalues.all();
+    for value in metadata_values:
+        metainfo = value.info_type
+        result[metainfo.name] = value.value()
+    return result
+
+def get_document_metadata_names(document):
+    result = {} 
+    metadata_values = document.metainfovalues.all();
+    for value in metadata_values:
+        metainfo = value.info_type
+        result[metainfo.name] = value.type()
+
+    return result
+
+def get_document_metric_names(analysis):
+    result = []
+    metrics = analysis.documentmetrics.all() 
+    for metric in metrics:
+        result.append(metric.name)
+
+    return result
 
 class AjaxDocument(object):
     def __init__(self, document):
