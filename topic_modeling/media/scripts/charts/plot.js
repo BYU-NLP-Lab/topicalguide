@@ -14,18 +14,19 @@ var PlotControls = Backbone.View.extend({
    this.xcontrol = this.$('#plot-document-x-control');
    this.ycontrol = this.$('#plot-document-y-control');
    this.rcontrol = this.$('#plot-document-r-control');
+   this.ccontrol = this.$('#plot-document-c-control');
 
   },
   
-  setUpControls: function(options, viewer) {
+  setUpControls: function(cont_options, nom_options, viewer) {
     if(!this.setUp) {
-      this.setUpControl(this.xcontrol, 'X Axis', options, viewer);
-      this.setUpControl(this.ycontrol, 'Y Axis', options, viewer);
-      this.setUpControl(this.rcontrol, 'Radius', options, viewer);
+      this.setUpControl(this.xcontrol, 'X Axis', cont_options, viewer);
+      this.setUpControl(this.ycontrol, 'Y Axis', cont_options, viewer);
+      this.setUpControl(this.rcontrol, 'Radius', cont_options, viewer);
+      this.setUpControl(this.ccontrol, 'Color', nom_options, viewer);
       this.setUp = true;
     }
   },
-    
 
   setUpControl: function(control, title, options, viewer) {
     control.append('<h4>' + title + '</h4>');
@@ -137,6 +138,35 @@ var PlotViewer = MainView.add(VisualizationView, {
     width: 720,
     height: 720,
     margins : {top: 20, right: 20, bottom: 20, left: 60}, // margins around the graph
+    colors : [
+      "#981C30",
+      "#989415",
+      "#1E4559",
+      "#7F7274",
+      "#4C4A12",
+      "#4B0612",
+      "#1EAAE4",
+      "#AD5E71",
+      "#000000",
+      "#0000FF",
+      "#8A2BE2",
+      "#A52A2A",
+      "#D2691E",
+      "#DC143C",
+      "#00FFFF",
+      "#00008B",
+      "#008B8B",
+      "#B8860B",
+      "#006400",
+      "#8B008B",
+      "#556B2F",
+      "#FF8C00",
+      "#8B0000",
+      "#8FBC8F",
+      "#2F4F4F",
+      "#00CED1",
+      "#696969"
+    ],
     /**
     **/
   },
@@ -172,7 +202,7 @@ var PlotViewer = MainView.add(VisualizationView, {
 
   update: function () {
     console.log("update()");
-    var documents = this.svg.selectAll("circle").data(this.drawingData, function (d) { return d.id;}),
+    var documents = this.svg.selectAll("circle").data(this.drawingData, function (doc) { return doc.id;}),
     axes = this.getAxes(),
     xRange = this.options.xRange,
     yRange = this.options.yRange,
@@ -180,7 +210,10 @@ var PlotViewer = MainView.add(VisualizationView, {
     width = this.options.width,
     height = this.options.height,
     bottomMargin = this.options.margins.bottom,
-    info = this.info;
+    info = this.info,
+    colors = this.options.colors,
+    nomMaps = this.nomMaps;
+    //console.log(colors);
     //console.log(this.drawingData);
 
     documents.enter()
@@ -188,7 +221,7 @@ var PlotViewer = MainView.add(VisualizationView, {
         .attr("cx", function (doc) { return xRange (doc.fields[axes.xAxis]); })
         .attr("cy", function (doc) { return height - yRange (doc.fields[axes.yAxis]) - bottomMargin; })
         .style("opacity", 0)
-        .style("fill", "0x0000FF")
+        .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
         .on("click", function (doc) { info.populate(doc); } );
 
     xRange.domain([
@@ -208,7 +241,7 @@ var PlotViewer = MainView.add(VisualizationView, {
 
     documents.transition().duration(1500).ease("exp-in-out")
       .style("opacity", 1)
-      .style("fill", "0x000000")
+      .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
       .attr("r", function(doc) { return rRange (doc.fields[axes.rAxis]); })
       .attr("cx", function (doc) { return xRange (doc.fields[axes.xAxis]); })
       .attr("cy", function (doc) { return height - yRange (doc.fields[axes.yAxis]) - bottomMargin; });
@@ -227,28 +260,51 @@ var PlotViewer = MainView.add(VisualizationView, {
     documents = data.documents;
     metrics = data.metrics;
     metadata = data.metadata;
-    fields = Array();
-    fields = fields.concat(metrics);
+    var cont_fields = Array();
+    var nom_fields = Array();
+    cont_fields = cont_fields.concat(metrics);
     for(var field in metadata) {
       if(metadata[field] == 'int' || metadata[field] == 'float')
-        fields.push(field);
+        cont_fields.push(field);
+      else
+        nom_fields.push(field);
     }
 
-    this.setUpControls(fields);
+
+    this.setUpControls(cont_fields, nom_fields);
 
     this.drawingData = [];
     var k = 0;
     for(var docid in documents) {
       this.drawingData.push(documents[docid]);
-      if (k > 8)
+      if (k > 100)
         break;
       k++;
     }
+    this.setUpNomMap(this.drawingData, nom_fields);
+    console.log(this.nomMaps);
     this.update();
   },
 
-  setUpControls: function(fields) {
-    this.controls.setUpControls(fields, this);
+  setUpNomMap: function(data, fields) {
+    this.nomMaps = new Object();
+    for(var j = 0; j < fields.length; j++) {
+      var field = fields[j];
+      var counter = 0;
+      var map = Object();
+      for(var k = 0; k < data.length; k++) {
+        var doc = data[k];
+        var value = doc.fields[field];
+        map[value] = counter;
+        counter++;
+      }
+      this.nomMaps[field] = map;
+    }
+  },
+
+
+  setUpControls: function(cont_fields, nom_fields) {
+    this.controls.setUpControls(cont_fields, nom_fields, this);
 
   },
 
@@ -261,12 +317,24 @@ var PlotViewer = MainView.add(VisualizationView, {
     var x = $("#plot-document-x-control input:checked").val();
     var y = $("#plot-document-y-control input:checked").val();
     var r = $("#plot-document-r-control input:checked").val();
+    var c = $("#plot-document-c-control input:checked").val();
     return {
       xAxis: x,
       yAxis: y,
-      rAxis: r
+      rAxis: r,
+      cAxis: c
     };
   },
+
+  randomColor: function() {
+    var letters = '0123456789ABCDEF'.split('');
+    var color = '#';
+    for(var i = 0; i < 6; i++)
+      color += letters[Math.round(Math.random() * 15)];
+    console.log(color);
+    return color;
+  },
+    
 
 
 });
