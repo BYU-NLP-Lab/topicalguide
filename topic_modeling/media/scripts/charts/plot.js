@@ -112,60 +112,42 @@ var PlotInfo = Backbone.View.extend({
  *             effected by the zoom object.
  *   zoom:     a zoom object for resizing your visualization
  *   options:  a dictionary of the {dict} passed in at initialization,
- *             extending the "defaults" dict
- *   info:     the info object
- *   menu:     the menu object
- *   controls: the controls object
- *
- * **/
-  
-var PlotViewer = MainView.add(VisualizationView, {
-  name: 'plot-documents',
-  title: '2D Plots',
-  menu_class: PlotMenu,
-  info_class: PlotInfo,
-  controls_class: PlotControls,
-
-
-  /** any defaults that you want. In the class, this.options will be populated
-  * with these defaults + an options dictionary passed in when the object is
+ *             extending the "defaults" dict *   info:     the info object *   menu:     the menu object *   controls: the controls object * * **/ var PlotViewer = MainView.add(VisualizationView, { name: 'plot-documents', title: '2D Plots', menu_class: PlotMenu, info_class: PlotInfo, controls_class: PlotControls, /** any defaults that you want. In the class, this.options will be populated * with these defaults + an options dictionary passed in when the object is
   * initialized **/
   defaults: {
     xRange : d3.scale.linear().range([60, 720 - 20]), // x range function, left and right padding
-    yRange : d3.scale.linear().range([30, 720 - 60]), // y range function
+    yRange : d3.scale.linear().range([720 - 60, 30]), // y range function
     rRange : d3.scale.linear().range([5, 20]), // radius range function - ensures the radius is between 5 and 20
     drawingData : null,
     width: 720,
     height: 720,
     margins : {top: 20, right: 20, bottom: 20, left: 60}, // margins around the graph
     colors : [
-      "#981C30",
-      "#989415",
-      "#1E4559",
-      "#7F7274",
-      "#4C4A12",
-      "#4B0612",
-      "#1EAAE4",
-      "#AD5E71",
       "#000000",
-      "#0000FF",
-      "#8A2BE2",
+      "#FFFF00",
+      "#800080",
+      "#FFA500",
+      "#ADD8E6",
+      "#CD0000",
+      "#F5DEB3",
+      "#A9A9A9",
+      "#228B22",
+      "#FF00FF",
+      "#0000CD",
+      "#F4A460",
+      "#EE82EE",
+      "#FF4500",
+      "#191970",
+      "#ADFF2F",
       "#A52A2A",
-      "#D2691E",
-      "#DC143C",
-      "#00FFFF",
-      "#00008B",
-      "#008B8B",
-      "#B8860B",
-      "#006400",
-      "#8B008B",
-      "#556B2F",
-      "#FF8C00",
-      "#8B0000",
-      "#8FBC8F",
-      "#2F4F4F",
-      "#00CED1",
-      "#696969"
+      "#808000",
+      "#DB7093",
+      "#F08080",
+      "#8A2B2E",
+      "#7FFFD4",
+      "#FF0000",
+      "#00FF00",
+      "#008000",
     ],
     /**
     **/
@@ -182,19 +164,19 @@ var PlotViewer = MainView.add(VisualizationView, {
 
   /** setup the d3 layout, etc. Everything you can do without data **/
   setup_d3: function () {
-    var xAxis = d3.svg.axis().scale(this.options.xRange).tickSize(16).tickSubdivide(true); // x axis function
-    var yAxis = d3.svg.axis().scale(this.options.yRange).tickSize(10).orient("right").tickSubdivide(true); // y axis function
+    this.xAxis = d3.svg.axis().scale(this.options.xRange).tickSize(10).tickSubdivide(true); // x axis function
+    this.yAxis = d3.svg.axis().scale(this.options.yRange).tickSize(10).orient("right").tickSubdivide(true); // y axis function
 
   // add in the x axis
   this.maing.append("svg:g") // container element
     .attr("class", "x axis") // so we can style it with CSS
     .attr("transform", "translate(0," + (this.options.height - this.options.margins.bottom - 20) + ")") // move into position
-    .call(xAxis); // add to the visualisation
+    .call(this.xAxis); // add to the visualisation
 
   // add in the y axis
   this.maing.append("svg:g") // container element
     .attr("class", "y axis") // so we can style it with CSS
-    .call(yAxis); // add to the visualisation
+    .call(this.yAxis); // add to the visualisation
 
   //set up listeners for the controls
   
@@ -219,7 +201,7 @@ var PlotViewer = MainView.add(VisualizationView, {
     documents.enter()
       .insert("svg:circle")
         .attr("cx", function (doc) { return xRange (doc.fields[axes.xAxis]); })
-        .attr("cy", function (doc) { return height - yRange (doc.fields[axes.yAxis]) - bottomMargin; })
+        .attr("cy", function (doc) { return yRange (doc.fields[axes.yAxis]); })
         .style("opacity", 0)
         .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
         .on("click", function (doc) { info.populate(doc); } );
@@ -238,13 +220,17 @@ var PlotViewer = MainView.add(VisualizationView, {
     ]);
 
     //TODO axis transformation
+	// transition function for the axes
+    var t = this.svg.transition().duration(1500).ease("exp-in-out");
+    t.select(".x.axis").call(this.xAxis);
+    t.select(".y.axis").call(this.yAxis);
 
     documents.transition().duration(1500).ease("exp-in-out")
       .style("opacity", 1)
       .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
       .attr("r", function(doc) { return rRange (doc.fields[axes.rAxis]); })
       .attr("cx", function (doc) { return xRange (doc.fields[axes.xAxis]); })
-      .attr("cy", function (doc) { return height - yRange (doc.fields[axes.yAxis]) - bottomMargin; });
+      .attr("cy", function (doc) { return yRange (doc.fields[axes.yAxis]); });
 
   },
 
@@ -282,7 +268,7 @@ var PlotViewer = MainView.add(VisualizationView, {
       k++;
     }
     this.setUpNomMap(this.drawingData, nom_fields);
-    console.log(this.nomMaps);
+    //console.log(this.nomMaps);
     this.update();
   },
 
@@ -295,8 +281,10 @@ var PlotViewer = MainView.add(VisualizationView, {
       for(var k = 0; k < data.length; k++) {
         var doc = data[k];
         var value = doc.fields[field];
+        if(!map[value]){
         map[value] = counter;
         counter++;
+        }
       }
       this.nomMaps[field] = map;
     }
