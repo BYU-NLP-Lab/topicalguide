@@ -94,7 +94,7 @@ var PlotInfo = Backbone.View.extend({
 
   populate: function(doc) {
     var div = $('#info-plot-documents');
-    div.html('');
+    div.html('</br>');
     div.append('<h4>' + doc.name + '</h4>');
     //TODO Correctly populate the info box
 
@@ -184,6 +184,10 @@ var PlotInfo = Backbone.View.extend({
 
   update: function () {
     console.log("update()");
+    /*
+      Most of these variables are just copied from this namespace so that
+        the anonomous functions can access them
+    */
     var documents = this.svg.selectAll("circle").data(this.drawingData, function (doc) { return doc.id;}),
     axes = this.getAxes(),
     xRange = this.options.xRange,
@@ -195,16 +199,34 @@ var PlotInfo = Backbone.View.extend({
     info = this.info,
     colors = this.options.colors,
     nomMaps = this.nomMaps;
-    //console.log(colors);
-    //console.log(this.drawingData);
 
+    //needed for tooltips
+    var div = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+    //sets up the circles
     documents.enter()
       .insert("svg:circle")
         .attr("cx", function (doc) { return xRange (doc.fields[axes.xAxis]); })
         .attr("cy", function (doc) { return yRange (doc.fields[axes.yAxis]); })
         .style("opacity", 0)
         .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
-        .on("click", function (doc) { info.populate(doc); } );
+        //updates the infobox
+        .on("click", function (doc) { info.populate(doc); } )
+        //tooltips
+        .on("mouseover", function(doc) {
+          div.transition()
+            .duration(200)
+            .style("opacity", 0.9);
+          div.html(doc.name)
+            .style("left", (d3.event.pageX + 8) + "px")
+            .style("top", (d3.event.pageY) + "px"); })
+        .on("mouseoff", function(doc) {
+          div.transition()
+            .duration(200)
+            .style("opacity", 0.0); });
+          
 
     xRange.domain([
       d3.min(this.drawingData, function (doc) { return +doc.fields[axes.xAxis]; }),
@@ -219,12 +241,12 @@ var PlotInfo = Backbone.View.extend({
       d3.max(this.drawingData, function (doc) { return +doc.fields[axes.rAxis]; })
     ]);
 
-    //TODO axis transformation
 	// transition function for the axes
     var t = this.svg.transition().duration(1500).ease("exp-in-out");
     t.select(".x.axis").call(this.xAxis);
     t.select(".y.axis").call(this.yAxis);
 
+    //transition function for the circles
     documents.transition().duration(1500).ease("exp-in-out")
       .style("opacity", 1)
       .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
@@ -261,9 +283,10 @@ var PlotInfo = Backbone.View.extend({
 
     this.drawingData = [];
     var k = 0;
+    var docLimit = 1000;
     for(var docid in documents) {
       this.drawingData.push(documents[docid]);
-      if (k > 100)
+      if (k > docLimit)
         break;
       k++;
     }
