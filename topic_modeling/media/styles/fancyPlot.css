@@ -1,0 +1,13 @@
+
+.axis text {
+	fill: #000;
+}
+
+.axis .domain {
+	opacity: 0;
+}
+
+.tick {
+	stroke: #000;
+}
+
