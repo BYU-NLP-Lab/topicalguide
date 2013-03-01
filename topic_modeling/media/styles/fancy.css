@@ -171,6 +171,16 @@ g.node circle {
   cursor: pointer;
   stroke: none; }
 
+g.leaf circle {
+  fill: #ff7f0e;
+  fill-opacity: 1;
+}
+
+g.root circle {
+  fill: #0066FF;
+  fill-opacity: 1;
+}
+
   g.node.highlighted-main circle {
     fill: #0064cd !important;
     stroke: #0064cd
