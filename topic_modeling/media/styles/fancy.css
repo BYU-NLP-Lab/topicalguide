@@ -86,6 +86,8 @@ body.loading #right-bar * {
   position: relative;
   float: right;
   width: 300px;
+  height: 630px;
+  overflow-y: auto;
 }
 
 #right-bar .bar-item {
