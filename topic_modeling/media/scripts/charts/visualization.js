@@ -35,6 +35,16 @@ var SelectUI = function (el, items) {
     this.selected = i;
     this.render();
   };
+  this.set_selected = function (value) {
+    for (var i=0; i<items.length; i++) {
+      if (value === items[i][0]) {
+        this.selected = i;
+        this.render();
+        return true;
+      }
+    }
+    return false;
+  };
   this.render();
   return this;
 };
@@ -66,23 +76,20 @@ var MainView = Backbone.View.extend({
     if (Storage && localStorage.refreshed_times) {
       this.refreshed_times = JSON.parse(localStorage.refreshed_times);
     }
-    /**
-    if (Storage && localStorage.topics_data) {
-      try {
-        this.load_data(JSON.parse(localStorage.topics_data));
-      } catch (e) {
-        console.log('loading error' + e);
-        if (confirm('An error occurred loading cached data: reload?')) {
-          // this.reload();
-        } else {
-          throw e;
-        }
-      }
+
+    this.follow_hash();
+    $(window).on('hashchange', _.bind(this.follow_hash, this));
+  },
+
+  follow_hash: function () {
+    var navto = document.location.hash.slice(1);
+    if (this.views[navto] && navto !== this.showing) {
+      this.vlist.set_selected(navto);
     } else {
-      // this.reload();
+      document.location.hash = '#' + this.showing;
+      navto = this.showing;
     }
-    **/
-    this.view(this.showing, {dont_hide: true});
+    this.view(navto);
   },
 
   fetch_data: function (url, callback) {
