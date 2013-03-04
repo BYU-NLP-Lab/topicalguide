@@ -30,7 +30,7 @@ from datetime import datetime
 from django.db import connection, transaction
 
 from topic_modeling.visualize.models import Analysis, Dataset, Topic
-from import_scripts.metadata import Metadata
+from import_tool.import_scripts.metadata import Metadata
 from topic_modeling import settings
 from topic_modeling.visualize.models import Document
 from topic_modeling.tools import TimeLongThing
@@ -38,7 +38,7 @@ import logging
 
 from import_tool.config import config
 
-logger = logging.getLogger('console')
+logger = logging.getLogger('root')
 
 def check_analysis(analysis_name, dataset_name):
     try:

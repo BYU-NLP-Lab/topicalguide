@@ -37,7 +37,7 @@ import sqlite3
 
 from optparse import OptionParser
 
-from metric_scripts.topics.coherence import compute_pmi
+from ...topics.coherence import compute_pmi
 from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import PairwiseTopicMetricValue

@@ -106,7 +106,7 @@ var CircleControls = Backbone.View.extend({
 /**
  * This is a Circle visualization
  */
-var CircleViewer = MainView.add(ZoomableView, {
+var CircleViewer = MainView.add({
   name: 'circle-topics',
   title: 'Circle Diagram',
   menu_class: CircleMenu,

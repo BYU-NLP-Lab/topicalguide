@@ -164,7 +164,11 @@ def create_config(build_script):
         c.default('db_jar', 'mysql-connector-java-5.1.18-bin.jar')
         c.default('jdbc_path', 'jdbc:mysql://%s/%s?user=%s\&password=%s'
                 % (c['mysql_server'], c['mysql_db'], c['mysql_user'], c['mysql_password']))
-    else: raise Exception("Unknown database type '" + settings.DBTYPE + "'")
+    elif settings.DBTYPE == 'postgres':
+        # do we really need stuff here?
+        pass
+    else:
+        raise Exception("Unknown database type '" + settings.DBTYPE + "'")
     return c
 
 build_script = get_buildscript(build)

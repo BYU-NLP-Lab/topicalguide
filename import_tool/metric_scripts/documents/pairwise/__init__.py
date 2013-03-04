@@ -20,8 +20,8 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from metric_scripts import MetricSet
-from metric_scripts.documents.pairwise import topic_correlation, word_correlation
+from ... import MetricSet
+from ...documents.pairwise import topic_correlation, word_correlation
 
 metrics = MetricSet()
 metrics['topic_correlation'] = topic_correlation

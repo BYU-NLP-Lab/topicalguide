@@ -222,8 +222,8 @@ var MainView = Backbone.View.extend({
  */
 var VisualizationView = Backbone.View.extend({
   base_defaults: {
-    width: 720,
-    height: 720
+    width: 630,
+    height: 630
   },
   menu_class: null,
   info_class: null,

@@ -22,7 +22,7 @@ ul.nav li, ul.nav li a {
 
 #main {
   float: left;
-  width: 720px;
+  width: 630px;
   position: relative;
 }
 
@@ -85,7 +85,7 @@ body.loading #right-bar * {
 #right-bar {
   position: relative;
   float: right;
-  width: 210px;
+  width: 300px;
 }
 
 #right-bar .bar-item {
