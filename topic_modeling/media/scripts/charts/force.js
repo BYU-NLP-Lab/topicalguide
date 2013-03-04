@@ -214,7 +214,7 @@ var ForceViewer = MainView.add(ZoomableView, {
               .linkStrength(function (d) {
                 return that.options.max_link_strength * rel(d.weight);
               }).start();
-    this.calc_layout();
+    // this.calc_layout();
 
     this.maing.selectAll('*').remove();
     this.maing.append('g').classed('all-links', true);
@@ -223,7 +223,8 @@ var ForceViewer = MainView.add(ZoomableView, {
     this.create_links(links, rel);
     this.create_nodes(nodes, data, trel);
     // update the positions of all the created nodes
-    this.update_positions();
+    // this.update_positions();
+    this.start_ticking();
   },
 
   create_links: function (links, rel) {

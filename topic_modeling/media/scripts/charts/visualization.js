@@ -12,6 +12,10 @@ var SelectUI = function (el, items) {
   this.selected = 0;
   this.title = $('a.dropdown-toggle span', this.el);
   this.body = $('ul.dropdown-menu', this.el);
+  this.titles = {};
+  for (var i=0; i<items.length; i++) {
+    this.titles[items[i][0]] = items[i][1];
+  }
   this.render = function () {
     this.title.html(items[this.selected][1]);
     this.body.empty();
@@ -187,6 +191,7 @@ var MainView = Backbone.View.extend({
     } else if (!options.dont_hide) {
       this.views[this.showing].hide();
     }
+    $('head title').text('Topical Guide | ' + this.vlist.titles[name]);
     this.start_loading();
     var that = this;
     this.showing = name;
