@@ -171,16 +171,6 @@ g.node circle {
   cursor: pointer;
   stroke: none; }
 
-g.leaf circle {
-  fill: #ff7f0e;
-  fill-opacity: 1;
-}
-
-g.root circle {
-  fill: #0066FF;
-  fill-opacity: 1;
-}
-
   g.node.highlighted-main circle {
     fill: #0064cd !important;
     stroke: #0064cd
@@ -189,6 +179,34 @@ g.root circle {
   g.node.highlighted circle {
     stroke: #0064cd;
     stroke-width: 2px; }
+
+
+g.c_node circle {
+
+}
+
+g.c_leaf circle {
+  fill: #3BC600;
+}
+
+g.c_root circle {
+  stroke: black;
+  stroke-width: 5px;
+  fill: white;
+}
+
+g.c_text {
+  pointer-events: none; }
+
+  g.c_text text {
+    font-family: sans;
+    fill: white;
+    font-weight: bold;
+    text-anchor: middle; }
+
+  g.c_text text tspan.back {
+    stroke: #2C2B1C;
+    stroke-width: 1; }
 
 /** lines **/
 
