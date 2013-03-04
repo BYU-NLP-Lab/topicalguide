@@ -3,6 +3,7 @@ import datetime
 import sys
 import os
 import logging
+import logging.config
 import json
 
 class BackendError(Exception):

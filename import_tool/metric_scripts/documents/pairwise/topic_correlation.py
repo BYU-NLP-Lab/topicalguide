@@ -37,17 +37,21 @@ from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetricValue
 
 from topic_modeling.tools import TimeLongThing
+import logging
+logger = logging.getLogger('root')
 
 metric_name = "Topic Correlation"
 
 # @transaction.commit_manually
 def add_metric(dataset, analysis):
+    print 'begginning metric'
+    sys.stdout.flush()
+    logger.info('beginning metric: document > pairwise > topic correlation')
     try:
         dataset = Dataset.objects.get(name=dataset)
         analysis = Analysis.objects.get(dataset=dataset, name=analysis)
         metric,created = PairwiseDocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
         if not created and PairwiseDocumentMetricValue.objects.filter(metric=metric).count():
-            # transaction.rollback()
             raise RuntimeError("%s is already in the database for this"
                     " analysis" % metric_name)
         
@@ -56,19 +60,34 @@ def add_metric(dataset, analysis):
         for i, topic in enumerate(topics):
             topic_idx[topic] = i
         
-        documents = dataset.documents.all()
-        doctopicvectors = [document_topic_vector(doc, topic_idx) for doc in documents]
+        documents = list(dataset.documents.all())
+        logger.info('Generating document topic vectors')
+        print 'gen t vectors'
+        sys.stdout.flush()
+        num_docs = len(documents)
+
+        timer = TimeLongThing(num_docs, 1, .05)
+        doctopicvectors = []
+        for doc in documents:
+            timer.inc() 
+            doctopicvectors.append(document_topic_vector(doc, topic_idx))
+
         vectornorms = [norm(vector) for vector in doctopicvectors]
-        
-    #    start = datetime.now()
+
+        logger.info('Comparing the vectors')
+        print 'compare vectors'
+        sys.stdout.flush()
+        timer = TimeLongThing(len(documents)**2, 5, 100)
         for i, doc1 in enumerate(documents):
-            write('.')
     #        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
     #        print >> sys.stderr, 'Time for last document:', datetime.now() - start
     #        start = datetime.now()
+            logger.info('Working on document %d out of %d' % (i, num_docs))
             doc1_topic_vals = doctopicvectors[i]
             doc1_norm = vectornorms[i]
             for j, doc2 in enumerate(documents):
+                timer.inc()
+                sys.stderr.flush()
                 doc2_topic_vals = doctopicvectors[j]
                 doc2_norm = vectornorms[j]
                 correlation_coeff = pmcc(doc1_topic_vals, doc2_topic_vals,
@@ -89,8 +108,8 @@ def metric_names_generated(_dataset, _analysis):
     return [metric_name]
 
 def write(s):
-    sys.stdout.write(s)
-    sys.stdout.flush()
+    sys.stderr.write(s)
+    sys.stderr.flush()
 
 def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
     return float(dot(doc1_topic_vals, doc2_topic_vals) /

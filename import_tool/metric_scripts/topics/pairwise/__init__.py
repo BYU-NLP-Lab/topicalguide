@@ -19,8 +19,8 @@
 # If you have inquiries regarding any further use of the Topical Guide, please
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
-from metric_scripts.metric_set import MetricSet
-from metric_scripts.topics.pairwise import document_correlation, pairwise_coherence, word_correlation
+from ...metric_set import MetricSet
+import document_correlation, pairwise_coherence, word_correlation
 
 metrics = MetricSet()
 metrics['document_correlation'] = document_correlation
