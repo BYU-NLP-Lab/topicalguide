@@ -199,12 +199,17 @@ def all_document_metrics(request, dataset, analysis):
     '''
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     documents = analysis.dataset.documents.all()
-    result = {'documents' : {}, 'metrics' : get_document_metric_names(analysis), 'metadata' : get_document_metadata_names(documents[0]) }
+    result = {'documents' : {},
+              'metrics' : get_document_metric_names(analysis),
+              'metadata' : get_document_metadata_names(documents[0]),
+              'topics' : get_topic_names(analysis)}
     for document in documents:
         info = {}
         info['name'] = document.filename
         info['id'] = document.id
         info['fields'] = get_document_metadata(document)
+        if document.id < 10:
+            info['topics'] = get_document_topics(document, analysis)
         result['documents'][str(document.id)] = info
 
     metrics = analysis.documentmetrics.all() 
@@ -217,6 +222,23 @@ def all_document_metrics(request, dataset, analysis):
             result['documents'][str(doc_id)]['fields'][metricName] = fieldValue
         
     return JsonResponse(result)
+
+def get_document_topics(document, analysis):
+    result = {}
+    tokens = document.tokens.all()
+    count = 0
+    for token in tokens:
+        topics = token.topics.all()
+        if len(topics) > 0:
+            count += 1
+            topic = topics[0]
+            if topic.id in result:
+                result[topic.id] += 1
+            else:
+                result[topic.id] = 1
+    for key in result:
+        result[key] /= float(count)
+    return result
 
 def get_document_metadata(document):
     result = {}
@@ -232,7 +254,6 @@ def get_document_metadata_names(document):
     for value in metadata_values:
         metainfo = value.info_type
         result[metainfo.name] = value.type()
-
     return result
 
 def get_document_metric_names(analysis):
@@ -240,7 +261,13 @@ def get_document_metric_names(analysis):
     metrics = analysis.documentmetrics.all() 
     for metric in metrics:
         result.append(metric.name)
+    return result
 
+def get_topic_names(analysis):
+    result = {}
+    topics = analysis.topics.all()
+    for topic in topics:
+        result[topic.id] = (topic.names.all()[0].name)
     return result
 
 class AjaxDocument(object):

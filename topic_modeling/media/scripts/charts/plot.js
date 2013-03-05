@@ -222,7 +222,7 @@ var PlotInfo = Backbone.View.extend({
           div.html(doc.name)
             .style("left", (d3.event.pageX + 8) + "px")
             .style("top", (d3.event.pageY) + "px"); })
-        .on("mouseoff", function(doc) {
+        .on("mouseout", function(doc) {
           div.transition()
             .duration(200)
             .style("opacity", 0.0); });
