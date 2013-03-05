@@ -55,7 +55,7 @@
           </ul>
           <ul class="nav pull-right">
             <li>
-            <button name='unfreeze' type="button" class="btn btn-primary" data-toggle="button">
+            <button name='unfreeze' type="button" class="btn btn-primary active" data-toggle="button">
               Active
             </button>
             </li>
@@ -82,6 +82,10 @@
       <label>Link Threshhold</label>
       <div class="threshhold"></div>
     </div>
+    <div id="controls-circle-topics">
+      <label>Link Threshhold</label>
+      <div class="threshhold"></div>
+    </div>
     <div id="controls-plot-documents">
       <h3>Plot Controls</h3>
       <div id="plot-document-x-control" class="plot-document-controls"></div>
@@ -94,6 +98,7 @@
     <div class="topleft-label">Info</div>
     <div id="info-chords">
       <h3 class="topic-name">Click a Topic</h3>
+      <button class="btn btn-primary btn-small view-plot">View Document Plot</button>
       <table class="metrics table-striped">
         <thead>
           <th>Metric</th>
@@ -125,7 +130,7 @@
     </div>
     <div id="info-force-topics">
       <h3 class="topic-name">Click a Topic</h3>
-      <table class="metrics table-striped">
+      <table class="metrics table table-condensed table-striped">
         <thead>
           <th>Metric</th>
           <th>Value</th>
@@ -136,7 +141,7 @@
         </tbody>
       </table>
       <h3>Top Documents</h3>
-      <table class="documents table-striped">
+      <table class="documents table table-condensed table-striped">
         <thead>
           <th>Name</th>
           <th>Count</th>
@@ -145,7 +150,7 @@
         </tbody>
       </table>
       <h3>Top Words</h3>
-      <table class="words table-striped">
+      <table class="words table table-condensed table-striped">
         <thead>
           <th>Name</th>
           <th>Count</th>
@@ -168,7 +173,6 @@
 {% block endjs %}
 
 <script src="/scripts/libs/d3.v3.min.js"></script>
-<script src="/scripts/jquery-ui.js"></script>
 <script src="/scripts/libs/d3.layout.cloud.js"></script>
 <script>
 var URLS = {

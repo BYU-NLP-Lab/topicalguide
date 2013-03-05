@@ -4,13 +4,21 @@
 
 var ChordInfo = Backbone.View.extend({
   initialize: function () {
+    this.$('button.view-plot').click(_.bind(this.view_plot, this));
+    this.$el.hide();
   },
 
   clear: function () {
     this.$('tbody').empty();
   },
 
-  load_topic: function (info) {
+  view_plot: function () {
+    this.options.parent.main.nav('plot-documents', {'topic': this.current_tid});
+  },
+
+  load_topic: function (tid, info) {
+    this.$el.hide();
+    this.current_tid = tid;
     this.$('.topic-name').text(info.names[0]);
     var mtable = this.$('table.metrics tbody');
     mtable.empty();
@@ -26,9 +34,10 @@ var ChordInfo = Backbone.View.extend({
       $('<tr><td>' + word.type__type + '</td><td>' + word.count + '</td></tr>')
         .appendTo(wtable);
     });
+    this.$el.show();
   },
   show: function () {
-    this.$el.show();
+    // this.$el.show();
   },
   hide: function () {
     this.$el.hide();
@@ -268,7 +277,7 @@ var ChordViewer = MainView.add({
 
 
     g.on('click', function (g, i) {
-      that.info.load_topic(data.topics[i]);
+      that.info.load_topic(i, data.topics[i]);
     });
   }
 });

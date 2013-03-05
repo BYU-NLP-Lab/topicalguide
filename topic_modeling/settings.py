@@ -42,29 +42,15 @@ if not os.path.exists(os.path.join(BASE_DIR, 'import_tool/local_settings.py')):
     raise Exception("You need to set up your import_tool/local_settings.py")
 sys.path.append(BASE_DIR)
 try:
-    from import_tool.local_settings import DB_FILE
+    from import_tool.local_settings import DB_CONFIG, DBTYPE, SQLITE_CONFIG, MYSQL_CONFIG
 except ImportError as e:
     raise Exception("Error imporing import_tool/local_settings.py: %s" % e)
 
 MANAGERS = ADMINS
 
-DBTYPE = 'sqlite3'
-#DBTYPE = 'mysql'
-
-SQLITE_CONFIG = {
-    'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': DB_FILE
+DATABASES = {
+    'default': DB_CONFIG
 }
-
-MYSQL_CONFIG = {
-    'ENGINE': 'django.db.backends.mysql',
-    'USER': 'topicalguide',
-    'SERVER': 'localhost',
-    'PASSWORD': 'topicalguide',
-    'NAME': 'topicalguide_newimport'
-}
-
-DATABASES = {'default': SQLITE_CONFIG if DBTYPE=='sqlite3' else MYSQL_CONFIG}
 
 def database_type():
     return DBTYPE

@@ -41,15 +41,19 @@
 #  Allow specification of multiple num_topics
 #
 
-if __name__ == "__main__":
-    raise Exception("This file is only meant to be run by doit. "
-                    "use ./run_import.py to run the backend import")
-
 import codecs
 import datetime
 import hashlib
 import os
 import sys
+
+from topic_modeling.tools import setup_logging, logging
+setup_logging()
+logger = logging.getLogger('root')
+
+if __name__ == "__main__":
+    logger.warn("This file is only meant to be run by doit. "
+                 "use ./run_import.py to run the backend import")
 
 from collections import defaultdict
 from subprocess import Popen, PIPE
@@ -81,9 +85,6 @@ from topic_modeling.visualize.models import PairwiseTopicMetric
 from topic_modeling.visualize.models import DocumentMetric
 from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import TopicNameScheme
-
-from topic_modeling.tools import setup_logging
-setup_logging()
 
 try:
     from import_tool.local_settings import LOCAL_DIR, build
@@ -869,6 +870,7 @@ if 'task_compile_java' not in locals():
         clean = ['rm -rf ' + c['java_bin']]
         return {'actions':actions, 'result_dep':result_deps, 'clean':clean}
 
+'''
 if 'task_graphs' not in locals():
     def task_graphs():
         classpath = '{0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/{2}'.format(c['java_bin'], c['java_base'], c['db_jar'])
@@ -894,6 +896,7 @@ if 'task_graphs' not in locals():
             task['name'] = ns.scheme_name()
             task['uptodate'] = [utd]
             yield task
+'''
 
 #
 #def task_reset_db():
