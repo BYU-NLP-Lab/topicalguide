@@ -2,6 +2,23 @@
  * Part of Topical Guide (c) BYU 2013
  */
 
+function url_args(args) {
+  var items = args.split('&');
+  var hash = {};
+  for (var i=0; i<items.length; i++) {
+    hash[items[i].split('=')[0]] = unescape(items[i].split('=').slice(1).join('='));
+  }
+  return hash;
+}
+
+function url_deargs(options) {
+  var items = [];
+  _.forOwn(options, function(value, key) {
+    items.push(key + '=' + escape(value));
+  });
+  return items.join('&');
+}
+
 /**
  * Make a select thing .. where items:
  *  [name, title, fn]
@@ -85,15 +102,30 @@ var MainView = Backbone.View.extend({
     $(window).on('hashchange', _.bind(this.follow_hash, this));
   },
 
+  /*
+   * The hashes we use for navigation look like
+   * page-name:arg1=val1&arg2=val2&...
+   */
   follow_hash: function () {
-    var navto = document.location.hash.slice(1);
-    if (this.views[navto] && navto !== this.showing) {
-      this.vlist.set_selected(navto);
+    var parts = document.location.hash.slice(1).split(':');
+    var options = {};
+    if (parts.length) {
+      var navto = parts[0];
+      var args = parts.slice(1).join(':');
+      options = url_args(args);
+      
+      if (this.views[navto] && navto !== this.showing) {
+        this.vlist.set_selected(navto);
+      }
     } else {
       document.location.hash = '#' + this.showing;
       navto = this.showing;
     }
-    this.view(navto);
+    this.view(navto, {}, options);
+  },
+
+  nav: function (page, options) {
+    document.location.hash = '#' + page + ':' + url_deargs(options);
   },
 
   fetch_data: function (url, callback) {
@@ -183,7 +215,7 @@ var MainView = Backbone.View.extend({
     $('#disable-main').hide();
   },
 
-  view: function (name, options) {
+  view: function (name, options, sub_options) {
     if (this.loading) return false;
     options = options || {};
     if (options.reload || options.refresh) {
@@ -203,7 +235,7 @@ var MainView = Backbone.View.extend({
       if (options.reload || options.refresh) {
         that.enable();
       } else {
-        that.views[name].show();
+        that.views[name].show(sub_options);
       }
       that.stop_loading()
     };
