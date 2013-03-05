@@ -14,3 +14,30 @@ build = "state_of_the_union"
 #build = "kcna/kcna"
 #build = "congressional_record"
 
+DBTYPE = 'sqlite3'
+
+DB_OPTIONS = {
+    'sqlite3': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': DB_FILE
+    },
+    'mysql': {
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': '',
+        'SERVER': 'localhost',
+        'PASSWORD': '',
+        'NAME': ''
+    },
+    'postgres': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': '',                      
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': ''
+    }
+}
+DB_CONFIG = DB_OPTIONS[DBTYPE]
+SQLITE_CONFIG = DB_OPTIONS['sqlite3']
+MYSQL_CONFIG = DB_OPTIONS['mysql']
+
+
