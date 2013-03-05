@@ -70,6 +70,23 @@ Start up the web server with the following command::
 
 and then open a web browser and navigate to http://localhost:8000/.
 
+POSTGRESQL
+==========
+
+It can be tons faster to use postgres. Because it took me a bit of hunting to
+get it to behave, here's how to do it on Fedora::
+
+   sudo yum install postgres*
+   sudo service postgres initdb
+   sudo service postgres start
+   sudo -u postgres createuser --superuser $USER
+   sudo -u postgres psql
+   ## here type `\password $USER` and then type in a new password
+   ## then type `\q` to exit 
+   createdb topicalguide
+   
+   ## based off of https://help.ubuntu.com/community/PostgreSQL
+
 Contributing
 ============
 

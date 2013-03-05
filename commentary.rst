@@ -1,3 +1,15 @@
+
+Performance:
+    - postgresql
+        - 1:49 for analysis import
+        -  :13 for dataset import
+        -  :14 document pairwise topic analysis
+        - 50 SECONDS for chord diagram reload
+    - mysql
+        -  :16 for dataset import
+        - 2:10 for analysis import
+
+
 Backend Running Sequence:
 
 -- extract_data

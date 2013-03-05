@@ -13,7 +13,7 @@ from topic_modeling.visualize.models import DatasetMetaInfo,\
 from topic_modeling.tools import TimeLongThing
 import logging
 
-logger = logging.getLogger('console')
+logger = logging.getLogger('root')
 
 datetime_format = "%Y-%m-%dT%H:%M:%S"
 

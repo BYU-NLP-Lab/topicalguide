@@ -115,12 +115,12 @@ var PlotInfo = Backbone.View.extend({
  *             extending the "defaults" dict *   info:     the info object *   menu:     the menu object *   controls: the controls object * * **/ var PlotViewer = MainView.add(VisualizationView, { name: 'plot-documents', title: '2D Plots', menu_class: PlotMenu, info_class: PlotInfo, controls_class: PlotControls, /** any defaults that you want. In the class, this.options will be populated * with these defaults + an options dictionary passed in when the object is
   * initialized **/
   defaults: {
-    xRange : d3.scale.linear().range([60, 720 - 20]), // x range function, left and right padding
-    yRange : d3.scale.linear().range([720 - 60, 30]), // y range function
+    xRange : d3.scale.linear().range([60, 630 - 20]), // x range function, left and right padding
+    yRange : d3.scale.linear().range([630 - 60, 30]), // y range function
     rRange : d3.scale.linear().range([5, 20]), // radius range function - ensures the radius is between 5 and 20
     drawingData : null,
-    width: 720,
-    height: 720,
+    width: 630,
+    height: 630,
     margins : {top: 20, right: 20, bottom: 20, left: 60}, // margins around the graph
     colors : [
       "#000000",

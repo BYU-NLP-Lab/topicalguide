@@ -24,7 +24,7 @@ from math import log
 from topic_modeling.visualize.models import AnalysisMetric, AnalysisMetricValue
 
 import logging
-logger = logging.getLogger('console')
+logger = logging.getLogger('root')
 
 def add_metric(analysis):
     metric, _ = AnalysisMetric.objects.get_or_create(name="Topic Entropy")

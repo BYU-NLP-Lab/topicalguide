@@ -36,7 +36,7 @@ from datetime import datetime
 from topic_modeling import settings
 import logging
 
-logger = logging.getLogger('console')
+logger = logging.getLogger('root')
 
 def check_dataset(name):
     try:
@@ -47,7 +47,7 @@ def check_dataset(name):
         return False
     for document in dataset.documents.all():
         if not document.tokens.count():
-            logging.warn('Dataset present, but not all documents are populated: %s %d' % (document.filename, document.pk))
+            logger.warn('Dataset present, but not all documents are populated: %s %d' % (document.filename, document.pk))
             return False
 
 def import_dataset(name, readable_name, description, metadata_filenames,

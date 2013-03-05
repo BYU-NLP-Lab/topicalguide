@@ -1,4 +1,3 @@
-
 /**
  * Create a bootstrap button group
  *
@@ -107,7 +106,7 @@ var CircleControls = Backbone.View.extend({
 /**
  * This is a Circle visualization
  */
-var CircleViewer = MainView.add(ZoomableView, {
+var CircleViewer = MainView.add({
   name: 'circle-topics',
   title: 'Circle Diagram',
   menu_class: CircleMenu,
@@ -148,81 +147,118 @@ var CircleViewer = MainView.add(ZoomableView, {
 	
   initialize_circles: function () {
 	var that = this;
+	var nodes = this.circle.nodes(this.create_node_hierarchy());
 	
-	var nodes = this.circle.nodes(this.create_node_hierarchy(0));
-
-    this.maing.select('*').remove();
-	this.maing.append('g').classed('cnodes', true);
-
-	this.node = this.maing.select('g.cnodes').selectAll('g.cnode').data(nodes);
+    this.maing.selectAll('*').remove();
+	this.maing.append('g').classed('c_nodes', true);
+	
+	this.node = this.maing.select('g.c_nodes').selectAll('g.c_node').data(nodes);
 
 	this.node.enter().append("g")
-      	.attr("class", function(d) { return d.children ? "root cnode" : "leaf cnode"; })
-		.attr("id", function(d) { return "cnode" + d.id; })
+      	.attr("class", function(d) { return d.children ? "c_root c_node" : "c_leaf c_node"; })
+		.attr("id", function(d) { return d.children ? "c_node_root" : "c_node_" + d.id; })
       	.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
 		.attr('pointer-events', 'all')
-		.on('click', function(d) { that.change_circles(d); });
-		//.on('mouseover', function(d) { that.add_word_cloud(d); });
-
-	this.node.append("title")
-		.text(function(d) { return d.name; });
+		.on('mouseover', function(d) { 
+			if (!d.children) {
+				 d3.select("#c_text_" + d.id).transition()
+				.attr('transform', 'translate(' + d.x + ',' + (d.y - 3) + ') scale(3)');
+			}
+		})
+		.on('mouseout', function(d) {
+			if (!d.children) {
+				 d3.select("#c_text_" + d.id).transition()
+				.attr('transform', 'translate(' + d.x + ',' + (d.y - 3) + ') scale(1)');
+			}
+		})
+		.on('click', function(d) {
+			var root = d3.select("#c_node_root");
+			var x = root.datum().x;
+			var y = root.datum().y;
+			var scale = (root.datum().r - 10) / d.r;
+			if (!d.children) {
+				that.display_word_cloud(d);
+			}
+		});
 
  	this.node.append('circle')
 		.attr('r', function(d) { return d.r; })
-		.attr('id', function(d) { return "circle" + d.id; });
+		.attr('id', function(d) { return "c_circle_" + d.id; });
 
- 	this.node.filter(function(d) { return !d.children; }).append("text")
-		.attr("dy", ".3em")
-		.style("text-anchor", "middle")
-		.text(function(d) { return d.name.substring(0, d.r / 3); })
-		.attr('id', function(d) { return "text" + d.id; });
+	this.create_texts(nodes);
   },
 
-  change_root: function (d, i) {
-	if (d === this.node) {
-		return;
-	}
-	
-	var nodes = this.circle.nodes(this.create_node_hierarchy(this.data, i));
+  display_word_cloud: function(d) {
 	var that = this;
-
-	this.create_circles(nodes);
-  },
-
-  //TODO: Create transitions via the enter and exit sets
-  change_circles: function (d) {
-	var that = this;
-	var nodes = this.circle.nodes(this.create_node_hierarchy(d.id));
-
-    this.maing.select('*').remove();
-	this.maing.append('g').classed('cnodes', true);
+	var root = d3.select("#c_node_root");
+	var x = root.datum().x;
+	var y = root.datum().y;
+	var scale = (root.datum().r - 10) / d.r;
+	var wordCloudLayer = this.maing.append('g').classed('word_cloud_layer', true);
 	
-	this.node = this.maing.select('g.cnodes').selectAll('g.cnode').data(nodes);
+	wordCloudLayer.append("g")
+      	.attr("class", "cloned c_leaf c_node")
+		.attr("id", "cloned-c_node_" + d.id)
+      	.attr("transform", "translate(" + d.x + "," + d.y + ")")
+		.on("click", function() {
+			d3.select("#cloned-c_node_" + d.id).transition()
+				.attr("transform", "translate(" + d.x + "," + d.y + ") scale(" + 1 / scale + ")");
 
-	this.node.enter().append("g")
-      	.attr("class", function(d) { return d.children ? "root cnode" : "leaf cnode"; })
-		.attr("id", function(d) { return "cnode" + d.id; })
-      	.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-		.attr('pointer-events', 'all')
-		.on('click', function(d) { that.change_circles(d); });
-		//.on('mouseover', function(d) { that.add_word_cloud(d); });
+			d3.select("#cloned-c_circle_" + d.id).transition()
+				.style("fill", "#3BC600")
+				.each("end", function() { that.maing.selectAll("g.word_cloud_layer").remove(); });
+		});
 
-	this.node.append("title")
-		.text(function(d) { return d.name; });
+	wordCloudLayer.select("#cloned-c_node_" + d.id).append("circle")
+		.attr("r", d.r)
+		.attr("id", "cloned-c_circle_" + d.id);
 
- 	this.node.append('circle')
-		.attr('r', function(d) { return d.r; })
-		.attr('id', function(d) { return "circle" + d.id; });
+	d3.select("#cloned-c_node_" + d.id).transition()
+		.attr("transform", "translate(" + x + "," + y + ") scale(" + scale + ")");
 
- 	this.node.filter(function(d) { return !d.children; }).append("text")
-		.attr("dy", ".3em")
-		.style("text-anchor", "middle")
-		.text(function(d) { return d.name.substring(0, d.r / 3); })
-		.attr('id', function(d) { return "text" + d.id; });
+	d3.select("#cloned-c_circle_" + d.id).transition()
+		.style("fill", "#0064cd")
+		.each("end", function() { that.create_word_cloud(d); });
   },
 
-  //TODO: Make this work, and add a remove_word_cloud() method
-  add_word_cloud: function(d) {
+  create_texts: function (nodes) {
+	var scaleText = d3.scale.linear().domain([1, 100]).range([3, 10])
+	var textSize = 13 - scaleText(nodes.length)
+
+    this.texts = this.maing.append('g')
+      .classed('all-texts', true).selectAll('g.text')
+        .data(nodes.filter(function(d) { return !d.children; }))
+      .enter().append('g')
+        .attr('pointer-events', 'none')
+        .attr('class', 'c_text');
+    
+	this.texts.append('text')
+        .attr('id', function (d) { return 'c_text_' + d.id; })
+        .each(function (d, index) {
+          var node = d3.select(this);
+          var parts = d.name.split(' ');
+          for (var i=0; i<parts.length; i++) {
+            node.append('tspan')
+              .attr('class', 'back')
+              .text(parts[i])
+			  .style("font-size", textSize + "px")
+              .attr('y', i * textSize)
+              .attr('x', 0);
+          }
+          for (i=0; i<parts.length; i++) {
+            node.append('tspan')
+              .text(parts[i])
+			  .style("font-size", textSize + "px")
+              .attr('y', i * textSize)
+              .attr('x', 0);
+          }
+        })
+		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  },
+
+  create_word_cloud: function(d) {
+	var root = d3.select("#c_node_root");
+	var wordCloudLayer = this.maing.append('g').classed('word_cloud_layer', true);
 
 	var words = d.words;
 	if (typeof words === "undefined") {
@@ -230,18 +266,20 @@ var CircleViewer = MainView.add(ZoomableView, {
 	}
 	
 	var fill = d3.scale.category20();
-  	d3.layout.cloud().size([d.r, d.r])
+  	d3.layout.cloud().size([root.datum().r - 10, root.datum().r - 10])
       .words(words)
-      .rotate(function() { return ~~(Math.random() * 2) * 90; })
+	  .timeInterval(5000)
+      .rotate(function() { return 0;/*~~(Math.random() * 5) * 30;*/ })
       .font("Impact")
       .fontSize(function(d) { return d.size; })
       .on("end", draw)
       .start();
 
   	function draw(words) {
-		d3.select("#cnode" + d.id).append("g")
-			.attr("width", d.r)
-			.attr("height", d.r)
+		wordCloudLayer.append("g")
+			.attr("width", root.datum().r - 10)
+			.attr("height", root.datum().r - 10)
+			.attr("transform", "translate(" + [root.datum().x, root.datum().y] + ") scale(2)")
 		  .selectAll("text")
 			.data(words)
 		  .enter().append("text")
@@ -256,23 +294,28 @@ var CircleViewer = MainView.add(ZoomableView, {
  	 }
   },
 
-  create_node_hierarchy: function(root) {
+  set_threshhold: function (threshhold) {
+    this.options.threshhold = threshhold;
+    this.reload();
+  },
+
+  create_node_hierarchy: function() {
 	var that = this;
-	var sizes = this.data.matrix[root].filter(function(d) { return d > 0; });
+	var sizes = this.data.topics.map(function(d) { return d.metrics["Number of tokens"]; });
 	var scaleSize = d3.scale.linear().domain([Math.min.apply(null, sizes), Math.max.apply(null, sizes)])
 
 	return {
-		name: this.data.topics[root].names[0],
-		children: this.data.matrix[root].map(
+		name: "Topics",
+		children: this.data.topics.map(
 			function(d, i) {
-				var words = that.data.topics[i].words;
+				var words = d.words;
 				var wordCounts = words.map(function(d) { return d.count; });
-				var scaleWordCount = d3.scale.log().domain([Math.min.apply(null, wordCounts), Math.max.apply(null, wordCounts)]).range([10, 100]);
+				var scaleWordCount = d3.scale.log().domain([Math.min.apply(null, wordCounts), Math.max.apply(null, wordCounts)]).range([15, 50]);
 				return {
-					name: that.data.topics[i].names[0],
-					size: scaleSize(d),
+					name: d.names[0],
+					size: scaleSize(d.metrics["Number of tokens"]),
 					id: i,
-					words: words.map(
+					words: d.words.map(
 						function(d, i) {
 							return {
 								text: d.type__type,
@@ -282,7 +325,7 @@ var CircleViewer = MainView.add(ZoomableView, {
 					)
 				};
 			}
-		).filter(function(d, i) { return (i != root && d.size > 0); })
+		).filter(function(d) { return d.size > that.options.threshhold[0] && d.size < that.options.threshhold[1]; })
 	};
   }
 });
@@ -325,7 +368,4 @@ data
 				0: Object
 					count: int
 					type__type: str
-				...
-		...
 */
-
