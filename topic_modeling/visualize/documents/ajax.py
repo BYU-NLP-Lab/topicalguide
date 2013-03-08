@@ -32,6 +32,7 @@ from topic_modeling.visualize.documents.filters import possible_document_filters
 from topic_modeling.visualize.models import Analysis
 from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
+from django.views.decorators.cache import cache_page
 
 import simplejson
 
@@ -174,7 +175,7 @@ def update_document_metric_filter(request, dataset, analysis, document, number,
 
 ###Visualizaion###
 
-@cache_page(60 * 60 * 12)
+#@cache_page(60 * 60 * 12)
 def all_documents_topics_count(request, dataset, analysis):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     from django.db import connection
@@ -185,6 +186,22 @@ def all_documents_topics_count(request, dataset, analysis):
             = %d group by wtt.topic_id, wt.document_id'''%(analysis.id,))
     rows = c.fetchall()
     # document_id, topic_id, count
+    result = {}
+    for row in rows:
+        doc_id = row[0]
+        topic_id = row[1]
+        count = row[2]
+        if not doc_id in result.keys():
+            result[doc_id] = {}
+        result[doc_id][topic_id] = count
+    for doc_id in result:
+        num_tokens = 0
+        for topic_id in result[doc_id]:
+            num_tokens += result[doc_id][topic_id]
+        for topic_id in result[doc_id]:
+            result[doc_id][topic_id] /= float(num_tokens)
+    return result
+
 
 #cache the data for 12 hours
 #@cache_page(60 * 60 * 12)
@@ -211,12 +228,17 @@ def all_document_metrics(request, dataset, analysis):
     '''
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     documents = analysis.dataset.documents.all()
-    result = {'documents' : {}, 'metrics' : get_document_metric_names(analysis), 'metadata' : get_document_metadata_names(documents[0]) }
+    result = {'documents' : {},
+              'metrics' : get_document_metric_names(analysis),
+              'metadata' : get_document_metadata_names(documents[0]),
+              'topics' : get_topic_names(analysis)}
+    document_topics = all_documents_topics_count(request, dataset, analysis.name)
     for document in documents:
         info = {}
         info['name'] = document.filename
         info['id'] = document.id
         info['fields'] = get_document_metadata(document)
+        info['fields'].update(document_topics[document.id])
         result['documents'][str(document.id)] = info
 
     metrics = analysis.documentmetrics.all() 
@@ -244,7 +266,6 @@ def get_document_metadata_names(document):
     for value in metadata_values:
         metainfo = value.info_type
         result[metainfo.name] = value.type()
-
     return result
 
 def get_document_metric_names(analysis):
@@ -252,7 +273,13 @@ def get_document_metric_names(analysis):
     metrics = analysis.documentmetrics.all() 
     for metric in metrics:
         result.append(metric.name)
+    return result
 
+def get_topic_names(analysis):
+    result = {}
+    topics = analysis.topics.all()
+    for topic in topics:
+        result[topic.id] = (topic.names.all()[0].name)
     return result
 
 class AjaxDocument(object):
