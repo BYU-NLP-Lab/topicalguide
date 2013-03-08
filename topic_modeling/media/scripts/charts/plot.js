@@ -181,7 +181,6 @@ var PlotInfo = Backbone.View.extend({
     width: 630,
     height: 630,
     margins : {top: 20, right: 20, bottom: 20, left: 60}, // margins around the graph
-    //colors array is replaced by the d3 color scheme
     colors : [ "#000000", "#FFFF00", "#800080", "#FFA500", "#ADD8E6", "#CD0000", "#F5DEB3", "#A9A9A9", "#228B22",
       "#FF00FF", "#0000CD", "#F4A460", "#EE82EE", "#FF4500", "#191970", "#ADFF2F", "#A52A2A", "#808000", "#DB7093",
       "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ],
@@ -209,10 +208,31 @@ var PlotInfo = Backbone.View.extend({
     .attr("transform", "translate(0," + (this.options.height - this.options.margins.bottom - 20) + ")") // move into position
     .call(this.xAxis); // add to the visualisation
 
+  this.xLabel = this.svg.append("text")
+                        .attr("class", "x label")
+                        .attr("text-anchor", "end")
+                        .attr("x", this.options.width - 10)
+                        .attr("y", this.options.height - 5)
+                        .text("X Label");
+
   // add in the y axis
   this.maing.append("svg:g") // container element
     .attr("class", "y axis") // so we can style it with CSS
     .call(this.yAxis); // add to the visualisation
+
+  this.yLabel = this.svg.append("text")
+                        .attr("class", "y label")
+                        .attr("text-anchor", "start")
+                        .attr("x", 5)
+                        .attr("y", 25)
+                        .text("Y Label");
+
+  this.rLabel = this.svg.append("text")
+                        .attr("class", "r label")
+                        .attr("text-anchor", "start")
+                        .attr("x", 5)
+                        .attr("y", this.options.height - 5)
+                        .text("Circle Radius: ");
 
   this.tooltip = d3.select("body").append("div")
     .attr("class", "tooltip")
@@ -296,7 +316,6 @@ var PlotInfo = Backbone.View.extend({
     tooltip = this.tooltip,
     viewRef = this;
 
-    //TODO set up the click handler for the circles to remove themselves
 
     //sets up the circles
     documents.enter()
@@ -342,6 +361,7 @@ var PlotInfo = Backbone.View.extend({
       d3.max(this.drawingData, function (doc) { return +doc.fields[axes.rAxis]; })
     ]);
 
+    this.setAxisLabels(axes);
 	// transition function for the axes
     var t = this.svg.transition().duration(1500).ease("exp-in-out");
     t.select(".x.axis").call(this.xAxis);
@@ -364,6 +384,32 @@ var PlotInfo = Backbone.View.extend({
     this.firstTime = false;
   },
 
+  setAxisLabels: function(axes) {
+    var x_label = "";
+    if($.isNumeric(axes.xAxis))
+      x_label = "Topic: " + this.topics[axes.xAxis];
+    else
+      x_label = axes.xAxis;
+    x_label = "X: " + x_label;
+    this.xLabel.text(x_label);
+
+    var y_label = "";
+    if($.isNumeric(axes.yAxis))
+      y_label = "Topic: " + this.topics[axes.yAxis];
+    else
+      y_label = axes.yAxis;
+    y_label = "Y: " + y_label;
+    this.yLabel.text(y_label);
+
+    var r_label = "";
+    if($.isNumeric(axes.rAxis))
+      r_label = "Topic: " + this.topics[axes.rAxis];
+    else
+      r_label = axes.rAxis;
+    r_label = "Circle Radius: " + r_label;
+    this.rLabel.text(r_label);
+  },
+
   /** populate everything! data is the JSON response from your url(). For
    * information on the return values of specific urls, look at the docs for
    * the function (probably in topic_modeling/visualize/topics/ajax.py)
@@ -375,20 +421,20 @@ var PlotInfo = Backbone.View.extend({
     console.log(server_data);
     this.firstTime = true;
     var documents = server_data.documents;
-    var metrics = server_data.metrics;
-    var metadata = server_data.metadata;
-    var topics = server_data.topics;
+    this.metrics = server_data.metrics;
+    this.metadata = server_data.metadata;
+    this.topics = server_data.topics;
     var cont_fields = Array();
     var nom_fields = Array();
-    cont_fields = cont_fields.concat(metrics);
-    for(var field in metadata) {
-      if(metadata[field] == 'int' || metadata[field] == 'float')
+    cont_fields = cont_fields.concat(this.metrics);
+    for(var field in this.metadata) {
+      if(this.metadata[field] == 'int' || this.metadata[field] == 'float')
         cont_fields.push(field);
       else
         nom_fields.push(field);
     }
 
-    this.setUpControls(cont_fields, nom_fields, topics);
+    this.setUpControls(cont_fields, nom_fields, this.topics);
 
     this.data = [];
     var k = 0;
