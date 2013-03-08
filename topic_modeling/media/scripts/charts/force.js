@@ -21,6 +21,10 @@ function translate_node(d) {
   return 'translate(' + d.x + ',' + d.y + ')'; 
 }
 
+function twofloat(n) {
+  return parseInt(n * 100)/100.0;
+}
+
 /**
  * Calculate the max and min values of a matrix.
  *
@@ -105,16 +109,22 @@ var ForceMenu = Backbone.View.extend({
 
 var ForceInfo = Backbone.View.extend({
   initialize: function () {
+    this.$el.hide();
   },
 
   clear: function () {
     this.$('tbody').empty();
+    this.$el.hide();
   },
 
-  load_topic: function (info) {
+  load_topic: function (info, metrics) {
+    this.$el.hide();
     this.$('.topic-name').text(info.names[0]);
     var mtable = this.$('table.metrics tbody');
     mtable.empty();
+    _.forOwn(info.metrics, function (value, key) {
+        mtable.append('<tr><td>' + key + '</td><td>' + twofloat(value) + '</td><td>' + twofloat(metrics[key].min) + '</td><td>' + twofloat(metrics[key].max) + '</td></tr>');
+    });
     var dtable = this.$('table.documents tbody');
     dtable.empty();
     _.each(info.documents, function (doc, i) {
@@ -127,9 +137,10 @@ var ForceInfo = Backbone.View.extend({
       $('<tr><td>' + word.type__type + '</td><td>' + word.count + '</td></tr>')
         .appendTo(wtable);
     });
+    this.$el.show();
   },
   show: function () {
-    this.$el.show();
+    // this.$el.show();
   },
   hide: function () {
     this.$el.hide();
@@ -327,7 +338,7 @@ var ForceViewer = MainView.add(ZoomableView, {
 
   /* click callback for the nodes */
   node_click: function (data, node, topic) {
-    this.info.load_topic(topic);
+    this.info.load_topic(topic, this.data.metrics);
     var s = this.options.full_scale;
     this.zoom.translate([-s*data.x + this.options.width/2,
                         -s*data.y + this.options.height/2]).scale(s);
