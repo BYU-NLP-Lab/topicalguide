@@ -154,9 +154,34 @@ var PlotInfo = Backbone.View.extend({
     this.$el.hide();
   },
 
+  setParent: function (par) {
+    this.parent = par;
+  },
+
   populate: function(doc) {
     this.docDisplay.html('</br><h4>' + doc.name + '</h4>');
+    var topTopics = this.parent.getTopTopics(doc);
+    console.log(topTopics);
     //TODO Correctly populate the info box
+
+    this.docDisplay.append('<h5>Metrics</h5>');
+    for(var index in this.parent.metrics) {
+      var fieldName = this.parent.metrics[index];
+      var fieldValue = doc.fields[fieldName];
+      this.docDisplay.append(fieldName + ': ' + fieldValue.toFixed(3) + '</br>');
+    }
+
+    this.docDisplay.append('<h5>MetaData</h5>');
+    for(var fieldName in this.parent.metadata) {
+      var fieldValue = doc.fields[fieldName];
+      this.docDisplay.append(fieldName + ': ' + fieldValue + '</br>');
+    }
+
+    this.docDisplay.append('<h5>Top 10 Topics</h5>');
+    for(var index in topTopics) {
+      var topic = topTopics[index];
+      this.docDisplay.append(topic.name + ': ' + topic.val.toFixed(3) + '</br>');
+    }
   }
 });
 
@@ -224,7 +249,7 @@ var PlotInfo = Backbone.View.extend({
                         .attr("class", "y label")
                         .attr("text-anchor", "start")
                         .attr("x", 5)
-                        .attr("y", 25)
+                        .attr("y", 20)
                         .text("Y Label");
 
   this.rLabel = this.svg.append("text")
@@ -240,6 +265,7 @@ var PlotInfo = Backbone.View.extend({
 
   this.lastAxes = null;
   this.removingDocs = false;
+  this.info.setParent(this);
 
   },
 
@@ -477,6 +503,37 @@ var PlotInfo = Backbone.View.extend({
 
   },
 
+  getTopTopics: function(doc) {
+    var topics = Array();
+    for(var index in doc.fields) {
+      if($.isNumeric(index))
+        topics.push(index);
+    }
+
+    topics.sort(
+      function (topic_1, topic_2) {
+        if(topic_1 == topic_2) {
+          return 0;
+        }
+        else {
+          return doc.fields[topic_2] - doc.fields[topic_1];
+        }
+      });
+
+    var topicResult = Array();
+    for(var k = 0; k < 10; k++) {
+      var topicNum = topics[k];
+      var topicName = this.topics[topicNum];
+      var topicValue = doc.fields[topicNum];
+      var topic = new Object();
+      topic.num = topicNum;
+      topic.name = topicName;
+      topic.val = topicValue;
+      topicResult.push(topic);
+    }
+
+    return topicResult;
+  },
 
   redraw: function() {
 
