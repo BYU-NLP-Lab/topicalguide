@@ -1,0 +1,40 @@
+
+g.text {
+  pointer-events: none; }
+
+  g.text text {
+    font-family: sans;
+    fill: white;
+    font-weight: bold;
+    font-size: 4px;
+    text-anchor: middle; }
+
+  g.text text tspan.back {
+    stroke: #2C2B1C;
+    stroke-width: 1; }
+
+g.node circle {
+  /* fill: #3BC600; */
+  fill: white;
+  cursor: pointer;
+  /* stroke:black; */
+  stroke: #8cf; }
+
+  g.node.highlighted-main circle {
+    fill: #0064cd !important;
+    stroke: #0064cd;
+    stroke-width: 3px; }
+
+  g.node.highlighted circle {
+    stroke: #0064cd;
+    stroke-width: 2px; }
+
+line.link {
+    stroke: #2C2B1C;
+    /* stroke-opacity: .6; */
+    stroke-opacity: .1; }
+
+  line.link.highlighted {
+    stroke-opacity: 1;
+    stroke: black; }
+
