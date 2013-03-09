@@ -185,7 +185,7 @@ var ForceViewer = MainView.add(ZoomableView, {
   defaults: {
     circle_r: 20,
     circle_min: 2,
-    charge: -50,
+    charge: -30,
     link_distance: 50,
     max_link_strength: .1,
     line_width: 3,
