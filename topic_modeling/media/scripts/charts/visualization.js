@@ -109,7 +109,7 @@ var MainView = Backbone.View.extend({
   follow_hash: function () {
     var parts = document.location.hash.slice(1).split(':');
     var options = {};
-    if (parts.length) {
+    if (parts.length && parts[0].length) {
       var navto = parts[0];
       var args = parts.slice(1).join(':');
       options = url_args(args);
