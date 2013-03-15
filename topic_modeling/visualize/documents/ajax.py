@@ -223,16 +223,17 @@ def all_document_metrics(request, dataset, analysis):
         metrics: [<metric name>,],
         metadata: [<metadata name>,]
     }
-    TODO: This needs to be able to handle not getting all the documents
-    This is currently broken
     '''
+    #TODO: This needs to be able to handle not getting all the documents
+    #using filters
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     documents = analysis.dataset.documents.all()
     result = {'documents' : {},
               'metrics' : get_document_metric_names(analysis),
               'metadata' : get_document_metadata_names(documents[0]),
               'topics' : get_topic_names(analysis)}
-    document_topics = all_documents_topics_count(request, dataset, analysis.name)
+    document_topics = all_documents_topics_count(
+                                        request, dataset, analysis.name)
     for document in documents:
         info = {}
         info['name'] = document.filename
@@ -247,8 +248,9 @@ def all_document_metrics(request, dataset, analysis):
         metricName = metric.name
         for metricValue in metricValues:
             doc_id = metricValue.document.id
-            fieldValue = metricValue.value
-            result['documents'][str(doc_id)]['fields'][metricName] = fieldValue
+            field= metricValue.value
+            if str(doc_id) in result['documents']:
+                result['documents'][str(doc_id)]['fields'][metricName] = field
         
     return JsonResponse(result)
 
