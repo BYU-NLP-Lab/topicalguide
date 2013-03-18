@@ -60,7 +60,7 @@ var PlotControls = Backbone.View.extend({
     control.append('<h4>' + title + '</h4>');
     var select = '<select name="' + title + '">';
 
-    if(title == 'Radius') {
+    if(title == 'Radius' || options.length === 0) {
       select += '<option value="uniform">Uniform</option>'; 
     }
 
@@ -319,7 +319,7 @@ var PlotInfo = Backbone.View.extend({
   isDefined: function(doc, axes) {
       return doc.fields[axes.xAxis] && doc.fields[axes.yAxis] &&
          (axes.rAxis == 'uniform' || doc.fields[axes.rAxis]) &&
-         doc.fields[axes.cAxis] && doc.included;
+         (axes.cAxis == 'uniform' || doc.fields[axes.cAxis]) && doc.included;
   },
 
   //this is an optimization that can be turned off
@@ -516,6 +516,9 @@ var PlotInfo = Backbone.View.extend({
     }
     //console.log(this.data);
     this.setUpNomMap(this.data, nom_fields);
+    if (!nom_fields.length) {
+        this.nomMaps['uniform'] = 0;
+    }
     //console.log(this.nomMaps);
     this.update(true);
   },

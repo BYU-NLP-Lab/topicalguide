@@ -131,13 +131,12 @@ def _load_documents(dataset, token_regex):
 
     timer = TimeLongThing(len(all_files), .01, .1)
     for i, (dirpath, filename, full_path) in enumerate(all_files):
-        full_filename = os.path.join(dirpath, filename)
         doc, _ = Document.objects.get_or_create(dataset=dataset,
                 filename=filename,
-                full_path=full_filename)
+                full_path=full_path)
         timer.inc()
 
-        with open(full_filename) as r:
+        with open(full_path) as r:
             content = r.read()
 
         tokens = []
@@ -146,7 +145,7 @@ def _load_documents(dataset, token_regex):
             token_lc = token.lower()
             if token_lc not in word_types:
                 raise Exception('New word type found: %s in document %s %d' % (token_lc,
-                    full_filename, doc.pk))
+                    full_path, doc.pk))
             word_type = word_types[token_lc]
             tokens.append(WordToken(type=word_type, document=doc,
                     token_index=position, start=match.start()))
@@ -155,7 +154,7 @@ def _load_documents(dataset, token_regex):
         '''
         if not doc.tokens.all().count():
             raise Exception('Failed to import word tokens for %s %d'
-                    % (full_filename, doc.pk))
+                    % (full_path, doc.pk))
         '''
 
 def _types(files_dir, token_regex):
