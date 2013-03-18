@@ -22,6 +22,9 @@ def import_dataset_metadata(dataset, dataset_metadata):
     sys.stdout.flush()
     start = datetime.now()
 
+    if dataset.name not in dataset_metadata:
+        raise RuntimeError("Invalid metadata file {}: doesn't comtain dataset {}".format(dataset_metadata.filename, dataset.name))
+
     for attribute, value in dataset_metadata[dataset.name].items():
         mi,__ = DatasetMetaInfo.objects.get_or_create(name=attribute)
         miv, ___ = DatasetMetaInfoValue.objects.get_or_create(info_type=mi, dataset=dataset)
@@ -35,7 +38,11 @@ def import_document_metadata(dataset, document_metadata):
     sys.stdout.flush()
     start = datetime.now()
 
-    for filename, metadata in document_metadata.items():
+    items = len(document_metadata)
+    timer = TimeLongThing(items, .01, .1)
+
+    for filename, metadata in document_metadata.iteritems():
+        timer.inc()
         doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
         for attribute, value in metadata.items():
             mi,__ = DocumentMetaInfo.objects.get_or_create(name=attribute)
@@ -149,6 +156,7 @@ class MetadataWrapper(dict):
 
 class Metadata(MetadataWrapper):
     def __init__(self, filename):
+        self.filename = filename
         if not os.path.exists(filename):
             self.types = {}
         else:
