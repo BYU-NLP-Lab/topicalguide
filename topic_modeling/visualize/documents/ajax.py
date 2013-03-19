@@ -202,6 +202,13 @@ def all_documents_topics_count(request, dataset, analysis):
             result[doc_id][topic_id] /= float(num_tokens)
     return result
 
+def save_svg(request):
+    if request.method == 'POST':
+        response = HttpResponse(request.body, content_type='image/svg+xml')
+        response['Content-Disposition'] = 'attachment; filename="graph.svg"'
+        return response
+    else:
+        return JsonResponse("Not Post")
 
 #cache the data for 12 hours
 #@cache_page(60 * 60 * 12)
