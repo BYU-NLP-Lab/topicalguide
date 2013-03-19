@@ -68,7 +68,7 @@ var PlotControls = Backbone.View.extend({
     control.append('<h4>' + title + '</h4>');
     var select = '<select name="' + title + '">';
 
-    if(title == 'Radius') {
+    if(title == 'Radius' || options.length === 0) {
       select += '<option value="uniform">Uniform</option>'; 
     }
 
@@ -496,6 +496,8 @@ var PlotInfo = Backbone.View.extend({
       k++;
     }
     this.setUpNomMap(this.data, nom_fields);
+
+    //console.log(this.nomMaps);
     this.update(true);
   },
 
