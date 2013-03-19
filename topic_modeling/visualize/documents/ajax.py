@@ -187,13 +187,11 @@ def all_documents_topics_count(request, dataset, analysis):
     rows = c.fetchall()
     # document_id, topic_id, count
     result = {}
-    for row in rows:
-        doc_id = row[0]
-        topic_id = row[1]
-        count = row[2]
-        if not doc_id in result.keys():
+    for doc_id, topic_id, count in rows:
+        if not doc_id in result:
             result[doc_id] = {}
         result[doc_id][topic_id] = count
+
     for doc_id in result:
         num_tokens = 0
         for topic_id in result[doc_id]:
@@ -246,7 +244,8 @@ def all_document_metrics(request, dataset, analysis):
         info['name'] = document.filename
         info['id'] = document.id
         info['fields'] = get_document_metadata(document)
-        info['fields'].update(document_topics[document.id])
+        if document.id in document_topics:
+            info['fields'].update(document_topics[document.id])
         result['documents'][str(document.id)] = info
 
     metrics = analysis.documentmetrics.all() 
