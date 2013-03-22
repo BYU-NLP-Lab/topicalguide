@@ -18,23 +18,19 @@ var PlotControls = Backbone.View.extend({
     this.allButton.on("click", function () { control.allButtonClicked(); });
     this.saveButton = $("<button style='display:block'>Save</button>").appendTo($('#controls-plot-documents'));
     this.saveButton.on("click", function () { control.saveButtonClicked(); });
+    this.hiddenSvgForm = $('<form id="svg_export_form" method="POST" style="display:none;visibility:hidden"> <input type="hidden" name="svg" /> </form>').appendTo($('#controls-plot-documents'));
   },
 
-  //TODO: implement right
+  //note that this does not get any css for the svg.  It must all be put inline
   saveButtonClicked: function() {
-    console.log(this.parent.svg);
     console.log("save button clicked");
     var viewDom = document.getElementById("plot-documents");
     var svg = viewDom.getElementsByTagName("svg")[0];
     var contents = viewDom.innerHTML;
-    //console.log(contents);
-    $.ajax({
-            //come up with the right url.  We just need an echo one on the global level,
-            //but the relative url is resolving to the current directory, which isn't good
-            method: "post",
-            url: "http://localhost:8000/save-svg/",
-            data: contents,
-    }).done(function (data) { console.log(data); });
+
+    $('#svg_export_form > input[name=svg]').val(contents);
+    $('#svg_export_form').attr('action','http://localhost:8000/save-svg/');
+    $('#svg_export_form').submit();
   },
 
   allButtonClicked: function () {
@@ -242,8 +238,8 @@ var PlotInfo = Backbone.View.extend({
 
   /** setup the d3 layout, etc. Everything you can do without data **/
   setup_d3: function () {
+    //this rect is for svg saving
     var tmp = $("#plot-documents rect");
-    console.log(tmp);
     tmp.attr("fill", "white");
     this.setUpAxes();
     this.setUpLabels();
@@ -266,7 +262,11 @@ var PlotInfo = Backbone.View.extend({
     this.maing.append("svg:g")
       .attr("class", "y axis")
       .call(this.yAxis);
-
+    
+    //these are for svg saving to include the css inline
+    $('.axis path').attr("opacity", 0);
+    $('.axis text').attr("fill", "#000000");
+    //$('.axis .tick').attr("style", "stroke:#000000; opacity:1");
   },
 
   setUpLabels: function() {
@@ -426,6 +426,8 @@ var PlotInfo = Backbone.View.extend({
     var t = this.svg.transition().duration(1500).ease("exp-in-out");
     t.select(".x.axis").call(this.xAxis);
     t.select(".y.axis").call(this.yAxis);
+    //this makes the css inline for saving the svg
+    $('.axis .tick').attr("style", "stroke:#000000; opacity:1");
   },
 
   //Change visual scale to fit the input domains

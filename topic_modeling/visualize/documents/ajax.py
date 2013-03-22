@@ -202,7 +202,7 @@ def all_documents_topics_count(request, dataset, analysis):
 
 def save_svg(request):
     if request.method == 'POST':
-        response = HttpResponse(request.body, content_type='image/svg+xml')
+        response = HttpResponse(request.POST['svg'], content_type='image/svg+xml')
         response['Content-Disposition'] = 'attachment; filename="graph.svg"'
         return response
     else:
