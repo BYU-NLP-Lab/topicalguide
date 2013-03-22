@@ -23,13 +23,16 @@ var PlotControls = Backbone.View.extend({
 
   //note that this does not get any css for the svg.  It must all be put inline
   saveButtonClicked: function() {
-    console.log("save button clicked");
+    //console.log("save button clicked");
     var viewDom = document.getElementById("plot-documents");
     var svg = viewDom.getElementsByTagName("svg")[0];
     var contents = viewDom.innerHTML;
 
+    var url = 'http://' + document.location.host + '/save-svg/';
+    //console.log(url);
+
     $('#svg_export_form > input[name=svg]').val(contents);
-    $('#svg_export_form').attr('action','http://localhost:8000/save-svg/');
+    $('#svg_export_form').attr('action', url);
     $('#svg_export_form').submit();
   },
 
