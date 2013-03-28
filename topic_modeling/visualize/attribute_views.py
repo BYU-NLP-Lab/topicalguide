@@ -158,7 +158,7 @@ class AttributeDocumentView(AttributeView):
 
 
 def attribute_info_tab(analysis, attribute, value, analysis_url, attributes_url):
-    tab = Tab('Attribute Information', 'attributes/attribute_info')
+    tab = Tab('Metadata Information', 'attributes/attribute_info')
     
     token_count = WordToken.objects.filter(
         document__metainfovalues__info_type=attribute,
