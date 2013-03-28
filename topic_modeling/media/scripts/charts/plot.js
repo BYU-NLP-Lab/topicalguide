@@ -18,7 +18,14 @@ var PlotControls = Backbone.View.extend({
     this.allButton.on("click", function () { control.allButtonClicked(); });
     this.saveButton = $("<button style='display:block'>Save</button>").appendTo($('#controls-plot-documents'));
     this.saveButton.on("click", function () { control.saveButtonClicked(); });
-    this.hiddenSvgForm = $('<form id="svg_export_form" method="POST" style="display:none;visibility:hidden"> <input type="hidden" name="svg" /> </form>').appendTo($('#controls-plot-documents'));
+    this.hiddenSvgForm = $('<form id="svg_export_form" method="POST" style="display:none;visibility:hidden">' +
+                           ' <input type="hidden" name="svg" /> </form>').appendTo($('#controls-plot-documents'));
+                          
+    //We will save this for another milestone
+    /*
+      this.filterButton = $("<button style='display:block'>Filter</button>").appendTo($('#controls-plot-documents'));
+      this.filterButton.on("click", function() { parent.filterButtonClicked(); });
+    */
   },
 
   //note that this does not get any css for the svg.  It must all be put inline
@@ -249,7 +256,44 @@ var PlotInfo = Backbone.View.extend({
     this.tooltip = d3.select("body").append("div")
                                     .attr("class", "tooltip")
                                     .style("opacity", 0);
+    this.populateFilter();
     this.info.parent = this;
+  },
+
+  //TODO: finish
+  setUpFilter: function(data) {
+    console.log('setUpFilter()');
+    console.log(data);
+    this.metrics = data.metrics;
+    this.metadata = data.metadata;
+    this.topics = data.topics;
+
+    var fields = Array();
+    fields = fields.concat(this.metrics);
+    for(var field in this.metadata) {
+      fields.push(field);
+    }
+
+    this.filterDialog = $('<div id=#plot-document-filter-dialog title="Document Filter" ></div>');
+    var addFilter = $("<button style='display:block'>Add Filter</button>").appendTo(this.filterDialog);
+    var self = this;
+    addFilter.on("click", function() { self.addFilter(); });
+  },
+
+  addFilter: function() {
+    console.log("addFilter()");
+
+  },
+
+  populateFilter: function() {
+    //var url = 'http://' + document.location.host + '/feeds/document-metrics/datasets...';
+    //hard coded url for now
+    var url = 'http://localhost:8000/feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics';
+    var self = this;
+    $.ajax({
+      method: 'GET',
+      url: url,
+      }).done(function (data) { self.setUpFilter(data) });
   },
 
   setUpAxes: function() {
@@ -294,7 +338,7 @@ var PlotInfo = Backbone.View.extend({
                           .text("Doc Count: ");
   },
 
-  filter: function(data, axes, override) {
+  filterData: function(data, axes, override) {
     if(!override && !this.shouldFilter(axes)) {
       return this.drawingData;
     }
@@ -344,7 +388,7 @@ var PlotInfo = Backbone.View.extend({
       return;
     }
     console.log("update()");
-    this.drawingData = this.filter(this.data, axes, override);
+    this.drawingData = this.filterData(this.data, axes, override);
     this.lastAxes = axes;
 
     var documents = this.svg.selectAll("circle").data(this.drawingData, function (doc) { return doc.id;});
@@ -464,6 +508,45 @@ var PlotInfo = Backbone.View.extend({
       return axisOption;
   },
 
+  filterServerData: function(popup) {
+    console.log("filterServerData()");
+
+    var postFilters = this.getSelectedFilters();
+    console.log(postFilters);
+    var url = this.url();
+    var self = this;
+    $.ajax({
+      url : url,
+      method: "POST",
+      data: postFilters,
+    }).done(function (data) { self.load(data); $(popup).dialog("close"); } );
+  },
+
+  getSelectedFilters: function() {
+    return new Object();
+  },
+
+  filterButtonClicked: function() {
+    console.log("Filter Button Clicked");
+    var self = this;
+    this.filterDialog.dialog({
+      buttons: [
+        {
+          text: "Filter",
+          click: function() {
+            self.filterServerData(this);
+            $(this).dialog("close");
+          }
+        },
+        {
+          text: "Cancel",
+          click: function() { $(this).dialog("close"); }
+        }
+      ]
+    });
+    this.filterDialog.dialog("open");
+  },
+
   /** populate everything! data is the JSON response from your url(). For
    * information on the return values of specific urls, look at the docs for
    * the function (probably in topic_modeling/visualize/topics/ajax.py)
@@ -474,9 +557,7 @@ var PlotInfo = Backbone.View.extend({
   load: function (server_data) {
     console.log(server_data);
     var documents = server_data.documents;
-    this.metrics = server_data.metrics;
-    this.metadata = server_data.metadata;
-    this.topics = server_data.topics;
+
     var cont_fields = Array();
     var nom_fields = Array();
     cont_fields = cont_fields.concat(this.metrics);
