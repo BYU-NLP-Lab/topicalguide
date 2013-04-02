@@ -8,7 +8,7 @@ $(document).ready(function() {
     
 
     //Event handlers
-    $("button.explore").button().click(explore);
+    $("a.explore").click(explore);
     $("img.plot").click(explore);
     $("select.analysis").change(load_plot_image);
     

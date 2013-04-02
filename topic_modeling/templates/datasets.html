@@ -90,7 +90,9 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
                                 </div>
                             </div>
                             <script>get_chart("{{dataset_info.initial_plot_img_url}}", "{{dataset.name}}")</script>
-                            <div class="explore-wrapper"><button class="explore btn btn-primary">Explore!</button></div>
+                            <div class="explore-wrapper">
+                                <a class="explore btn btn-primary btn-block">Explore!</a>
+                            </div>
                         {% else %}
                             <div class="ui-state-highlight">No analyses available for this dataset. Try importing one using <code>backend.py analysis_import</code>.</div>
                         {% endif %}
@@ -108,7 +110,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
                             <span><em>Analysis:</em></span>
                             <select class="analysis">
                             {% for analysis,plot_img_url in dataset_info.analysis_img_urls.iteritems %}
-                                <option value="{{analysis.name}}" img_url="{{plot_img_url}}" url="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}">{{analysis.name}}</option>
+                                <option value="{{analysis.name}}" img_url="{{plot_img_url}}" url="{% url 'tg-fancy' dataset=dataset.name analysis=analysis.name %}">{{analysis.name}}</option>
                             {% endfor %}
                             </select>
                         </div>{# end settings #}
