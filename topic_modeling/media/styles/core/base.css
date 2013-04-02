@@ -50,6 +50,10 @@ table {
 	width: 100%;
 }
 
+table thead th {
+    background-color: #ddd;
+}
+
 td.key {
 	text-align: left;
 }
@@ -124,15 +128,6 @@ label {
 /***** Cupertino Tweaks *****/
 .ui-widget {
     /*font-size: .8em !important;*/
-}
-
-.ui-tabs, .ui-tabs-nav {
-    padding: 0 !important;
-}
-
-.ui-tabs .ui-tabs-nav li a {
-    padding: 0 !important;
-    /*padding: 0.25em 0.5em 0.25em 0.5em !important;*/
 }
 
 /***** Favorites *****/

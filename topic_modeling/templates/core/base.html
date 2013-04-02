@@ -30,19 +30,24 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
         
         {% block stylesheets %}
         <link rel="stylesheet" href="{{STYLES}}/core/base.css" type="text/css" />
-        <link rel="stylesheet" href="{{STYLES}}/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" />
+        <!--link rel="stylesheet" href="{{STYLES}}/cupertino/jquery-ui-1.8.11.custom.css" type="text/css" /-->
+        <link href="/site-media/bootstrap/css/bootstrap.min.css" rel="stylesheet"
+            media="screen"/>
         {% endblock %}
         
         {% block scripts %}
+        <script src="/site-media/bootstrap/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
         <script type="text/javascript" src="{{SCRIPTS}}/core/base.js"></script>        
-		        
+                
         {% endblock %}
     </head>
     <body>
-        {% block header %}{% endblock %}
-        {% block body %}{% endblock %}
-        {% block footer %}{% endblock %}
+        <div class="container-fluid">
+            {% block header %}{% endblock %}
+            {% block body %}{% endblock %}
+            {% block footer %}{% endblock %}
+        </div>
     </body>
 </html>

@@ -63,6 +63,20 @@ h2:not(.subtitle) {
 }
 
 /** Page Structure **/
+div.accordion-heading a {
+    background-color: #eef;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+div.accordion-heading a img {
+    margin-left: 10px;
+}
+
+div.accordion-heading a:hover {
+    text-decoration: none;
+}
+
 div.main {
 	float: left;
 	width: 35%;

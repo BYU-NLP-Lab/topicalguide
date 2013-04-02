@@ -80,25 +80,25 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 {% endblock %}
 
 {% block body %}
-<div id="main">
-	<div id="sidebar" class="ui-tabs ui-widget ui-widget-content ui-corner-all">
-	    <ul id="tabs" class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all">
-	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "topics_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+<div id="main" class="row-fluid">
+	<div id="sidebar" class="span3">
+	    <ul id="tabs" class="nav nav-pills">
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "topics_tab"%} active{%endifequal%}">
 	            <a href="{% url 'tg-analysis' dataset=dataset.name analysis=analysis.name %}">Topics</a>
 	        </li>
-	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "documents_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "documents_tab"%} active{%endifequal%}">
 	            <a href="{% url 'tg-docs' dataset=dataset.name analysis=analysis.name %}">Documents</a>
 	        </li>
-	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "words_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "words_tab"%} active{%endifequal%}">
 	            <a href="{% url 'tg-words' dataset=dataset.name analysis=analysis.name %}">Words</a>
 	        </li>
-	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "attributes_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "attributes_tab"%} active{%endifequal%}">
 	            <a href="{% url 'tg-attrs' dataset=dataset.name analysis=analysis.name %}">Metadata</a>
 	        </li>
-	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "plots_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "plots_tab"%} active{%endifequal%}">
 	            <a href="{% url 'tg-plots' dataset=dataset.name analysis=analysis.name %}">Plots</a>
 	        </li>
-	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "plots_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "plots_tab"%} active{%endifequal%}">
 	            <a href="{% url 'tg-fancy' dataset=dataset.name analysis=analysis.name %}">Fancy</a>
 	        </li>
 	    </ul>
@@ -130,10 +130,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	            {% block sidebar_tab_panel_footer%}{% endblock %}
 	        </div>
 	    </div>
-	</div>{# end div sidebar #}<div id="presentation-area">
+        </div>{# end div sidebar #}
+        <div id="presentation-area" class="span9">
 	    {% block presentation_area %}
 	    <div id="tabs">
-	        <ul>
+	        <ul class="nav nav-tabs">
 	            {% for tab in tabs %}
 	            <li><a href="#tab-{{tab.title|slugify}}">{{tab.title}}</a></li>
 	            {% endfor %}
