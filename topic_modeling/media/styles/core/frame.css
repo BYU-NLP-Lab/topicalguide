@@ -31,6 +31,10 @@ nav#header {
     font-family: 'Varela Round', sans-serif;
 }
 
+nav#header > .navbar-inner {
+    border-radius: 0;
+}
+
 footer {
     /*position: absolute;*/
     /*bottom: 0;*/
