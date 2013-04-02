@@ -146,7 +146,7 @@ class Document(models.Model):
         return ' '.join(parts)
 
     def text(self, kwic=None):
-        file_dir = DocumentMetaInfo.objects.get(name='dirname').values.get(document=self).value()
+        file_dir = self.dataset.files_dir
         text = open(os.path.join(file_dir, self.filename), 'r').read().decode('utf-8')
         if kwic:
             beg_context, end_context = self.get_kwic_context_ends(kwic, text)

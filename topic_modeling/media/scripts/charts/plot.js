@@ -1,13 +1,7 @@
 
-//this is our trigger for updating the graph
-//function update() {}
-
 /** The Controls **/
 var PlotControls = Backbone.View.extend({
-  xcontrol : null,
-  ycontrol : null,
-  rcontrol : null,
-  setUp : false,
+  xcontrol : null, ycontrol : null, rcontrol : null, setUp : false,
 
   initialize: function (options) {
     var parent = this.parent = options.parent;
@@ -22,15 +16,35 @@ var PlotControls = Backbone.View.extend({
     this.removeButton.on("click", function () { control.removeButtonClicked(); });
     this.allButton = $("<button style='display:block'>Add Removed Documents</button>").appendTo($('#controls-plot-documents'));
     this.allButton.on("click", function () { control.allButtonClicked(); });
+    this.saveButton = $("<button style='display:block'>Save</button>").appendTo($('#controls-plot-documents'));
+    this.saveButton.on("click", function () { control.saveButtonClicked(); });
+    this.hiddenSvgForm = $('<form id="svg_export_form" method="POST" style="display:none;visibility:hidden">' +
+                           ' <input type="hidden" name="svg" /> </form>').appendTo($('#controls-plot-documents'));
+                          
+    //We will save this for another milestone
+    /*
+      this.filterButton = $("<button style='display:block'>Filter</button>").appendTo($('#controls-plot-documents'));
+      this.filterButton.on("click", function() { parent.filterButtonClicked(); });
+    */
+  },
+
+  //note that this does not get any css for the svg.  It must all be put inline
+  saveButtonClicked: function() {
+    //console.log("save button clicked");
+    var viewDom = document.getElementById("plot-documents");
+    var svg = viewDom.getElementsByTagName("svg")[0];
+    var contents = viewDom.innerHTML;
+
+    var url = 'http://' + document.location.host + '/save-svg/';
+    //console.log(url);
+
+    $('#svg_export_form > input[name=svg]').val(contents);
+    $('#svg_export_form').attr('action', url);
+    $('#svg_export_form').submit();
   },
 
   allButtonClicked: function () {
-    for(doc_id in this.parent.data)
-    {
-      var doc = this.parent.data[doc_id];
-      doc.included = true;
-    }
-    this.parent.update(true);
+    this.parent.includeAllDocuments();
     this.parent.removingDocs = false;
     this.removeButton.html('Remove Documents');
   },
@@ -81,13 +95,9 @@ var PlotControls = Backbone.View.extend({
     select.on("change", function() { viewer.update(); });
   },
 
-  show: function () {
-    this.$el.show();
-  },
+  show: function () { this.$el.show(); },
 
-  hide: function () {
-    this.$el.hide();
-  }
+  hide: function () { this.$el.hide(); },
 });
 
 
@@ -97,38 +107,23 @@ var PlotMenu = Backbone.View.extend({
   initialize: function (options) {
     var parent = this.parent = options.parent;
     // setup elements. The el is #menu-[name]
-   //Eventually we want to be able to switch between looking at documents
-   //to looking at topics
   },
 
-  show: function () {
-    this.$el.show();
-  },
+  show: function () { this.$el.show(); },
 
-  hide: function () {
-    this.$el.hide();
-  },
-
+  hide: function () { this.$el.hide(); },
 });
 
 /** The Info **/
 var PlotInfo = Backbone.View.extend({
-  //TODO display the number of documents shown
 
-  initialize: function () {
-    this.docDisplay = $("<div></div>").appendTo($('#info-plot-documents'));
-  },
+  initialize: function () { this.docDisplay = $("<div></div>").appendTo($('#info-plot-documents')); },
 
-  clear: function () {
-  },
+  clear: function () { },
 
-  show: function () {
-    this.$el.show();
-  },
+  show: function () { this.$el.show(); },
   
-  hide: function () {
-    this.$el.hide();
-  },
+  hide: function () { this.$el.hide(); },
 
   //this creates three separate tables instead of just one
   populateOriginal: function(doc) {
@@ -229,20 +224,17 @@ var PlotInfo = Backbone.View.extend({
   * initialized **/
   lastAxes : null,
   removingDocs : false,
+  xRange : d3.scale.linear().range([60, 630 - 20]), // x range function, left and right padding
+  yRange : d3.scale.linear().range([630 - 60, 30]), // y range function
+  rRange : d3.scale.linear().range([5, 15]), // radius range function - ensures the radius is between 5 and 20
+  data : null,
+  width: 630,
+  height: 630,
+  colors : [ "#000000", "#FFFF00", "#800080", "#FFA500", "#ADD8E6", "#CD0000", "#F5DEB3", "#A9A9A9", "#228B22",
+    "#FF00FF", "#0000CD", "#F4A460", "#EE82EE", "#FF4500", "#191970", "#ADFF2F", "#A52A2A", "#808000", "#DB7093",
+    "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ],
 
   defaults: {
-    xRange : d3.scale.linear().range([60, 630 - 20]), // x range function, left and right padding
-    yRange : d3.scale.linear().range([630 - 60, 30]), // y range function
-    rRange : d3.scale.linear().range([5, 15]), // radius range function - ensures the radius is between 5 and 20
-    data : null,
-    width: 630,
-    height: 630,
-    margins : {top: 20, right: 20, bottom: 20, left: 60}, // margins around the graph
-    colors : [ "#000000", "#FFFF00", "#800080", "#FFA500", "#ADD8E6", "#CD0000", "#F5DEB3", "#A9A9A9", "#228B22",
-      "#FF00FF", "#0000CD", "#F4A460", "#EE82EE", "#FF4500", "#191970", "#ADFF2F", "#A52A2A", "#808000", "#DB7093",
-      "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ],
-    /**
-    **/
   },
 
   /**
@@ -256,34 +248,78 @@ var PlotInfo = Backbone.View.extend({
 
   /** setup the d3 layout, etc. Everything you can do without data **/
   setup_d3: function () {
+    //this rect is for svg saving
+    var tmp = $("#plot-documents rect");
+    tmp.attr("fill", "white");
     this.setUpAxes();
     this.setUpLabels();
     this.tooltip = d3.select("body").append("div")
                                     .attr("class", "tooltip")
                                     .style("opacity", 0);
+    this.populateFilter();
     this.info.parent = this;
   },
 
+  //TODO: finish
+  setUpFilter: function(data) {
+    console.log('setUpFilter()');
+    console.log(data);
+    this.metrics = data.metrics;
+    this.metadata = data.metadata;
+    this.topics = data.topics;
+
+    var fields = Array();
+    fields = fields.concat(this.metrics);
+    for(var field in this.metadata) {
+      fields.push(field);
+    }
+
+    this.filterDialog = $('<div id=#plot-document-filter-dialog title="Document Filter" ></div>');
+    var addFilter = $("<button style='display:block'>Add Filter</button>").appendTo(this.filterDialog);
+    var self = this;
+    addFilter.on("click", function() { self.addFilter(); });
+  },
+
+  addFilter: function() {
+    console.log("addFilter()");
+
+  },
+
+  populateFilter: function() {
+    //var url = 'http://' + document.location.host + '/feeds/document-metrics/datasets...';
+    //hard coded url for now
+    var url = 'http://localhost:8000/feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics';
+    var self = this;
+    $.ajax({
+      method: 'GET',
+      url: url,
+      }).done(function (data) { self.setUpFilter(data) });
+  },
+
   setUpAxes: function() {
-    this.xAxis = d3.svg.axis().scale(this.options.xRange).tickSize(10).tickSubdivide(true); // x axis function
-    this.yAxis = d3.svg.axis().scale(this.options.yRange).tickSize(10).orient("right").tickSubdivide(true); // y axis function
+    this.xAxis = d3.svg.axis().scale(this.xRange).tickSize(10).tickSubdivide(true); // x axis function
+    this.yAxis = d3.svg.axis().scale(this.yRange).tickSize(10).orient("right").tickSubdivide(true); // y axis function
     // add in the x axis
     this.maing.append("svg:g")
       .attr("class", "x axis")
-      .attr("transform", "translate(0," + (this.options.height - this.options.margins.bottom - 20) + ")") 
+      .attr("transform", "translate(0," + (this.height - 40) + ")") 
       .call(this.xAxis);
 
     // add in the y axis
     this.maing.append("svg:g")
       .attr("class", "y axis")
       .call(this.yAxis);
-
+    
+    //these are for svg saving to include the css inline
+    $('.axis path').attr("opacity", 0);
+    $('.axis text').attr("fill", "#000000");
+    //$('.axis .tick').attr("style", "stroke:#000000; opacity:1");
   },
 
   setUpLabels: function() {
     this.xLabel = this.svg.append("text")
                           .attr("class", "x label").attr("text-anchor", "end")
-                          .attr("x", this.options.width - 10).attr("y", this.options.height - 5)
+                          .attr("x", this.width - 10).attr("y", this.height - 5)
                           .text("X Label");
 
     this.yLabel = this.svg.append("text")
@@ -293,33 +329,36 @@ var PlotInfo = Backbone.View.extend({
 
     this.rLabel = this.svg.append("text")
                           .attr("class", "r label").attr("text-anchor", "start")
-                          .attr("x", 5).attr("y", this.options.height - 5)
+                          .attr("x", 5).attr("y", this.height - 5)
                           .text("Circle Radius: ");
 
     this.countLabel = this.svg.append("text")
                           .attr("class", "label").attr("text-anchor", "end")
-                          .attr("x", this.options.width - 10).attr("y", 20)
+                          .attr("x", this.width - 10).attr("y", 20)
                           .text("Doc Count: ");
   },
 
-  filter: function(data, axes, override) {
+  filterData: function(data, axes, override) {
     if(!override && !this.shouldFilter(axes)) {
       return this.drawingData;
     }
-    console.log("filter()");
+    //console.log("filter()");
     var filteredData = Array();
     for (var index in data) {
       var doc = data[index];
-      if(this.isDefined(doc, axes))
+      if(this.shouldDisplay(doc, axes))
         filteredData.push(doc);
     }
     return filteredData;
   },
 
-  isDefined: function(doc, axes) {
-      return doc.fields[axes.xAxis] && doc.fields[axes.yAxis] &&
+  //if a document should be displayed under these axes
+  //TODO: Allow a user to filter out documents 1% for topics
+  shouldDisplay: function(doc, axes) {
+      return doc.included &&
+         doc.fields[axes.xAxis] && doc.fields[axes.yAxis] &&
          (axes.rAxis == 'uniform' || doc.fields[axes.rAxis]) &&
-         (axes.cAxis == 'uniform' || doc.fields[axes.cAxis]) && doc.included;
+         doc.fields[axes.cAxis];
   },
 
   //this is an optimization that can be turned off
@@ -339,10 +378,8 @@ var PlotInfo = Backbone.View.extend({
   shouldUpdate: function(newAxes) {
     var lastAxes = this.lastAxes;
     return lastAxes && 
-           lastAxes.xAxis == newAxes.xAxis &&
-           lastAxes.yAxis == newAxes.yAxis &&
-           lastAxes.rAxis == newAxes.rAxis &&
-           lastAxes.cAxis == newAxes.cAxis;
+           lastAxes.xAxis == newAxes.xAxis && lastAxes.yAxis == newAxes.yAxis &&
+           lastAxes.rAxis == newAxes.rAxis && lastAxes.cAxis == newAxes.cAxis;
   },
 
   update: function (override) {
@@ -351,7 +388,7 @@ var PlotInfo = Backbone.View.extend({
       return;
     }
     console.log("update()");
-    this.drawingData = this.filter(this.data, axes, override);
+    this.drawingData = this.filterData(this.data, axes, override);
     this.lastAxes = axes;
 
     var documents = this.svg.selectAll("circle").data(this.drawingData, function (doc) { return doc.id;});
@@ -364,11 +401,11 @@ var PlotInfo = Backbone.View.extend({
   },
 
   setDocEnter: function(documents, axes) {
-    var xRange = this.options.xRange,
-    yRange = this.options.yRange,
-    rRange = this.options.rRange,
+    var xRange = this.xRange,
+    yRange = this.yRange,
+    rRange = this.rRange,
     info = this.info,
-    colors = this.options.colors, 
+    colors = this.colors, 
     nomMaps = this.nomMaps,
     tooltip = this.tooltip,
     viewRef = this;
@@ -380,16 +417,8 @@ var PlotInfo = Backbone.View.extend({
         .style("opacity", 0)
         .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
         //updates the infobox and handles removing documents.
-        //TODO: Does this have to be anonymous.  If we define it
-        .on("click", function (doc) {
-                              if(viewRef.removingDocs) {
-                                viewRef.tooltip.transition().duration(200).style("opacity", 0.0);
-                                $(this).remove();
-                                doc.included = false;
-                              }
-                              else
-                                info.populate(doc);
-                              } )
+        //TODO: Does this have to be anonymous?
+        .on("click", this.getDocClickHandler())
         //tooltips
         .on("mouseover", function(doc) {
           tooltip.transition()
@@ -405,17 +434,29 @@ var PlotInfo = Backbone.View.extend({
 
   },
 
+  getDocClickHandler: function() {
+    var viewRef = this;
+    return function (doc) {
+             if(viewRef.removingDocs) {
+               viewRef.tooltip.transition().duration(200).style("opacity", 0.0);
+               $(this).remove();
+               doc.included = false;
+             }
+             else
+               viewRef.info.populate(doc);
+           };
+  },
+
   setDocTransition: function(documents, axes) {
-    var colors = this.options.colors,
+    var colors = this.colors,
     nomMaps = this.nomMaps,
-    xRange = this.options.xRange,
-    yRange = this.options.yRange,
-    rRange = this.options.rRange;
+    xRange = this.xRange,
+    yRange = this.yRange,
+    rRange = this.rRange;
 
     documents.transition().duration(1500).ease("exp-in-out")
       .style("opacity", 1)
       .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
-      //.style("fill", function(doc) { return colors(nomMaps[axes.cAxis][doc.fields[axes.cAxis]]); })
       .attr("r", function(doc) { return (axes.rAxis == 'uniform') ? 7 :rRange(doc.fields[axes.rAxis]); })
       .attr("cx", function (doc) { return xRange(doc.fields[axes.xAxis]); })
       .attr("cy", function (doc) { return yRange(doc.fields[axes.yAxis]); });
@@ -426,27 +467,27 @@ var PlotInfo = Backbone.View.extend({
       .attr("r", 0)
       .style("opacity", 0)
         .remove();
-
   },
-
 
   setAxesTransition: function() {
     var t = this.svg.transition().duration(1500).ease("exp-in-out");
     t.select(".x.axis").call(this.xAxis);
     t.select(".y.axis").call(this.yAxis);
+    //this makes the css inline for saving the svg
+    $('.axis .tick').attr("style", "stroke:#000000; opacity:1");
   },
 
   //Change visual scale to fit the input domains
   scaleAxes: function(axes) {
-    this.options.xRange.domain([
+    this.xRange.domain([
       d3.min(this.drawingData, function (doc) { return +doc.fields[axes.xAxis]; }),
       d3.max(this.drawingData, function (doc) { return +doc.fields[axes.xAxis]; })
     ]);
-    this.options.yRange.domain([
+    this.yRange.domain([
       d3.min(this.drawingData, function (doc) { return +doc.fields[axes.yAxis]; }),
       d3.max(this.drawingData, function (doc) { return +doc.fields[axes.yAxis]; })
     ]);
-    this.options.rRange.domain([
+    this.rRange.domain([
       d3.min(this.drawingData, function (doc) { return +doc.fields[axes.rAxis]; }),
       d3.max(this.drawingData, function (doc) { return +doc.fields[axes.rAxis]; })
     ]);
@@ -454,28 +495,56 @@ var PlotInfo = Backbone.View.extend({
 
   //Topics are recognized by a numerical value
   setAxisLabels: function(axes) {
-    var x_label = "";
-    if($.isNumeric(axes.xAxis))
-      x_label = "Topic: " + this.topics[axes.xAxis];
-    else
-      x_label = axes.xAxis;
-    this.xLabel.text("X: " + x_label);
-
-    var y_label = "";
-    if($.isNumeric(axes.yAxis))
-      y_label = "Topic: " + this.topics[axes.yAxis];
-    else
-      y_label = axes.yAxis;
-    this.yLabel.text("Y: " + y_label);
-
-    var r_label = "";
-    if($.isNumeric(axes.rAxis))
-      r_label = "Topic: " + this.topics[axes.rAxis];
-    else
-      r_label = axes.rAxis;
-    this.rLabel.text("Circle Radius: " + r_label);
-
+    this.xLabel.text("X: " + this.getName(axes.xAxis));
+    this.yLabel.text("Y: " + this.getName(axes.yAxis));
+    this.rLabel.text("Circle Radius: " + this.getName(axes.rAxis));
     this.countLabel.text("Doc Count: " + this.drawingData.length);
+  },
+
+  getName: function(axisOption) {
+    if($.isNumeric(axisOption))
+      return this.topics[axisOption];
+    else
+      return axisOption;
+  },
+
+  filterServerData: function(popup) {
+    console.log("filterServerData()");
+
+    var postFilters = this.getSelectedFilters();
+    console.log(postFilters);
+    var url = this.url();
+    var self = this;
+    $.ajax({
+      url : url,
+      method: "POST",
+      data: postFilters,
+    }).done(function (data) { self.load(data); $(popup).dialog("close"); } );
+  },
+
+  getSelectedFilters: function() {
+    return new Object();
+  },
+
+  filterButtonClicked: function() {
+    console.log("Filter Button Clicked");
+    var self = this;
+    this.filterDialog.dialog({
+      buttons: [
+        {
+          text: "Filter",
+          click: function() {
+            self.filterServerData(this);
+            $(this).dialog("close");
+          }
+        },
+        {
+          text: "Cancel",
+          click: function() { $(this).dialog("close"); }
+        }
+      ]
+    });
+    this.filterDialog.dialog("open");
   },
 
   /** populate everything! data is the JSON response from your url(). For
@@ -488,9 +557,7 @@ var PlotInfo = Backbone.View.extend({
   load: function (server_data) {
     console.log(server_data);
     var documents = server_data.documents;
-    this.metrics = server_data.metrics;
-    this.metadata = server_data.metadata;
-    this.topics = server_data.topics;
+
     var cont_fields = Array();
     var nom_fields = Array();
     cont_fields = cont_fields.concat(this.metrics);
@@ -501,7 +568,7 @@ var PlotInfo = Backbone.View.extend({
         nom_fields.push(field);
     }
 
-    this.setUpControls(cont_fields, nom_fields, this.topics);
+    this.controls.setUpControls(cont_fields, nom_fields, this.topics, this);
 
     this.data = [];
     var k = 0;
@@ -514,15 +581,13 @@ var PlotInfo = Backbone.View.extend({
         break;
       k++;
     }
-    //console.log(this.data);
     this.setUpNomMap(this.data, nom_fields);
-    if (!nom_fields.length) {
-        this.nomMaps['uniform'] = 0;
-    }
+
     //console.log(this.nomMaps);
     this.update(true);
   },
 
+  //this maps the nominal field values to an index in the color array
   setUpNomMap: function(data, fields) {
     this.nomMaps = new Object();
     for(var j = 0; j < fields.length; j++) {
@@ -541,10 +606,7 @@ var PlotInfo = Backbone.View.extend({
     }
   },
 
-  setUpControls: function(cont_fields, nom_fields, topics) {
-    this.controls.setUpControls(cont_fields, nom_fields, topics, this);
-  },
-
+  //returns the Top topics of a document 
   getTopTopics: function(doc) {
     var topics = Array();
     for(var index in doc.fields) {
@@ -552,35 +614,22 @@ var PlotInfo = Backbone.View.extend({
         topics.push(index);
     }
 
-    topics.sort(
-      function (topic_1, topic_2) {
-        if(topic_1 == topic_2) {
-          return 0;
-        }
-        else {
-          return doc.fields[topic_2] - doc.fields[topic_1];
-        }
-      });
+    //sort topics by document composition
+    topics.sort(function (topic_1, topic_2) { return doc.fields[topic_2] - doc.fields[topic_1]; });
 
     var topicResult = Array();
     var numTopTopics = 10;
     for(var k = 0; k < numTopTopics; k++) {
-      var topicNum = topics[k];
-      var topicName = this.topics[topicNum];
-      var topicValue = doc.fields[topicNum];
       var topic = new Object();
-      topic.num = topicNum;
-      topic.name = topicName;
-      topic.val = topicValue;
+      topic.num = topics[k];
+      topic.name = this.topics[topic.num];
+      topic.val = doc.fields[topic.num];
       topicResult.push(topic);
     }
-
     return topicResult;
   },
 
-  redraw: function() {
-
-  },
+  redraw: function() { },
 
 
   getAxes: function() {
@@ -590,6 +639,16 @@ var PlotInfo = Backbone.View.extend({
     var c = $("option:selected", this.controls.ccontrol).val();
     return { xAxis: x, yAxis: y, rAxis: r, cAxis: c };
   },
+    
+  includeAllDocuments: function() {
+    for(doc_id in this.data)
+    {
+      var doc = this.data[doc_id];
+      doc.included = true;
+    }
+    this.update(true);
+    this.removingDocs = false;
+  }
 
 });
 
