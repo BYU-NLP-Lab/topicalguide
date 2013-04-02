@@ -188,7 +188,7 @@ class TopicDocumentView(TopicView):
         context['topic_post_link'] = '/documents/%s' % document.id
     
         context['tabs'] = doc_tabs(request, analysis, document)
-        
+
         return context
 
 
@@ -205,7 +205,7 @@ class TopicDocumentView(TopicView):
 def tabs(request, topic, topic_url, images_url, name_scheme_name):
     tabs = []
     tabs.append(top_words_tab(topic, topic_url, images_url))
-    tabs.append(similar_topics_tab(request, topic, name_scheme_name))
+    tabs.append(similar_topics_tab(request, topic, name_scheme_name, topic_url))
     tabs.append(extra_information_tab(request, topic, topic_url))
     return tabs
 
@@ -328,14 +328,15 @@ def turbo_topics_cloud_widget(topic):
 # Similar Topics Widgets
 ########################
 
-def similar_topics_tab(request, topic, name_scheme_name):
+def similar_topics_tab(request, topic, name_scheme_name, topic_url):
     tab = Tab("Similar Topics", 'topics/similar_topics')
-    tab.add(similar_topic_list_widget(request, topic))
-    tab.add(topic_map_widget(topic, name_scheme_name))
+    tab.add(similar_topic_list_widget(request, topic, topic_url))
+    #this map should be redundant to the d3 force diagram
+    #tab.add(topic_map_widget(topic, name_scheme_name))
     return tab
 
 
-def similar_topic_list_widget(request, topic):
+def similar_topic_list_widget(request, topic, topic_url):
     w = Widget("Most Similar Topics", "topics/similar_topics")
     similarity_measures = topic.analysis.pairwisetopicmetrics.all()
     dataset = topic.analysis.dataset
@@ -350,11 +351,14 @@ def similar_topic_list_widget(request, topic):
         similar_topics = topic.pairwisetopicmetricvalue_originating.\
                 select_related().filter(metric=measure).order_by('-value')
         entries = []
+        index = topic_url.rfind('/')
+        topic_url = topic_url[0: index]
         for t in similar_topics[1:11]:
             topic = t.topic2
             number = topic.number
             name = str(number) + ': ' + topic_name_with_ns(topic, ns)
-            entries.append(TopicSimilarityEntry(name, number, t.value))
+            url = '%s/%d' % (topic_url, number)
+            entries.append(TopicSimilarityEntry(name, number, t.value, url))
         w['similar_topics'] = entries
         w['similarity_measures'] = similarity_measures
         w['similarity_measure'] = measure
@@ -459,10 +463,10 @@ def top_values_widget(request, topic):
 #########
 
 class TopicSimilarityEntry(object):
-    def __init__(self, name, number, value):
+    def __init__(self, name, number, value, url):
         self.name = name
         self.number = number
         self.value = value
-
+        self.url = url
 
 # vim: et sw=4 sts=4
