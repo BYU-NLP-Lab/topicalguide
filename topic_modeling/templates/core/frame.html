@@ -29,57 +29,57 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     {{block.super}}
     <script>
         $(document).ready(function() {
-        	{# Favorite This View #}
-        	
-        	
-        	var form = $("#fav-this-form");
-        	var input = $("> input", form);
-        	
-        	input.keyup(function() {
+            {# Favorite This View #}
+            
+            
+            var form = $("#fav-this-form");
+            var input = $("> input", form);
+            
+            input.keyup(function() {
                 if(!this.value) {
                     $(this).addClass('ui-state-error');
                 } else {
                     $(this).removeClass("ui-state-error");
                 }
             });
-        	
-        	form.dialog({
-        		autoOpen:false,
-        		modal:true,
-        		position:['right','top'],
-        		title:'Enter a name for this favorite',
-        		buttons: {"Save": function(){
-        			var name = input.val();
-        			var favid = slugify(name);
-        			if(favid) {
-        			    form.dialog('close');
-        			    favorite_this_view(name, favid);
-       			    }
-        		}, "Cancel": function(){
-        			form.dialog('close');
-        		}}
-       		});
-        	
-        	$("button#fav-this").button({label: "Fav This View"}).click(function(){
+            
+            form.dialog({
+                autoOpen:false,
+                modal:true,
+                position:['right','top'],
+                title:'Enter a name for this favorite',
+                buttons: {"Save": function(){
+                    var name = input.val();
+                    var favid = slugify(name);
+                    if(favid) {
+                        form.dialog('close');
+                        favorite_this_view(name, favid);
+                       }
+                }, "Cancel": function(){
+                    form.dialog('close');
+                }}
+               });
+            
+            $("button#fav-this").button({label: "Fav This View"}).click(function(){
                 input.addClass("ui-state-error").val('');
                 form.dialog('open');
             });
-        	$("button#favs").button({text:false, icons: {primary: "ui-icon-triangle-1-s"}}).click(function(){
-        		var menu = $("nav#header li#favorites ul");
-        		switch(menu.css("visibility")) {
-	        		case "visible":
-	        			menu.css("visibility","hidden");
-	        			break;
-	        		case "hidden":
-	        			menu.css("visibility","visible");
-	        			break;
-	       			default:
-	       				menu.css("visibility","hidden");
-	       				break;
-        		}
-        	});
-        	
-        	$("span#buttons").buttonset();
+            $("button#favs").button({text:false, icons: {primary: "ui-icon-triangle-1-s"}}).click(function(){
+                var menu = $("nav#header li#favorites ul");
+                switch(menu.css("visibility")) {
+                    case "visible":
+                        menu.css("visibility","hidden");
+                        break;
+                    case "hidden":
+                        menu.css("visibility","visible");
+                        break;
+                       default:
+                           menu.css("visibility","hidden");
+                           break;
+                }
+            });
+            
+            $("span#buttons").buttonset();
         });
     </script>
 {% endblock %}
@@ -96,38 +96,39 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
     <input type="text" name="fav-this-view" id="name" class="text ui-widget-content ui-corner-all" />
 </div>
 
-<nav id="header">
-	{% block nav_menu %}
-	    <ul id="breadcrumbs" class="nav-menu left">
-			<li id="logo">
-				<a href="{% url 'tg-datasets' %}">
-					<img src="{{nlp_lab_small_logo_url}}" alt="BYU NLP Lab Logo"/>
-				</a>
-			</li>
-			
-			<li id="title-text" class="breadcrumb" title="Go Home">
-				<a href="{% url 'tg-datasets' %}">The Topical Guide</a>
-			</li>
-			
-			{{breadcrumb.to_ul|safe}}
-	    </ul>{# end breadcrumbs #}
-	    <ul id="buttons" class="nav-menu right">
-		    {% comment %}
-			<li id="namescheme-dropdown">
-				Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
-				{% for namescheme in nameschemes %}
-				<option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
-				{% endfor %}
-				</select>
-			</li>
-			{% endcomment %}
-			
-			<li id="favorites">
-			    <span id="buttons">
-					{% block fav-this-button %}<button id="fav-this" title="Favorite This View"></button>{% endblock %}
-					<button id="favs" title="Favorites">&nbsp;</button>
-				</span>
-				<ul id="entities">
+<nav id="header" class="navbar">
+    <div class="navbar-inner">
+    {% block nav_menu %}
+        <ul id="breadcrumbs" class="nav-menu left">
+            <li id="logo">
+                <a href="{% url 'tg-datasets' %}">
+                    <img src="{{nlp_lab_small_logo_url}}" alt="BYU NLP Lab Logo"/>
+                </a>
+            </li>
+            
+            <li id="title-text" class="breadcrumb" title="Go Home">
+                <a href="{% url 'tg-datasets' %}">The Topical Guide</a>
+            </li>
+            
+            {{breadcrumb.to_ul|safe}}
+        </ul>{# end breadcrumbs #}
+        <ul id="buttons" class="nav-menu right">
+            {% comment %}
+            <li id="namescheme-dropdown">
+                Topic Name Scheme: <select name="namescheme" id="namescheme-dropdown-select" onchange="set_name_scheme()">
+                {% for namescheme in nameschemes %}
+                <option value="{{ namescheme.id }}"{% ifequal namescheme.id currentnamescheme.id%} selected="selected"{% endifequal %}>{{namescheme.name}}</option>
+                {% endfor %}
+                </select>
+            </li>
+            {% endcomment %}
+            
+            <li id="favorites">
+                <span id="buttons" class="btn-group">
+                    {% block fav-this-button %}<button id="fav-this" class="btn" title="Favorite This View"></button>{% endblock %}
+                    <button id="favs" class="btn" title="Favorites">&nbsp;</button>
+                </span>
+                <ul id="entities">
                    {% for type,favs in favorites.items %}
                    {% if favs %}
                        <li id="{{type}}" class="entity">
@@ -141,21 +142,22 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
                    {% endif %}
                    {% endfor %}
                </ul>
-			</li>
-		    
-	    </ul>
-	{% endblock %}
+            </li>
+            
+        </ul>
+    {% endblock %}
+    </div>
 </nav>
 {% endblock %}{# end block header #}
 
 {% block footer %}
 <footer>
-	<ul class="nav-menu">
-		{% block footer_items %}
-		<li><a href="{{topical_guide_project_url|safe}}" class="new-window">The Topical Guide</a></li>
-		<li>Copyright 2010-2012 <a href="http://www.byu.edu/" class="new-window">Brigham Young University</a> under the following <a href="{% url 'tg-terms' %}">terms of use</a></li>
-		<li>Developed by <a href="{{nlp_lab_url|safe}}" class="new-window">the BYU Natural Language Processing Lab</a></li>
-		{% endblock %}
-	</ul>
+    <ul class="nav-menu">
+        {% block footer_items %}
+        <li><a href="{{topical_guide_project_url|safe}}" class="new-window">The Topical Guide</a></li>
+        <li>Copyright 2010-2012 <a href="http://www.byu.edu/" class="new-window">Brigham Young University</a> under the following <a href="{% url 'tg-terms' %}">terms of use</a></li>
+        <li>Developed by <a href="{{nlp_lab_url|safe}}" class="new-window">the BYU Natural Language Processing Lab</a></li>
+        {% endblock %}
+    </ul>
 </footer>
 {% endblock %}

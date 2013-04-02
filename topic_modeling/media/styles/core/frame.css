@@ -23,7 +23,6 @@
  */
  
 nav#header {
-	position: fixed;
 	top: 0;
     width: 100%;
     margin-bottom: 1em;
@@ -43,8 +42,9 @@ footer {
     z-index: 5;
 }
 
-nav#header, footer {
+footer {
     background-color: hsla(210,85%,65%,1);
+    border-radius: 5px;
 }
 
 ul.nav-menu {
@@ -53,13 +53,21 @@ ul.nav-menu {
     padding: 0;
     display: table-row;
     background: none;
+    position: relative;
+    top: 8px;
+    display: inline-block;
+    margin-left: 0;
 }
 
 ul.nav-menu.right {
 	position: absolute;
-    right: 0;
-    top: 0;
+    right: 30px;
+    top: 4px;
     margin: 0;
+}
+
+ul.nav-menu li.breadcrumb {
+    margin-bottom: 0;
 }
 
 ul.nav-menu > li {
