@@ -11,6 +11,33 @@
 {% block bodytitle %}Topic Chord Diagrams{% endblock %}
 {% block nav-title %}Topical Guide{% endblock %}
 
+{% block modals %}
+    {{ block.super }}
+    <div id="iframe-modal" class="modal hide fade"
+        tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"> &times; </button>
+            <h3 id="iframe-label">Details</h3>
+        </div>
+        <div class="modal-body">
+            <iframe class="theframe seamless">
+            </iframe>
+        </div>
+    </div>
+{% endblock %}
+
+{% block breadcrumb-container %}
+<div class="nav nav-pills">
+    <li class="active">
+        <a>Visualizations</a>
+    </li>
+    <li><a href="{{ base_url }}/topics">Browse Topics</a></li>
+    <li><a href="{{ base_url }}/documents">Browse Documents</a></li>
+    <li><a href="{{ base_url }}/words">Browse Words</a></li>
+    <li><a href="{{ base_url }}/metadata">Browse Metadata</a></li>
+</div>
+{% endblock %}
+
 {% block container %}
 <div id="vis-navbar" class="navbar">
   <div class="navbar-inner">
@@ -35,7 +62,7 @@
       <div id="viz-menus">
         <div id="menu-force-topics" class="nav-collapse collapse viz-menu">
           <ul class="nav">
-            <li><a>Node:</a></li>
+            <!--li><a>Node:</a></li>
             <li name='node-type' class="btn-group" data-toggle="buttons-radio">
             <button name='topics' type="button" class="btn btn-primary active">
               Topics
@@ -43,7 +70,7 @@
             <button name='documents' type="button" class="btn btn-primary">
               Documents
             </button>
-            </li>
+            </li-->
             <li><a>Compare By:</a></li>
             <li name='metric' class="btn-group" data-toggle="buttons-radio">
             <button name='Documents' type="button" class="btn btn-primary active">
@@ -99,7 +126,8 @@
     <div class="topleft-label">Info</div>
     <div id="info-chords">
       <h3 class="topic-name">Click a Topic</h3>
-      <button class="btn btn-primary btn-small view-plot">View Document Plot</button>
+      <!--button class="btn btn-primary btn-small view-plot">View Document Plot</button-->
+      <a href="#" class="btn btn-primary btn-small view-details-btn">View Topic Details</a>
       <table class="metrics table-striped">
         <thead>
           <th>Metric</th>
@@ -131,6 +159,7 @@
     </div>
     <div id="info-force-topics">
       <h3 class="topic-name">Click a Topic</h3>
+      <a href="#" class="btn btn-primary btn-small view-details-btn">View Topic Details</a>
       <table class="metrics table table-condensed table-striped">
         <thead>
           <th>Metric</th>
@@ -173,6 +202,14 @@
 
 {% block endjs %}
 
+<script type="text/template" id="iframe-loading">
+    <div style="position:absolute;top:50%;left:50%;
+                margin-top:-16px;margin-left:-50px;
+                text-align:center">
+        <img src="/site-media/images/large-spinner.gif"/>
+        <h3>loading data</h3>
+    </div>
+</script>
 <script src="/scripts/libs/d3.v3.min.js"></script>
 <script src="/scripts/libs/d3.layout.cloud.js"></script>
 <script>
@@ -186,6 +223,7 @@ var URLS = {
   }
 };
 </script>
+<img style="display:block;visibility:hidden;position: absolute;" src="/site-media/images/large-spinner.gif"/>
 <script src="/scripts/libs/jquery.timeago.js"></script>
 <script src="/scripts/charts/visualization.js"></script>
 <script src="/scripts/charts/chords.js"></script>
