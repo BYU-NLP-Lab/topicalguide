@@ -238,8 +238,13 @@ urlpatterns += patterns(prefix + '.documents.ajax',
     (r'^feeds/update-document-metric-filter/' + dataset + '/' + analysis + '/' + \
             document + '/' + number + '/' + metric + '/' + comp + '/' + value + '$',
         'update_document_metric_filter'),
+    #for document-plot
     url(r'^feeds/document-metrics/' + dataset + '/' + analysis + '$',
         'all_document_metrics', name='ajax-all-document-metrics'),
+    url(r'^feeds/document-plot-filter/' + dataset + '/' + analysis + '$',
+        'filter_fields', name='ajax-document-fields'),
+    url(r'^save-svg/$',
+        'save_svg', name='ajax-save-svg'),
    
 )
 
