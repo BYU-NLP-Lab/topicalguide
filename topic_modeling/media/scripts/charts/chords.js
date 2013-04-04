@@ -34,6 +34,16 @@ var ChordInfo = Backbone.View.extend({
       $('<tr><td>' + word.type__type + '</td><td>' + word.count + '</td></tr>')
         .appendTo(wtable);
     });
+    var details_url = location.href.split('/').slice(0,-1).join('/') + '/topics/' + tid;
+    $('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
+    $('#iframe-modal iframe.theframe').attr('src', details_url);
+    this.$('.view-details-btn')
+        .attr('href', details_url)
+        .click(function (e) {
+            e.preventDefault();
+            $('#iframe-modal').modal('show');
+            return false;
+        });
     this.$el.show();
   },
   show: function () {

@@ -43,6 +43,7 @@ if not os.path.exists(os.path.join(BASE_DIR, 'import_tool/local_settings.py')):
 sys.path.append(BASE_DIR)
 try:
     from import_tool.local_settings import DB_CONFIG, DBTYPE, SQLITE_CONFIG, MYSQL_CONFIG
+    from import_tool import local_settings
 except ImportError as e:
     raise Exception("Error imporing import_tool/local_settings.py: %s" % e)
 
@@ -131,6 +132,7 @@ try:
     INSTALLED_APPS += ('django_extensions',)
 except ImportError:
     print 'Notice: django_extensions not installed. runserver_plus not available'
+    django_extensions = False
 
 try:
     import debug_toolbar
@@ -138,6 +140,13 @@ try:
     MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
 except ImportError:
     print 'Notice: debug_toolbar not installed.'
+
+try:
+    import gunicorn
+    INSTALLED_APPS += ('gunicorn',)
+except ImportError:
+    print 'Notice: guniocorn not installed.'
+    gunicorn = False
 
 INTERNAL_IPS = '127.0.0.1',
 

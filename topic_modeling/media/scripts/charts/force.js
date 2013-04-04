@@ -117,8 +117,18 @@ var ForceInfo = Backbone.View.extend({
     this.$el.hide();
   },
 
-  load_topic: function (info, metrics) {
+  load_topic: function (id, info, metrics) {
     this.$el.hide();
+    var details_url = location.href.split('/').slice(0,-1).join('/') + '/topics/' + id;
+    $('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
+    $('#iframe-modal iframe.theframe').attr('src', details_url);
+    this.$('.view-details-btn')
+        .attr('href', details_url)
+        .click(function (e) {
+            e.preventDefault();
+            $('#iframe-modal').modal('show');
+            return false;
+        });
     this.$('.topic-name').text(info.names[0]);
     var mtable = this.$('table.metrics tbody');
     mtable.empty();
@@ -338,7 +348,7 @@ var ForceViewer = MainView.add(ZoomableView, {
 
   /* click callback for the nodes */
   node_click: function (data, node, topic) {
-    this.info.load_topic(topic, this.data.metrics);
+    this.info.load_topic(data.index, topic, this.data.metrics);
     var s = this.options.full_scale;
     this.zoom.translate([-s*data.x + this.options.width/2,
                         -s*data.y + this.options.height/2]).scale(s);

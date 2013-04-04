@@ -45,6 +45,7 @@ class FancyView(TemplateResponseMixin, View):
                 ['/datasets/%s/analyses/%s' % (kwargs['dataset'], kwargs['analysis']),
                     kwargs['analysis']],
                 ['#', 'fancy']]
+        context['base_url'] = '/'.join(request.get_full_path().split('/')[:-1])
         return context
 
         # context = super(FancyView, self).get_context_data(request, **kwargs)

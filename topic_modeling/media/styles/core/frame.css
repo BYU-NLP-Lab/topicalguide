@@ -31,6 +31,10 @@ nav#header {
     font-family: 'Varela Round', sans-serif;
 }
 
+nav#header > .navbar-inner {
+    border-radius: 0;
+}
+
 footer {
     /*position: absolute;*/
     /*bottom: 0;*/
@@ -182,6 +186,10 @@ button#favs {
 	background-image: url("/site-media/images/openclipart/Star-349834968906.png");
 }
 
+ul#buttons {
+ z-index: 10;
+}
+
 li#fav-this span#buttons {
 	margin: 0;
 	padding: 0;
@@ -202,8 +210,9 @@ nav#header li#favorites > ul {
 	box-shadow: 0.5em 0.2em 0.5em #ccc;
 	margin-right: 0.5em;
 	height: 40em;
-	overflow-y:scroll;
+	overflow-y:auto;
 	overflow-x:hidden;
+	border-radius: 10px;
 }
 
 nav#header li#favorites ul {

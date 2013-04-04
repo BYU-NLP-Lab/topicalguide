@@ -128,6 +128,32 @@ div.topleft-label {
   font-weight: bold;
 }
 
+iframe.theframe {
+  width: 100%;
+  height: 100%;
+}
+
+#iframe-modal {
+    position: fixed;
+    top: 50px;
+    left: 50px;
+    margin-left: 0;
+    right: 50px;
+    width: auto;
+    bottom: 50px;
+}
+
+#iframe-modal .modal-body {
+    position: absolute;
+    max-height: none;
+    padding: 0;
+    overflow-y: hidden;
+    top: 45px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
 /*---------------------* 
  ****** SVG stuff ****** 
  *---------------------*/
