@@ -33,7 +33,7 @@ from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.helpers import word_cloud_widget, set_word_context, get_word_cloud, \
                                                     get_dataset_and_analysis
 from topic_modeling.visualize.documents.views import tabs as doc_tabs
-from topic_modeling.visualize.models import Analysis, Document, Topic, TopicMetaInfo, TopicMetaInfoValue, WordType
+from topic_modeling.visualize.models import Analysis, Document, Topic, TopicMetaInfo, TopicMetaInfoValue, WordType, WordToken
 #from topic_modeling.visualize.topics import topic_attribute
 from topic_modeling.visualize.topics.common import RenameForm, SortTopicForm, top_values_for_attr_topic
 from topic_modeling.visualize.topics.filters import TopicFilterByDocument, TopicFilterByWord, clean_topics_from_session
@@ -120,10 +120,11 @@ class TopicWordView(TopicView):
         topic = context['topic']
         context['word'] = word
         
-        documents = Document.objects.filter(tokens__topic=topic).order_by('document__filename')
+        doc_ids = WordToken.objects.filter(type=word).filter(topics=topic).values_list('document', flat=True)
+        documents = Document.objects.filter(pk__in=doc_ids).distinct()
         docs = []
         for dtw in documents:
-            d = dtw.document
+            d = dtw
             w = WordSummary(word.type)
             set_word_context(w, d, analysis, topic.number)
             docs.append(w)
@@ -132,7 +133,7 @@ class TopicWordView(TopicView):
             w.doc_name = d.filename
             w.doc_id = d.id
         context['documents'] = docs
-        context['breadcrumb'].word(word)
+        #context['breadcrumb'].word(word)
         context['topic_post_link'] = '/words/%s' % word.type
         
         word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
@@ -141,7 +142,9 @@ class TopicWordView(TopicView):
         return context
     
     def _topic_word_tab(self, analysis, word, word_url, images_url):
-        tab = words_tab(analysis, word, word_url, images_url)
+        #words_tab is looking for a session variable for a topic naming scheme
+        #passing an empty dictionary to invoke default naming scheme
+        tab = words_tab(dict(), analysis, word, word_url, images_url)
         tab.title = "Topic Word"
         return tab
     
