@@ -208,6 +208,16 @@ def save_svg(request):
     else:
         return JsonResponse("Not Post")
 
+#This is for populating a filter form on the document plot
+def filter_fields(request, dataset, analysis):
+    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    document = analysis.dataset.documents.all()[0]
+
+    result = {'metrics' : get_document_metric_names(analysis),
+              'metadata' : get_document_metadata_names(document),
+              'topics' : get_topic_names(analysis)}
+    return JsonResponse(result)
+
 #cache the data for 12 hours
 #@cache_page(60 * 60 * 12)
 def all_document_metrics(request, dataset, analysis):
@@ -232,7 +242,7 @@ def all_document_metrics(request, dataset, analysis):
     #TODO: This needs to be able to handle not getting all the documents
     #using filters
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    documents = analysis.dataset.documents.all()
+    documents = analysis.dataset.documents.all()[:500]
     result = {'documents' : {},
               'metrics' : get_document_metric_names(analysis),
               'metadata' : get_document_metadata_names(documents[0]),
@@ -244,20 +254,11 @@ def all_document_metrics(request, dataset, analysis):
         info['name'] = document.filename
         info['id'] = document.id
         info['fields'] = get_document_metadata(document)
+        info['fields'].update(get_document_metrics(document))
         if document.id in document_topics:
             info['fields'].update(document_topics[document.id])
         result['documents'][str(document.id)] = info
 
-    metrics = analysis.documentmetrics.all() 
-    for metric in metrics:
-        metricValues = metric.values.all()
-        metricName = metric.name
-        for metricValue in metricValues:
-            doc_id = metricValue.document.id
-            field= metricValue.value
-            if str(doc_id) in result['documents']:
-                result['documents'][str(doc_id)]['fields'][metricName] = field
-        
     return JsonResponse(result)
 
 def get_document_metadata(document):
@@ -274,6 +275,14 @@ def get_document_metadata_names(document):
     for value in metadata_values:
         metainfo = value.info_type
         result[metainfo.name] = value.type()
+    return result
+
+def get_document_metrics(document):
+    result = {}
+    metric_values = document.documentmetricvalues.all()
+    for value in metric_values:
+        metric_name = value.metric.name
+        result[metric_name] = value.value
     return result
 
 def get_document_metric_names(analysis):
