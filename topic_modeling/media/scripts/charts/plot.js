@@ -81,7 +81,8 @@ var PlotControls = Backbone.View.extend({
     for(var k = 0; k < options.length; k++) {
        select += '<option value="' + options[k] + '">' + options[k] + '</option>';
     }
-    select += '<option value="none" disabled>-----Topics-----</option>';
+    if(topics)
+      select += '<option value="none" disabled>-----Topics-----</option>';
     for (var topic_id in topics)
     {
       var topic_name = topics[topic_id];
@@ -249,6 +250,7 @@ var PlotInfo = Backbone.View.extend({
   /** setup the d3 layout, etc. Everything you can do without data **/
   setup_d3: function () {
     //this rect is for svg saving
+    console.log("setup()");
     var tmp = $("#plot-documents rect");
     tmp.attr("fill", "white");
     this.setUpAxes();
@@ -288,6 +290,7 @@ var PlotInfo = Backbone.View.extend({
   populateFilter: function() {
     //var url = 'http://' + document.location.host + '/feeds/document-metrics/datasets...';
     //hard coded url for now
+    console.log("popluateFilter");
     var url = 'http://localhost:8000/feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics';
     var self = this;
     $.ajax({
@@ -558,11 +561,14 @@ var PlotInfo = Backbone.View.extend({
     console.log(server_data);
     var documents = server_data.documents;
 
+    this.metrics = server_data.metrics;
+    this.metadata = server_data.metadata;
+    this.topics = server_data.topics;
     var cont_fields = Array();
     var nom_fields = Array();
     cont_fields = cont_fields.concat(this.metrics);
     for(var field in this.metadata) {
-      if(this.metadata[field] == 'int' || this.metadata[field] == 'float')
+      if(field == 'year' || this.metadata[field] == 'int' || this.metadata[field] == 'float')
         cont_fields.push(field);
       else
         nom_fields.push(field);
