@@ -55,7 +55,7 @@ class DocumentView(AnalysisBaseView):
                 request.session)
         page_num = request.session.get(sess_key(dataset,'document-page'), 1)
         context['documents'] = documents
-        context['filter'] = filter_form
+        #context['filter'] = filter_form
         context['num_pages'] = num_pages
         context['page_num'] = page_num
     
