@@ -80,7 +80,7 @@ class TopicView(AnalysisBaseView):
         topics = list(set(topics))
         page_num = request.session.get(sess_key(dataset,'topic-page'), 1)
         context['topics'] = topics
-        context['filter'] = filter_form
+        #context['filter'] = filter_form
         context['num_pages'] = num_pages
         context['page_num'] = page_num
         if not topic:
