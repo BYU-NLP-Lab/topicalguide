@@ -119,7 +119,7 @@ class TopicWordView(TopicView):
         analysis = context['analysis']
         topic = context['topic']
         context['word'] = word
-        
+
         doc_ids = WordToken.objects.filter(type=word).filter(topics=topic).values_list('document', flat=True)
         documents = Document.objects.filter(pk__in=doc_ids).distinct()
         docs = []
@@ -137,14 +137,12 @@ class TopicWordView(TopicView):
         context['topic_post_link'] = '/words/%s' % word.type
         
         word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
-        context['tabs'] = [self._topic_word_tab(analysis, word, word_url, context['IMAGES'])]
+        context['tabs'] = [self._topic_word_tab(request.session, analysis, word, word_url, context['IMAGES'])]
         
         return context
     
-    def _topic_word_tab(self, analysis, word, word_url, images_url):
-        #words_tab is looking for a session variable for a topic naming scheme
-        #passing an empty dictionary to invoke default naming scheme
-        tab = words_tab(dict(), analysis, word, word_url, images_url)
+    def _topic_word_tab(self, session, analysis, word, word_url, images_url):
+        tab = words_tab(session, analysis, word, word_url, images_url)
         tab.title = "Topic Word"
         return tab
     
