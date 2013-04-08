@@ -59,7 +59,6 @@ class TopicView(AnalysisBaseView):
         
         #TODO: clean up this context by moving widget-specific entries into widget contexts
         
-        
         context['highlight'] = 'topics_tab'
         context['tab'] = 'topic'
         context['extra_widgets'] = []
@@ -78,9 +77,10 @@ class TopicView(AnalysisBaseView):
             topic = get_object_or_404(Topic, number=topic, analysis=analysis)
         topics = analysis.topics
         topics, filter_form, num_pages = clean_topics_from_session(dataset, topics, request.session, extra_filters, topic)
+        topics = list(set(topics))
         page_num = request.session.get(sess_key(dataset,'topic-page'), 1)
         context['topics'] = topics
-        context['filter'] = filter_form
+        #context['filter'] = filter_form
         context['num_pages'] = num_pages
         context['page_num'] = page_num
         if not topic:

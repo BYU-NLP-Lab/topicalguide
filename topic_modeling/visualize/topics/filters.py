@@ -319,7 +319,7 @@ class TopicFilterByWord(object):
     def apply(self, topic_set):
         if not self.current_word_type:
             return topic_set
-        return topic_set.filter(tokens__type=self.current_word_type)
+        return topic_set.filter(tokens__type=self.current_word_type).distinct()
 #        word = self.analysis.dataset.word_set.get(type=self.current_word)
 #        return topic_set.filter(topicword__word=word)
 
