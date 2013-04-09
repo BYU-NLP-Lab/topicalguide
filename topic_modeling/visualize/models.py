@@ -202,6 +202,9 @@ class Document(models.Model):
         except DocumentMetaInfoValue.DoesNotExist:
             return self.filename
 
+    def word_count(self):
+        return self.tokens.count()
+
     class Meta:
         ordering = ['dataset', 'filename']
 

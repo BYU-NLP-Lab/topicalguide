@@ -429,11 +429,17 @@ def top_documents_widget(topic, topic_url):
     w = Widget('Top Documents', 'topics/top_documents')
 #    topicdocs = topic.documenttopic_set.order_by('-count')[:10]
     w['topic_doc_counts'] = topic.topic_document_counts(sort=True)[:10]
+
+    for obj in w['topic_doc_counts']:
+        doc = Document.objects.get(pk=obj['document__id'])
+        obj['document__count'] = doc.word_count()
+        
     w['topic_url'] = topic_url
     return w
 
 class NoValidCurrentAttribute(Exception): pass
 
+#TODO: Fix this so it populates
 def top_values_widget(request, topic):
     w = Widget('Top Values', 'topics/top_values')
     
