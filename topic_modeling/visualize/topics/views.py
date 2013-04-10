@@ -402,9 +402,9 @@ def topic_map_widget(topic, name_scheme_name):
 def extra_information_tab(request, topic, topic_url):
     tab = Tab("Extra Information", 'topics/extra_information')
     tab.add(metrics_widget(topic))
-    tab.add(metadata_widget(topic))
+    #tab.add(metadata_widget(topic))
     tab.add(top_documents_widget(topic, topic_url))
-    tab.add(top_values_widget(request, topic))
+    #tab.add(top_values_widget(request, topic))
     return tab
 
 def metrics_widget(topic):
