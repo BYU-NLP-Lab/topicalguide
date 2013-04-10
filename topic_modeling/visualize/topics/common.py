@@ -26,7 +26,7 @@
 from django import forms
 
 from topic_modeling.visualize.topics.names import topic_name_with_ns,\
-    current_name_scheme
+    current_name_scheme, get_all_topic_names
 
 
 # Methods
@@ -44,7 +44,8 @@ def sort_topics(topics, sort_by, session):
     elif sort_by == 'name':
         ns = current_name_scheme(session, topics.all()[0].analysis)
         topic_list = list(topics.all())
-        topic_list.sort(key=lambda x: topic_name_with_ns(x, ns))
+        topic_names = get_all_topic_names(ns)
+        topic_list.sort(key=lambda x: topic_names[x.id])
         return topic_list
     elif 'metric:' in sort_by:
         metric_name = sort_by[7:]
