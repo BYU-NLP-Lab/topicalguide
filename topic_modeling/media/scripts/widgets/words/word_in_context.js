@@ -41,9 +41,11 @@ function get_context_for_word(word, num) {
 		new_html += '<td class="lcontext">';
 		new_html += word.left_context;
 		new_html += '</td><td class="word">';
-        new_html += '<a href="' + $.fn.words_url + '/';
+      /*  new_html += '<a href="' + $.fn.words_url + '/';
         new_html += lc_word;
 		new_html += '">'+word.word+'</a></td>';
+    */
+		new_html += word.word+'</td>';
 		new_html += '<td class="rcontext">';
 		new_html += word.right_context;
 		new_html += '</td>';
