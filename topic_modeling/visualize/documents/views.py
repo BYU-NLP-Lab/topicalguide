@@ -29,7 +29,7 @@ from topic_modeling.visualize.common.ui import Widget
 from topic_modeling.visualize.common.ui import WordSummary
 from topic_modeling.visualize.documents.common import SortDocumentForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
-from topic_modeling.visualize.models import Document
+from topic_modeling.visualize.models import Document, TopicName
 from django.shortcuts import get_object_or_404
 
 class DocumentView(AnalysisBaseView):
@@ -136,20 +136,25 @@ def metadata_widget(document):
 
 def top_topics_widget(analysis, document):
     w = Widget('Top Topics', 'documents/top_topics')
-    #FIXME
-#    topicdocs = document.documenttopic_set.filter(topic__analysis=analysis)
-#    total = 0
-#    topics = []
-#    for topicdoc in topicdocs:
-#        total += topicdoc.count
-#    for topicdoc in topicdocs:
-#        t = WordSummary(topicdoc.topic.name, float(topicdoc.count) / total)
-#        topics.append(t)
-#    topics.sort()
-#    w['chart_address'] = get_chart(topics)
+    from django.db import connection
+    c = connection.cursor()
+    c.execute('''SELECT t.id, count(*) as cnt FROM visualize_wordtoken
+            wt JOIN visualize_wordtoken_topics wtt on wtt.wordtoken_id = wt.id
+            JOIN visualize_topic t on t.id = wtt.topic_id WHERE t.analysis_id
+            = %d AND wt.document_id = %d
+            GROUP BY wtt.topic_id ORDER BY cnt DESC'''%(analysis.id,document.id))
+    rows = c.fetchall()[:10]
+    total = 0
+    for obj in rows:
+        total += obj[1]
+    topics = []
+    for obj in rows:
+        topic_name = TopicName.objects.filter(topic__id=obj[0])[0]
+        t = WordSummary(topic_name, float(obj[1]) / total)
+        topics.append(t)
+    w['chart_address'] = get_chart(topics)
     return w
-
-
+        
 # Similar Documents Widgets
 ###########################
 def similar_documents_tab(request, analysis, document):
