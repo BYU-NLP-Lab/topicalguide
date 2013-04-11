@@ -55,5 +55,4 @@ except ImportError:
     print "Docopt not installed. Command-line arguments disabled"
 
 if __name__ == '__main__':
-    run('runserver')
-    #main()
+    main()
