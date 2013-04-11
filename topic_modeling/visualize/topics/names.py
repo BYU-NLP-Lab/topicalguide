@@ -67,6 +67,11 @@ def topic_name_with_ns_id(topic, name_scheme_id):
     ns = TopicNameScheme.objects.get(id=name_scheme_id)
     return topic_name_with_ns(topic, ns)
 
+def get_all_topic_names(name_scheme):
+    '''Fetch a dictionary of {topic_id:topic_name, ...}'''
+    rows = TopicName.objects.filter(name_scheme=name_scheme)
+    return {row.topic_id:row.name for row in rows}
+
 def topic_name_with_ns(topic, name_scheme):
     try:
         name = TopicName.objects.get(topic=topic, name_scheme=name_scheme).name

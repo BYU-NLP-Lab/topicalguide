@@ -41,11 +41,19 @@ function get_context_for_word(word, num) {
 		new_html += '<td class="lcontext">';
 		new_html += word.left_context;
 		new_html += '</td><td class="word">';
+//<<<<<<< HEAD
       /*  new_html += '<a href="' + $.fn.words_url + '/';
         new_html += lc_word;
 		new_html += '">'+word.word+'</a></td>';
     */
 		new_html += word.word+'</td>';
+//=======
+/*
+        new_html += '<a href="' + $.fn.words_url + '/';
+        new_html += lc_word;
+		new_html += '">'+word.word+'</a></td>';
+  */
+//>>>>>>> f8dd438e98e3b38aafd2dff38157010037ca6a96
 		new_html += '<td class="rcontext">';
 		new_html += word.right_context;
 		new_html += '</td>';
