@@ -1,15 +1,13 @@
-django == 1.4.3
-nltk == 2.0.4
-numpy>=1.4
-matplotlib == 1.2.0
-pytest
-scipy
-simplejson
-feedparser
-selenium
+django
+nltk
+numpy
+# optional
 django-debug-toolbar
 django-extensions
-BeautifulSoup4
-# twitter ; required by the nytimes_twitter
+gunicorn
+docopt
+# for testing
+pytest
+selenium
 
 

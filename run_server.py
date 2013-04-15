@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 '''Run the Topical Guide Server
+<<<<<<< HEAD
 
 Usage:
     run_server.py [-h] [--gunicorn | --wsgi | --wsgi-plus ]
@@ -13,7 +14,21 @@ Default functionality is: if local_settings.USE_GUNICORN, try to run with
 gunicorn. If not USE)GUNICORN or gunicorn isn't installed, run with werkzeug
 (if it's available) otherwise use django's normal wsgi server.
 '''
+=======
+>>>>>>> 637a68a8033061b8764613fdde659513d0b3b215
 
+Usage:
+    run_server.py [-h] [--gunicorn | --wsgi | --wsgi-plus ]
+
+-h --help       show help
+--gunicorn      run with gunicorn (dies if not available)
+--wsgi          run using django's normal wsgi server
+--wsgi-plus     run using werkzeug's special server, with awesome debug page
+
+Default functionality is: if local_settings.USE_GUNICORN, try to run with
+gunicorn. If not USE)GUNICORN or gunicorn isn't installed, run with werkzeug
+(if it's available) otherwise use django's normal wsgi server.
+'''
 from topic_modeling import manage
 
 def run(cmd):
@@ -48,6 +63,30 @@ def docopt_main():
     else:
         return plain_main()
 
+<<<<<<< HEAD
+=======
+main = plain_main
+
+def docopt_main():
+    res = docopt(__doc__, version='0.1b')
+    if res['--gunicorn']:
+        if manage.settings.gunicorn:
+            return run('run_gunicorn')
+        else:
+            print "FATAL: Gunicorn not installed"
+            return
+    elif res['--wsgi-plus']:
+        if manage.settings.django_extensions:
+            return run('runserver_plus')
+        else:
+            print 'FATAL: django-extensions not installed. Can\'t use wsgi-plus'
+            return
+    elif res['--wsgi']:
+        return run('runserver')
+    else:
+        return plain_main()
+
+>>>>>>> 637a68a8033061b8764613fdde659513d0b3b215
 try:
     from docopt import docopt
     main = docopt_main
