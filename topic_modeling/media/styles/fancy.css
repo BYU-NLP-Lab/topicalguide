@@ -178,36 +178,6 @@ g.zoom-out rect.cross {
     fill: white;
 }
 
-/** nodes **/
-
-
-g.c_node circle {
-
-}
-
-g.c_leaf circle {
-  fill: #3BC600;
-}
-
-g.c_root circle {
-  stroke: black;
-  stroke-width: 5px;
-  fill: white;
-}
-
-g.c_text {
-  pointer-events: none; }
-
-  g.c_text text {
-    font-family: sans;
-    fill: white;
-    font-weight: bold;
-    text-anchor: middle; }
-
-  g.c_text text tspan.back {
-    stroke: #2C2B1C;
-    stroke-width: 1; }
-
 /** lines **/
 
 /** chord diagram stuff **/

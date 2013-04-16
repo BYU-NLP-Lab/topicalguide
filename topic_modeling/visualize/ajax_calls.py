@@ -30,7 +30,7 @@ from topic_modeling.visualize.charts import TopicMetricChart
 from topic_modeling.visualize.common.helpers import get_word_list
 from topic_modeling.visualize.common.helpers import paginate_list
 #from topic_modeling.visualize.common.ui import WordSummary
-from topic_modeling.visualize.models import WordToken, Dataset, WordType, DocumentMetaInfo
+from topic_modeling.visualize.models import WordToken, Dataset, Document, WordType, DocumentMetaInfo
 #from topic_modeling.visualize.models import Attribute
 #from topic_modeling.visualize.models import Topic
 #from topic_modeling.visualize.models import Word
@@ -38,6 +38,7 @@ from topic_modeling.visualize import sess_key
 from topic_modeling.visualize.topics.names import set_current_name_scheme_id
 from django.views.decorators.http import require_GET
 from topic_modeling.visualize.common.http_responses import JsonResponse
+from django.db.models.aggregates import Count
 
 
 
@@ -68,6 +69,41 @@ def word_in_context(request, dataset, analysis, word, topic=None):
     word_in_context['doc_id'] = doc.id
     
     return JsonResponse(word_in_context)
+    
+@require_GET
+def words_in_document_given_topic(request, dataset, analysis, document, topic):
+    dataset = Dataset.objects.get(name=dataset)
+    document = Document.objects.get(id=int(document), dataset=int(dataset.id))
+    analysis = dataset.analyses.get(name=analysis)
+    topic = analysis.topics.get(number=int(topic))
+    
+    words = document.tokens.values('type__type').filter(topics=topic).annotate(count=Count('type__type')).order_by('-count')[0:10]
+    return JsonResponse(list(words))
+
+@require_GET
+def word_in_contexts_in_document(request, document, word):
+    document = Document.objects.get(id=document)
+    word_type = WordType.objects.get(type=word)
+    tokens = document.tokens.filter(type=word_type)
+    tokens = list(tokens)
+    
+    word_in_contexts = []
+    while len(word_in_contexts) < 5 and len(tokens) > 0:
+        index = random.randint(0, len(tokens)-1)
+        token = tokens.pop(index)
+        
+        context = document.tokens.all()[max(0, token.token_index - 5):token.token_index + 5 + 1]
+        left_context = ' '.join([tok.type.type for tok in context[:5]])
+        right_context = ' '.join([tok.type.type for tok in context[5 + 1:]])
+        
+        word_in_context = dict()
+        word_in_context['word'] = token.type.type
+        word_in_context['left_context'] = left_context
+        word_in_context['right_context'] = right_context
+        
+        word_in_contexts.append(word_in_context)
+    
+    return JsonResponse(word_in_contexts)
 
 
 # Plots tab ajax calls

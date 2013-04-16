@@ -26,7 +26,6 @@ def plain_main():
     if manage.settings.django_extensions:
         return run('runserver_plus')
     return run('runserver')
-
 main = plain_main
 
 def docopt_main():

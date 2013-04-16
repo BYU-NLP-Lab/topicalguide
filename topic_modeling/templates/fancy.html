@@ -3,6 +3,7 @@
 {% block css %}
 <link href="/styles/fancy.css" rel="stylesheet">
 <link href="/styles/fancy-force.css" rel="stylesheet">
+<link href="/styles/fancy-circle.css" rel="stylesheet">
 <link href="/styles/fancyPlot.css" rel="stylesheet">
 <link href="/styles/jquery-ui.css" rel="stylesheet">
 {% endblock %}
@@ -189,7 +190,23 @@
         </tbody>
       </table>
     </div>
-    <div id="info-plot-documents"></div>
+	<div id="info-circle-topics">
+      <h4 id="circle-topic-name">Click a Topic</h4>
+	  <a href="#" class="btn btn-primary btn-small view-topic-details-btn">View Topic Details</a>
+      <div id="circle-topic-info"></div>
+	  <br/>
+	  <h4 id="circle-document-name">Click a Document</h4>
+	  <a href="#" class="btn btn-primary btn-small view-document-details-btn">View Document Details</a>
+      <div id="circle-document-info"></div>
+	  <br/>
+	  <h4 id="circle-word-name">Click a Word</h4>
+	  <a href="#" class="btn btn-primary btn-small view-word-details-btn">View Word Details</a>
+      <div id="circle-word-info"></div>
+    </div>
+    <div id="info-plot-documents">
+      <a href="#" class="btn btn-primary btn-small view-details-btn">View Document Details</a>
+      <div class="contents"></div>
+    </div>
   </div> <!-- end of info -->
   <div id="refresh">
     <button name='refresh' type="button" class="btn btn-primary btn-mini">
