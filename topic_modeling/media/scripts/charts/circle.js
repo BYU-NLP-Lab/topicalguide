@@ -65,13 +65,13 @@ var CircleInfo = Backbone.View.extend({
 		this.$('#circle-topic-name').text("Topic: " + topic.name);
 		
 		var details_url = location.href.split('/').slice(0,-1).join('/') + '/topics/' + topic.topicID;
-		$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
-		$('#iframe-modal iframe.theframe').attr('src', details_url);
 		this.$('.view-topic-details-btn')
 			.show()
 			.attr('href', details_url)
 			.click(function (e) {
 				e.preventDefault();
+				$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
+				$('#iframe-modal iframe.theframe').attr('src', details_url);
 				$('#iframe-modal').modal('show');
 				return false;
 			});
@@ -95,16 +95,16 @@ var CircleInfo = Backbone.View.extend({
 		this.$('#circle-document-name').text("Document: " + document.name);
 		
 		var details_url = location.href.split('/').slice(0,-1).join('/') + '/documents/' + document.documentID;
-		$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
-		$('#iframe-modal iframe.theframe').attr('src', details_url);
 		this.$('.view-document-details-btn').show()
 			.attr('href', details_url)
 			.click(function (e) {
 				e.preventDefault();
+				$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
+				$('#iframe-modal iframe.theframe').attr('src', details_url);
 				$('#iframe-modal').modal('show');
 				return false;
 			});
-		
+			
 		this.$('#circle-word-name').show();
 		this.$('#circle-word-info').show();
 	},
@@ -122,18 +122,17 @@ var CircleInfo = Backbone.View.extend({
 		this.$('#circle-word-name').text("Word: " + word.name);
 		
 		var details_url = location.href.split('/').slice(0,-1).join('/') + '/words/' + word.name;
-		$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
-		$('#iframe-modal iframe.theframe').attr('src', details_url);
 		this.$('.view-word-details-btn').show()
 			.attr('href', details_url)
 			.click(function (e) {
 				e.preventDefault();
+				$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
+				$('#iframe-modal iframe.theframe').attr('src', details_url);
 				$('#iframe-modal').modal('show');
 				return false;
 			});
 		
 		this.load_contexts(word);
-		// load some handy word info
 	},
 	
 	remove_word: function(word) {
@@ -173,8 +172,8 @@ var CircleInfo = Backbone.View.extend({
 					return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
 				})
 				.text(function(d) { return d.text; });
-
-			g.attr("transform", "translate(" + 145 + "," + 105 + ")");
+			
+			g.attr("transform", transform(145, 105));
 		}
 	},
 	
@@ -187,15 +186,12 @@ var CircleInfo = Backbone.View.extend({
 			.attr('id', '#circle-word-contexts');
 		
 		contextsDiv.append('p')
-			.html('<i>Loading...</i>');
+			.html('<i>Loading contexts...</i>');
 			
 		var link = "/feeds/word-in-contexts-in-document";
 				link += "/documents/" + word.documentID;
 				link += "/words/" + word.name;
-			
-		//	(r'^feeds/word-in-contexts-in-document/' + document + '/' + word + '$',
-        //'word_in_contexts_in_document'),
-			
+		
 		d3.json(link, function (data) {
 			if (!data) return;
 			
@@ -625,51 +621,10 @@ var CircleViewer = MainView.add({
 					});
 			});
 		
+		this.info.remove_document();
 		this.info.load_document(document);
 		this.create_event_layer(wordNodes, 'word', function(d) { that.info.remove_word(); that.info.load_word(d); });
 
 		return wordNodes;
 	}
 });
-
-
-
-/*
-data
-   matrix: Array[100]
-      0: Array[100]
-      ...
-   metrics: Object
-      Document Entropy: Object
-         avg: fp
-         max: fp
-         min: fp
-      Number of tokens: Object
-         ...
-      Number of types: Object
-         ...
-      Word Entropy: Object
-         ...
-   topics: Array[100]
-      0: Object
-         documents: Array[10]
-            0: Object
-               count: int
-               document__filename: str
-               document__id: int
-            ...
-         metrics: Object
-            Document Entropy: fp
-            Number of tokens: int
-            Number of types: int
-            Word Entropy: fp
-         names: Array[1]
-            0: str
-         topics: Array[10]
-            0: int
-            ...
-         words: Array[10]
-            0: Object
-               count: int
-               type__type: str
-*/
