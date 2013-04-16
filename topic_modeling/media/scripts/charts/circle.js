@@ -63,6 +63,19 @@ var CircleInfo = Backbone.View.extend({
 
 	load_topic: function (topic) {
 		this.$('#circle-topic-name').text("Topic: " + topic.name);
+		
+		var details_url = location.href.split('/').slice(0,-1).join('/') + '/topics/' + topic.topicID;
+		$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
+		$('#iframe-modal iframe.theframe').attr('src', details_url);
+		this.$('.view-topic-details-btn')
+			.show()
+			.attr('href', details_url)
+			.click(function (e) {
+				e.preventDefault();
+				$('#iframe-modal').modal('show');
+				return false;
+			});
+		
 		this.load_word_cloud(topic);
 		
 		this.$('#circle-document-name').show();
@@ -71,6 +84,7 @@ var CircleInfo = Backbone.View.extend({
 
 	remove_topic: function() {
 		this.$('#circle-topic-name').text("Click a Topic");
+		this.$('.view-topic-details-btn').hide();
 		this.$('#circle-topic-info').empty();
 		
 		this.$('#circle-document-name').hide();
@@ -79,7 +93,17 @@ var CircleInfo = Backbone.View.extend({
 	
 	load_document: function(document) {
 		this.$('#circle-document-name').text("Document: " + document.name);
-		// load some handy document info
+		
+		var details_url = location.href.split('/').slice(0,-1).join('/') + '/documents/' + document.documentID;
+		$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
+		$('#iframe-modal iframe.theframe').attr('src', details_url);
+		this.$('.view-document-details-btn').show()
+			.attr('href', details_url)
+			.click(function (e) {
+				e.preventDefault();
+				$('#iframe-modal').modal('show');
+				return false;
+			});
 		
 		this.$('#circle-word-name').show();
 		this.$('#circle-word-info').show();
@@ -87,6 +111,7 @@ var CircleInfo = Backbone.View.extend({
 	
 	remove_document: function() {
 		this.$('#circle-document-name').text("Click a Document");
+		this.$('.view-document-details-btn').hide();
 		this.$('#circle-document-info').empty();
 	
 		this.$('#circle-word-name').hide();
@@ -95,12 +120,25 @@ var CircleInfo = Backbone.View.extend({
 	
 	load_word: function(word) {
 		this.$('#circle-word-name').text("Word: " + word.name);
+		
+		var details_url = location.href.split('/').slice(0,-1).join('/') + '/words/' + word.name;
+		$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
+		$('#iframe-modal iframe.theframe').attr('src', details_url);
+		this.$('.view-word-details-btn').show()
+			.attr('href', details_url)
+			.click(function (e) {
+				e.preventDefault();
+				$('#iframe-modal').modal('show');
+				return false;
+			});
+		
 		this.load_contexts(word);
 		// load some handy word info
 	},
 	
 	remove_word: function(word) {
 		this.$('#circle-word-name').text("Click a Word");
+		this.$('.view-word-details-btn').hide();
 		this.$('#circle-word-info').empty();
 	},
 
