@@ -33,7 +33,7 @@ from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.helpers import word_cloud_widget, set_word_context, get_word_cloud, \
                                                     get_dataset_and_analysis
 from topic_modeling.visualize.documents.views import tabs as doc_tabs
-from topic_modeling.visualize.models import Analysis, Document, Topic, TopicMetaInfo, TopicMetaInfoValue, WordType
+from topic_modeling.visualize.models import Analysis, Document, Topic, TopicMetaInfo, TopicMetaInfoValue, WordType, WordToken
 #from topic_modeling.visualize.topics import topic_attribute
 from topic_modeling.visualize.topics.common import RenameForm, SortTopicForm, top_values_for_attr_topic
 from topic_modeling.visualize.topics.filters import TopicFilterByDocument, TopicFilterByWord, clean_topics_from_session
@@ -59,7 +59,6 @@ class TopicView(AnalysisBaseView):
         
         #TODO: clean up this context by moving widget-specific entries into widget contexts
         
-        
         context['highlight'] = 'topics_tab'
         context['tab'] = 'topic'
         context['extra_widgets'] = []
@@ -78,9 +77,10 @@ class TopicView(AnalysisBaseView):
             topic = get_object_or_404(Topic, number=topic, analysis=analysis)
         topics = analysis.topics
         topics, filter_form, num_pages = clean_topics_from_session(dataset, topics, request.session, extra_filters, topic)
+        topics = list(set(topics))
         page_num = request.session.get(sess_key(dataset,'topic-page'), 1)
         context['topics'] = topics
-        context['filter'] = filter_form
+        #context['filter'] = filter_form
         context['num_pages'] = num_pages
         context['page_num'] = page_num
         if not topic:
@@ -119,11 +119,12 @@ class TopicWordView(TopicView):
         analysis = context['analysis']
         topic = context['topic']
         context['word'] = word
-        
-        documents = Document.objects.filter(tokens__topic=topic).order_by('document__filename')
+
+        doc_ids = WordToken.objects.filter(type=word).filter(topics=topic).values_list('document', flat=True)
+        documents = Document.objects.filter(pk__in=doc_ids).distinct()
         docs = []
         for dtw in documents:
-            d = dtw.document
+            d = dtw
             w = WordSummary(word.type)
             set_word_context(w, d, analysis, topic.number)
             docs.append(w)
@@ -132,16 +133,16 @@ class TopicWordView(TopicView):
             w.doc_name = d.filename
             w.doc_id = d.id
         context['documents'] = docs
-        context['breadcrumb'].word(word)
+        #context['breadcrumb'].word(word)
         context['topic_post_link'] = '/words/%s' % word.type
         
         word_url = '%s/%d/words/' % (context['topics_url'], topic.number)
-        context['tabs'] = [self._topic_word_tab(analysis, word, word_url, context['IMAGES'])]
+        context['tabs'] = [self._topic_word_tab(request.session, analysis, word, word_url, context['IMAGES'])]
         
         return context
     
-    def _topic_word_tab(self, analysis, word, word_url, images_url):
-        tab = words_tab(analysis, word, word_url, images_url)
+    def _topic_word_tab(self, session, analysis, word, word_url, images_url):
+        tab = words_tab(session, analysis, word, word_url, images_url)
         tab.title = "Topic Word"
         return tab
     
@@ -401,9 +402,9 @@ def topic_map_widget(topic, name_scheme_name):
 def extra_information_tab(request, topic, topic_url):
     tab = Tab("Extra Information", 'topics/extra_information')
     tab.add(metrics_widget(topic))
-    tab.add(metadata_widget(topic))
+    #tab.add(metadata_widget(topic))
     tab.add(top_documents_widget(topic, topic_url))
-    tab.add(top_values_widget(request, topic))
+    #tab.add(top_values_widget(request, topic))
     return tab
 
 def metrics_widget(topic):
@@ -428,11 +429,17 @@ def top_documents_widget(topic, topic_url):
     w = Widget('Top Documents', 'topics/top_documents')
 #    topicdocs = topic.documenttopic_set.order_by('-count')[:10]
     w['topic_doc_counts'] = topic.topic_document_counts(sort=True)[:10]
+
+    for obj in w['topic_doc_counts']:
+        doc = Document.objects.get(pk=obj['document__id'])
+        obj['document__count'] = doc.word_count()
+        
     w['topic_url'] = topic_url
     return w
 
 class NoValidCurrentAttribute(Exception): pass
 
+#TODO: Fix this so it populates
 def top_values_widget(request, topic):
     w = Widget('Top Values', 'topics/top_values')
     

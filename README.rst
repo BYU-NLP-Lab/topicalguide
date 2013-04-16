@@ -70,6 +70,22 @@ Start up the web server with the following command::
 
 and then open a web browser and navigate to http://localhost:8000/.
 
+Dependencies
+-------------
+
+- python
+   - django
+   - nltk
+   - numpy
+
+   [optional]
+   - django-extensions
+   - gunicorn
+   - django-debug-toolbar
+   - docopt
+
+- java [for mallet]
+
 POSTGRESQL
 ==========
 

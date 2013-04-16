@@ -848,7 +848,7 @@ if 'task_metrics' not in locals():
     def task_metrics():
         return {'actions':None, 'task_dep': ['analysis_import', 'topic_metrics', 'pairwise_topic_metrics', 'document_metrics', 'pairwise_document_metrics']}
 
-def task_hash_java():
+def disabled_task_hash_java():
     def _cmd_output(cmd):
         return Popen(cmd, shell=True, bufsize=512, stdout=PIPE).stdout.read()
 
@@ -864,7 +864,7 @@ def task_hash_java():
     return {'actions': [(_directory_recursive_hash, [c['java_base']])]}
 
 if 'task_compile_java' not in locals():
-    def task_compile_java():
+    def disabled_task_compile_java():
         actions = ["cd {0} && ant -lib lib".format(c['java_base'])]
         result_deps = ['hash_java']
         clean = ['rm -rf ' + c['java_bin']]

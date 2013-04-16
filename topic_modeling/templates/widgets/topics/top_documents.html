@@ -38,7 +38,7 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	        <td class="key"><a href="{{topic_url}}/documents/{{ topicdoc.document__id }} ">{{ topicdoc.document__filename }}</a></td>
 	        <td class="value">{{ topicdoc.count }}</td>
 	        {# FIXME #}
-	        {#<td class="value">{{ topicdoc.count|divide:doc.document.word_count }}</td>#}
+	        <td class="value">{{ topicdoc.count|divide:topicdoc.document__count }}</td>
 	    </tr>
 	    {% endfor %}
     </tbody>

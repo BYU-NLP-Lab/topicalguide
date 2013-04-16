@@ -25,7 +25,7 @@ from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.ui import BreadCrumb, WordSummary, \
     WordFindForm, Tab, Widget
 from topic_modeling.visualize.common.helpers import get_word_list, paginate_list
-from topic_modeling.visualize.models import WordType, Document, Topic
+from topic_modeling.visualize.models import WordType, Document, Topic, WordToken
 from topic_modeling.visualize import sess_key
 from django.db.models.aggregates import Count
 from topic_modeling.visualize.topics.names import current_name_scheme, topic_name_with_ns
@@ -75,7 +75,7 @@ def words_tab(session, analysis, word, word_url, images_url):
     
     tab.add(top_documents_widget(analysis.dataset, word))
     tab.add(top_topics_widget(session, analysis, word))
-    tab.add(total_count_widget(word))
+    tab.add(total_count_widget(word, analysis.dataset))
     tab.add(word_in_context_widget(word, word_url, images_url))
     
     return tab
@@ -124,9 +124,12 @@ def top_topics_widget(session, analysis, word):
     w['chart_url'] = get_chart(topics)
     return w
 
-def total_count_widget(word):
+def total_count_widget(word, dataset):
     w = Widget('Total Count', 'words/total_count')
+    cnt = WordToken.objects.filter(type=word).filter(document__dataset=dataset).count()
+    count = cnt
     w['word'] = word
+    w['count'] = count
     return w
 
 def word_in_context_widget(word, word_url, images_url):
