@@ -1,7 +1,7 @@
 import os
 import sys
 
-path = '/src/topicalguide'
+path = '/srv/topicalguide'
 if path not in sys.path:
     sys.path.append(path)
 
