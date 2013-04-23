@@ -122,9 +122,19 @@ def get_topic_info_sqa(tid, t, bridge):
     names = n.select(n.c.topic_id == tid).execute().fetchall()
     from django.db import connection
     c = connection.cursor()
-    c.execute('select document_id, d.filename, count(*) dc from visualize_wordtoken_topics join visualize_wordtoken wt on wt.id == wordtoken_id join visualize_document d on d.id == wt.document_id where topic_id == 1 group by wt.document_id order by -dc')
+    c.execute('''select document_id, d.filename, count(*) dc from visualize_wordtoken_topics
+                    join visualize_wordtoken wt on wt.id == wordtoken_id
+                    join visualize_document d on d.id == wt.document_id
+                        where topic_id == 1
+                        group by wt.document_id
+                        order by -dc''')
     documents = c.fetchmany(10)
-    c.execute('select wtp.type, count(*) dc from visualize_wordtoken_topics wtt join visualize_wordtoken wt on wt.id == wtt.wordtoken_id join visualize_wordtype wtp on wtp.id == type_id where topic_id == 1 group by type_id order by -dc')
+    c.execute('''select wtp.type, count(*) dc from visualize_wordtoken_topics wtt
+                    join visualize_wordtoken wt on wt.id == wtt.wordtoken_id
+                    join visualize_wordtype wtp on wtp.id == type_id
+                        where topic_id == 1
+                        group by type_id
+                        order by -dc''')
     words = c.fetchmany(10)
     info = {
         'name': [name.name for name in names],

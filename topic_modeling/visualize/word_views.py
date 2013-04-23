@@ -142,3 +142,4 @@ def word_in_context_widget(word, word_url, images_url):
     w['IMAGES'] = images_url
     w['words'] = words
     return w
+
