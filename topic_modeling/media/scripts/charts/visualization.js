@@ -71,6 +71,9 @@ var SelectUI = function (el, items) {
 };
 
 var InfoView = Backbone.View.extend({
+  initialize: function () {
+    this.$el.hide();
+  },
   preload_popover: function (url) {
     // reset the innards to just be loading
     $('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
@@ -83,7 +86,11 @@ var InfoView = Backbone.View.extend({
       $('#iframe-modal').modal('show');
       return false;
     });
-  }
+  },
+  show: function () {
+    //this.$el.show();
+  },
+  hide: function () { this.$el.hide(); },
 });
 
 /** This view manages the content of the page
@@ -155,9 +162,13 @@ var MainView = Backbone.View.extend({
     if (Storage && localStorage[url]) {
       try {
         this.cache[url] = JSON.parse(localStorage[url]);
-        // using a timeout so the loading indicator will show before any long
-        // JS processing freezes the UI
-        return setTimeout(function () {callback(that.cache[url])}, 100);
+        if (this.cache[url]) {
+          // using a timeout so the loading indicator will show before any long
+          // JS processing freezes the UI
+          return setTimeout(function () {callback(that.cache[url])}, 100);
+        } else {
+          this.reload(url, callback);
+        }
       } catch (e) {
         console.log('loading error: ' + e);
         if (confirm('An error occurred loading cached data: reload?')) {
@@ -321,6 +332,7 @@ var VisualizationView = Backbone.View.extend({
   setup_info: function (info) {
     if (this.info_class) {
       this.info = new this.info_class({el: info, parent: this});
+      this.info.hide();
     }
   },
 
@@ -328,6 +340,7 @@ var VisualizationView = Backbone.View.extend({
   setup_controls: function (controls) {
     if (this.controls_class) {
       this.controls = new this.controls_class({el: controls, parent: this});
+      this.controls.hide();
     }
   },
 

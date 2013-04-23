@@ -120,11 +120,14 @@ var PlotInfo = InfoView.extend({
 
   initialize: function () {
    this.docDisplay = this.$('>.contents');
+   this.$el.hide();
   },
 
   clear: function () { },
 
-  show: function () { this.$el.show(); },
+  show: function () {
+      //this.$el.show();
+  },
   
   hide: function () { this.$el.hide(); },
 
@@ -165,6 +168,7 @@ var PlotInfo = InfoView.extend({
           '<td valign="top">' + this.formatField(topic.val) + '</td></tr>';
     }
     table.html(tableHtml);
+    this.$el.show();
   },
 
   //accesses the view via this.parent which is set during view setup
@@ -199,6 +203,7 @@ var PlotInfo = InfoView.extend({
     }
     tableHtml += '</tbody>';
     table.html(tableHtml);
+    this.$el.show();
   },
 
   formatField: function(n) {
