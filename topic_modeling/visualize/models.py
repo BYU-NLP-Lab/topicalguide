@@ -102,6 +102,7 @@ class Document(models.Model):
 
     def raw_text(self):
         '''Get the document's raw text from the ... what?'''
+        raise NotImplemented
 
     def get_context_for_word(self, word_to_find, analysis, topic=None):
         '''Get the word in context
@@ -146,8 +147,8 @@ class Document(models.Model):
         return ' '.join(parts)
 
     def text(self, kwic=None):
-        file_dir = self.dataset.files_dir
-        text = open(os.path.join(file_dir, self.filename), 'r').read().decode('utf-8')
+        #file_dir = self.dataset.files_dir
+        text = open(self.full_path, 'r').read().decode('utf-8')
         if kwic:
             beg_context, end_context = self.get_kwic_context_ends(kwic, text)
             if beg_context >= 0:

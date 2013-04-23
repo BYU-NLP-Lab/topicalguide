@@ -180,7 +180,7 @@ def all_documents_topics_count(request, dataset, analysis):
     analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
     from django.db import connection
     c = connection.cursor()
-    c.execute('''select wt.document_id, t.id, count(*) from visualize_wordtoken
+    c.execute('''select wt.document_id, wtt.topic_id, count(*) from visualize_wordtoken
             wt join visualize_wordtoken_topics wtt on wtt.wordtoken_id = wt.id
             join visualize_topic t on t.id = wtt.topic_id where t.analysis_id
             = %d group by wtt.topic_id, wt.document_id'''%(analysis.id,))

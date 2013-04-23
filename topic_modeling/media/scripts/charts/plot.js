@@ -303,7 +303,7 @@ var PlotInfo = Backbone.View.extend({
     //var url = 'http://' + document.location.host + '/feeds/document-metrics/datasets...';
     //hard coded url for now
     console.log("popluateFilter");
-    var url = 'http://localhost:8000/feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics';
+    var url = '/feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics';
     var self = this;
     $.ajax({
       method: 'GET',
