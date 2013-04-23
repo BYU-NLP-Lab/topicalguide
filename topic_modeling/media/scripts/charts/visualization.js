@@ -70,6 +70,22 @@ var SelectUI = function (el, items) {
   return this;
 };
 
+var InfoView = Backbone.View.extend({
+  preload_popover: function (url) {
+    // reset the innards to just be loading
+    $('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
+    // set the url
+    $('#iframe-modal iframe.theframe').attr('src', url + '?in_iframe=true');
+    this.$('.view-details-btn')
+    .attr('href', url)
+    .click(function (e) {
+      e.preventDefault();
+      $('#iframe-modal').modal('show');
+      return false;
+    });
+  }
+});
+
 /** This view manages the content of the page
  *
  * It also handles the request and storage of data.

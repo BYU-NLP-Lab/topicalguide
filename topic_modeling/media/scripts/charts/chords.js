@@ -2,7 +2,7 @@
  * Part of Topical Guide (c) BYU 2013
  */
 
-var ChordInfo = Backbone.View.extend({
+var ChordInfo = InfoView.extend({
   initialize: function () {
     this.$('button.view-plot').click(_.bind(this.view_plot, this));
     this.$el.hide();
@@ -34,16 +34,10 @@ var ChordInfo = Backbone.View.extend({
       $('<tr><td>' + word.type__type + '</td><td>' + word.count + '</td></tr>')
         .appendTo(wtable);
     });
+    // preload the popover
     var details_url = location.href.split('/').slice(0,-1).join('/') + '/topics/' + tid;
-    $('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
-    $('#iframe-modal iframe.theframe').attr('src', details_url);
-    this.$('.view-details-btn')
-        .attr('href', details_url)
-        .click(function (e) {
-            e.preventDefault();
-            $('#iframe-modal').modal('show');
-            return false;
-        });
+    this.preload_popover(details_url);
+    // show yourself
     this.$el.show();
   },
   show: function () {

@@ -47,6 +47,7 @@ class RootView(TemplateResponseMixin, View):
         context['nlp_lab_url'] = "http://nlp.cs.byu.edu"
         context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
         context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
+        context['in_iframe'] = 'in_iframe' in request.GET
 
         # Favorites Stuff
         # Do what's necessary to keep the session from ever expiring (assuming the user checks in every 10 years or so
