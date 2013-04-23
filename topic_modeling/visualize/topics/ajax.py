@@ -115,25 +115,6 @@ def similar_for_topic(analysis, topic, metric, max=10):
     return topic.pairwisetopicmetricvalue_originating.\
             select_related().filter(metric=metric).order_by('-value')[1:1 + max]
 
-def get_topic_info_sqa(tid, t, bridge):
-    n = bridge[TopicName]
-    tm = bridge[TopicMetric]
-    tmv = bridge[TopicMetricValue]
-    names = n.select(n.c.topic_id == tid).execute().fetchall()
-    from django.db import connection
-    c = connection.cursor()
-    c.execute('select document_id, d.filename, count(*) dc from visualize_wordtoken_topics join visualize_wordtoken wt on wt.id == wordtoken_id join visualize_document d on d.id == wt.document_id where topic_id == 1 group by wt.document_id order by -dc')
-    documents = c.fetchmany(10)
-    c.execute('select wtp.type, count(*) dc from visualize_wordtoken_topics wtt join visualize_wordtoken wt on wt.id == wtt.wordtoken_id join visualize_wordtype wtp on wtp.id == type_id where topic_id == 1 group by type_id order by -dc')
-    words = c.fetchmany(10)
-    info = {
-        'name': [name.name for name in names],
-        'metrics': [(tt.name, tt.value) for tt in tmv.join(tm).select(tmv.c.topic_id == tid).execute()],
-        'documents': documents,
-        'words': words
-    }
-    return info
-
 """
 ## trying to do an aggregate solution ... not substantially faster
 def get_topic_infos(aid):
@@ -156,20 +137,6 @@ def get_topic_info(topic):
         'words': list(topic.topic_word_counts(sort=True)[:10]),
     }
     return info
-
-def get_metrics_sqa(aid, b):
-    tm = b[TopicMetric]
-    tmv = b[TopicMetricValue]
-    metrics = tm.select(tm.c.analysis_id == aid).execute().fetchall()
-    minfo = dict((m.name, 0) for m in metrics)
-    mnames = dict((m.id, m.name) for m in metrics)
-    mids = [m.id for m in metrics]
-    from django.db import connection
-    c = connection.cursor()
-    c.execute('select metric_id, min(value), max(value), avg(value) from visualize_topicmetricvalue where metric_id in (%s) group by metric_id' % ', '.join(str(mid) for mid in mids))
-    rows = c.fetchall()
-    minfo = dict((mnames[r[0]], r[1:]) for r in rows)
-    return minfo
 
 def get_metrics(analysis):
     res = {}
@@ -225,75 +192,6 @@ def all_similar_topics(request, dataset, analysis, measure):
         for value in similar_for_topic(analysis, topic, measure):
             matrix[topic.number][value.topic2.number] = value.value
             tinfo['topics'].append(value.topic2.number)
-        info.append(tinfo)
-
-    return JsonResponse({'matrix': matrix, 'topics': info, 'metrics': metrics})
-
-# cache this for 12 hours
-# @cache_page(60 * 60 * 12)
-def all_similar_topics_sqa(request, dataset, analysis, measure):
-    ## this is me trying to get speedups by using sqlalchemy and raw execution
-    ## ... didn't work
-    '''An ajax view for listing a matrix of pairwise topic correlation
-    
-    @url /feeds/similar-topics/@dataset/@analysis/@measure$
-    @name all-similar-topics
-
-    measure = name of a pairwise topic matric
-    dataset = name of a dataset
-    analysis = name of an analysis for the dataset
-
-    Returns:
-        {
-            'matrix': m x m matrix (m = number of topics in the analysis)
-                      where matrix[i][j] = correlation between topic i and topic j,
-            'topics': [{
-                'names': list of topic names,
-                'metrics': dict of metric values,
-                'documents': list of top 10 documents,
-                'words': list of the top 10 words,
-                'topics': list of top 10 correlated topics
-            }, ... for each topic (where index = topic.number)],
-            'metrics': get_metrics(analysis)
-        }
-    '''
-    import sqlalchemy
-    from sqlalchemy import and_, or_, not_, func
-    from sabridge import Bridge
-    bridge = Bridge()
-    a = bridge[Analysis]
-    d = bridge[Dataset]
-    t = bridge[Topic]
-    p = bridge[PairwiseTopicMetric]
-    pv = bridge[PairwiseTopicMetricValue]
-
-    analysis_id = a.join(d).select(a.c.name == analysis,
-                                   d.c.name == dataset).execute().fetchone()[0]
-    topics = t.select(t.c.analysis_id == analysis_id).order_by(t.c.number).execute().fetchall()
-    tlookup = dict((t.id, t.number) for t in topics)
-    measure_id = p.select(and_(p.c.analysis_id == analysis_id,
-                            func.lower(p.c.name) == measure.lower())).execute().fetchone()[0]
-
-    '''
-    ns = current_name_scheme(request.session, analysis)
-    ret_val = dict()
-    topics = list(analysis.topics.all().order_by('number'))
-    measure = analysis.pairwisetopicmetrics.get(name__iexact=measure)
-    '''
-
-    matrix = [[0 for x in range(len(topics))] for x in range(len(topics))]
-    info = []
-    metrics = get_metrics_sqa(analysis_id, bridge)
-
-    num_to_get = 10
-    for tid, number, aid in topics:
-        tinfo = get_topic_info_sqa(tid, t, bridge)
-        tinfo['topics'] = []
-        similar = pv.select(and_(pv.c.topic1_id == tid,
-            pv.c.metric_id == measure_id)).order_by(-pv.c.value).execute().fetchmany(num_to_get + 1)[1:]
-        for value in similar:
-            matrix[tid][tlookup[value.topic2_id]] = value.value
-            tinfo['topics'].append(tlookup[value.topic2_id])
         info.append(tinfo)
 
     return JsonResponse({'matrix': matrix, 'topics': info, 'metrics': metrics})

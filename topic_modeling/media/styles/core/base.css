@@ -78,13 +78,14 @@ table td.value {
 	padding-left: 2em;
 }
 
+/**
 table tr:nth-child(odd) {
 	background-color: #ffffff;
-	/*background-color: #fff6d0;*/
 }
 table tr:nth-child(even) {
 	background-color: #fffcef
 }
+    */
 
 /***** Unordered Lists *****/
 ul.vertical {

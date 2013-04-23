@@ -167,7 +167,8 @@ def attribute_info_tab(analysis, attribute, value, analysis_url, attributes_url)
     words = get_words(attribute, value, attributes_url, token_count)
     
     value_type = attribute.values.all()[0].type() + '_value'
-    tab.add(metrics_widget(analysis.dataset, attribute, value, value_type, token_count))
+    metrics = metrics_widget(analysis.dataset, attribute, value, value_type, token_count)
+    tab.add(metrics)
     tab.add(top_words_chart_widget(words))
     tab.add(word_cloud_widget(words))
 #    ngram_widget = ngram_word_cloud_widget(attribute, value, attributes_url, token_count)
