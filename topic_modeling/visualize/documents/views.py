@@ -31,6 +31,8 @@ from topic_modeling.visualize.documents.common import SortDocumentForm
 from topic_modeling.visualize.documents.filters import clean_docs_from_session
 from topic_modeling.visualize.models import Document, TopicName
 from django.shortcuts import get_object_or_404
+import logging
+logger = logging.getLogger('root')
 
 class DocumentView(AnalysisBaseView):
     template_name = 'documents.html'
@@ -107,8 +109,9 @@ def plain_text_widget(document):
     w['title'] = document.get_title()
     try:
         w['document_text'] = document.text()
-    except IOError:
+    except IOError as e:
         w['document_text'] = '[ error - file not found ]'
+        logger.warn('Tried to find a document...and failed: {}'.format(document.full_path))
     return w
 
 # Extra Information Widgets
