@@ -27,7 +27,7 @@ Installation
 -----------------------
 
 You can either use the pip `requirements.txt file`_::
-    
+
     pip install -r requirements.txt
 
 .. _`requirements.txt file`: http://www.pip-installer.org/en/latest/requirements.html
@@ -112,10 +112,39 @@ This can be done as follows::
    sudo -u postgres python topic_modeling/manage.py syncdb
    sudo -u postgres python run_import.py
 
-Assuming that everything imported without error, 
+Assuming that everything imported without error,
 you are now ready to run the server::
 
    sudo -u postgres python run_server.py
+
+Apache
+======
+
+As an example, the following is the apache configuration file in
+/etc/httpd/conf.d which we use on our demo server::
+
+   ServerAdmin jefflund@gmail.com
+   ServerName coherence.byu.edu
+   ErrorLog /var/log/httpd/coherence-error_log
+   CustomLog /var/log/httpd/coherence-access_log common
+   LogLevel warn
+
+   Alias /scripts /srv/topicalguide/topic_modeling/media/scripts/
+   Alias /styles /srv/topicalguide/topic_modeling/media/styles/
+   Alias /site-media /srv/topicalguide/topic_modeling/media
+   <Directory "/srv/topicalguide/topic_modeling/media">
+       Require all granted
+   </Directory>
+
+   WSGIApplicationGroup %{GLOBAL}
+   WSGIScriptAlias / /srv/topicalguide/topic_modeling/apache/django.wsgi
+   <Directory "/srv/topicalguide/topic_modeling/apache">
+       Require all granted
+   </Directory>
+
+Note that the django.wsgi file we use is included in the repository.
+Further information on setting up Django to run with Apache can be found
+in the official Django documentation.
 
 Contributing
 ============
