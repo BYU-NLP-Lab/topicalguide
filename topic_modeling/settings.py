@@ -74,10 +74,11 @@ SITE_ID = 1
 USE_I18N = True
 
 # Path to the directory containing statically served files
-TEMPLATES_ROOT = os.getcwd() + '/topic_modeling/templates'
-STATICFILES_ROOT = os.getcwd()+'/topic_modeling/media'
-SCRIPTS_ROOT = STATICFILES_ROOT + '/scripts'
-STYLES_ROOT = STATICFILES_ROOT + '/styles'
+_base_dir = os.path.dirname(os.path.abspath(__file__))
+TEMPLATES_ROOT = os.path.join(_base_dir, 'templates')
+STATICFILES_ROOT = os.path.join(_base_dir, 'media')
+SCRIPTS_ROOT = os.path.join(STATICFILES_ROOT, 'scripts')
+STYLES_ROOT = os.path.join(STATICFILES_ROOT, 'styles')
 ALLOWED_INCLUDE_ROOTS = (SCRIPTS_ROOT, STYLES_ROOT)
 
 # Absolute path to the directory that holds media.
