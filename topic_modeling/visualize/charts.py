@@ -25,7 +25,6 @@ from collections import defaultdict
 from django import forms
 from django.forms.widgets import Input
 from numpy import arange, zeros
-'''
 from scipy import linspace, stats
 from scipy.stats.kde import gaussian_kde
 from topic_modeling.visualize.models import (Analysis,
@@ -237,16 +236,16 @@ class TopicAttributeChart(object):
         self.frequency = 'frequency' in chart_parameters
         self.histogram = 'histogram' in chart_parameters
         self.chartdata = defaultdict(list)
-        """For each value in the list of potential values for the given
+        '''For each value in the list of potential values for the given
         document metadata attribute:
         Go through the topics. Find out the
         - percentage of (topic + this attribute) / (all topics + this
           attribute)
-          """
+          '''
         for raw, documents in val_dict.iteritems():
-            """select topics.id from topics join tokens on tokens.tid =
+            '''select topics.id from topics join tokens on tokens.tid =
             topics.id join documents on documents.id = tokects.did join
-            metainfovalues on metainfovalues.did = documents.id"""
+            metainfovalues on metainfovalues.did = documents.id'''
 
             if self.frequency:
                 total_token_count = 1
@@ -558,5 +557,4 @@ plot_types = { 'Topics vs. Attributes': (TopicAttributeChart, 1),
         }
 
 
-'''
 # vim: et sw=4 sts=4
