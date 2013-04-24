@@ -67,6 +67,10 @@ var PlotControls = Backbone.View.extend({
       this.setUpControl(this.rcontrol, 'Radius', cont_options, topics, viewer);
       this.setUpControl(this.ccontrol, 'Color', nom_options, null, viewer);
       this.setUp = true;
+      //these pre selected options work well for state of the union
+      $("option:eq(4)", this.xcontrol).attr('selected', true);
+      //$("option:eq(7)", this.ycontrol).attr('selected', true);
+      $("option:eq(1)", this.ccontrol).attr('selected', true);
     }
   },
 
