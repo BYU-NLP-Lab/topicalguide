@@ -141,11 +141,15 @@ def top_topics_widget(analysis, document):
     w = Widget('Top Topics', 'documents/top_topics')
     from django.db import connection
     c = connection.cursor()
-    c.execute('''SELECT wtt.topic_id, count(*) as cnt FROM visualize_wordtoken
-            wt JOIN visualize_wordtoken_topics wtt on wtt.wordtoken_id = wt.id
-            JOIN visualize_topic t on t.id = wtt.topic_id WHERE t.analysis_id
-            = %d AND wt.document_id = %d
-            GROUP BY wtt.topic_id ORDER BY cnt DESC'''%(analysis.id,document.id))
+    c.execute('''SELECT wtt.topic_id, count(*) as cnt
+                    FROM visualize_wordtoken wt
+                    JOIN visualize_wordtoken_topics wtt
+                     on wtt.wordtoken_id = wt.id
+                    JOIN visualize_topic t
+                     on t.id = wtt.topic_id
+                        WHERE t.analysis_id = %d AND wt.document_id = %d
+                        GROUP BY wtt.topic_id
+                        ORDER BY cnt DESC'''%(analysis.id,document.id))
     rows = c.fetchall()[:10]
     total = 0
     for obj in rows:

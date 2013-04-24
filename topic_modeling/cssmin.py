@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #This file comes from https://github.com/zacharyvoase/cssmin
 #License available at licenses/cssmin.txt
 

@@ -120,15 +120,18 @@ var PlotMenu = Backbone.View.extend({
 });
 
 /** The Info **/
-var PlotInfo = Backbone.View.extend({
+var PlotInfo = InfoView.extend({
 
   initialize: function () {
    this.docDisplay = this.$('>.contents');
+   this.$el.hide();
   },
 
   clear: function () { },
 
-  show: function () { this.$el.show(); },
+  show: function () {
+      //this.$el.show();
+  },
   
   hide: function () { this.$el.hide(); },
 
@@ -169,21 +172,14 @@ var PlotInfo = Backbone.View.extend({
           '<td valign="top">' + this.formatField(topic.val) + '</td></tr>';
     }
     table.html(tableHtml);
+    this.$el.show();
   },
 
   //accesses the view via this.parent which is set during view setup
   populate: function(doc) {
     this.docDisplay.html('</br><h4>' + doc.name + '</h4>');
     var details_url = location.href.split('/').slice(0,-1).join('/') + '/documents/' + doc.id;
-    $('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
-    $('#iframe-modal iframe.theframe').attr('src', details_url);
-    this.$('.view-details-btn')
-        .attr('href', details_url)
-        .click(function (e) {
-            e.preventDefault();
-            $('#iframe-modal').modal('show');
-            return false;
-        });
+    this.preload_popover(details_url);
     var topTopics = this.parent.getTopTopics(doc);
 
     var table = $('<table class="documents table-stripped" cellpadding="3">').appendTo(this.docDisplay);
@@ -211,6 +207,7 @@ var PlotInfo = Backbone.View.extend({
     }
     tableHtml += '</tbody>';
     table.html(tableHtml);
+    this.$el.show();
   },
 
   formatField: function(n) {

@@ -23,6 +23,7 @@
 # Common User Interface Elements
 
 import os
+import sys
 
 from django import forms, template
 from django.template.context import Context
@@ -270,6 +271,8 @@ class Widget(object):
         self.script_path = _script_path
         if os.path.exists(_script_path):
             self.script_url = '/scripts/widgets/%s.js' % path
+        else:
+            print>>sys.stderr, "Failed to find script file:", _script_path
         
         _style_path = '%s/widgets/%s.css' % (settings.STYLES_ROOT, path)
         if os.path.exists(_style_path):

@@ -24,8 +24,11 @@ from django.conf.urls.defaults import patterns, url
 from django.conf import settings
 from django.http import Http404
 
-from topic_modeling.visualize.topics.views import TopicView, TopicWordView, \
-    TopicDocumentView
+import scipy
+from scipy import linspace, stats
+from topic_modeling.visualize.topics.views import  (TopicView, TopicWordView, \
+    TopicDocumentView)
+'''
 from topic_modeling.visualize.documents.views import DocumentView
 from topic_modeling.visualize.dataset_views import DatasetView
 from topic_modeling.visualize.word_views import WordView
@@ -290,3 +293,13 @@ urlpatterns += patterns('',
 
 #Terms of Use
 urlpatterns += patterns('', url(r'^terms/?$', TermsView.as_view(), name='tg-terms'))
+'''
+from django.conf.urls.defaults import patterns, url
+from django.http import HttpResponse
+import datetime
+import os
+def home(request):
+    return HttpResponse('Hello! {}; {}'.format(datetime.datetime.now(), datetime.datetime.fromtimestamp(os.path.getmtime(__file__))))
+urlpatterns = patterns('',
+    ('', home)
+)

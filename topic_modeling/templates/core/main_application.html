@@ -95,9 +95,11 @@ Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "attributes_tab"%} active{%endifequal%}">
 	            <a href="{% url 'tg-attrs' dataset=dataset.name analysis=analysis.name %}">Metadata</a>
 	        </li>
-	        <li class="top-level ui-state-default ui-corner-top {%ifequal highlight "plots_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
+          {% if not in_iframe %}
+	        <li class="plots-tab top-level ui-state-default ui-corner-top {%ifequal highlight "plots_tab"%} ui-tabs-selected ui-state-active{%endifequal%}">
 	            <a href="{% url 'tg-fancy' dataset=dataset.name analysis=analysis.name %}">Plots</a>
 	        </li>
+          {% endif %}
 	    </ul>
 	    <div id="tab-content" class="ui-tabs-panel ui-widget-content ui-corner-bottom">
 	        <div class="header">

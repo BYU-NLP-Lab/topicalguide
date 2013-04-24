@@ -27,7 +27,7 @@ Installation
 -----------------------
 
 You can either use the pip `requirements.txt file`_::
-    
+
     pip install -r requirements.txt
 
 .. _`requirements.txt file`: http://www.pip-installer.org/en/latest/requirements.html
@@ -93,15 +93,58 @@ It can be tons faster to use postgres. Because it took me a bit of hunting to
 get it to behave, here's how to do it on Fedora::
 
    sudo yum install postgres*
-   sudo service postgres initdb
-   sudo service postgres start
-   sudo -u postgres createuser --superuser $USER
-   sudo -u postgres psql
-   ## here type `\password $USER` and then type in a new password
-   ## then type `\q` to exit 
-   createdb topicalguide
-   
-   ## based off of https://help.ubuntu.com/community/PostgreSQL
+   sudo yum install python-psycopg2
+
+   sudo systemctl enable postgresql.service
+   sudo postgresql-setup initdb
+   sudo -u postgres createdb topicalguide
+
+In your local_settings.py you'll then need to switch DBTYPE to 'postgres' and
+update the settings for the postgres database. For a local connection, we
+prefer to use peer authentication, so we leave the user and password blank.
+If you prefer to use md5 authentication, set the user and password
+appropriately. Update the name field to 'topicalguide', or whatever you named
+the database created for the topical guide.
+
+Once the database is setup, you'll need to import the data.
+This can be done as follows::
+
+   sudo -u postgres python topic_modeling/manage.py syncdb
+   sudo -u postgres python run_import.py
+
+Assuming that everything imported without error,
+you are now ready to run the server::
+
+   sudo -u postgres python run_server.py
+
+Apache
+======
+
+As an example, the following is the apache configuration file in
+/etc/httpd/conf.d which we use on our demo server::
+
+   ServerAdmin jefflund@gmail.com
+   ServerName coherence.byu.edu
+   ErrorLog /var/log/httpd/coherence-error_log
+   CustomLog /var/log/httpd/coherence-access_log common
+   LogLevel warn
+
+   Alias /scripts /srv/topicalguide/topic_modeling/media/scripts/
+   Alias /styles /srv/topicalguide/topic_modeling/media/styles/
+   Alias /site-media /srv/topicalguide/topic_modeling/media
+   <Directory "/srv/topicalguide/topic_modeling/media">
+       Require all granted
+   </Directory>
+
+   WSGIApplicationGroup %{GLOBAL}
+   WSGIScriptAlias / /srv/topicalguide/topic_modeling/apache/django.wsgi
+   <Directory "/srv/topicalguide/topic_modeling/apache">
+       Require all granted
+   </Directory>
+
+Note that the django.wsgi file we use is included in the repository.
+Further information on setting up Django to run with Apache can be found
+in the official Django documentation.
 
 Contributing
 ============
@@ -154,5 +197,5 @@ with the Topical Guide.  If not, see <http://www.gnu.org/licenses/>.
 
 If you have inquiries regarding any further use of the Topical Guide, please
 contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
-Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+        Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 

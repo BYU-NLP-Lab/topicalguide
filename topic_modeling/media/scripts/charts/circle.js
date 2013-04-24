@@ -50,7 +50,7 @@ var CircleMenu = Backbone.View.extend({
 	}
 });
 
-var CircleInfo = Backbone.View.extend({
+var CircleInfo = InfoView.extend({
 	initialize: function () {
 		this.clear();
 	},
@@ -65,16 +65,7 @@ var CircleInfo = Backbone.View.extend({
 		this.$('#circle-topic-name').text("Topic: " + topic.name);
 		
 		var details_url = location.href.split('/').slice(0,-1).join('/') + '/topics/' + topic.topicID;
-		this.$('.view-topic-details-btn')
-			.show()
-			.attr('href', details_url)
-			.click(function (e) {
-				e.preventDefault();
-				$('#iframe-modal iframe.theframe')[0].contentDocument.body.innerHTML=$('script#iframe-loading')[0].innerHTML;
-				$('#iframe-modal iframe.theframe').attr('src', details_url);
-				$('#iframe-modal').modal('show');
-				return false;
-			});
+                this.preload_popover(details_url);
 		
 		this.load_word_cloud(topic);
 		
