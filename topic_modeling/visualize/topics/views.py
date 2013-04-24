@@ -28,7 +28,6 @@ from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 
 from topic_modeling.visualize.charts import get_chart
-"""
 from topic_modeling.visualize.common.ui import BreadCrumb, Widget, WordSummary, Tab
 from topic_modeling.visualize.common.views import AnalysisBaseView
 from topic_modeling.visualize.common.helpers import word_cloud_widget, set_word_context, get_word_cloud, \
@@ -477,5 +476,4 @@ class TopicSimilarityEntry(object):
         self.value = value
         self.url = url
 
-"""
 # vim: et sw=4 sts=4
