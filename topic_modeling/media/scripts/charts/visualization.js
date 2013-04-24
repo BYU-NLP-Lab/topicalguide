@@ -234,14 +234,12 @@ var MainView = Backbone.View.extend({
     $('#disable-nav').show();
     $('#disable-right').show();
     $('#disable-main').show();
-    $('#disable-main-message').show();
   },
 
   enable: function () {
     $('#disable-nav').hide();
     $('#disable-right').hide();
     $('#disable-main').hide();
-    $('#disable-main-message').hide();
   },
 
   view: function (name, options, sub_options) {
