@@ -43,6 +43,35 @@ ul.nav li, ul.nav li a {
   z-index: 1000;
 }
 
+#disable-main-message {
+  display: none;
+  position: relative;
+  left: 210px;
+  top: 320px;
+  z-index: 1001;
+  opacity: 1.0;
+  font-size: 2em;
+  font-weight: 700;
+  color: black;
+}
+
+#loading-message {
+  position: absolute;
+  left: 43%;
+  top: 60%;
+  text-align: center;
+  font-size: 1.5em;
+  font-weight: 700;
+  color: black;
+
+  z-index: 50;
+  display: none;
+}
+
+body.loading #loading-message {
+  display: block;
+}
+
 #loading-indicator {
   position: absolute;
   left: 50%;
