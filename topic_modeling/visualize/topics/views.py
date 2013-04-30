@@ -56,7 +56,7 @@ class TopicView(AnalysisBaseView):
         
         if 'topic_filters' in kwargs:
             request.session[sess_key(dataset,'topic-filters')] = kwargs['topic_filters']
-        
+       
         #TODO: clean up this context by moving widget-specific entries into widget contexts
         
         context['highlight'] = 'topics_tab'
@@ -110,6 +110,7 @@ class TopicWordView(TopicView):
         dataset_name = kwargs['dataset']
         analysis_name = kwargs['analysis']
         word = WordType.objects.get(type=kwargs['word'])
+
         
         filter = TopicFilterByWord(Analysis.objects.get(dataset__name=dataset_name,
                 name=analysis_name), 0)
@@ -119,6 +120,10 @@ class TopicWordView(TopicView):
         analysis = context['analysis']
         topic = context['topic']
         context['word'] = word
+
+        '''
+        I don't know why the following code is there.
+        It isn't used in the template
 
         doc_ids = WordToken.objects.filter(type=word).filter(topics=topic).values_list('document', flat=True)
         documents = Document.objects.filter(pk__in=doc_ids).distinct()
@@ -133,6 +138,7 @@ class TopicWordView(TopicView):
             w.doc_name = d.filename
             w.doc_id = d.id
         context['documents'] = docs
+        '''
         #context['breadcrumb'].word(word)
         context['topic_post_link'] = '/words/%s' % word.type
         

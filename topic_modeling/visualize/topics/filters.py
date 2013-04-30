@@ -314,7 +314,7 @@ class TopicFilterByWord(object):
         self.analysis = analysis
         self.id = id
         self.current_word_type = None
-        self.remake_form()
+        #self.remake_form()
 
     def apply(self, topic_set):
         if not self.current_word_type:
