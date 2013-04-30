@@ -276,7 +276,7 @@ class Widget(object):
         
         _style_path = '%s/widgets/%s.css' % (settings.STYLES_ROOT, path)
         if os.path.exists(_style_path):
-            self.style_url = '/styles/widgets/%s.css' % path
+            self.style_url = '/site-media/styles/widgets/%s.css' % path
         
         if content_html and not html:
             html = '<div id="widget-'+slugify(self.short_path)+'" class="ui-widget">\n'
