@@ -38,8 +38,8 @@ class RootView(TemplateResponseMixin, View):
         context = Context()
 
         STATIC = '/site-media'
-        context['SCRIPTS'] = '/scripts'
-        context['STYLES'] = '/styles'
+        context['SCRIPTS'] = STATIC + '/scripts'
+        context['STYLES'] = STATIC + '/styles'
         context['IMAGES'] = STATIC + '/images'
         context['FONTS'] = STATIC + '/fonts'
         context['license'] = "http://www.gnu.org/licenses/agpl.html"

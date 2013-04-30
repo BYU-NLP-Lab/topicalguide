@@ -1,11 +1,11 @@
 {% extends "bootstrap/bootstrap.html" %}
 
 {% block css %}
-<link href="/styles/fancy.css" rel="stylesheet">
-<link href="/styles/fancy-force.css" rel="stylesheet">
-<link href="/styles/fancy-circle.css" rel="stylesheet">
-<link href="/styles/fancyPlot.css" rel="stylesheet">
-<link href="/styles/jquery-ui.css" rel="stylesheet">
+<link href="/site-media/styles/fancy.css" rel="stylesheet">
+<link href="/site-media/styles/fancy-force.css" rel="stylesheet">
+<link href="/site-media/styles/fancy-circle.css" rel="stylesheet">
+<link href="/site-media/styles/fancyPlot.css" rel="stylesheet">
+<link href="/site-media/styles/jquery-ui.css" rel="stylesheet">
 {% endblock %}
 
 {% block headtitle %}Topic Chord Diagrams{% endblock %}
@@ -230,8 +230,8 @@
         <h3>loading data</h3>
     </div>
 </script>
-<script src="/scripts/libs/d3.v3.min.js"></script>
-<script src="/scripts/libs/d3.layout.cloud.js"></script>
+<script src="/site-media/scripts/libs/d3.v3.min.js"></script>
+<script src="/site-media/scripts/libs/d3.layout.cloud.js"></script>
 <script>
 var URLS = {
   'pairwise topics': {
@@ -244,12 +244,12 @@ var URLS = {
 };
 </script>
 <img style="display:block;visibility:hidden;position: absolute;" src="/site-media/images/large-spinner.gif"/>
-<script src="/scripts/libs/jquery.timeago.js"></script>
-<script src="/scripts/charts/visualization.js"></script>
-<script src="/scripts/charts/chords.js"></script>
-<script src="/scripts/charts/circle.js"></script>
-<script src="/scripts/charts/force.js"></script>
-<script src="/scripts/charts/plot.js"></script>
-<script src="/scripts/charts/main.js"></script>
+<script src="/site-media/scripts/libs/jquery.timeago.js"></script>
+<script src="/site-media/scripts/charts/visualization.js"></script>
+<script src="/site-media/scripts/charts/chords.js"></script>
+<script src="/site-media/scripts/charts/circle.js"></script>
+<script src="/site-media/scripts/charts/force.js"></script>
+<script src="/site-media/scripts/charts/plot.js"></script>
+<script src="/site-media/scripts/charts/main.js"></script>
 
 {% endblock %}
