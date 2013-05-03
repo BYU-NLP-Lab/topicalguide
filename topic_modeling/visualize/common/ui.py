@@ -230,7 +230,7 @@ class Tab(object):
         if path:
             _style_path = '%s/tabs/%s.css' % (settings.STYLES_ROOT, path)
             if os.path.exists(_style_path):
-                self.style_url = '/styles/tabs/%s.css' % path
+                self.style_url = '/site-media/styles/tabs/%s.css' % path
             
             _template_path = 'tabs/%s.html' % path
             if os.path.exists('%s/%s' % (settings.TEMPLATES_ROOT, _template_path)):
@@ -240,7 +240,7 @@ class Tab(object):
                 
             _script_path = '%s/tabs/%s.js' % (settings.SCRIPTS_ROOT, path)
             if os.path.exists(_script_path):
-                self.script_url = '/scripts/tabs/%s.js' % path
+                self.script_url = '/site-media/scripts/tabs/%s.js' % path
         
         self.widgets = widgets if widgets else dict()
     
@@ -270,13 +270,13 @@ class Widget(object):
         _script_path = '%s/widgets/%s.js' % (settings.SCRIPTS_ROOT, path)
         self.script_path = _script_path
         if os.path.exists(_script_path):
-            self.script_url = '/scripts/widgets/%s.js' % path
+            self.script_url = '/site-media/scripts/widgets/%s.js' % path
         else:
             print>>sys.stderr, "Failed to find script file:", _script_path
         
         _style_path = '%s/widgets/%s.css' % (settings.STYLES_ROOT, path)
         if os.path.exists(_style_path):
-            self.style_url = '/styles/widgets/%s.css' % path
+            self.style_url = '/site-media/styles/widgets/%s.css' % path
         
         if content_html and not html:
             html = '<div id="widget-'+slugify(self.short_path)+'" class="ui-widget">\n'
