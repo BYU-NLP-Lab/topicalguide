@@ -130,7 +130,9 @@ var ChordViewer = MainView.add({
     for (var i=0; i<this.matrix.length; i++) {
       row = [];
       for (var y=0; y<this.matrix[i].length; y++) {
-        if (this.matrix[i][y] < this.options.threshhold[0]) {
+        //change
+        if (this.matrix[i][y] < this.options.threshhold[0] ||
+            this.matrix[i][y] > this.options.threshhold[1] ) {
           row.push(0);
         } else {
           row.push(this.matrix[i][y]);
@@ -147,7 +149,8 @@ var ChordViewer = MainView.add({
     for (var i=0; i<tids.length; i++) {
       row = [];
       for (var y=0; y<tids.length; y++) {
-        if (this.matrix[tids[i]][tids[y]] < this.options.threshhold[0]) {
+        if (this.matrix[tids[i]][tids[y]] < this.options.threshhold[0] ||
+            this.matrix[tids[i]][tids[y]] > this.options.threshhold[1] ) {
           row.push(0);
         } else {
           row.push(this.matrix[tids[i]][tids[y]] * 100);
@@ -172,6 +175,7 @@ var ChordViewer = MainView.add({
   },
 
   load: function (data) {
+    console.log(data);
     var outerRadius = (Math.min(this.options.width, this.options.height) / 2
                         - this.options.outer_padding),
         innerRadius = outerRadius - this.options.inner_padding;
@@ -229,7 +233,9 @@ var ChordViewer = MainView.add({
       return function(g, i) {
         // d3.select(this).classed('hovered', show);
         that.svg.selectAll('g.group')
-          .filter(function (d) { return data.matrix[i][d.index] > that.options.threshhold[0]; })
+          //change
+          .filter(function (d) { return data.matrix[i][d.index] > that.options.threshhold[0] &&
+                                        data.matrix[i][d.index] < that.options.threshhold[1]; })
           .classed('hovering', show);
         that.svg.selectAll("path.chord")
         .filter(function(d) { return d.source.index != i && d.target.index != i; })
