@@ -293,8 +293,8 @@ var MainView = Backbone.View.extend({
  */
 var VisualizationView = Backbone.View.extend({
   base_defaults: {
-    width: 630,
-    height: 630
+    width: 630,// $('#main').attr('width'),
+    height: 630// $('#main').attr('height')
   },
   menu_class: null,
   info_class: null,
@@ -302,6 +302,7 @@ var VisualizationView = Backbone.View.extend({
   defaults: {},
 
   initialize: function () {
+    console.log("Flag1");
     this.options = _.extend(this.base_defaults, this.defaults, this.options);
     if (!this.options.parent) throw new Error('No parent app given in options');
     if (!this.el) throw new Error('No element given in options');

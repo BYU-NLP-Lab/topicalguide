@@ -125,6 +125,7 @@ class TopicWordView(TopicView):
         I don't know why the following code is there.
         It isn't used in the template
 
+
         doc_ids = WordToken.objects.filter(type=word).filter(topics=topic).values_list('document', flat=True)
         documents = Document.objects.filter(pk__in=doc_ids).distinct()
         docs = []
