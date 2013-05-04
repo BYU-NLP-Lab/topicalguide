@@ -130,7 +130,6 @@ var ChordViewer = MainView.add({
     for (var i=0; i<this.matrix.length; i++) {
       row = [];
       for (var y=0; y<this.matrix[i].length; y++) {
-        //change
         if (this.matrix[i][y] < this.options.threshhold[0] ||
             this.matrix[i][y] > this.options.threshhold[1] ) {
           row.push(0);
@@ -233,7 +232,6 @@ var ChordViewer = MainView.add({
       return function(g, i) {
         // d3.select(this).classed('hovered', show);
         that.svg.selectAll('g.group')
-          //change
           .filter(function (d) { return data.matrix[i][d.index] > that.options.threshhold[0] &&
                                         data.matrix[i][d.index] < that.options.threshhold[1]; })
           .classed('hovering', show);
