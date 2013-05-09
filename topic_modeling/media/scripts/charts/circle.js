@@ -209,12 +209,12 @@ var CircleInfo = InfoView.extend({
 var CircleControls = Backbone.View.extend({
 	initialize: function (options) {
 		var parent = this.parent = options.parent;
-		var t = parent.options.threshhold;
-		this.$('.threshhold').slider({
+		var t = parent.options.circle_threshold;
+		this.$('#circle-topics-slider').slider({
 			range: true,
 			min: 0,
 			max: 1,
-			values: parent.options.threshhold,
+			values: parent.options.circle_threshold,
 			step: (t[1] - t[0]) / 20,
 			stop: function ( event, ui ) {
 				parent.set_threshhold(ui.values);
@@ -249,7 +249,7 @@ var CircleViewer = MainView.add({
 		max_link_strength: .1,
 		line_width: 3,
 		full_scale: 3,
-		threshhold: [0.7, 1],
+		circle_threshold: [0.7, 1],
 		pairwise: 'document correlation'
 	},
 
@@ -269,7 +269,7 @@ var CircleViewer = MainView.add({
 	},
 
 	set_threshhold: function (threshhold) {
-		this.options.threshhold = threshhold;
+		this.options.circle_threshold = threshhold;
 		this.reload();
 	},
 
@@ -338,7 +338,7 @@ var CircleViewer = MainView.add({
 						)
 					};
 				}
-			).filter(function(d) { return d.tokenCount > that.options.threshhold[0] && d.tokenCount < that.options.threshhold[1]; })
+			).filter(function(d) {return d.tokenCount > that.options.circle_threshold[0] && d.tokenCount < that.options.circle_threshold[1]; })
 		};
 	},
 

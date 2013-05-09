@@ -263,7 +263,7 @@ var PlotInfo = InfoView.extend({
   /** setup the d3 layout, etc. Everything you can do without data **/
   setup_d3: function () {
     //this rect is for svg saving
-    console.log("setup()");
+    //console.log("setup()");
     var tmp = $("#plot-documents rect");
     tmp.attr("fill", "white");
     this.setUpAxes();
@@ -277,8 +277,8 @@ var PlotInfo = InfoView.extend({
 
   //TODO: finish
   setUpFilter: function(data) {
-    console.log('setUpFilter()');
-    console.log(data);
+    //console.log('setUpFilter()');
+    //console.log(data);
     this.metrics = data.metrics;
     this.metadata = data.metadata;
     this.topics = data.topics;
@@ -296,14 +296,14 @@ var PlotInfo = InfoView.extend({
   },
 
   addFilter: function() {
-    console.log("addFilter()");
+    //console.log("addFilter()");
 
   },
 
   populateFilter: function() {
     //var url = 'http://' + document.location.host + '/feeds/document-metrics/datasets...';
     //hard coded url for now
-    console.log("popluateFilter");
+    //console.log("popluateFilter");
     var url = '/feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics';
     var self = this;
     $.ajax({
@@ -403,7 +403,7 @@ var PlotInfo = InfoView.extend({
     if(!override && this.shouldUpdate(axes)) {
       return;
     }
-    console.log("update()");
+    //console.log("update()");
     this.drawingData = this.filterData(this.data, axes, override);
     this.lastAxes = axes;
 
@@ -525,10 +525,10 @@ var PlotInfo = InfoView.extend({
   },
 
   filterServerData: function(popup) {
-    console.log("filterServerData()");
+    //console.log("filterServerData()");
 
     var postFilters = this.getSelectedFilters();
-    console.log(postFilters);
+    //console.log(postFilters);
     var url = this.url();
     var self = this;
     $.ajax({
@@ -543,7 +543,7 @@ var PlotInfo = InfoView.extend({
   },
 
   filterButtonClicked: function() {
-    console.log("Filter Button Clicked");
+    //console.log("Filter Button Clicked");
     var self = this;
     this.filterDialog.dialog({
       buttons: [
@@ -571,7 +571,7 @@ var PlotInfo = InfoView.extend({
    * the bottom of the right-hand bar
    */
   load: function (server_data) {
-    console.log(server_data);
+    //console.log(server_data);
     var documents = server_data.documents;
 
     this.metrics = server_data.metrics;

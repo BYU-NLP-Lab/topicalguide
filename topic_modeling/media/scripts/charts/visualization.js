@@ -302,7 +302,6 @@ var VisualizationView = Backbone.View.extend({
   defaults: {},
 
   initialize: function () {
-    console.log("Flag1");
     this.options = _.extend(this.base_defaults, this.defaults, this.options);
     if (!this.options.parent) throw new Error('No parent app given in options');
     if (!this.el) throw new Error('No element given in options');

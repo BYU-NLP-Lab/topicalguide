@@ -52,13 +52,13 @@ var ChordInfo = InfoView.extend({
 var ChordControls = Backbone.View.extend({
   initialize: function (options) {
     var parent = this.parent = options.parent;
-    var t = parent.options.threshhold;
+    var t = parent.options.chord_threshold;
     var tb = parent.options.threshhold_bounds;
-    this.$('.threshhold').slider({
+    this.$('#chords-slider').slider({
       range: true,
       min: tb[0],
       max: tb[1],
-      values: parent.options.threshhold,
+      values: parent.options.chord_threshold,
       step: (tb[1] - tb[0]) / 20,
       stop: function ( event, ui ) {
         parent.set_threshhold(ui.values);
@@ -88,7 +88,7 @@ var ChordViewer = MainView.add({
     padding: .04,
     num_topics: 10,
     tid: 0,
-    threshhold: [.7, 1],
+    chord_threshold: [.7, 1],
     threshhold_bounds: [.5, 1],
     pairwise: 'document correlation'
   },
@@ -130,8 +130,8 @@ var ChordViewer = MainView.add({
     for (var i=0; i<this.matrix.length; i++) {
       row = [];
       for (var y=0; y<this.matrix[i].length; y++) {
-        if (this.matrix[i][y] < this.options.threshhold[0] ||
-            this.matrix[i][y] > this.options.threshhold[1] ) {
+        if (this.matrix[i][y] < this.options.chord_threshold[0] ||
+            this.matrix[i][y] > this.options.chord_threshold[1] ) {
           row.push(0);
         } else {
           row.push(this.matrix[i][y]);
@@ -148,8 +148,8 @@ var ChordViewer = MainView.add({
     for (var i=0; i<tids.length; i++) {
       row = [];
       for (var y=0; y<tids.length; y++) {
-        if (this.matrix[tids[i]][tids[y]] < this.options.threshhold[0] ||
-            this.matrix[tids[i]][tids[y]] > this.options.threshhold[1] ) {
+        if (this.matrix[tids[i]][tids[y]] < this.options.chord_threshold[0] ||
+            this.matrix[tids[i]][tids[y]] > this.options.chord_threshold[1] ) {
           row.push(0);
         } else {
           row.push(this.matrix[tids[i]][tids[y]] * 100);
@@ -169,12 +169,11 @@ var ChordViewer = MainView.add({
   },
 
   set_threshhold: function (threshhold) {
-    this.options.threshhold = threshhold;
+		this.options.chord_threshold = threshhold;
     this.reload();
   },
 
   load: function (data) {
-    console.log(data);
     var outerRadius = (Math.min(this.options.width, this.options.height) / 2
                         - this.options.outer_padding),
         innerRadius = outerRadius - this.options.inner_padding;
@@ -232,8 +231,8 @@ var ChordViewer = MainView.add({
       return function(g, i) {
         // d3.select(this).classed('hovered', show);
         that.svg.selectAll('g.group')
-          .filter(function (d) { return data.matrix[i][d.index] > that.options.threshhold[0] &&
-                                        data.matrix[i][d.index] < that.options.threshhold[1]; })
+          .filter(function (d) { return data.matrix[i][d.index] > that.options.chord_threshold[0] &&
+                                        data.matrix[i][d.index] < that.options.chord_threshold[1]; })
           .classed('hovering', show);
         that.svg.selectAll("path.chord")
         .filter(function(d) { return d.source.index != i && d.target.index != i; })

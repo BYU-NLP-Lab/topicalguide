@@ -155,12 +155,12 @@ var ForceInfo = InfoView.extend({
 var ForceControls = Backbone.View.extend({
   initialize: function (options) {
     var parent = this.parent = options.parent;
-    var t = parent.options.threshhold;
+    var t = parent.options.force_threshold;
     this.$('.threshhold').slider({
       range: true,
       min: 0,
       max: 1,
-      values: parent.options.threshhold,
+      values: parent.options.force_threshold,
       step: (t[1] - t[0]) / 20,
       stop: function ( event, ui ) {
         parent.set_threshhold(ui.values);
@@ -195,7 +195,7 @@ var ForceViewer = MainView.add(ZoomableView, {
     max_link_strength: .1,
     line_width: 3,
     full_scale: 3,
-    threshhold: [0.7, 1],
+    force_threshold: [0.7, 1],
     pairwise: 'document correlation'
   },
 
@@ -218,7 +218,7 @@ var ForceViewer = MainView.add(ZoomableView, {
   load: function (data) {
     this.data = data;
     var nodes = data.topics;
-    var links = force_links(nodes, data.matrix, this.options.threshhold);
+    var links = force_links(nodes, data.matrix, this.options.force_threshold);
     var minmax = get_matrixminmax(data.matrix);
     var tminmax = get_topicsminmax(data.topics);
     var rel = make_rel(minmax);
@@ -260,13 +260,13 @@ var ForceViewer = MainView.add(ZoomableView, {
 
   set_threshhold: function (threshhold) {
     var data = this.data;
-    this.options.threshhold = threshhold;
+    this.options.force_threshold = threshhold;
     var minmax = get_matrixminmax(data.matrix);
     if (minmax[0] < threshhold[0]) minmax[0] = threshhold[0];
     if (minmax[1] > threshhold[1]) minmax[1] = threshhold[1];
     var rel = make_rel(minmax);
     this.remove_links();
-    var links = force_links(data.topics, data.matrix, this.options.threshhold);
+    var links = force_links(data.topics, data.matrix, this.options.force_threshold);
     this.create_links(links, rel);
     if (this.ticking) {
       this.force.stop()
