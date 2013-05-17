@@ -88,7 +88,7 @@ var ChordViewer = MainView.add({
     padding: .04,
     num_topics: 10,
     tid: 0,
-    chord_threshold: [.7, 1],
+    chord_threshold: [.87, 0.94],
     threshhold_bounds: [.5, 1],
     pairwise: 'document correlation'
   },

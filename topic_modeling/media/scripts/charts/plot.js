@@ -236,17 +236,30 @@ var PlotInfo = InfoView.extend({
  *   options:  a dictionary of the {dict} passed in at initialization,
  *             extending the "defaults" dict *   info:     the info object *   menu:     the menu object *   controls: the controls object * * **/ var PlotViewer = MainView.add(VisualizationView, { name: 'plot-documents', title: '2D Plots', menu_class: PlotMenu, info_class: PlotInfo, controls_class: PlotControls, /** any defaults that you want. In the class, this.options will be populated * with these defaults + an options dictionary passed in when the object is
   * initialized **/
-  lastAxes : null,
-  removingDocs : false,
-  xRange : d3.scale.linear().range([60, 630 - 20]), // x range function, left and right padding
-  yRange : d3.scale.linear().range([630 - 60, 30]), // y range function
-  rRange : d3.scale.linear().range([5, 15]), // radius range function - ensures the radius is between 5 and 20
-  data : null,
-  width: 630,
-  height: 630,
-  colors : [ "#000000", "#FFFF00", "#800080", "#FFA500", "#ADD8E6", "#CD0000", "#F5DEB3", "#A9A9A9", "#228B22",
-    "#FF00FF", "#0000CD", "#F4A460", "#EE82EE", "#FF4500", "#191970", "#ADFF2F", "#A52A2A", "#808000", "#DB7093",
-    "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ],
+  setUpProperties: function () {
+    this.lastAxes = null;
+    this.removingDocs = false;
+    this.width = this.base_defaults.width;
+    this.height = this.base_defaults.height;
+    this.margins = {left : (this.width / 12), // for y tick labels 
+                    bottom : (this.height / 10), // for x axis tick labels, and x/r axis labels
+                    top : (this.height / 20), // for y axis label and doc count
+                    right : (this.width / 30)}; // so circles centers don't land on the border
+    // x range function, left and right padding
+    this.xRange = d3.scale.linear().range([this.margins.left, this.width - this.margins.right]);
+    // y range function
+    this.yRange = d3.scale.linear().range([this.height - this.margins.bottom, this.margins.top]);
+    this.rMax =  Math.round(this.width / 47);
+    this.rMin =  Math.round((this.rMax / 3));
+    this.rUniform = this.rMin + Math.round(0.3 * (this.rMax - this.rMin));
+    this.rRange = d3.scale.linear().range([this.rMin, this.rMax]); // radius range function - ensures the radius is a certain range
+    this.data = null;
+    this.colors = [ "#000000", "#FFFF00", "#800080", "#FFA500", "#ADD8E6", "#CD0000", "#F5DEB3", "#A9A9A9", "#228B22",
+      "#FF00FF", "#0000CD", "#F4A460", "#EE82EE", "#FF4500", "#191970", "#ADFF2F", "#A52A2A", "#808000", "#DB7093",
+      "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ];
+    console.log(this);
+
+  },
 
   defaults: {
   },
@@ -266,6 +279,7 @@ var PlotInfo = InfoView.extend({
     //console.log("setup()");
     var tmp = $("#plot-documents rect");
     tmp.attr("fill", "white");
+    this.setUpProperties();
     this.setUpAxes();
     this.setUpLabels();
     this.tooltip = d3.select("body").append("div")
@@ -468,12 +482,14 @@ var PlotInfo = InfoView.extend({
     nomMaps = this.nomMaps,
     xRange = this.xRange,
     yRange = this.yRange,
-    rRange = this.rRange;
+    rRange = this.rRange,
+    rUniform = this.rUniform;
 
+    //transiting is not working in firefox now... but it still works in chrome...
     documents.transition().duration(1500).ease("exp-in-out")
       .style("opacity", 1)
       .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
-      .attr("r", function(doc) { return (axes.rAxis == 'uniform') ? 7 :rRange(doc.fields[axes.rAxis]); })
+      .attr("r", function(doc) { return (axes.rAxis == 'uniform') ? rUniform :rRange(doc.fields[axes.rAxis]); })
       .attr("cx", function (doc) { return xRange(doc.fields[axes.xAxis]); })
       .attr("cy", function (doc) { return yRange(doc.fields[axes.yAxis]); });
   },

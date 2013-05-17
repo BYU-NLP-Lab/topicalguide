@@ -22,7 +22,8 @@ ul.nav li, ul.nav li a {
 
 #main {
   float: left;
-  width: 630px;
+  width: 760px;
+  height: 760px;
   position: relative;
 }
 

@@ -1,17 +1,21 @@
-g.root-node circle {
+g.root-node {
 	fill: white;
 	stroke: black;
 	stroke-width: 4 !important;
 	cursor: pointer;
 }	
 
-g.circle-node circle {
+g.event-handler circle {
+	cursor: pointer;
+}
+
+g.circle-node {
 	stroke: black;
 	stroke-width: 2;
 	cursor: pointer;
 }
 
-g.leaf-node circle {
+g.leaf-node {
 	stroke: black;
 	stroke-width: 1;
 	cursor: pointer;

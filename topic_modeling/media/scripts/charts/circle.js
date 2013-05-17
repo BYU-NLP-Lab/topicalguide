@@ -249,7 +249,7 @@ var CircleViewer = MainView.add({
 		max_link_strength: .1,
 		line_width: 3,
 		full_scale: 3,
-		circle_threshold: [0.7, 1],
+		circle_threshold: [0.5, 0.9],
 		pairwise: 'document correlation'
 	},
 
