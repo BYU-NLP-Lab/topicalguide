@@ -134,28 +134,38 @@ var CircleInfo = InfoView.extend({
 
 	load_word_cloud: function(topic) {
 		var infoDiv = d3.select('#circle-topic-info');
+    var rightBarWidth = $('#right-bar').width();
+    var svgMargin = Math.round(rightBarWidth / 14);
+    var svgWidth = rightBarWidth - (2 * svgMargin);
+    var svgHeight = 0.9 * svgWidth;
+    var size_mult = $('#main').height() / 500;
+    console.log(size_mult);
+
+    //here we need to center the svg element
 		var wordCloud = infoDiv.append('svg')
-			.attr("height", 200);
+			.attr("height", svgHeight)
+      .attr("width", svgWidth);
 
 		var words = topic.words;
 
 		var fill = d3.scale.category20();
-		d3.layout.cloud().size([200, 200])
+		d3.layout.cloud().size([svgWidth, svgHeight])
 			.words(words)
 			.timeInterval(5000)
-			.rotate(function() { return 0;/*~~(Math.random() * 5) * 30;*/ })
+			.rotate(function() { return 0;})
 			.font("Impact")
-			.fontSize(function(d) { return d.size; })
+			.fontSize(function(d) { return d.size * size_mult; })
 			.on("end", draw_word_cloud)
 			.start();
 
 		function draw_word_cloud(words) {
 			var g = wordCloud.append("g");
+      console.log(words);
 
 			g.selectAll("text")
 				.data(words)
 				.enter().append("text")
-				.style("font-size", function(d) { return d.size + "px"; })
+				.style("font-size", function(d) { return (d.size) + "px"; })
 				.style("font-family", "Impact")
 				.style("fill", function(d, i) { return fill(i); })
 				.attr("text-anchor", "middle")
@@ -164,7 +174,7 @@ var CircleInfo = InfoView.extend({
 				})
 				.text(function(d) { return d.text; });
 			
-			g.attr("transform", transform(145, 105));
+			g.attr("transform", transform((svgWidth ) / 2, svgHeight / 2));
 		}
 	},
 	
@@ -369,7 +379,7 @@ var CircleViewer = MainView.add({
 	create_text_layer: function (nodes, layer) {
 		nodes = nodes.filter(filterByType(layer));
 		var scaleText = d3.scale.linear().domain([1, 100]).range([3, 20]);
-		var textSize = 23 - scaleText(nodes.length);
+		var textSize = (this.options.width / 25) - scaleText(nodes.length);
 		
 		var layerName = layer + '-layer-texts';
 		

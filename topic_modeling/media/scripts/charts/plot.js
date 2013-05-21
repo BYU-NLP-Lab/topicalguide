@@ -143,7 +143,7 @@ var PlotInfo = InfoView.extend({
 
     //this.docDisplay.append('<h5>Metrics</h5>');
 
-    var table = $('<table class="documents table-stripped" cellpadding="3">').appendTo(this.docDisplay);
+    var table = $('<table class="documents table-striped" cellpadding="3">').appendTo(this.docDisplay);
     var tableHtml = '<thead><tr><th>Metric</th><th>Value</th></tr></thead>';
     for(var index in this.parent.metrics) {
       var fieldName = this.parent.metrics[index];
@@ -154,7 +154,7 @@ var PlotInfo = InfoView.extend({
     table.html(tableHtml);
 
     //this.docDisplay.append('<h5>MetaData</h5>');
-    table = $('<table class="documents table-stripped" cellpadding="3">').appendTo(this.docDisplay);
+    table = $('<table class="documents table-striped" cellpadding="3">').appendTo(this.docDisplay);
     tableHtml = '<thead><tr><th>Metadata</th><th>Value</th></tr></thead>';
     for(var fieldName in this.parent.metadata) {
       var fieldValue = doc.fields[fieldName];
@@ -164,7 +164,7 @@ var PlotInfo = InfoView.extend({
     table.html(tableHtml);
 
     //this.docDisplay.append('<h5>Top 10 Topics</h5>');
-    table = $('<table class="documents table-stripped" cellpadding="3">').appendTo(this.docDisplay);
+    table = $('<table class="documents table-striped" cellpadding="3">').appendTo(this.docDisplay);
     tableHtml = '<thead><tr><th>Top 10 Topic</th><th>Value</th></tr></thead>';
     for(var index in topTopics) {
       var topic = topTopics[index];
@@ -182,7 +182,7 @@ var PlotInfo = InfoView.extend({
     this.preload_popover(details_url);
     var topTopics = this.parent.getTopTopics(doc);
 
-    var table = $('<table class="documents table-stripped" cellpadding="3">').appendTo(this.docDisplay);
+    var table = $('<table class="documents table-striped" cellpadding="3">').appendTo(this.docDisplay);
     var tableHtml = '<tbody align="left" valign="top">';
     tableHtml += '<tr><th>Metric</th><th>Value</th></tr>';
     for(var index in this.parent.metrics) {
@@ -243,7 +243,7 @@ var PlotInfo = InfoView.extend({
     this.height = this.base_defaults.height;
     this.margins = {left : (this.width / 12), // for y tick labels 
                     bottom : (this.height / 10), // for x axis tick labels, and x/r axis labels
-                    top : (this.height / 20), // for y axis label and doc count
+                    top : (this.height / 18), // for y axis label and doc count
                     right : (this.width / 30)}; // so circles centers don't land on the border
     // x range function, left and right padding
     this.xRange = d3.scale.linear().range([this.margins.left, this.width - this.margins.right]);
@@ -254,9 +254,13 @@ var PlotInfo = InfoView.extend({
     this.rUniform = this.rMin + Math.round(0.3 * (this.rMax - this.rMin));
     this.rRange = d3.scale.linear().range([this.rMin, this.rMax]); // radius range function - ensures the radius is a certain range
     this.data = null;
+    this.topLabelSpacing = Math.round(this.height / 32);
+    this.xAxisMargin = Math.round(this.height / 13);
+    this.tickLength = Math.round(this.width / 63);
     this.colors = [ "#000000", "#FFFF00", "#800080", "#FFA500", "#ADD8E6", "#CD0000", "#F5DEB3", "#A9A9A9", "#228B22",
       "#FF00FF", "#0000CD", "#F4A460", "#EE82EE", "#FF4500", "#191970", "#ADFF2F", "#A52A2A", "#808000", "#DB7093",
       "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ];
+    this.fontSize = $('body').css('font-size');
     console.log(this);
 
   },
@@ -327,12 +331,12 @@ var PlotInfo = InfoView.extend({
   },
 
   setUpAxes: function() {
-    this.xAxis = d3.svg.axis().scale(this.xRange).tickSize(10).tickSubdivide(true); // x axis function
-    this.yAxis = d3.svg.axis().scale(this.yRange).tickSize(10).orient("right").tickSubdivide(true); // y axis function
+    this.xAxis = d3.svg.axis().scale(this.xRange).tickSize(this.tickLength).tickSubdivide(true); // x axis function
+    this.yAxis = d3.svg.axis().scale(this.yRange).tickSize(this.tickLength).orient("right").tickSubdivide(true); // y axis function
     // add in the x axis
     this.maing.append("svg:g")
       .attr("class", "x axis")
-      .attr("transform", "translate(0," + (this.height - 40) + ")") 
+      .attr("transform", "translate(0," + (this.height - this.xAxisMargin) + ")") 
       .call(this.xAxis);
 
     // add in the y axis
@@ -350,22 +354,22 @@ var PlotInfo = InfoView.extend({
     this.xLabel = this.svg.append("text")
                           .attr("class", "x label").attr("text-anchor", "end")
                           .attr("x", this.width - 10).attr("y", this.height - 5)
-                          .text("X Label");
+                          .text("X Label").attr('font-size', this.fontSize);
 
     this.yLabel = this.svg.append("text")
                           .attr("class", "y label").attr("text-anchor", "start")
-                          .attr("x", 5).attr("y", 20)
-                          .text("Y Label");
+                          .attr("x", 5).attr("y", this.topLabelSpacing)
+                          .text("Y Label").attr('font-size', this.fontSize);
 
     this.rLabel = this.svg.append("text")
                           .attr("class", "r label").attr("text-anchor", "start")
                           .attr("x", 5).attr("y", this.height - 5)
-                          .text("Circle Radius: ");
+                          .text("Circle Radius: ").attr('font-size', this.fontSize);
 
     this.countLabel = this.svg.append("text")
                           .attr("class", "label").attr("text-anchor", "end")
-                          .attr("x", this.width - 10).attr("y", 20)
-                          .text("Doc Count: ");
+                          .attr("x", this.width - 10).attr("y", this.topLabelSpacing)
+                          .text("Doc Count: ").attr('font-size', this.fontSize);
   },
 
   filterData: function(data, axes, override) {
@@ -507,6 +511,7 @@ var PlotInfo = InfoView.extend({
     t.select(".y.axis").call(this.yAxis);
     //this makes the css inline for saving the svg
     $('.axis .tick').attr("style", "stroke:#000000; opacity:1");
+    $('.axis text').css("font-size", this.fontSize);
   },
 
   //Change visual scale to fit the input domains

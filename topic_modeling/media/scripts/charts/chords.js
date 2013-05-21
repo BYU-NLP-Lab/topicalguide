@@ -98,6 +98,7 @@ var ChordViewer = MainView.add({
   },
 
   setup_d3: function () {
+    this.options.inner_padding = this.options.width / 26;
     var outerRadius = (Math.min(this.options.width, this.options.height) / 2
                         - this.options.outer_padding),
         innerRadius = outerRadius - this.options.inner_padding;
@@ -249,6 +250,7 @@ var ChordViewer = MainView.add({
     paths.append("svg:title")
       .text(function(d) { return data.topics[d.index].names[0]; });
 
+    var spacing = this.options.height / 42;
     setTimeout(function () {
     paths.each(function (d, i) {
       var b = this.getBBox();
@@ -260,13 +262,13 @@ var ChordViewer = MainView.add({
         d.textnode.append('tspan')
           .attr('class', 'back')
           .text(parts[i])
-          .attr('y', i*15)
+          .attr('y', i*spacing)
           .attr('x', 0);
       }
       for (var i=0; i<parts.length; i++) {
         d.textnode.append('tspan')
           .text(parts[i])
-          .attr('y', i*15)
+          .attr('y', i*spacing)
           .attr('x', 0);
       }
     });

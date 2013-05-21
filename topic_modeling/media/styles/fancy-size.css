@@ -2,7 +2,7 @@
 
 @media all and (max-device-height: 599px) {
 	.container {
-		width : 710px;
+		width : 660px;
 	}
 
 	#main {
@@ -11,8 +11,45 @@
 	}
 
 	#right-bar {
-		width : 300px;
+		width : 250px;
 		height : 400px;
+	}
+
+
+	body, li, h5, .label, label, .dropdown-menu li > a, div.topleft-label, button, select, textarea, input[type="text"], input[type="password"],
+	input[type="datetime"], input[type="datetime-local"], input[type="date"],
+	input[type="month"], input[type="time"], input[type="week"],
+	input[type="number"], input[type="email"], input[type="url"],
+	input[type="search"], input[type="tel"], input[type="color"],
+	.uneditable-input {
+		font-size : 10px;
+		line-height : 15px;
+	}
+
+	text.chord-title {
+		font-size : 10px;
+	}
+
+	h4 {
+		font-size : 12px;
+		line-height : 10px;
+	}
+
+	h3 {
+		font-size : 18.5px;
+		line-height : 20px;
+	}
+
+	select {
+		height : 25px;
+
+	}
+
+	div.tooltip {
+		font-size : 8px;
+		width : 80px;
+		height : 14px;
+
 	}
 
 }
@@ -32,11 +69,16 @@
 		height : 540px;
 	}
 
+	select {
+		height : 30px;
+		width : 250px;
+	}
+
 }
 
 @media all and (max-device-height: 999px) and (min-device-height: 800px) {
 	.container {
-		width : 1010px;
+		width : 1060px;
 	}
 
 	#main {
@@ -45,15 +87,20 @@
 	}
 
 	#right-bar {
-		width : 300px;
+		width : 350px;
 		height : 700px;
+	}
+
+	select {
+		height : 30px;
+		width : 280px;
 	}
 
 }
 
 @media all and (max-device-height: 1499px) and (min-device-height: 1000px) {
 	.container {
-		width : 1210px;
+		width : 1400px;
 	}
 
 	#main {
@@ -62,15 +109,66 @@
 	}
 
 	#right-bar {
-		width : 300px;
+		width : 470px;
 		height : 900px;
+	}
+
+	body, li, h5, .label, label, .dropdown-menu li > a, div.topleft-label, button, select, textarea, input[type="text"], input[type="password"],
+	input[type="datetime"], input[type="datetime-local"], input[type="date"],
+	input[type="month"], input[type="time"], input[type="week"],
+	input[type="number"], input[type="email"], input[type="url"],
+	input[type="search"], input[type="tel"], input[type="color"],
+	.uneditable-input {
+		font-size : 22px;
+		line-height : 24px;
+	}
+
+	text.chord-title {
+		font-size : 20px;
+	}
+
+	h4 {
+		font-size : 26px;
+		line-height : 32px;
+	}
+
+	#viz-picker a.dropdown-toggle, h3, .nav > li > a {
+		font-size : 32px;
+		line-height : 42px;
+	}
+
+	.documents tr td {
+		padding-bottom : 7px;
+		padding-top : 7px;
+		padding-right : 7px;
+	}
+
+	.btn-small {
+		font-size: 22px;
+	}
+
+	.btn-mini {
+		font-size : 15px;
+
+	}
+
+	select {
+		height : 40px;
+		width : 300px;
+	}
+
+	div.tooltip {
+		font-size : 16px;
+		width : 200px;
+		height : 20px;
+
 	}
 
 }
 
 @media all and (max-device-height: 1999px) and (min-device-height: 1500px) {
 	.container {
-		width : 1610px;
+		width : 2010px;
 	}
 
 	#main {
@@ -79,15 +177,68 @@
 	}
 
 	#right-bar {
-		width : 300px;
+		width : 700px;
 		height : 1300px;
 	}
 
+	body, li, h5, .label, label, .dropdown-menu li > a, div.topleft-label, button, select, textarea, input[type="text"], input[type="password"],
+	input[type="datetime"], input[type="datetime-local"], input[type="date"],
+	input[type="month"], input[type="time"], input[type="week"],
+	input[type="number"], input[type="email"], input[type="url"],
+	input[type="search"], input[type="tel"], input[type="color"],
+	.uneditable-input {
+		font-size : 34px;
+		line-height : 38px;
+	}
+
+	text.chord-title {
+		font-size : 30px;
+	}
+
+	h4 {
+		font-size : 40px;
+		line-height : 52px;
+	}
+
+	#viz-picker a.dropdown-toggle, h3, .nav > li > a {
+		font-size : 52px;
+		line-height : 68px;
+	}
+
+	.documents tr td {
+		padding-bottom : 7px;
+		padding-top : 7px;
+		padding-right: 7px;
+	}
+
+	.btn-small {
+		font-size: 28px;
+		line-height: 30px;
+	}
+
+	.btn-mini {
+		font-size : 22px;
+		line-height: 28px;
+	}
+
+	select {
+		height : 60px;
+		width : 600px;
+	}
+
+	div.tooltip {
+		font-size : 20px;
+		width : 240px;
+		height : 24px;
+
+	}
+
+	
 }
 
 @media all and (min-device-height: 2000px) {
 	.container {
-		width : 2110px;
+		width : 2700px;
 	}
 
 	#main {
@@ -96,9 +247,60 @@
 	}
 
 	#right-bar {
-		width : 300px;
+		width : 850px;
 		height : 1800px;
 	}
 
+	body, li, h5, .label, label, .dropdown-menu li > a, div.topleft-label, button, select, textarea, input[type="text"], input[type="password"],
+	input[type="datetime"], input[type="datetime-local"], input[type="date"],
+	input[type="month"], input[type="time"], input[type="week"],
+	input[type="number"], input[type="email"], input[type="url"],
+	input[type="search"], input[type="tel"], input[type="color"],
+	.uneditable-input {
+		font-size : 40px;
+		line-height : 50px;
+	}
+
+	text.chord-title {
+		font-size : 45px;
+	}
+
+	h4 {
+		font-size : 52px;
+		line-height : 66px;
+	}
+
+	#viz-picker a.dropdown-toggle, h3, .nav > li > a {
+		font-size : 64px;
+		line-height : 78px;
+	}
+
+	.documents tr td {
+		padding-bottom : 10px;
+		padding-top : 10px;
+		padding-right: 10px;
+	}
+
+	.btn-small {
+		font-size: 34px;
+		line-height: 38px;
+	}
+
+	.btn-mini {
+		font-size : 30px;
+		line-height: 34px;
+	}
+
+	select {
+		height : 80px;
+		width : 750px;
+	}
+
+	div.tooltip {
+		font-size : 30px;
+		width : 320px;
+		height : 30px;
+
+	}
 }
 
