@@ -254,6 +254,13 @@ var ChordViewer = MainView.add({
     setTimeout(function () {
     paths.each(function (d, i) {
       var b = this.getBBox();
+      //This makes sure that we are not creating titles on hidden chords
+      var shouldAllow = false;
+      for(var k = 0; k < data.matrix[i].length; k++)
+        if (data.matrix[i][k] > that.options.chord_threshold[0] &&
+           data.matrix[i][k] < that.options.chord_threshold[1])
+            shouldAllow = true;
+      if(shouldAllow) {
       d.textnode = d3.select(this.parentNode).append('svg:text')
         .attr('transform', 'translate(' + parseInt(b.x + b.width/2) + ' ' + (parseInt(b.y + b.height/2) - 15) + ')')
         .classed('chord-title', true);
@@ -271,7 +278,7 @@ var ChordViewer = MainView.add({
           .attr('y', i*spacing)
           .attr('x', 0);
       }
-    });
+    }});
     }, 100);
     /*
     // Add the group label (but only for large groups, where it will fit).
