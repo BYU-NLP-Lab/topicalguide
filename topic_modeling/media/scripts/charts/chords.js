@@ -230,6 +230,7 @@ var ChordViewer = MainView.add({
     // Returns an event handler for fading a given chord group.
     function fade(opacity, show) {
       return function(g, i) {
+        //alert("triggered");
         // d3.select(this).classed('hovered', show);
         that.svg.selectAll('g.group')
           .filter(function (d) { return data.matrix[i][d.index] > that.options.chord_threshold[0] &&
@@ -280,6 +281,16 @@ var ChordViewer = MainView.add({
       }
     }});
     }, 100);
+
+    var highlight_id = 48;
+    setTimeout(function() {
+        fade(.1, true)(null, highlight_id);
+        $('#group' + highlight_id).parent().children('text').css('display', 'block');
+        //pop up a modal to say to mouseover the outer nodes
+      }, 500);
+    setTimeout(function() {fade(1, false)(null, highlight_id);
+        $('#group' + highlight_id).parent().children('text').css('display', '');
+      }, 4000);
     /*
     // Add the group label (but only for large groups, where it will fit).
     // An alternative labeling mechanism would be nice for the small groups.
