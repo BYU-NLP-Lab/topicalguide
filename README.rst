@@ -57,6 +57,7 @@ Navigate to topicalguide/topic_modeling/settings.py.
 Insert your generated SECRET_KEY where is says 
 	SECRET_KEY=''
 
+Be sure not to commit/push your settings.py file with your SECRET_KEY in it.
 
 5. Create the Database
 ----------------------
