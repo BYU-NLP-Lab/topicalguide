@@ -48,9 +48,10 @@ should be reasonable::
     cp import_tool/local_settings.py.sample import_tool/local_settings.py
 
 4. Generate the SECRET_KEY
+--------------------------
 
 Go to this website to generate your SECRET_KEY 
-	http://www.miniwebtool.com/django-secret-key-generator/
+http://www.miniwebtool.com/django-secret-key-generator/
 
 Navigate to topicalguide/topic_modeling/settings.py.  
 Insert your generated SECRET_KEY where is says 
