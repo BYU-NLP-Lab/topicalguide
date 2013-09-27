@@ -47,21 +47,31 @@ should be reasonable::
 
     cp import_tool/local_settings.py.sample import_tool/local_settings.py
 
-4. Create the Database
+4. Generate the SECRET_KEY
+
+Go to this website to generate your SECRET_KEY 
+	http://www.miniwebtool.com/django-secret-key-generator/
+
+Navigate to topicalguide/topic_modeling/settings.py.  
+Insert your generated SECRET_KEY where is says 
+	SECRET_KEY=''
+
+
+5. Create the Database
 ----------------------
 
 Run::
 
    python topic_modeling/manage.py syncdb
 
-5. Import a dataset
+6. Import a dataset
 -------------------
 
 In local settings you can configure what dataset to import (default is the
 'state of the union addresses'), and then run `./run_import.py` to run the
 import.
 
-6. Done!
+7. Done!
 --------
 
 Start up the web server with the following command::
