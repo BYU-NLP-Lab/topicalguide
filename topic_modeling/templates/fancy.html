@@ -246,11 +246,11 @@
 <script>
 var URLS = {
   'pairwise topics': {
-    'document correlation': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="document correlation" %}',
-    'word correlation': '{% url ajax-all-topics-pairwise dataset=dataset_name analysis=analysis_name measure="word correlation" %}',
+    'document correlation': '{% url "ajax-all-topics-pairwise" dataset=dataset_name analysis=analysis_name measure="document correlation" %}',
+    'word correlation': '{% url "ajax-all-topics-pairwise" dataset=dataset_name analysis=analysis_name measure="word correlation" %}',
   },
   'documents': {
-    'metrics' : '{% url ajax-all-document-metrics dataset=dataset_name analysis=analysis_name %}',
+    'metrics' : '{% url "ajax-all-document-metrics" dataset=dataset_name analysis=analysis_name %}',
   }
 };
 </script>
