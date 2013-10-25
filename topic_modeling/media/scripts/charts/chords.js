@@ -2,6 +2,7 @@
  * Part of Topical Guide (c) BYU 2013
  */
 
+
 var ChordInfo = InfoView.extend({
   initialize: function () {
     this.$('button.view-plot').click(_.bind(this.view_plot, this));
@@ -194,35 +195,30 @@ var ChordViewer = MainView.add({
 
     this.maing.selectAll('*').remove();
 
-    /**
-    var topics = [], colors = [];
-    var perc;
-    var mn = 'Number of tokens';
-    for (var i=0; i<this.current_topics.length; i++) {
-      topics.push(this.topics[this.current_topics[i]]);
-      num = this.topics[this.current_topics[i]].metrics[mn];
-      perc = (num - this.metrics[mn].min)/(this.metrics[mn].max - this.metrics[mn].min);
-      colors.push(d3.hsl(0, 1, perc));
-    }
-    **/
+
+    // scale.quantize() means the domain is continuous, but the range is discrete
+    var fill = d3.scale.quantize()
+    .domain([this.options.chord_threshold[0],this.options.chord_threshold[1]])
+    .range(colorbrewer.RdBu[9].reverse())
+    //.range(colorbrewer.Reds[9]);
+
 
     var chord = this.maing.append('g').classed('all-chords', true).selectAll("path.chord")
       .data(this.layout.chords)
       .enter().append("svg:path")
         .attr("class", "chord")
-        // .style("fill", _.bind(this.topic_color, this))
-        .attr("d", this.path); /*
-      .append('svg:title')
+        .style("fill", function(d) {return fill(d.source.value);})
+        .attr("d", this.path); 
+        /*.append('svg:title')
         .text(function(d) { return topics[d.source.index].names[0] + ' :: ' +
                                    topics[d.target.index].names[0] + ' :: ' +
-                                   matrix[d.source.index][d.target.index]; });
-      // */
+                                   matrix[d.source.index][d.target.index]; });*/
 
     var g = this.maing.append('g').classed('all-groups', true).selectAll("g.group")
       .data(this.layout.groups)
       .enter().append("svg:g")
       .attr("class", "group")
-      .on('mouseover', fade(.1, true))
+      .on('mouseover', fade(.2, true))
       .on('mouseout', fade(1, false));
 
     var that = this;
@@ -236,6 +232,7 @@ var ChordViewer = MainView.add({
           .filter(function (d) { return data.matrix[i][d.index] > that.options.chord_threshold[0] &&
                                         data.matrix[i][d.index] < that.options.chord_threshold[1]; })
           .classed('hovering', show);
+	//this filter selects all chords not being hovered and sets the opacity lower
         that.svg.selectAll("path.chord")
         .filter(function(d) { return d.source.index != i && d.target.index != i; })
         .transition()
