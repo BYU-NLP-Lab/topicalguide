@@ -1,4 +1,4 @@
-Last updated: 13 Dec 2012
+Last updated: 01 Oct 2013
 
 --------------------------------------------
 The Topical Guide
@@ -9,8 +9,8 @@ Copyright 2010-2012 Brigham Young University
 About
 =====
 
-The topical guide is a tool aimed at helped laymen (and experts) intuitively
-naviagate the topic distribution produced by a topic model (such as LDA) for a
+The topical guide is a tool aimed at helping laymen (and experts) intuitively
+navigate the topic distribution produced by a topic model (such as LDA) for a
 given dataset.
 
 Installation
