@@ -199,9 +199,7 @@ var ChordViewer = MainView.add({
     // scale.quantize() means the domain is continuous, but the range is discrete
     var fill = d3.scale.quantize()
     .domain([this.options.chord_threshold[0],this.options.chord_threshold[1]])
-    .range(colorbrewer.RdBu[9].reverse())
-    //.range(colorbrewer.Reds[9]);
-
+    .range(colorbrewer.RdBu[9].reverse());
 
     var chord = this.maing.append('g').classed('all-chords', true).selectAll("path.chord")
       .data(this.layout.chords)

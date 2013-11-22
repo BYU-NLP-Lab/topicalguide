@@ -253,3 +253,34 @@ path.chord {
   display: none;
 }
 
+.palette {
+    display: block;
+    vertical-align: bottom;
+    margin: 1px;
+    padding: 2px 0 4px 4px;
+    background: #fff;
+    border: solid 1px #aaa;
+}
+
+.swatch {
+    float: left;
+    width: 11%;
+    height: 22px;
+}
+
+#color-legend {
+    margin: 10px 1px 0 1px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
