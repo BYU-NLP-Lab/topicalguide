@@ -29,6 +29,9 @@ from django.views.generic.base import TemplateResponseMixin, View
 from topic_modeling.visualize.models import Dataset, Analysis
 from topic_modeling.visualize.favorites import dataset_favorite_entries, analysis_favorite_entries, favorite_topic_entries, \
     topic_view_favorite_entries, document_view_favorite_entries, favorite_document_entries
+from git import Repo
+import time
+import os
 
 '''
 Like TemplateView, but better
@@ -48,6 +51,8 @@ class RootView(TemplateResponseMixin, View):
         context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
         context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
         context['in_iframe'] = 'in_iframe' in request.GET
+        #print(os.getcwd())
+        context['last_updated'] = "Last updated on %s" % time.strftime("%a, %d %b %Y %H:%M", time.gmtime(Repo(__file__).head.commit.committed_date))
 
         # Favorites Stuff
         # Do what's necessary to keep the session from ever expiring (assuming the user checks in every 10 years or so
