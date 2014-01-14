@@ -12,11 +12,11 @@ var PlotControls = Backbone.View.extend({
 
     var control = this;
     $("</br><h4>Remove Documents</h4>").appendTo($('#controls-plot-documents'));
-    this.removeButton = $("<button style='display:block'>Remove Documents</button>").appendTo($('#controls-plot-documents'));
+    this.removeButton = $("<button style='display:block; margin-bottom:4px'>Remove Documents</button>").appendTo($('#controls-plot-documents'));
     this.removeButton.on("click", function () { control.removeButtonClicked(); });
-    this.allButton = $("<button style='display:block'>Add Removed Documents</button>").appendTo($('#controls-plot-documents'));
+    this.allButton = $("<button style='display:block; margin-bottom:4px'>Add Removed Documents</button>").appendTo($('#controls-plot-documents'));
     this.allButton.on("click", function () { control.allButtonClicked(); });
-    this.saveButton = $("<button style='display:block'>Save</button>").appendTo($('#controls-plot-documents'));
+    this.saveButton = $("<button style='display:block; margin-bottom:4px'>Save</button>").appendTo($('#controls-plot-documents'));
     this.saveButton.on("click", function () { control.saveButtonClicked(); });
     this.hiddenSvgForm = $('<form id="svg_export_form" method="POST" style="display:none;visibility:hidden">' +
                            ' <input type="hidden" name="svg" /> </form>').appendTo($('#controls-plot-documents'));
