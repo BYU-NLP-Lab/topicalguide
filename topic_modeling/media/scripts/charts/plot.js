@@ -18,6 +18,9 @@ var PlotControls = Backbone.View.extend({
     this.allButton.on("click", function () { control.allButtonClicked(); });
     this.saveButton = $("<button style='display:block; margin-bottom:4px'>Save</button>").appendTo($('#controls-plot-documents'));
     this.saveButton.on("click", function () { control.saveButtonClicked(); });
+    this.aggregateButton = $("<button style='display:block; margin-bottom:4px'>Aggregate Documents by Author</button>").appendTo($('#controls-plot-documents'));
+    this.aggregateButton.on("click", function () { control.aggregateButtonClicked(); });
+
     this.hiddenSvgForm = $('<form id="svg_export_form" method="POST" style="display:none;visibility:hidden">' +
                            ' <input type="hidden" name="svg" /> </form>').appendTo($('#controls-plot-documents'));
                           
@@ -26,6 +29,19 @@ var PlotControls = Backbone.View.extend({
       this.filterButton = $("<button style='display:block'>Filter</button>").appendTo($('#controls-plot-documents'));
       this.filterButton.on("click", function() { parent.filterButtonClicked(); });
     */
+  },
+
+  aggregateButtonClicked: function() {
+    var aggregated = this.parent.currentlyAggregated;
+    if(aggregated) {
+      this.parent.update(true, false);
+      this.aggregateButton.html('Aggregate Documents by Author');
+      this.parent.currentlyAggregated = false;
+    } else {
+      this.parent.update(true, true);
+      this.aggregateButton.html('De-aggregate');
+      this.parent.currentlyAggregated = true;
+    }
   },
 
   //note that this does not get any css for the svg.  It must all be put inline
@@ -52,7 +68,7 @@ var PlotControls = Backbone.View.extend({
   removeButtonClicked : function () {
     if(this.parent.removingDocs) {
       this.removeButton.html('Remove Documents');
-      this.parent.update(true);
+      this.parent.update(true, false);
     }
     else {
       this.removeButton.html('Done');
@@ -239,6 +255,7 @@ var PlotInfo = InfoView.extend({
   setUpProperties: function () {
     this.lastAxes = null;
     this.removingDocs = false;
+    this.currentlyAggregated = false;
     this.width = this.base_defaults.width;
     this.height = this.base_defaults.height;
     this.margins = {left : (this.width / 12), // for y tick labels 
@@ -416,13 +433,14 @@ var PlotInfo = InfoView.extend({
            lastAxes.rAxis == newAxes.rAxis && lastAxes.cAxis == newAxes.cAxis;
   },
 
-  update: function (override) {
+  update: function (override, aggregateAuthor) {
     var axes = this.getAxes();
     if(!override && this.shouldUpdate(axes)) {
       return;
     }
     //console.log("update()");
-    this.drawingData = this.filterData(this.data, axes, override);
+    var filteredData = this.filterData(this.data, axes, override);
+    this.drawingData = aggregateAuthor ? this.aggregateByAuthor(filteredData) : filteredData;
     this.lastAxes = axes;
 
     var documents = this.svg.selectAll("circle").data(this.drawingData, function (doc) { return doc.id;});
@@ -432,6 +450,74 @@ var PlotInfo = InfoView.extend({
     this.setAxesTransition();
     this.setDocTransition(documents, axes);
     this.setDocExit(documents);
+  },
+
+  aggregateByAuthor: function(filteredData) {
+    var docData = filteredData;
+
+    //console.log("we are about to aggregateByAuthor");
+
+    var authorData = Array();
+    var docsBySameAuthor = Array();
+    var authorCtrIndex = 0;
+
+
+    for (var index=0; index < docData.length; index++) {
+      var doc = docData[index];
+      var author = doc.fields.author_name;
+
+      if(!this.alreadySeenAuthor(author, authorData)){
+
+        docsBySameAuthor = Array();
+        
+        for(var dupeFinder=index; dupeFinder < docData.length; dupeFinder++) {
+          if(author == docData[dupeFinder].fields.author_name) {
+            docsBySameAuthor.push(docData[dupeFinder]);
+          }
+        }
+
+        authorData.push(this.consolidateDocsByAuthor(docsBySameAuthor, authorCtrIndex));
+        authorCtrIndex++;
+
+      }
+
+    }
+    
+    return authorData;
+  },
+
+  //TODO: discuss with TG team how this should actually be done
+  consolidateDocsByAuthor: function(docsBySameAuthor, authorCtrIndex) {
+
+    var authorObj = {'name':docsBySameAuthor[0].fields.author_name, 'fields':{'year':docsBySameAuthor[0].fields.year, 
+                                                                              'author_name': docsBySameAuthor[0].fields.author_name}};
+
+    authorObj.included = true;
+    authorObj.id = authorCtrIndex;
+    var tempConsolidation = {'Number of tokens': 0, 'Number of types': 0, 'Topic Entropy': 0};
+    for(var i=0; i < docsBySameAuthor.length; i++) {
+      var doc = docsBySameAuthor[i];
+      tempConsolidation['Number of tokens'] += doc.fields['Number of tokens'];
+      tempConsolidation['Number of types'] += doc.fields['Number of types'];
+      tempConsolidation['Topic Entropy'] += doc.fields['Topic Entropy'];
+    }
+
+    authorObj.fields['Number of tokens'] = tempConsolidation['Number of tokens'] / docsBySameAuthor.length;
+    authorObj.fields['Number of types'] = tempConsolidation['Number of types'] / docsBySameAuthor.length;
+    authorObj.fields['Topic Entropy'] = tempConsolidation['Topic Entropy'] / docsBySameAuthor.length;
+
+    //console.log(JSON.stringify(authorObj));
+
+    return authorObj;
+  },
+
+  alreadySeenAuthor: function(author, authorData) {
+      for(var index in authorData) {
+          if(author == authorData[index].fields.author_name) {
+            return true;
+          }
+      }
+      return false;
   },
 
   setDocEnter: function(documents, axes) {
@@ -472,7 +558,7 @@ var PlotInfo = InfoView.extend({
     var viewRef = this;
     return function (doc) {
              if(viewRef.removingDocs) {
-               viewRef.tooltip.transition().duration(200).style("opacity", 0.0);
+               viewRef.tooltip.transition().duration(200).style("opacity", 0.5);
                $(this).remove();
                doc.included = false;
              }
@@ -624,7 +710,7 @@ var PlotInfo = InfoView.extend({
     this.setUpNomMap(this.data, nom_fields);
 
     //console.log(this.nomMaps);
-    this.update(true);
+    this.update(true, false);
   },
 
   //this maps the nominal field values to an index in the color array
@@ -686,7 +772,7 @@ var PlotInfo = InfoView.extend({
       var doc = this.data[doc_id];
       doc.included = true;
     }
-    this.update(true);
+    this.update(true, false);
     this.removingDocs = false;
   }
 
