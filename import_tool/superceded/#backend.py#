@@ -45,9 +45,7 @@ import codecs
 import datetime
 import hashlib
 import os
-from os.path import join, dirname
 import sys
-import imp
 
 from topic_modeling.tools import setup_logging, logging
 setup_logging()
@@ -55,7 +53,7 @@ logger = logging.getLogger('root')
 
 if __name__ == "__main__":
     logger.warn("This file is only meant to be run by doit. "
-                 "use ./run_import.py to run the backend import")
+                 "Use ./run_import.py to run the backend import")
 
 from collections import defaultdict
 from subprocess import Popen, PIPE
@@ -89,7 +87,7 @@ from topic_modeling.visualize.models import PairwiseDocumentMetric
 from topic_modeling.visualize.models import TopicNameScheme
 
 try:
-    from import_tool.local_settings import LOCAL_DIR
+    from import_tool.local_settings import LOCAL_DIR, build
 except ImportError:
     print >> sys.stderr, "Import error looking for local_settings.py."\
             "Look at topic_modeling/local_settings.py.sample for help"
@@ -147,38 +145,51 @@ let it pollute our namespace. Then we go through and set up an aggregious
 number of config options, making sure not to override any options that may
 have been set by our config script.
 '''
-BASE_DIR = os.path.abspath(dirname(dirname(__file__)))
 
-from config import config
+from config import config, build_scri
 c = config
 
+for task in build_script.create_tasks(c):
+    locals()[task.__name__] = task
 
-# gets info from the database, this will represent all of the documents
+print "----- Topical Guide Data Import System -----"
+print "Dataset name: " + c['dataset_name']
+
+if not os.path.exists(c['dataset_dir']): os.mkdir(c['dataset_dir'])
+
 def dataset():
     return Dataset.objects.get(name=c['dataset_name'])
 
 def analysis():
     return Analysis.objects.get(name=c['analysis_name'], dataset__name=c['dataset_name'])
 
-
-
-
-
-
 #-----------------------------------IMPORT THINGS----------------------------#
+'''To start things off, we have a number of tasks whose main job is to import things.'''
 
-# After we import things we run the task 'analysis_import'
+#TODO(josh): get rid of the default document_metadata task---it's a total kludge
+if not 'task_document_metadata' in locals() and not ('suppress_default_document_metadata_task' in c and c['suppress_default_document_metadata_task']):
+    def make_document_metadata():
+        attrs = open(c['metadata_filenames']['documents'], "w")
+        attrs.write('{\n')
+        for filename in os.listdir(c['files_dir']):
+            attrs.write('\t"{0}": {}\n'.format(filename))
+        attrs.write('}')
+
+    def task_document_metadata():
+        task = dict()
+        task['targets'] = [c['metadata_filenames']['documents']]
+        task['actions'] = [(make_document_metadata)]
+        return task
+
 if 'task_metadata_import' not in locals():
     def task_metadata_import():
 
         class ImportTask(DoitTask):
             task_dep = ['analysis_import']
-            
+
             def action(self):
                 try:
-                    
                     metadata = Metadata(c['metadata_filenames'][self.name])
-                    
                     self.fn[0](dataset(), metadata)
                 except Dataset.DoesNotExist:
                     raise Exception('Trying to run a metadata import for '
@@ -196,7 +207,6 @@ if 'task_metadata_import' not in locals():
                 except Dataset.DoesNotExist:
                     pass
 
-            #c['metadata_filenames']['datasets'] = /local/cj264/topicalguide/working/datasets/Conference_Talks_on_Agency/metadata/datasets.json
             def uptodate(self, _task, _values):
                 if not os.path.exists(c['metadata_filenames']['datasets']):
                     return True
@@ -218,8 +228,6 @@ if 'task_metadata_import' not in locals():
                 except Dataset.DoesNotExist:
                     pass
 
-            #c['metadata_filenames']['documents'] = /local/cj264/topicalguide/working/datasets/Conference_Talks_on_Agency/metadata/documents.json
-            #print c['metadata_filenames']['documents']
             def uptodate(self, _task, _values):
                 if not os.path.exists(c['metadata_filenames']['documents']): return True
                 try:
@@ -334,64 +342,59 @@ if 'task_metadata_import' not in locals():
 - extracting the output
 '''
 
-#~ if 'task_mallet_input' not in locals():
-    #~ class MalletInput(DoitTask):
-#~ 
-        #~ basename = 'mallet_input'
-        #~ clean = 'rm -f '+c['mallet_input']
-        #~ targets = [c['mallet_input']]
-        #~ if 'task_extract_data' in globals():
-            #~ task_dep = ['extract_data']
-#~ 
-        #~ def action(self, docs_dir, output_file):
-            #~ count = 0
-            #~ for root, dirs, files in os.walk(docs_dir):
-                #~ for f in files:
-                    #~ count += 1
-                    #~ path = '{0}/{1}'.format(root, f)
-                    #~ # the [1:] takes off a leading /
-                    #~ partial_root = root.replace(docs_dir, '')[1:]
-                    #~ if partial_root:
-                        #~ mallet_path = '{0}/{1}'.format(partial_root, f)
-                    #~ else:
-                        #~ mallet_path = f
-                    #~ text = open(path).read().decode('utf-8').strip().replace('\n',' ').replace('\r',' ')
-                    #~ w.write(u'{0} all {1}'.format(mallet_path, text))
-                    #~ w.write(u'\n')
-#~ 
-            #~ if not count:
-                #~ raise Exception('No files processed')
-#~ 
-        #~ def uptodate(self, _task, _values):
-            #~ return os.path.exists(c['mallet_input'])
-#~ 
-    #~ task_mallet_input = MalletInput(c['files_dir'], c['mallet_input'])()
+if 'task_mallet_input' not in locals():
+    class MalletInput(DoitTask):
 
-#~ if 'task_mallet_imported_data' not in locals():
-    #~ def task_mallet_imported_data():
-        #~ task = dict()
-        #~ task['targets'] = [c['mallet_imported_data']]
-        #~ print "config items:"
-        #~ print c['mallet']
-        #~ print c['files_dir']
-        #~ print c['mallet_imported_data']
-        #~ print c['files_dir']
-        #~ #raise Exception("mallet_imported_data")
-        #~ #TODO why is import-dir being used?
-        #~ #this means compiling data to single file is unnecessary
-        #~ cmd = '%s import-dir --input %s --output %s --keep-sequence --set-source-by-name --source-name-prefix "file:%s/%s/" --remove-stopwords' \
-            #~ % (c['mallet'], c['files_dir'], c['mallet_imported_data'], os.getcwd(), c['files_dir'])
-#~ 
-        #~ if 'extra_stopwords_file' in c:
-            #~ cmd += ' --extra-stopwords ' + c['extra_stopwords_file']
-#~ 
-        #~ if 'token_regex' in c and c['token_regex']:
-            #~ cmd += " --token-regex " + c['token_regex']
-#~ 
-        #~ task['actions'] = [cmd]
-        #~ task['file_dep'] = [c['mallet_input']]
-        #~ task['clean'] = ["rm -f " + c['mallet_imported_data']]
-        #~ return task
+        basename = 'mallet_input'
+        clean = 'rm -f '+c['mallet_input']
+        targets = [c['mallet_input']]
+        if 'task_extract_data' in globals():
+            task_dep = ['extract_data']
+
+        def action(self, docs_dir, output_file):
+            w = codecs.open(output_file, 'w', 'utf-8')
+
+            count = 0
+            for root, dirs, files in os.walk(docs_dir):
+                for f in files:
+                    count += 1
+                    path = '{0}/{1}'.format(root, f)
+                    # the [1:] takes off a leading /
+                    partial_root = root.replace(docs_dir, '')[1:]
+                    if partial_root:
+                        mallet_path = '{0}/{1}'.format(partial_root, f)
+                    else:
+                        mallet_path = f
+                    text = open(path).read().decode('utf-8').strip().replace('\n',' ').replace('\r',' ')
+                    w.write(u'{0} all {1}'.format(mallet_path, text))
+                    w.write(u'\n')
+
+            if not count:
+                raise Exception('No files processed')
+
+        def uptodate(self, _task, _values):
+            return os.path.exists(c['mallet_input'])
+
+    task_mallet_input = MalletInput(c['files_dir'], c['mallet_input'])()
+
+if 'task_mallet_imported_data' not in locals():
+    def task_mallet_imported_data():
+        task = dict()
+        task['targets'] = [c['mallet_imported_data']]
+
+        cmd = '%s import-dir --input %s --output %s --keep-sequence --set-source-by-name --source-name-prefix "file:%s/%s/" --remove-stopwords' \
+            % (c['mallet'], c['files_dir'], c['mallet_imported_data'], os.getcwd(), c['files_dir'])
+
+        if 'extra_stopwords_file' in c:
+            cmd += ' --extra-stopwords ' + c['extra_stopwords_file']
+
+        if 'token_regex' in c and c['token_regex']:
+            cmd += " --token-regex " + c['token_regex']
+
+        task['actions'] = [cmd]
+        task['file_dep'] = [c['mallet_input']]
+        task['clean'] = ["rm -f " + c['mallet_imported_data']]
+        return task
 
 if 'task_mallet_output_gz' not in locals():
     def task_mallet_output_gz():
@@ -415,7 +418,7 @@ if 'task_mallet_output' not in locals():
 
 if 'task_mallet' not in locals():
     def task_mallet():
-        return {'actions':None, 'task_dep': ['mallet_output_gz', 'mallet_output']}
+        return {'actions':None, 'task_dep': ['mallet_input', 'mallet_imported_data', 'mallet_output_gz', 'mallet_output']}
 
 #------------------------------Import things---------------------------------#
 '''Here we import stuff into the database!  '''
@@ -845,6 +848,57 @@ if 'task_metrics' not in locals():
     def task_metrics():
         return {'actions':None, 'task_dep': ['analysis_import', 'topic_metrics', 'pairwise_topic_metrics', 'document_metrics', 'pairwise_document_metrics']}
 
+def disabled_task_hash_java():
+    def _cmd_output(cmd):
+        return Popen(cmd, shell=True, bufsize=512, stdout=PIPE).stdout.read()
+
+    def _hash(txt):
+        hasher = hashlib.md5()
+        hasher.update(txt)
+        return hasher.hexdigest()
+
+    def _directory_recursive_hash(dir_):
+        if not os.path.exists(dir_): return "0"
+        return str(hash(_cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir_))))
+
+    return {'actions': [(_directory_recursive_hash, [c['java_base']])]}
+
+if 'task_compile_java' not in locals():
+    def disabled_task_compile_java():
+        actions = ["cd {0} && ant -lib lib".format(c['java_base'])]
+        result_deps = ['hash_java']
+        clean = ['rm -rf ' + c['java_bin']]
+        return {'actions':actions, 'result_dep':result_deps, 'clean':clean}
+
+'''
+if 'task_graphs' not in locals():
+    def task_graphs():
+        classpath = '{0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/{2}'.format(c['java_bin'], c['java_base'], c['db_jar'])
 
 
+        for ns in c['name_schemes']:
+            def utd(_task, _values): return os.path.exists(graphs_img_dir)
 
+            task = dict()
+            graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(c['dataset_dir'], c['analysis_name'], ns.scheme_name())
+            graphs_unlinked_img_dir = graphs_img_dir + "-unlinked"
+            gexf_file_name = "{0}/full_graph.gexf".format(graphs_img_dir)
+
+            task['actions'] = [
+                'java -cp {0} {1} {2} {3} {4} {5} "{6}" {7} {8} {9} {10}'
+                .format(classpath,c['graph_builder_class'],c['graphs_min_value'],c['dataset_name'],c['analysis_name'],ns.scheme_name(),c['graphs_pairwise_metric'], c['jdbc_path'], graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
+            ]
+            task['task_dep'] = ['pairwise_topic_metrics', 'name_schemes', 'compile_java']
+            task['clean'] =  [
+                'rm -rf '+graphs_unlinked_img_dir,
+                'rm -rf '+graphs_img_dir
+            ]
+            task['name'] = ns.scheme_name()
+            task['uptodate'] = [utd]
+            yield task
+'''
+
+#
+#def task_reset_db():
+#    actions = ['yes "yes" | python topic_modeling/manage.py reset visualize']
+#    return {'actions':actions}

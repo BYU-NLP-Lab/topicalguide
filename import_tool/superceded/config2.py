@@ -25,15 +25,17 @@ import os
 import sys
 import imp
 import json
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+
 from os.path import join, dirname
 from collections import defaultdict
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
 
 from topic_modeling import settings
-from import_tool.local_settings import LOCAL_DIR
+from local_settings import LOCAL_DIR
+from project import Project
 from build import create_dirs_and_open
-
-from import_tool.tasks.general_task import DataSetImportTask
 
 BASE_DIR = os.path.abspath(dirname(dirname(__file__)))
 
@@ -58,10 +60,7 @@ class Config(dict):
     def required(self, key):
         if key not in self: raise Exception("Configuration key '%s' is required")
 
-
-
 def create_config(project):
-    #TODO get all necessary methods from the state_of_the_union2.py file!
     '''The configuration dictionary'''
     config = Config()
     '''A shorthand alias for the config dictionary'''
@@ -184,20 +183,18 @@ def create_config(project):
     
     #write all document metadata
     destination_file_name = c['metadata_filenames']['documents']
-    print('Metadata file name: ', c['metadata_filenames'])
-    #~ w = create_dirs_and_open(destination_file_name)
-    #~ metadata = {'types':project.get_document_metadata_types(), \
-                #~ 'data':project.get_all_documents_metadata()}
-    #~ w.write(json.dumps(metadata))
-    #~ w.close()
-    #~ 
-    #~ #write documents
-    #~ doc_dest_dir = c['files_dir']
+    w = create_dirs_and_open(destination_file_name)
+    metadata = {'types':project.get_document_metadata_types(), \
+                'data':project.get_all_documents_metadata()}
+    w.write(json.dumps(metadata))
+    w.close()
     
+    #write documents
+    doc_dest_dir = c['files_dir']
+    project.copy_contents_to_directory(doc_dest_dir)
     return c
     
 #workaround for analysis_import.py
-project = DataSetImportTask('/local/cj264/topicalguide/raw-data/agency_conference_talks/')
-config = create_config(project)
+
 
 # vim: et sw=4 sts=4

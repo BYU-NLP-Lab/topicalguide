@@ -128,8 +128,9 @@ def _load_documents(dataset, token_regex):
         for filename in filenames:
             all_files.append([dataset.files_dir, filename, os.path.join(dirpath, filename)])
     all_files.sort()
-
-    timer = TimeLongThing(len(all_files), .01, .1)
+    
+    #commented out to prevent modulus by zero
+    timer = TimeLongThing(len(all_files))#, .01, .1)
     for i, (dirpath, filename, full_path) in enumerate(all_files):
         doc, _ = Document.objects.get_or_create(dataset=dataset,
                 filename=filename,

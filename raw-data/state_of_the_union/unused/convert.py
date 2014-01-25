@@ -1,26 +1,5 @@
-# The Topical Guide
-# Copyright 2010-2011 Brigham Young University
-#
-# This file is part of the Topical Guide <http://nlp.cs.byu.edu/topic_browser>.
-#
-# The Topical Guide is free software: you can redistribute it and/or modify it
-# under the terms of the GNU Affero General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or (at your
-# option) any later version.
-#
-# The Topical Guide is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with the Topical Guide.  If not, see <http://www.gnu.org/licenses/>.
-#
-# If you have inquiries regarding any further use of the Topical Guide, please
-# contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
-# Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
+#!/usr/bin/env python
 
-#State of the Union Addresses Dataset build settings
 import codecs
 import os
 import re
@@ -28,8 +7,6 @@ from nltk.tokenize import TreebankWordTokenizer
 
 from build import create_dirs_and_open
 from topic_modeling import anyjson
-
-from ImportInfo import ImportInfo
 
 def update_config(c):
     c['num_topics'] = 100
@@ -51,7 +28,7 @@ def create_tasks(c):
         doc_meta_filename = c['metadata_filenames']['documents']
 
         def utd(_task, _vals):
-            return len(os.listdir(dest_dir))==NUMBER_OF_ADDRESSES and
+            return len(os.listdir(dest_dir))==NUMBER_OF_ADDRESSES and \
             os.path.exists(doc_meta_filename)
 
         task = dict()
@@ -73,10 +50,8 @@ def _filename(chron_entry_d):
 
 _tokenizer = TreebankWordTokenizer()
 def _lines_to_string(lines):
-    raw_txt = u' '.join(lines)
-    tokens = _tokenizer.tokenize(raw_txt)
-    tokenized_txt = u' '.join(tokens)
-    return tokenized_txt
+    raw_txt = '\n\n'.join(lines)
+    return raw_txt
 
 def _extract_metadata(chron_list_filename):
     metadata_text = codecs.open(chron_list_filename,'r','utf-8').read()
@@ -107,17 +82,25 @@ def _write_metadata(metadata_data, dest_filename):
     w.write(anyjson.serialize(metadata))
     w.close()
 
-def _extract_doc(doc_filename, title, lines):
+def _extract_doc(doc_filename, title, lines, metadata):
     w = create_dirs_and_open(doc_filename)
+    m = ''
+    for key in metadata:
+        m += key
+        m += ': '
+        m += str(metadata[key])
+        m += '\n'
+    m += '\n'
+    w.write(m)
     w.write(_lines_to_string(lines))
     w.close()
-    print 'Extracted "{0}"'.format(title)
+    #print 'Extracted "{0}"'.format(title)
 
 def _extract(chron_list_filename, addresses_filename, dest_dir, doc_metadata_filename):
     print "extract_state_of_the_union({0},{1},{2})".format(chron_list_filename,
             addresses_filename, dest_dir)
     metadata_data, titles_to_filenames = _extract_metadata(chron_list_filename)
-    _write_metadata(metadata_data, doc_metadata_filename)
+    #_write_metadata(metadata_data, doc_metadata_filename)
 
     print 'Addresses in index: ' + str(len(titles_to_filenames))
     count = 0
@@ -125,20 +108,32 @@ def _extract(chron_list_filename, addresses_filename, dest_dir, doc_metadata_fil
     lines = []
     for line in codecs.open(addresses_filename, 'r', 'utf-8'):
         line = line.strip()
+        #print "\""+line+"\""
+        #raise Exception(" ")
         if line in titles_to_filenames:
             if title is not None:
                 filename = '%s/%s' % (dest_dir, titles_to_filenames[title])
-                _extract_doc(filename, title, lines)
+                _extract_doc(filename, title, lines, metadata_data[titles_to_filenames[title]])
                 lines = []
                 count += 1
             title = line
         else:
             lines += [line]
     filename = '%s/%s' % (dest_dir, titles_to_filenames[title])
-    _extract_doc(filename, title, lines)
+    _extract_doc(filename, title, lines, metadata_data[titles_to_filenames[title]])
     count += 1
 
     print 'Addresses extracted: ' + str(count)
     if count < len(titles_to_filenames):
         raise Exception('Some addresses were not extracted')
 
+
+if __name__ == "__main__":
+    _extract('/local/cj264/topicalguide/raw-data/state_of_the_union/chronological_list.wiki', \
+            '/local/cj264/topicalguide/raw-data/state_of_the_union/state_of_the_union_addresses.txt', \
+            '/local/cj264/topicalguide/raw-data/state_of_the_union/documents', \
+            '/local/cj264/topicalguide/raw-data/state_of_the_union/chronological_list.wiki')
+
+
+
+# vim: et sw=4 sts=4

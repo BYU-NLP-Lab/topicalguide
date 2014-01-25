@@ -97,7 +97,7 @@ ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
 #TODO Set this before deploying a server
-SECRET_KEY = ''
+SECRET_KEY = 'sr#!r+ni%isxkb)9j1aw$u)e6=z!*ca_$&v4xx+&yxo==1(0-t'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (

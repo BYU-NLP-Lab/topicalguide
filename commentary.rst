@@ -134,9 +134,9 @@ First, a custom script is imported which pollutes the local namespace... yeah I
 thought it was a bad idea too.
 
 1. set some config options...
-2. define some task_* functions, which get automajically collected by our
+2. define some task_* functions, which get automatically collected by our
    friend doit.
-3. in the case of state_of_the_union, the only task\_ we define is
+3. in the case of state_of_the_union, the only task_ we define is
    task_extract_data
 4. define some helper functions which, though they pollute the local namespace,
    don't appear to get used.

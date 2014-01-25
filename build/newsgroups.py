@@ -29,30 +29,53 @@ from nltk.tokenize import TreebankWordTokenizer
 from build import create_dirs_and_open
 from topic_modeling import anyjson
 
-from ImportInfo import ImportInfo
 
+#TODO figure out how the import tool is getting a list of all of
+#the file names from state of the union, this is disconcerting
+#since I don't specify anything here, or so it seems...
 def update_config(c):
-    c['num_topics'] = 100
+    #the number of topic groups you want created
+    #appears that the larger this is the longer the first step of the
+    #import process takes, the second step of the import process
+    #takes longer based on the number of files being searched through
+    c['num_topics'] = 2
+    #unsure as to the importance or usage of this
+    #appears to be just a listing for the database
+    #unsure if this actually has a hand in getting data
+    #now I'm pretty sure the regex further down parses the chronological
+    #data and figures out the file names from there
     c['chron_list_filename'] = 'chronological_list.wiki'
-    c['addresses_filename'] = 'state_of_the_union_addresses.txt'
-    c['dataset_name'] = 'state_of_the_union'
-    c['dataset_readable_name'] = 'State of the Union Addresses 1790-2010'
+
+    #my replacement
+    #because I want to be able to import a dataset
+    #with the metadata at the top followed by \n\n followed by the document
+    c['all_data_filepath'] = 'raw-data/newsgroups/small_group'
+    
+
+    c['addresses_filename'] = 'newsgroup_postings.txt'
+    c['dataset_name'] = 'newsgroups'
+    #this appears in the datasets.json file as well
+    c['dataset_readable_name'] = 'Various Internet Postings'
+    #unsure still
     c['suppress_default_document_metadata_task'] = True
+    #unnecessarily complicated way to add a file to the 
+    #metadata filenames
     c['metadata_filenames'] = lambda c: {'datasets':
             '%s/datasets.json' % c['raw_data_dir']}
+    #unsure still
     c['pairwise_document_metrics'] = ['topic_correlation']
 
 def create_tasks(c):
     NUMBER_OF_ADDRESSES = 223
     def task_extract_data():
+        #get all of the file names previously specified, with the path
         index_filename = '%s/%s' % (c['raw_data_dir'], c['chron_list_filename'])
         data_filename = '%s/%s' % (c['raw_data_dir'], c['addresses_filename'])
         dest_dir = c['files_dir']
         doc_meta_filename = c['metadata_filenames']['documents']
 
         def utd(_task, _vals):
-            return len(os.listdir(dest_dir))==NUMBER_OF_ADDRESSES and
-            os.path.exists(doc_meta_filename)
+            return len(os.listdir(dest_dir))==NUMBER_OF_ADDRESSES and os.path.exists(doc_meta_filename)
 
         task = dict()
         task['targets'] = [dest_dir, doc_meta_filename]
@@ -62,16 +85,24 @@ def create_tasks(c):
         return task
     return [task_extract_data]
 
+#used for parsing the chronological_list.wiki file
+#chronological_list.wiki contains all of the metadata for the documents
 chron_entry_rgx_s = r"\[\[(?P<title>(?P<president_name>.+)'s? .*State of the Union (?:Address|Speech))\|(?P<address_number>\w+) State of the Union Address\]\] - \[\[author:(?P<author_name>.+)\|.+\]\], \((?P<day>\d+) (?P<month>\w+) \[\[w:(?P<year>\d+)\|(?P=year)\]\]\)"
 chron_entry_rgx = re.compile(chron_entry_rgx_s, re.I)
 nums = {'First':'1', 'Second':'2', 'Third':'3', 'Fourth':'4', 'Fifth':'5', 'Sixth':'6', 'Seventh':'7', 'Eighth':'8',
         'Ninth':'9', 'Tenth':'10', 'Eleventh':'11', 'Twelfth':'12'}
+
+
+#extracts data to create the filename from the chronological_list.wiki file
 def _filename(chron_entry_d):
     prez = chron_entry_d['president_name'].replace(' ','_')
     num = chron_entry_d['address_number']
     return '%s_%s.txt' % (prez, num)
+    #ex: John_Adams_1.txt
 
+#this class creates word tokens from sentences
 _tokenizer = TreebankWordTokenizer()
+#method to create a list of words seperated by spaces
 def _lines_to_string(lines):
     raw_txt = u' '.join(lines)
     tokens = _tokenizer.tokenize(raw_txt)
@@ -92,21 +123,26 @@ def _extract_metadata(chron_list_filename):
         raise Exception('No Addresses Found! (empty metadata listing)')
     return metadata_data, titles_to_filenames
 
+#this is where the chronological_list.wiki is converted into
+#json and put in working/datasets/newsgroups/documents.json
+#essentially documents.json stores all of the metadata for each data file
 def _write_metadata(metadata_data, dest_filename):
     metadata_types = {
-        "address_number": "int",
-        "title": "text",
-        "author_name": "text",
-        "month": "text",
-        "president_name": "text",
-        "year": "int",
-        "day": "int"
+        "newsgroups": "text",
+        "organization": "text",
+        "date": "text",
+        "from": "text",
+        "subject": "text"
     }
     metadata = {'types':metadata_types, 'data':metadata_data}
     w = create_dirs_and_open(dest_filename)
     w.write(anyjson.serialize(metadata))
     w.close()
 
+
+#creates a document file
+#writing the lines to it
+#should be named something more like _write_extracted_document
 def _extract_doc(doc_filename, title, lines):
     w = create_dirs_and_open(doc_filename)
     w.write(_lines_to_string(lines))

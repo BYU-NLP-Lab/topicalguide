@@ -23,7 +23,7 @@ def import_dataset_metadata(dataset, dataset_metadata):
     start = datetime.now()
 
     if dataset.name not in dataset_metadata:
-        raise RuntimeError("Invalid metadata file {}: doesn't comtain dataset {}".format(dataset_metadata.filename, dataset.name))
+        raise RuntimeError("Invalid metadata file {}: doesn't contain dataset {}".format(dataset_metadata.filename, dataset.name))
 
     for attribute, value in dataset_metadata[dataset.name].items():
         mi,__ = DatasetMetaInfo.objects.get_or_create(name=attribute)

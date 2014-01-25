@@ -50,8 +50,12 @@ class TimeLongThing:
             minor = int(minor * total)
         if major < 1:
             major = int(major * total)
-        self.minor = minor
+		#commented out to ensure that self.minor is NEVER zero
+        self.minor = 50#minor
         self.major = major
+        #a check to prevent divide by zero for small datasets
+        if self.major == 0:
+            self.major = 1
         self.target = target
         self.maxwait = maxwait
         self.start()
