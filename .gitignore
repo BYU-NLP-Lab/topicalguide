@@ -16,3 +16,4 @@ datasets/
 /tg.sqlite3
 /import_tool/local_settings.py
 /working/
+/raw-data/*

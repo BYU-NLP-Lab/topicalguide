@@ -33,7 +33,7 @@ from topic_modeling import settings
 from import_tool.local_settings import LOCAL_DIR
 from build import create_dirs_and_open
 
-from import_tool.tasks.general_task import DataSetImportTask
+from dataset_classes.generic_dataset import DataSetImportTask
 
 BASE_DIR = os.path.abspath(dirname(dirname(__file__)))
 
@@ -183,8 +183,8 @@ def create_config(project):
         raise Exception("Unknown database type '" + settings.DBTYPE + "'")
     
     #write all document metadata
-    destination_file_name = c['metadata_filenames']['documents']
-    print('Metadata file name: ', c['metadata_filenames'])
+    #~ destination_file_name = c['metadata_filenames']['documents']
+    #~ print('Metadata file name: ', c['metadata_filenames'])
     #~ w = create_dirs_and_open(destination_file_name)
     #~ metadata = {'types':project.get_document_metadata_types(), \
                 #~ 'data':project.get_all_documents_metadata()}

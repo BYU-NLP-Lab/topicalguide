@@ -71,10 +71,11 @@ def remove_analysis(analysis):
 
 def import_analysis(dataset_name, analysis_name, analysis_readable_name, analysis_description,
        markup_dir, state_file, tokenized_file, metadata_filenames, token_regex):
-    print >> sys.stderr, u"analysis_import({0})".\
-            format(u', '.join([dataset_name, analysis_name,
-                analysis_readable_name, analysis_description,
-       markup_dir, state_file, tokenized_file, unicode(metadata_filenames), token_regex]))
+    # Disabled to keep from cluttering up the CLI
+    #~ print >> sys.stderr, u"analysis_import({0})".\
+            #~ format(u', '.join([dataset_name, analysis_name,
+                #~ analysis_readable_name, analysis_description,
+       #~ markup_dir, state_file, tokenized_file, unicode(metadata_filenames), token_regex]))
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
     if settings.database_type()=='sqlite3':

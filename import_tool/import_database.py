@@ -15,11 +15,11 @@ from mallet import (prepare_mallet_input, run_mallet)
 from import_metrics import *
 
 # configure Django Settings
-# NOTE: The 'DJANGO_SETTINGS_MODULE' must be set before 'dataset_import'
+# NOTE: The 'DJANGO_SETTINGS_MODULE' must be set before dataset_import 
 # can be imported.
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
-# import process utilities
+# import utilities
 from import_scripts import dataset_import, analysis_import
 from import_scripts.metadata import (Metadata, import_dataset_metadata,
     import_document_metadata, import_word_type_metadata, 
@@ -27,7 +27,7 @@ from import_scripts.metadata import (Metadata, import_dataset_metadata,
 
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
 
-from dataset_classes.generic_dataset import DataSetImportTask
+from tasks.general_task import DataSetImportTask
 
 from topic_modeling.visualize.models import (Dataset, TopicMetric,
     PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric, 
@@ -43,16 +43,44 @@ from build import create_dirs_and_open # TODO add this to a general toolset
 
 
 
-# TODO make sure mallet doesn't stop the process to ask if you want to override a file
-# TODO make input to mallet more sensical(sp?), eliminate html items like &lquo;
-# TODO make sure that anything (like 'year') is converted to an int in metadata (if needed)
-# TODO find cause of error referencing state_of_the_union:
-#  [30/Jan/2014 13:08:49] "GET /feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics HTTP/1.1" 500 12461
-# TODO while importing a KeyError is thrown for u'a' as the key, find the cause
 
+#TODO eradicate dependence on the config and backend script
+
+#TODO eliminate doit
+#~ Backend Running Sequence:
+#~ 
+#~ -- extract_data # done
+#~ -- mallet_input # done
+#~ -- dataset_import # done
+#~ -- mallet_imported_data # done
+#~ -- mallet_output_gz # done
+#~ -- mallet_output # done
+#~ -- analysis_import # done
+#~ -- metadata_import:word_tokens # done
+#~ -- metadata_import:word_types # done
+#~ -- metadata_import:datasets # done
+#~ -- metadata_import:documents # done
+#~ -- metadata_import:analysis # done
+#~ -- metadata_import:topics # done
+#~ -- name_schemes:Top3 # done
+#~ -- dataset_metrics:counts # next
+#~ -- analysis_metrics:entropy
+#~ -- topic_metrics:word_entropy # next 2
+#~ -- topic_metrics:token_count # next 2
+#~ -- topic_metrics:type_count # next 2
+#~ -- topic_metrics:document_entropy # next 2
+#~ -- pairwise_topic_metrics:document_correlation
+#~ -- pairwise_topic_metrics:word_correlation
+#~ -- document_metrics:topic_entropy # next
+#~ -- document_metrics:token_count # next
+#~ -- document_metrics:type_count # next
+#~ -- pairwise_document_metrics:topic_correlation
+#~ .  hash_java
+#~ -- compile_java
+#~ -- graphs:Top3
 
 def transfer_data(dataset, dataset_dir, document_dir):
-    '''\
+    '''/
     Transfers the dataset's documents and metadata into files located on the server.
     Ex: $TOPICAL_GUIDE_ROOT/working/datasets/files
         $TOPICAL_GUIDE_ROOT/working/datasets/metadata/documents.json
@@ -235,7 +263,7 @@ def name_schemes(dataset, analysis_settings, analysis_db):
 
 def import_dataset(dataset):
     '''\
-    Imports the dataset described by 'dataset' (which should be of type DataSetImportTask).
+    Imports the dataset describle by 'dataset' (which should be of type DataSetImportTask).
     '''
     
     analysis_settings = dataset.get_analysis_settings()
@@ -258,14 +286,6 @@ def import_dataset(dataset):
     if not os.path.exists(document_dir):
         os.mkdir(document_dir)
     metadata_dir = os.path.join(dataset_dir, 'metadata')
-    # create database directory
-    database_dir = os.path.join(LOCAL_DIR, '.dbs')
-    if not os.path.exists(database_dir):
-        os.mkdir(database_dir)
-    # TODO it appears that the database made specifically for this import
-    # is never actually used, getting it working would allow for easy transporting
-    # of pre-imported datasets
-    database_file = os.path.join(database_dir, dataset.get_dataset_name() + '.db')
     
     
     # Move the dataset data to a stable location on the server.
@@ -307,22 +327,57 @@ def import_dataset(dataset):
     name_schemes(dataset, analysis_settings, analysis_db)
     
     
+    from metric_scripts.datasets import metrics
     dataset_name = dataset.get_dataset_name()
     analysis_name = analysis_settings.get_analysis_name()
     # Compute metrics
-    # the following depend on import_analysis()
+    # depends on import_dataset_into_database()
     print('Dataset metrics...')
-    dataset_metrics(dataset_name, analysis_name) # depends on import_dataset_into_database()
+    dataset_metrics(metrics, dataset_name, analysis_name)
+    
+    # depends on import_analysis()
     print('Analysis metrics...')
-    analysis_metrics(dataset_name, analysis_name, analysis_db)
+    analysis_metrics(metrics, dataset_name, analysis_name, analysis_db)
+    
+    # depends on import_analysis()
     print('Topic metrics...')
-    topic_metrics(analysis_settings.get_topic_metrics(), dataset_name, analysis_name, analysis_db, analysis_settings.get_topic_metric_args())
+    topic_metrics(metrics, dataset_name, analysis_name, analysis_db)
+    
+    # depends on import_analysis()
     print('Pairwise topic metrics...')
-    pairwise_topic_metrics(analysis_settings.get_pairwise_topic_metrics(), dataset_name, analysis_name, analysis_db)
+    pairwise_topic_metrics(metrics, dataset_name, analysis_name)
+    
+    # depends on import_analysis()
     print('Document metrics...')
-    document_metrics(dataset_name, analysis_name, analysis_db)
+    document_metrics(metrics, dataset_name, analysis_name)
+    
+    # depends on import_analysis()
     print('Pairwise document metrics...')
-    pairwise_document_metrics(analysis_settings.get_pairwise_document_metrics(), dataset_name, analysis_name, analysis_db)
+    pairwise_document_metrics(metrics, dataset_name, analysis_name)
+    
+    
+    
+    
+    
+    #the usual doit processes will run after this line
+    # TODO delete the following after doit is stripped out
+    #~ try:
+        #~ from import_tool.local_settings import LOCAL_DIR
+    #~ except ImportError:
+        #~ raise Exception("Import error looking for local_settings.py. "
+                #~ "Look at import_tool/local_settings.py.sample for help")
+    #~ DB_BASE = os.path.join(LOCAL_DIR, '.dbs')
+    #~ if not os.path.exists(DB_BASE):
+        #~ os.mkdir(DB_BASE)
+    #~ sys.path.append("tools/doit")
+    #~ from doit.doit_cmd import cmd_main
+    #~ path = os.path.abspath('import_tool/backend.py')
+#~ 
+    #~ #The database file where we'll store info about this build
+    #~ db_name = os.path.join(DB_BASE, "{0}.db".format("Conference_Talks_on_Agency".replace('/','_')))
+#~ 
+    #~ args = ['-f', path] + ['--db', db_name]
+    #~ res = cmd_main(args)
 
 
 # vim: et sw=4 sts=4

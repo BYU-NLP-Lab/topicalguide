@@ -49,6 +49,7 @@ def check_dataset(name):
         if not document.tokens.count():
             logger.warn('Dataset present, but not all documents are populated: %s %d' % (document.filename, document.pk))
             return False
+    return True
 
 def import_dataset(name, readable_name, description, metadata_filenames,
                    dataset_dir, files_dir, token_regex, dont_overwrite=False):
@@ -65,12 +66,13 @@ def import_dataset(name, readable_name, description, metadata_filenames,
 
     '''
 
-    print >> sys.stderr, "dataset_import({0})".format(', '.join(
-        [name, readable_name, description,
-         metadata_filenames['datasets'], metadata_filenames['documents'],
-         metadata_filenames['word_types'], metadata_filenames['word_tokens'],
-         dataset_dir, files_dir]
-    ))
+    # Disabled to keep from cluttering up the CLI
+    #~ print >> sys.stderr, "dataset_import({0})".format(', '.join(
+        #~ [name, readable_name, description,
+         #~ metadata_filenames['datasets'], metadata_filenames['documents'],
+         #~ metadata_filenames['word_types'], metadata_filenames['word_tokens'],
+         #~ dataset_dir, files_dir]
+    #~ ))
 
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time

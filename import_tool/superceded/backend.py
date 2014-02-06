@@ -45,7 +45,9 @@ import codecs
 import datetime
 import hashlib
 import os
+from os.path import join, dirname
 import sys
+import imp
 
 from topic_modeling.tools import setup_logging, logging
 setup_logging()
@@ -145,51 +147,38 @@ let it pollute our namespace. Then we go through and set up an aggregious
 number of config options, making sure not to override any options that may
 have been set by our config script.
 '''
+BASE_DIR = os.path.abspath(dirname(dirname(__file__)))
 
 from config import config
 c = config
 
-#~ for task in build_script.create_tasks(c):
-    #~ locals()[task.__name__] = task
-#~ 
-#~ print "----- Topical Guide Data Import System -----"
-#~ print "Dataset name: " + c['dataset_name']
 
-#~ if not os.path.exists(c['dataset_dir']): os.mkdir(c['dataset_dir'])
-
+# gets info from the database, this will represent all of the documents
 def dataset():
     return Dataset.objects.get(name=c['dataset_name'])
 
 def analysis():
     return Analysis.objects.get(name=c['analysis_name'], dataset__name=c['dataset_name'])
 
-#-----------------------------------IMPORT THINGS----------------------------#
-'''To start things off, we have a number of tasks whose main job is to import things.'''
 
-#TODO(josh): get rid of the default document_metadata task---it's a total kludge
-#~ if not 'task_document_metadata' in locals() and not ('suppress_default_document_metadata_task' in c and c['suppress_default_document_metadata_task']):
-    #~ def make_document_metadata():
-        #~ attrs = open(c['metadata_filenames']['documents'], "w")
-        #~ attrs.write('{\n')
-        #~ for filename in os.listdir(c['files_dir']):
-            #~ attrs.write('\t"{0}": {}\n'.format(filename))
-        #~ attrs.write('}')
-#~ 
-    #~ def task_document_metadata():
-        #~ task = dict()
-        #~ task['targets'] = [c['metadata_filenames']['documents']]
-        #~ task['actions'] = [(make_document_metadata)]
-        #~ return task
-#~ 
+
+
+
+
+#-----------------------------------IMPORT THINGS----------------------------#
+
+# After we import things we run the task 'analysis_import'
 #~ if 'task_metadata_import' not in locals():
     #~ def task_metadata_import():
 #~ 
         #~ class ImportTask(DoitTask):
-            #~ task_dep = ['analysis_import']
-#~ 
+            #~ #task_dep = ['analysis_import']
+            #~ 
             #~ def action(self):
                 #~ try:
+                    #~ 
                     #~ metadata = Metadata(c['metadata_filenames'][self.name])
+                    #~ 
                     #~ self.fn[0](dataset(), metadata)
                 #~ except Dataset.DoesNotExist:
                     #~ raise Exception('Trying to run a metadata import for '
@@ -207,6 +196,7 @@ def analysis():
                 #~ except Dataset.DoesNotExist:
                     #~ pass
 #~ 
+            #~ #c['metadata_filenames']['datasets'] = /local/cj264/topicalguide/working/datasets/Conference_Talks_on_Agency/metadata/datasets.json
             #~ def uptodate(self, _task, _values):
                 #~ if not os.path.exists(c['metadata_filenames']['datasets']):
                     #~ return True
@@ -228,6 +218,8 @@ def analysis():
                 #~ except Dataset.DoesNotExist:
                     #~ pass
 #~ 
+            #~ #e.g.: c['metadata_filenames']['documents'] = /local/cj264/topicalguide/working/datasets/Conference_Talks_on_Agency/metadata/documents.json
+            #~ #print c['metadata_filenames']['documents']
             #~ def uptodate(self, _task, _values):
                 #~ if not os.path.exists(c['metadata_filenames']['documents']): return True
                 #~ try:
@@ -285,7 +277,7 @@ def analysis():
         #~ yield ImportWordTokens().to_dict()
 #~ 
         #~ class ImportATask(DoitTask):
-            #~ task_dep = ['analysis_import']
+            #~ #task_dep = ['analysis_import']
 #~ 
             #~ def action(self):
                 #~ try:
@@ -334,14 +326,14 @@ def analysis():
 #~ 
         #~ yield ImportAnalysis().to_dict()
         #~ yield ImportTopics().to_dict()
-#~ 
-#~ #--------------------------------MALLET TASKS--------------------------------#
-#~ '''Next we have several tasks that deal with mallet
-#~ - preparing + importing the data
-#~ - running mallet train-topics
-#~ - extracting the output
-#~ '''
-#~ 
+
+#--------------------------------MALLET TASKS--------------------------------#
+'''Next we have several tasks that deal with mallet
+- preparing + importing the data
+- running mallet train-topics
+- extracting the output
+'''
+
 #~ if 'task_mallet_input' not in locals():
     #~ class MalletInput(DoitTask):
 #~ 
@@ -352,8 +344,6 @@ def analysis():
             #~ task_dep = ['extract_data']
 #~ 
         #~ def action(self, docs_dir, output_file):
-            #~ w = codecs.open(output_file, 'w', 'utf-8')
-#~ 
             #~ count = 0
             #~ for root, dirs, files in os.walk(docs_dir):
                 #~ for f in files:
@@ -376,12 +366,19 @@ def analysis():
             #~ return os.path.exists(c['mallet_input'])
 #~ 
     #~ task_mallet_input = MalletInput(c['files_dir'], c['mallet_input'])()
-#~ 
+
 #~ if 'task_mallet_imported_data' not in locals():
     #~ def task_mallet_imported_data():
         #~ task = dict()
         #~ task['targets'] = [c['mallet_imported_data']]
-#~ 
+        #~ print "config items:"
+        #~ print c['mallet']
+        #~ print c['files_dir']
+        #~ print c['mallet_imported_data']
+        #~ print c['files_dir']
+        #~ #raise Exception("mallet_imported_data")
+        #~ #TODO why is import-dir being used?
+        #~ #this means compiling data to single file is unnecessary
         #~ cmd = '%s import-dir --input %s --output %s --keep-sequence --set-source-by-name --source-name-prefix "file:%s/%s/" --remove-stopwords' \
             #~ % (c['mallet'], c['files_dir'], c['mallet_imported_data'], os.getcwd(), c['files_dir'])
 #~ 
@@ -395,14 +392,14 @@ def analysis():
         #~ task['file_dep'] = [c['mallet_input']]
         #~ task['clean'] = ["rm -f " + c['mallet_imported_data']]
         #~ return task
-#~ 
+
 #~ if 'task_mallet_output_gz' not in locals():
     #~ def task_mallet_output_gz():
         #~ task = dict()
+        #~ 
         #~ task['targets'] = [c['mallet_output_gz'], c['mallet_doctopics_output']]
         #~ task['actions'] = ['%s train-topics --input %s --optimize-interval %s --num-iterations %s --num-topics %s --output-state %s --output-doc-topics %s' \
                    #~ % (c['mallet'], c['mallet_imported_data'], c['mallet_optimize_interval'], c['num_iterations'], c['num_topics'], c['mallet_output_gz'], c['mallet_doctopics_output'])]
-#~ 
         #~ task['file_dep'] = [c['mallet_imported_data']]
         #~ task['clean'] = ["rm -f " + c['mallet_output_gz'], "rm -f " + c['mallet_doctopics_output']]
         #~ return task
@@ -418,11 +415,11 @@ def analysis():
 #~ 
 #~ if 'task_mallet' not in locals():
     #~ def task_mallet():
-        #~ return {'actions':None, 'task_dep': ['mallet_input', 'mallet_imported_data', 'mallet_output_gz', 'mallet_output']}
-#~ 
-#~ #------------------------------Import things---------------------------------#
-#~ '''Here we import stuff into the database!  '''
-#~ 
+        #~ return {'actions':None, 'task_dep': ['mallet_output_gz', 'mallet_output']}
+
+#------------------------------Import things---------------------------------#
+'''Here we import stuff into the database!  '''
+
 #~ sys.stdout = sys.stderr
 #~ ## it looks like this is working
 #~ if 'task_dataset_import' not in locals():
@@ -479,8 +476,8 @@ def analysis():
         #~ task['uptodate'] = [utd]
         #~ # remove_dataset()
         #~ return task
-#~ 
-#~ ## and now this is working too!
+
+## and now this is working too!
 #~ if 'task_analysis_import' not in locals():
     #~ def task_analysis_import():
         #~ '''Here we wrap import_analysis. And we import the analysis
@@ -520,8 +517,8 @@ def analysis():
         #~ task['task_dep'] = ['dataset_import']
         #~ task['uptodate'] = [utd]
         #~ return task
-#~ 
-#~ ## works!
+
+## works!
 #~ if 'task_name_schemes' not in locals():
     #~ def task_name_schemes():
         #~ '''This names all of our topics based on a particular scheme'''
@@ -542,12 +539,12 @@ def analysis():
             #~ task = dict()
             #~ task['name'] = ns.scheme_name()
             #~ task['actions'] = [(generate_names, [ns])]
-            #~ task['task_dep'] = ['analysis_import']
+            #~ #task['task_dep'] = ['analysis_import']
             #~ task['clean'] = [(clean_names,[ns])]
             #~ task['uptodate'] = [utd]
             #~ yield task
-#~ 
-#~ # this looks fine
+
+# this looks fine
 #~ if 'task_dataset_metrics' not in locals():
     #~ def task_dataset_metrics():
         #~ '''Runs metrics on the dataset. This wraps metrics from the helper_scripts'''
@@ -591,54 +588,54 @@ def analysis():
             #~ task['name'] = metric_name.replace(' ', '_')
             #~ task['actions'] = [(import_metric, [metric_name])]
             #~ task['clean'] = [(clean_metric, [metric_name])]
-            #~ task['task_dep'] = ['dataset_import']
+            #~ #task['task_dep'] = ['dataset_import']
             #~ task['uptodate'] = [utd]
             #~ yield task
-#~ 
-#~ # doing well
-#~ if 'task_analysis_metrics' not in locals():
-    #~ def task_analysis_metrics():
-        #~ from metric_scripts.analyses import metrics
-        #~ def metric_in_database(metric_name):
-            #~ for name in metrics[metric_name].metric_names_generated(c['analysis_name']):
-                #~ try:
-                    #~ AnalysisMetricValue.objects.get(metric__name=name, analysis__name=c['analysis_name'])
-                #~ except AnalysisMetricValue.DoesNotExist:
-                    #~ return False
-            #~ return True
-#~ 
-        #~ def import_metric(analysis_metric):
-            #~ start_time = datetime.datetime.now()
-            #~ print 'Adding %s...' % analysis_metric,
-            #~ sys.stdout.flush()
-#~ 
-            #~ try:
-                #~ metrics[analysis_metric].add_metric(analysis())
-                #~ end_time = datetime.datetime.now()
-                #~ print '  Done', end_time - start_time
-                #~ sys.stdout.flush()
-            #~ except KeyError as e:
-                #~ print "\nI couldn't find the metric you specified:", e
-                #~ sys.stdout.flush()
-            #~ except RuntimeError as e:
-                #~ print "\nThere was an error importing the specified metric:", e
-                #~ sys.stdout.flush()
-#~ 
-        #~ def clean_metric(analysis_metric):
-            #~ names = metrics[analysis_metric].metric_names_generated(analysis())
-            #~ for name in names:
-                #~ AnalysisMetric.objects.get(name=name).delete()
-#~ 
-        #~ print "Available analysis metrics: " + u', '.join(metrics)
-        #~ for metric_name in metrics:
-            #~ utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
-            #~ task = dict()
-            #~ task['name'] = metric_name.replace(' ', '_')
-            #~ task['actions'] = [(import_metric, [metric_name])]
-            #~ task['clean'] = [(clean_metric, [metric_name])]
-            #~ task['task_dep'] = ['analysis_import']
-            #~ task['uptodate'] = [utd]
-            #~ yield task
+
+# doing well
+if 'task_analysis_metrics' not in locals():
+    def task_analysis_metrics():
+        from metric_scripts.analyses import metrics
+        def metric_in_database(metric_name):
+            for name in metrics[metric_name].metric_names_generated(c['analysis_name']):
+                try:
+                    AnalysisMetricValue.objects.get(metric__name=name, analysis__name=c['analysis_name'])
+                except AnalysisMetricValue.DoesNotExist:
+                    return False
+            return True
+
+        def import_metric(analysis_metric):
+            start_time = datetime.datetime.now()
+            print 'Adding %s...' % analysis_metric,
+            sys.stdout.flush()
+
+            try:
+                metrics[analysis_metric].add_metric(analysis())
+                end_time = datetime.datetime.now()
+                print '  Done', end_time - start_time
+                sys.stdout.flush()
+            except KeyError as e:
+                print "\nI couldn't find the metric you specified:", e
+                sys.stdout.flush()
+            except RuntimeError as e:
+                print "\nThere was an error importing the specified metric:", e
+                sys.stdout.flush()
+
+        def clean_metric(analysis_metric):
+            names = metrics[analysis_metric].metric_names_generated(analysis())
+            for name in names:
+                AnalysisMetric.objects.get(name=name).delete()
+
+        print "Available analysis metrics: " + u', '.join(metrics)
+        for metric_name in metrics:
+            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
+            task = dict()
+            task['name'] = metric_name.replace(' ', '_')
+            task['actions'] = [(import_metric, [metric_name])]
+            task['clean'] = [(clean_metric, [metric_name])]
+            #task['task_dep'] = ['analysis_import']
+            task['uptodate'] = [utd]
+            yield task
 
 # these are looking fine
 if 'task_topic_metrics' not in locals():
@@ -655,15 +652,12 @@ if 'task_topic_metrics' not in locals():
                 return True
             except (Dataset.DoesNotExist, Analysis.DoesNotExist, TopicMetric.DoesNotExist):
                 return False
-    
+
         def import_metric(topic_metric):
-            print 'Topic metric3: ', topic_metric
             start_time = datetime.datetime.now()
             print 'Adding %s...' % topic_metric,
             sys.stdout.flush()
             try:
-                print 'What is this? ', c['topic_metric_args'][topic_metric]
-                raise Exception('stop')
                 metrics[topic_metric].add_metric(c['dataset_name'], c['analysis_name'],
                         **c['topic_metric_args'][topic_metric])
                 end_time = datetime.datetime.now()
@@ -686,8 +680,6 @@ if 'task_topic_metrics' not in locals():
 
         print "Available topic metrics: " + u', '.join(c['topic_metrics'])
         for topic_metric in c['topic_metrics']:
-            print 'Topic metrics: ', c['topic_metrics']
-            print 'Topic metric: ', topic_metric
             utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
             task = dict()
             task['name'] = topic_metric.replace(' ', '_')
@@ -695,220 +687,168 @@ if 'task_topic_metrics' not in locals():
             task['clean'] = [(clean_metric, [topic_metric])]
             #task['task_dep'] = ['analysis_import']
             task['uptodate'] = [utd]
+            print utd(task, None)
+            print 'Topic metric1: ', topic_metric
+            print('Topic metrics: ', c['topic_metrics'])
             yield task
-
-if 'task_pairwise_topic_metrics' not in locals():
-    def task_pairwise_topic_metrics():
-        from metric_scripts.topics.pairwise import metrics
-
-        def metric_in_database(metric):
-            try:
-                names = metrics[metric].metric_names_generated(
-                        c['dataset_name'], c['analysis_name'])
-                for name in names:
-                    metric = PairwiseTopicMetric.objects.get(analysis=analysis,
-                                name=name)
-                    values = PairwiseTopicMetricValue.objects.filter(metric=metric)
-                    if not values.count():
-                        return False
-                return True
-            except (Dataset.DoesNotExist, Analysis.DoesNotExist,
-                    PairwiseTopicMetric.DoesNotExist):
-                return False
-
-        def import_metric(metric):
-            start_time = datetime.datetime.now()
-            print 'Adding %s...' % metric,
-            sys.stdout.flush()
-            try:
-                print 'yeah...'
-                metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
-                end_time = datetime.datetime.now()
-                print '  Done', end_time - start_time
-                sys.stdout.flush()
-            except KeyError as e:
-                print "\nI couldn't find the metric you specified:", e
-                sys.stdout.flush()
-            except RuntimeError as e:
-                print "\nThere was an error importing the specified metric:", e
-                sys.stdout.flush()
-
-        def clean_metric(metric):
-            print "Removing pairwise topic metric: " + metric
-            names = metrics[metric].metric_names_generated(
-                    c['dataset_name'], c['analysis_name'])
-            for metric_name in names:
-                PairwiseTopicMetric.objects.get(analysis=analysis,
-                        name=metric_name).delete()
-
-        print "Available pairwise topic metrics: " + u', '.join(
-                c['pairwise_topic_metrics'])
-        for pairwise_topic_metric in c['pairwise_topic_metrics']:
-            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
-            task = dict()
-            task['name'] = pairwise_topic_metric.replace(' ', '_')
-            task['actions'] = [(import_metric, [pairwise_topic_metric])]
-            task['clean'] = [(clean_metric, [pairwise_topic_metric])]
-            #task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [utd]
-            yield task
-
-if 'task_document_metrics' not in locals():
-    def task_document_metrics():
-        from metric_scripts.documents import metrics
-
-        def metric_in_database(metric):
-            try:
-                names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
-                for name in names:
-                    metric = DocumentMetric.objects.get(analysis=analysis, name=name)
-                    if not DocumentMetricValue.objects.filter(metric=metric).count():
-                        return False
-                return True
-            except (Dataset.DoesNotExist, Analysis.DoesNotExist, DocumentMetric.DoesNotExist):
-                return False
-
-        def import_metric(metric):
-            start_time = datetime.datetime.now()
-            print 'Adding %s...' % metric,
-            sys.stdout.flush()
-            try:
-                metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
-                end_time = datetime.datetime.now()
-                print '  Done', end_time - start_time
-                sys.stdout.flush()
-            except KeyError as e:
-                print "\nI couldn't find the metric you specified:", e
-                sys.stdout.flush()
-            except RuntimeError as e:
-                print "\nThere was an error importing the specified metric:", e
-                sys.stdout.flush()
-
-        def clean_metric(metric):
-            print "Removing document metric: " + metric
-            names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
-            for metric_name in names:
-                metric = DocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
-
-        print "Available document metrics: " + u', '.join(metrics)
-        for metric in metrics:
-            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
-            task = dict()
-            task['name'] = metric.replace(' ', '_')
-            task['actions'] = [(import_metric, [metric])]
-            task['clean'] = [(clean_metric, [metric])]
-            #task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [utd]
-            yield task
-
-if 'task_pairwise_document_metrics' not in locals():
-    def task_pairwise_document_metrics():
-        from metric_scripts.documents.pairwise import metrics
-
-        def metric_in_database(metric):
-            print 'Metric123 ', metric
-            sys.stdout.flush()
-            try:
-                names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
-                for name in names:
-                    metric = PairwiseDocumentMetric.objects.get(analysis=analysis, name=name)
-                    if not PairwiseTopicMetricValue.objects.filter(metric=metric).count():
-                        return False
-                return True
-            except (Dataset.DoesNotExist, Analysis.DoesNotExist, PairwiseDocumentMetric.DoesNotExist):
-                return False
-
-        def import_metric(metric):
-            print 'Metric1234 ', metric
-            sys.stdout.flush()
-            start_time = datetime.datetime.now()
-            print 'Adding %s...' % metric,
-            sys.stdout.flush()
-            try:
-                metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
-                end_time = datetime.datetime.now()
-                print '  Done', end_time - start_time
-                sys.stdout.flush()
-            except KeyError as e:
-                print "\nI couldn't find the metric you specified:", e
-                sys.stdout.flush()
-            except RuntimeError as e:
-                print "\nThere was an error importing the specified metric:", e
-                sys.stdout.flush()
-
-        def clean_metric(metric):
-            print "Removing pairwise document metric: " + metric
-            names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
-            if isinstance(names, basestring): names = [names]
-            for metric_name in names:
-                PairwiseDocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
-
-        print "Available pairwise document metrics: " + u', '.join(metrics)
-        for metric in c['pairwise_document_metrics']:
-            utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
-            task = dict()
-            task['name'] = metric.replace(' ', '_')
-            task['actions'] = [(import_metric, [metric])]
-            task['clean'] = [(clean_metric, [metric])]
-            #task['task_dep'] = ['analysis_import']
-            task['uptodate'] = [utd]
-            yield task
-
+#~ 
+#~ if 'task_pairwise_topic_metrics' not in locals():
+    #~ def task_pairwise_topic_metrics():
+        #~ from metric_scripts.topics.pairwise import metrics
+#~ 
+        #~ def metric_in_database(metric):
+            #~ try:
+                #~ names = metrics[metric].metric_names_generated(
+                        #~ c['dataset_name'], c['analysis_name'])
+                #~ for name in names:
+                    #~ metric = PairwiseTopicMetric.objects.get(analysis=analysis,
+                                #~ name=name)
+                    #~ values = PairwiseTopicMetricValue.objects.filter(metric=metric)
+                    #~ if not values.count():
+                        #~ return False
+                #~ return True
+            #~ except (Dataset.DoesNotExist, Analysis.DoesNotExist,
+                    #~ PairwiseTopicMetric.DoesNotExist):
+                #~ return False
+#~ 
+        #~ def import_metric(metric):
+            #~ start_time = datetime.datetime.now()
+            #~ print 'Adding %s...' % metric,
+            #~ sys.stdout.flush()
+            #~ try:
+                #~ print 'yeah...'
+                #~ metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
+                #~ end_time = datetime.datetime.now()
+                #~ print '  Done', end_time - start_time
+                #~ sys.stdout.flush()
+            #~ except KeyError as e:
+                #~ print "\nI couldn't find the metric you specified:", e
+                #~ sys.stdout.flush()
+            #~ except RuntimeError as e:
+                #~ print "\nThere was an error importing the specified metric:", e
+                #~ sys.stdout.flush()
+#~ 
+        #~ def clean_metric(metric):
+            #~ print "Removing pairwise topic metric: " + metric
+            #~ names = metrics[metric].metric_names_generated(
+                    #~ c['dataset_name'], c['analysis_name'])
+            #~ for metric_name in names:
+                #~ PairwiseTopicMetric.objects.get(analysis=analysis,
+                        #~ name=metric_name).delete()
+#~ 
+        #~ print "Available pairwise topic metrics: " + u', '.join(
+                #~ c['pairwise_topic_metrics'])
+        #~ for pairwise_topic_metric in c['pairwise_topic_metrics']:
+            #~ utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
+            #~ task = dict()
+            #~ task['name'] = pairwise_topic_metric.replace(' ', '_')
+            #~ task['actions'] = [(import_metric, [pairwise_topic_metric])]
+            #~ task['clean'] = [(clean_metric, [pairwise_topic_metric])]
+            #~ #task['task_dep'] = ['analysis_import']
+            #~ task['uptodate'] = [utd]
+            #~ yield task
+#~ 
+#~ if 'task_document_metrics' not in locals():
+    #~ def task_document_metrics():
+        #~ from metric_scripts.documents import metrics
+#~ 
+        #~ def metric_in_database(metric):
+            #~ try:
+                #~ names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
+                #~ for name in names:
+                    #~ metric = DocumentMetric.objects.get(analysis=analysis, name=name)
+                    #~ if not DocumentMetricValue.objects.filter(metric=metric).count():
+                        #~ return False
+                #~ return True
+            #~ except (Dataset.DoesNotExist, Analysis.DoesNotExist, DocumentMetric.DoesNotExist):
+                #~ return False
+#~ 
+        #~ def import_metric(metric):
+            #~ start_time = datetime.datetime.now()
+            #~ print 'Adding %s...' % metric,
+            #~ sys.stdout.flush()
+            #~ try:
+                #~ metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
+                #~ end_time = datetime.datetime.now()
+                #~ print '  Done', end_time - start_time
+                #~ sys.stdout.flush()
+            #~ except KeyError as e:
+                #~ print "\nI couldn't find the metric you specified:", e
+                #~ sys.stdout.flush()
+            #~ except RuntimeError as e:
+                #~ print "\nThere was an error importing the specified metric:", e
+                #~ sys.stdout.flush()
+#~ 
+        #~ def clean_metric(metric):
+            #~ print "Removing document metric: " + metric
+            #~ names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
+            #~ for metric_name in names:
+                #~ metric = DocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
+#~ 
+        #~ print "Available document metrics: " + u', '.join(metrics)
+        #~ for metric in metrics:
+            #~ utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
+            #~ task = dict()
+            #~ task['name'] = metric.replace(' ', '_')
+            #~ task['actions'] = [(import_metric, [metric])]
+            #~ task['clean'] = [(clean_metric, [metric])]
+            #~ #task['task_dep'] = ['analysis_import']
+            #~ task['uptodate'] = [utd]
+            #~ yield task
+#~ 
+#~ if 'task_pairwise_document_metrics' not in locals():
+    #~ def task_pairwise_document_metrics():
+        #~ from metric_scripts.documents.pairwise import metrics
+#~ 
+        #~ def metric_in_database(metric):
+            #~ try:
+                #~ names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
+                #~ for name in names:
+                    #~ metric = PairwiseDocumentMetric.objects.get(analysis=analysis, name=name)
+                    #~ if not PairwiseTopicMetricValue.objects.filter(metric=metric).count():
+                        #~ return False
+                #~ return True
+            #~ except (Dataset.DoesNotExist, Analysis.DoesNotExist, PairwiseDocumentMetric.DoesNotExist):
+                #~ return False
+#~ 
+        #~ def import_metric(metric):
+            #~ start_time = datetime.datetime.now()
+            #~ print 'Adding %s...' % metric,
+            #~ sys.stdout.flush()
+            #~ try:
+                #~ metrics[metric].add_metric(c['dataset_name'], c['analysis_name'])
+                #~ end_time = datetime.datetime.now()
+                #~ print '  Done', end_time - start_time
+                #~ sys.stdout.flush()
+            #~ except KeyError as e:
+                #~ print "\nI couldn't find the metric you specified:", e
+                #~ sys.stdout.flush()
+            #~ except RuntimeError as e:
+                #~ print "\nThere was an error importing the specified metric:", e
+                #~ sys.stdout.flush()
+#~ 
+        #~ def clean_metric(metric):
+            #~ print "Removing pairwise document metric: " + metric
+            #~ names = metrics[metric].metric_names_generated(c['dataset_name'], c['analysis_name'])
+            #~ if isinstance(names, basestring): names = [names]
+            #~ for metric_name in names:
+                #~ PairwiseDocumentMetric.objects.get(analysis=analysis, name=metric_name).delete()
+#~ 
+        #~ print "Available pairwise document metrics: " + u', '.join(metrics)
+        #~ for metric in c['pairwise_document_metrics']:
+            #~ utd = lambda task,vals: metric_in_database(task.name.split(':')[-1])
+            #~ task = dict()
+            #~ task['name'] = metric.replace(' ', '_')
+            #~ task['actions'] = [(import_metric, [metric])]
+            #~ task['clean'] = [(clean_metric, [metric])]
+            #~ #task['task_dep'] = ['analysis_import']
+            #~ task['uptodate'] = [utd]
+            #~ yield task
+#~ 
 #~ if 'task_metrics' not in locals():
     #~ def task_metrics():
         #~ return {'actions':None, 'task_dep': ['topic_metrics', 'pairwise_topic_metrics', 'document_metrics', 'pairwise_document_metrics']}
-#~ 
-#~ def disabled_task_hash_java():
-    #~ def _cmd_output(cmd):
-        #~ return Popen(cmd, shell=True, bufsize=512, stdout=PIPE).stdout.read()
-#~ 
-    #~ def _hash(txt):
-        #~ hasher = hashlib.md5()
-        #~ hasher.update(txt)
-        #~ return hasher.hexdigest()
-#~ 
-    #~ def _directory_recursive_hash(dir_):
-        #~ if not os.path.exists(dir_): return "0"
-        #~ return str(hash(_cmd_output("find {dir} -type f -print0 | xargs -0 md5sum".format(dir=dir_))))
-#~ 
-    #~ return {'actions': [(_directory_recursive_hash, [c['java_base']])]}
-#~ 
-#~ if 'task_compile_java' not in locals():
-    #~ def disabled_task_compile_java():
-        #~ actions = ["cd {0} && ant -lib lib".format(c['java_base'])]
-        #~ result_deps = ['hash_java']
-        #~ clean = ['rm -rf ' + c['java_bin']]
-        #~ return {'actions':actions, 'result_dep':result_deps, 'clean':clean}
-#~ 
-#~ '''
-#~ if 'task_graphs' not in locals():
-    #~ def task_graphs():
-        #~ classpath = '{0}:{1}/lib/gephi-toolkit.jar:{1}/lib/statnlp-rev562.jar:{1}/lib/{2}'.format(c['java_bin'], c['java_base'], c['db_jar'])
-#~ 
-#~ 
-        #~ for ns in c['name_schemes']:
-            #~ def utd(_task, _values): return os.path.exists(graphs_img_dir)
-#~ 
-            #~ task = dict()
-            #~ graphs_img_dir = "{0}/topic_maps/{1}/{2}".format(c['dataset_dir'], c['analysis_name'], ns.scheme_name())
-            #~ graphs_unlinked_img_dir = graphs_img_dir + "-unlinked"
-            #~ gexf_file_name = "{0}/full_graph.gexf".format(graphs_img_dir)
-#~ 
-            #~ task['actions'] = [
-                #~ 'java -cp {0} {1} {2} {3} {4} {5} "{6}" {7} {8} {9} {10}'
-                #~ .format(classpath,c['graph_builder_class'],c['graphs_min_value'],c['dataset_name'],c['analysis_name'],ns.scheme_name(),c['graphs_pairwise_metric'], c['jdbc_path'], graphs_unlinked_img_dir, graphs_img_dir, gexf_file_name)
-            #~ ]
-            #~ task['task_dep'] = ['pairwise_topic_metrics', 'name_schemes', 'compile_java']
-            #~ task['clean'] =  [
-                #~ 'rm -rf '+graphs_unlinked_img_dir,
-                #~ 'rm -rf '+graphs_img_dir
-            #~ ]
-            #~ task['name'] = ns.scheme_name()
-            #~ task['uptodate'] = [utd]
-            #~ yield task
-#~ '''
 
-#
-#def task_reset_db():
-#    actions = ['yes "yes" | python topic_modeling/manage.py reset visualize']
-#    return {'actions':actions}
+
+
+
