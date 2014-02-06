@@ -230,7 +230,7 @@ class GenericDataset:
         self.dataset_directory = os.path.abspath(dataset_directory)
         self.dataset_metadata_file = os.path.join(self.dataset_directory,
                                                   'dataset_metadata.json')
-        self.documents_directory = os.path.join(self.dataset_root_directory, 
+        self.documents_directory = os.path.join(self.dataset_directory, 
                                                 'documents')
         
         self.subdocuments = subdocuments
@@ -357,10 +357,16 @@ class GenericDocumentIterator:
         return is_dir and is_hidden_linux
     
     def next(self):
-        #raise StopIteration to signal the for loop
+        '''\
+        Returns the next available document.
+        '''
         for file_path in self.list_of_documents:
-            document = GenericDocument(file_path)
-            yield document
+            try:
+                document = GenericDocument(self.documents_directory, file_path)
+                yield document
+            except Exception as e:
+                print('Error: Could not import %s' % file_path)
+        raise StopIteration
         
 
 class GenericDocument:
@@ -369,15 +375,21 @@ class GenericDocument:
     the Document class is an abstraction of a single document in that dataset.
     '''
     
-    def __init__(self, document_path, subdocuments):
+    def __init__(self, root_doc_directory, document_path, subdocuments):
+        self.root_doc_directory = root_doc_directory
         self.document_path = document_path
         self.subdocuments = subdocuments
-        # TODO parse a document
+        
+        with open(self.document_path, 'r') as doc_file:
+            s = doc_file.read()
+            metadata, self.content = GenericTools.seperate_metadata_and_content(s)
+            self.metadata = GenericTools.metadata_to_dict(metadata)
     
     def get_name(self):
         '''\
+        Return a unique identifier for this document. Must only contain underscores or alphanumeric characters.
         '''
-        pass
+        return os.path.relpath(self.document_path, self.root_doc_directory).replace('/', '_').replace(' ', '_')
     
     def get_metadata(self):
         '''\
@@ -406,14 +418,29 @@ class GenericDocument:
         Returns a Document iterator where each document is a portion of
         the original one.
         '''
-        raise NotImplementedError()
+        if self.subdocuments:
+            return self
+        else:
+            raise Exception('Not able to split into subdocuments.')
+    
+    def next(self):
+        '''\
+        Returns a Document object representing a subdocument of this document.
+        '''
+        raise NotImplemented()
 
 
 class AnalysisSettings:
     def __init__(self):
-        self.number_of_topics = 50
+        self.number_of_topics = 100
         self.number_of_iterations = 100
         self.mallet_relative_file_path = 'tools/mallet/mallet'
+    
+    def set_number_of_iterations(self, iterations):
+        self.number_of_iterations = iterations
+        
+    def set_number_of_topics(self, num_topics):
+        self.number_of_topics = num_topics
     
     def get_number_of_iterations(self):
         return self.number_of_iterations

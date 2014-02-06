@@ -1,0 +1,21 @@
+{
+    "types": {
+        "readable_name": "text",
+        "description": "text",
+        "creator": "text",
+        "source": "text"
+    },
+    "data": {
+
+	    "readable_name": "Test",
+	    "description": "Testing",
+	    "creator": "Me",
+	    "source": "Me"
+
+    },
+    "document_types": {
+            "meta1": "text",
+            "meta2": "text",
+            "meta3": "text"
+    }
+}

@@ -20,7 +20,7 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(title='subcommands',
                                        help='Type -h under each subcommand for additional help.')
     
-    import_parser = subparsers.add_parser('import')
+    import_parser = subparsers.add_parser('import', help='Import a dataset using a built-in class.')
     import_parser.add_argument('dataset', type=str,
                                help='Imports the dataset from the given folder.')
     import_parser.add_argument('-r', '--recursive', action='store_true',
@@ -28,6 +28,16 @@ if __name__ == '__main__':
     import_parser.add_argument('-s', '--subdocuments', action='store_true',
                                help='Breaks a document into subdocuments to create better topics.')
     import_parser.set_defaults(which='import')
+    
+    import_parser = subparsers.add_parser('link', help='Takes a path to a database containing an imported dataset.')
+    import_parser.add_argument('database', type=str,
+                               help='Links the database to the Topical Guide server.')
+    import_parser.set_defaults(which='link')
+    
+    import_parser = subparsers.add_parser('check', help='A utility that helps check the integrity of documents and metadata raising red flags if inconsistencies are found amoung the metadata keys or if there are any blank documents.')
+    import_parser.add_argument('dataset', type=str,
+                               help='The dataset to be checked for inconsistencies.')
+    import_parser.set_defaults(which='check')
     
     server_parser = subparsers.add_parser('server')
     server_parser.add_argument('command', type=str, choices=['start'],
@@ -45,7 +55,11 @@ if __name__ == '__main__':
             import_dataset.import_dataset(dataset_object)
         else:
             print('Not a valid dataset path.')
+    elif args.which == 'link':
+        print('Not yet implemented.')
+    elif args.which == 'check':
+        print('Not yet implemented.')
     elif args.which == 'server':
-        print('Server commands with this utility are not yet implemented.')
+        print('Not yet implemented.')
 
 # vim: et sw=4 sts=4

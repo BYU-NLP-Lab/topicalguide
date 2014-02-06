@@ -9,6 +9,7 @@ import json
 
 class GenericTools:
     
+    @staticmethod
     def json_to_dict(file_path):
         '''\
         Takes a file path to a .json file and converts the contents to a dictionary.
@@ -23,6 +24,7 @@ class GenericTools:
         except Exception:
             return {}
     
+    @staticmethod
     def seperate_metadata_and_content(s):
         '''\
         Given a string the metadata is seperated from the content. The string must be in the following format:
@@ -69,11 +71,14 @@ class GenericTools:
         
         return (metadata, content)
     
+    @staticmethod
     def metadata_to_dict(metadata):
         '''\
         Takes metadata as specified in seperate_metadata_and_content() documentation and\
         converts it to a dictionary.
-        Note that white space on either side of the metadata tags and values will be stripped.
+        Note that white space on either side of the metadata tags and values will be stripped; \
+        also, if there are any duplicate metadata key names, the value of the last duplicate will \
+        be in the resulting dictionary.
         Also, the tags will have any spaces replaced with underscores and be set to lowercase.
         '''
         result = {}
@@ -81,12 +86,9 @@ class GenericTools:
         for l in lines:
             key_value = l.split(':', 1)
             if len(key_value) == 2:
-                key = key_value[0].strip().replace(' ', '_').lowercase()
+                key = key_value[0].strip().replace(' ', '_').lower()
                 value = key_value[1].strip()
         return result
-
-
-
 
 
 
