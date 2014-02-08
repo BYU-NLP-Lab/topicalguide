@@ -1,17 +1,15 @@
-#The following object is a way to make data importing easier.
-
-#TODO create base class that has virtual functions required by the 
-#import process
-#TODO remove helper functions to helper library
-#TODO documents which methods are required by the import process, mallet,
-#analysis tools, etc.
-
 from __future__ import print_function
+
 import os
 import sys
 import json
 from collections import defaultdict
+
+from abstract_dataset import AbstractDataset, AbstractDocument
+from analysis_settings import AnalysisSettings
 from generic_tools import GenericTools
+
+#TODO create an abstract base class
 
 
 #A single object encapsulating every item necessary to import
@@ -206,9 +204,9 @@ class DataSetImportTask:
 				new_document.write(document)
     
 
-class GenericDataset:
+class GenericDataset(AbstractDataset):
     '''\
-    The DataSetImportTask is an abstraction that allows the import process
+    The GenericDataset is an abstraction that allows the import process
     to interact with the dataset in a standardized manner. 
     This allows for flexibility in what datasets
     can be imported and how they are imported. 
@@ -217,14 +215,12 @@ class GenericDataset:
     class and override functions as necessary.
     '''
     
-    def __init__(self, dataset_directory, subdocuments, recursive):
+    def __init__(self, dataset_directory):
         '''\
-        dataset_directory: a relative or absolute file path to the 
-        directory that contains the documents directory and the dataset_metadata.json file
-        subdocuments: a boolean flag that indicate whether or not you want to 
-        break documents down into subdocuments
-        recursive: a boolean flag indicating whether or not 
-        
+        dataset_directory: A relative or absolute file path to the \
+        directory that contains the documents directory and the dataset_metadata.json file.
+        Note that by default documents will be found by recursively searching the dataset_directory \
+        and the documents don't have subdocuments.
         '''
         # create commonly used directory and file paths
         self.dataset_directory = os.path.abspath(dataset_directory)
@@ -233,18 +229,30 @@ class GenericDataset:
         self.documents_directory = os.path.join(self.dataset_directory, 
                                                 'documents')
         
-        self.subdocuments = subdocuments
-        self.recursive = recursive
+        self.does_have_subdocuments = False
+        self.is_recursive = True
         
         # load the dataset metadata
-        self.metadata = GenericTools.json_to_dict(dataset_metadata_file)
-        self.dataset_metadata = metadata['data']
-        self.dataset_metadata_types = metadata['types']
-        self.document_metadata_types = metadata['document_types']
-        # TODO make all key values lowercase, with no spaces
+        self.metadata = GenericTools.json_to_dict(self.dataset_metadata_file)
+        self.dataset_metadata = self.metadata['data']
+        self.dataset_metadata_types = self.metadata['types']
+        self.document_metadata_types = self.metadata['document_types']
         
         # create/configure the analysis settings
         self.analysis_settings = AnalysisSettings()
+    
+    def set_has_subdocuments(self, does_have_subdocuments):
+        '''\
+        Setting this to True will indicate that Documents have subdocuments, and the \
+        appropriate flags will be set.
+        '''
+        self.does_have_subdocuments = does_have_subdocuments
+    
+    def set_is_recursive(self, is_recursive):
+        '''\
+        Setting this to True will make the dataset class search for Documents recursively in the "documents" directory.
+        '''
+        self.is_recursive = is_recursive
     
     def get_analysis_settings(self):
         '''\
@@ -253,34 +261,18 @@ class GenericDataset:
         '''
         return self.analysis_settings
     
-    def get_readable_name(self):
+    def get_dataset_metadata(self):
         '''\
-        Returns a human readable name for the dataset (e.g. "State of the Union Addresses".)
+        Returns a dictionary where they keys are the metadata identifiers \
+        and the values are the associated values for this dataset.
+        Note that 'readable_name' and 'description' are special keys that are \
+        used by the Topical Guide to neatly display an imported dataset.
         '''
-        return self.dataset_metadata['readable_name']
+        return self.dataset_metadata
     
-    def get_description(self):
+    def get_dataset_identifier(self):
         '''\
-        Returns a description of what the dataset contains, its importance, etc.
-        '''
-        return self.dataset_metadata['description']
-    
-    def get_creator(self):
-        '''\
-        Returns the name of the person who compiled the dataset, 
-        or created a way to import the dataset.
-        '''
-        return self.dataset_metadata['creator']
-    
-    def get_source(self):
-        '''\
-        Returns the origination of the dataset (i.e. where the documents came from.)
-        '''
-        return self.dataset_metadata['source']
-    
-    def get_dataset_name(self):
-        '''\
-        Returns a name uniquely identifying this dataset on the
+        Returns a string that uniquely identifies this dataset on the \
         Topical Guide server.
         '''
         return self.dataset_metadata['readable_name'].replace(' ', '_').lower()
@@ -301,93 +293,56 @@ class GenericDataset:
     
     def __iter__(self):
         '''\
-        Returns a DocumentIterator.
+        Returns a GenericDocument iterator.
         '''
-        return GenericDocumentIterator(self.documents_directory, self.subdocuments, self.recursive)
-
-class GenericDocumentIterator:
-    '''\
-    Allows one to iterate through documents in a given document tree.
-    '''
-    
-    def __init__(self, documents_directory, subdocuments, recursive):
-        self.documents_directory = documents_directory
-        self.subdocuments = subdocuments
-        self.recursive = recursive
-        
-        self.list_of_documents = self.get_all_files(self.documents_directory)
-        
-    def get_all_files(self, file_path):
-        '''\
-        Gets a list of ALL the files in the dataset.
-        '''
-        all_files = []
-        directories = []
-        directories.append(file_path)
-        
-        while len(directories) > 0:
-            file_path = directories.pop(0)
-            all_files.extend(self.get_files(file_path))
-            directories.extend(self.get_directories(file_path))
-        return all_files
-        
-    def get_files(self, file_path):
-        '''\
-        Gets a list of all files in the given directory.
-        '''
-        files = [os.path.join(file_path, file_name) for file_name in os.listdir(file_path) \
-                if self.is_valid_file(file_path, file_name)]
-        return files
-    
-    def get_directories(self, file_path):
-        '''\
-        Gets a list of all directories in the given directory.
-        '''
-        dirs = [os.path.join(file_path, file_name) \
-                for file_name in os.listdir(file_path) \
-                if os.path.isdir(os.path.join(file_path, file_name))]
-        return dirs
-        
-    def is_valid_file(self, file_path, file_name):
-        '''\
-        Helper function to detect hidden files and folders.
-        '''
-        is_dir = os.path.isfile(os.path.join(file_path, file_name))
-        is_hidden_linux = file_name[0] != '.' and file_name[-1] != '~'
-        return is_dir and is_hidden_linux
+        self.documents_index = 0
+        self.list_of_documents = GenericTools.get_all_files_from_directory(self.documents_directory, self.is_recursive)
+        return self
     
     def next(self):
         '''\
-        Returns the next available document.
+        Returns the next GenericDocument.  Files that cannot be opened \
+        or raise an error will not be included.
         '''
-        for file_path in self.list_of_documents:
+        while self.documents_index < len(self.list_of_documents):
+            index = self.documents_index
+            self.documents_index += 1
+            file_path = self.list_of_documents[index]
             try:
                 document = GenericDocument(self.documents_directory, file_path)
-                yield document
+                document.set_has_subdocuments(self.does_have_subdocuments)
+                return document
             except Exception as e:
-                print('Error: Could not import %s' % file_path)
+                print('Error: Could not import %s because of %s' % (file_path, e))
         raise StopIteration
         
 
-class GenericDocument:
+class GenericDocument(AbstractDocument):
     '''\
-    While the DataSetImportTask is an abstraction of an entire dataset 
+    While the GenericDataset is an abstraction of an entire dataset 
     the Document class is an abstraction of a single document in that dataset.
     '''
     
-    def __init__(self, root_doc_directory, document_path, subdocuments):
+    def __init__(self, root_doc_directory, document_path):
         self.root_doc_directory = root_doc_directory
         self.document_path = document_path
-        self.subdocuments = subdocuments
+        self.does_have_subdocuments = False
         
         with open(self.document_path, 'r') as doc_file:
             s = doc_file.read()
             metadata, self.content = GenericTools.seperate_metadata_and_content(s)
             self.metadata = GenericTools.metadata_to_dict(metadata)
     
+    def set_has_subdocuments(self, does_have_subdocuments):
+        '''\
+        True indicates that this document has subdocuments.
+        '''
+        self.does_have_subdocuments = does_have_subdocuments
+    
     def get_name(self):
         '''\
-        Return a unique identifier for this document. Must only contain underscores or alphanumeric characters.
+        Returns a unique identifier for this document.
+        Must only contain underscores or alphanumeric characters.
         '''
         return os.path.relpath(self.document_path, self.root_doc_directory).replace('/', '_').replace(' ', '_')
     
@@ -407,18 +362,27 @@ class GenericDocument:
     
     def has_subdocuments(self):
         '''\
-        Returns True if this document can be broken down into smaller
-        chunks/documents; False if the document cannot be broken down or
+        Returns True if this document can be broken down into smaller \
+        chunks/documents; False if the document cannot be broken down or \
         the user wants the entire document to be analyzed together.
+        Must implement the __iter__ function if True is returned.
+        Note that by default the subdocuments are
         '''
-        return self.subdocuments
+        return self.does_have_subdocuments
     
     def __iter__(self):
         '''\
         Returns a Document iterator where each document is a portion of
         the original one.
         '''
-        if self.subdocuments:
+        if self.does_have_subdocuments:
+            subdoc_content_temp = self.content.split('\n\n')
+            self.subdocuments_content = []
+            for sub_doc in subdoc_content_temp:
+                sub_doc = sub_doc.strip()
+                if sub_doc != '':
+                    self.subdocuments_content.append(sub_doc)
+            self.subdocument_index = 0
             return self
         else:
             raise Exception('Not able to split into subdocuments.')
@@ -427,76 +391,24 @@ class GenericDocument:
         '''\
         Returns a Document object representing a subdocument of this document.
         '''
-        raise NotImplemented()
+        if self.subdocument_index < len(self.subdocuments_content):
+            sub_doc = GenericSubdocument()
+            sub_doc.set_content(self.subdocuments_content[self.subdocument_index])
+            self.subdocument_index += 1
+            return sub_doc
+        raise StopIteration
 
-
-class AnalysisSettings:
+class GenericSubdocument(GenericDocument):
+    '''\
+    Represents a subdocument.  This class doesn't allow for further subdocuments.
+    '''
     def __init__(self):
-        self.number_of_topics = 100
-        self.number_of_iterations = 100
-        self.mallet_relative_file_path = 'tools/mallet/mallet'
+        self.content = ''
+        self.metadata = {}
     
-    def set_number_of_iterations(self, iterations):
-        self.number_of_iterations = iterations
-        
-    def set_number_of_topics(self, num_topics):
-        self.number_of_topics = num_topics
+    def set_content(self, content):
+        self.content = content
     
-    def get_number_of_iterations(self):
-        return self.number_of_iterations
-        
-    def get_number_of_topics(self):
-        return self.number_of_topics
-    
-    def get_mallet_file_path(self, topical_guide_root_dir):
-        return os.path.join(topical_guide_root_dir, self.mallet_relative_file_path)
-    
-    def get_analysis_name(self):
-        return 'lda%stopics' % self.number_of_topics
-    
-    def get_analysis_readable_name(self):
-        return 'LDA %s Topics' % self.number_of_topics
-        
-    def get_analysis_description(self):
-        return 'Mallet LDA with %s topics' % self.number_of_topics
-    
-    def get_mallet_configurations(self, topical_guide_dir, dataset_dir):
-        config = dict()
-        config['mallet'] = os.path.join(topical_guide_dir, 'tools/mallet/mallet')
-        config['num_topics'] = self.number_of_topics
-        config['mallet_input_file_name'] = 'mallet_input.txt'
-        config['mallet_input'] = os.path.join(dataset_dir, config['mallet_input_file_name'])
-        config['mallet_imported_data'] = os.path.join(dataset_dir, 'imported_data.mallet')
-        analysis_name = 'lda%stopics' % self.number_of_topics
-        mallet_out = os.path.join(dataset_dir, analysis_name)
-        config['mallet_output_gz'] = mallet_out + '.outputstate.gz'
-        config['mallet_output'] = mallet_out + '.outputstate'
-        config['mallet_doctopics_output'] = mallet_out + '.doctopics'
-        config['mallet_optimize_interval'] = 10
-        config['num_iterations'] = self.number_of_iterations
-        return config
-    
-    def get_topic_metrics(self):
-        return ["token_count", "type_count", "document_entropy", "word_entropy"]
-    
-    # TODO most of these entities don't seem to exist... why?
-    # the one that does is metadata/documents.json
-    def get_metadata_filenames(self, metadata_dir):
-        '''\
-        Returns a dictionary of the metadata filenames.
-        '''
-        metadata_entities = ('datasets', 'documents', 'word_types', 'word_tokens', 'analysis', 'topics')
-        metadata_filenames = {}
-        for entity_type in metadata_entities:
-            metadata_filenames[entity_type] = os.path.join(metadata_dir, entity_type)
-        return metadata_filenames
-    
-    def get_pairwise_topic_metrics(self):
-        return ['document_correlation']#, 'word_correlation']
-    
-    def get_pairwise_document_metrics(self):
-        return ['word_correlation', 'topic_correlation']
-    
-    def get_topic_metric_args(self):
-        return defaultdict(dict)
+    def has_subdocuments(self):
+        return False
 

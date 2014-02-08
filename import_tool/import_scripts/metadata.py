@@ -37,7 +37,7 @@ def import_document_metadata(dataset, document_metadata):
     logger.info('Importing document metadata...  ')
     sys.stdout.flush()
     start = datetime.now()
-
+    
     items = len(document_metadata)
     timer = TimeLongThing(items, .01, .1)
 

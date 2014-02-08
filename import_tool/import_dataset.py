@@ -42,12 +42,14 @@ from topic_modeling.visualize.models import (Analysis, DatasetMetric,
 from build import create_dirs_and_open # TODO add this to a general toolset
 
 
+# TODO fix dataset metadata
+# SOLUTION import the dataset metadata into database, this may require refactoring to make it elegant
+# TODO fix document metadata, which isn't being imported into the database correctly
+# TODO database table 'pairwisedocumentmetric' has extra entry 'Word Correlation'
+#       which should be under 'pairwisetopicmetric'
 
 # TODO make sure mallet doesn't stop the process to ask if you want to override a file
-# TODO make input to mallet more sensical(sp?), eliminate html items like &lquo;
 # TODO make sure that anything (like 'year') is converted to an int in metadata (if needed)
-# TODO find cause of error referencing state_of_the_union:
-#  [30/Jan/2014 13:08:49] "GET /feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics HTTP/1.1" 500 12461
 # TODO while importing a KeyError is thrown for u'a' as the key, find the cause
 
 

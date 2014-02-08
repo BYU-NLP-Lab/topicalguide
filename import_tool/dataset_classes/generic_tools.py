@@ -89,7 +89,28 @@ class GenericTools:
                 key = key_value[0].strip().replace(' ', '_').lower()
                 value = key_value[1].strip()
         return result
-
+    
+    @staticmethod
+    def get_all_files_from_directory(directory, recursive=False):
+        '''\
+        Returns a list of absolute file paths starting at the given directory.
+        Set recursive to True to recursively find files.
+        Note that hidden files are ignored.
+        '''
+        
+        def get_all_files(arg, dirname, names):
+            for name in names:
+                file_name = os.path.abspath(os.path.join(dirname, name))
+                arg.append(file_name)
+                
+        list_of_files = []
+        
+        if recursive:
+            os.path.walk(directory, get_all_files, list_of_files)
+        else:
+            get_all_files(list_of_files, directory, os.listdir(directory))
+        return list_of_files
+        
 
 
 

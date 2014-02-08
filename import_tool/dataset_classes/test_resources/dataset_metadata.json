@@ -7,10 +7,10 @@
     },
     "data": {
 
-	    "readable_name": "Test",
+	    "readable_name": "Test With Spaces",
 	    "description": "Testing",
-	    "creator": "Me",
-	    "source": "Me"
+	    "creator": "Me1",
+	    "source": "Me2"
 
     },
     "document_types": {

@@ -31,7 +31,7 @@ from helper_scripts.name_schemes.top_n import TopNTopicNamer
 
 from topic_modeling import settings
 from import_tool.local_settings import LOCAL_DIR
-from build import create_dirs_and_open
+#from build import create_dirs_and_open
 
 from dataset_classes.generic_dataset import DataSetImportTask
 
