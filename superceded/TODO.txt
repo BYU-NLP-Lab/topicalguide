@@ -1,0 +1,27 @@
+Discuss with Joey:
+code review
+removing the metadata types
+require document readable name?
+
+
+TODO:
+Add ability to import to detached databases.
+
+Make database importing more efficient.
+Readup on pythonic documentation (pep-8) and update mine accordingly to prep for code review.
+Track down bug in frontend/server that causes dataset to not be loaded for 2D Plots.
+
+create test case for type autodetect
+
+Upgrade Mallet/find source code that we changed.
+Make output more space efficient with Mallet.
+
+
+
+
+Discussion:
+Allow metadata descriptions.
+Remove metadata types altogether and just use string, but verify types before database insertion?
+Database: Change document database model to require readable name.
+Feature: Show *document* readable name and metadata on website.
+How to properly import subdocuments (is it as simple as treating each paragraph as a document?)

@@ -9,7 +9,7 @@ from topic_modeling.visualize.models import DatasetMetaInfo,\
     DatasetMetaInfoValue, Document, DocumentMetaInfo, DocumentMetaInfoValue,\
     AnalysisMetaInfo, AnalysisMetaInfoValue, TopicMetaInfo, TopicMetaInfoValue, WordType,\
     WordTypeMetaInfo, WordTypeMetaInfoValue, WordTokenMetaInfoValue, WordTokenMetaInfo
-
+from django.db.models import Max
 from topic_modeling.tools import TimeLongThing
 import logging
 
@@ -17,40 +17,81 @@ logger = logging.getLogger('root')
 
 datetime_format = "%Y-%m-%dT%H:%M:%S"
 
-def import_dataset_metadata(dataset, dataset_metadata):
-    logger.info('Importing dataset metadata...  ')
-    sys.stdout.flush()
-    start = datetime.now()
-
-    if dataset.name not in dataset_metadata:
-        raise RuntimeError("Invalid metadata file {}: doesn't contain dataset {}".format(dataset_metadata.filename, dataset.name))
-
-    for attribute, value in dataset_metadata[dataset.name].items():
-        mi,__ = DatasetMetaInfo.objects.get_or_create(name=attribute)
-        miv, ___ = DatasetMetaInfoValue.objects.get_or_create(info_type=mi, dataset=dataset)
-        miv.set(value)
-        miv.save()
-    end = datetime.now()
-    logger.info(' Done %s' % (end - start))
-
-def import_document_metadata(dataset, document_metadata):
-    logger.info('Importing document metadata...  ')
-    sys.stdout.flush()
-    start = datetime.now()
+def import_dataset_metadata_into_database(database_id, dataset_db, dataset_metadata, dataset_metadata_types):
+    '''\
+    dataset_db The Dataset ORM object.
+    dataset_metadata A dictionary with the metadata.
+    dataset_metadata_types A dictionary specifying what type each metadatum is.
     
-    items = len(document_metadata)
-    timer = TimeLongThing(items, .01, .1)
+    Puts the metadata for the dataset into the database.
+    '''
+    # check to see if the dataset metadata is already in the database
+    if DatasetMetaInfoValue.objects.using(database_id).filter(dataset=dataset_db).exists():
+        return # if there is metadata then we're done here
+    
+    try: # try to put dataset metadata into database
+        metadata = MetadataWrapper(dataset_metadata, dataset_metadata_types)
+        
+        meta_info_value_id = 0 # use this to assign primary keys for metadata values
+        # check to see if there are other entries in the table, if so get the id of the most recently added
+        if DatasetMetaInfoValue.objects.using(database_id).exists():
+            meta_info_value_id = DatasetMetaInfoValue.objects.using(database_id).aggregate(Max('id'))['id__max'] + 1
+        
+        # create the objects
+        meta_info_values = []
+        for attribute, value in dataset_metadata.items():
+            meta_info, __ = DatasetMetaInfo.objects.using(database_id).get_or_create(name=attribute)
+            meta_info_value = DatasetMetaInfoValue(info_type=meta_info, dataset=dataset_db)
+            meta_info_value.set(value)
+            meta_info_value.id = meta_info_value_id
+            meta_info_value_id += 1
+            meta_info_values.append(meta_info_value)
+        # put the objects into the database
+        DatasetMetaInfoValue.objects.using(database_id).bulk_create(meta_info_values)
+    except Exception as e: # if anything goes wrong try to clean-up the database
+        try:
+            DatasetMetaInfoValue.objects.using(database_id).filter(dataset=dataset_db).all().delete()
+        except Exception:
+            pass
+        raise e
 
-    for filename, metadata in document_metadata.iteritems():
-        timer.inc()
-        doc, _ = Document.objects.get_or_create(dataset=dataset, filename=filename)
-        for attribute, value in metadata.items():
-            mi,__ = DocumentMetaInfo.objects.get_or_create(name=attribute)
-            miv, ___ = DocumentMetaInfoValue.objects.get_or_create(info_type=mi, document=doc)
-            miv.set(value)
-            miv.save()
-    end = datetime.now()
-    logger.info('  Done %s' % (end - start))
+def import_document_metadata_into_database(database_id, dataset_db, document_metadata, document_metadata_types, timer=None):
+    '''\
+    Puts the document metadata into the database.
+    '''
+    # check to see if the document metadata is already in the database
+    if dataset_db.documents.exists() and \
+       dataset_db.documents.all()[0].metainfovalues.exists():
+        return # if there is metadata then we're done here
+    
+    try: # try to put document metadata into database
+        all_metadata = MetadataWrapper(document_metadata_types, document_metadata)
+        
+        meta_info_value_id = 0 # use this to assign primary keys for metadata values
+        # check to see if there are other entries in the table, if so get the id of the most recently added
+        if DocumentMetaInfoValue.objects.using(database_id).exists():
+            meta_info_value_id = DocumentMetaInfoValue.objects.using(database_id).aggregate(Max('id'))['id__max'] + 1
+        
+        meta_info_values = []
+        # create the objects
+        for filename, metadata in all_metadata.iteritems():
+            doc = Document.objects.using(database_id).get(dataset=dataset_db, filename=filename)
+            for attribute, value in metadata.items():
+                meta_info,__ = DocumentMetaInfo.objects.using(database_id).get_or_create(name=attribute)
+                meta_info_value = DocumentMetaInfoValue(info_type=meta_info, document=doc)
+                meta_info_value.set(value)
+                meta_info_value.id = meta_info_value_id
+                meta_info_value_id += 1
+                meta_info_values.append(meta_info_value)
+        # put the objects into the database
+        DocumentMetaInfoValue.objects.using(database_id).bulk_create(meta_info_values)
+    except Exception as e: # if anything goes wrong try to clean-up the database
+        try:
+            for document in dataset_db.documents.all():
+                document.metainfovalues.all().delete()
+        except Exception:
+            pass
+        raise e
 
 def import_word_type_metadata(dataset, word_type_metadata):
     logger.info('Importing word type metadata...  ')
@@ -116,10 +157,10 @@ def import_topic_metadata(analysis, topic_metadata):
     logger.info('  Done %s' % (end - start))
 
 class MetadataWrapper(dict):
-    def __init__(self, types, copy=None):
+    def __init__(self, types, data=None):
         self.types = types
-        if copy:
-            self.update(copy)
+        if data:
+            self.update(data)
 
     def _get_super_item(self, key):
         return super(MetadataWrapper, self).__getitem__(key)
@@ -147,7 +188,7 @@ class MetadataWrapper(dict):
             #Example: "2004-06-03T00:44:35"
             return time.strptime(unicode(value), datetime_format)
         else:
-            raise Exception("Type '{0}' is not recognized.".format(type))
+            raise Exception("Type '{0}' is not recognized.".format(type_))
 
     def items(self):
         for key in self:
@@ -163,4 +204,3 @@ class Metadata(MetadataWrapper):
             json_obj = anyjson.deserialize(open(filename).read())
             self.types = json_obj['types']
             self.update(json_obj['data'])
-

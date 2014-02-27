@@ -47,11 +47,15 @@ def run_mallet(analysis_settings, dataset_dir, document_dir, topical_guide_dir):
     #TODO why is import-dir being used?
     #this means compiling data to single file is unnecessary
     #since mallet will pull data from each of the files in the specified directory
-    print('  Running "mallet import-dir..."')
+    print('  Running "mallet import-file..."')
     if not os.path.exists(c['mallet_imported_data']):
-        cmd = [c['mallet'], 'import-dir', '--input', document_dir, '--output',
-               c['mallet_imported_data'], '--keep-sequence', '--set-source-by-name',
-               '--source-name-prefix', '"file:%s/%s/"'%(os.getcwd(), document_dir),
+        cmd = [c['mallet'], 'import-file', 
+               '--input', c['mallet_input'], 
+               '--output', c['mallet_imported_data'], 
+               '--keep-sequence', 
+               '--set-source-by-name',
+               # TODO do we need this? I don't think so
+               #'--source-name-prefix', '"file:%s/%s/"'%(os.getcwd(), document_dir),
                '--remove-stopwords']
         #TODO add methods to get any specified settings for the below options
         #~ if 'extra_stopwords_file' in c:

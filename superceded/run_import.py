@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     #The database file where we'll store info about this build
     db_name = os.path.join(DB_BASE, "{0}.db".format("Conference_Talks_on_Agency".replace('/','_')))
-
+    
     args = ['-f', path] + ['--db', db_name] + sys.argv[1:]
     res = cmd_main(args)
 

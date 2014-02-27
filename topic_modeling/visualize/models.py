@@ -92,9 +92,11 @@ class Dataset(Describable):
 LEFT_CONTEXT_SIZE = 40
 RIGHT_CONTEXT_SIZE = 40
 class Document(models.Model):
+    id = models.IntegerField(primary_key=True)
     filename = models.CharField(max_length=128, db_index=True)
     full_path = models.TextField()
     dataset = models.ForeignKey(Dataset, related_name='documents')
+    # content = models.TextField(null=True)
 #    word_count = models.IntegerField(default=0)
 
     def __unicode__(self):
@@ -211,8 +213,9 @@ class Document(models.Model):
 
 
 class WordType(models.Model):
+    id = models.IntegerField(primary_key=True)
     type = models.CharField(max_length=128, db_index=True) #@ReservedAssignment
-
+    
     def __unicode__(self):
         return unicode(self.type)
 
@@ -220,6 +223,7 @@ class WordType(models.Model):
         return self.type
 
 class WordToken(models.Model):
+    id = models.IntegerField(primary_key=True)
     type = models.ForeignKey(WordType, related_name='tokens') #@ReservedAssignment
     document = models.ForeignKey(Document, related_name='tokens')
     token_index = models.IntegerField()
@@ -306,7 +310,7 @@ class Topic(models.Model):
 #    documents = models.ManyToManyField(Document, through='DocumentTopic')
     metrics = models.ManyToManyField('TopicMetric', through='TopicMetricValue')
 #    words = models.ManyToManyField(Word, through='TopicWord')
-
+    
     def __unicode__(self):
         names = TopicName.objects.filter(topic=self)
         if names.count():
@@ -484,6 +488,8 @@ class MetaInfo(models.Model):
 # TODO: Use a consistent related_name in the children of this model.
 # TODO: Create class MetaInfoTarget with a value method that references the consistent metainfo related_name
 class MetaInfoValue(models.Model):
+    # warning: this class doesn't have an auto-incrrementing primary key
+    id = models.IntegerField(primary_key=True)
     bool_value = models.NullBooleanField(null=True)
     float_value = models.FloatField(null=True)
     int_value = models.IntegerField(null=True)

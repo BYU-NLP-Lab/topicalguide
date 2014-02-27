@@ -35,26 +35,48 @@ ADMINS = (
 )
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-if not os.path.exists(os.path.join(BASE_DIR, 'import_tool/local_settings.py')):
-    print >> sys.stderr, "Import error looking for local_settings.py. "\
-            "Look at import_tool/local_settings.py.sample for help"
-    raise Exception("You need to set up your import_tool/local_settings.py")
 sys.path.append(BASE_DIR)
-try:
-    from import_tool.local_settings import DB_CONFIG, DBTYPE, SQLITE_CONFIG, MYSQL_CONFIG
-    from import_tool import local_settings
-except ImportError as e:
-    raise Exception("Error imporing import_tool/local_settings.py: %s" % e)
+
+
+USE_GUNICORN = False
+
+# this is the path to the default sqlite database e.g.: TOPICAL_GUIDE_ROOT/working/tg.sqlite3
+DB_FILE = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '../working')), 'tg.sqlite3')
+DB_OPTIONS = {
+    'sqlite3': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': DB_FILE
+    },
+    'mysql': {
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': '',
+        'SERVER': 'localhost',
+        'PASSWORD': '',
+        'NAME': ''
+    },
+    'postgres': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': '',                      
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': ''
+    }
+}
 
 MANAGERS = ADMINS
 
 DATABASES = {
-    'default': DB_CONFIG
+    'default': DB_OPTIONS['sqlite3']
 }
 
 def database_type():
-    return DBTYPE
+    engine = DATABASES['default']['ENGINE']
+    if engine == 'django.db.backends.sqlite3':
+        return 'sqlite3'
+    elif engine == 'django.db.backends.mysql':
+        return 'mysql'
+    elif engine == 'django.db.backends.postgresql_psycopg2':
+        return 'postgres'
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -146,7 +168,7 @@ try:
     import gunicorn
     INSTALLED_APPS += ('gunicorn',)
 except ImportError:
-    print 'Notice: guniocorn not installed.'
+    print 'Notice: gunicorn not installed.'
     gunicorn = False
 
 INTERNAL_IPS = '127.0.0.1',

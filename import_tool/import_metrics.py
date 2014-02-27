@@ -11,7 +11,7 @@ import datetime
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
-from dataset_classes.generic_dataset import DataSetImportTask
+from dataset_classes.generic_dataset import GenericDataset
 
 from topic_modeling.visualize.models import (Dataset, TopicMetric,
     PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric, 

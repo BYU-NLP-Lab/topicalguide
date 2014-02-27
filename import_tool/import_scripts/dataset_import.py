@@ -29,7 +29,7 @@ from topic_modeling.visualize.models import Dataset
 from topic_modeling.visualize.models import Document
 from topic_modeling.tools import TimeLongThing
 
-from django.db import connection, transaction
+from django.db import connection, connections, transaction
 from django.db.utils import DatabaseError
 
 from datetime import datetime
@@ -38,9 +38,9 @@ import logging
 
 logger = logging.getLogger('root')
 
-def check_dataset(name):
+def check_dataset(database_id, name):
     try:
-        dataset = Dataset.objects.get(name=name)
+        dataset = Dataset.objects.using(database_id).get(name=name)
     except (Dataset.DoesNotExist, DatabaseError):
         return False
     if not dataset.documents.count():
@@ -51,7 +51,7 @@ def check_dataset(name):
             return False
     return True
 
-def import_dataset(name, readable_name, description, metadata_filenames,
+def import_dataset(database_id, name, readable_name, description, metadata_filenames,
                    dataset_dir, files_dir, token_regex, dont_overwrite=False):
     '''Import the dataset into the Database
 
@@ -65,7 +65,10 @@ def import_dataset(name, readable_name, description, metadata_filenames,
     4) create WordToken objects for each "word" (found by c['token_regex'])
 
     '''
-
+    if check_dataset(database_id, name):
+        return
+    
+    
     # Disabled to keep from cluttering up the CLI
     #~ print >> sys.stderr, "dataset_import({0})".format(', '.join(
         #~ [name, readable_name, description,
@@ -79,19 +82,19 @@ def import_dataset(name, readable_name, description, metadata_filenames,
 
     if settings.database_type()=='sqlite3':
         # These are some attempts to make the database access a little faster
-        cursor = connection.cursor()
+        cursor = connections[database_id].cursor()
         cursor.execute('PRAGMA temp_store=MEMORY')
         cursor.execute('PRAGMA synchronous=OFF')
         cursor.execute('PRAGMA cache_size=2000000')
         cursor.execute('PRAGMA journal_mode=MEMORY')
         cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
 
-    dataset, created = _create_dataset(name, readable_name, description, dataset_dir, files_dir)
+    dataset, created = _create_dataset(database_id, name, readable_name, description, dataset_dir, files_dir)
     if not dont_overwrite or created:
-        _load_documents(dataset, token_regex)
+        _load_documents(database_id, dataset, token_regex)
 
         if settings.database_type()=='sqlite3':
-            cursor = connection.cursor()
+            cursor = connections[database_id].cursor()
             cursor.execute('PRAGMA journal_mode=DELETE')
             cursor.execute('PRAGMA locking_mode=NORMAL')
         end_time = datetime.now()
@@ -104,7 +107,7 @@ def import_dataset(name, readable_name, description, metadata_filenames,
 def _create_documents(files_dir):
     pass
 
-def _load_documents(dataset, token_regex):
+def _load_documents(database_id, dataset, token_regex):
     '''This goes through the dataset (by walking through the files in dataset.files_dir).
 
     1) creates word types
@@ -114,13 +117,13 @@ def _load_documents(dataset, token_regex):
     if dataset.documents.all().count():
         logger.info('Deleting old documents')
         for document in dataset.documents.all():
-            WordTokenMetricValue.objects.raw('delete from visualize_wordtokenmetricvalue wtv join visualize_wordtoken wt on wtv.token_id=wt.id where wt.document_id=%s', [document.pk])
-            WordToken.objects.raw('delete from visualize_wordtoken where document_id=%d' % document.pk)
-            Document.objects.raw('delete from visualize_document where id=%s', [document.pk])
+            WordTokenMetricValue.objects.using(database_id).raw('delete from visualize_wordtokenmetricvalue wtv join visualize_wordtoken wt on wtv.token_id=wt.id where wt.document_id=%s', [document.pk])
+            WordToken.objects.using(database_id).raw('delete from visualize_wordtoken where document_id=%d' % document.pk)
+            Document.objects.using(database_id).raw('delete from visualize_document where id=%s', [document.pk])
         # dataset.documents.all().delete()
 
     logger.info('Creating the Word Types')
-    word_types = _types(dataset.files_dir, token_regex)
+    word_types = _types(database_id, dataset.files_dir, token_regex)
 
     print >> sys.stderr, 'Creating documents and tokens...  '
 
@@ -134,7 +137,7 @@ def _load_documents(dataset, token_regex):
     #commented out to prevent modulus by zero
     timer = TimeLongThing(len(all_files))#, .01, .1)
     for i, (dirpath, filename, full_path) in enumerate(all_files):
-        doc, _ = Document.objects.get_or_create(dataset=dataset,
+        doc, _ = Document.objects.using(database_id).get_or_create(dataset=dataset,
                 filename=filename,
                 full_path=full_path)
         timer.inc()
@@ -152,7 +155,7 @@ def _load_documents(dataset, token_regex):
             word_type = word_types[token_lc]
             tokens.append(WordToken(type=word_type, document=doc,
                     token_index=position, start=match.start()))
-        WordToken.objects.bulk_create(tokens)
+        WordToken.objects.using(database_id).bulk_create(tokens)
         del content
         '''
         if not doc.tokens.all().count():
@@ -160,23 +163,23 @@ def _load_documents(dataset, token_regex):
                     % (full_path, doc.pk))
         '''
 
-def _types(files_dir, token_regex):
+def _types(database_id, files_dir, token_regex):
     print >> sys.stderr, 'Ensuring word types...  '
-    type_objs = dict((wtype.type, wtype) for wtype in WordType.objects.all())
+    type_objs = dict((wtype.type, wtype) for wtype in WordType.objects.using(database_id).all())
 
     types_in_dataset = set(wtype for _filename, _token_idx, wtype
-            in _token_iterator(files_dir, token_regex))
+            in _token_iterator(database_id, files_dir, token_regex))
 
     types_dict = {}
     for wtype in types_in_dataset:
         if wtype in type_objs:
             types_dict[wtype] = type_objs[wtype]
         else:
-            types_dict[wtype] = WordType.objects.create(type=wtype)
+            types_dict[wtype] = WordType.objects.using(database_id).create(type=wtype)
 
     return types_dict
 
-def _token_iterator(files_dir, token_regex):
+def _token_iterator(database_id, files_dir, token_regex):
     for (dirpath, _dirnames, filenames) in os.walk(files_dir):
         for filename in filenames:
             full_filename = '%s/%s' % (dirpath, filename)
@@ -189,9 +192,9 @@ def _token_iterator(files_dir, token_regex):
                 token_lc = token.lower()
                 yield filename, token_idx, token_lc
 
-def _create_dataset(name, readable_name, description, dataset_dir, files_dir):
+def _create_dataset(database_id, name, readable_name, description, dataset_dir, files_dir):
     print >> sys.stderr, 'Creating the dataset...  ',
-    dataset,created = Dataset.objects.get_or_create(name=name, readable_name=readable_name, description=description,
+    dataset,created = Dataset.objects.using(database_id).get_or_create(name=name, readable_name=readable_name, description=description,
                     dataset_dir=dataset_dir, files_dir=files_dir)
     print >> sys.stderr, 'Done'
     return dataset, created

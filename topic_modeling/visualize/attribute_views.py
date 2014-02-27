@@ -35,7 +35,8 @@ from topic_modeling.visualize.models import WordType
 from topic_modeling.visualize import sess_key
 from django.db.models.aggregates import Count
 
-from import_tool.config import config as c
+# TODO delete this as it shouldn't be used
+#~ from import_tool.config import config as c
 
 class AttributeView(AnalysisBaseView):
     template_name = "attributes.html"

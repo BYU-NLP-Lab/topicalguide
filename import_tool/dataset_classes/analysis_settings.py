@@ -7,7 +7,7 @@ from collections import defaultdict
 
 class AnalysisSettings:
     def __init__(self):
-        self.number_of_topics = 100
+        self.number_of_topics = 50
         self.number_of_iterations = 100
         self.mallet_relative_file_path = 'tools/mallet/mallet'
     
@@ -55,7 +55,7 @@ class AnalysisSettings:
         return ["token_count", "type_count", "document_entropy", "word_entropy"]
     
     # TODO most of these entities don't seem to exist... why?
-    # the one that does is metadata/documents.json
+    # the one that does exist is metadata/documents.json
     def get_metadata_filenames(self, metadata_dir):
         '''\
         Returns a dictionary of the metadata filenames.
@@ -63,14 +63,14 @@ class AnalysisSettings:
         metadata_entities = ('datasets', 'documents', 'word_types', 'word_tokens', 'analysis', 'topics')
         metadata_filenames = {}
         for entity_type in metadata_entities:
-            metadata_filenames[entity_type] = os.path.join(metadata_dir, entity_type)
+            metadata_filenames[entity_type] = os.path.join(metadata_dir, entity_type) + '.json'
         return metadata_filenames
     
     def get_pairwise_topic_metrics(self):
-        return ['document_correlation']#, 'word_correlation']
+        return ['document_correlation', 'word_correlation']
     
     def get_pairwise_document_metrics(self):
-        return ['word_correlation', 'topic_correlation']
+        return ['topic_correlation']
     
     def get_topic_metric_args(self):
         return defaultdict(dict)

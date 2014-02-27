@@ -7,47 +7,45 @@ class AbstractDataset(object):
     This allows for flexibility in what datasets \
     can be imported and how they are imported. 
     To create a class that imports \
-    data from a dataset with a different format or structure, extend this \
+    data from a dataset with a specialized format or structure, extend this \
     class and override functions as necessary.
     '''
     
     def get_analysis_settings(self):
         '''\
         Returns an AnalysisSettings object that tracks which analysis' \
-        to perform, specific file paths, etc.
+        to perform, mallet file paths, etc.
         '''
         raise NotImplementedError('get_analysis_settings is not implemented')
     
-    def get_dataset_identifier(self):
+    def get_identifier(self):
         '''\
         Returns a string that uniquely identifies this dataset on the \
         Topical Guide server.
         '''
         raise NotImplementedError('get_dataset_identifier is not implemented')
     
-    def get_dataset_metadata(self):
+    def get_readable_name(self):
+        '''\
+        Returns a string that identifies the dataset and is formatted \
+        to be read by a human.
+        '''
+        raise NotImplementedError('get_readable_name is not implemented')
+    
+    def get_description(self):
+        '''\
+        Returns a description of the dataset.
+        '''
+        raise NotImplementedError('get_description is not implemented')
+    
+    def get_metadata(self):
         '''\
         Returns a dictionary where they keys are the metadata identifiers \
         and the values are the associated values for this dataset.
         Note that 'readable_name' and 'description' are special keys that are \
-        used by the Topical Guide to neatly display an imported dataset.
+        required by the Topical Guide to neatly display basic information about your dataset.
         '''
         raise NotImplementedError('get_dataset_metadata is not implemented')
-    
-    def get_dataset_metadata_types(self):
-        '''\
-        Returns a dictionary where the keys are the metadata identifiers 
-        for this dataset and the values are the types.
-        '''
-        raise NotImplementedError('get_dataset_metadata_types is not implemented')
-    
-    def get_document_metadata_types(self):
-        '''\
-        Returns a dictionary where the keys are the metadata identifiers and
-        the values are the types (e.g. "author": "string", "year": "int", etc.)
-        Supported types include "int", and "text"
-        '''
-        raise NotImplementedError('get_document_metadata_types is not implemented')
     
     def __iter__(self):
         '''\
@@ -62,11 +60,18 @@ class AbstractDocument(object):
     the AbstractDocument class is an abstraction of a single document in that dataset.
     '''
     
-    def get_name(self):
+    def get_identifier(self):
         '''\
-        Return a unique identifier for this document. Must only contain underscores or alphanumeric characters.
+        Return a unique identifier for this document in relation to its dataset.
+        Must only contain underscores, dashes, periods, or alphanumeric characters.
         '''
         raise NotImplementedError('get_name is not implemented')
+    
+    def get_uri(self):
+        '''\
+        Returns the document's uri.
+        '''
+        raise NotImplementedError('get_document_uri is not implemented')
     
     def get_metadata(self):
         '''\
