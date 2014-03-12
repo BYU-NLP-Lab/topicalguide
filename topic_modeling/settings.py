@@ -69,8 +69,8 @@ DATABASES = {
     'default': DB_OPTIONS['sqlite3']
 }
 
-def database_type():
-    engine = DATABASES['default']['ENGINE']
+def database_type(database_id='default'):
+    engine = DATABASES[database_id]['ENGINE']
     if engine == 'django.db.backends.sqlite3':
         return 'sqlite3'
     elif engine == 'django.db.backends.mysql':

@@ -30,15 +30,15 @@ from topic_modeling.visualize.models import DocumentMetricValue
 
 metric_name = 'Number of tokens'
 # @transaction.commit_manually
-def add_metric(dataset, analysis):
-    dataset = Dataset.objects.get(name=dataset)
-    analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    metric, created = DocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
+def add_metric(database_id, dataset, analysis):
+    dataset = Dataset.objects.using(database_id).get(name=dataset)
+    analysis = Analysis.objects.using(database_id).get(dataset=dataset, name=analysis)
+    metric, created = DocumentMetric.objects.using(database_id).get_or_create(name=metric_name, analysis=analysis)
     if not created:
         raise RuntimeError('%s is already in the database for this analysis!' % metric_name)
     
     for document in dataset.documents.all():
-        DocumentMetricValue.objects.create(document=document, metric=metric, value=document.tokens.count())
+        DocumentMetricValue.objects.using(database_id).create(document=document, metric=metric, value=document.tokens.count())
     # transaction.commit()
 
 def metric_names_generated(dataset, analysis):

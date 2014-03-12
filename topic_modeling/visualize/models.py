@@ -96,7 +96,7 @@ class Document(models.Model):
     filename = models.CharField(max_length=128, db_index=True)
     full_path = models.TextField()
     dataset = models.ForeignKey(Dataset, related_name='documents')
-    # content = models.TextField(null=True)
+    #content = models.TextField(null=True)
 #    word_count = models.IntegerField(default=0)
 
     def __unicode__(self):

@@ -30,7 +30,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 
-from django.db import connection, transaction
+from django.db import connections, transaction
 
 from topic_modeling.visualize.models import Analysis, Dataset, Topic
 from import_tool.import_scripts.metadata import Metadata
@@ -79,9 +79,9 @@ def import_analysis(database_id, dataset_name, analysis_name, analysis_readable_
        #~ markup_dir, state_file, tokenized_file, unicode(metadata_filenames), token_regex]))
     start_time = datetime.now()
     print >> sys.stderr, 'Starting time:', start_time
-    if settings.database_type()=='sqlite3':
+    if settings.database_type(database_id)=='sqlite3':
         # These are some attempts to make the database access a little faster
-        cursor = connection.cursor()
+        cursor = connections[database_id].cursor()
         cursor.execute('PRAGMA temp_store=MEMORY')
         cursor.execute('PRAGMA synchronous=OFF')
         cursor.execute('PRAGMA cache_size=2000000')

@@ -32,10 +32,10 @@ from django.db.models.aggregates import Count
 
 metric_name = 'Topic Entropy'
 # @transaction.commit_manually
-def add_metric(dataset, analysis):
-    dataset = Dataset.objects.get(name=dataset)
-    analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-    metric, created = DocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
+def add_metric(database_id, dataset, analysis):
+    dataset = Dataset.objects.using(database_id).get(name=dataset)
+    analysis = Analysis.objects.using(database_id).get(dataset=dataset, name=analysis)
+    metric, created = DocumentMetric.objects.using(database_id).get_or_create(name=metric_name, analysis=analysis)
     if not created:
         raise RuntimeError('%s is already in the database for this analysis!' % metric_name)
 
@@ -53,7 +53,7 @@ def add_metric(dataset, analysis):
                         prob = doctopic_count / doc_token_count
                         entropy -= prob * (log(prob) / log(2))
                         #TODO Decide if we care about this entropy being in bits (log base of 2)
-        DocumentMetricValue.objects.create(document=document, metric=metric, value=entropy)
+        DocumentMetricValue.objects.using(database_id).create(document=document, metric=metric, value=entropy)
     # transaction.commit()
 
 def metric_names_generated(dataset, analysis):

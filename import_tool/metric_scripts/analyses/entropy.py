@@ -26,8 +26,8 @@ from topic_modeling.visualize.models import AnalysisMetric, AnalysisMetricValue
 import logging
 logger = logging.getLogger('root')
 
-def add_metric(analysis):
-    metric, _ = AnalysisMetric.objects.get_or_create(name="Topic Entropy")
+def add_metric(database_id, analysis):
+    metric, _ = AnalysisMetric.objects.using(database_id).get_or_create(name="Topic Entropy")
     logger.info('starting analysis entropy metric')
 
     # Get normalized topic counts
@@ -48,7 +48,7 @@ def add_metric(analysis):
         mv.value = entropy
         mv.save()
     except AnalysisMetricValue.DoesNotExist:
-        AnalysisMetricValue.objects.create(metric=metric, analysis=analysis, value=entropy)
+        AnalysisMetricValue.objects.using(database_id).create(metric=metric, analysis=analysis, value=entropy)
 
 def metric_names_generated(_analysis):
     return ["Topic Entropy"]

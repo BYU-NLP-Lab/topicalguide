@@ -36,15 +36,15 @@ from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
 metric_name = "Word Correlation"
 # @transaction.commit_manually
-def add_metric(dataset, analysis):
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
-    metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name,
+def add_metric(database_id, dataset, analysis):
+    analysis = Analysis.objects.using(database_id).get(dataset__name=dataset, name=analysis)
+    metric, created = PairwiseTopicMetric.objects.using(database_id).get_or_create(name=metric_name,
                         analysis=analysis)
-    if not created and PairwiseTopicMetricValue.objects.filter(metric=metric).count():
+    if not created and PairwiseTopicMetricValue.objects.using(database_id).filter(metric=metric).count():
         # transaction.rollback()
         raise RuntimeError("%s is already in the database for this analysis" % metric_name)
 
-    word_types = WordType.objects.filter(tokens__topics__analysis=analysis).distinct()
+    word_types = WordType.objects.using(database_id).filter(tokens__topics__analysis=analysis).distinct()
     topics = analysis.topics.order_by('number').all()
 
     word_idx = dict((word_type.type, i) for i,word_type in enumerate(word_types))
@@ -61,7 +61,7 @@ def add_metric(dataset, analysis):
             correlation_coeff = pmcc(topic1_word_vals, topic2_word_vals)
             # if not correlation_coeff or numpy.isnan(correlation_coeff):
             #    raise Exception('Null correlation? %s %s %s %s' % (topic1, topic2, topic1_word_vals, topic2_word_vals))
-            PairwiseTopicMetricValue.objects.create(topic1=topic1,
+            PairwiseTopicMetricValue.objects.using(database_id).create(topic1=topic1,
                     topic2=topic2, metric=metric, value=correlation_coeff)
     # transaction.commit()
 

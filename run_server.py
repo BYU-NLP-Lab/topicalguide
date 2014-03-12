@@ -19,7 +19,7 @@ def run(cmd):
     manage.execute_manager(manage.settings, ['run_server.py', cmd])
 
 def plain_main():
-    if getattr(manage.settings.local_settings, 'USE_GUNICORN', False):
+    if getattr(manage.settings, 'USE_GUNICORN', False):
         if manage.settings.gunicorn:
             return run('run_gunicorn')
         print "Gunicorn not installed; defaulting to normal execution"

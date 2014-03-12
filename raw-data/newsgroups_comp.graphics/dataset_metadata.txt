@@ -1,0 +1,5 @@
+readable_name: Newsgroups: Computer Graphics
+description: News clippings from Computer Graphics?
+creator: Jeff
+source: AML Datasets/The Internet
+

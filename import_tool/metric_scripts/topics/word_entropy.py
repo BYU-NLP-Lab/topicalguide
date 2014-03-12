@@ -32,11 +32,11 @@ from django.db.models.aggregates import Count
 
 metric_name = 'Word Entropy'
 #@transaction.commit_manually
-def add_metric(dataset, analysis, force_import=False):
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+def add_metric(database_id, dataset, analysis, force_import=False):
+    analysis = Analysis.objects.using(database_id).get(dataset__name=dataset, name=analysis)
     try:
         ## TODO: add more intelligent checking; check for any TopicMetricValues
-        metric = TopicMetric.objects.get(name=metric_name, analysis=analysis)
+        metric = TopicMetric.objects.using(database_id).get(name=metric_name, analysis=analysis)
         if not force_import:
             raise RuntimeError('Word Entropy is already in the database '
                     'for this analysis!')

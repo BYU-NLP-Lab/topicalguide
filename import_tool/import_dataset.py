@@ -46,14 +46,14 @@ def run_migrate(dataset_identifier, database_info):
     '''
     if database_info:
         settings.DATABASES[dataset_identifier] = database_info
-        identifier = dataset_identifier
     else:
-        identifier = 'default'
+        dataset_identifier = 'default'
     
-    call_command('syncdb', database=identifier)
-    return identifier
+    call_command('syncdb', database=dataset_identifier)
+    return dataset_identifier
 
 
+# TODO make the content present in the database
 def document_info_collector(args, doc):
     '''\
     Function to aid in collecting data from documents. The data collected \
@@ -85,7 +85,7 @@ def document_info_collector(args, doc):
     with open(full_path, 'w') as f:
         f.write(content)
 
-def transfer_dataset(database_id, dataset, analysis_settings, dataset_dir, document_dir, metadata_dir):
+def transfer_dataset(database_id, dataset, analysis_settings, dataset_dir, document_dir):
     '''\
     Transfers the dataset's documents and metadata into files located on the server where the import process will continue.
     Ex: $TOPICAL_GUIDE_ROOT/working/datasets/files
@@ -111,7 +111,7 @@ def transfer_dataset(database_id, dataset, analysis_settings, dataset_dir, docum
     # create entries for each document
     import_documents_into_database(database_id, dataset.get_identifier(), args['doc_identifiers'])
     
-    # import words into database
+    # import each document's words into the database
     import_document_word_tokens(database_id, dataset.get_identifier(), args['words'])
     
     dataset_db = Dataset.objects.using(database_id).get(name=dataset.get_identifier())
@@ -242,29 +242,41 @@ def import_analysis(database_id, dataset, analysis_settings, topical_guide_dir, 
                 #~ pass
             #~ raise e
 
-def scheme_in_database(name_scheme_name, analysis_db):
-    '''\
-    Helper function for name_schemes().
-    '''
-    try:
-        TopicNameScheme.objects.get(analysis=analysis_db, name=name_scheme_name)
-        return True
-    except (Dataset.DoesNotExist, Analysis.DoesNotExist, TopicNameScheme.DoesNotExist):
-        return False
+#~ def scheme_in_database(name_scheme_name, analysis_db):
+    #~ '''\
+    #~ Helper function for name_schemes().
+    #~ '''
+    #~ try:
+        #~ TopicNameScheme.objects.get(analysis=analysis_db, name=name_scheme_name)
+        #~ return True
+    #~ except (Dataset.DoesNotExist, Analysis.DoesNotExist, TopicNameScheme.DoesNotExist):
+        #~ return False
+#~ 
+#~ # TODO update documentation to be more specific
+#~ def name_schemes(dataset, analysis_settings, analysis_db):
+    #~ '''\
+    #~ Names all topics based on a particular scheme.
+    #~ '''
+    #~ 
+    #~ name_schemes = [TopNTopicNamer(dataset.get_identifier(), 
+                    #~ analysis_settings.get_analysis_name(), 3)]
+    #~ 
+    #~ for ns in name_schemes:
+        #~ if not scheme_in_database(ns.scheme_name().split(':')[-1], analysis_db):
+            #~ ns.name_all_topics()
 
-# TODO update documentation to be more specific
-def name_schemes(dataset, analysis_settings, analysis_db):
-    '''\
-    Names all topics based on a particular scheme.
-    '''
-    
-    name_schemes = [TopNTopicNamer(dataset.get_identifier(), 
-                    analysis_settings.get_analysis_name(), 3)]
-    
-    for ns in name_schemes:
-        if not scheme_in_database(ns.scheme_name().split(':')[-1], analysis_db):
-            ns.name_all_topics()
 
+# TODO make this a little bit more modular and better documented
+# for example, the method could take an AbstractNamer type object
+def name_topics(database_id, dataset, analysis_settings, analysis_db):
+    '''\
+    Names all of the topics.
+    '''
+    topic_namer = TopNTopicNamer(database_id, dataset.get_identifier(), 
+                                 analysis_settings.get_analysis_name(), 3)
+    
+    if not TopicNameScheme.objects.using(database_id).filter(analysis=analysis_db, name=topic_namer.get_identifier()).exists():
+        topic_namer.name_all_topics()
 
 
 
@@ -302,8 +314,8 @@ def import_dataset(dataset, analysis_settings, database_info=None):
     
     # move the dataset data to a stable location on the server
     print('Importing data from dataset object...')
-    transfer_dataset(database_id, dataset, analysis_settings, dataset_dir, document_dir, metadata_dir)
-    dataset_db = Dataset.objects.get(name=dataset.get_identifier())
+    transfer_dataset(database_id, dataset, analysis_settings, dataset_dir, document_dir)
+    dataset_db = Dataset.objects.using(database_id).get(name=dataset.get_identifier())
     
     # depends on transfer_data()
     print('Preparing mallet input file...')
@@ -324,24 +336,24 @@ def import_dataset(dataset, analysis_settings, database_info=None):
     
     # depends on import_analysis()
     print('Naming schemes...')
-    name_schemes(dataset, analysis_settings, analysis_db)
+    name_topics(database_id, dataset, analysis_settings, analysis_db)
     
     dataset_name = dataset.get_identifier()
     analysis_name = analysis_settings.get_analysis_name()
     # Compute metrics
     # the following depend on import_analysis()
     print('Dataset metrics...')
-    dataset_metrics(dataset_name, analysis_name) # depends on import_dataset_into_database()
+    dataset_metrics(database_id, dataset_name, analysis_name) # depends on import_dataset_into_database()
     print('Analysis metrics...')
-    analysis_metrics(dataset_name, analysis_name, analysis_db)
+    analysis_metrics(database_id, dataset_name, analysis_name, analysis_db)
     print('Topic metrics...')
-    topic_metrics(analysis_settings.get_topic_metrics(), dataset_name, analysis_name, analysis_db, analysis_settings.get_topic_metric_args())
+    topic_metrics(database_id, analysis_settings.get_topic_metrics(), dataset_name, analysis_name, analysis_db, analysis_settings.get_topic_metric_args())
     print('Pairwise topic metrics...')
-    pairwise_topic_metrics(analysis_settings.get_pairwise_topic_metrics(), dataset_name, analysis_name, analysis_db)
+    pairwise_topic_metrics(database_id, analysis_settings.get_pairwise_topic_metrics(), dataset_name, analysis_name, analysis_db)
     print('Document metrics...')
-    document_metrics(dataset_name, analysis_name, analysis_db)
+    document_metrics(database_id, dataset_name, analysis_name, analysis_db)
     print('Pairwise document metrics...')
-    pairwise_document_metrics(analysis_settings.get_pairwise_document_metrics(), dataset_name, analysis_name, analysis_db)
+    pairwise_document_metrics(database_id, analysis_settings.get_pairwise_document_metrics(), dataset_name, analysis_name, analysis_db)
 
 
 # vim: et sw=4 sts=4

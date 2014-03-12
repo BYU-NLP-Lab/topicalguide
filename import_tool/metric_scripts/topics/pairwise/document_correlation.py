@@ -35,12 +35,12 @@ from topic_modeling.visualize.models import PairwiseTopicMetricValue
 from django.db.models.aggregates import Count
 
 metric_name = "Document Correlation"
-def add_metric(dataset_name, analysis_name):
+def add_metric(database_id, dataset_name, analysis_name):
     try:
-        dataset = Dataset.objects.get(name=dataset_name)
+        dataset = Dataset.objects.using(database_id).get(name=dataset_name)
         analysis = dataset.analyses.get(name=analysis_name)
         
-        metric, created = PairwiseTopicMetric.objects.get_or_create(name=metric_name,
+        metric, created = PairwiseTopicMetric.objects.using(database_id).get_or_create(name=metric_name,
                     analysis=analysis)
         
         if not created and PairwiseTopicMetricValue.objects.filter(metric=metric).count():
@@ -65,7 +65,7 @@ def add_metric(dataset_name, analysis_name):
                 topic2_doc_vals = doctopicvectors[j]
                 correlation_coeff = pmcc(topic1_doc_vals, topic2_doc_vals)
                 if not isnan(correlation_coeff):
-                    PairwiseTopicMetricValue.objects.create(topic1=topic1,
+                    PairwiseTopicMetricValue.objects.using(database_id).create(topic1=topic1,
                         topic2=topic2, metric=metric, value=correlation_coeff)
                 else:
                     print "Error computing metric between {0} and {1}".format(

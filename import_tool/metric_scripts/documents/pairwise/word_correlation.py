@@ -39,8 +39,8 @@ from django.db.models.aggregates import Count
 metric_name = "Word Correlation"
 
 # @transaction.commit_manually
-def add_metric(dataset, analysis):
-    dataset = Dataset.objects.get(name=dataset)
+def add_metric(database_id, dataset, analysis):
+    dataset = Dataset.objects.using(database_id).get(name=dataset)
     analysis = dataset.analyses.get(name=analysis)
     metric, created = analysis.pairwisedocumentmetrics.get_or_create(name=metric_name, analysis=analysis)
     if not created:
@@ -63,7 +63,7 @@ def add_metric(dataset, analysis):
             correlation_coeff = pmcc(doc1_word_vals, doc2_word_vals, doc1_norm,
                     doc2_norm)
             if not isnan(correlation_coeff):
-                PairwiseDocumentMetricValue.objects.create(
+                PairwiseDocumentMetricValue.objects.using(database_id).create(
                     document1=doc1, document2=doc2, metric=metric, value=correlation_coeff)
         # transaction.commit()
     write('\n')

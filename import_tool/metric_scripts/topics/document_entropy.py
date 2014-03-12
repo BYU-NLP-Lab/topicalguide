@@ -33,11 +33,11 @@ from django.db.models.aggregates import Count
 
 metric_name = 'Document Entropy'
 # @transaction.commit_manually
-def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
+def add_metric(database_id, dataset, analysis, force_import=False, *args, **kwargs):
     # try:
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+    analysis = Analysis.objects.using(database_id).get(dataset__name=dataset, name=analysis)
     try:
-        metric = TopicMetric.objects.get(name=metric_name,
+        metric = TopicMetric.objects.using(database_id).get(name=metric_name,
                 analysis=analysis)
         if not force_import:
             raise RuntimeError('%s is already in the database for this '

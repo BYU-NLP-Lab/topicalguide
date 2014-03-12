@@ -44,10 +44,10 @@ from topic_modeling.visualize.models import PairwiseTopicMetricValue
 
 metric_name = "Pairwise Coherence"
 # @transaction.commit_manually
-def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
-    analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+def add_metric(database_id, dataset, analysis, force_import=False, *args, **kwargs):
+    analysis = Analysis.objects.using(database_id).get(dataset__name=dataset, name=analysis)
     try:
-        metric = PairwiseTopicMetric.objects.get(name=metric_name,
+        metric = PairwiseTopicMetric.objects.using(database_id).get(name=metric_name,
                 analysis=analysis)
         if not force_import:
             raise RuntimeError("%s is already in the database for this"
@@ -89,7 +89,7 @@ def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
             topic2_words = topicwords[j]
             coherence = pairwise_coherence(topic1_words, topic2_words, c,
                     total_words, total_cooccurrences)
-            PairwiseTopicMetricValue.objects.create(topic1=topic1,
+            PairwiseTopicMetricValue.objects.using(database_id).create(topic1=topic1,
                     topic2=topic2, metric=metric, value=coherence)
     # transaction.commit()
 

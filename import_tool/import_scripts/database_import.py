@@ -134,7 +134,7 @@ def import_document_word_tokens(database_id, dataset_identifier, words):
                 word_types_to_create.append(word_type)
             else:
                 word_type = word_types[word]
-            word_token = WordToken(id=word_token_pk, type=word_type, document=doc,
+            word_token = WordToken(id=word_token_pk, type=word_type, document_id=doc.id,
                                    token_index=index, start=start_pos)
             word_token_pk += 1
             word_tokens_to_create.append(word_token)

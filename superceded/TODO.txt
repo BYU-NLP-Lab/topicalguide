@@ -6,12 +6,23 @@ require document readable name?
 
 TODO:
 Add ability to import to detached databases.
-
 Make database importing more efficient.
+Refactor code to conform to structure condisive to the next item below.
+
+Take a second look at the import system and determine if it could be broken down in different ways.
+    Some of these ways would be to allow the user to do multiple analysis imports on an already imported dataset.
+    Running different metrics, even on an as needed basis.
+    Why? This may make the Topical Guide more accessible, 
+    users can interact with the dataset running metrics/analysis/topic naming on an as needed basis.
+    Users should be able to remove a dataset, analysis, metrics, etc.
+Update documentation.
+Create test case for type autodetect
+Add ability for the server to link to an existing dataset in an existing database.
+
 Readup on pythonic documentation (pep-8) and update mine accordingly to prep for code review.
 Track down bug in frontend/server that causes dataset to not be loaded for 2D Plots.
 
-create test case for type autodetect
+
 
 Upgrade Mallet/find source code that we changed.
 Make output more space efficient with Mallet.
@@ -20,8 +31,10 @@ Make output more space efficient with Mallet.
 
 
 Discussion:
-Allow metadata descriptions.
-Remove metadata types altogether and just use string, but verify types before database insertion?
-Database: Change document database model to require readable name.
-Feature: Show *document* readable name and metadata on website.
+Allow metadata key descriptions.
+Remove metadata types altogether and just use a string, but verify types before database insertion?
+    Then use Javascript to reconvert those types at user time.
+Database: Change Document database model to require readable name.
+Feature: Show *Document* readable name and metadata on website in nice human readable format.
 How to properly import subdocuments (is it as simple as treating each paragraph as a document?)
+    There seems to be a concept that I'm missing.

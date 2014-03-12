@@ -12,6 +12,7 @@ from import_tool.dataset_classes.generic_dataset \
 
 # Example usage:
 # ./topicalguide.py import raw-data/agency_conference_talks/
+# ./topicalguide.py import raw-data/agency_conference_talks/ -d raw-data/agency_conference_talks/database_config.txt
 
 # For help:
 # ./topicalguide.py -h
@@ -35,6 +36,31 @@ def verify_generic_dataset_path(dataset_dir):
         print('The "documents" directory must exist.')
         exit(1)
 
+
+def get_database_configurations(file_path):
+    '''\
+    Gets the database configurations, an error is thrown if the \
+    file cannot be read or is not found.
+    If the contents don't make sense an empty dictionary is returned.
+    For relative filenames, the folder they will be relative to is \
+    the working directory.
+    '''
+    database_config = {}
+    
+    key_names = ['ENGINE', 'NAME', 'HOST', 'OPTIONS', 'PASSWORD', 'PORT', 'USER']
+    with open(file_path, 'r') as f:
+        database_config = GenericTools.metadata_to_dict(f.read()) # read in the database configurations
+    for key in key_names:
+        if key.lower() in database_config: # make sure the key names are upper case
+            database_config[key] = database_config[key.lower()]
+            del database_config[key.lower()]
+    if 'NAME' in database_config and not os.path.isdir(database_config['NAME']):
+        if not os.path.isabs(database_config['NAME']): # create an absolute path if a relative one is specified
+            topical_guide_dir = os.path.abspath(os.path.dirname(__file__))
+            database_config['NAME'] = os.path.join(topical_guide_dir, 'working', database_config['NAME'])
+    
+    return database_config
+        
 
 def exec_check_dataset(args):
     '''\
@@ -101,11 +127,17 @@ def exec_import_generic_dataset(args):
     dataset_object.set_has_subdocuments(args.subdocuments)
     if args.identifier:
         dataset_object.set_identifier(args.identifier)
+    
     analysis_settings = AnalysisSettings()
+    
     working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'working'))
     database_file = os.path.join(working_dir, dataset_object.get_identifier() + '.sqlite3')
-    #database_info = {'ENGINE': 'django.db.backends.sqlite3', 'NAME': database_file}
-    import_dataset.import_dataset(dataset_object, analysis_settings)#, database_info)
+    
+    database_info = None
+    if args.database_config:
+        database_info = get_database_configurations(args.database_config)
+    
+    import_dataset.import_dataset(dataset_object, analysis_settings, database_info)
 
 
 
@@ -118,19 +150,21 @@ if __name__ == '__main__':
     # import command
     import_parser = subparsers.add_parser('import', help='Import a dataset using a built-in class.')
     import_parser.add_argument('dataset', type=str,
-                               help='Imports the dataset from the given folder.')
+                               help='Imports the dataset from the given directory.')
+    import_parser.add_argument('-d', '--database-config', type=str,
+                               help='Uses the database configurations from the given file.')
     import_parser.add_argument('--identifier', type=str, action='store', default=None, 
                                help='A unique name to import the dataset under (e.g. state_of_the_union.)')
     import_parser.add_argument('-r', '--recursive', action='store_true',
-                               help='Recursively look for documents in the given dataset folder.')
+                               help='Recursively look for documents in the given dataset directory.')
     import_parser.add_argument('-s', '--subdocuments', action='store_true',
                                help='Breaks a document into subdocuments to create better topics.')
     import_parser.set_defaults(which='import')
     
     # link command
-    link_parser = subparsers.add_parser('link', help='Takes a path to a database containing an imported dataset.')
-    link_parser.add_argument('database', type=str,
-                               help='Links the database to the Topical Guide server.')
+    link_parser = subparsers.add_parser('link', help='Links the database to the Topical Guide server.')
+    link_parser.add_argument('database-config', type=str,
+                               help='Takes a path to a config file specifying where the database is that contains an imported dataset.')
     link_parser.set_defaults(which='link')
     
     # check command

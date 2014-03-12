@@ -30,11 +30,11 @@ from topic_modeling.visualize.models import TopicMetricValue
 
 metric_name = 'Number of types'
 # @transaction.commit_manually
-def add_metric(dataset, analysis, force_import=False, *args, **kwargs):
+def add_metric(database_id, dataset, analysis, force_import=False, *args, **kwargs):
     # try:
-        analysis = Analysis.objects.get(dataset__name=dataset, name=analysis)
+        analysis = Analysis.objects.using(database_id).get(dataset__name=dataset, name=analysis)
         try:
-            metric = TopicMetric.objects.get(name=metric_name,
+            metric = TopicMetric.objects.using(database_id).get(name=metric_name,
                     analysis=analysis)
             if not force_import:
                 raise RuntimeError('Number of types is already in the database '

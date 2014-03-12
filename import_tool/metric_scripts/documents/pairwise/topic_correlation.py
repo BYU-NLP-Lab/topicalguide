@@ -43,15 +43,15 @@ logger = logging.getLogger('root')
 metric_name = "Topic Correlation"
 
 # @transaction.commit_manually
-def add_metric(dataset, analysis):
+def add_metric(database_id, dataset, analysis):
     print 'begginning metric'
     sys.stdout.flush()
     logger.info('beginning metric: document > pairwise > topic correlation')
     try:
-        dataset = Dataset.objects.get(name=dataset)
-        analysis = Analysis.objects.get(dataset=dataset, name=analysis)
-        metric,created = PairwiseDocumentMetric.objects.get_or_create(name=metric_name, analysis=analysis)
-        if not created and PairwiseDocumentMetricValue.objects.filter(metric=metric).count():
+        dataset = Dataset.objects.using(database_id).get(name=dataset)
+        analysis = Analysis.objects.using(database_id).get(dataset=dataset, name=analysis)
+        metric,created = PairwiseDocumentMetric.objects.using(database_id).get_or_create(name=metric_name, analysis=analysis)
+        if not created and PairwiseDocumentMetricValue.objects.using(database_id).filter(metric=metric).count():
             raise RuntimeError("%s is already in the database for this"
                     " analysis" % metric_name)
         

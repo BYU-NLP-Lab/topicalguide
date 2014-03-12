@@ -23,15 +23,15 @@
 from topic_modeling.visualize.models import DatasetMetric, DatasetMetricValue,\
     WordType, WordToken
 
-def add_metric(dataset):
-    token_metric, _ = DatasetMetric.objects.get_or_create(name="Token Count")
-    type_metric, _ = DatasetMetric.objects.get_or_create(name="Type Count")
+def add_metric(database_id, dataset):
+    token_metric, _ = DatasetMetric.objects.using(database_id).get_or_create(name="Token Count")
+    type_metric, _ = DatasetMetric.objects.using(database_id).get_or_create(name="Type Count")
     
-    token_count = WordToken.objects.filter(document__dataset=dataset).distinct().count()
-    type_count = WordType.objects.filter(tokens__document__dataset=dataset).distinct().count()
+    token_count = WordToken.objects.using(database_id).filter(document__dataset=dataset).distinct().count()
+    type_count = WordType.objects.using(database_id).filter(tokens__document__dataset=dataset).distinct().count()
 
-    DatasetMetricValue.objects.create(metric=token_metric, dataset=dataset, value=token_count)
-    DatasetMetricValue.objects.create(metric=type_metric, dataset=dataset, value=type_count)
+    DatasetMetricValue.objects.using(database_id).create(metric=token_metric, dataset=dataset, value=token_count)
+    DatasetMetricValue.objects.using(database_id).create(metric=type_metric, dataset=dataset, value=type_count)
 
 def metric_names_generated(_dataset):
     return ["Token Count", "Type Count"]
