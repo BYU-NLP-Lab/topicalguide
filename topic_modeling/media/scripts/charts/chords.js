@@ -206,7 +206,7 @@ var ChordViewer = MainView.add({
       .enter().append("svg:path")
         .attr("class", "chord")
         .style("fill", function(d) {return fill(d.source.value);})
-        .attr("d", this.path); 
+        .attr("d", this.path);
         /*.append('svg:title')
         .text(function(d) { return topics[d.source.index].names[0] + ' :: ' +
                                    topics[d.target.index].names[0] + ' :: ' +

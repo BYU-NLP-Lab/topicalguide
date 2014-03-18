@@ -1,3 +1,105 @@
+/** Aggregation Utilities  **/
+var AggregationUtils = {
+
+    aggregateByAuthor: function(filteredData) {
+    var docData = filteredData;
+
+    //console.log("we entered aggregateByAuthor");
+
+    var authorData = Array();
+    var docsBySameAuthor = Array();
+    var authorCtrIndex = 0;
+
+
+    //we iterate through every document
+    for (var index=0; index < docData.length; index++) {
+      var doc = docData[index];
+      var author = doc.fields.author_name;
+
+      //if we have already encountered an author, then we don't need to do anything with that document (it has already been taken care of)
+      if(!this.alreadySeenAuthor(author, authorData)){
+
+        docsBySameAuthor = Array();
+
+        //we reiterate through all the documents and grab the docs that have the same author
+        //("dupeFinder = index" instead of "= 0" is a minor improvement since we know that any authors behind index have already been taken care of )
+        for(var dupeFinder=index; dupeFinder < docData.length; dupeFinder++) {
+          if(author == docData[dupeFinder].fields.author_name) {
+            docsBySameAuthor.push(docData[dupeFinder]);
+          }
+        }
+
+        //take all docs with the same author, and consolidate them with whatever algorithm is decided upon
+        authorData.push(this.consolidateDocsByAuthor(docsBySameAuthor, authorCtrIndex));
+        authorCtrIndex++;
+
+      }
+    }
+
+    return authorData;
+  },
+
+
+  //TODO: discuss with TopicalGuide team how this should actually be done. Right now we are just averaging everything
+  //      and putting the first document's year in as the year. (year probably shouldn't be a field in an author aggregation)
+  //One idea we had was to have the user choose which fields and options he wants, and then use those.
+  consolidateDocsByAuthor: function(docsBySameAuthor, authorCtrIndex) {
+
+    var authorObj = {'included':true, 'id':authorCtrIndex, 'name':docsBySameAuthor[0].fields.author_name, 'fields':{'year':docsBySameAuthor[0].fields.year}};
+
+    var tempConsolidation = {'Number of tokens': 0, 'Number of types': 0, 'Topic Entropy': 0, 'fields':
+                                                                                                  {'year':docsBySameAuthor[0].fields.year,
+                                                                                                  'author_name': docsBySameAuthor[0].fields.author_name}};
+    //initialize the each topicID field to zero.
+    for(var k=1; k <=100; k++) {
+        tempConsolidation.fields[k] = 0;
+    }
+
+    //for each document, sum up the different fields
+    for(var i=0; i < docsBySameAuthor.length; i++) {
+      var doc = docsBySameAuthor[i];
+      tempConsolidation['Number of tokens'] += doc.fields['Number of tokens'];
+      tempConsolidation['Number of types'] += doc.fields['Number of types'];
+      tempConsolidation['Topic Entropy'] += doc.fields['Topic Entropy'];
+      //each document has may or may not have the keys 1 - 100 which are the topicIds.  If the document had a 0 for a particular topic, then
+      // that topicId isn't actually included as on of the keys on the document. Thus we have the ternary operator to check for that.
+      for(var k=1; k <=100; k++) {
+        tempConsolidation.fields[k] += (doc.fields[k] ? doc.fields[k] : 0);
+      }
+    }
+
+    //here I check and see if any topic is still at 0, then delete it from the array (for consistency with how it was before I got here)
+    //if it actually has a value, then get the average.
+    for(var k=1; k <=100; k++) {
+      if(tempConsolidation.fields[k] === 0) {
+        delete tempConsolidation.fields[k];
+      } else {
+        tempConsolidation.fields[k] /= docsBySameAuthor.length;
+      }
+    }
+
+    //set up the authorObj with all the fields it needs, and then averaging the numbers.
+    authorObj.fields = tempConsolidation.fields;
+    authorObj.fields['Number of tokens'] = tempConsolidation['Number of tokens'] / docsBySameAuthor.length;
+    authorObj.fields['Number of types'] = tempConsolidation['Number of types'] / docsBySameAuthor.length;
+    authorObj.fields['Topic Entropy'] = tempConsolidation['Topic Entropy'] / docsBySameAuthor.length;
+
+    //console.log(JSON.stringify(authorObj));
+
+    return authorObj;
+  },
+
+  alreadySeenAuthor: function(author, authorData) {
+      for(var index in authorData) {
+          if(author == authorData[index].fields.author_name) {
+            return true;
+          }
+      }
+      return false;
+  }
+
+};
+
 
 /** The Controls **/
 var PlotControls = Backbone.View.extend({
@@ -23,7 +125,7 @@ var PlotControls = Backbone.View.extend({
 
     this.hiddenSvgForm = $('<form id="svg_export_form" method="POST" style="display:none;visibility:hidden">' +
                            ' <input type="hidden" name="svg" /> </form>').appendTo($('#controls-plot-documents'));
-                          
+
     //We will save this for another milestone
     /*
       this.filterButton = $("<button style='display:block'>Filter</button>").appendTo($('#controls-plot-documents'));
@@ -42,6 +144,10 @@ var PlotControls = Backbone.View.extend({
       this.aggregateButton.html('De-aggregate');
       this.parent.currentlyAggregated = true;
     }
+
+    //TODO: call the setUpControls function.  This function below doesn't work exactly as we want it to. It doesn't change the plot controls like it needs to.
+    //this.setUpControls(['Number of topics', 'Number of types','Topic Entropy'], ['Number of tokens'], localStorage.topics, this.parent);
+
   },
 
   //note that this does not get any css for the svg.  It must all be put inline
@@ -75,9 +181,10 @@ var PlotControls = Backbone.View.extend({
     }
     this.parent.removingDocs = !this.parent.removingDocs;
   },
-  
+
   setUpControls: function(cont_options, nom_options, topics, viewer) {
-    if(!this.setUp) {
+
+    if(!this.setup) {
       this.setUpControl(this.xcontrol, 'X Axis', cont_options, topics, viewer);
       this.setUpControl(this.ycontrol, 'Y Axis', cont_options, topics, viewer);
       this.setUpControl(this.rcontrol, 'Radius', cont_options, topics, viewer);
@@ -91,11 +198,12 @@ var PlotControls = Backbone.View.extend({
   },
 
   setUpControl: function(control, title, options, topics, viewer) {
+
     control.append('<h4>' + title + '</h4>');
     var select = '<select name="' + title + '">';
 
     if(title == 'Radius' || options.length === 0) {
-      select += '<option value="uniform">Uniform</option>'; 
+      select += '<option value="uniform">Uniform</option>';
     }
 
     for(var k = 0; k < options.length; k++) {
@@ -148,7 +256,7 @@ var PlotInfo = InfoView.extend({
   show: function () {
       //this.$el.show();
   },
-  
+
   hide: function () { this.$el.hide(); },
 
   //this creates three separate tables instead of just one
@@ -240,7 +348,7 @@ var PlotInfo = InfoView.extend({
 });
 
 /*****************************************************
- * Data: [currently loaded, 
+ * Data: [currently loaded,
 
 /** The main visualization class
  *
@@ -250,15 +358,23 @@ var PlotInfo = InfoView.extend({
  *             effected by the zoom object.
  *   zoom:     a zoom object for resizing your visualization
  *   options:  a dictionary of the {dict} passed in at initialization,
- *             extending the "defaults" dict *   info:     the info object *   menu:     the menu object *   controls: the controls object * * **/ var PlotViewer = MainView.add(VisualizationView, { name: 'plot-documents', title: '2D Plots', menu_class: PlotMenu, info_class: PlotInfo, controls_class: PlotControls, /** any defaults that you want. In the class, this.options will be populated * with these defaults + an options dictionary passed in when the object is
-  * initialized **/
+ *             extending the "defaults" dict
+ *   info:     the info object
+ *   menu:     the menu object
+ *   controls: the controls object
+ *
+ *
+ **/
+ var PlotViewer = MainView.add(VisualizationView, { name: 'plot-documents', title: '2D Plots', menu_class: PlotMenu, info_class: PlotInfo, controls_class: PlotControls,
+ /** any defaults that you want. In the class, this.options will be populated * with these defaults + an options dictionary passed in when the object is initialized **/
+
   setUpProperties: function () {
     this.lastAxes = null;
     this.removingDocs = false;
     this.currentlyAggregated = false;
     this.width = this.base_defaults.width;
     this.height = this.base_defaults.height;
-    this.margins = {left : (this.width / 12), // for y tick labels 
+    this.margins = {left : (this.width / 12), // for y tick labels
                     bottom : (this.height / 10), // for x axis tick labels, and x/r axis labels
                     top : (this.height / 18), // for y axis label and doc count
                     right : (this.width / 30)}; // so circles centers don't land on the border
@@ -268,7 +384,7 @@ var PlotInfo = InfoView.extend({
     this.yRange = d3.scale.linear().range([this.height - this.margins.bottom, this.margins.top]);
     this.rMax =  Math.round(this.width / 47);
     this.rMin =  Math.round((this.rMax / 3));
-    this.rUniform = this.rMin + Math.round(0.3 * (this.rMax - this.rMin));
+    this.rUniform = this.rMin + Math.round(0.175 * (this.rMax - this.rMin));
     this.rRange = d3.scale.linear().range([this.rMin, this.rMax]); // radius range function - ensures the radius is a certain range
     this.data = null;
     this.topLabelSpacing = Math.round(this.height / 32);
@@ -353,14 +469,14 @@ var PlotInfo = InfoView.extend({
     // add in the x axis
     this.maing.append("svg:g")
       .attr("class", "x axis")
-      .attr("transform", "translate(0," + (this.height - this.xAxisMargin) + ")") 
+      .attr("transform", "translate(0," + (this.height - this.xAxisMargin) + ")")
       .call(this.xAxis);
 
     // add in the y axis
     this.maing.append("svg:g")
       .attr("class", "y axis")
       .call(this.yAxis);
-    
+
     //these are for svg saving to include the css inline
     $('.axis path').attr("opacity", 0);
     $('.axis text').attr("fill", "#000000");
@@ -419,7 +535,7 @@ var PlotInfo = InfoView.extend({
 
     for(var k = 0; k < axes.length; k++) {
       var axis = axes[k];
-      if(lastAxes[axis] != newAxes[axis] && 
+      if(lastAxes[axis] != newAxes[axis] &&
         ($.isNumeric(lastAxes[axis]) || $.isNumeric(newAxes[axis])) )
           return true;
     }
@@ -428,7 +544,7 @@ var PlotInfo = InfoView.extend({
 
   shouldUpdate: function(newAxes) {
     var lastAxes = this.lastAxes;
-    return lastAxes && 
+    return lastAxes &&
            lastAxes.xAxis == newAxes.xAxis && lastAxes.yAxis == newAxes.yAxis &&
            lastAxes.rAxis == newAxes.rAxis && lastAxes.cAxis == newAxes.cAxis;
   },
@@ -440,7 +556,7 @@ var PlotInfo = InfoView.extend({
     }
     //console.log("update()");
     var filteredData = this.filterData(this.data, axes, override);
-    this.drawingData = aggregateAuthor ? this.aggregateByAuthor(filteredData) : filteredData;
+    this.drawingData = aggregateAuthor ? AggregationUtils.aggregateByAuthor(filteredData) : filteredData;
     this.lastAxes = axes;
 
     var documents = this.svg.selectAll("circle").data(this.drawingData, function (doc) { return doc.id;});
@@ -452,80 +568,12 @@ var PlotInfo = InfoView.extend({
     this.setDocExit(documents);
   },
 
-  aggregateByAuthor: function(filteredData) {
-    var docData = filteredData;
-
-    //console.log("we are about to aggregateByAuthor");
-
-    var authorData = Array();
-    var docsBySameAuthor = Array();
-    var authorCtrIndex = 0;
-
-
-    for (var index=0; index < docData.length; index++) {
-      var doc = docData[index];
-      var author = doc.fields.author_name;
-
-      if(!this.alreadySeenAuthor(author, authorData)){
-
-        docsBySameAuthor = Array();
-        
-        for(var dupeFinder=index; dupeFinder < docData.length; dupeFinder++) {
-          if(author == docData[dupeFinder].fields.author_name) {
-            docsBySameAuthor.push(docData[dupeFinder]);
-          }
-        }
-
-        authorData.push(this.consolidateDocsByAuthor(docsBySameAuthor, authorCtrIndex));
-        authorCtrIndex++;
-
-      }
-
-    }
-    
-    return authorData;
-  },
-
-  //TODO: discuss with TG team how this should actually be done
-  consolidateDocsByAuthor: function(docsBySameAuthor, authorCtrIndex) {
-
-    var authorObj = {'name':docsBySameAuthor[0].fields.author_name, 'fields':{'year':docsBySameAuthor[0].fields.year, 
-                                                                              'author_name': docsBySameAuthor[0].fields.author_name}};
-
-    authorObj.included = true;
-    authorObj.id = authorCtrIndex;
-    var tempConsolidation = {'Number of tokens': 0, 'Number of types': 0, 'Topic Entropy': 0};
-    for(var i=0; i < docsBySameAuthor.length; i++) {
-      var doc = docsBySameAuthor[i];
-      tempConsolidation['Number of tokens'] += doc.fields['Number of tokens'];
-      tempConsolidation['Number of types'] += doc.fields['Number of types'];
-      tempConsolidation['Topic Entropy'] += doc.fields['Topic Entropy'];
-    }
-
-    authorObj.fields['Number of tokens'] = tempConsolidation['Number of tokens'] / docsBySameAuthor.length;
-    authorObj.fields['Number of types'] = tempConsolidation['Number of types'] / docsBySameAuthor.length;
-    authorObj.fields['Topic Entropy'] = tempConsolidation['Topic Entropy'] / docsBySameAuthor.length;
-
-    //console.log(JSON.stringify(authorObj));
-
-    return authorObj;
-  },
-
-  alreadySeenAuthor: function(author, authorData) {
-      for(var index in authorData) {
-          if(author == authorData[index].fields.author_name) {
-            return true;
-          }
-      }
-      return false;
-  },
-
   setDocEnter: function(documents, axes) {
     var xRange = this.xRange,
     yRange = this.yRange,
     rRange = this.rRange,
     info = this.info,
-    colors = this.colors, 
+    colors = this.colors,
     nomMaps = this.nomMaps,
     tooltip = this.tooltip,
     viewRef = this;
@@ -575,10 +623,16 @@ var PlotInfo = InfoView.extend({
     rRange = this.rRange,
     rUniform = this.rUniform;
 
+
     //transiting is not working in firefox now... but it still works in chrome...
     documents.transition().duration(1500).ease("exp-in-out")
       .style("opacity", 1)
-      .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
+      .style("fill", function(doc) {
+
+        if(nomMaps[axes.cAxis] === undefined) {
+          return colors[0];
+        }
+        return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
       .attr("r", function(doc) { return (axes.rAxis == 'uniform') ? rUniform :rRange(doc.fields[axes.rAxis]); })
       .attr("cx", function (doc) { return xRange(doc.fields[axes.xAxis]); })
       .attr("cy", function (doc) { return yRange(doc.fields[axes.yAxis]); });
@@ -668,7 +722,10 @@ var PlotInfo = InfoView.extend({
       ]
     });
     this.filterDialog.dialog("open");
-  },
+  draw},
+
+
+
 
   /** populate everything! data is the JSON response from your url(). For
    * information on the return values of specific urls, look at the docs for
@@ -681,9 +738,10 @@ var PlotInfo = InfoView.extend({
     //console.log(server_data);
     var documents = server_data.documents;
 
-    this.metrics = server_data.metrics;
-    this.metadata = server_data.metadata;
-    this.topics = server_data.topics;
+    this.metrics = data_metrics = server_data.metrics;
+    this.metadata = data_metadata = server_data.metadata;
+    this.topics = data_topics = server_data.topics;
+
     var cont_fields = Array();
     var nom_fields = Array();
     cont_fields = cont_fields.concat(this.metrics);
@@ -693,7 +751,7 @@ var PlotInfo = InfoView.extend({
       else
         nom_fields.push(field);
     }
-
+    thisViewer = this;
     this.controls.setUpControls(cont_fields, nom_fields, this.topics, this);
 
     this.data = [];
@@ -703,6 +761,7 @@ var PlotInfo = InfoView.extend({
       var doc = documents[docid];
       doc.included = true;
       this.data.push(doc);
+      //TODO: WE SHOULD PROBABLY CHECK HERE AND IF IT IS OVER THE LIMIT, WE CAN HAVE THEM AGGREGATE FIRST THING.
       if (k > docLimit)
         break;
       k++;
@@ -732,7 +791,7 @@ var PlotInfo = InfoView.extend({
     }
   },
 
-  //returns the Top topics of a document 
+  //returns the Top topics of a document
   getTopTopics: function(doc) {
     var topics = Array();
     for(var index in doc.fields) {
@@ -765,7 +824,7 @@ var PlotInfo = InfoView.extend({
     var c = $("option:selected", this.controls.ccontrol).val();
     return { xAxis: x, yAxis: y, rAxis: r, cAxis: c };
   },
-    
+
   includeAllDocuments: function() {
     for(doc_id in this.data)
     {
