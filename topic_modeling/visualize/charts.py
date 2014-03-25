@@ -448,7 +448,7 @@ class NumericAttributeDistributionPlotForm(forms.Form):
         self.fields['attribute'] = forms.ModelMultipleChoiceField(attributes,
                 initial=[attributes[0]])
 
-        # A bunch of options to control what gets renered and how
+        # A bunch of options to control what gets rendered and how
         self.fields['by_frequency'] = forms.BooleanField(required=False)
         self.fields['histogram'] = forms.BooleanField(required=False, initial=True)
         self.fields['normalized'] = forms.BooleanField(required=False, initial=True)

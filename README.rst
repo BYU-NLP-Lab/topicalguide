@@ -38,42 +38,29 @@ etc.); they're listed in the `requirements.txt` file.
 .. include:: requirements.txt
    :literal:
 
-3. Configure local settings
----------------------------
-
-Copy `import_tool/local_settings.py.sample` to
-`import_tool/local_settings.py` and make any changes you want. The defaults
-should be reasonable::
-
-    cp import_tool/local_settings.py.sample import_tool/local_settings.py
-
-4. Generate the SECRET_KEY
+3. Generate the SECRET_KEY
 --------------------------
 
 Go to this website to generate your SECRET_KEY 
 http://www.miniwebtool.com/django-secret-key-generator/
 
 Navigate to topicalguide/topic_modeling/settings.py.  
-Insert your generated SECRET_KEY where is says 
+Insert your generated SECRET_KEY where is says
+
 	SECRET_KEY=''
 
 Be sure not to commit/push your settings.py file with your SECRET_KEY in it.
 
-5. Create the Database
-----------------------
-
-Run::
-
-   python topic_modeling/manage.py syncdb
-
-6. Import a dataset
+4. Import a dataset
 -------------------
 
-In local settings you can configure what dataset to import (default is the
-'state of the union addresses'), and then run `./run_import.py` to run the
-import.
+Run `./topicalguide.py import raw-data/state_of_the_union` to run the default import.
+Run `./topicalguide.py -h` for more options.
+Alternatively you can create your own custom import by inheriting from the `AbstractDataset` 
+class in the `import_tool/dataset_classes/abstract_dataset.py` and use the methods available in 
+`import_tool/import_utilities.py` to import a dataset, run analyses, or run metrics.
 
-7. Done!
+5. Done!
 --------
 
 Start up the web server with the following command::

@@ -18,42 +18,25 @@ from import_tool.dataset_classes.generic_dataset \
 # ./topicalguide.py -h
 
 
-def verify_generic_dataset_path(dataset_dir):
-    '''\
-    Verifies that the needed files are present.
-    '''
-    if not os.path.isdir(dataset_dir):
-        print('Invalid dataset directory.')
-        exit(1)
-    
-    meta_path = os.path.join(dataset_dir, 'dataset_metadata.txt')
-    if not (os.path.exists(meta_path) and os.path.isfile(meta_path)):
-        print('The "dataset_metadata.txt" file must exist.')
-        exit(1)
-    
-    documents_dir = os.path.join(dataset_dir, 'documents')
-    if not (os.path.exists(documents_dir) and os.path.isdir(documents_dir)):
-        print('The "documents" directory must exist.')
-        exit(1)
-
-
 def get_database_configurations(file_path):
-    '''\
-    Gets the database configurations, an error is thrown if the \
+    """
+    Get the database configurations, an error is thrown if the \
     file cannot be read or is not found.
-    If the contents don't make sense an empty dictionary is returned.
+    If the contents don't make sense return an empty dictionary.
     For relative filenames, the folder they will be relative to is \
     the working directory.
-    '''
+    """
     database_config = {}
     
     key_names = ['ENGINE', 'NAME', 'HOST', 'OPTIONS', 'PASSWORD', 'PORT', 'USER']
     with open(file_path, 'r') as f:
         database_config = GenericTools.metadata_to_dict(f.read()) # read in the database configurations
+    # make sure the key names are upper case
     for key in key_names:
-        if key.lower() in database_config: # make sure the key names are upper case
+        if key.lower() in database_config:
             database_config[key] = database_config[key.lower()]
             del database_config[key.lower()]
+    # make sure that the relative path is relative to the working directory
     if 'NAME' in database_config and not os.path.isdir(database_config['NAME']):
         if not os.path.isabs(database_config['NAME']): # create an absolute path if a relative one is specified
             topical_guide_dir = os.path.abspath(os.path.dirname(__file__))
@@ -63,14 +46,10 @@ def get_database_configurations(file_path):
         
 
 def exec_check_dataset(args):
-    '''\
-    Checks the dataset for blank documents and tells you what metadata types you have.
-    '''
-    dataset_dir = args.dataset
-    verify_generic_dataset_path(dataset_dir)
-    
-    
-    dataset = GenericDataset(dataset_dir)
+    """
+    Check the dataset for blank documents and tell you what metadata types you have.
+    """
+    dataset = GenericDataset(args.dataset)
     
     blank_documents = []
     blank_metadata = []
@@ -115,30 +94,63 @@ def exec_check_dataset(args):
         print()
 
 def exec_import_generic_dataset(args):
-    '''\
-    Performs basic checks and creates necessary objects in preparation to import.
-    '''
-    verify_generic_dataset_path(args.dataset)
+    """\
+    Perform basic checks and create necessary objects in preparation to import.
+    Import dataset.
+    Return nothing.
+    """
+    from import_tool import import_utilities
     
-    from import_tool import import_dataset
-    
+    # create GenericDataset object and set settings
     dataset_object = GenericDataset(args.dataset)
     dataset_object.set_is_recursive(args.recursive)
     dataset_object.set_has_subdocuments(args.subdocuments)
     if args.identifier:
         dataset_object.set_identifier(args.identifier)
     
+    # create analysis settings
     analysis_settings = AnalysisSettings()
+    if args.number_of_topics:
+        if args.number_of_topics > 0:
+            analysis_settings.set_number_of_topics(args.number_of_topics)
+        else:
+            raise Exception('Number of topics is non-positive.')
     
-    working_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'working'))
-    database_file = os.path.join(working_dir, dataset_object.get_identifier() + '.sqlite3')
-    
+    # get database configurations
     database_info = None
     if args.database_config:
         database_info = get_database_configurations(args.database_config)
     
-    import_dataset.import_dataset(dataset_object, analysis_settings, database_info)
+    # make sure that the default database exists
+    import_utilities.run_syncdb(None)
+    # make sure the tables exist in the database and get an identifier
+    database_id = import_utilities.run_syncdb(database_info)
+    
+    # get common directories
+    directories = import_utilities.get_common_working_directories(dataset_object.get_identifier())
+    
+    # start the import process
+    import_utilities.import_dataset(database_id, dataset_object, 
+                                    directories['dataset'], 
+                                    directories['documents'])
+    
+    # link dataset to default database
+    import_utilities.link_dataset(database_id, dataset_object.get_identifier())
+    
+    # run an analysis
+    import_utilities.run_analysis(database_id, dataset_object, 
+                                  analysis_settings, 
+                                  directories['topical_guide'], 
+                                  directories['dataset'],
+                                  directories['documents'])
+    
+    # run metrics on an analysis
+    import_utilities.run_basic_metrics(database_id, dataset_object, analysis_settings)
 
+
+def exec_link(args):
+    """Link a dataset to the default database."""
+    pass
 
 
 if __name__ == '__main__':
@@ -151,14 +163,16 @@ if __name__ == '__main__':
     import_parser = subparsers.add_parser('import', help='Import a dataset using a built-in class.')
     import_parser.add_argument('dataset', type=str,
                                help='Imports the dataset from the given directory.')
-    import_parser.add_argument('-d', '--database-config', type=str,
+    import_parser.add_argument('-d', '--database-config', type=str, action='store', default=None, 
                                help='Uses the database configurations from the given file.')
-    import_parser.add_argument('--identifier', type=str, action='store', default=None, 
+    import_parser.add_argument('-i', '--identifier', type=str, action='store', default=None, 
                                help='A unique name to import the dataset under (e.g. state_of_the_union.)')
-    import_parser.add_argument('-r', '--recursive', action='store_true',
+    import_parser.add_argument('-r', '--recursive', action='store_true', default=False, 
                                help='Recursively look for documents in the given dataset directory.')
-    import_parser.add_argument('-s', '--subdocuments', action='store_true',
+    import_parser.add_argument('-s', '--subdocuments', action='store_true', default=False, 
                                help='Breaks a document into subdocuments to create better topics.')
+    import_parser.add_argument('-t', '--number-of-topics', type=int, action='store', default=None, 
+                               help='The number of topics that will be created.')
     import_parser.set_defaults(which='import')
     
     # link command
@@ -170,11 +184,11 @@ if __name__ == '__main__':
     # check command
     check_parser = subparsers.add_parser('check', help='A utility that helps check the integrity of documents and metadata raising red flags if inconsistencies are found among the metadata keys or if there are any blank documents.')
     check_parser.add_argument('dataset', type=str,
-                               help='''\
+                               help="""\
                                     The dataset to be checked for missing metadata, \
                                     missing content, and prints info about the metadata \
                                     types of the documents to aid in importing.
-                                    ''')
+                                    """)
     check_parser.set_defaults(which='check')
     
     args = parser.parse_args()
@@ -182,7 +196,7 @@ if __name__ == '__main__':
     if args.which == 'import':
         exec_import_generic_dataset(args)
     elif args.which == 'link':
-        print('Not yet implemented.')
+        exec_link(args)
     elif args.which == 'check':
         exec_check_dataset(args)
 

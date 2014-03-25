@@ -25,6 +25,7 @@
 import os
 import sys
 
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -65,11 +66,53 @@ DB_OPTIONS = {
 
 MANAGERS = ADMINS
 
+
 DATABASES = {
-    'default': DB_OPTIONS['sqlite3']
+    'default': DB_OPTIONS['sqlite3'],
 }
 
+DATASET_TO_DATABASE_MAPPING = {}
+
+def get_keys_to_compare(engine):
+    """
+    Returns the main keys required to determine if a database is identical.
+    """
+    keys_to_check = ['NAME']
+    if engine == 'django.db.backends.mysql' or \
+       engine == 'django.db.backends.postgresql_psycopg2' or \
+       engine == 'django.db.backends.oracle':
+        additional_keys = ['USER', 'PASSWORD', 'HOST', 'PORT']
+        keys_to_check.append(additional_keys)
+    return keys_to_check
+
+def is_database_config_equal(database_id, database_config):
+    """
+    Determine if the database configurations are identical (or close enough.)
+    """
+    if DATABASES[database_id]['ENGINE'] == database_config['ENGINE']:
+        keys_to_check = get_keys_to_compare(database_config['ENGINE'])
+        for k in keys_to_check:
+            if not (k in DATABASES[database_id] and \
+                    k in database_config and \
+                    DATABASES[database_id][k] == database_config[k]):
+                return False
+        return True
+            
+    return False
+
+def is_database_config_present(database_config):
+    """
+    Determine if the given configurations are already present in DATABASES.
+    Return None if they aren't present.
+    Return the key to the configurations if they are present.
+    """
+    for database_id in DATABASES:
+        if is_database_config_equal(database_id, database_config):
+            return database_id
+    return None
+
 def database_type(database_id='default'):
+    """Return the type of the database as a string, ex: 'sqlite3'."""
     engine = DATABASES[database_id]['ENGINE']
     if engine == 'django.db.backends.sqlite3':
         return 'sqlite3'
@@ -83,7 +126,7 @@ def database_type(database_id='default'):
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'America/Denver'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -133,6 +176,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'topic_modeling.profiling_middleware.ProfileMiddleware',
+    'topic_modeling.routers.DatabaseRouterMiddleware',
 )
 
 ROOT_URLCONF = 'topic_modeling.urls'
@@ -182,4 +226,7 @@ CACHES = {
         'LOCATION': 'unique-topicalguide'
     }
 }
+
+# Database router
+DATABASE_ROUTERS = ['topic_modeling.routers.DatabaseRouter']
 

@@ -5,18 +5,11 @@ require document readable name?
 
 
 TODO:
-Add ability to import to detached databases.
-Make database importing more efficient.
-Refactor code to conform to structure condisive to the next item below.
+Refactor code to conform to structure conducive to the next item below.
 
-Take a second look at the import system and determine if it could be broken down in different ways.
-    Some of these ways would be to allow the user to do multiple analysis imports on an already imported dataset.
-    Running different metrics, even on an as needed basis.
-    Why? This may make the Topical Guide more accessible, 
-    users can interact with the dataset running metrics/analysis/topic naming on an as needed basis.
-    Users should be able to remove a dataset, analysis, metrics, etc.
+Add ability to add dataset, remove dataset, add analysis, remove analysis, add metrics, link to database, create database tables.
 Update documentation.
-Create test case for type autodetect
+Create test case for type autodetect.
 Add ability for the server to link to an existing dataset in an existing database.
 
 Readup on pythonic documentation (pep-8) and update mine accordingly to prep for code review.
@@ -38,3 +31,14 @@ Database: Change Document database model to require readable name.
 Feature: Show *Document* readable name and metadata on website in nice human readable format.
 How to properly import subdocuments (is it as simple as treating each paragraph as a document?)
     There seems to be a concept that I'm missing.
+
+
+Goals:
+Optimize pairwise doc correlation. (at 3 min with state of the union)
+    
+Make join table more explicit to enable batch commits. (analysis import at 2:30 with state of union)
+    visualize_wordtoken_topics with wordtoken_id and topic_id
+Make sure all 3 of datasets can be imported, no problems with encodings.
+Make stopwords and regex removal available.
+
+

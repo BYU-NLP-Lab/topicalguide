@@ -543,10 +543,10 @@ var CircleViewer = MainView.add({
 		}
 		
 		if (!document.children) {
-			var link = "/feeds/words-in-document-given-topic/datasets/state_of_the_union";
-				link += "/analyses/" + "lda100topics";
-				link += "/documents/" + document.documentID;
-				link += "/topics/" + document.topicID;
+            var base_part = '/feeds/words-in-document-given-topic';
+            var dataset_analysis_part = location.pathname.split('/').slice(0, -1).join('/');
+            var doc_topics_part = '/documents/' + document.documentID + '/topics/' + document.topicID;
+            var link = base_part + dataset_analysis_part + doc_topics_part;
 			
 			d3.json(link, function (data) {
 				if (!data) return;

@@ -44,7 +44,6 @@ metric_name = "Topic Correlation"
 
 # @transaction.commit_manually
 def add_metric(database_id, dataset, analysis):
-    print 'begginning metric'
     sys.stdout.flush()
     logger.info('beginning metric: document > pairwise > topic correlation')
     try:
@@ -62,11 +61,11 @@ def add_metric(database_id, dataset, analysis):
         
         documents = list(dataset.documents.all())
         logger.info('Generating document topic vectors')
-        print 'gen t vectors'
+        #~ print 'gen t vectors'
         sys.stdout.flush()
         num_docs = len(documents)
 
-        timer = TimeLongThing(num_docs, 1, .05)
+        timer = TimeLongThing(num_docs, 0, 0)
         doctopicvectors = []
         for doc in documents:
             timer.inc() 
@@ -77,14 +76,15 @@ def add_metric(database_id, dataset, analysis):
         logger.info('Comparing the vectors')
         print 'compare vectors'
         sys.stdout.flush()
-        timer = TimeLongThing(len(documents)**2, 5, 100)
+        timer = TimeLongThing(len(documents)**2, 0, 0)
         for i, doc1 in enumerate(documents):
     #        print >> sys.stderr, 'Working on document', i, 'out of', num_docs
     #        print >> sys.stderr, 'Time for last document:', datetime.now() - start
     #        start = datetime.now()
-            logger.info('Working on document %d out of %d' % (i, num_docs))
+            #~ logger.info('Working on document %d out of %d' % (i, num_docs))
             doc1_topic_vals = doctopicvectors[i]
             doc1_norm = vectornorms[i]
+            metric_values = []
             for j, doc2 in enumerate(documents):
                 timer.inc()
                 sys.stderr.flush()
@@ -95,9 +95,12 @@ def add_metric(database_id, dataset, analysis):
                 if not isnan(correlation_coeff):
                     mv = PairwiseDocumentMetricValue(document1=doc1, 
                         document2=doc2, metric=metric, value=correlation_coeff)
-                    mv.save()
+                    #~ mv.save()
+                    metric_values.append(mv)
                 else:
                     pass
+            # bulk create Pairwise Document Metric Values
+            PairwiseDocumentMetricValue.objects.using(database_id).bulk_create(metric_values)
             # transaction.commit()
         write('\n')
     except:
@@ -118,8 +121,11 @@ def pmcc(doc1_topic_vals, doc2_topic_vals, doc1_norm, doc2_norm):
 
 def document_topic_vector(document, topic_idx):
     document_topic_vals = zeros(len(topic_idx))
+    doc_query = document.tokens
+    doc_query.count()
+    doc_query.select_related('topics')
     for topic in topic_idx:
-        doctopic_count = document.tokens.filter(topics=topic).count()
+        doctopic_count = doc_query.filter(topics=topic).count()
         document_topic_vals[topic_idx[topic]] = doctopic_count
 #    for doctopic in document.documenttopic_set.all():
 #        if doctopic.topic_id not in topic_idx:

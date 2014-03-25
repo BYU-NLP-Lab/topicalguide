@@ -8,8 +8,7 @@ import os
 import codecs
 import subprocess
 
-# TODO figure out if this method/step is needed
-# see comments in run_mallet() for details
+
 def prepare_mallet_input(dataset_dir, document_dir):
     '''\
     Combines every document into one large text file for processing with mallet.
@@ -30,23 +29,19 @@ def prepare_mallet_input(dataset_dir, document_dir):
                 mallet_path = '{0}/{1}'.format(partial_root, f)
             else:
                 mallet_path = f
-            text = open(path).read().decode('utf-8').strip().replace('\n',' ').replace('\r',' ')
+            text = unicode(codecs.open(path).read(), errors='ignore').strip().replace(u'\n', u' ').replace(u'\r', u' ')
             w.write(u'{0} all {1}'.format(mallet_path, text))
             w.write(u'\n')
         if not count:
             raise Exception('No files processed')
+    w.close()
 
 def run_mallet(analysis_settings, dataset_dir, document_dir, topical_guide_dir):
     '''\
     Runs mallet; mallet performs word counts and other basic statistics.
     '''
     c = analysis_settings.get_mallet_configurations(topical_guide_dir, dataset_dir)
-
     
-        
-    #TODO why is import-dir being used?
-    #this means compiling data to single file is unnecessary
-    #since mallet will pull data from each of the files in the specified directory
     print('  Running "mallet import-file..."')
     if not os.path.exists(c['mallet_imported_data']):
         cmd = [c['mallet'], 'import-file', 
@@ -54,8 +49,6 @@ def run_mallet(analysis_settings, dataset_dir, document_dir, topical_guide_dir):
                '--output', c['mallet_imported_data'], 
                '--keep-sequence', 
                '--set-source-by-name',
-               # TODO do we need this? I don't think so
-               #'--source-name-prefix', '"file:%s/%s/"'%(os.getcwd(), document_dir),
                '--remove-stopwords']
         #TODO add methods to get any specified settings for the below options
         #~ if 'extra_stopwords_file' in c:

@@ -26,13 +26,28 @@ import time
 from datetime import datetime
 
 from django.db import models
+from django.db.models.aggregates import Count
 
 from topic_modeling.anyjson import deserialize
-from django.db.models.aggregates import Count
+
+
+
+##############################################################################
+# Table to track external datasets.
+##############################################################################
+
+class ExternalDataset(models.Model):
+    """Tracks external datasets by storing a json string representing the database settings."""
+    name = models.SlugField(unique=True)
+    database_settings = models.TextField()
+    # Used by the database router to correctly route the table creation and usage correctly
+    _MODEL_NAME = 'ExternalDataset'
+    
 
 ##############################################################################
 # Tables just to hold information about data and documents
 ##############################################################################
+
 
 # Basic things in the database
 ##############################
@@ -237,6 +252,9 @@ class WordToken(models.Model):
     def __unicode__(self):
         return '[%s,%s]' % (self.type.type, self.token_index)
 
+
+
+
 '''We want to go through the WordTokenTopis table for the foreignkey, to
 optimize queries in the attributes tab'''
 ## Links between the basic things in the database
@@ -337,6 +355,11 @@ class Topic(models.Model):
             topicdocs = topicdocs.order_by('-count')
         return topicdocs
 
+# This class is a way to explicitly access a many-to-many table to optimize adding to a database
+class WordToken_Topics(models.Model):
+    id = models.IntegerField(primary_key=True)
+    wordtoken = models.ForeignKey(WordToken)
+    topic = models.ForeignKey(Topic)
 
 class TopicGroup(Topic):
     @property

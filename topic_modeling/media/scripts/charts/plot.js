@@ -261,7 +261,7 @@ var PlotInfo = InfoView.extend({
       "#FF00FF", "#0000CD", "#F4A460", "#EE82EE", "#FF4500", "#191970", "#ADFF2F", "#A52A2A", "#808000", "#DB7093",
       "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ];
     this.fontSize = $('body').css('font-size');
-    console.log(this);
+    //console.log(this);
 
   },
 
@@ -322,7 +322,8 @@ var PlotInfo = InfoView.extend({
     //var url = 'http://' + document.location.host + '/feeds/document-metrics/datasets...';
     //hard coded url for now
     //console.log("popluateFilter");
-    var url = '/feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics';
+    //var url = '/feeds/document-plot-filter/datasets/state_of_the_union/analyses/lda100topics';
+    var url = '/feeds/document-plot-filter' + location.pathname.split('/').slice(0, -1).join('/');
     var self = this;
     $.ajax({
       method: 'GET',

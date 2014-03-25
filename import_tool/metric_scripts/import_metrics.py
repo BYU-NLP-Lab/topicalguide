@@ -11,8 +11,6 @@ import datetime
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 
-from dataset_classes.generic_dataset import GenericDataset
-
 from topic_modeling.visualize.models import (Dataset, TopicMetric,
     PairwiseTopicMetric, DocumentMetric, PairwiseDocumentMetric, 
     TopicNameScheme)
@@ -65,7 +63,7 @@ def dataset_metrics(database_id, dataset_name, analysis_name):
     '''\
     Runs metrics on the dataset. This wraps metrics from the helper_scripts.
     '''
-    from metric_scripts.datasets import metrics
+    from datasets import metrics
     for metric_name in metrics:
         if not dataset_metric_in_database(database_id, metric_name.replace(' ', '_').split(':')[-1], metrics, dataset_name, analysis_name):
             dataset_import_metric(database_id, metric_name, metrics, dataset_name, analysis_name)
@@ -105,7 +103,7 @@ def analysis_import_metric(database_id, analysis_metric, metrics, dataset_name, 
         sys.stdout.flush()
 
 def analysis_metrics(database_id, dataset_name, analysis_name, analysis_db):
-    from metric_scripts.analyses import metrics
+    from analyses import metrics
     for metric_name in metrics:
         if not analysis_metric_in_database(database_id, metric_name.replace(' ', '_').split(':')[-1], 
                                            metrics, dataset_name, analysis_name):
@@ -152,13 +150,10 @@ def topic_import_metric(database_id, topic_metric, metrics, dataset_name, analys
         sys.stdout.flush()
 
 def topic_metrics(database_id, topic_metrics, dataset_name, analysis_name, analysis_db, topic_metric_args):
-    from metric_scripts.topics import metrics
+    from topics import metrics
     for topic_metric in topic_metrics:
         if not topic_metric_in_database(database_id, topic_metric, metrics, dataset_name, analysis_name, analysis_db):
             topic_import_metric(database_id, topic_metric, metrics, dataset_name, analysis_name, topic_metric_args)
-
-
-
 
 
 def pairwise_topic_metric_in_database(database_id, metric_name, metrics, dataset_name, analysis_name, analysis_db):
@@ -191,7 +186,6 @@ def pairwise_topic_import_metric(database_id, dataset_metric, metrics, dataset_n
     print('Adding %s...' % dataset_metric)
     sys.stdout.flush()
     try:
-        print('yeah...')
         metrics[dataset_metric].add_metric(database_id, dataset_name, analysis_name)
         end_time = datetime.datetime.now()
         print('  Done', end_time - start_time)
@@ -204,7 +198,7 @@ def pairwise_topic_import_metric(database_id, dataset_metric, metrics, dataset_n
         sys.stdout.flush()
 
 def pairwise_topic_metrics(database_id, pairwise_topic_metrics, dataset_name, analysis_name, analysis_db):
-    from metric_scripts.topics.pairwise import metrics
+    from topics.pairwise import metrics
     for pairwise_topic_metric in pairwise_topic_metrics:
         if not pairwise_topic_metric_in_database(database_id, pairwise_topic_metric.replace(' ', '_').split(':')[-1], metrics, dataset_name, analysis_name, analysis_db):
             pairwise_topic_import_metric(database_id, pairwise_topic_metric, metrics, dataset_name, analysis_name)
@@ -250,7 +244,7 @@ def document_import_metric(database_id, dataset_metric, metrics, dataset_name, a
         sys.stdout.flush()
     
 def document_metrics(database_id, dataset_name, analysis_name, analysis_db):
-    from metric_scripts.documents import metrics
+    from documents import metrics
     for metric in metrics:
         if not document_metric_in_database(database_id, metric, metrics, dataset_name, analysis_name, analysis_db):
             document_import_metric(database_id, metric, metrics, dataset_name, analysis_name)
@@ -262,14 +256,10 @@ def pairwise_document_metric_in_database(database_id, metric_name, metrics, data
     '''\
     Helper function fo pairwise_document_metrics().
     '''
-    # TODO see if there is a way to refactor so we don't have to use this kludge
-    def analysis():
-        return analysis_db
-    
     try:
         names = metrics[metric_name].metric_names_generated(dataset_name, analysis_name)
         for name in names:
-            metric_name = PairwiseDocumentMetric.objects.using(database_id).get(analysis=analysis, name=name)
+            metric_name = PairwiseDocumentMetric.objects.using(database_id).get(analysis=analysis_db, name=name)
             if not PairwiseTopicMetricValue.objects.using(database_id).filter(metric=metric_name).count():
                 return False
         return True
@@ -296,7 +286,7 @@ def pairwise_document_import_metric(database_id, dataset_metric, metrics, datase
         sys.stdout.flush()
 
 def pairwise_document_metrics(database_id, pairwise_document_metrics, dataset_name, analysis_name, analysis_db):
-    from metric_scripts.documents.pairwise import metrics
+    from documents.pairwise import metrics
     for metric in pairwise_document_metrics:
         if not pairwise_document_metric_in_database(database_id, metric, metrics, dataset_name, analysis_name, analysis_db):
             pairwise_document_import_metric(database_id, metric, metrics, dataset_name, analysis_name)

@@ -11,7 +11,7 @@ def test_generic_document_methods():
     doc = GenericDocument(root_dataset_dir, test1_file)
     doc.set_has_subdocuments(False)
     
-    assert doc.get_name() == 'documents_test1.txt'
+    assert doc.get_identifier() == 'documents_test1.txt'
     assert doc.get_content() == 'content\n\ncontent'
     assert not doc.has_subdocuments()
     
@@ -38,33 +38,21 @@ def test_generic_dataset_methods():
     root_dataset_dir = os.path.abspath('test_resources/')
     dataset = GenericDataset(root_dataset_dir)
     
-    assert dataset.get_dataset_identifier() == 'test_with_spaces'
+    assert dataset.get_identifier() == 'test_with_spaces'
+    assert dataset.get_readable_name() == 'Test With Spaces'
+    assert dataset.get_description() == 'Testing'
     
-    actual_dataset_types = {'readable_name': 'text', 'description': 'text', 'creator': 'text', 'source': 'text'}
-    dataset_types = dataset.get_dataset_metadata_types()
-    for t in dataset_types:
-        assert t in actual_dataset_types
-        assert dataset_types[t] == actual_dataset_types[t]
-    assert len(dataset_types) == len(actual_dataset_types)
-    
-    actual_dataset_meta = {'readable_name': 'Test With Spaces', 'description': 'Testing', 'creator': 'Me1', 'source': 'Me2'}
-    meta = dataset.get_dataset_metadata()
+    actual_dataset_meta = {'creator': 'Me1', 'source': 'Me2'}
+    meta = dataset.get_metadata()
     for t in meta:
         assert t in actual_dataset_meta
         assert meta[t] == actual_dataset_meta[t]
     assert len(meta) == len(actual_dataset_meta)
     
-    actual_types = {'meta1': 'text', 'meta2': 'text', 'meta3': 'text'}
-    types = dataset.get_document_metadata_types()
-    for t in types:
-        assert t in actual_types
-        assert types[t] == actual_types[t]
-    assert len(types) == len(actual_types)
-    
-    doc_names = ['test1.txt', 'test2.txt', 'test_directory_test3.txt']
+    doc_names = ['test1.txt', 'test2.txt', 'test_directory_test3.txt', 'test_directory_test_dir2_test4.txt']
     doc_count = 0
     for doc in dataset:
         doc_count += 1
-        assert doc.get_name() in doc_names
+        assert doc.get_identifier() in doc_names
         assert not doc.has_subdocuments()
     assert len(doc_names) == doc_count
