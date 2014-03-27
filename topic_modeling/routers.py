@@ -60,8 +60,8 @@ class DatabaseRouter(object):
         """
         if hasattr(model, '_MODEL_NAME') and model._MODEL_NAME == 'ExternalDataset':
             return 'default'
-        elif hasattr(request_cfg, 'dataset') and request_cfg.dataset in DATASET_TO_DATABASE_MAPPING:
-            return DATASET_TO_DATABASE_MAPPING[request_cfg.dataset]
+        elif hasattr(request_cfg, 'dataset') and request_cfg.dataset in settings.DATASET_TO_DATABASE_MAPPING:
+            return settings.DATASET_TO_DATABASE_MAPPING[request_cfg.dataset]
         return None
     
     def db_for_write(self, model, **hints):
@@ -70,8 +70,8 @@ class DatabaseRouter(object):
         """
         if hasattr(model, '_MODEL_NAME') and model._MODEL_NAME == 'ExternalDataset':
             return 'default'
-        elif hasattr(request_cfg, 'dataset') and request_cfg.dataset in DATASET_TO_DATABASE_MAPPING:
-            return DATASET_TO_DATABASE_MAPPING[request_cfg.dataset]
+        elif hasattr(request_cfg, 'dataset') and request_cfg.dataset in settings.DATASET_TO_DATABASE_MAPPING:
+            return settings.DATASET_TO_DATABASE_MAPPING[request_cfg.dataset]
         return None
     
     def allow_relation(self, obj1, obj2, **hints):

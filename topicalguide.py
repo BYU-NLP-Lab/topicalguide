@@ -121,13 +121,13 @@ def exec_import_generic_dataset(args):
     if args.database_config:
         database_info = get_database_configurations(args.database_config)
     
+    # get common directories
+    directories = import_utilities.get_common_working_directories(dataset_object.get_identifier())
+    
     # make sure that the default database exists
     import_utilities.run_syncdb(None)
     # make sure the tables exist in the database and get an identifier
     database_id = import_utilities.run_syncdb(database_info)
-    
-    # get common directories
-    directories = import_utilities.get_common_working_directories(dataset_object.get_identifier())
     
     # start the import process
     import_utilities.import_dataset(database_id, dataset_object, 
