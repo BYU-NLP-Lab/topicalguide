@@ -196,7 +196,7 @@ def run_analysis(database_id, dataset, analysis_settings, topical_guide_dir, dat
 
 def run_basic_metrics(database_id, dataset, analysis_settings):
     """
-    Run all metrics; an analysis is required for this process.
+    Run all basic metrics; an analysis is required for this process.
     """
     print('Creating metrics...')
     dataset_name = dataset.get_identifier()

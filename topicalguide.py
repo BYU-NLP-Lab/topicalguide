@@ -56,7 +56,9 @@ def exec_check_dataset(args):
     metadata_types = {}
     arg = {'blank_documents': blank_documents, 'blank_metadata': blank_metadata, 
             'metadata_types': metadata_types}
-    def check_document(arg, identifier, path, meta, content):
+    def check_document(arg, doc):
+        content = doc.get_content()
+        meta = doc.get_metadata()
         if content == '' or content == None: # collect blank documents
             arg['blank_documents'].append(path)
         if meta == {} or meta == None: # collect blank metadata
@@ -81,22 +83,36 @@ def exec_check_dataset(args):
     dataset_metadata_types = {}
     GenericTools.collect_types(dataset_metadata_types, dataset.get_metadata())
     
+    print('Dataset readable name: ')
+    print('"' + dataset.get_readable_name() + '"')
+    print()
+    
+    print('Dataset description: ')
+    print('"' + dataset.get_description() + '"')
+    print()
+    
     if dataset_metadata_types:
         print('Listing of dataset metadata and their associated types: ')
         for key, value in dataset_metadata_types.items():
             print(key + ': ' + value)
         print()
+    else:
+        print('No dataset metadata.')
     
     if metadata_types:
         print('Listing of document metadata and their associated types: ')
         for key, value in metadata_types.items():
             print(key + ': ' + value)
         print()
+    else:
+        print('No document metdata')
 
 def exec_import_generic_dataset(args):
-    """\
+    """
     Perform basic checks and create necessary objects in preparation to import.
-    Import dataset.
+    Import dataset into database.
+    Run the analysis and import results into the database.
+    Run metrics and import results into the database.
     Return nothing.
     """
     from import_tool import import_utilities
@@ -124,10 +140,12 @@ def exec_import_generic_dataset(args):
     # get common directories
     directories = import_utilities.get_common_working_directories(dataset_object.get_identifier())
     
-    # make sure that the default database exists
-    import_utilities.run_syncdb(None)
     # make sure the tables exist in the database and get an identifier
     database_id = import_utilities.run_syncdb(database_info)
+    
+    # make sure that the default database exists
+    if database_id != 'default':
+        import_utilities.run_syncdb(None)
     
     # start the import process
     import_utilities.import_dataset(database_id, dataset_object, 
@@ -150,8 +168,13 @@ def exec_import_generic_dataset(args):
 
 def exec_link(args):
     """Link a dataset to the default database."""
-    pass
-
+    # get database configurations
+    if args.dataset_name and args.database_config:
+        database_info = get_database_configurations(args.database_config)
+        database_id = import_utilities.run_syncdb(database_info)
+        import_utilities.link_dataset(database_id, args.dataset_name)
+    else:
+        print('You need to specify a dataset name and a database configuration file.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -177,8 +200,10 @@ if __name__ == '__main__':
     
     # link command
     link_parser = subparsers.add_parser('link', help='Links the database to the Topical Guide server.')
-    link_parser.add_argument('database-config', type=str,
-                               help='Takes a path to a config file specifying where the database is that contains an imported dataset.')
+    link_parser.add_argument('dataset-name', type=str, default=None, 
+                             help='The dataset name or unique identifier.')
+    link_parser.add_argument('database-config', type=str, default=None, 
+                             help='Takes a path to a config file specifying where the database is that contains an imported dataset.')
     link_parser.set_defaults(which='link')
     
     # check command
