@@ -254,7 +254,7 @@ def document_metrics(database_id, dataset_name, analysis_name, analysis_db):
 
 def pairwise_document_metric_in_database(database_id, metric_name, metrics, dataset_name, analysis_name, analysis_db):
     '''\
-    Helper function fo pairwise_document_metrics().
+    Helper function for pairwise_document_metrics().
     '''
     try:
         names = metrics[metric_name].metric_names_generated(dataset_name, analysis_name)

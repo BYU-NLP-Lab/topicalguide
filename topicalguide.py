@@ -160,9 +160,12 @@ def exec_import_generic_dataset(args):
                                   directories['topical_guide'], 
                                   directories['dataset'], 
                                   directories['documents'])
+
+    # get non-basic metrics list
+    non_basic_metrics = set(args.metric)
     
     # run metrics on an analysis
-    import_utilities.run_basic_metrics(database_id, dataset_object, analysis_settings)
+    import_utilities.run_basic_metrics(database_id, dataset_object, analysis_settings, non_basic_metrics)
 
 
 def exec_link(args):
@@ -218,6 +221,8 @@ if __name__ == '__main__':
                                help='Breaks a document into subdocuments to create better topics.')
     import_parser.add_argument('-t', '--number-of-topics', type=int, action='store', default=None, 
                                help='The number of topics that will be created.')
+    import_parser.add_argument('-m', '--metric', type=str, action='append', default=[], choices=['pairwise-doc'],
+                               help='Specify a non-basic metric to include.')
     import_parser.set_defaults(which='import')
     
     # link command
