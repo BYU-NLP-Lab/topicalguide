@@ -317,6 +317,19 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
         # commit all values
         DocumentMetaInfoValue.objects.using(to_db_id).bulk_create(all_values)
     
+    # transfer document metrics
+    with transaction.commit_on_success():
+        documents = Document.objects.using(to_db_id).filter(dataset__name=dataset_id)
+        for document in documents:
+            if not DocumentMetricValue.objects.using(to_db_id).filter(document_id=document.id).exists():
+                metric_values = DocumentMetricValue.objects.using(from_db_id).filter(document__filename=document.filename)
+                for value in metric_values:
+                    value.id = None
+                    value.document_id = document.id
+                    metric, _ = DocumentMetric.objects.using(to_db_id).get_or_create(name=value.metric.name)
+                    value.metric_id = metric.id
+                    value.save(using=to_db_id)
+    
     # transfer words and word types
     with transaction.commit_on_success():
         word_type_pk = 0
@@ -399,7 +412,9 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
                         name.topic_id = topic.id
                         name_scheme, _ = to_topic_name_schemes.get_or_create(name=name.name_scheme.name, analysis_id=analysis.id)
                         name.name_scheme_id = name_scheme.id
-                        name.save(using=to_db_id) 
+                        name.save(using=to_db_id)
+    
+    
                         
 
             

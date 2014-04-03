@@ -64,8 +64,8 @@ var NameInfo = Backbone.View.extend({
  *
  * **/
 var NameViewer = MainView.add(VisualizationView, {
-  name: 'name',
-  title: 'The Title',
+  name: 'topics_over_time',
+  title: 'Topics Over Time',
   menu_class: NameMenu,
   info_class: NameInfo,
   controls_class: NameControls,

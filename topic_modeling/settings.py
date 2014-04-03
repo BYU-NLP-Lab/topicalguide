@@ -200,12 +200,12 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 )
 
-try:
-    import django_extensions
-    INSTALLED_APPS += ('django_extensions',)
-except ImportError:
-    print 'Notice: django_extensions not installed. runserver_plus not available'
-    django_extensions = False
+#~ try:
+    #~ import django_extensions
+    #~ INSTALLED_APPS += ('django_extensions',)
+#~ except ImportError:
+    #~ print 'Notice: django_extensions not installed. runserver_plus not available'
+    #~ django_extensions = False
 
 try:
     import debug_toolbar
@@ -214,12 +214,12 @@ try:
 except ImportError:
     print 'Notice: debug_toolbar not installed.'
 
-try:
-    import gunicorn
-    INSTALLED_APPS += ('gunicorn',)
-except ImportError:
-    print 'Notice: gunicorn not installed.'
-    gunicorn = False
+#~ try:
+    #~ import gunicorn
+    #~ INSTALLED_APPS += ('gunicorn',)
+#~ except ImportError:
+    #~ print 'Notice: gunicorn not installed.'
+    #~ gunicorn = False
 
 INTERNAL_IPS = '127.0.0.1',
 
