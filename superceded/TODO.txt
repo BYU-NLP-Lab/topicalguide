@@ -23,14 +23,14 @@ Make output more space efficient with Mallet.
 
 
 
-Discussion:
-Allow metadata key descriptions.
+Changes:
 Remove metadata types altogether and just use a string, but verify types before database insertion?
     Then use Javascript to reconvert those types at user time.
 Database: Change Document database model to require readable name.
 Feature: Show *Document* readable name and metadata on website in nice human readable format.
 How to properly import subdocuments (is it as simple as treating each paragraph as a document?)
     There seems to be a concept that I'm missing.
+
 
 
 Goals:
@@ -40,5 +40,4 @@ Make join table more explicit to enable batch commits. (analysis import at 2:30 
     visualize_wordtoken_topics with wordtoken_id and topic_id
 Make sure all 3 of datasets can be imported, no problems with encodings.
 Make stopwords and regex removal available.
-
 

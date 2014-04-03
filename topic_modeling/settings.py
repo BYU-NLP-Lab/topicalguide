@@ -69,6 +69,10 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': DB_OPTIONS['sqlite3'],
+    'agency': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': '/local/cj264/topicalguide/working/agency_conference_talks.sqlite3'
+    }
 }
 
 DATASET_TO_DATABASE_MAPPING = {}

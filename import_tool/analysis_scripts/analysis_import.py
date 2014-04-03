@@ -152,7 +152,7 @@ def import_analysis(database_id, dataset_name, analysis_name, analysis_readable_
                     if len(token_topics_to_create) > add_limit:
                         WordToken_Topics.objects.using(database_id).bulk_create(token_topics_to_create)
                         token_topics_to_create = []
-                if len(token_topics_to_create) > add_limit:
+                if len(token_topics_to_create) > 0:
                         WordToken_Topics.objects.using(database_id).bulk_create(token_topics_to_create)
                         token_topics_to_create = []
                     #~ relationships_to_create[topic_num].append(token)
