@@ -522,21 +522,31 @@ class MetaInfoValue(models.Model):
     class Meta:
         abstract = True
 
-    def set(self, value):
-        if isinstance(value, float):
-            self.float_value = value
-        elif isinstance(value, basestring):
-            self.text_value = value
-        elif isinstance(value, int):
-            self.int_value = value
-        elif isinstance(value, bool):
-            self.bool_value = value
-        elif isinstance(value, datetime):
-            self.datetime_value = value
-        elif isinstance(value, time.struct_time):
-            self.datetime_value = datetime(*value[0:6])
+    def set(self, value, value_type='text'):
+        if value_type == 'float':
+            self.float_value = float(value)
+        elif value_type == 'text':
+            self.text_value = str(value)
+        elif value_type == 'int':
+            self.int_value = int(value)
+        elif value_type == 'bool':
+            self.bool_value = bool(value)
+        elif value_type == 'date':
+            self.datetime_value = datetime(value)
         else:
-            raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(type(value)))
+            raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(value_type))
+        #~ elif isinstance(value, basestring):
+            #~ self.text_value = value
+        #~ elif isinstance(value, int):
+            #~ self.int_value = value
+        #~ elif isinstance(value, bool):
+            #~ self.bool_value = value
+        #~ elif isinstance(value, datetime):
+            #~ self.datetime_value = value
+        #~ elif isinstance(value, time.struct_time):
+            #~ self.datetime_value = datetime(*value[0:6])
+        #~ else:
+            #~ raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(type(value)))
 
     def __str__(self):
         return str(self.value())

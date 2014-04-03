@@ -149,6 +149,7 @@ STATICFILES_ROOT = os.path.join(_base_dir, 'media')
 SCRIPTS_ROOT = os.path.join(STATICFILES_ROOT, 'scripts')
 STYLES_ROOT = os.path.join(STATICFILES_ROOT, 'styles')
 ALLOWED_INCLUDE_ROOTS = (SCRIPTS_ROOT, STYLES_ROOT)
+STATIC_URL = STATICFILES_ROOT + '/'
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -196,6 +197,7 @@ INSTALLED_APPS = (
 #    'django.contrib.contenttypes',
     'django.contrib.sessions',
 #    'django.contrib.sites',
+    'django.contrib.staticfiles',
 )
 
 try:

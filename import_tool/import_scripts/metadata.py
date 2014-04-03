@@ -26,10 +26,6 @@ def import_dataset_metadata_into_database(database_id, dataset_db, dataset_metad
     dataset_metadata A dictionary with the metadata.
     dataset_metadata_types A dictionary specifying what type each metadatum is.
     """
-    # check to see if the dataset metadata is already in the database
-    if DatasetMetaInfoValue.objects.using(database_id).filter(dataset=dataset_db).exists():
-        return # if there is metadata then we're done here
-    
     # try to put dataset metadata into database
     with transaction.commit_on_success():
         meta_info_value_id = 0 # use this to assign primary keys for metadata values
@@ -42,7 +38,7 @@ def import_dataset_metadata_into_database(database_id, dataset_db, dataset_metad
         for attribute, value in dataset_metadata.items():
             meta_info, __ = DatasetMetaInfo.objects.using(database_id).get_or_create(name=attribute)
             meta_info_value = DatasetMetaInfoValue(info_type=meta_info, dataset=dataset_db)
-            meta_info_value.set(value)
+            meta_info_value.set(value, dataset_metadata_types[attribute])
             meta_info_value.id = meta_info_value_id
             meta_info_value_id += 1
             meta_info_values.append(meta_info_value)
@@ -77,7 +73,7 @@ def import_document_metadata_into_database(database_id, dataset_db, document_met
                 timer.inc()
                 meta_info,__ = DocumentMetaInfo.objects.using(database_id).get_or_create(name=attribute)
                 meta_info_value = DocumentMetaInfoValue(info_type=meta_info, document=doc)
-                meta_info_value.set(value)
+                meta_info_value.set(value, document_metadata_types[attribute])
                 meta_info_value.id = meta_info_value_id
                 meta_info_value_id += 1
                 meta_info_values.append(meta_info_value)
