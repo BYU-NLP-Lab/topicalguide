@@ -1,53 +1,54 @@
+/**
+ * Part of Topical Guide (c) BYU 2013
+ */
 
-/** replace "Name" with things **/
-
-/** The Controls **/
-var NameControls = Backbone.View.extend({
-
-  initialize: function (options) {
-    var parent = this.parent = options.parent;
-    // setup elements. The el is #controls-[name]
-  },
-
-  show: function () {
-    this.$el.show();
-  },
-
-  hide: function () {
-    this.$el.hide();
-  }
-};
-
-
-/** The Menus **/
-var NameMenu = Backbone.View.extend({
-
-  initialize: function (options) {
-    var parent = this.parent = options.parent;
-    // setup elements. The el is #menu-[name]
-  },
-
-  show: function () {
-    this.$el.show();
-  },
-
-  hide: function () {
-    this.$el.hide();
-  }
-};
 
 /** The Info **/
-var NameInfo = Backbone.View.extend({
+var TopicsOverTimeInfo = InfoView.extend({
 
   initialize: function () {
+    this.$el.hide();
   },
 
   clear: function () {
+    this.$('tbody').empty();
+  },
+
+  view_plot: function () {
+  },
+
+  load_topic: function (tid, info) {
+    // show yourself
+    this.$el.show();
+  },
+
+  show: function () {
+    // this.$el.show();
+  },
+
+  hide: function () {
+    this.$el.hide();
   }
+
 });
 
-/*****************************************************
- * Data: [currently loaded, 
+
+/** The Controls **/
+var TopicsOverTimeControls = Backbone.View.extend({
+
+  initialize: function (options) {
+  },
+
+  show: function () {
+    this.$el.show();
+  },
+
+  hide: function () {
+    this.$el.hide();
+  }
+
+});
+
 
 /** The main visualization class
  *
@@ -63,12 +64,11 @@ var NameInfo = Backbone.View.extend({
  *   controls: the controls object
  *
  * **/
-var NameViewer = MainView.add(VisualizationView, {
+var TopicsOverTimeViewer = MainView.add({
   name: 'topics_over_time',
   title: 'Topics Over Time',
-  menu_class: NameMenu,
-  info_class: NameInfo,
-  controls_class: NameControls,
+  controls_class: TopicsOverTimeControls,
+  info_class: TopicsOverTimeInfo,
 
   /** any defaults that you want. In the class, this.options will be populated
    * with these defaults + an options dictionary passed in when the object is
@@ -82,7 +82,9 @@ var NameViewer = MainView.add(VisualizationView, {
     global URLS variable (and you can add your own to that object).
   **/
   url: function () {
+    return URLS['documents']['metrics'];
   },
+
 
   /** setup the d3 layout, etc. Everything you can do without data **/
   setup_d3: function () {
@@ -96,6 +98,8 @@ var NameViewer = MainView.add(VisualizationView, {
    * the bottom of the right-hand bar
    */
   load: function (data) {
-  },
+    console.log(data);
+  }
 
 });
+
