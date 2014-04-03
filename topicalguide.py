@@ -8,6 +8,7 @@ import argparse
 
 from import_tool.dataset_classes.generic_dataset \
     import GenericDataset, GenericTools, AnalysisSettings
+from import_tool import import_utilities
 
 
 # Example usage:
@@ -115,8 +116,6 @@ def exec_import_generic_dataset(args):
     Run metrics and import results into the database.
     Return nothing.
     """
-    from import_tool import import_utilities
-    
     # create GenericDataset object and set settings
     dataset_object = GenericDataset(args.dataset)
     dataset_object.set_is_recursive(args.recursive)
@@ -144,7 +143,7 @@ def exec_import_generic_dataset(args):
     database_id = import_utilities.run_syncdb(database_info)
     
     # make sure that the default database exists
-    if database_id != 'default':
+    if database_id != 'default': # check so syncdb isn't run twice in a row
         import_utilities.run_syncdb(None)
     
     # start the import process
@@ -159,7 +158,7 @@ def exec_import_generic_dataset(args):
     import_utilities.run_analysis(database_id, dataset_object, 
                                   analysis_settings, 
                                   directories['topical_guide'], 
-                                  directories['dataset'],
+                                  directories['dataset'], 
                                   directories['documents'])
     
     # run metrics on an analysis
@@ -168,13 +167,36 @@ def exec_import_generic_dataset(args):
 
 def exec_link(args):
     """Link a dataset to the default database."""
+    database_info = get_database_configurations(args.database_config)
+    database_id = import_utilities.run_syncdb(database_info)
+    import_utilities.link_dataset(database_id, args.dataset_name)
+
+def exec_migrate_dataset(args):
+    """Move a dataset from one database to another."""
+    dataset_id = args.dataset_id
+    from_database = args.from_database
+    to_database = args.to_database
+    
+    if from_database == to_database:
+        print('The from database is the same as the to database.')
+    
     # get database configurations
-    if args.dataset_name and args.database_config:
-        database_info = get_database_configurations(args.database_config)
-        database_id = import_utilities.run_syncdb(database_info)
-        import_utilities.link_dataset(database_id, args.dataset_name)
-    else:
-        print('You need to specify a dataset name and a database configuration file.')
+    from_database_config = None
+    to_database_config = None
+    if from_database != 'default':
+        from_database_config = get_database_configurations(from_database)
+    if to_database != 'default':
+        to_database_config = get_database_configurations(to_database)
+    
+    # ensure that the working directory is created prior to syncdb
+    import_utilities.make_working_dir()
+    
+    # make sure that both databases exist
+    from_db_id = import_utilities.run_syncdb(from_database_config)
+    to_db_id = import_utilities.run_syncdb(to_database_config)
+    
+    # run migrate
+    import_utilities.migrate_dataset(dataset_id, from_db_id, to_db_id)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -200,9 +222,9 @@ if __name__ == '__main__':
     
     # link command
     link_parser = subparsers.add_parser('link', help='Links the database to the Topical Guide server.')
-    link_parser.add_argument('dataset-name', type=str, default=None, 
+    link_parser.add_argument('dataset_name', type=str, 
                              help='The dataset name or unique identifier.')
-    link_parser.add_argument('database-config', type=str, default=None, 
+    link_parser.add_argument('database_config', type=str, 
                              help='Takes a path to a config file specifying where the database is that contains an imported dataset.')
     link_parser.set_defaults(which='link')
     
@@ -216,13 +238,27 @@ if __name__ == '__main__':
                                     """)
     check_parser.set_defaults(which='check')
     
+    # migrate command
+    migrate_parser = subparsers.add_parser('migrate', help='A utility that migrates a dataset from one database to another database.')
+    migrate_parser.add_argument('dataset_id', type=str,
+                               help='The dataset identifier for the dataset to be moved.')
+    migrate_parser.add_argument('from_database', type=str, 
+                                help='The database configuration file the dataset is in, or default for the default database.')
+    migrate_parser.add_argument('to_database', type=str, 
+                                help='The database configuration file to move the dataset to, or default for the default database.')
+    migrate_parser.set_defaults(which='migrate')
+    
+    # parse arguments
     args = parser.parse_args()
     
+    # execute command
     if args.which == 'import':
         exec_import_generic_dataset(args)
     elif args.which == 'link':
         exec_link(args)
     elif args.which == 'check':
         exec_check_dataset(args)
+    elif args.which == 'migrate':
+        exec_migrate_dataset(args)
 
 # vim: et sw=4 sts=4
