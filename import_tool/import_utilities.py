@@ -202,7 +202,7 @@ def run_analysis(database_id, dataset, analysis_settings, topical_guide_dir, dat
     if not TopicNameScheme.objects.using(database_id).filter(analysis=analysis_db, name=topic_namer.get_identifier()).exists():
         topic_namer.name_all_topics()
 
-def run_basic_metrics(database_id, dataset, analysis_settings):
+def run_basic_metrics(database_id, dataset, analysis_settings, non_basic_metrics):
     """Run all basic metrics; an analysis is required for this process."""
     print('Creating metrics...')
     dataset_name = dataset.get_identifier()
@@ -219,8 +219,11 @@ def run_basic_metrics(database_id, dataset, analysis_settings):
     import_metrics.pairwise_topic_metrics(database_id, analysis_settings.get_pairwise_topic_metrics(), dataset_name, analysis_name, analysis_db)
     print('  Document metrics...')
     import_metrics.document_metrics(database_id, dataset_name, analysis_name, analysis_db)
-    print('  Pairwise document metrics...')
-    import_metrics.pairwise_document_metrics(database_id, analysis_settings.get_pairwise_document_metrics(), dataset_name, analysis_name, analysis_db)
+
+    for metric in non_basic_metrics:
+        if metric == 'pairwise-doc':
+            print('  Pairwise document metrics...')
+            import_metrics.pairwise_document_metrics(database_id, analysis_settings.get_pairwise_document_metrics(), dataset_name, analysis_name, analysis_db)
 
 def migrate_dataset(dataset_id, from_db_id, to_db_id):
     """

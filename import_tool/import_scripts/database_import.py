@@ -150,7 +150,7 @@ def import_document_word_tokens(database_id, dataset_identifier, words):
                                        token_index=index, start=start_pos)
                 word_token_pk += 1
                 word_tokens_to_create.append(word_token)
-        print('  Commiting WordTokens to database...')
+        print('  Committing WordTokens to database...')
         WordType.objects.using(database_id).bulk_create(word_types_to_create)
         WordToken.objects.using(database_id).bulk_create(word_tokens_to_create)
 
