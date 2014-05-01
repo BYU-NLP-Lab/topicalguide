@@ -2,6 +2,8 @@
  * Part of Topical Guide (c) BYU 2013
  */
 
+Backbone.View.prototype.event_aggregator = _.extend({}, Backbone.Events);
+
 function url_args(args) {
   var items = args.split('&');
   var hash = {};
@@ -292,7 +294,7 @@ var MainView = Backbone.View.extend({
  * This is the base view for visualizations
  */
 var VisualizationView = Backbone.View.extend({
-  base_defaults: {
+  base_defaults: {  
     width:  $('#main').width(),
     height: $('#main').height(),
   },
