@@ -1,7 +1,0 @@
-meta1: value1-1
-meta2: value1-2
-meta3: value1-3
-
-content
-
-content

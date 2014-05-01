@@ -57,9 +57,9 @@ DB_OPTIONS = {
     },
     'postgres': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': '',                      
-        'USER': '',
-        'PASSWORD': '',
+        'NAME': 'topicalguide',                      
+        'USER': 'cj264',
+        'PASSWORD': 'jungle',
         'HOST': ''
     }
 }
@@ -68,11 +68,7 @@ MANAGERS = ADMINS
 
 
 DATABASES = {
-    'default': DB_OPTIONS['sqlite3'],
-    'agency': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '/local/cj264/topicalguide/working/agency_conference_talks.sqlite3'
-    }
+    'default': DB_OPTIONS['postgres'],
 }
 
 DATASET_TO_DATABASE_MAPPING = {}
@@ -200,12 +196,12 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 )
 
-#~ try:
-    #~ import django_extensions
-    #~ INSTALLED_APPS += ('django_extensions',)
-#~ except ImportError:
+try:
+    import django_extensions
+    INSTALLED_APPS += ('django_extensions',)
+except ImportError:
     #~ print 'Notice: django_extensions not installed. runserver_plus not available'
-    #~ django_extensions = False
+    django_extensions = False
 
 try:
     import debug_toolbar
@@ -214,12 +210,12 @@ try:
 except ImportError:
     print 'Notice: debug_toolbar not installed.'
 
-#~ try:
-    #~ import gunicorn
-    #~ INSTALLED_APPS += ('gunicorn',)
-#~ except ImportError:
+try:
+    import gunicorn
+    INSTALLED_APPS += ('gunicorn',)
+except ImportError:
     #~ print 'Notice: gunicorn not installed.'
-    #~ gunicorn = False
+    gunicorn = False
 
 INTERNAL_IPS = '127.0.0.1',
 

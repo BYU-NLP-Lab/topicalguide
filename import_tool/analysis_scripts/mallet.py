@@ -7,39 +7,53 @@ from __future__ import print_function
 import os
 import codecs
 import subprocess
+import json
 
 
-def prepare_mallet_input(dataset_dir, document_dir):
-    '''\
-    Combines every document into one large text file for processing with mallet.
-    '''
-    mallet_input_file = os.path.join(dataset_dir, "mallet_input.txt")
+def prepare_mallet_input(analysis_settings, dataset_dir, document_dir):
+    """
+    Combine every document into one large text file for processing with mallet.
+    """
+    mallet_input_file = os.path.join(dataset_dir, 'mallet_input.txt')
+    subdoc_to_doc_map_file = os.path.join(dataset_dir, 'subdoc_to_doc_map.json')
+    subdoc_to_doc_map = {}
     
-    w = codecs.open(mallet_input_file, 'w', 'utf-8')
-    count = 0
-    for root, dirs, files in os.walk(document_dir):
-        # for each file/document, strip out '\n' and '\r' and put onto one line in the 
-        # mallet input file
-        for f in files:
-            count += 1
-            path = '{0}/{1}'.format(root, f)
-            # the [1:] takes off a leading /
-            partial_root = root.replace(document_dir, '')[1:]
-            if partial_root:
-                mallet_path = '{0}/{1}'.format(partial_root, f)
-            else:
-                mallet_path = f
-            text = unicode(codecs.open(path).read(), errors='ignore').strip().replace(u'\n', u' ').replace(u'\r', u' ')
-            w.write(u'{0} all {1}'.format(mallet_path, text))
-            w.write(u'\n')
-        if not count:
-            raise Exception('No files processed')
-    w.close()
+    if os.path.exists(mallet_input_file) and os.path.exists(subdoc_to_doc_map_file):
+        return
+    
+    with codecs.open(mallet_input_file, 'w', 'utf-8') as w:
+        count = 0
+        for root, dirs, file_names in os.walk(document_dir):
+            # for each file/document, strip out '\n' and '\r' and put 
+            # onto one line in the mallet input file
+            for file_name in file_names:
+                count += 1
+                path = '{0}/{1}'.format(root, file_name)
+                # the [1:] takes off a leading /
+                partial_root = root.replace(document_dir, '')[1:]
+                if partial_root:
+                    mallet_path = '{0}/{1}'.format(partial_root, file_name)
+                else:
+                    mallet_path = file_name
+                # read file and split into subdocuments if specified
+                with codecs.open(path) as f:
+                    content = unicode(f.read(), errors='ignore')
+                    subdocuments = analysis_settings.create_subdocuments(file_name, content)
+                    for subdoc in subdocuments:
+                        subdoc_to_doc_map[subdoc[0]] = mallet_path
+                        text = subdoc[1].replace(u'\n', u' ').replace(u'\r', u' ')
+                        w.write(u'{0} all {1}\n'.format(subdoc[0], analysis_settings.filter_text(text)))
+            if not count:
+                raise Exception('No files processed.')
+    # record which subdocuments belong to which documents
+    with codecs.open(subdoc_to_doc_map_file, 'w', 'utf-8') as w:
+        w.write(json.dumps(subdoc_to_doc_map))
 
 def run_mallet(analysis_settings, dataset_dir, document_dir, topical_guide_dir):
-    '''\
-    Runs mallet; mallet performs word counts and other basic statistics.
-    '''
+    """
+    Run mallet.
+    """
+    analysis_settings.save_stopwords(os.path.join(dataset_dir, 'stopwords.txt'))
     c = analysis_settings.get_mallet_configurations(topical_guide_dir, dataset_dir)
     
     print('  Running "mallet import-file..."')
@@ -50,17 +64,19 @@ def run_mallet(analysis_settings, dataset_dir, document_dir, topical_guide_dir):
                '--keep-sequence', 
                '--set-source-by-name',
                '--remove-stopwords']
-        #TODO add methods to get any specified settings for the below options
-        #~ if 'extra_stopwords_file' in c:
-            #~ cmd += ' --extra-stopwords ' + c['extra_stopwords_file']
-        #~ if 'token_regex' in c and c['token_regex']:
-            #~ cmd += " --token-regex " + c['token_regex']
+        
+        if 'extra_stopwords_file' in c and c['extra_stopwords_file']:
+            cmd.append(' --extra-stopwords ')
+            cmd.append(c['extra_stopwords_file'])
+        
+        if 'token_regex' in c and c['token_regex']:
+            cmd.append(' --token-regex ')
+            cmd.append(c['token_regex'])
+        
         try:
             subprocess.check_call(cmd)
         except Exception as e:
-            # clean up before propagating the Exception
-            cmd = 'rm -f %s' % c['mallet_imported_data']
-            subprocess.check_call(cmd, shell=True)
+            os.remove(c['mallet_imported_data'])
             raise e
     
     print('  Running "mallet train-topics..."')
@@ -75,10 +91,8 @@ def run_mallet(analysis_settings, dataset_dir, document_dir, topical_guide_dir):
         try:
             subprocess.check_call(cmd)
         except Exception as e:
-            cmd = 'rm -f %s' % c['mallet_output_gz']
-            subprocess.check_call(cmd, shell=True)
-            cmd = 'rm -f %s' % c['mallet_doctopics_output']
-            subprocess.check_call(cmd, shell=True)
+            os.remove(c['mallet_output_gz'])
+            os.remove(c['mallet_doctopics_output'])
             raise e
     
     print('  Extracting mallet output...')
@@ -87,8 +101,7 @@ def run_mallet(analysis_settings, dataset_dir, document_dir, topical_guide_dir):
         try:
             subprocess.check_call(cmd, shell=True)
         except Exception as e:
-            cmd = 'rm -f %s' % c['mallet_output']
-            subprocess.check_call(cmd, shell=True)
+            os.remove(c['mallet_output'])
             raise e
 
 # vim: et sw=4 sts=4

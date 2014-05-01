@@ -45,7 +45,7 @@ Go to this website to generate your SECRET_KEY
 http://www.miniwebtool.com/django-secret-key-generator/
 
 Navigate to topicalguide/topic_modeling/settings.py.  
-Insert your generated SECRET_KEY where is says
+Insert your generated SECRET_KEY where it says
 
 	SECRET_KEY=''
 
@@ -54,7 +54,7 @@ Be sure not to commit/push your settings.py file with your SECRET_KEY in it.
 4. Import a dataset
 -------------------
 
-Run `./topicalguide.py import raw-data/state_of_the_union` to run the default import.
+Run `./topicalguide.py import raw_data/state_of_the_union` to run the default import.
 Run `./topicalguide.py -h` for more options.
 Alternatively you can create your own custom import by inheriting from the `AbstractDataset` 
 class in the `import_tool/dataset_classes/abstract_dataset.py` and use the methods available in 

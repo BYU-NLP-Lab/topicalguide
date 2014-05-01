@@ -319,6 +319,8 @@ class MarkupFile(models.Model):
     analysis = models.ForeignKey(Analysis)
     path = models.CharField(max_length=128)
 
+    
+
 
 class Topic(models.Model):
     number = models.IntegerField()
@@ -358,8 +360,8 @@ class Topic(models.Model):
 # This class is a way to explicitly access a many-to-many table to optimize adding to a database
 class WordToken_Topics(models.Model):
     id = models.IntegerField(primary_key=True)
-    wordtoken = models.ForeignKey(WordToken)
-    topic = models.ForeignKey(Topic)
+    wordtoken = models.ForeignKey(WordToken, related_name='topic_relations')
+    topic = models.ForeignKey(Topic, related_name='word_relations')
 
 class TopicGroup(Topic):
     @property
@@ -446,8 +448,8 @@ class PairwiseTopicMetricValue(MetricValue):
     metric = models.ForeignKey(PairwiseTopicMetric, related_name='values')
 
     def __unicode__(self):
-        return '%s(%s, %s) = %d' % (self.metric.name, self.topic1.name,
-                self.topic2.name, self.value)
+        return '%s(%s, %s) = %d' % (self.metric.name, self.topic1.names,
+                self.topic2.names, self.value)
 
 # These could go under the dataset section, but there are some metrics that
 # only make sense with a corresponding Analysis, so we will just put them all

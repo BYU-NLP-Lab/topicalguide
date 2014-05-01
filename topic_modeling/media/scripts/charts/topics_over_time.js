@@ -1,54 +1,53 @@
-/**
- * Part of Topical Guide (c) BYU 2013
- */
 
+/** replace "Name" with things **/
+
+/** The Controls **/
+var NameControls = Backbone.View.extend({
+
+  initialize: function (options) {
+    var parent = this.parent = options.parent;
+    // setup elements. The el is #controls-[name]
+  },
+
+  show: function () {
+    this.$el.show();
+  },
+
+  hide: function () {
+    this.$el.hide();
+  }
+});
+
+
+/** The Menus **/
+var NameMenu = Backbone.View.extend({
+
+  initialize: function (options) {
+    var parent = this.parent = options.parent;
+    // setup elements. The el is #menu-[name]
+  },
+
+  show: function () {
+    this.$el.show();
+  },
+
+  hide: function () {
+    this.$el.hide();
+  }
+});
 
 /** The Info **/
-var TopicsOverTimeInfo = InfoView.extend({
+var NameInfo = Backbone.View.extend({
 
   initialize: function () {
-    this.$el.hide();
   },
 
   clear: function () {
-    this.$('tbody').empty();
-  },
-
-  view_plot: function () {
-  },
-
-  load_topic: function (tid, info) {
-    // show yourself
-    this.$el.show();
-  },
-
-  show: function () {
-    // this.$el.show();
-  },
-
-  hide: function () {
-    this.$el.hide();
   }
-
 });
 
-
-/** The Controls **/
-var TopicsOverTimeControls = Backbone.View.extend({
-
-  initialize: function (options) {
-  },
-
-  show: function () {
-    this.$el.show();
-  },
-
-  hide: function () {
-    this.$el.hide();
-  }
-
-});
-
+/*****************************************************
+ * Data: [currently loaded, 
 
 /** The main visualization class
  *
@@ -64,11 +63,12 @@ var TopicsOverTimeControls = Backbone.View.extend({
  *   controls: the controls object
  *
  * **/
-var TopicsOverTimeViewer = MainView.add({
+var NameViewer = MainView.add(VisualizationView, {
   name: 'topics_over_time',
   title: 'Topics Over Time',
-  controls_class: TopicsOverTimeControls,
-  info_class: TopicsOverTimeInfo,
+  menu_class: NameMenu,
+  info_class: NameInfo,
+  controls_class: NameControls,
 
   /** any defaults that you want. In the class, this.options will be populated
    * with these defaults + an options dictionary passed in when the object is
@@ -82,9 +82,7 @@ var TopicsOverTimeViewer = MainView.add({
     global URLS variable (and you can add your own to that object).
   **/
   url: function () {
-    return URLS['documents']['metrics'];
   },
-
 
   /** setup the d3 layout, etc. Everything you can do without data **/
   setup_d3: function () {
@@ -98,8 +96,6 @@ var TopicsOverTimeViewer = MainView.add({
    * the bottom of the right-hand bar
    */
   load: function (data) {
-    console.log(data);
-  }
+  },
 
 });
-

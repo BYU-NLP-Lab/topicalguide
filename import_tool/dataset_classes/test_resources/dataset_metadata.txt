@@ -1,4 +1,0 @@
-readable_name: Test With Spaces
-description: Testing
-creator: Me1
-source: Me2

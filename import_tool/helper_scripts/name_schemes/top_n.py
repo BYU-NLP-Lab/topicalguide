@@ -46,7 +46,6 @@ class TopNTopicNamer:
             if created:
                 for i, topic in enumerate(analysis.topics.all()):
                     name = self.topic_name(topic)
-                    print 'topic #%i: %s' % (i, name.encode('utf-8'))
                     name_scheme.names.create(topic=topic, name=name)
                 #name_scheme.save()
                 # transaction.commit()

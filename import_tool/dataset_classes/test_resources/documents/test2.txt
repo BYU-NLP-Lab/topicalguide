@@ -1,8 +1,0 @@
-meta1: value2-1
-meta2: value2-2
-meta3: value2-3
-meta3: replacement
-
-content
-
-content

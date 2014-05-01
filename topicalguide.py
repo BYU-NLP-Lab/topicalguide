@@ -5,11 +5,13 @@ from __future__ import print_function
 import os
 import sys
 import argparse
+import time
 
-from import_tool.dataset_classes.generic_dataset \
-    import GenericDataset, GenericTools, AnalysisSettings
 from import_tool import import_utilities
-
+from import_tool import basic_tools
+from import_tool.dataset_scripts.generic_dataset import GenericDataset
+from import_tool.dataset_scripts.wikipedia_dataset import WikipediaDataset
+from import_tool.analysis_scripts.mallet_analysis import MALLETAnalysis
 
 # Example usage:
 # ./topicalguide.py import raw-data/agency_conference_talks/
@@ -31,7 +33,7 @@ def get_database_configurations(file_path):
     
     key_names = ['ENGINE', 'NAME', 'HOST', 'OPTIONS', 'PASSWORD', 'PORT', 'USER']
     with open(file_path, 'r') as f:
-        database_config = GenericTools.metadata_to_dict(f.read()) # read in the database configurations
+        database_config = basic_tools.metadata_to_dict(f.read()) # read in the database configurations
     # make sure the key names are upper case
     for key in key_names:
         if key.lower() in database_config:
@@ -55,19 +57,16 @@ def exec_check_dataset(args):
     blank_documents = []
     blank_metadata = []
     metadata_types = {}
-    arg = {'blank_documents': blank_documents, 'blank_metadata': blank_metadata, 
-            'metadata_types': metadata_types}
-    def check_document(arg, doc):
+
+    for doc in dataset:
         content = doc.get_content()
         meta = doc.get_metadata()
         if content == '' or content == None: # collect blank documents
-            arg['blank_documents'].append(path)
+            blank_documents.append(doc.get_uri())
         if meta == {} or meta == None: # collect blank metadata
-            arg['blank_metadata'].append(path)
+            blank_metadata.append(doc.get_uri())
         else: # collect metadata types
-            GenericTools.collect_types(arg['metadata_types'], meta)
-            
-    GenericTools.walk_documents(dataset, check_document, arg)
+            basic_tools.collect_types(metadata_types, meta)
     
     if blank_metadata:
         print('List of files with no metadata: ')
@@ -82,7 +81,7 @@ def exec_check_dataset(args):
         print()
     
     dataset_metadata_types = {}
-    GenericTools.collect_types(dataset_metadata_types, dataset.get_metadata())
+    basic_tools.collect_types(dataset_metadata_types, dataset.get_metadata())
     
     print('Dataset readable name: ')
     print('"' + dataset.get_readable_name() + '"')
@@ -96,17 +95,17 @@ def exec_check_dataset(args):
         print('Listing of dataset metadata and their associated types: ')
         for key, value in dataset_metadata_types.items():
             print(key + ': ' + value)
-        print()
     else:
         print('No dataset metadata.')
+    print()
     
     if metadata_types:
         print('Listing of document metadata and their associated types: ')
         for key, value in metadata_types.items():
             print(key + ': ' + value)
-        print()
     else:
         print('No document metdata')
+    print()
 
 def exec_import_generic_dataset(args):
     """
@@ -116,57 +115,56 @@ def exec_import_generic_dataset(args):
     Run metrics and import results into the database.
     Return nothing.
     """
-    # create GenericDataset object and set settings
-    dataset_object = GenericDataset(args.dataset)
-    dataset_object.set_is_recursive(args.recursive)
-    dataset_object.set_has_subdocuments(args.subdocuments)
-    if args.identifier:
-        dataset_object.set_identifier(args.identifier)
-    
-    # create analysis settings
-    analysis_settings = AnalysisSettings()
-    if args.number_of_topics:
-        if args.number_of_topics > 0:
-            analysis_settings.set_number_of_topics(args.number_of_topics)
-        else:
-            raise Exception('Number of topics is non-positive.')
-    
     # get database configurations
     database_info = None
     if args.database_config:
         database_info = get_database_configurations(args.database_config)
     
+    # create GenericDataset object and set settings
+    dataset = GenericDataset(args.dataset)
+    dataset.set_is_recursive(args.recursive)
+    if args.identifier:
+        dataset.set_identifier(args.identifier)
+    
     # get common directories
-    directories = import_utilities.get_common_working_directories(dataset_object.get_identifier())
+    directories = import_utilities.get_common_working_directories(dataset.get_identifier())
+    
+    # create analysis
+    analysis = MALLETAnalysis(directories['topical_guide'], directories['dataset'])
+    if args.filters:
+        with open(args.filters, 'r') as f:
+            lines = f.readlines()
+            filters = [line.strip() for line in lines]
+            analysis.add_filters(filters)
+            dataset.add_filters(filters)
+    if args.subdocuments:
+        analysis.set_create_subdocuments_method(basic_tools.create_subdocuments)
+    if args.number_of_topics:
+        if args.number_of_topics > 0:
+            analysis.set_number_of_topics(args.number_of_topics)
+        else:
+            raise Exception('Number of topics is non-positive.')
     
     # make sure the tables exist in the database and get an identifier
     database_id = import_utilities.run_syncdb(database_info)
-    
     # make sure that the default database exists
-    if database_id != 'default': # check so syncdb isn't run twice in a row
+    if database_id != 'default': # check so syncdb isn't run twice in a row for no reason
         import_utilities.run_syncdb(None)
     
     # start the import process
-    import_utilities.import_dataset(database_id, dataset_object, 
-                                    directories['dataset'], 
-                                    directories['documents'])
-    
-    # link dataset to default database
-    import_utilities.link_dataset(database_id, dataset_object.get_identifier())
+    dataset_name = import_utilities.import_dataset(database_id, dataset, directories)
     
     # run an analysis
-    import_utilities.run_analysis(database_id, dataset_object, 
-                                  analysis_settings, 
-                                  directories['topical_guide'], 
-                                  directories['dataset'], 
-                                  directories['documents'])
-
-    # get non-basic metrics list
-    non_basic_metrics = set(args.metric)
+    analysis_name = import_utilities.run_analysis(database_id, dataset_name, analysis, directories)
     
-    # run metrics on an analysis
-    import_utilities.run_basic_metrics(database_id, dataset_object, analysis_settings, non_basic_metrics)
+    # run metrics on the analysis
+    import_utilities.run_basic_metrics(database_id, dataset_name, analysis_name)
+    if args.metrics:
+        import_utilities.run_metrics(database_id, dataset_name, analysis_name, set(args.metrics))
 
+def exec_import_wikipedia_dataset(args):
+    """Import a dataset from Wikipedia.org."""
+    pass
 
 def exec_link(args):
     """Link a dataset to the default database."""
@@ -176,7 +174,7 @@ def exec_link(args):
 
 def exec_migrate_dataset(args):
     """Move a dataset from one database to another."""
-    dataset_id = args.dataset_id
+    dataset_id = args.dataset_name
     from_database = args.from_database
     to_database = args.to_database
     
@@ -201,6 +199,20 @@ def exec_migrate_dataset(args):
     # run migrate
     import_utilities.migrate_dataset(dataset_id, from_db_id, to_db_id)
 
+def exec_remove_metrics(args):
+    """Remove listed metrics from dataset."""
+    dataset_name = args.dataset_name
+    analysis_name = args.analysis_name
+    
+    database = args.database
+    database_config = None
+    if database != 'default':
+        database_config = get_database_configurations(database)
+    
+    database_id = import_utilities.run_syncdb(database_config)
+    
+    import_utilities.remove_metrics(database_id, dataset_name, analysis_name, args.metrics)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
@@ -218,12 +230,31 @@ if __name__ == '__main__':
     import_parser.add_argument('-r', '--recursive', action='store_true', default=False, 
                                help='Recursively look for documents in the given dataset directory.')
     import_parser.add_argument('-s', '--subdocuments', action='store_true', default=False, 
-                               help='Breaks a document into subdocuments to create better topics.')
+                               help='Breaks a document into subdocuments in an attempt to create better topics.')
     import_parser.add_argument('-t', '--number-of-topics', type=int, action='store', default=None, 
                                help='The number of topics that will be created.')
-    import_parser.add_argument('-m', '--metric', type=str, action='append', default=[], choices=['pairwise-doc'],
+    import_parser.add_argument('-m', '--metrics', type=str, action='append', default=[], 
+                               choices=import_utilities.get_all_metric_names(),
                                help='Specify a non-basic metric to include.')
+    import_parser.add_argument('-f', '--filters', type=str, action='store', default=None, 
+                               help='Specify a file containing a list of the filters to apply.')
     import_parser.set_defaults(which='import')
+    
+    # import-wikipedia command
+    import_wiki_parser = subparsers.add_parser('import-wikipedia', help='Import a dataset from Wikipedia.org.')
+    import_wiki_parser.add_argument('page_title', type=str,
+                               help='Imports the dataset from the given directory.')
+    import_wiki_parser.add_argument('-d', '--database-config', type=str, action='store', default=None, 
+                               help='Uses the database configurations from the given file.')
+    import_wiki_parser.add_argument('-i', '--identifier', type=str, action='store', default=None, 
+                               help='A unique name to import the dataset under (e.g. state_of_the_union.)')
+    import_wiki_parser.add_argument('-s', '--subdocuments', action='store_true', default=False, 
+                               help='Breaks a document into subdocuments to create better topics.')
+    import_wiki_parser.add_argument('-t', '--number-of-topics', type=int, action='store', default=None, 
+                               help='The number of topics that will be created.')
+    import_wiki_parser.add_argument('-m', '--metrics', type=str, action='append', default=[], choices=['pairwise-doc'],
+                               help='Specify a non-basic metric to include.')
+    import_wiki_parser.set_defaults(which='import-wikipedia')
     
     # link command
     link_parser = subparsers.add_parser('link', help='Links the database to the Topical Guide server.')
@@ -245,25 +276,44 @@ if __name__ == '__main__':
     
     # migrate command
     migrate_parser = subparsers.add_parser('migrate', help='A utility that migrates a dataset from one database to another database.')
-    migrate_parser.add_argument('dataset_id', type=str,
-                               help='The dataset identifier for the dataset to be moved.')
+    migrate_parser.add_argument('dataset_name', type=str,
+                               help='The dataset name/identifier for the dataset to be moved.')
     migrate_parser.add_argument('from_database', type=str, 
                                 help='The database configuration file the dataset is in, or default for the default database.')
     migrate_parser.add_argument('to_database', type=str, 
                                 help='The database configuration file to move the dataset to, or default for the default database.')
     migrate_parser.set_defaults(which='migrate')
     
+    # remove-metrics
+    remove_metrics_parser = subparsers.add_parser('remove-metrics', help='A utility to remove metrics from a dataset.')
+    remove_metrics_parser.add_argument('dataset_name', type=str, 
+                                help='The dataset name/unique identifier.')
+    remove_metrics_parser.add_argument('analysis_name', type=str, 
+                                help='The analysis name/unique identifier.')
+    remove_metrics_parser.add_argument('database', type=str, 
+                                help='The database configuration file the dataset is in, or default for the default database.')
+    remove_metrics_parser.add_argument('-m', '--metrics', type=str, action='append', default=[], 
+                                choices=import_utilities.get_all_metric_names(),
+                                help='Specify a non-basic metric to include.')
+    remove_metrics_parser.set_defaults(which='remove-metrics')
+    
     # parse arguments
     args = parser.parse_args()
     
     # execute command
+    start_time = time.time()
     if args.which == 'import':
         exec_import_generic_dataset(args)
+    elif args.which == 'import-wikipedia':
+        exec_import_wikipedia_dataset(args)
     elif args.which == 'link':
         exec_link(args)
     elif args.which == 'check':
         exec_check_dataset(args)
     elif args.which == 'migrate':
         exec_migrate_dataset(args)
+    elif args.which == 'remove-metrics':
+        exec_remove_metrics(args)
+    print('Total time taken: %s seconds'%str(time.time() - start_time))
 
 # vim: et sw=4 sts=4

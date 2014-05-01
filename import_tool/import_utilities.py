@@ -14,18 +14,25 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 from django.db import transaction
 from django.db.models import Max
 
-from import_scripts import database_import
-from import_scripts import metadata
+import basic_tools
+from dataset_scripts import database_import
+from dataset_scripts import metadata
 from analysis_scripts import analysis_import
 from analysis_scripts import mallet
 from helper_scripts.name_schemes.top_n import TopNTopicNamer
-from metric_scripts import import_metrics
-
-from dataset_classes.generic_dataset import (GenericDataset, GenericDocument, GenericSubdocument)
-from dataset_classes.generic_tools import GenericTools
+from metric_scripts import metric_import
 
 #~ from topic_modeling.visualize.models import (Dataset, Analysis, TopicNameScheme, ExternalDataset)
 from topic_modeling.visualize.models import *
+
+BASIC_METRICS = [
+    'dataset_token_count', 'dataset_type_count',
+    'document_token_count', 'document_type_count', 'document_topic_entropy', 
+    'analysis_entropy',
+    'topic_token_count', 'topic_type_count', 'topic_document_entropy', 'topic_word_entropy', 
+    #~ 'document_pairwise_topic_correlation',
+    'topic_pairwise_document_correlation', 'topic_pairwise_word_correlation',
+]
 
 def make_working_dir():
     """Make the 'working/' dir and return the absolute path."""
@@ -38,7 +45,7 @@ def make_working_dir():
 def get_common_working_directories(dataset_identifier):
     """
     Create commonly used directory paths.
-    Return a dictionary with 'working', 'dataset', and 'documents' that map to the correct directory.
+    Return a dictionary with 'topical_guide', 'working', 'dataset', and 'documents' that map to the correct directory.
     """
     topical_guide_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     working_dir = make_working_dir()
@@ -71,8 +78,14 @@ def run_syncdb(database_info):
     call_command('syncdb', database=dataset_identifier)
     return dataset_identifier
 
-def import_dataset(database_id, dataset, dataset_dir, document_dir):
-    """Transfer document content and metadata to database."""
+def import_dataset(database_id, dataset, directories, token_regex=r'[^\W0-9_]+'):
+    """
+    Transfer document content and metadata to database.
+    By default token_regex is set to recogize sequences of unicode alpha characters.
+    Return unique dataset name as found in database."""
+    dataset_dir = directories['dataset']
+    document_dir = directories['documents']
+    
     # create database entry for dataset
     dataset_db = database_import.create_dataset_db_entry(database_id, 
                                                          dataset, 
@@ -80,66 +93,54 @@ def import_dataset(database_id, dataset, dataset_dir, document_dir):
                                                          document_dir)
     
     # transfer all documents and collect document info
-    args = {'doc_identifiers': {}, 
-            'words': {}, 
-            'doc_metadata': {}, 
-            'doc_dir': document_dir,
-            'token_regex': ur'[a-zA-Z]+'}
-    def document_info_collector(args, doc):
-        """
-        Function to aid in collecting data from documents. The data collected \
-        includes metadata and words (including their location in the text).
-        In addition to collecting data, the content is copied to a location \
-        on the server.
-        args should be a dict containing 'doc_metadata' and 'words'
-        'doc_identifiers' a dictionary where the doc_identifier maps to its full path or uri
-        'doc_metadata' should map to a dictionary with the doc_identifier mapping to its metadata
-        'words' maps to a dictionary with doc_identifier mapping to a list of tuples
-        'token_regex' is the regular expression used to identify words
-        'doc_dir' should the the directory the document's content will be copied to
-        """
+    doc_identifiers = {}
+    all_words = {}
+    all_doc_metadata = {}
+    
+    for doc in dataset:
         doc_id = doc.get_identifier()
         # get document full path
-        full_path = os.path.join(args['doc_dir'], doc_id)
-        args['doc_identifiers'][doc_id] = full_path
+        full_path = os.path.join(document_dir, doc_id)
+        doc_identifiers[doc_id] = full_path
         # get metadata
-        args['doc_metadata'][doc_id] = doc.get_metadata()
+        all_doc_metadata[doc_id] = doc.get_metadata()
         # get words
-        content = unicode(doc.get_content(), errors='ignore')
-        args['words'][doc_id] = []
-        words = args['words'][doc_id]
-        for word_index, match in enumerate(re.finditer(args['token_regex'], content)):
+        content = doc.get_content()
+        words = []
+        for word_index, match in enumerate(re.finditer(token_regex, content, re.UNICODE)):
             word = match.group().lower()
             start = match.start()
             words.append((word, word_index, start))
+        all_words[doc_id] = words
         # copy content to new location
         if not os.path.exists(full_path):
             with codecs.open(full_path, 'w', 'utf-8') as f:
                 f.write(content)
-    GenericTools.walk_documents(dataset, document_info_collector, args)
     
     # create entries for each document
-    database_import.import_documents_into_database(database_id, dataset.get_identifier(), args['doc_identifiers'])
+    print('Importing documents into database...')
+    database_import.import_documents_into_database(database_id, dataset.get_identifier(), doc_identifiers)
     
     # import each document's words into the database
-    database_import.import_document_word_tokens(database_id, dataset.get_identifier(), args['words'])
+    print('Importing document words into database...')
+    database_import.import_document_word_tokens(database_id, dataset.get_identifier(), all_words)
     
     # write the dataset metadata to the database
     dataset_metadata = dataset.get_metadata()
     dataset_metadata_types = {}
-    GenericTools.collect_types(dataset_metadata_types, dataset_metadata)
+    basic_tools.collect_types(dataset_metadata_types, dataset_metadata)
     print('Importing dataset metadata into database...')
     metadata.import_dataset_metadata_into_database(database_id, dataset_db, dataset_metadata, 
                                                    dataset_metadata_types)
-                                          
+    
     # write the document metadata to the database
-    all_doc_metadata = args['doc_metadata']
     all_document_metadata_types = {}
     for key, value in all_doc_metadata.items():
-        GenericTools.collect_types(all_document_metadata_types, value)
+        basic_tools.collect_types(all_document_metadata_types, value)
     print('Importing document metadata into database...')
     metadata.import_document_metadata_into_database(database_id, dataset_db, all_doc_metadata,
                                                     all_document_metadata_types)
+    return dataset.get_identifier()
 
 def link_dataset(database_id, dataset_name):
     """
@@ -170,60 +171,100 @@ def link_dataset(database_id, dataset_name):
     else:
         print('Dataset linking failed.')
 
-def run_analysis(database_id, dataset, analysis_settings, topical_guide_dir, dataset_dir, document_dir):
-    """
-    Import the analysis by creating a DataSet object, Analysis DB object,
-    a Metadata dictionary, and parse the mallet_output file.
-    """
+def run_analysis(database_id, dataset_name, analysis, directories):
+    """Import the given analysis.  Return unique analysis name for dataset."""
+    print('Preparing analysis for run...')
+    def document_iterator(doc_dir):
+        for root, dirs, file_names in os.walk(doc_dir):
+            for file_name in file_names:
+                path = os.path.join(root, file_name)
+                content = ''
+                with codecs.open(path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                yield (file_name, content)
+        raise StopIteration
+    analysis.prepare_analysis_input(document_iterator(directories['documents']))
     print('Running analysis...')
-    # run mallet
-    print('  Preparing mallet input file...')
-    mallet.prepare_mallet_input(dataset_dir, document_dir)
-    print('  Running mallet...')
-    mallet.run_mallet(analysis_settings, dataset_dir, document_dir, topical_guide_dir)
-    # import the mallet output
-    print('  Importing mallet output into database...')
-    c = analysis_settings.get_mallet_configurations(topical_guide_dir, dataset_dir)
-    analysis_import.import_analysis(database_id,
-                                    dataset.get_identifier(), 
-                                    analysis_settings.get_analysis_name(), 
-                                    analysis_settings.get_analysis_readable_name(), 
-                                    analysis_settings.get_analysis_description(), 
-                                    c['mallet_output'], 
-                                    c['mallet_input'], 
-                                    r'[A-Za-z]+',
-                                    analysis_settings.get_number_of_topics())
-    # name the topics
-    print('  Naming topics...')
-    analysis_db = Analysis.objects.using(database_id).get(name=analysis_settings.get_analysis_name(), 
-                                         dataset__name=dataset.get_identifier())
-    topic_namer = TopNTopicNamer(database_id, dataset.get_identifier(), 
-                                 analysis_settings.get_analysis_name(), 3)
+    analysis.run_analysis()
+    print('Importing mallet output into database...')
+    analysis_import.import_analysis(database_id, dataset_name, analysis)
+    print('Naming topics...')
+    analysis_db = Analysis.objects.using(database_id).get(name=analysis.get_identifier(), dataset__name=dataset_name)
+    topic_namer = TopNTopicNamer(database_id, dataset_name, analysis.get_identifier(), 3)
     if not TopicNameScheme.objects.using(database_id).filter(analysis=analysis_db, name=topic_namer.get_identifier()).exists():
         topic_namer.name_all_topics()
+    return analysis.get_identifier()
 
-def run_basic_metrics(database_id, dataset, analysis_settings, non_basic_metrics):
-    """Run all basic metrics; an analysis is required for this process."""
-    print('Creating metrics...')
-    dataset_name = dataset.get_identifier()
-    analysis_name = analysis_settings.get_analysis_name()
-    analysis_db = Analysis.objects.using(database_id).get(name=analysis_name, 
-                                                          dataset__name=dataset_name)
-    print('  Dataset metrics...')
-    import_metrics.dataset_metrics(database_id, dataset_name, analysis_name) # depends on import_dataset_into_database()
-    print('  Analysis metrics...')
-    import_metrics.analysis_metrics(database_id, dataset_name, analysis_name, analysis_db)
-    print('  Topic metrics...')
-    import_metrics.topic_metrics(database_id, analysis_settings.get_topic_metrics(), dataset_name, analysis_name, analysis_db, analysis_settings.get_topic_metric_args())
-    print('  Pairwise topic metrics...')
-    import_metrics.pairwise_topic_metrics(database_id, analysis_settings.get_pairwise_topic_metrics(), dataset_name, analysis_name, analysis_db)
-    print('  Document metrics...')
-    import_metrics.document_metrics(database_id, dataset_name, analysis_name, analysis_db)
+def get_all_metric_names():
+    """Return a list of all metric names."""
+    from metric_scripts import all_metrics
+    return all_metrics.keys()
 
-    for metric in non_basic_metrics:
-        if metric == 'pairwise-doc':
-            print('  Pairwise document metrics...')
-            import_metrics.pairwise_document_metrics(database_id, analysis_settings.get_pairwise_document_metrics(), dataset_name, analysis_name, analysis_db)
+def run_basic_metrics(database_id, dataset_name, analysis_name):
+    """Run all basic metrics on the given dataset's analysis."""
+    run_metrics(database_id, dataset_name, analysis_name, BASIC_METRICS)
+
+def run_metrics(database_id, dataset_name, analysis_name, metrics):
+    """Run the metrics specified in the given list."""
+    
+    from metric_scripts import all_metrics
+    for metric_name in metrics:
+        if not metric_name in all_metrics:
+            print('Metric "' + metric_name + '" doesn\'t exist.')
+            continue
+        
+        print('Running metric "' + metric_name + '"...')
+        if metric_name.startswith('document_pairwise_'):
+            metric_import.run_document_pairwise_metric(database_id, dataset_name, analysis_name,
+                                                        all_metrics[metric_name])
+        elif metric_name.startswith('topic_pairwise_'):
+            metric_import.run_topic_pairwise_metric(database_id, dataset_name, analysis_name,
+                                                     all_metrics[metric_name])
+        elif metric_name.startswith('dataset_'):
+            metric_import.run_dataset_metric(database_id, dataset_name, analysis_name,
+                                              all_metrics[metric_name])
+        elif metric_name.startswith('document_'):
+            metric_import.run_document_metric(database_id, dataset_name, analysis_name,
+                                               all_metrics[metric_name])
+        elif metric_name.startswith('analysis_'):
+            metric_import.run_analysis_metric(database_id, dataset_name, analysis_name,
+                                               all_metrics[metric_name])
+        elif metric_name.startswith('topic_'):
+            metric_import.run_topic_metric(database_id, dataset_name, analysis_name,
+                                            all_metrics[metric_name])
+        
+
+def remove_metrics(database_id, dataset_name, analysis_name, metrics=None):
+    """Remove the listed metrics from the given dataset.  If metrics is None or empty, then remove all basic metrics."""
+    from metric_scripts import all_metrics
+    if metrics == None or metrics == []:
+        metrics = BASIC_METRICS
+    
+    for metric_name in metrics:
+        if not metric_name in all_metrics:
+            print('Metric "' + metric_name + '" doesn\'t exist.')
+            continue
+            
+        print('Removing metric "' + metric_name + '"...')
+        if metric_name.startswith('document_pairwise_'):
+            metric_import.remove_document_pairwise_metric(database_id, dataset_name, analysis_name,
+                                                          all_metrics[metric_name])
+        elif metric_name.startswith('topic_pairwise_'):
+            metric_import.remove_topic_pairwise_metric(database_id, dataset_name, analysis_name,
+                                                       all_metrics[metric_name])
+        elif metric_name.startswith('dataset_'):
+            metric_import.remove_dataset_metric(database_id, dataset_name, analysis_name,
+                                                all_metrics[metric_name])
+        elif metric_name.startswith('document_'):
+            metric_import.remove_document_metric(database_id, dataset_name, analysis_name,
+                                                 all_metrics[metric_name])
+        elif metric_name.startswith('analysis_'):
+            metric_import.remove_analysis_metric(database_id, dataset_name, analysis_name,
+                                                 all_metrics[metric_name])
+        elif metric_name.startswith('topic_'):
+            metric_import.remove_topic_metric(database_id, dataset_name, analysis_name,
+                                              all_metrics[metric_name])
+    
 
 def migrate_dataset(dataset_id, from_db_id, to_db_id):
     """
@@ -238,177 +279,154 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
         return
     
     # transfer dataset entry
+    print('Creating dataset entry...')
     with transaction.commit_on_success():
         if not Dataset.objects.using(to_db_id).filter(name=dataset_id).exists():
             dataset = Dataset.objects.using(from_db_id).get(name=dataset_id)
             dataset.id = None
+            dataset.visible = False
             dataset.save(using=to_db_id)
     
+    # get Dataset object for use elsewhere
+    to_dataset = Dataset.objects.using(to_db_id).get(name=dataset_id)
+    
     # transfer dataset metadata
+    print('Migrating dataset metadata...')
     with transaction.commit_on_success():
         if DatasetMetaInfoValue.objects.using(from_db_id).filter(dataset__name=dataset_id).count() != \
            DatasetMetaInfoValue.objects.using(to_db_id).filter(dataset__name=dataset_id).count():
-            dataset = Dataset.objects.using(to_db_id).get(name=dataset_id)
-            # get largest primary key
-            meta_info_value_id = 0
-            if DatasetMetaInfoValue.objects.using(to_db_id).exists():
-                meta_info_value_id = DatasetMetaInfoValue.objects.using(to_db_id).aggregate(Max('id'))['id__max'] + 1
-            
-            all_values = []
+            # create DatasetMetaInfo and key mappings
+            meta_info_map = {}
             dataset_metadata_info = DatasetMetaInfo.objects.using(from_db_id).all()
             for dataset_metadata_type in dataset_metadata_info:
                 meta_info, _ = DatasetMetaInfo.objects.using(to_db_id).get_or_create(name=dataset_metadata_type.name)
-                dataset_metadata_values = DatasetMetaInfoValue.objects.using(from_db_id).filter(info_type=dataset_metadata_type, dataset__name=dataset_id)
+                meta_info_map[dataset_metadata_type.id] = meta_info.id
+            
+            # get largest primary key
+            meta_info_value_id = get_max_pk(DatasetMetaInfoValue, to_db_id) + 1
+            
+            all_values = []
+            from_meta_values = DatasetMetaInfoValue.objects.using(from_db_id).filter(dataset__id=to_dataset.id)
+            for from_meta_value in from_meta_values:
                 # collect values
-                for value in dataset_metadata_values:
-                    value.id = meta_info_value_id
-                    meta_info_value_id += 1
-                    value.dataset_id = dataset.id
-                    value.info_type_id = meta_info.id
-                    all_values.append(value)
+                from_meta_value.id = meta_info_value_id
+                meta_info_value_id += 1
+                from_meta_value.dataset_id = dataset.id
+                from_meta_value.info_type_id = meta_info_map[from_meta_value.info_type_id]
+                all_values.append(from_meta_value)
             # commit values
             DatasetMetaInfoValue.objects.using(to_db_id).bulk_create(all_values)
     
+    # get keys for general use later on
+    from_dataset_pk = Dataset.objects.using(from_db_id).get(name=dataset_id).id
+    to_dataset_pk = to_dataset.id
+    
     # transfer dataset metrics
+    # NOTE: The amount of data is minimal and thus this is not optimized.
+    print('Migrating dataset metrics...')
     with transaction.commit_on_success():
-        dataset = Dataset.objects.using(to_db_id).get(name=dataset_id)
-        if not DatasetMetricValue.objects.using(to_db_id).filter(dataset_id=dataset).exists():
-            metric_values = DatasetMetricValue.objects.using(from_db_id).filter(dataset__name=dataset_id)
+        if not DatasetMetricValue.objects.using(to_db_id).filter(dataset_id=to_dataset_pk).exists():
+            metric_values = DatasetMetricValue.objects.using(from_db_id).filter(dataset_id=from_dataset_pk)
             for value in metric_values:
                 value.id = None
-                value.dataset_id = dataset.id
+                value.dataset_id = to_dataset.id
                 metric, _ = DatasetMetric.objects.using(to_db_id).get_or_create(name=value.metric.name)
                 value.metric_id = metric.id
                 value.save(using=to_db_id)
     
     # transfer documents
+    # TODO change full_path info
+    print('Migrating documents...')
     with transaction.commit_on_success():
         if Document.objects.using(from_db_id).filter(dataset__name=dataset_id).count() != \
            Document.objects.using(to_db_id).filter(dataset__name=dataset_id).count():
-            dataset = Dataset.objects.using(to_db_id).get(name=dataset_id)
+            curr_doc_id = get_max_pk(Document, to_db_id) + 1
             documents = Document.objects.using(from_db_id).filter(dataset__name=dataset_id)
+            docs_to_commit = []
             for document in documents:
-                document.id = None
+                document.id = curr_doc_id
+                curr_doc_id += 1
                 document.dataset_id = dataset.id
-                document.save(using=to_db_id)
+                docs_to_commit.append(document)
+            Document.objects.using(to_db_id).bulk_create(docs_to_commit)
+    
+    # generate key mappings for general use later on
+    document_pk_map = {}
+    from_documents = Document.objects.using(from_db_id).filter(dataset_id=from_dataset_pk)
+    to_documents = Document.objects.using(to_db_id).filter(dataset_id=to_dataset_pk)
+    to_documents.count()
+    for doc in from_documents:
+        document_pk_map[doc.id] = to_documents.get(filename=doc.filename).id
     
     # transfer document metadata
+    print('Migrating document metadata...')
     with transaction.commit_on_success():
         # get largest primary key
-        meta_info_value_id = 0
-        if DocumentMetaInfoValue.objects.using(to_db_id).exists():
-            meta_info_value_id = DocumentMetaInfoValue.objects.using(to_db_id).aggregate(Max('id'))['id__max'] + 1
-        all_values = []
-        # create query set for MetaInfo items
-        all_meta_info = DocumentMetaInfo.objects.using(to_db_id).all()
-        # iterate through documents
-        documents = Document.objects.using(to_db_id).filter(dataset__name=dataset_id)
-        for document in documents:
-            # check if document metadata is present
-            if DocumentMetaInfoValue.objects.using(from_db_id).filter(document__filename=document.filename).count() != \
-               DocumentMetaInfoValue.objects.using(to_db_id).filter(document__filename=document.filename).count():
-                # get all values for document
-                document_metadata_values = DocumentMetaInfoValue.objects.using(from_db_id).filter(document__filename=document.filename)
-                document_metadata_values.select_related()
-                for value in document_metadata_values:
-                    meta_info, _ = all_meta_info.get_or_create(name=value.info_type.name)
-                    value.id = meta_info_value_id
-                    meta_info_value_id += 1
-                    value.document_id = document.id
-                    value.info_type_id = meta_info.id
-                    all_values.append(value)
-        # commit all values
-        DocumentMetaInfoValue.objects.using(to_db_id).bulk_create(all_values)
-    
-    # transfer document metrics
-    with transaction.commit_on_success():
-        documents = Document.objects.using(to_db_id).filter(dataset__name=dataset_id)
-        for document in documents:
-            if not DocumentMetricValue.objects.using(to_db_id).filter(document_id=document.id).exists():
-                metric_values = DocumentMetricValue.objects.using(from_db_id).filter(document__filename=document.filename)
-                for value in metric_values:
-                    value.id = None
-                    value.document_id = document.id
-                    metric, _ = DocumentMetric.objects.using(to_db_id).get_or_create(name=value.metric.name)
-                    value.metric_id = metric.id
-                    value.save(using=to_db_id)
-    
-    # transfer words and word types
-    with transaction.commit_on_success():
-        word_type_pk = 0
-        if WordType.objects.using(to_db_id).all().exists():
-            word_type_pk = WordType.objects.using(to_db_id).all().aggregate(Max('id'))['id__max'] + 1
-        word_token_pk = 0
-        if WordToken.objects.using(to_db_id).all().exists():
-            word_token_pk = WordToken.objects.using(to_db_id).all().aggregate(Max('id'))['id__max'] + 1
         
-        # get all word types currently in the database
-        word_types = dict((wtype.type, wtype) for wtype in WordType.objects.using(to_db_id).all())
-        
-        documents = Document.objects.using(to_db_id).filter(dataset__name=dataset_id)
-        word_tokens_to_create = []
-        word_types_to_create = []
-        for document in documents:
-            if not WordToken.objects.using(to_db_id).filter(document__filename=document.filename).exists():
-                word_tokens = WordToken.objects.using(from_db_id).filter(document__filename=document.filename)
-                word_tokens.select_related()
-                for word_token in word_tokens:
-                    word = word_token.type.type
-                    if not word in word_types: # create a word type if it doesn't exist
-                        word_type = WordType(id=word_type_pk, type=word)
-                        word_types[word] = word_type
-                        word_type_pk += 1
-                        word_types_to_create.append(word_type)
-                    else:
-                        word_type = word_types[word]
-                    word_token.id = word_token_pk
-                    word_token_pk += 1
-                    word_token.document_id = document.id
-                    word_token.type_id = word_type.id
-                    word_tokens_to_create.append(word_token)
-                if len(word_tokens_to_create) > 100000:
-                    WordType.objects.using(to_db_id).bulk_create(word_types_to_create)
-                    WordToken.objects.using(to_db_id).bulk_create(word_tokens_to_create)
-                    word_types_to_create = []
-                    word_tokens_to_create = []
-        WordType.objects.using(to_db_id).bulk_create(word_types_to_create)
-        WordToken.objects.using(to_db_id).bulk_create(word_tokens_to_create)
+        from_meta_values = DocumentMetaInfoValue.objects.using(from_db_id).filter(document__dataset__name=dataset_id)
+        if from_meta_values.count() != \
+           DocumentMetaInfoValue.objects.using(to_db_id).filter(document__dataset__name=dataset_id).count():
+            meta_info_value_id = get_max_pk(DocumentMetaInfoValue, to_db_id) + 1
+            
+            # create DocumentMetaInfo and key mappings
+            meta_info_map = {}
+            document_metadata_info = DocumentMetaInfo.objects.using(from_db_id).filter(values__document__dataset__name=dataset_id)
+            for document_metadata_type in document_metadata_info:
+                meta_info, _ = DocumentMetaInfo.objects.using(to_db_id).get_or_create(name=document_metadata_type.name)
+                meta_info_map[document_metadata_type.id] = meta_info.id
+            
+            # get all values and commit them
+            all_values = []
+            for value in from_meta_values:
+                value.id = meta_info_value_id
+                meta_info_value_id += 1
+                value.document_id = document_pk_map[value.document_id]
+                value.info_type_id = meta_info_map[value.info_type_id]
+                all_values.append(value)
+            DocumentMetaInfoValue.objects.using(to_db_id).bulk_create(all_values)
     
     # transfer analyses
+    print('Migrating analyses...')
     # note that analyses is the plural form of analysis
     with transaction.commit_on_success():
         if not Analysis.objects.using(to_db_id).filter(dataset__name=dataset_id).exists():
-            analyses = Analysis.objects.using(from_db_id).filter(dataset__name=dataset_id)
-            dataset = Dataset.objects.using(to_db_id).get(name=dataset_id)
-            for analysis in analyses:
+            from_analyses = Analysis.objects.using(from_db_id).filter(dataset_id=from_dataset_pk)
+            for analysis in from_analyses:
                 analysis.id = None
-                analysis.dataset_id = dataset.id
+                analysis.dataset_id = to_dataset_pk
                 analysis.save(using=to_db_id)
     
+    # generate key mappings for general use later on
+    analysis_pk_map = {}
+    from_analyses = Analysis.objects.using(from_db_id).filter(dataset_id=from_dataset_pk)
+    to_analyses = Analysis.objects.using(to_db_id).filter(dataset_id=to_dataset_pk)
+    for analysis in from_analyses:
+        analysis_pk_map[analysis.id] = to_analyses.get(name=analysis.name).id
+    
     # transfer analyses metrics
+    print('Migrating analyses metrics...')
     with transaction.commit_on_success():
-        analyses = Analysis.objects.using(to_db_id).filter(dataset__name=dataset_id)
-        for analysis in analyses:
-            if not AnalysisMetricValue.objects.using(to_db_id).filter(analysis_id=analysis).exists():
-                metric_values = AnalysisMetricValue.objects.using(from_db_id).filter(analysis__name=analysis.name)
+        for analysis in from_analyses:
+            if not AnalysisMetricValue.objects.using(to_db_id).filter(analysis_id=analysis_pk_map[analysis.id]).exists():
+                metric_values = AnalysisMetricValue.objects.using(from_db_id).filter(analysis_id=analysis.id)
                 for value in metric_values:
                     metric, _ = AnalysisMetric.objects.using(to_db_id).get_or_create(name=value.metric.name)
                     value.id = None
-                    value.analysis_id = analysis.id
+                    value.analysis_id = analysis_pk_map[analysis.id]
                     value.metric_id = metric.id
                     value.save(using=to_db_id)
     
     # transfer topics, topic names, and topic name schemes
+    print('Migrating topics, topic names, and topic name schemes...')
     with transaction.commit_on_success():
-        analyses = Analysis.objects.using(to_db_id).filter(dataset__name=dataset_id)
         to_topic_name_schemes = TopicNameScheme.objects.using(to_db_id).all()
-        for analysis in analyses:
-            if not Topic.objects.using(to_db_id).filter(analysis_id=analysis).exists():
-                topics = Topic.objects.using(from_db_id).filter(analysis__name=analysis.name)
+        for analysis in from_analyses:
+            if not Topic.objects.using(to_db_id).filter(analysis_id=analysis_pk_map[analysis.id]).exists():
+                topics = Topic.objects.using(from_db_id).filter(analysis_id=analysis.id)
                 for topic in topics:
                     topic_names = TopicName.objects.using(from_db_id).filter(topic_id=topic.id)
                     topic.id = None
-                    topic.analysis_id = analysis.id
+                    topic.analysis_id = analysis_pk_map[analysis.id]
                     topic.save(using=to_db_id)
                     for name in topic_names:
                         name.id = None
@@ -417,33 +435,162 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
                         name.name_scheme_id = name_scheme.id
                         name.save(using=to_db_id)
     
+    # generate key mappings for general use later on
+    topic_pk_map = {}
+    from_topics = Topic.objects.using(from_db_id).filter(analysis__dataset_id=from_dataset_pk)
+    to_topics = Topic.objects.using(to_db_id).filter(analysis__dataset_id=to_dataset_pk)
+    to_topics.count()
+    for topic in from_topics:
+        topic_pk_map[topic.id] = to_topics.get(number=topic.number, analysis_id=analysis_pk_map[topic.analysis_id]).id
     
-                        
-
+    # transfer document metrics
+    print('Migrating document metrics...')
+    with transaction.commit_on_success():
+        for document in from_documents:
+            if not DocumentMetricValue.objects.using(to_db_id).filter(document_id=document_pk_map[document.id]).exists():
+                metric_values = DocumentMetricValue.objects.using(from_db_id).filter(document_id=document.id)
+                for value in metric_values:
+                    metric, _ = DocumentMetric.objects.using(to_db_id).get_or_create(name=value.metric.name, analysis_id=analysis_pk_map[value.metric.analysis_id])
+                    value.id = None
+                    value.metric_id = metric.id
+                    value.document_id = document_pk_map[document.id]
+                    value.save(using=to_db_id)
+    
+    # transfer topic metrics
+    print('Migrating topic metrics...')
+    with transaction.commit_on_success():
+        for topic in from_topics:
+            if not TopicMetricValue.objects.using(to_db_id).filter(topic_id=topic_pk_map[topic.id]).exists():
+                metric_values = TopicMetricValue.objects.using(from_db_id).filter(topic_id=topic.id)
+                for value in metric_values:
+                    metric, _ = TopicMetric.objects.using(to_db_id).get_or_create(name=value.metric.name, analysis_id=analysis_pk_map[value.metric.analysis_id])
+                    value.id = None
+                    value.topic_id = topic_pk_map[topic.id]
+                    value.metric_id = metric.id
+                    value.save(using=to_db_id)
+    
+    # transfer word tokens, word types, and word token to topics relations
+    print('Migrating word tokens, word types, and word token to topics relations...')
+    with transaction.commit_on_success():
+        if not WordToken.objects.using(to_db_id).filter(document__dataset__name=dataset_id).exists():
+            word_type_pk = get_max_pk(WordType, to_db_id) + 1
+            word_token_pk = get_max_pk(WordToken, to_db_id) + 1
+            word_token_topic_pk = get_max_pk(WordToken_Topics, to_db_id) + 1
             
+            # get all word types currently in the database
+            to_word_types = dict((wtype.type, wtype) for wtype in WordType.objects.using(to_db_id).all())
+            
+            word_tokens = WordToken.objects.using(from_db_id).filter(document__dataset__name=dataset_id).select_related()
+            #~ word_tokens.select_related()
+            all_word_tokens = []
+            all_word_types = []
+            all_word_token_topics = []
+            for token in word_tokens:
+                # go over relations
+                for topic in token.topics.all():#topic_relations:
+                    word_token_topic = WordToken_Topics(wordtoken_id=word_token_pk, topic_id=topic_pk_map[topic.id])
+                    word_token_topic.id = word_token_topic_pk
+                    word_token_topic_pk += 1
+                    all_word_token_topics.append(word_token_topic)
+                
+                word = token.type.type
+                # create WordType if word doesn't exist
+                if not word in to_word_types:
+                    word_type = WordType(id=word_type_pk, type=word)
+                    word_type_pk += 1
+                    to_word_types[word] = word_type
+                    all_word_types.append(word_type)
+                else:
+                    word_type = to_word_types[word]
+                token.id = word_token_pk
+                word_token_pk += 1
+                token.document_id = document_pk_map[token.document_id]
+                token.type_id = word_type.id
+                all_word_tokens.append(token)
+                
+                if len(all_word_tokens) > 100000:
+                    WordType.objects.using(to_db_id).bulk_create(all_word_types)
+                    WordToken.objects.using(to_db_id).bulk_create(all_word_tokens)
+                    WordToken_Topics.objects.using(to_db_id).bulk_create(all_word_token_topics)
+                    all_word_types = []
+                    all_word_tokens = []
+                    all_word_token_topics = []
+            WordType.objects.using(to_db_id).bulk_create(all_word_types)
+            WordToken.objects.using(to_db_id).bulk_create(all_word_tokens)
+            WordToken_Topics.objects.using(to_db_id).bulk_create(all_word_token_topics)
+    
+    # transfer pairwise document metric values
+    print('Migrating pairwise document metric values...')
+    with transaction.commit_on_success():
+        # used to map document id's in the from database to those in the to database
+        from_pairwise_document_metric = PairwiseDocumentMetric.objects.using(from_db_id).all()
+        to_pairwise_document_metric = PairwiseDocumentMetric.objects.using(to_db_id).all()
+        metric_pk_map = None
+        
+        values_to_commit = []
+        for analysis in from_analyses:
+            if not PairwiseDocumentMetricValue.objects.using(to_db_id).filter(metric__analysis_id=analysis_pk_map[analysis.id]).exists():
+                if metric_pk_map == None:
+                    metric_pk_map = {}
+                    from_pairwise_document_metric.count()
+                    to_pairwise_document_metric.count()
+                    for metric in from_pairwise_document_metric:
+                        if metric.analysis_id in analysis_pk_map:
+                            m, _ = to_pairwise_document_metric.get_or_create(name=metric.name, analysis_id=analysis_pk_map[analysis.id])
+                            metric_pk_map[metric.id] = m.id
+                
+                metric_values = PairwiseDocumentMetricValue.objects.using(from_db_id).filter(metric__analysis_id=analysis.id)
+                
+                for value in metric_values:
+                    value.id = None
+                    value.document1_id = document_pk_map[value.document1_id]
+                    value.document2_id = document_pk_map[value.document2_id]
+                    value.metric_id = metric_pk_map[value.metric_id]
+                    values_to_commit.append(value)
+        PairwiseDocumentMetricValue.objects.using(to_db_id).bulk_create(values_to_commit)
+    
+    # transfer pairwise topic metric values
+    print('Migrating pairwise topic metric values...')
+    with transaction.commit_on_success():
+        from_pairwise_document_metric = PairwiseTopicMetric.objects.using(from_db_id).all()
+        to_pairwise_document_metric = PairwiseTopicMetric.objects.using(to_db_id).all()
+        metric_pk_map = None
+        
+        values_to_commit = []
+        for analysis in from_analyses:
+            if not PairwiseTopicMetricValue.objects.using(to_db_id).filter(metric__analysis_id=analysis_pk_map[analysis.id]).exists():
+                if metric_pk_map == None:
+                    metric_pk_map = {}
+                    for metric in from_pairwise_document_metric:
+                        if metric.analysis_id in analysis_pk_map:
+                            m, _ = to_pairwise_document_metric.get_or_create(name=metric.name, analysis_id=analysis_pk_map[metric.analysis_id])
+                            metric_pk_map[metric.id] = m.id
+                
+                metric_values = PairwiseTopicMetricValue.objects.using(from_db_id).filter(metric__analysis_id=analysis.id)
+                for value in metric_values:
+                    value.id = None
+                    value.topic1_id = topic_pk_map[value.topic1_id]
+                    value.topic2_id = topic_pk_map[value.topic2_id]
+                    value.metric_id = metric_pk_map[value.metric_id]
+                    values_to_commit.append(value)
+        PairwiseTopicMetricValue.objects.using(to_db_id).bulk_create(values_to_commit)
+    
+    # make the dataset visible
+    to_dataset.visible = True
+    to_dataset.save(using=to_db_id)
     
     print('Done')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# migrate helper function
+def get_max_pk(django_model, database_id):
+    """
+    The django_model must have a non-auto-incrementing integer field named 'id'.
+    Return the max id for the given model.
+    """
+    max_id = 0
+    if django_model.objects.using(database_id).exists():
+        max_id = django_model.objects.using(database_id).aggregate(Max('id'))['id__max']
+    return max_id
 
 
 

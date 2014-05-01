@@ -1,6 +1,7 @@
 django
 nltk
 numpy
+chardet
 # optional
 django-debug-toolbar
 django-extensions
