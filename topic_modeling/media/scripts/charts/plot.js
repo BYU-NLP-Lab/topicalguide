@@ -234,8 +234,17 @@ var PlotInfo = InfoView.extend({
  *             effected by the zoom object.
  *   zoom:     a zoom object for resizing your visualization
  *   options:  a dictionary of the {dict} passed in at initialization,
- *             extending the "defaults" dict *   info:     the info object *   menu:     the menu object *   controls: the controls object * * **/ var PlotViewer = MainView.add(VisualizationView, { name: 'plot-documents', title: '2D Plots', menu_class: PlotMenu, info_class: PlotInfo, controls_class: PlotControls, /** any defaults that you want. In the class, this.options will be populated * with these defaults + an options dictionary passed in when the object is
-  * initialized **/
+ *             extending the "defaults" dict *   info:     the info object *   menu:     the menu object *   controls: the controls object * * **/
+var PlotViewer = MainView.add(VisualizationView, {
+  name: 'plot-documents',
+  title: '2D Plots',
+  menu_class: PlotMenu,
+  info_class: PlotInfo,
+  controls_class: PlotControls,
+  
+  /** any defaults that you want. In the class, this.options will be populated
+   * with these defaults + an options dictionary passed in when the object is
+   * initialized **/
   setUpProperties: function () {
     this.lastAxes = null;
     this.removingDocs = false;
