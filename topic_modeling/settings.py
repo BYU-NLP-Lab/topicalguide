@@ -57,9 +57,9 @@ DB_OPTIONS = {
     },
     'postgres': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'topicalguide',                      
-        'USER': 'cj264',
-        'PASSWORD': 'jungle',
+        'NAME': '',                      
+        'USER': '',
+        'PASSWORD': '',
         'HOST': ''
     }
 }
@@ -68,7 +68,7 @@ MANAGERS = ADMINS
 
 
 DATABASES = {
-    'default': DB_OPTIONS['postgres'],
+    'default': DB_OPTIONS['sqlite3'],
 }
 
 DATASET_TO_DATABASE_MAPPING = {}
@@ -162,8 +162,7 @@ MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
-#TODO Set this before deploying a server
-SECRET_KEY = 'sr#!r+ni%isxkb)9j1aw$u)e6=z!*ca_$&v4xx+&yxo==1(0-t'
+SECRET_KEY = '' # TODO Set this before deploying a server
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
