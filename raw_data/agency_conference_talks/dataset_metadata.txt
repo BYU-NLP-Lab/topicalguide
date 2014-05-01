@@ -1,0 +1,4 @@
+readable_name: Conference Talks on Agency
+description: Conference talks covering the topic of agency.
+creator: Craig Jacobson
+source: AML Datasets

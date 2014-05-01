@@ -1,0 +1,4 @@
+readable_name: Newsgroups: Graphics
+description: This dataset is a bunch of graphics related documents.
+creator: Craig
+source: AML Datasets
