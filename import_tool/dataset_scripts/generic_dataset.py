@@ -141,7 +141,9 @@ class GenericDocument(AbstractDocument):
         self.content = ''
         self.metadata = {}
         
-        text = basic_tools.get_unicode_content(self.document_path)
+        text = ''
+        with open(document_path, 'r') as f:
+            text = unicode(f.read(), encoding='utf-8', errors='ignore')
         metadata, self.content = basic_tools.seperate_metadata_and_content(text)
         self.metadata = basic_tools.metadata_to_dict(metadata)
         self.filters = []
@@ -169,7 +171,7 @@ class GenericDocument(AbstractDocument):
         return self.metadata
     
     def get_content(self):
-        """Returns the raw text of the document."""
+        """Returns the raw text of the document in a utf-8 encoding."""
         for f in self.filters:
             self.content = f(self.content)
         return self.content

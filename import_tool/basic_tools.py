@@ -192,21 +192,26 @@ def replace_html_entities(text):
     parser = HTMLParser()
     return parser.unescape(text)
 
-def get_unicode_content(file_path, encoding=None, errors='ignore'):
+def get_unicode_content(file_path, encoding=None):
     """
     Return a unicode string of the files contents using the given encoding.  If no encoding is given
     then chardet will be used to determine the encoding.
+    Note that this uses the chardet library and may cause problems, if an error is thrown then
+    a utf-8 encoding is assumed and unrecognize caracters are discarded.
     """
     try:
-        encoding = 'ascii'
-        detector = UniversalDetector()
-        contents = ''
-        with open(file_path, 'rb') as f:
-            contents = f.read()
-            detector.feed(contents)
-        detector.close()
-        encoding = detector.result['encoding']
-        return contents.decode(encoding=encoding)
+        if not encoding:
+            detector = UniversalDetector()
+            contents = ''
+            with open(file_path, 'rb') as f:
+                contents = f.read()
+                detector.feed(contents)
+            detector.close()
+            determined_encoding = detector.result['encoding']
+            return contents.decode(encoding=determined_encoding)
+        else:
+            with open(file_path, 'r') as f:
+                return unicode(f.read(), encoding=encoding, errors='ignore')
     except UnicodeError:
         with open(file_path, 'r') as f:
             return unicode(f.read(), encoding='utf-8', errors='ignore')
