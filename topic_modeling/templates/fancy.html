@@ -60,8 +60,8 @@
         </ul>
         </li>
       </ul>
-	  <div id="menu-plot-documents" class="nav-collapse collapse viz-menu"></div>
-      <!-- <div id="menu-topics-over-time" class="nav-collapse collapse viz-menu"></div> -->
+    <div id="menu-plot-documents" class="nav-collapse collapse viz-menu"></div>
+      <div id="menu-topics-over-time" class="nav-collapse collapse viz-menu"></div>
       <div id="viz-menus">
         <div id="menu-force-topics" class="nav-collapse collapse viz-menu">
           <ul class="nav">
@@ -109,41 +109,37 @@
   <div id="controls" class="bar-item">
     <div class="topleft-label">Controls</div>
     <div id="controls-chords">
-	 	</br>
+    </br>
       <label>Link Threshold Using Document Correlation</label>
       <div class="threshhold" id='chords-slider'></div>
     </div>
     <div id="controls-force-topics">
-	 	</br>
+    </br>
       <label>Link Threshold</label>
       <div class="threshhold" id='force-link-slider'></div>
       <label>Topic Size Threshold</label>
       <div class="threshhold" id='force-size-slider'></div>
     </div>
     <div id="controls-circle-topics">
-	 	</br>
+    </br>
       <label>Topic Size Threshold</label>
       <div class="threshhold" id='circle-topics-slider'></div>
     </div>
     <div id="controls-plot-documents">
-	 	</br>
+    </br>
       <h3>Plot Controls</h3>
       <div id="plot-document-x-control" class="plot-document-controls"></div>
       <div id="plot-document-y-control" class="plot-document-controls"></div>
       <div id="plot-document-r-control" class="plot-document-controls"></div>
       <div id="plot-document-c-control" class="plot-document-controls"></div>
     </div>
-<!--
     <div id="controls-topics-over-time"></div>
--->
   </div>
   <div id="info" class="bar-item">
     <div class="topleft-label">Info</div>
-<!--
     <div id="info-topics-over-time"></div>
--->
     <div id="info-chords">
-	 	</br>
+    </br>
       <h3 class="topic-name">Click a Topic</h3>
       <!--button class="btn btn-primary btn-small view-plot">View Document Plot</button-->
       <a href="#" class="btn btn-primary btn-small view-details-btn">View Topic Details</a>
@@ -177,7 +173,7 @@
       </table>
     </div>
     <div id="info-force-topics">
-	 	</br>
+    </br>
       <h3 class="topic-name">Click a Topic</h3>
       <a href="#" class="btn btn-primary btn-small view-details-btn">View Topic Details</a>
       <table class="metrics table table-condensed table-striped">
@@ -209,22 +205,22 @@
         </tbody>
       </table>
     </div>
-	<div id="info-circle-topics">
-	 	</br>
+  <div id="info-circle-topics">
+    </br>
       <h4 id="circle-topic-name">Click a Topic</h4>
-	  <a href="#" class="btn btn-primary btn-small view-topic-details-btn">View Topic Details</a>
+    <a href="#" class="btn btn-primary btn-small view-topic-details-btn">View Topic Details</a>
       <div id="circle-topic-info"></div>
-	  <br/>
-	  <h4 id="circle-document-name">Click a Document</h4>
-	  <a href="#" class="btn btn-primary btn-small view-document-details-btn">View Document Details</a>
+    <br/>
+    <h4 id="circle-document-name">Click a Document</h4>
+    <a href="#" class="btn btn-primary btn-small view-document-details-btn">View Document Details</a>
       <div id="circle-document-info"></div>
-	  <br/>
-	  <h4 id="circle-word-name">Click a Word</h4>
-	  <a href="#" class="btn btn-primary btn-small view-word-details-btn">View Word Details</a>
+    <br/>
+    <h4 id="circle-word-name">Click a Word</h4>
+    <a href="#" class="btn btn-primary btn-small view-word-details-btn">View Word Details</a>
       <div id="circle-word-info"></div>
     </div>
     <div id="info-plot-documents">
-	 	</br>
+    </br>
       <a href="#" class="btn btn-primary btn-small view-details-btn">View Document Details</a>
       <div class="contents"></div>
     </div>
@@ -269,9 +265,7 @@ var URLS = {
 <script src="/site-media/scripts/charts/circle.js"></script>
 <script src="/site-media/scripts/charts/force.js"></script>
 <script src="/site-media/scripts/charts/plot.js"></script>
-<!--
 <script src="/site-media/scripts/charts/topics_over_time.js"></script>
--->
 <script src="/site-media/scripts/charts/main.js"></script>
 
 {% endblock %}
