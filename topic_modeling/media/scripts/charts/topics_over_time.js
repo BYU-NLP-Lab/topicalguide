@@ -349,7 +349,7 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
     this.yRange.domain([ yMin, yMax ]);
 
     // Set color domain
-    this.colors.domain([ 0, maxStack ]);
+    this.colors.domain(_.range(0, maxStack));//[ 0, maxStack ]);
   },
 
   /**
@@ -368,8 +368,8 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
     this.yRange.domain([ 0, this.topicData.max ]);
 
     // set color domain
-    var topicKeys = $.map(this.topicData, function(value, key) { return key; }); // Get all topic IDs (they are the keys)
-    this.colors.domain([ topicKeys[0], topicKeys[topicKeys.length - 1] ]);
+    var topicKeys = $.map(this.topics, function(value, key) { return key; }); // Get all topic IDs (they are the keys)
+    this.colors.domain(_.range(topicKeys[0], topicKeys[topicKeys.length - 1]));// [ topicKeys[0], topicKeys[topicKeys.length - 1] ]);
   },
 
   /**
