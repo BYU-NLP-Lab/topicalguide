@@ -24,3 +24,7 @@ div.tooltip {
 	pointer-events: none;
 }
 
+#controls-plot-documents .plot-document-controls {
+	float: left;
+}
+

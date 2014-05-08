@@ -1,9 +1,12 @@
 
 /** The Controls **/
-var PlotControls = Backbone.View.extend({
+var PlotControls = ControlsView.extend({
   xcontrol : null, ycontrol : null, rcontrol : null, setUp : false,
 
   initialize: function (options) {
+
+    ControlsView.prototype.initialize.apply(this, arguments);
+
     var parent = this.parent = options.parent;
     this.xcontrol = this.$('#plot-document-x-control');
     this.ycontrol = this.$('#plot-document-y-control');
@@ -100,9 +103,13 @@ var PlotControls = Backbone.View.extend({
     select.on("change", function() { viewer.update(); });
   },
 
-  show: function () { this.$el.show(); },
+  show: function () {
+    ControlsView.prototype.show.call(this, $.merge([{ element_loc : '#controls-plot-documents', resize_trigger : "plot-documents:resize" }], arguments));
+  },
 
-  hide: function () { this.$el.hide(); },
+  hide: function () {
+    ControlsView.prototype.hide.apply(this, arguments);
+  }
 });
 
 
@@ -123,17 +130,22 @@ var PlotMenu = Backbone.View.extend({
 var PlotInfo = InfoView.extend({
 
   initialize: function () {
-   this.docDisplay = this.$('>.contents');
-   this.$el.hide();
+    this.defaults.resize_trigger = "plot-documents:resize";
+    InfoView.prototype.initialize.apply(this, arguments);
+    
+    this.docDisplay = this.$('>.contents');
+    this.$el.hide();
   },
 
   clear: function () { },
 
   show: function () {
-      //this.$el.show();
+    InfoView.prototype.show.apply(this, arguments);
   },
-  
-  hide: function () { this.$el.hide(); },
+
+  hide: function () {
+    InfoView.prototype.hide.apply(this, arguments);
+  },
 
   //this creates three separate tables instead of just one
   populateOriginal: function(doc) {
