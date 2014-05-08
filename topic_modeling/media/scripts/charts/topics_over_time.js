@@ -7,7 +7,8 @@
 var TopicsOverTimeInfo = InfoView.extend({
 
   initialize: function () {
-    this.$el.hide();
+  	this.defaults.resize_trigger = "tot:resize";
+  	InfoView.prototype.initialize.apply(this, arguments);
   },
 
   clear: function () {
@@ -23,24 +24,26 @@ var TopicsOverTimeInfo = InfoView.extend({
   },
 
   show: function () {
-    // this.$el.show();
+  	InfoView.prototype.show.apply(this, arguments);
   },
 
   hide: function () {
-    this.$el.hide();
-  }
+  	InfoView.prototype.hide.apply(this, arguments);
+  },
 
 });
 
 
 /** The Controls **/
-var TopicsOverTimeControls = Backbone.View.extend({
+var TopicsOverTimeControls = ControlsView.extend({
 
   initialize: function (options) {
-    this.controls = $('#controls-topics-over-time');
+  	ControlsView.prototype.initialize.apply(this, arguments);
+  	this.controls = $('#controls-topics-over-time');
+
+    this.loaded = false;
     _.bindAll(this, "load");
     this.event_aggregator.bind("tot:loaded", this.load);
-    this.loaded = false;
   },
 
   load: function (topics) {    
@@ -68,11 +71,11 @@ var TopicsOverTimeControls = Backbone.View.extend({
   },
 
   show: function () {
-    this.$el.show();
+  	ControlsView.prototype.show.call(this, $.merge([{ element_loc : '#controls-topics-over-time', resize_trigger : "tot:resize" }], arguments));
   },
 
   hide: function () {
-    this.$el.hide();
+  	ControlsView.prototype.hide.apply(this, arguments);
   }
 
 });
@@ -92,7 +95,7 @@ var TopicsOverTimeControls = Backbone.View.extend({
  *   controls: the controls object
  *
  * **/
-var TopicsOverTimeViewer = MainView.add(VisualizationView, {
+var TopicsOverTimeViewer = MainView.add({
   name: 'topics-over-time',
   title: 'Topics Over Time',
   controls_class: TopicsOverTimeControls,
@@ -126,8 +129,6 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
 
   setUpProperties: function() {
 
-    this.width = this.base_defaults.width;
-    this.height = this.base_defaults.height;
     this.margins = {left : (this.width / 12), // for y tick labels 
                     bottom : (this.height / 12), // for x axis tick labels, and x/r axis labels
                     top : (this.height / 18), // for y axis label and doc count
@@ -141,6 +142,7 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
 
     this.documents = null;
     this.topicData = null;
+    this.selectedTopicIds = null;
     this.selectedTopicData = null;
     this.lineChart = null;
     this.bars = null;
@@ -154,8 +156,9 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
     //   "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ];
     this.fontSize = $('body').css('font-size');
     //console.log(this);
-    _.bindAll(this, "selectTopics");
+    _.bindAll(this, "selectTopics", "resize");
     this.event_aggregator.bind("tot:select-topics", this.selectTopics);
+    this.event_aggregator.bind("tot:resize", this.resize);
 
   },
 
@@ -180,6 +183,16 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
     $('.axis path').attr("opacity", 1);
     $('.axis text').attr("fill", "#000000");
     //$('.axis .tick').attr("style", "stroke:#000000; opacity:1");
+  },
+
+  scaleRanges: function() {
+  	this.xRange.range([this.margins.left, this.width - this.margins.right]);
+  	this.yRange.range([this.height - this.margins.bottom, this.margins.top]);
+
+  	this.xAxis.scale(this.xRange);
+  	this.yAxis.scale(this.yRange);
+  	// d3.selectAll('.x.axis').attr("transform", "translate(0," + (this.height - this.margins.bottom) + ")");
+  	// console.log(d3.selectAll('.x.axis').attr("transform"));
   },
 
   /** populate everything! data is the JSON response from your url(). For
@@ -222,6 +235,7 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
     if (topicIds === undefined) { // If there are no arguments (select all)
       topicIds = [];
     }
+    this.selectedTopicIds = topicIds;
 
     if (topicIds.length > this.topics.length) {
       throw new Error('More topics selected than exist');
@@ -441,9 +455,10 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
 
     // Function for creating lines - sets x and y value at every point on the line
     var line = d3.svg.line()
+    	// .defined(function(d, i) { return d.index === 0; })
         .interpolate("basis")
         .x(function(d, i) { return xRange(d.year); })
-        .y(function(d, i) { return yRange(data[d.year][d.index].probability); });
+        .y(function(d, i) { return yRange(data[d.year].totalProbability); }); // Use the total value for this year
 
     // Delete existing lines to conserve memory (this could be optimized)
     this.svg.selectAll(".chart.line").data([]).exit().remove();
@@ -454,15 +469,17 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
     for (var topicId in this.topicData) {
       if (topicId !== "min" && topicId !== "max") {
         var topic = this.topicData[topicId];
+        var indices = topic.yearIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
+        indices.topicId = topic.yearIndices.topicId;
         data = topic.data;
         // Create lineChart SVG line element for this topic
         var path = this.svg.append("svg:path")
-          .datum(topic.yearIndices)
+          .datum(indices)
           .attr("class", "chart line")
           .attr("d", line)
           .style("opacity", 0)
           .style("stroke", colors(topicId))
-          .style("fill", "none")
+          .style("fill", "none");
 
         // This is to initialize the magical unfolding transition
         // NOTE: disabled because this gets screwed up when the axes scale
@@ -492,6 +509,15 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
     var t = this.svg.transition().duration(duration);//.ease("exp-in-out");
     t.select(".x.axis").call(this.xAxis);
     t.select(".y.axis").call(this.yAxis);
+
+    // Translate x axis in case the whole visualization moves
+    var translate = this.parseTransformAttr($('.x.axis').attr("transform")).translate;
+    $({ transform : translate[1] }).animate({ transform : this.height - this.margins.bottom }, // Magical jQuery attribute animation
+										    { duration : duration,
+										     	step : function(now) {
+										    		$('.x.axis').attr("transform", "translate(" + translate[0] + "," + now + ")");
+										    	}
+									   	    });
     
     //this makes the css inline for saving the svg
     $('.axis .tick').attr("style", "stroke:#000000; opacity:1");
@@ -608,6 +634,7 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
     var xRange = this.xRange;
     var yRange = this.yRange;
     var topicData = this.topicData;
+    var colors = this.colors;
 
     // Register event variables
     var getOnPathMouseover = this.getOnPathMouseover;
@@ -620,13 +647,14 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
         .interpolate("basis")
         .x(function(d, i) { return xRange(d.year); })
         .y(function(d, i) { var data = topicData[topicId].data;
-                            return yRange(data[d.year][d.index].probability);
+                            return yRange(data[d.year].totalProbability);
                           });
 
     path
-      .on("mouseover", getOnPathMouseover(vis))
-      .on("mouseout", getOnPathMouseout(vis))
-      .on("click", function(d) {
+    	.style("stroke", function(d) { return colors(d.topicId); })
+    	.on("mouseover", getOnPathMouseover(vis))
+    	.on("mouseout", getOnPathMouseout(vis))
+    	.on("click", function(d) {
           select.call(vis, [d.topicId]);
         });
 
@@ -668,6 +696,14 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
       .delay(delayOrder * 15)
       // .attr("stroke-dashoffset", length) // Fold lines
       .style("opacity", 0.0);
+  },
+
+  resize: function(options) { 
+
+  	VisualizationView.prototype.resize.call(this, options);
+
+	this.scaleRanges();
+	this.selectTopics(this.selectedTopicIds);
   },
 
   /**
@@ -747,22 +783,24 @@ var TopicsOverTimeViewer = MainView.add(VisualizationView, {
           documentData.docId = docid;
           var year = thisDocument.fields.year;
 
-          // Get min and max probability to help set domain for y axis
-          if (topicData.min === -1 || topicData.min > documentData.probability)
-            topicData.min = documentData.probability;
-
-          if (topicData.max === -1 || topicData.max < documentData.probability)
-            topicData.max = documentData.probability;
-
           // Get all previously found entries for the same year as this document (this is for stacking purposes)
           var yearData = data[year];
           if (yearData === undefined) { // Or initialize if necessary
             yearData = [];
+            yearData.totalProbability = 0;
             data[year] = yearData;
           }
 
           // Add this document to the data for this year
+          yearData.totalProbability += documentData.probability;
           yearData.push(documentData);
+
+          // Get min and max probability to help set domain for y axis
+          if (topicData.min === -1 || topicData.min > yearData.totalProbability)
+            topicData.min = yearData.totalProbability;
+
+          if (topicData.max === -1 || topicData.max < yearData.totalProbability)
+            topicData.max = yearData.totalProbability;
 
           // Add to index so we can stack them in bar chart
           var yearIndex = { year : year,

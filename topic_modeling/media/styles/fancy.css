@@ -1,15 +1,17 @@
 
 /** CSS stuff **/
 
+*, *:before, *:after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -ms-box-sizing:border-box;
+  box-sizing: border-box;
+}
+
 body {
   /*font: 10px sans-serif;
   margin-top: 40px;
   padding: 20px;*/
-}
-
-svg {
-  border: 2px solid black;
-  border-radius: 3px;
 }
 
 ul.nav li, ul.nav li a {
@@ -20,11 +22,16 @@ ul.nav li, ul.nav li a {
   font-size: 20px;
 }
 
-#main {
+#visualization-components {
   float: left;
-  width: 760px;
-  height: 760px;
-  position: relative;
+}
+
+#main .viz-main {
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  display: inline-block;
+  vertical-align: top;
+  overflow: hidden;
 }
 
 .navbar-inner {
@@ -95,12 +102,6 @@ body.loading #loading-message {
 body.loading #loading-indicator {
   display: block;
 }
-body.loading #viz-menus {
-}
-body.loading #main > * {
-}
-body.loading #right-bar * {
-}
 
 #refresh {
   background-color: whiteSmoke;
@@ -108,8 +109,24 @@ body.loading #right-bar * {
   border-radius: 5px;
 }
 
+.control-item {
+  padding: 5px;
+  position: relative;
+  top: 1px;
+  /*border: 1px solid #ddd;*/
+  background-color: whiteSmoke;
+}
+
 #info {
   position: relative;
+  display: inline-block;
+  vertical-align: top;
+  overflow: auto;
+}
+
+.info-item {
+  /*border: 1px solid #ddd;*/
+  background-color: whiteSmoke;
 }
 
 #right-bar {
@@ -121,7 +138,8 @@ body.loading #right-bar * {
 }
 
 #right-bar .bar-item {
-  border: 1px solid #ddd;
+  position: relative;
+  /*border: 1px solid #ddd;*/
   padding: 3px 7px;
   border-radius: 4px;
   padding-top: 14px;
@@ -129,31 +147,29 @@ body.loading #right-bar * {
   min-height: 30px;
 }
 
-#controls.bar-item {
-  position: relative;
-  padding-top: 30px;
-}
-
 div.viz-menu {
   display: none;
 }
 
-#info > div.topleft-label, #controls > div.topleft-label {
-  display: block;
+button.topleft-label#info-trigger {
+  position: relative;
+  float: left;
+  border-radius: 0 4px 4px 0;
+  top: 25px;
+  /*left: 1px;*/
+} 
+
+button.topleft-label#control-trigger {
+  position: relative;
+  border-radius: 4px 4px 0 0;
+  top: 1px;
+  left: 25px;
 }
 
-#info > div, #controls > div {
-  display: none;
-}
-
-div.topleft-label {
-  position: absolute;
-  top: -1px;
-  left: -1px;
+button.topleft-label {
   border: 1px solid #DDD;
   background-color: whiteSmoke;
   padding: 3px 7px;
-  border-radius: 4px 0 4px 0;
   font-size: 12px;
   font-weight: bold;
 }

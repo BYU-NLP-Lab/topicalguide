@@ -73,9 +73,24 @@ var SelectUI = function (el, items) {
 };
 
 var InfoView = Backbone.View.extend({
-  initialize: function () {
-    this.$el.hide();
+
+  defaults: {
+    resize_trigger: "", // Specify this in implementation classes BEFORE calling initialize on this class to bind a resize event for that view
   },
+
+  initialize: function () {
+
+    this.$el.hide();
+    this.width = this.$el.width();
+    this.height = this.$el.height();
+
+    _.bindAll(this, "resize");
+    this.event_aggregator.bind(this.defaults.resize_trigger, this.resize);
+
+    this.trigger = $('#info-trigger');
+    this.open = false;
+  },
+
   preload_popover: function (url) {
     // set the url
     this.$('.view-details-btn')
@@ -89,11 +104,83 @@ var InfoView = Backbone.View.extend({
       return false;
     });
   },
+
   show: function () {
-    //this.$el.show();
+
+    this.$el.show();
+    var infoView = this;
+    var event_aggregator = this.event_aggregator;
+    var open = this.open;
+    var resize_trigger = this.defaults.resize_trigger;
+
+    // Set click handler for info trigger
+    this.trigger.click(function() {
+
+      // Set up resize event for other views
+      open = !open; // Toggle open or closed
+      var width = infoView.width; // Get the width of the info view
+      width = open ? width * -1 : width; // Get pixels to add to main view
+
+      // By resizing the main view, the info view will get pushed into the overflow and hidden
+      event_aggregator.trigger(resize_trigger, { dWidth : width }); // Trigger resize event
+      return false;
+    });
   },
-  hide: function () { this.$el.hide(); },
+
+  hide: function () {
+    this.$el.hide();
+    this.trigger.off("click");
+  },
+
+  resize: function(attr) {
+    if (attr && attr.dHeight) {
+      this.height = this.height + attr.dHeight;
+      this.$el.animate({
+        height : this.height + "px"
+      }, 400);
+    }
+  },
+  
 });
+
+var ControlsView = Backbone.View.extend({
+  initialize: function() {
+    this.$el.hide();
+
+    this.height = this.$el.height();
+    this.trigger = $('#control-trigger');
+  },
+
+  show: function(toggles) {
+
+    var controlView = this;
+    var event_aggregator = this.event_aggregator;
+    var open = false;
+
+    // Create controls trigger event
+    this.trigger.click(function() {
+      for (var toggle_element in toggles) {
+        var element_loc = toggles[toggle_element].element_loc;
+        $(element_loc).slideToggle(400);
+
+        open = !open;
+        var height = controlView.height;
+        height = open ? height * -1 : height;
+
+        var resize_trigger = toggles[toggle_element].resize_trigger;
+        event_aggregator.trigger(resize_trigger, { dHeight : height });
+      }
+      return false;
+    });
+  },
+
+  hide: function() {
+    this.$el.hide();
+
+    // remove controls trigger event
+    this.trigger.off("click");
+  },
+})
 
 /** This view manages the content of the page
  *
@@ -190,7 +277,7 @@ var MainView = Backbone.View.extend({
     this.views = {};
     // this.$el.empty();
     _.forOwn(this.constructor.visualizations, function (value, key) {
-      var node = $('<div class="viz-main"></div>').attr('id', key).appendTo(that.$el).hide();
+      var node = $('<div class="viz-main"></div>').attr('id', key).insertBefore($('#main #info')).hide();
       var menu = $('#menu-' + key);
       var info = $('#info-' + key);
       var controls = $('#controls-' + key);
@@ -304,11 +391,15 @@ var VisualizationView = Backbone.View.extend({
   defaults: {},
 
   initialize: function () {
+
     this.options = _.extend(this.base_defaults, this.defaults, this.options);
     if (!this.options.parent) throw new Error('No parent app given in options');
     if (!this.el) throw new Error('No element given in options');
     if (!this.options.menu_el) throw new Error('No element given in options');
     if (!this.options.info_el) throw new Error('No element given in options');
+
+    this.set_new_dimensions();
+
     this.main = this.options.parent;
     this.data = this.main.data;
     this.loading = false;
@@ -317,6 +408,20 @@ var VisualizationView = Backbone.View.extend({
     this.setup_controls(this.options.controls_el);
     this.setup_base();
     this.setup_d3();
+  },
+
+  set_new_dimensions: function(override) {
+
+    var width = this.base_defaults.width;
+    var height = this.base_defaults.height;
+    if (override) {
+      if (override.width)
+        width = override.width;
+      if (override.height)
+        height = override.height;
+    }
+    this.width = width;
+    this.height = height;
   },
 
   url: function () {
@@ -413,6 +518,61 @@ var VisualizationView = Backbone.View.extend({
           "translate(" + this.zoom.translate() + ")"
           + " scale(" + this.zoom.scale() + ")");
   },
+
+  resize: function(options) {
+    var newDimensions = {};
+    var svg = this.svg;
+
+    if (options.dWidth) {
+      var width = this.width + options.dWidth;
+      var goal = { width : width + "px" };
+      this.$el.animate(goal, 1000);
+      // Magical jQuery syntax to animate html attributes, rather than changing the styling
+      // I'm leaving this here in case someone needs to know how to do this in the future
+      // $({ width : svg.attr("width") }).animate(goal,
+      //                                               { duration: 1000,
+      //                                                 step : function(now) {
+      //                                                   svg.attr("width", now);
+      //                                                 }
+      //                                               });
+
+      newDimensions.width = width;
+    }
+
+    if (options.dHeight) {
+      var height = this.height + options.dHeight;
+      var goal = { height : height + "px" };
+      $('#visualization-components').animate(goal, 400);
+      this.$el.animate(goal, 400);
+
+      newDimensions.height = height;
+    }
+
+    this.set_new_dimensions(newDimensions);
+  },
+
+  /**
+   * Hashes the html transform attribute
+   * i.e. parseTransformAttr('translate(6,5),scale(3,3.5),a(1,1),b(2,23,-34),c(300)')
+   *      RETURNS
+   *      {
+   *        translate: [ '6', '5' ],
+   *        scale: [ '3', '3.5' ],
+   *        a: [ '1', '1' ],
+   *        b: [ '2', '23', '-34' ],
+   *        c: [ '300' ]
+   *      }
+   */
+  parseTransformAttr: function(attributes) {
+    var b={};
+    for (var i in attributes = attributes.match(/(\w+\((\-?\d+\.?\d*,?)+\))+/g)) // for all valid attributes (including negative and decimal)
+    {
+        var c = attributes[i].match(/[\w\.\-]+/g); // Split transform name and values into array
+        b[c.shift()] = c; // First item is name, equal to array of values left
+    }
+    return b;
+  },
+
 });
 
 /**
