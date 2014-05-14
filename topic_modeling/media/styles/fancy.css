@@ -22,18 +22,6 @@ ul.nav li, ul.nav li a {
   font-size: 20px;
 }
 
-#visualization-components {
-  float: left;
-}
-
-#main .viz-main {
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  display: inline-block;
-  vertical-align: top;
-  overflow: hidden;
-}
-
 .navbar-inner {
   position: relative;
 }
@@ -109,24 +97,72 @@ body.loading #loading-indicator {
   border-radius: 5px;
 }
 
-.control-item {
-  padding: 5px;
+#controls {
+  border: 1px solid #ddd;
+  border-radius: 5px 5px 5px 0px;
   position: relative;
   top: 1px;
-  /*border: 1px solid #ddd;*/
   background-color: whiteSmoke;
+  overflow: auto;
+}
+
+.control-item {
+  padding: 5px;
+}
+
+#main-and-info-components {
+  float: left;
+}
+
+#main-and-info-visible {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: top;
+}
+
+#main {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.viz-main {
+  border: 1px solid #ddd;
 }
 
 #info {
+  border: 1px solid #ddd;
+  border-radius: 0px 5px 5px 0px;
+  padding: 5px;
   position: relative;
   display: inline-block;
   vertical-align: top;
   overflow: auto;
+  background-color: whiteSmoke;
 }
 
-.info-item {
-  /*border: 1px solid #ddd;*/
+button.topleft-label#control-trigger {
+  position: relative;
+  border-radius: 4px 4px 0 0;
+  top: 1px;
+  left: 25px;
+}
+
+button.topleft-label#info-trigger {
+  position: relative;
+  margin: 0;
+  display: inline-block;
+  vertical-align: top;
+  border-radius: 0 4px 4px 0;
+  top: 25px;
+  left: -1px;
+}
+
+button.topleft-label {
+  border: 1px solid #DDD;
   background-color: whiteSmoke;
+  padding: 3px 7px;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 #right-bar {
@@ -149,29 +185,6 @@ body.loading #loading-indicator {
 
 div.viz-menu {
   display: none;
-}
-
-button.topleft-label#info-trigger {
-  position: relative;
-  float: left;
-  border-radius: 0 4px 4px 0;
-  top: 25px;
-  /*left: 1px;*/
-} 
-
-button.topleft-label#control-trigger {
-  position: relative;
-  border-radius: 4px 4px 0 0;
-  top: 1px;
-  left: 25px;
-}
-
-button.topleft-label {
-  border: 1px solid #DDD;
-  background-color: whiteSmoke;
-  padding: 3px 7px;
-  font-size: 12px;
-  font-weight: bold;
 }
 
 iframe.theframe {

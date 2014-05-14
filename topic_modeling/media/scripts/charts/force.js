@@ -133,7 +133,44 @@ var ForceMenu = Backbone.View.extend({
 
 var ForceInfo = InfoView.extend({
   initialize: function () {
-    this.$el.hide();
+
+    InfoView.prototype.initialize.apply(this, arguments);
+
+    this.createItems();
+  },
+
+  createItems: function() {
+
+    var clickTopicLabel = this.appendItem('</br><h3 class="topic-name">Click a Topic</h3>');
+    var topicDetailsButton = this.appendItem('<a href="#" class="btn btn-primary btn-small view-details-btn">View Topic Details</a>');
+    var metricsTable = this.appendItem('<table class="metrics table table-condensed table-striped">' +
+                                          '<thead>' +
+                                            '<th>Metric</th>' +
+                                            '<th>Value</th>' +
+                                            '<th>Min</th>' +
+                                            '<th>Max</th>' +
+                                          '</thead>' +
+                                          '<tbody>' +
+                                          '</tbody>' +
+                                        '</table>');
+    var topDocumentsLabel = this.appendItem('<h3>Top Documents</h3>');
+    var documentsTabel = this.appendItem('<table class="documents table table-condensed table-striped">' +
+                                            '<thead>' +
+                                              '<th>Name</th>' +
+                                              '<th>Count</th>' +
+                                            '</thead>' +
+                                            '<tbody>' +
+                                            '</tbody>' +
+                                          '</table>');
+    var topWordsLabel = this.appendItem('<h3>Top Words</h3>');
+    var wordsTable = this.appendItem('<table class="words table table-condensed table-striped">' +
+                                        '<thead>' +
+                                          '<th>Name</th>' +
+                                          '<th>Count</th>' +
+                                        '</thead>' +
+                                        '<tbody>' +
+                                        '</tbody>' +
+                                      '</table>');
   },
 
   clear: function () {
@@ -175,17 +212,21 @@ var ForceInfo = InfoView.extend({
         .appendTo(wtable);
     });
     this.$el.show();
-  },
-  show: function () {
-    // this.$el.show();
-  },
-  hide: function () {
-    this.$el.hide();
   }
+
 });
 
-var ForceControls = Backbone.View.extend({
+var ForceControls = ControlsView.extend({
+  
   initialize: function (options) {
+
+    ControlsView.prototype.initialize.apply(this, arguments);
+
+    $('</br><label>Link Threshold</label>').appendTo(this.$el);
+    $('<div class="threshhold" id="force-link-slider"></div>').appendTo(this.$el);
+    $('<label>Topic Size Threshold</label>').appendTo(this.$el);
+    $('<div class="threshhold" id="force-size-slider"></div>').appendTo(this.$el);
+
     var parent = this.parent = options.parent;
     var link_th = parent.options.link_threshold;
     this.$('#force-link-slider').slider({
@@ -210,15 +251,8 @@ var ForceControls = Backbone.View.extend({
         parent.set_size_th(ui.values);
       }
     });
-  },
-
-  show: function () {
-    this.$el.show();
-  },
-
-  hide: function () {
-    this.$el.hide();
   }
+
 });
 
 /**
@@ -247,7 +281,7 @@ var ForceViewer = MainView.add(ZoomableView, {
   first : true,
 
   initialize: function () {
-    VisualizationView.prototype.initialize.apply(this, arguments);
+    ZoomableView.prototype.initialize.apply(this, arguments);
     this.ticking = false;
   },
 

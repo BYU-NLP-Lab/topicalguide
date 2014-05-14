@@ -5,8 +5,45 @@
 
 var ChordInfo = InfoView.extend({
   initialize: function () {
-    this.$('button.view-plot').click(_.bind(this.view_plot, this));
-    this.$el.hide();
+    InfoView.prototype.initialize.apply(this, arguments);
+
+    this.$('button.viewplot').click(_.bind(this.view_plot, this));
+
+    this.createItems();
+  },
+
+  createItems: function() {
+
+    var clickTopicLabel = this.appendItem('</br><h3 class="topic-name">Click a Topic</h3>');
+    var topicDetailsButton = this.appendItem('<a href="#" class="btn btn-primary btn-small view-details-btn">View Topic Details</a>');
+    var metricsTable = this.appendItem('<table class="metrics table-striped">' +
+                                          '<thead>' +
+                                            '<th>Metric</th>' +
+                                            '<th>Value</th>' +
+                                            '<th>Min</th>' +
+                                            '<th>Max</th>' +
+                                          '</thead>' +
+                                          '<tbody>' +
+                                          '</tbody>' +
+                                        '</table>');
+    var topDocumentsLabel = this.appendItem('<h3>Top Documents</h3>');
+    var documentsTable = this.appendItem('<table class="documents table-striped">' +
+                                            '<thead>' +
+                                              '<th>Name</th>' +
+                                              '<th>Count</th>' +
+                                            '</thead>' +
+                                            '<tbody>' +
+                                            '</tbody>' +
+                                          '</table>');
+    var topWordsLabel = this.appendItem('<h3>Top Words</h3>');
+    var wordsTable = this.appendItem('<table class="words table-striped">' +
+                                        '<thead>' +
+                                          '<th>Name</th>' +
+                                          '<th>Count</th>' +
+                                        '</thead>' +
+                                        '<tbody>' +
+                                        '</tbody>' +
+                                      '</table>');
   },
 
   clear: function () {
@@ -40,18 +77,19 @@ var ChordInfo = InfoView.extend({
     this.preload_popover(details_url);
     // show yourself
     this.$el.show();
-  },
-  show: function () {
-    // this.$el.show();
-  },
-  hide: function () {
-    this.$el.hide();
   }
 });
 
 // TODO change step to be based on number of topics? or something more sensible than 20...
-var ChordControls = Backbone.View.extend({
+var ChordControls = ControlsView.extend({
+
   initialize: function (options) {
+
+    ControlsView.prototype.initialize.apply(this, arguments);
+
+    $('</br><label>Link Threshold Using Document Correlation</label>').appendTo(this.$el);
+    $('<div class="threshhold" id="chords-slider"></div>').appendTo(this.$el);
+
     var parent = this.parent = options.parent;
     var t = parent.options.chord_threshold;
     var tb = parent.options.threshhold_bounds;
@@ -65,15 +103,8 @@ var ChordControls = Backbone.View.extend({
         parent.set_threshhold(ui.values);
       }
     });
-  },
-
-  show: function () {
-    this.$el.show();
-  },
-
-  hide: function () {
-    this.$el.hide();
   }
+
 });
 
 

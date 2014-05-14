@@ -72,23 +72,33 @@ var SelectUI = function (el, items) {
   return this;
 };
 
+
 var InfoView = Backbone.View.extend({
 
+  parent: $('#info'),
+
+  trigger: $('#info-trigger'),
+
   defaults: {
-    resize_trigger: "", // Specify this in implementation classes BEFORE calling initialize on this class to bind a resize event for that view
+    resize_trigger: "resize", // You can change this in implementation classes, though it is not recommended
   },
 
-  initialize: function () {
+  initialize: function (options) {
+
+    var el_selector = '#' + options.el_id;
+    this.infoView = this.parent;
+    $('<div id="' + options.el_id + '" class="info-item">').appendTo(this.infoView);
+    this.setElement(el_selector);
+
+    this.width = this.parent.outerWidth();
+    this.height = this.parent.outerHeight();
 
     this.$el.hide();
-    this.width = this.$el.width();
-    this.height = this.$el.height();
 
     _.bindAll(this, "resize");
     this.event_aggregator.bind(this.defaults.resize_trigger, this.resize);
 
-    this.trigger = $('#info-trigger');
-    this.open = false;
+    InfoView.prototype.open = false; // Set for all InfoViews so it stays open across visualizations
   },
 
   preload_popover: function (url) {
@@ -110,16 +120,15 @@ var InfoView = Backbone.View.extend({
     this.$el.show();
     var infoView = this;
     var event_aggregator = this.event_aggregator;
-    var open = this.open;
     var resize_trigger = this.defaults.resize_trigger;
 
     // Set click handler for info trigger
     this.trigger.click(function() {
 
       // Set up resize event for other views
-      open = !open; // Toggle open or closed
+      InfoView.prototype.open = !InfoView.prototype.open; // Toggle open or closed
       var width = infoView.width; // Get the width of the info view
-      width = open ? width * -1 : width; // Get pixels to add to main view
+      width = InfoView.prototype.open ? width * -1 : width; // Get pixels to add to main view
 
       // By resizing the main view, the info view will get pushed into the overflow and hidden
       event_aggregator.trigger(resize_trigger, { dWidth : width }); // Trigger resize event
@@ -129,7 +138,7 @@ var InfoView = Backbone.View.extend({
 
   hide: function () {
     this.$el.hide();
-    this.trigger.off("click");
+    this.trigger.off("click"); // Un-register click handler for this infoview when switching to another view
   },
 
   resize: function(attr) {
@@ -140,36 +149,61 @@ var InfoView = Backbone.View.extend({
       }, 400);
     }
   },
+
+  appendItem: function(html) {
+    return $(html).appendTo(this.$el);
+  },
+
+  appendItems: function(items) {
+    var elements = [];
+    for (var i in items) {
+      var html = items[i];
+      elements.push(this.appendItem(html));
+    }
+    return elements;
+  }
   
 });
 
+
 var ControlsView = Backbone.View.extend({
-  initialize: function() {
+
+  parent: $('#controls'),
+
+  trigger: $('#control-trigger'),
+
+  showing: false,
+
+  initialize: function(options) {
+
+    var el_selector = '#' + options.el_id;
+    var controlsView = this.controlsView = this.parent;
+    $('<div id="' + options.el_id + '" class="control-item">').appendTo(this.controlsView);
+    this.setElement(el_selector);
+
+    this.parent.hide();
     this.$el.hide();
 
-    this.height = this.$el.height();
-    this.trigger = $('#control-trigger');
+    this.height = this.parent.outerHeight();
+    ControlsView.prototype.open = false; // Set for all InfoViews so it stays open across visualizations
   },
 
-  show: function(toggles) {
-
+  show: function() {
+    this.$el.show();
     var controlView = this;
     var event_aggregator = this.event_aggregator;
     var open = false;
 
     // Create controls trigger event
     this.trigger.click(function() {
-      for (var toggle_element in toggles) {
-        var element_loc = toggles[toggle_element].element_loc;
-        $(element_loc).slideToggle(400);
+      $('#controls').slideToggle(400);
 
-        open = !open;
-        var height = controlView.height;
-        height = open ? height * -1 : height;
+      ControlsView.prototype.open = !ControlsView.prototype.open;
+      var height = controlView.height;
+      height = ControlsView.prototype.open ? height * -1 : height;
 
-        var resize_trigger = toggles[toggle_element].resize_trigger;
-        event_aggregator.trigger(resize_trigger, { dHeight : height });
-      }
+      var resize_trigger = "resize";
+      event_aggregator.trigger(resize_trigger, { dHeight : height });
       return false;
     });
   },
@@ -180,6 +214,20 @@ var ControlsView = Backbone.View.extend({
     // remove controls trigger event
     this.trigger.off("click");
   },
+
+  appendItem: function(html) {
+    return $(html).appendTo(this.$el);
+  },
+
+  appendItems: function(items) {
+    var elements = [];
+    for (var i in items) {
+      var html = items[i];
+      elements.push(this.appendItem(html));
+    }
+    return elements;
+  }
+
 })
 
 /** This view manages the content of the page
@@ -277,12 +325,12 @@ var MainView = Backbone.View.extend({
     this.views = {};
     // this.$el.empty();
     _.forOwn(this.constructor.visualizations, function (value, key) {
-      var node = $('<div class="viz-main"></div>').attr('id', key).insertBefore($('#main #info')).hide();
+      var node = $('<div class="viz-main vis-full-height"></div>').attr('id', key).appendTo($('#main')).hide();
       var menu = $('#menu-' + key);
-      var info = $('#info-' + key);
-      var controls = $('#controls-' + key);
+      var info_id = 'info-' + key;
+      var controls_id = 'controls-' + key;
       that.views[key] = new value({parent: that, el: node, menu_el: menu,
-        info_el: info, controls_el: controls
+        info_el_id: info_id, controls_el_id: controls_id
       });
       items.push([key, that.views[key].title, _.bind(that.view, that, key)]);
     });
@@ -382,8 +430,8 @@ var MainView = Backbone.View.extend({
  */
 var VisualizationView = Backbone.View.extend({
   base_defaults: {  
-    width:  $('#main').width(),
-    height: $('#main').height(),
+    width:  $('#main').outerWidth(),
+    height: $('#main').outerHeight(),
   },
   menu_class: null,
   info_class: null,
@@ -396,32 +444,30 @@ var VisualizationView = Backbone.View.extend({
     if (!this.options.parent) throw new Error('No parent app given in options');
     if (!this.el) throw new Error('No element given in options');
     if (!this.options.menu_el) throw new Error('No element given in options');
-    if (!this.options.info_el) throw new Error('No element given in options');
+    if (!this.options.info_el_id) throw new Error('No element given in options');
 
+    this.width = this.base_defaults.width;
+    this.height = this.base_defaults.height;
     this.set_new_dimensions();
 
     this.main = this.options.parent;
     this.data = this.main.data;
     this.loading = false;
     this.setup_menu(this.options.menu_el);
-    this.setup_info(this.options.info_el);
-    this.setup_controls(this.options.controls_el);
+    this.setup_info(this.options.info_el_id);
+    this.setup_controls(this.options.controls_el_id);
     this.setup_base();
     this.setup_d3();
   },
 
   set_new_dimensions: function(override) {
 
-    var width = this.base_defaults.width;
-    var height = this.base_defaults.height;
     if (override) {
       if (override.width)
-        width = override.width;
+        this.width = override.width;
       if (override.height)
-        height = override.height;
+        this.height = override.height;
     }
-    this.width = width;
-    this.height = height;
   },
 
   url: function () {
@@ -436,17 +482,17 @@ var VisualizationView = Backbone.View.extend({
   },
 
   /** setup the info pane. Arg: $(this.options.info_el) **/
-  setup_info: function (info) {
+  setup_info: function (info_id) {
     if (this.info_class) {
-      this.info = new this.info_class({el: info, parent: this});
+      this.info = new this.info_class({el_id: info_id, parent: this});
       this.info.hide();
     }
   },
 
-  /** setup the controls pane. Arg: $(this.options.controls_el} **/
-  setup_controls: function (controls) {
+  /** setup the controls pane. Arg: $(this.options.controls_el_id} **/
+  setup_controls: function (controls_id) {
     if (this.controls_class) {
-      this.controls = new this.controls_class({el: controls, parent: this});
+      this.controls = new this.controls_class({el_id: controls_id, parent: this});
       this.controls.hide();
     }
   },
@@ -454,8 +500,8 @@ var VisualizationView = Backbone.View.extend({
   /** this sets up the basic d3 svg scaffolding, zooming, etc. **/
   setup_base: function () {
     this.svg = d3.select(this.el).append('svg')
-      .attr('width', this.options.width)
-      .attr('height', this.options.height)
+      // .attr('width', this.options.width)
+      // .attr('height', this.options.height)
       .attr("pointer-events", "all");
     this.outer = this.svg.append('svg:g');
     this.outer.append('rect').attr('class', 'background')
@@ -526,7 +572,8 @@ var VisualizationView = Backbone.View.extend({
     if (options.dWidth) {
       var width = this.width + options.dWidth;
       var goal = { width : width + "px" };
-      this.$el.animate(goal, 1000);
+      // this.$el.animate(goal, 1000);
+      $('#main').animate(goal, 400);
       // Magical jQuery syntax to animate html attributes, rather than changing the styling
       // I'm leaving this here in case someone needs to know how to do this in the future
       // $({ width : svg.attr("width") }).animate(goal,
@@ -542,8 +589,9 @@ var VisualizationView = Backbone.View.extend({
     if (options.dHeight) {
       var height = this.height + options.dHeight;
       var goal = { height : height + "px" };
-      $('#visualization-components').animate(goal, 400);
-      this.$el.animate(goal, 400);
+      $('#visualization .vis-full-height').animate(goal, 400);
+      // console.log(this.$el);
+      // this.$el.animate(goal, 400);
 
       newDimensions.height = height;
     }

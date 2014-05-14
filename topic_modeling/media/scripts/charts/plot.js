@@ -7,28 +7,37 @@ var PlotControls = ControlsView.extend({
 
     ControlsView.prototype.initialize.apply(this, arguments);
 
-    var parent = this.parent = options.parent;
-    this.xcontrol = this.$('#plot-document-x-control');
-    this.ycontrol = this.$('#plot-document-y-control');
-    this.rcontrol = this.$('#plot-document-r-control');
-    this.ccontrol = this.$('#plot-document-c-control');
+    var parent = this.parent = options.parent; // This isn't really a parent, it's the plot-documents main view...
 
-    var control = this;
-    $("</br><h4>Remove Documents</h4>").appendTo($('#controls-plot-documents'));
-    this.removeButton = $("<button style='display:block'>Remove Documents</button>").appendTo($('#controls-plot-documents'));
-    this.removeButton.on("click", function () { control.removeButtonClicked(); });
-    this.allButton = $("<button style='display:block'>Add Removed Documents</button>").appendTo($('#controls-plot-documents'));
-    this.allButton.on("click", function () { control.allButtonClicked(); });
-    this.saveButton = $("<button style='display:block'>Save</button>").appendTo($('#controls-plot-documents'));
-    this.saveButton.on("click", function () { control.saveButtonClicked(); });
-    this.hiddenSvgForm = $('<form id="svg_export_form" method="POST" style="display:none;visibility:hidden">' +
-                           ' <input type="hidden" name="svg" /> </form>').appendTo($('#controls-plot-documents'));
-                          
+    this.createItems();
     //We will save this for another milestone
     /*
-      this.filterButton = $("<button style='display:block'>Filter</button>").appendTo($('#controls-plot-documents'));
+      this.filterButton = this.appendItem("<button style='display:block'>Filter</button>");
       this.filterButton.on("click", function() { parent.filterButtonClicked(); });
     */
+  },
+
+  createItems: function() {
+
+    var control = this;
+
+    this.xcontrol = this.appendItem('<div id="plot-document-x-control" class="plot-document-controls"></div>');
+    this.ycontrol = this.appendItem('<div id="plot-document-y-control" class="plot-document-controls"></div>');
+    this.rcontrol = this.appendItem('<div id="plot-document-r-control" class="plot-document-controls"></div>');
+    this.ccontrol = this.appendItem('<div id="plot-document-c-control" class="plot-document-controls"></div>');
+
+    var removeLabel = this.appendItem("</br><h4>Remove Documents</h4>");
+    this.removeButton = this.appendItem("<button style='display:block'>Remove Documents</button>");
+    this.removeButton.on("click", function () { control.removeButtonClicked(); });
+
+    this.allButton = this.appendItem("<button style='display:block'>Add Removed Documents</button>");
+    this.allButton.on("click", function () { control.allButtonClicked(); });
+
+    this.saveButton = this.appendItem("<button style='display:block'>Save</button>");
+    this.saveButton.on("click", function () { control.saveButtonClicked(); });
+
+    this.hiddenSvgForm = this.appendItem('<form id="svg_export_form" method="POST" style="display:none;visibility:hidden">' +
+                                         ' <input type="hidden" name="svg" /> </form>');
   },
 
   //note that this does not get any css for the svg.  It must all be put inline
@@ -104,7 +113,7 @@ var PlotControls = ControlsView.extend({
   },
 
   show: function () {
-    ControlsView.prototype.show.call(this, $.merge([{ element_loc : '#controls-plot-documents', resize_trigger : "plot-documents:resize" }], arguments));
+    ControlsView.prototype.show.call(this, arguments);
   },
 
   hide: function () {
@@ -130,22 +139,16 @@ var PlotMenu = Backbone.View.extend({
 var PlotInfo = InfoView.extend({
 
   initialize: function () {
-    this.defaults.resize_trigger = "plot-documents:resize";
+
     InfoView.prototype.initialize.apply(this, arguments);
+
+    var detailsbutton = this.appendItem('</br><a href="#" class="btn btn-primary btn-small view-details-btn">View Document Details</a>');
+    var contents = this.appendItem('<div class="contents"></div>');
     
     this.docDisplay = this.$('>.contents');
-    this.$el.hide();
   },
 
   clear: function () { },
-
-  show: function () {
-    InfoView.prototype.show.apply(this, arguments);
-  },
-
-  hide: function () {
-    InfoView.prototype.hide.apply(this, arguments);
-  },
 
   //this creates three separate tables instead of just one
   populateOriginal: function(doc) {
@@ -283,6 +286,8 @@ var PlotViewer = MainView.add(VisualizationView, {
       "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ];
     this.fontSize = $('body').css('font-size');
     //console.log(this);
+    _.bindAll(this, "resize");
+    this.event_aggregator.bind("resize", this.resize);
 
   },
 
@@ -392,6 +397,19 @@ var PlotViewer = MainView.add(VisualizationView, {
                           .attr("class", "label").attr("text-anchor", "end")
                           .attr("x", this.width - 10).attr("y", this.topLabelSpacing)
                           .text("Doc Count: ").attr('font-size', this.fontSize);
+  },
+
+  scaleRanges: function() {    // x range function, left and right padding
+    this.xRange = d3.scale.linear().range([this.margins.left, this.width - this.margins.right]);
+    // y range function
+    this.yRange = d3.scale.linear().range([this.height - this.margins.bottom, this.margins.top]);
+    this.rMax =  Math.round(this.width / 47);
+    this.rMin =  Math.round((this.rMax / 3));
+    this.rUniform = this.rMin + Math.round(0.3 * (this.rMax - this.rMin));
+    this.rRange = d3.scale.linear().range([this.rMin, this.rMax]); // radius range function - ensures the radius is a certain range
+
+    this.xAxis.scale(this.xRange);
+    this.yAxis.scale(this.yRange);
   },
 
   filterData: function(data, axes, override) {
@@ -512,7 +530,7 @@ var PlotViewer = MainView.add(VisualizationView, {
     rUniform = this.rUniform;
 
     //transiting is not working in firefox now... but it still works in chrome...
-    documents.transition().duration(1500).ease("exp-in-out")
+    documents.transition().duration(1500)
       .style("opacity", 1)
       .style("fill", function(doc) { return colors[nomMaps[axes.cAxis][doc.fields[axes.cAxis]] % colors.length]; })
       .attr("r", function(doc) { return (axes.rAxis == 'uniform') ? rUniform :rRange(doc.fields[axes.rAxis]); })
@@ -521,16 +539,27 @@ var PlotViewer = MainView.add(VisualizationView, {
   },
 
   setDocExit: function(documents) {
-    documents.exit().transition().duration(1500).ease("exp-in-out")
+    documents.exit().transition().duration(1500)
       .attr("r", 0)
       .style("opacity", 0)
         .remove();
   },
 
   setAxesTransition: function() {
-    var t = this.svg.transition().duration(1500).ease("exp-in-out");
+    var t = this.svg.transition().duration(1500);
     t.select(".x.axis").call(this.xAxis);
     t.select(".y.axis").call(this.yAxis);
+
+    // Translate x axis in case the whole visualization moves
+    var xAxisEl = $('#plot-documents .x.axis');
+    var translate = this.parseTransformAttr(xAxisEl.attr("transform")).translate;
+    $({ transform : translate[1] }).animate({ transform : this.height - this.xAxisMargin }, // Magical jQuery attribute animation
+                                            { duration : 1500,
+                                              step : function(now) {
+                                                xAxisEl.attr("transform", "translate(" + translate[0] + "," + now + ")");
+                                              }
+                                            });
+
     //this makes the css inline for saving the svg
     $('.axis .tick').attr("style", "stroke:#000000; opacity:1");
     $('.axis text').css("font-size", this.fontSize);
@@ -586,7 +615,7 @@ var PlotViewer = MainView.add(VisualizationView, {
   },
 
   filterButtonClicked: function() {
-    //console.log("Filter Button Clicked");
+    // console.log("Filter Button Clicked");
     var self = this;
     this.filterDialog.dialog({
       buttons: [
@@ -693,6 +722,12 @@ var PlotViewer = MainView.add(VisualizationView, {
 
   redraw: function() { },
 
+  resize: function(options) {
+    VisualizationView.prototype.resize.call(this, options);
+
+    this.scaleRanges();
+    this.update(true);
+  },
 
   getAxes: function() {
     var x = $("option:selected", this.controls.xcontrol).val();

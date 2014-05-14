@@ -7,8 +7,9 @@
 var TopicsOverTimeInfo = InfoView.extend({
 
   initialize: function () {
-  	this.defaults.resize_trigger = "tot:resize";
   	InfoView.prototype.initialize.apply(this, arguments);
+
+    var label = this.appendItem('<p>Some stuff here</p>');
   },
 
   clear: function () {
@@ -38,24 +39,26 @@ var TopicsOverTimeInfo = InfoView.extend({
 var TopicsOverTimeControls = ControlsView.extend({
 
   initialize: function (options) {
+
   	ControlsView.prototype.initialize.apply(this, arguments);
-  	this.controls = $('#controls-topics-over-time');
 
     this.loaded = false;
     _.bindAll(this, "load");
     this.event_aggregator.bind("tot:loaded", this.load);
   },
 
-  load: function (topics) {    
+  load: function (topics) {
+
     if (!this.loaded) {
-      var html = 'Topics<br><select id="topic-selector" size="' + topics.length + '" multiple>';
+      // Set up the topic selector once the data has been loaded
+      var html = '<p>Topics</p><select id="topic-selector" size="' + topics.length + '" multiple>';
       for (var topicId in topics) {
         var topic = topics[topicId];
         html += '<option value="' + topicId + '">' + topic + ' ' + topicId + '</option>';
       }
       html += '</select>';
 
-      var label = this.controls.append(html);
+      var topicSelector = this.appendItem(html);
       var event_aggregator = this.event_aggregator;
 
       $('#topic-selector').change(function() {
@@ -71,7 +74,7 @@ var TopicsOverTimeControls = ControlsView.extend({
   },
 
   show: function () {
-  	ControlsView.prototype.show.call(this, $.merge([{ element_loc : '#controls-topics-over-time', resize_trigger : "tot:resize" }], arguments));
+  	ControlsView.prototype.show.call(this, arguments);
   },
 
   hide: function () {
@@ -158,7 +161,7 @@ var TopicsOverTimeViewer = MainView.add({
     //console.log(this);
     _.bindAll(this, "selectTopics", "resize");
     this.event_aggregator.bind("tot:select-topics", this.selectTopics);
-    this.event_aggregator.bind("tot:resize", this.resize);
+    this.event_aggregator.bind("resize", this.resize);
 
   },
 
@@ -231,8 +234,12 @@ var TopicsOverTimeViewer = MainView.add({
    */
   selectTopics: function() {
 
+  	if (!this.topics) {
+  		return;
+  	}
+
     var topicIds = Array.prototype.slice.call(arguments, 0)[0];
-    if (topicIds === undefined) { // If there are no arguments (select all)
+    if (!topicIds) { // If there are no arguments (select all)
       topicIds = [];
     }
     this.selectedTopicIds = topicIds;
@@ -455,7 +462,6 @@ var TopicsOverTimeViewer = MainView.add({
 
     // Function for creating lines - sets x and y value at every point on the line
     var line = d3.svg.line()
-    	// .defined(function(d, i) { return d.index === 0; })
         .interpolate("basis")
         .x(function(d, i) { return xRange(d.year); })
         .y(function(d, i) { return yRange(data[d.year].totalProbability); }); // Use the total value for this year
@@ -466,33 +472,31 @@ var TopicsOverTimeViewer = MainView.add({
     this.lineChart = {};
 
     // Append SVG element path for each requested topic
-    for (var topicId in this.topicData) {
-      if (topicId !== "min" && topicId !== "max") {
-        var topic = this.topicData[topicId];
-        var indices = topic.yearIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
-        indices.topicId = topic.yearIndices.topicId;
-        data = topic.data;
-        // Create lineChart SVG line element for this topic
-        var path = this.svg.append("svg:path")
-          .datum(indices)
-          .attr("class", "chart line")
-          .attr("d", line)
-          .style("opacity", 0)
-          .style("stroke", colors(topicId))
-          .style("fill", "none");
+    for (var topicId in this.topics) {
+    	var topic = this.topicData[topicId];
+	    var indices = topic.yearIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
+	    indices.topicId = topic.yearIndices.topicId;
+	    data = topic.data;
+	    // Create lineChart SVG line element for this topic
+	    var path = this.svg.append("svg:path")
+	      .datum(indices)
+	      .attr("class", "chart line")
+	      .attr("d", line)
+	      .style("opacity", 0)
+	      .style("stroke", colors(topicId))
+	      .style("fill", "none");
 
-        // This is to initialize the magical unfolding transition
-        // NOTE: disabled because this gets screwed up when the axes scale
-        //        The length is not updated when the lines are scaled, so they do not get entirely drawn out
-        //        It would be cool to fix, but I don't want to waste too much time on it
-        //
-        // var length = path.node().getTotalLength();
-        // path
-        //   .attr("stroke-dasharray", length + " " + length)
-        //   .attr("stroke-dashoffset", length);
+	    // This is to initialize the magical unfolding transition
+	    // NOTE: disabled because this gets screwed up when the axes scale
+	    //        The length is not updated when the lines are scaled, so they do not get entirely drawn out
+	    //        It would be cool to fix, but I don't want to waste too much time on it
+	    //
+	    // var length = path.node().getTotalLength();
+	    // path
+	    //   .attr("stroke-dasharray", length + " " + length)
+	    //   .attr("stroke-dashoffset", length);
 
-        this.lineChart[topicId] = path;
-      } 
+ 	   this.lineChart[topicId] = path;
     }
   },
 
@@ -511,12 +515,13 @@ var TopicsOverTimeViewer = MainView.add({
     t.select(".y.axis").call(this.yAxis);
 
     // Translate x axis in case the whole visualization moves
-    var translate = this.parseTransformAttr($('.x.axis').attr("transform")).translate;
+    var xAxisEl = $('#topics-over-time .x.axis');
+    var translate = this.parseTransformAttr(xAxisEl.attr("transform")).translate;
     $({ transform : translate[1] }).animate({ transform : this.height - this.margins.bottom }, // Magical jQuery attribute animation
 										    { duration : duration,
-										     	step : function(now) {
-										    		$('.x.axis').attr("transform", "translate(" + translate[0] + "," + now + ")");
-										    	}
+									     	  step : function(now) {
+									    		xAxisEl.attr("transform", "translate(" + translate[0] + "," + now + ")");
+									    	  }
 									   	    });
     
     //this makes the css inline for saving the svg
