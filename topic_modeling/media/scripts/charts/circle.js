@@ -52,6 +52,21 @@ var CircleMenu = Backbone.View.extend({
 
 var CircleInfo = InfoView.extend({
 	initialize: function () {
+
+    	InfoView.prototype.initialize.apply(this, arguments);
+
+		var topicNameLabel = this.appendItem('</br><h4 id="circle-topic-name">Click a Topic</h4>');
+        var topicDetailsButton = this.appendItem('<a href="#" class="btn btn-primary btn-small view-topic-details-btn">View Topic Details</a>');
+        var topicInfo = this.appendItem('<div id="circle-topic-info"></div>');
+
+        var clickDocumentLabel = this.appendItem('<br/><h4 id="circle-document-name">Click a Document</h4>');
+        var documentDetailsButton = this.appendItem('<a href="#" class="btn btn-primary btn-small view-document-details-btn">View Document Details</a>');
+        var documentInfo = this.appendItem('<div id="circle-document-info"></div>');
+
+        var wordNameLabel = this.appendItem('<br/><h4 id="circle-word-name">Click a Word</h4>');
+        var wordDetailsButton = this.appendItem('<a href="#" class="btn btn-primary btn-small view-word-details-btn">View Word Details</a>');
+        var wordInfo = this.appendItem('<div id="circle-word-info"></div>');
+
 		this.clear();
 	},
 
@@ -134,17 +149,16 @@ var CircleInfo = InfoView.extend({
 
 	load_word_cloud: function(topic) {
 		var infoDiv = d3.select('#circle-topic-info');
-    var rightBarWidth = $('#right-bar').width();
-    var svgMargin = Math.round(rightBarWidth / 14);
-    var svgWidth = rightBarWidth - (2 * svgMargin);
-    var svgHeight = 0.9 * svgWidth;
-    var size_mult = $('#main').height() / 500;
-    console.log(size_mult);
+	    var rightBarWidth = $('#right-bar').width();
+	    var svgMargin = Math.round(rightBarWidth / 14);
+	    var svgWidth = rightBarWidth - (2 * svgMargin);
+	    var svgHeight = 0.9 * svgWidth;
+	    var size_mult = $('#main').height() / 500;
 
-    //here we need to center the svg element
+	    //here we need to center the svg element
 		var wordCloud = infoDiv.append('svg')
 			.attr("height", svgHeight)
-      .attr("width", svgWidth);
+      		.attr("width", svgWidth);
 
 		var words = topic.words;
 
@@ -160,7 +174,7 @@ var CircleInfo = InfoView.extend({
 
 		function draw_word_cloud(words) {
 			var g = wordCloud.append("g");
-      console.log(words);
+      		// console.log(words);
 
 			g.selectAll("text")
 				.data(words)
@@ -207,17 +221,17 @@ var CircleInfo = InfoView.extend({
 		});			
 	},
 	
-
-	show: function () {
-		this.$el.show();
-	},
-	hide: function () {
-		this.$el.hide();
-	}
 });
 
-var CircleControls = Backbone.View.extend({
+var CircleControls = ControlsView.extend({
+	
 	initialize: function (options) {
+
+    	ControlsView.prototype.initialize.apply(this, arguments);
+
+    	$('</br><label>Topic Size Threshold</label>').appendTo(this.$el);
+    	$('<div class="threshhold" id="circle-topics-slider"></div>').appendTo(this.$el);
+
 		var parent = this.parent = options.parent;
 		var t = parent.options.circle_threshold;
 		this.$('#circle-topics-slider').slider({
@@ -230,15 +244,8 @@ var CircleControls = Backbone.View.extend({
 				parent.set_threshhold(ui.values);
 			}
 		});
-	},
-
-	show: function () {
-		this.$el.show();
-	},
-
-	hide: function () {
-		this.$el.hide();
 	}
+
 });
 
 /**
@@ -266,6 +273,9 @@ var CircleViewer = MainView.add({
 	initialize: function () {
 		VisualizationView.prototype.initialize.apply(this, arguments);
 		this.ticking = false;
+
+		_.bindAll(this, "resize");
+		this.event_aggregator.bind("resize", this.resize);
 	},
 
 	url: function () {
@@ -274,7 +284,7 @@ var CircleViewer = MainView.add({
 
 	setup_d3: function () {
 		this.circle = d3.layout.pack()
-			.size([this.options.width, this.options.height])
+			.size([this.width, this.height])
 			.value(function(d) { return d.size; });
 	},
 
@@ -284,9 +294,14 @@ var CircleViewer = MainView.add({
 	},
 
 	load: function (data) {
-		var that = this;
 		this.data = data;
 		
+		this.updateCircles();
+	},
+
+	updateCircles: function() {		
+		var that = this;
+
 		this.maing.selectAll("*").remove();
 		this.info.clear();
 
@@ -627,5 +642,13 @@ var CircleViewer = MainView.add({
 		this.create_event_layer(wordNodes, 'word', function(d) { that.info.remove_word(); that.info.load_word(d); });
 
 		return wordNodes;
+	},
+
+	resize: function(options) {
+		VisualizationView.prototype.resize.call(this, options);
+
+		this.setup_d3();
+		this.updateCircles();
 	}
+
 });

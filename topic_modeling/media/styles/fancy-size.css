@@ -5,7 +5,7 @@
 		width : 660px;
 	}
 
-	#visualization-components, #main {
+	#main-and-info-components, #main {
 		width : 400px;
 		height : 400px;
 	}
@@ -58,7 +58,7 @@
 		width : 850px;
 	}
 
-	#visualization-components, #main {
+	#main-and-info-components, #main {
 		width : 540px;
 		height : 540px;
 	}
@@ -80,7 +80,7 @@
 		width : 1060px;
 	}
 
-	#visualization-components, #main {
+	#main-and-info-components, #main {
 		width : 700px;
 		height : 700px;
 	}
@@ -102,29 +102,33 @@
 		width : 1400px;
 	}
 
-	#visualization-components {
-		width : 1360px;
-		height : 900px;
-	}
-
-	#vis-overflow {
-		width : 1780px;
-	}
-
-	#main {
-		width: 1360px;
+	.vis-full-height {
 		height: 900px;
-		max-width: 1360px;
 	}
 
-	.control-item {
+	#controls {
 		width : 1360px;
 		height : 150px;
 	}
 
-	.info-item {
+	#main-and-info-components {
+		width : 1400px;
+	}
+
+	#main-and-info-visible {
+		width : 1360px;
+	}
+
+	#main-and-info-overflow {
+		width : 1800px;
+	}
+
+	#main {
+		width: 1360px;
+	}
+
+	#info {
 		width : 420px;
-		height : 900px;
 	}
 
 	button.topleft-label#info-trigger {
@@ -189,7 +193,7 @@
 		width : 2010px;
 	}
 
-	#visualization-components, #main {
+	#main-and-info-components, #main {
 		width : 1300px;
 		height : 1300px;
 	}
@@ -259,7 +263,7 @@
 		width : 2700px;
 	}
 
-	#visualization-components, #main {
+	#main-and-info-components, #main {
 		width : 1800px;
 		height : 1800px;
 	}
