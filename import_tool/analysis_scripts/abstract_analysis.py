@@ -19,27 +19,26 @@ class AbstractAnalysis(object):
         """Return a string that uniquely identifies this analysis."""
         raise NotImplementedError('get_identifier is not implemented')
     
-    def get_readable_name(self):
-        """Return a string that contains a human readable name for this analysis."""
-        raise NotImplementedError('get_readable_name is not implemented')
-        
-    def get_description(self):
-        """Return a string describing this analysis."""
-        raise NotImplementedError('get_description is not implemented')
-    
     def get_stopwords(self):
-        """Return a list of unicode stopwords the analysis used, or an empty list if none."""
+        """Return a set of unicode stopwords the analysis used, or an empty list if none."""
         raise NotImplementedError('get_stopwords is not implemented')
     
-    def prepare_analysis_input(self, document_iterator):
+    def get_metadata(self):
         """
-        Do any preping needed for this analysis; document_iterator must 
-        iterator over documents returning a tuple like: 
-        (document_name, document_text.)
+        Return a dictionary where they keys are the metadata identifiers \
+        and the values are the associated values for this analysis.
+        Note that 'readable_name' and 'description' are special keys that are \
+        used by the Topical Guide to neatly display basic information about your dataset.
         """
-        raise NotImplementedError('prepare_analysis_input is not implemented')
+        raise NotImplementedError('get_metadata is not implemented')
     
-    def run_analysis(self):
+    def get_working_directory(self):
+        """
+        Return the directory that contains temporary files used by this particular analysis.
+        """
+        raise NotImplementedError('get_working_directory is not implemented')
+    
+    def run_analysis(self, document_iterator):
         """Perform the analysis."""
         raise NotImplementedError('run_analysis is not implemented')
     

@@ -30,7 +30,7 @@ BASIC_METRICS = [
     'document_token_count', 'document_type_count', 'document_topic_entropy', 
     'analysis_entropy',
     'topic_token_count', 'topic_type_count', 'topic_document_entropy', 'topic_word_entropy', 
-    #~ 'document_pairwise_topic_correlation',
+    #~ 'document_pairwise_topic_correlation', # This is an expensive metric.
     'topic_pairwise_document_correlation', 'topic_pairwise_word_correlation',
 ]
 
@@ -173,7 +173,7 @@ def link_dataset(database_id, dataset_name):
 
 def run_analysis(database_id, dataset_name, analysis, directories):
     """Import the given analysis.  Return unique analysis name for dataset."""
-    print('Preparing analysis for run...')
+    print('Running analysis...')
     def document_iterator(doc_dir):
         for root, dirs, file_names in os.walk(doc_dir):
             for file_name in file_names:
@@ -183,13 +183,15 @@ def run_analysis(database_id, dataset_name, analysis, directories):
                     content = f.read()
                 yield (file_name, content)
         raise StopIteration
-    analysis.prepare_analysis_input(document_iterator(directories['documents']))
-    print('Running analysis...')
-    analysis.run_analysis()
-    print('Importing mallet output into database...')
+    analysis.run_analysis(document_iterator(directories['documents']))
+    print('Importing analysis output into database...')
     analysis_import.import_analysis(database_id, dataset_name, analysis)
-    print('Naming topics...')
+    print('Importing analysis metadata into database...')
     analysis_db = Analysis.objects.using(database_id).get(name=analysis.get_identifier(), dataset__name=dataset_name)
+    analysis_metadata_types = {}
+    basic_tools.collect_types(analysis_metadata_types, analysis.get_metadata())
+    metadata.import_analysis_metadata_into_database(database_id, analysis_db, analysis.get_metadata(), analysis_metadata_types)
+    print('Naming topics...')
     topic_namer = TopNTopicNamer(database_id, dataset_name, analysis.get_identifier(), 3)
     if not TopicNameScheme.objects.using(database_id).filter(analysis=analysis_db, name=topic_namer.get_identifier()).exists():
         topic_namer.name_all_topics()

@@ -14,9 +14,35 @@ from django.db import transaction
 from topic_modeling.tools import TimeLongThing
 import logging
 
-logger = logging.getLogger('root')
-
-datetime_format = "%Y-%m-%dT%H:%M:%S"
+def import_analysis_metadata_into_database(database_id, analysis_db, analysis_metadata, analysis_metadata_types):
+    """
+    Put the metadata for the analysis into the database.
+    
+    dataset_db The Dataset ORM object.
+    dataset_metadata A dictionary with the metadata.
+    dataset_metadata_types A dictionary specifying what type each metadatum is.
+    """
+    if analysis_db.metainfovalues.exists():
+        return
+    
+    # try to put dataset metadata into database
+    with transaction.commit_on_success():
+        meta_info_value_id = 0 # use this to assign primary keys for metadata values
+        # check to see if there are other entries in the table, if so get the id of the most recently added
+        if AnalysisMetaInfoValue.objects.using(database_id).exists():
+            meta_info_value_id = AnalysisMetaInfoValue.objects.using(database_id).aggregate(Max('id'))['id__max'] + 1
+        
+        # create the objects
+        meta_info_values = []
+        for attribute, value in analysis_metadata.items():
+            meta_info, __ = AnalysisMetaInfo.objects.using(database_id).get_or_create(name=attribute)
+            meta_info_value = AnalysisMetaInfoValue(info_type=meta_info, analysis=analysis_db)
+            meta_info_value.set(value, analysis_metadata_types[attribute])
+            meta_info_value.id = meta_info_value_id
+            meta_info_value_id += 1
+            meta_info_values.append(meta_info_value)
+        # put the objects into the database
+        AnalysisMetaInfoValue.objects.using(database_id).bulk_create(meta_info_values)
 
 def import_dataset_metadata_into_database(database_id, dataset_db, dataset_metadata, dataset_metadata_types):
     """

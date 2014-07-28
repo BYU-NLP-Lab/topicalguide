@@ -1,0 +1,137 @@
+/* Style needed by every page */
+
+/* Header */
+.header {
+	top: 0;
+    width: 100%;
+    clear: both;
+    font-family: 'Varela Round', sans-serif;
+    border-radius: 0;
+    display: block;
+    padding: 0.5em 0.5em 0.5em 0.5em;
+}
+
+/* Logo */
+a.nav-logo:link, a.nav-logo:hover, a.nav-logo:visited, a.nav-logo:active {
+    text-decoration: none;
+}
+svg.nav-logo {
+    padding: 0.5em 0.5em 0.5em 0.5em;
+}
+
+/* Footer */
+.footer {
+    width: 100%;
+    border-top: 1px solid black;
+    margin-top: 1em;
+    padding-top: 1em;
+    clear: both;
+    text-align: center;
+    display: block;
+}
+
+.footer > p {
+    margin: 0px 0px 0px 0px;
+    padding: 5px 0px 5px 0px;
+}
+
+.centered-pills { text-align: center; }
+.centered-pills { display: inline-block; }
+.centered-pills > li { display: inline; }
+
+
+
+/************************
+ * General Utilities 
+ ************************/
+a.nounderline:hover {
+    text-decoration: none;
+}
+
+/************************
+ * General Page Structure 
+ ************************/
+
+body {
+	padding: 0;
+	margin: 0;
+}
+
+a:link, a:visited, td.remove, .link, .clickable_text {
+    color:#000F3E;
+    text-decoration:none;
+}
+
+a:hover {
+    color:#0033D5;
+}
+a:hover span {
+    color:#0033D5;
+}
+
+.table > thead {
+    background: #EEEEEE;
+}
+
+
+/************************
+ * Enable Sub-menus
+ * from Bootstrap v2.3.2
+ ************************/
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu > .dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  -webkit-border-radius: 0 6px 6px 6px;
+     -moz-border-radius: 0 6px 6px 6px;
+          border-radius: 0 6px 6px 6px;
+}
+
+.dropdown-submenu:hover > .dropdown-menu {
+  display: block;
+}
+
+.dropup .dropdown-submenu > .dropdown-menu {
+  top: auto;
+  bottom: 0;
+  margin-top: 0;
+  margin-bottom: -2px;
+  -webkit-border-radius: 5px 5px 5px 0;
+     -moz-border-radius: 5px 5px 5px 0;
+          border-radius: 5px 5px 5px 0;
+}
+
+.dropdown-submenu > a:after {
+  display: block;
+  float: right;
+  width: 0;
+  height: 0;
+  margin-top: 5px;
+  margin-right: -10px;
+  border-color: transparent;
+  border-left-color: #cccccc;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  content: " ";
+}
+
+.dropdown-submenu:hover > a:after {
+  border-left-color: #ffffff;
+}
+
+.dropdown-submenu.pull-left {
+  float: none;
+}
+
+.dropdown-submenu.pull-left > .dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  -webkit-border-radius: 6px 0 6px 6px;
+     -moz-border-radius: 6px 0 6px 6px;
+          border-radius: 6px 0 6px 6px;
+}

@@ -54,13 +54,9 @@ def create_dataset_db_entry(database_id, dataset, dataset_dir, files_dir):
         with transaction.commit_on_success():
             dataset_db = Dataset.objects.using(database_id)\
                                 .create(name=dataset.get_identifier(), 
-                                        readable_name=dataset.get_readable_name(), 
-                                        description=dataset.get_description(),
                                         dataset_dir=dataset_dir, 
                                         files_dir=files_dir)
         return dataset_db
-    
-
 
 def import_documents_into_database(database_id, dataset_identifier, documents):
     """Create database entries for each document."""
@@ -134,7 +130,7 @@ def import_document_word_tokens(database_id, dataset_identifier, words):
     print('  Creating WordTokens...')
     with transaction.commit_on_success():
         for doc_id in words:
-            doc = document_query.get(filename=doc_id)
+            doc = document_query.get(filename=doc_id, dataset=dataset)
             
             # import every word in the document
             for word, index, start_pos in words[doc_id]:

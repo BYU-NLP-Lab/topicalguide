@@ -11,23 +11,15 @@ class AbstractDataset(object):
     class and override functions as necessary.
     """
     
+    readable_name = "You should override this item."
+    description = "You should override this item."
+    
     def get_identifier(self):
         """
         Return a string that uniquely identifies this dataset on the \
         Topical Guide server.
         """
-        raise NotImplementedError('get_dataset_identifier is not implemented')
-    
-    def get_readable_name(self):
-        """
-        Return a string that identifies the dataset and is formatted \
-        to be read by a human.
-        """
-        raise NotImplementedError('get_readable_name is not implemented')
-    
-    def get_description(self):
-        """Return a description of the dataset."""
-        raise NotImplementedError('get_description is not implemented')
+        raise NotImplementedError('get_identifier is not implemented')
     
     def get_metadata(self):
         """
@@ -36,7 +28,7 @@ class AbstractDataset(object):
         Note that 'readable_name' and 'description' are special keys that are \
         required by the Topical Guide to neatly display basic information about your dataset.
         """
-        raise NotImplementedError('get_dataset_metadata is not implemented')
+        raise NotImplementedError('get_metadata is not implemented')
     
     def __iter__(self):
         """Return an AbstractDocument iterator."""
@@ -54,11 +46,11 @@ class AbstractDocument(object):
         Return a unique identifier for this document in relation to its dataset.
         Must only contain underscores, dashes, periods, or alphanumeric characters.
         """
-        raise NotImplementedError('get_name is not implemented')
+        raise NotImplementedError('get_identifier is not implemented')
     
     def get_uri(self):
         """Return the document's uri."""
-        raise NotImplementedError('get_document_uri is not implemented')
+        raise NotImplementedError('get_uri is not implemented')
     
     def get_metadata(self):
         """

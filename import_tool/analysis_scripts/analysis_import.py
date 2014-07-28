@@ -48,9 +48,8 @@ def get_or_create_analysis(database_id, dataset_name, analysis):
         analysis_db = Analysis.objects.using(database_id).get(name=analysis.get_identifier(), dataset_id=dataset_pk)
     else:
         analysis_db = Analysis.objects.using(database_id).create(name=analysis.get_identifier(),
-                                                                 dataset_id=dataset_pk, 
-                                                                 readable_name=analysis.get_readable_name(),
-                                                                 description=analysis.get_description())
+                                                                 dataset_id=dataset_pk,
+                                                                 working_dir_path=analysis.get_working_directory())
     return analysis_db
 
 def has_token_topic_relations(database_id, analysis_db):
@@ -60,7 +59,6 @@ def has_token_topic_relations(database_id, analysis_db):
             return True
     return False
 
-# TODO make this import more flexible with regards to the topic numbers
 def import_analysis(database_id, dataset_name, analysis):
     """Import the mallet output into the database."""
     # attempt to make the database access a little faster
@@ -85,11 +83,15 @@ def import_analysis(database_id, dataset_name, analysis):
             
             add_limit = 200000 # how many entries to commit to the database at a time
             
-            # the items to be committed to the database
+            # the Token-Topic relations to be committed to the database
             token_topics_to_create = []
             token_topics_id = 0
             if WordToken_Topics.objects.using(database_id).all().exists():
                 token_topics_id = WordToken_Topics.objects.using(database_id).all().aggregate(Max('id'))['id__max'] + 1
+            
+            # stopwords
+            stopwords = analysis.get_stopwords()
+            stopword_relations = [] # relations to create with the Analysis
             
             topics = {}
             for t in Topic.objects.using(database_id).filter(analysis_id=analysis_db.id):
@@ -110,13 +112,17 @@ def import_analysis(database_id, dataset_name, analysis):
                     current_doc_name = doc_name
                     current_token = 0
                 
-                # report WordTokens we didn't find in the database
+                # find the correct WordToken that matches the word
                 try:
                     while unicode(current_doc_tokens[current_token].type.type) != word:
+                        if current_doc_tokens[current_token].type.type in stopwords:
+                            stopword_relations.append(current_doc_tokens[current_token])
                         current_token += 1
                 except:
                     print("Not found: %s %s %s" %(doc_name, word, str(topic_num)))
                     current_token = 0
+                    continue
+                    
                 
                 # collect the tokens/words associated with each topic
                 token = current_doc_tokens[current_token]
@@ -135,8 +141,12 @@ def import_analysis(database_id, dataset_name, analysis):
                     WordToken_Topics.objects.using(database_id).bulk_create(token_topics_to_create)
                     token_topics_to_create = []
             if len(token_topics_to_create) > 0:
-                    WordToken_Topics.objects.using(database_id).bulk_create(token_topics_to_create)
-                    token_topics_to_create = []
+                WordToken_Topics.objects.using(database_id).bulk_create(token_topics_to_create)
+                token_topics_to_create = []
+            if len(stopword_relations) > 0:
+                while len(stopword_relations) > 200:
+                    analysis_db.stopwords.add(*stopword_relations[-200:])
+                    stopword_relations[-200:] = []
     
     # make it so the database isn't in memory
     if settings.database_type(database_id)=='sqlite3':

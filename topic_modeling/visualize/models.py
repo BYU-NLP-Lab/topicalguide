@@ -42,78 +42,79 @@ class ExternalDataset(models.Model):
     database_settings = models.TextField()
     # Used by the database router to correctly route the table creation and usage correctly
     _MODEL_NAME = 'ExternalDataset'
-    
 
 ##############################################################################
-# Tables just to hold information about data and documents
+# Tables for datasets, documents, and words.
 ##############################################################################
 
-
-# Basic things in the database
-##############################
-
-# FIXME: readable_name and description should be deprecated in favor of the meta info system
-class Describable(models.Model):
-    '''A unique identifier. For URLs.'''
+class Dataset(models.Model):
     name = models.SlugField(unique=True)
-
-    '''A short, human-readable name'''
-    readable_name = models.TextField(max_length=128)
-
-    '''A longer, human-readable description'''
-    description = models.TextField()
-
-    class Meta:
-        abstract = True
-
-from django.db.backends.sqlite3.base import DatabaseError
-class Dataset(Describable):
     dataset_dir = models.CharField(max_length=128, db_index=True)
     files_dir = models.CharField(max_length=128, db_index=True)
     visible = models.BooleanField(default=True)
-
+    
+    FIELDS = {
+        'metadata': lambda x: {miv.info_type.name: miv.value() for miv in x.metainfovalues.iterator()},
+        'metrics': lambda x: {mv.metric.name: mv.value for mv in x.datasetmetricvalues.iterator()},
+    }
+    
     def __unicode__(self):
         return self.name
 
     def all_words(self):
-        # 'select * from visualize_
+        # select * from visualize_
         return WordType.objects.filter(tokens__document__dataset=self)
 
     def delete(self, *args, **kwargs):
-        '''
-        for analysis in self.analyses.all():
-            print "\tremove analysis " + str(analysis)
-            analysis.delete()
-
-        for doc in self.documents.all():
-            print "\tremove doc " + str(doc)
-            doc.delete()
-            '''
-
-        import sys
+        """Remove everything pertaining to this dataset."""
+        if self.analyses.exists():
+            self.analyses.delete()
+        if self.documents.exists():
+            self.documents.delete()
+        if self.metainfovalues.exists():
+            self.metainfovalues.delete()
+        if datasetmetricvalues.exists():
+            datasetmetricvalues.delete()
         super(Dataset, self).delete(*args, **kwargs)
-        '''
-        except DatabaseError as e:
-            ## dumb sql - can't have more than 1000 items in a query
-            print >> sys.stderr, "Argh", e
-            pass
-            pass
-        except Exception as e:
-            print >> sys.stderr, e
-            pass
-            '''
+    
+    @property
+    def identifier(self):
+        return self.name
+    
+    # Take a set of field names ['metadata', 'metrics'] and return the appropriate values
+    def fields_to_dict(self, fields):
+        result = {}
+        for f in fields:
+            if f in self.FIELDS:
+                result[f] = self.FIELDS[f](self)
+        return result
+    
+    @property
+    def readable_name(self):
+        """Return a human readable name."""
+        try:
+            return self.metainfovalues.get(info_type__name='readable_name').value()
+        except:
+            return self.name.replace('_', ' ').title()
+    
+    @property
+    def description(self):
+        """Return a description of the dataset."""
+        try:
+            return self.metainfovalues.get(info_type__name='description').value()
+        except:
+            return 'No description available.'
 
 
 LEFT_CONTEXT_SIZE = 40
 RIGHT_CONTEXT_SIZE = 40
 class Document(models.Model):
+    # Warning: this class doesn't have an auto-incrrementing primary key.
     id = models.IntegerField(primary_key=True)
     filename = models.CharField(max_length=128, db_index=True)
     full_path = models.TextField()
     dataset = models.ForeignKey(Dataset, related_name='documents')
-    #content = models.TextField(null=True)
-#    word_count = models.IntegerField(default=0)
-
+    
     def __unicode__(self):
         return unicode(self.filename)
 
@@ -228,6 +229,7 @@ class Document(models.Model):
 
 
 class WordType(models.Model):
+    # Warning: this class doesn't have an auto-incrementing primary key.
     id = models.IntegerField(primary_key=True)
     type = models.CharField(max_length=128, db_index=True) #@ReservedAssignment
     
@@ -238,71 +240,38 @@ class WordType(models.Model):
         return self.type
 
 class WordToken(models.Model):
+    # Warning: this class doesn't have an auto-incrementing primary key.
     id = models.IntegerField(primary_key=True)
     type = models.ForeignKey(WordType, related_name='tokens') #@ReservedAssignment
-    document = models.ForeignKey(Document, related_name='tokens')
     token_index = models.IntegerField()
     start = models.IntegerField()
-
-
-#    '''The form of this type instance. If null, it defers to type.value'''
-#    token = models.CharField(max_length=128, db_index=True, null=True)
+    
+    document = models.ForeignKey(Document, related_name='tokens')
     topics = models.ManyToManyField('Topic', related_name='tokens')
 
     def __unicode__(self):
         return '[%s,%s]' % (self.type.type, self.token_index)
+    
+    def get_max_pk(self, database_id='default'):
+        """Return the largest primary key/id for these objects."""
+        return WordToken.objects.using(database_id).all().aggregate(Max('id'))['id__max']
 
-
-
-
-'''We want to go through the WordTokenTopis table for the foreignkey, to
-optimize queries in the attributes tab'''
-## Links between the basic things in the database
-#################################################
-#
-#class AttributeValueDocument(models.Model):
-#    document = models.ForeignKey(Document)
-#    attribute = models.ForeignKey(Attribute)
-#    value = models.ForeignKey(Value)
-#
-#    def __unicode__(self):
-#        return u'{a} is "{v}" for {d}'.format(a=self.attribute, v=self.value,
-#                d=self.document)
-#
-#
-#class AttributeValue(models.Model):
-#    attribute = models.ForeignKey(Attribute)
-#    value = models.ForeignKey(Value)
-#    token_count = models.IntegerField(default=0)
-#
-#
-#class AttributeValueWord(models.Model):
-#    attribute = models.ForeignKey(Attribute)
-#    word = models.ForeignKey(Word)
-#    value = models.ForeignKey(Value)
-#    count = models.IntegerField(default=0)
-#
 
 ##############################################################################
-# Tables that hold information about particular analyses of the data
+# Tables for analyses, and topics.
 ##############################################################################
 
-# Basic components of the analysis
-##################################
-
-# This is assuming perhaps several different runs of different kinds of LDA
 class Analysis(models.Model):
     dataset = models.ForeignKey(Dataset, related_name='analyses')
     stopwords = models.ManyToManyField(WordToken)
-
     name = models.SlugField()
-
-    '''A short, human-readable name'''
-    readable_name = models.TextField(max_length=128)
-
-    '''A longer, human-readable description'''
-    description = models.TextField()
-
+    working_dir_path = models.CharField(max_length=128)
+    
+    FIELDS = {
+        'metadata': lambda analysis: {miv.info_type.name: miv.value() for miv in analysis.metainfovalues.iterator()},
+        'metrics': lambda analysis: {mv.metric.name: mv.value for mv in analysis.analysismetricvalues.iterator()},
+    }
+    
     def __unicode__(self):
         return self.name
 
@@ -312,24 +281,60 @@ class Analysis(models.Model):
             topic.delete()
 
         super(Analysis, self).delete(*args, **kwargs)
-
-
-class MarkupFile(models.Model):
-    document = models.ForeignKey(Document)
-    analysis = models.ForeignKey(Analysis)
-    path = models.CharField(max_length=128)
-
     
-
+    @property
+    def identifier(self):
+        return self.name
+    
+    def fields_to_dict(self, fields):
+        result = {}
+        for f in fields:
+            if f in self.FIELDS:
+                result[f] = self.FIELDS[f](self)
+        return result
+    
+    @property
+    def readable_name(self):
+        """Return a human readable name."""
+        try:
+            return self.metainfovalues.get(info_type__name='readable_name').value
+        except:
+            return self.name.replace('_', ' ').title()
+    
+    @property
+    def description(self):
+        """Return a description of the analysis."""
+        try:
+            return self.metainfovalues.get(info_type__name='description').value
+        except:
+            return 'No description available.'
+    
+    class Meta:
+        unique_together = ('dataset', 'name')
 
 class Topic(models.Model):
     number = models.IntegerField()
-#    name = models.CharField(max_length=128)
-#    total_count = models.IntegerField()
     analysis = models.ForeignKey(Analysis, related_name='topics')
-#    documents = models.ManyToManyField(Document, through='DocumentTopic')
     metrics = models.ManyToManyField('TopicMetric', through='TopicMetricValue')
-#    words = models.ManyToManyField(Word, through='TopicWord')
+    
+    ATTRIBUTES = {
+        'metadata': lambda topic: {miv.info_type.name: miv.value() for miv in topic.metainfovalues.iterator()},
+        'metrics': lambda topic: {mv.metric.name: mv.value for mv in topic.topicmetricvalues.iterator()},
+        'names': lambda topic: {name.name_scheme.name: name.name for name in topic.names.iterator()},
+        'top-10-documents': lambda topic: list(topic.topic_document_counts(sort=True)[:10]),
+        'top-10-words': lambda topic: { value['type__type']: {'count':value['count']} for value in topic.topic_word_counts(sort=True)[:10]},
+    }
+    
+    @property
+    def identifier(self):
+        return self.number
+    
+    def attributes_to_dict(self, attributes):
+        result = {}
+        for attr in attributes:
+            if attr in self.ATTRIBUTES:
+                result[attr] = self.ATTRIBUTES[attr](self)
+        return result
     
     def __unicode__(self):
         names = TopicName.objects.filter(topic=self)
@@ -339,26 +344,32 @@ class Topic(models.Model):
             name = ' -- '
         return '%d: %s' % (self.number, name)
 
-#    class Meta:
-#        ordering = ['name']
-
     def total_count(self):
         return self.tokens.count()
-
+    
+    def top_n_words(self, words='*', topN=10):
+        topicwords = self.tokens.values('type__type').annotate(count=Count('type__type'))
+        if words != '*':
+            topicwords = topicwords.filter(type__type__in=words)
+        topicwords = topicwords.order_by('-count')
+        return {value['type__type']: {'token_count': value['count']} for value in topicwords[:topN]}
+        
+    
     def topic_word_counts(self, sort=False):
         topicwords = self.tokens.values('type__type').annotate(count=Count('type__type'))
         if sort:
             topicwords = topicwords.order_by('-count')
         return topicwords
-
+        
     def topic_document_counts(self, sort=False):
         topicdocs = self.tokens.values('document__id', 'document__filename').annotate(count=Count('document__id'))
         if sort:
             topicdocs = topicdocs.order_by('-count')
         return topicdocs
 
-# This class is a way to explicitly access a many-to-many table to optimize adding to a database
+# This class is to explicitly access a many-to-many table to optimize adding to a database
 class WordToken_Topics(models.Model):
+    # Warning: this class doesn't have an auto-incrrementing primary key.
     id = models.IntegerField(primary_key=True)
     wordtoken = models.ForeignKey(WordToken, related_name='topic_relations')
     topic = models.ForeignKey(Topic, related_name='word_relations')
@@ -366,7 +377,7 @@ class WordToken_Topics(models.Model):
 class TopicGroup(Topic):
     @property
     def subtopics(self):
-        return [topicgrouptopic.topic for topicgrouptopic
+        return [topicgrouptopic.topic for topicgrouptopic \
                 in TopicGroupTopic.objects.filter(group=self)]
 
 class TopicGroupTopic(models.Model):
@@ -388,7 +399,10 @@ class TopicName(models.Model):
     def __str__(self):
         return self.name
 
-### Metrics ###
+##############################################################################
+# Tables for metrics.
+##############################################################################
+
 class Metric(models.Model):
     name = models.CharField(max_length=128)
     class Meta:
@@ -451,9 +465,6 @@ class PairwiseTopicMetricValue(MetricValue):
         return '%s(%s, %s) = %d' % (self.metric.name, self.topic1.names,
                 self.topic2.names, self.value)
 
-# These could go under the dataset section, but there are some metrics that
-# only make sense with a corresponding Analysis, so we will just put them all
-# in the same class here, even if some of the metrics ignore the analysis.
 class DocumentMetric(Metric):
     analysis = models.ForeignKey(Analysis, related_name='documentmetrics')
 
@@ -495,12 +506,11 @@ class WordTokenMetricValue(MetricValue):
     token = models.ForeignKey(WordToken, related_name='wordtokenmetricvalues')
     metric = models.ForeignKey(WordTokenMetric, related_name='values')
 
-# Metadata
+##############################################################################
+# Tables for metadata.
+##############################################################################
 
-# TODO: rename MetaInfo -> MetaInfoField
-# TODO: also rename children
-# TODO: keep track of the field type. Use the 'choices' parameter to specify possible types.
-# TODO: Update the set, value, and type methods
+#TODO Store the data type as a field in the MetaInfo class
 class MetaInfo(models.Model):
     name = models.CharField(max_length=128, db_index=True)
 
@@ -510,10 +520,8 @@ class MetaInfo(models.Model):
     class Meta:
         abstract = True
 
-# TODO: Use a consistent related_name in the children of this model.
-# TODO: Create class MetaInfoTarget with a value method that references the consistent metainfo related_name
 class MetaInfoValue(models.Model):
-    # warning: this class doesn't have an auto-incrrementing primary key
+    # Warning: this class doesn't have an auto-incrrementing primary key.
     id = models.IntegerField(primary_key=True)
     bool_value = models.NullBooleanField(null=True)
     float_value = models.FloatField(null=True)
@@ -537,19 +545,7 @@ class MetaInfoValue(models.Model):
             self.datetime_value = datetime(value)
         else:
             raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(value_type))
-        #~ elif isinstance(value, basestring):
-            #~ self.text_value = value
-        #~ elif isinstance(value, int):
-            #~ self.int_value = value
-        #~ elif isinstance(value, bool):
-            #~ self.bool_value = value
-        #~ elif isinstance(value, datetime):
-            #~ self.datetime_value = value
-        #~ elif isinstance(value, time.struct_time):
-            #~ self.datetime_value = datetime(*value[0:6])
-        #~ else:
-            #~ raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(type(value)))
-
+    
     def __str__(self):
         return str(self.value())
 
@@ -571,7 +567,6 @@ class MetaInfoValue(models.Model):
             result = self.datetime_value
         return result
 
-    #TODO Store the data type as a field in the MetaInfo class
     def type(self):
         type = None
         if self.float_value:
@@ -636,6 +631,26 @@ class WordTokenMetaInfoValue(MetaInfoValue):
     word_token = models.ForeignKey(WordToken, related_name='metainfovalues')
     analysis = models.ForeignKey(Analysis, null=True)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###################################################################
+# The Following are unused at the time of this comment.
+# Move code above if it becomes used or delete it if it is useless.
+###################################################################
+
 ## Favorites
 class Favorite(models.Model):
     session_key = models.CharField(max_length=40, db_index=True)
@@ -680,4 +695,30 @@ class DocumentViewFavorite(ViewFavorite):
     '''And the analysis we're using'''
     analysis = models.ForeignKey(Analysis)
 
-# vim: et sw=4 sts=4
+'''We want to go through the WordTokenTopis table for the foreignkey, to
+optimize queries in the attributes tab'''
+## Links between the basic things in the database
+#################################################
+#
+#class AttributeValueDocument(models.Model):
+#    document = models.ForeignKey(Document)
+#    attribute = models.ForeignKey(Attribute)
+#    value = models.ForeignKey(Value)
+#
+#    def __unicode__(self):
+#        return u'{a} is "{v}" for {d}'.format(a=self.attribute, v=self.value,
+#                d=self.document)
+#
+#
+#class AttributeValue(models.Model):
+#    attribute = models.ForeignKey(Attribute)
+#    value = models.ForeignKey(Value)
+#    token_count = models.IntegerField(default=0)
+#
+#
+#class AttributeValueWord(models.Model):
+#    attribute = models.ForeignKey(Attribute)
+#    word = models.ForeignKey(Word)
+#    value = models.ForeignKey(Value)
+#    count = models.IntegerField(default=0)
+#

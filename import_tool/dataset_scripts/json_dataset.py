@@ -2,16 +2,14 @@ from __future__ import print_function
 
 import os
 import sys
+import json
 
 from import_tool import basic_tools
 from abstract_dataset import AbstractDataset, AbstractDocument
-    
 
-class GenericDataset(AbstractDataset):
-    """
-    The GenericDataset allows the import process
-    to interact with the dataset in a standardized/pre-determined manner. 
-    """
+
+class JsonDataset(AbstractDataset):
+    """The JsonDataset expects all data to be in a json format."""
     
     def __init__(self, dataset_directory):
         """
@@ -23,7 +21,7 @@ class GenericDataset(AbstractDataset):
         self.dataset_directory = dataset_directory
         self.abs_dataset_directory = os.path.abspath(dataset_directory)
         self.metadata_file = os.path.join(self.abs_dataset_directory,
-                                          'dataset_metadata.txt')
+                                          'dataset_metadata.json')
         self.documents_directory = os.path.join(self.abs_dataset_directory, 
                                                 'documents')
         self.is_recursive = True
@@ -31,10 +29,9 @@ class GenericDataset(AbstractDataset):
         self.metadata = {}
         # load the dataset metadata
         with open(self.metadata_file, 'r') as meta_file:
-            content = meta_file.read()
-            metadata, __ = basic_tools.seperate_metadata_and_content(content)
-            self.metadata = basic_tools.metadata_to_dict(metadata)
+            self.metadata = json.loads(meta_file.read())['dataset_metadata']
         
+        # set the identifier
         if not 'readable_name' in self.metadata:
             identifier = self.dataset_directory.replace('_', ' ').replace('/', ' ').title()
         else:
@@ -121,7 +118,7 @@ class GenericDataset(AbstractDataset):
             self.documents_index += 1
             file_path = self.list_of_documents[index]
             try:
-                document = GenericDocument(self.documents_directory, file_path)
+                document = JsonDocument(self.documents_directory, file_path)
                 document.set_filters(self.filters)
                 return document
             except Exception as e:
@@ -129,7 +126,7 @@ class GenericDataset(AbstractDataset):
         raise StopIteration
         
 
-class GenericDocument(AbstractDocument):
+class JsonDocument(AbstractDocument):
     """
     While the GenericDataset is an abstraction of an entire dataset 
     the Document class is an abstraction of a single document in that dataset.
@@ -143,9 +140,9 @@ class GenericDocument(AbstractDocument):
         
         text = ''
         with open(document_path, 'r') as f:
-            text = unicode(f.read(), encoding='utf-8', errors='ignore')
-        metadata, self.content = basic_tools.seperate_metadata_and_content(text)
-        self.metadata = basic_tools.metadata_to_dict(metadata)
+            self.document = json.loads(f.read())
+            self.metadata = self.document['metadata']
+            self.content = self.document['content']
         self.filters = []
     
     def set_filters(self, filters):
@@ -175,5 +172,3 @@ class GenericDocument(AbstractDocument):
         for f in self.filters:
             self.content = f(self.content)
         return self.content
-
-

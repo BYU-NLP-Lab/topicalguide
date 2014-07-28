@@ -10,6 +10,7 @@ import time
 from import_tool import import_utilities
 from import_tool import basic_tools
 from import_tool.dataset_scripts.generic_dataset import GenericDataset
+from import_tool.dataset_scripts.json_dataset import JsonDataset
 from import_tool.dataset_scripts.wikipedia_dataset import WikipediaDataset
 from import_tool.analysis_scripts.mallet_analysis import MALLETAnalysis
 
@@ -47,12 +48,28 @@ def get_database_configurations(file_path):
     
     return database_config
         
+def get_dataset(args):
+    """Read the args and return a dataset."""
+    if args.which in ('import', 'check'):
+        dataset = GenericDataset(args.dataset)
+        dataset.set_is_recursive(args.recursive)
+        if args.identifier:
+            dataset.set_identifier(args.identifier)
+    elif args.which in ('import-json', 'check-json'):
+        dataset = JsonDataset(args.dataset)
+        dataset.set_is_recursive(args.recursive)
+        if args.identifier:
+            dataset.set_identifier(args.identifier)
+    else:
+        raise Exception('Invalid selection.')
+    return dataset
+
 
 def exec_check_dataset(args):
     """
     Check the dataset for blank documents and tell you what metadata types you have.
     """
-    dataset = GenericDataset(args.dataset)
+    dataset = get_dataset(args)
     
     blank_documents = []
     blank_metadata = []
@@ -84,11 +101,11 @@ def exec_check_dataset(args):
     basic_tools.collect_types(dataset_metadata_types, dataset.get_metadata())
     
     print('Dataset readable name: ')
-    print('"' + dataset.get_readable_name() + '"')
+    print('"' + dataset.readable_name + '"')
     print()
     
     print('Dataset description: ')
-    print('"' + dataset.get_description() + '"')
+    print('"' + dataset.description + '"')
     print()
     
     if dataset_metadata_types:
@@ -107,7 +124,7 @@ def exec_check_dataset(args):
         print('No document metdata')
     print()
 
-def exec_import_generic_dataset(args):
+def exec_import_dataset(args):
     """
     Perform basic checks and create necessary objects in preparation to import.
     Import dataset into database.
@@ -121,16 +138,16 @@ def exec_import_generic_dataset(args):
         database_info = get_database_configurations(args.database_config)
     
     # create GenericDataset object and set settings
-    dataset = GenericDataset(args.dataset)
-    dataset.set_is_recursive(args.recursive)
-    if args.identifier:
-        dataset.set_identifier(args.identifier)
+    dataset = get_dataset(args)
     
     # get common directories
     directories = import_utilities.get_common_working_directories(dataset.get_identifier())
     
     # create analysis
-    analysis = MALLETAnalysis(directories['topical_guide'], directories['dataset'])
+    if args.number_of_topics:
+        analysis = MALLETAnalysis(directories['topical_guide'], directories['dataset'], args.number_of_topics)
+    else:
+        analysis = MALLETAnalysis(directories['topical_guide'], directories['dataset'])
     if args.filters:
         with open(args.filters, 'r') as f:
             lines = f.readlines()
@@ -139,11 +156,6 @@ def exec_import_generic_dataset(args):
             dataset.add_filters(filters)
     if args.subdocuments:
         analysis.set_create_subdocuments_method(basic_tools.create_subdocuments)
-    if args.number_of_topics:
-        if args.number_of_topics > 0:
-            analysis.set_number_of_topics(args.number_of_topics)
-        else:
-            raise Exception('Number of topics is non-positive.')
     
     # make sure the tables exist in the database and get an identifier
     database_id = import_utilities.run_syncdb(database_info)
@@ -219,41 +231,39 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers(title='subcommands',
                                        help='Type -h under each subcommand for additional help.')
     
+    def add_standard_flags(parser):
+        parser.add_argument('-d', '--database-config', type=str, action='store', default=None, 
+                            help='Uses the database configurations from the given file.')
+        parser.add_argument('-i', '--identifier', type=str, action='store', default=None, 
+                            help='A unique name to import the dataset under (e.g. state_of_the_union.)')
+        parser.add_argument('-r', '--recursive', action='store_true', default=False, 
+                            help='Recursively look for documents in the given dataset directory.')
+        parser.add_argument('-s', '--subdocuments', action='store_true', default=False, 
+                            help='Breaks a document into subdocuments in an attempt to create better topics.')
+        parser.add_argument('-t', '--number-of-topics', type=int, action='store', default=None, 
+                            help='The number of topics that will be created.')
+        parser.add_argument('-m', '--metrics', type=str, action='append', default=[], 
+                            choices=import_utilities.get_all_metric_names(),
+                            help='Specify a non-basic metric to include.')
+        parser.add_argument('-f', '--filters', type=str, action='store', default=None, 
+                            help='Specify a file containing a list of the filters to apply.')
+    
     # import command
     import_parser = subparsers.add_parser('import', help='Import a dataset using a built-in class.')
-    import_parser.add_argument('dataset', type=str,
-                               help='Imports the dataset from the given directory.')
-    import_parser.add_argument('-d', '--database-config', type=str, action='store', default=None, 
-                               help='Uses the database configurations from the given file.')
-    import_parser.add_argument('-i', '--identifier', type=str, action='store', default=None, 
-                               help='A unique name to import the dataset under (e.g. state_of_the_union.)')
-    import_parser.add_argument('-r', '--recursive', action='store_true', default=False, 
-                               help='Recursively look for documents in the given dataset directory.')
-    import_parser.add_argument('-s', '--subdocuments', action='store_true', default=False, 
-                               help='Breaks a document into subdocuments in an attempt to create better topics.')
-    import_parser.add_argument('-t', '--number-of-topics', type=int, action='store', default=None, 
-                               help='The number of topics that will be created.')
-    import_parser.add_argument('-m', '--metrics', type=str, action='append', default=[], 
-                               choices=import_utilities.get_all_metric_names(),
-                               help='Specify a non-basic metric to include.')
-    import_parser.add_argument('-f', '--filters', type=str, action='store', default=None, 
-                               help='Specify a file containing a list of the filters to apply.')
+    import_parser.add_argument('dataset', type=str, help='Imports the dataset from the given directory.')
+    add_standard_flags(import_parser)
     import_parser.set_defaults(which='import')
+    
+    # import-json command
+    import_json_parser = subparsers.add_parser('import-json', help='Import a dataset in JSON format using a built-in class.')
+    import_json_parser.add_argument('dataset', type=str, help='Imports the dataset in JSON format from the given directory.')
+    add_standard_flags(import_json_parser)
+    import_json_parser.set_defaults(which='import-json')
     
     # import-wikipedia command
     import_wiki_parser = subparsers.add_parser('import-wikipedia', help='Import a dataset from Wikipedia.org.')
-    import_wiki_parser.add_argument('page_title', type=str,
-                               help='Imports the dataset from the given directory.')
-    import_wiki_parser.add_argument('-d', '--database-config', type=str, action='store', default=None, 
-                               help='Uses the database configurations from the given file.')
-    import_wiki_parser.add_argument('-i', '--identifier', type=str, action='store', default=None, 
-                               help='A unique name to import the dataset under (e.g. state_of_the_union.)')
-    import_wiki_parser.add_argument('-s', '--subdocuments', action='store_true', default=False, 
-                               help='Breaks a document into subdocuments to create better topics.')
-    import_wiki_parser.add_argument('-t', '--number-of-topics', type=int, action='store', default=None, 
-                               help='The number of topics that will be created.')
-    import_wiki_parser.add_argument('-m', '--metrics', type=str, action='append', default=[], choices=['pairwise-doc'],
-                               help='Specify a non-basic metric to include.')
+    import_wiki_parser.add_argument('page_title', type=str, help='Imports the dataset from the given directory.')
+    add_standard_flags(import_wiki_parser)
     import_wiki_parser.set_defaults(which='import-wikipedia')
     
     # link command
@@ -266,13 +276,33 @@ if __name__ == '__main__':
     
     # check command
     check_parser = subparsers.add_parser('check', help='A utility that helps check the integrity of documents and metadata raising red flags if inconsistencies are found among the metadata keys or if there are any blank documents.')
-    check_parser.add_argument('dataset', type=str,
-                               help="""\
-                                    The dataset to be checked for missing metadata, \
-                                    missing content, and prints info about the metadata \
-                                    types of the documents to aid in importing.
-                                    """)
+    check_parser.add_argument('dataset', type=str, help="""\
+                                                        The dataset to be checked for missing metadata, \
+                                                        missing content, and prints info about the metadata \
+                                                        types of the documents to aid in importing.
+                                                        """)
+    add_standard_flags(check_parser)
     check_parser.set_defaults(which='check')
+    
+    # check-json command
+    check_json_parser = subparsers.add_parser('check-json', help='A utility that helps check the integrity of documents and metadata raising red flags if inconsistencies are found among the metadata keys or if there are any blank documents.')
+    check_json_parser.add_argument('dataset', type=str, help="""\
+                                                        The dataset to be checked for missing metadata, \
+                                                        missing content, and prints info about the metadata \
+                                                        types of the documents to aid in importing.
+                                                        """)
+    add_standard_flags(check_json_parser)
+    check_json_parser.set_defaults(which='check-json')
+    
+    # check-wikipedia command
+    check_wiki_parser = subparsers.add_parser('check-wikipedia', help='A utility that helps check the integrity of documents and metadata raising red flags if inconsistencies are found among the metadata keys or if there are any blank documents.')
+    check_wiki_parser.add_argument('page_title', type=str, help="""\
+                                                        The dataset to be checked for missing metadata, \
+                                                        missing content, and prints info about the metadata \
+                                                        types of the documents to aid in importing.
+                                                        """)
+    add_standard_flags(check_wiki_parser)
+    check_wiki_parser.set_defaults(which='check-wikipedia')
     
     # migrate command
     migrate_parser = subparsers.add_parser('migrate', help='A utility that migrates a dataset from one database to another database.')
@@ -302,13 +332,11 @@ if __name__ == '__main__':
     
     # execute command
     start_time = time.time()
-    if args.which == 'import':
-        exec_import_generic_dataset(args)
-    elif args.which == 'import-wikipedia':
-        exec_import_wikipedia_dataset(args)
+    if args.which in ('import', 'import-json', 'import-wikipedia'):
+        exec_import_dataset(args)
     elif args.which == 'link':
         exec_link(args)
-    elif args.which == 'check':
+    elif args.which in ('check', 'check-json', 'check-wikipedia'):
         exec_check_dataset(args)
     elif args.which == 'migrate':
         exec_migrate_dataset(args)

@@ -1,0 +1,61 @@
+{% load url from future %}
+
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Topical Guide{% if view_description %} &mdash; {{view_description}}{% endif %}</title>
+        <link rel="shortcut icon" href="{{nlp_lab_small_logo_url}}" />
+        
+        {% block stylesheets %}
+            <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/css/bootstrap.min.css" />
+            <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/css/bootstrap-theme.min.css" />
+            <link rel="stylesheet" type="text/css" href="{{STYLES}}/base.css" />
+        {% endblock %}
+        
+        {% block scripts %}
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/jquery-1.11.1.min.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/bootstrap/js/bootstrap.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/lodash.min.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/backbone.min.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/d3.v3.min.js"></script>
+        {% endblock %}
+        
+    </head>
+    
+    <body>
+        <div class="container-fluid">
+            {% block header %}
+                <header class="header">
+                    <div id="main-nav" class="nav-bar">
+                        {% block navigation %}{% endblock %}
+                    </div>
+                </header>
+            {% endblock %}
+            
+            <div id="main-container" class="container">
+                {% block body %}{% endblock %}
+            </div>
+            
+            {% block footer %}
+                <footer class="footer">
+                    {% block footer_items %}
+                        <p><a href="{{nlp_lab_url|safe}}"><img width="135px" height="135px" src="{{nlp_lab_logo_url|safe}}"/></a></p>
+                        <div class="text-center">
+                            <ul class="nav nav-pills centered-pills">
+                                <li><a href="{{wiki_url|safe}}">Topical Guide Wiki</a></li>
+                                <li><a href="{% url 'tg-terms' %}">Terms of Use</a></li>
+                                <li><a href="{{nlp_lab_url|safe}}">NLP Home</a></li>
+                                <li><a href="{{cs_dept_url|safe}}">CS Department Home</a></li>
+                                <li><a href="http://www.byu.edu">BYU Home</a></li>
+                            </ul>
+                        </div>
+                        <p>{{last_updated}}</p>
+                        <p>Developed by the BYU Natural Language Processing Lab</p>
+                        <p>Copyright &copy; 2010-2011 Brigham Young University</p>
+                    {% endblock %}
+                </footer>
+            {% endblock %}
+        </div>
+    </body>
+</html>

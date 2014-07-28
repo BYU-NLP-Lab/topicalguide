@@ -18,7 +18,7 @@ class MALLETAnalysis(AbstractAnalysis):
     running the analysis to avoid naming conflicts or inconsistencies.
     """
     
-    def __init__(self, topical_guide_root_dir, dataset_dir, token_regex=r'[\p{L}]+'):
+    def __init__(self, topical_guide_root_dir, dataset_dir, number_of_topics=50, number_of_iterations=100, token_regex=r'[\p{L}]+'):
         """
         The dataset_dir is just in case the working_directory path is not set.
         The token regex must be MALLET compatible.
@@ -27,39 +27,38 @@ class MALLETAnalysis(AbstractAnalysis):
         self.stopwords = set()
         self.create_subdocuments_method = None
         self.optimize_interval = 10
-        self.num_topics = 50
-        self.num_iterations = 100
+        self.num_topics = number_of_topics
+        self.num_iterations = number_of_iterations
         
         self.dataset_dir = dataset_dir
         self.mallet_path = abspath(join(topical_guide_root_dir, 'tools/mallet/mallet'))
         
         self.token_regex = token_regex
         
+        self.metadata = {}
+        
         # determined when prepare_analysis_input is called if not specified sooner
-        self.identifier = None
-        self.working_dir = None
-        self.readable_name = None
-        self.description = None
+        self.identifier = 'lda' + str(self.num_topics) + 'topics'
+        self.set_working_directory(abspath(join(self.dataset_dir, 'analyses/' + self.identifier)))
+        self.readable_name = 'LDA with ' + str(self.num_topics) + ' Topics'
+        self.metadata['readable_name'] = self.readable_name
+        self.description = 'Mallet LDA with ' + str(self.num_topics) + ' topics.'
+        self.metadata['description'] = self.description
     
     def set_identifier(self, identifier):
-        """Set identifier, must be a string with valid directory characters."""
+        """Set identifier and corresponding working directory, must be a string with valid directory characters."""
         self.identifier = identifier
+        self.set_working_directory(abspath(join(self.dataset_dir, 'analyses/' + self.identifier)))
     
     def set_readable_name(self, readable_name):
         """Set identifier, must be a string with valid directory characters."""
         self.readable_name = readable_name
+        self.metadata['readable_name'] = readable_name
     
     def set_description(self, description):
         """Set identifier, must be a string with valid directory characters."""
         self.description = description
-    
-    def set_number_of_iterations(self, iterations):
-        """Set number of iterations, must be a positive integer."""
-        self.num_iterations = iterations
-    
-    def set_number_of_topics(self, num_topics):
-        """Set number of topics, must be a positive integer."""
-        self.num_topics = num_topics
+        self.metadata['description'] = description
     
     def set_working_directory(self, working_dir):
         """The working_dir is the directory the mallet input and output files will be stored in."""
@@ -67,23 +66,27 @@ class MALLETAnalysis(AbstractAnalysis):
         if not os.path.exists(self.working_dir):
             os.makedirs(self.working_dir)
     
+    def get_working_directory(self):
+        return self.working_dir
+    
     def get_identifier(self):
         """Return a string that uniquely identifies this analysis."""
-        if not self.identifier:
-            return 'lda' + str(self.num_topics) + 'topics'
         return self.identifier
     
     def get_readable_name(self):
         """Return a string that contains a human readable name for this analysis."""
-        if not self.readable_name:
-            return 'LDA with ' + str(self.num_topics) + ' Topics'
         return self.readable_name
         
     def get_description(self):
         """Return a string describing this analysis."""
-        if not self.description:
-            return 'Mallet LDA with ' + str(self.num_topics) + ' topics.'
         return self.description
+        
+    def get_stopwords(self):
+        """Return stopwords."""
+        return self.stopwords
+    
+    def get_metadata(self):
+        return self.metadata
     
     # Do not add any filters that replace or add anything to the text as it may make it so your
     # tokens don't line up.
@@ -137,15 +140,6 @@ class MALLETAnalysis(AbstractAnalysis):
     def prepare_analysis_input(self, document_iterator):
         """Combine every document into one large text file for processing with mallet."""
         
-        if not self.identifier:
-            self.set_identifier('lda' + str(self.num_topics) + 'topics')
-        if not self.working_dir:
-            self.set_working_directory(abspath(join(self.dataset_dir, 'analyses/' + self.identifier)))
-        if not self.readable_name:
-            self.set_readable_name('LDA with ' + str(self.num_topics) + ' Topics')
-        if not self.description:
-            self.set_description('Mallet LDA with ' + str(self.num_topics) + ' topics.')
-        
         self.mallet_input_file = join(self.working_dir, 'mallet_input.txt')
         self.subdoc_to_doc_map_file = join(self.working_dir, 'subdoc_to_doc_map.json')
         subdoc_to_doc_map = {}
@@ -177,8 +171,10 @@ class MALLETAnalysis(AbstractAnalysis):
                 os.remove(self.subdoc_to_doc_map_file)
             raise
     
-    def run_analysis(self):
-        """Run MALLET.  The prepare function must be called prior to this one."""
+    def run_analysis(self, document_iterator):
+        """Run MALLET."""
+        self.prepare_analysis_input(document_iterator)
+        
         self.stopwords_file = join(self.working_dir, 'stopwords.txt')
         with codecs.open(self.stopwords_file, 'w', 'utf-8') as f:
             f.write('\n'.join(self.stopwords))
