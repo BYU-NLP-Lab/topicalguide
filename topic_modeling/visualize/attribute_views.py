@@ -201,7 +201,7 @@ def filterout(words, stopwords, max=-1):
 def get_words(attribute, value, attributes_url, token_count):
     words = []
     attrvalwords = get_attrvalwords(attribute, value)
-    stopwords = open(c['stopwords_file']).read().split('\n')
+    stopwords = [] # open(c['stopwords_file']).read().split('\n')
     for attrvalword in filterout(attrvalwords, stopwords, 100):
         type = attrvalword['document__tokens__type__type']
         percent = float(attrvalword['count']) / token_count

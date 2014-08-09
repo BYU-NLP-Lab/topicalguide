@@ -87,11 +87,14 @@ def get_chart(words):
 
     url = "http://chart.apis.google.com/chart?cht=bhs&chs=200x300&chxt=x,y"
     data = "&chd=t:"
-    axislabel = ""
+    axislabel = u""
 
     for word in words[:10]:
         data += "%f," % word.percent
-        axislabel = "|" + str(word.word) + axislabel
+        tmp_word = word.word
+        if not tmp_word is str or not tmp_word is unicode:
+            tmp_word = unicode(word.word)
+        axislabel = "|" + tmp_word + axislabel
     axislabel = "&chxl=1:" + axislabel
 
     max_ = math.ceil(float(words[0].percent))

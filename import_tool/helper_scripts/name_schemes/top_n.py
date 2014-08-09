@@ -41,7 +41,7 @@ class TopNTopicNamer:
     def name_all_topics(self):
         # try:
             analysis = Analysis.objects.using(self.database_id).get(dataset__name=self.dataset_name, name=self.analysis_name)
-            name_scheme,created = analysis.topicnameschemes.get_or_create(name=self.scheme_name())
+            name_scheme, created = analysis.topicnameschemes.get_or_create(name=self.scheme_name())
             
             if created:
                 for i, topic in enumerate(analysis.topics.all()):

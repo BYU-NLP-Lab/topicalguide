@@ -1,4 +1,17 @@
-/* Style needed by every page */
+/* Styles needed by every page */
+
+/* Colors (typically used with the glyphicons) */
+.gold {
+    color: #D4AF37;
+}
+
+.pewter {
+    color: #9D9A96;
+}
+
+.blue {
+    color: #003EFF;
+}
 
 /* Header */
 .header {
@@ -135,3 +148,5 @@ a:hover span {
      -moz-border-radius: 6px 0 6px 6px;
           border-radius: 6px 0 6px 6px;
 }
+
+

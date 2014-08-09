@@ -1,162 +1,83 @@
 /*
  * The code on this page is responsible for updating the navigation and views, ensuring that 
- * url fragments are routed correctly.
+ * url fragments are routed correctly and the nav bar stays up-to-date.
  */
-
-/*
- * Parse url arguments to a hash.
- */
-function urlToHash(args) {
-    var hash = {};
-    var items = args.split('&');
-    if(items[0] !== "") {
-        for(i=0; i<items.length; i++) {
-            var keyAndValue = items[i].split('=');
-            if(keyAndValue[1]===undefined) keyAndValue.push("")
-            hash[unescape(keyAndValue[0])] = unescape(keyAndValue[1]);
-        }
-    }
-    return hash;
-}
-
-/*
- * Convert a hash to url arguments.
- */
-function hashToUrl(hash) {
-    var items = [];
-    _.forOwn(hash, function(value, key) {
-        items.push(escape(key) + '=' + escape(value));
-    });
-    return items.join('&');
-}
-
-
-/*
- * The DefaultView acts as an interface for other views to use so the proper methods and attributes
- * are implemented.
- */
-var DefaultView = Backbone.View.extend({
-    
-    // A human readable name for this view.
-    readableName: "Default Page",
-    
-    /*
-     * Any needed model event binding should be done in here.
-     */
-    initialize: function() {},
-    
-    /*
-     * Render visualization to the given element.
-     */
-    render: function() {
-        this.$el.html("<p>Welcome to the Default Page</p>");
-    },
-    
-    /*
-     * Remove this from any model events this is bound to and call cleanup on any subviews.
-     * This is done to prevent memory leaks.
-     */
-    cleanup: function() {}
-});
-
-/*
- * The LoadingView will display a loading symbol when the information you're waiting for is loading.
- * Once the query is fulfilled, your renderLoaded function is called with the data requested.
- */
-var LoadingView = Backbone.View.extend({
-    
-    readableName: "Loading View",
-    
-    mainQuery: function() {
-        return "api?datasets=*&analyses=*&dataset_attr=metadata,metrics&analysis_attr=metdata,metrics";
-    },
-    
-    initialize: function(args) {
-        if("mainQuery" in args) {
-            this.mainQuery = args.mainQuery;
-        }
-        var hash = {};
-        hash[this.mainQuery] = "unloaded";
-        globalDataModel.set(hash);
-        globalDataModel.on("change:"+this.mainQuery, this.render, this);
-    },
-    
-    render: function() {
-        this.renderAction(globalDataModel.get(this.mainQuery));
-    },
-    
-    // The view argument is the DatasetView object. Because "this" refers to the renderAction object.
-    renderAction:function(status){
-        if(status === "loading") {
-            this.$el.html("<p>Loading...</p>");
-        } else if(status === "unloaded") {
-            this.$el.html("<p>Making request for data...</p>");
-            globalDataModel.requestData(this.mainQuery);
-        } else if(status === "loaded") {
-            this.renderLoaded(globalDataModel.getData(this.mainQuery));
-        } else if(status === "error") {
-            this.$el.html("<p>An error was encountered with your request.</p");
-        } else {
-            this.$el.html("<p>Unknown status encountered: "+status+"</p");
-        }
-    },
-    
-    renderLoaded: function(data) {
-        this.$el.html("<p>Override the \"renderLoaded\" function to use your loaded data: "+JSON.stringify(data)+"</p");
-    },
-    
-    cleanup: function() {
-        globalDataModel.off(null, this.render, this);
-    }
-    
-});
 
 var DEBUG_VIEWMODEL = false;
 /*
  * The ViewModel is responsible for tracking which view is selected. This is primarily used with
  * the visualizations page where views are being swapped.
- * Bindable events include currentView, addedView, removedView.
+ * Bindable events include currentView, addedView, removedView, addedSettings.
  */
 var ViewModel = Backbone.Model.extend({
     
     initialize: function() {
         this.currentView = new DefaultView({ el: $("#main-container") });
+        this.helpView = new DefaultView({ el: $("#main-nav-help-modal") });
+        this.settingsView = new DefaultView({ el: $("#main-nav-settings-modal") });
+        this.favsView = new DefaultView();
     },
     
     rootViewClass: DefaultView,
     currentView: null,
-    currentPath: "",
     paths: {},
     navigation: {},
+    currentPath: "",
+    helpViewClass: null,
+    helpView: null,
+    favsViewClass: null,
+    favsView: null,
+    settingsView: null,
     settings: {},
+    
+    
+    
     
     /*
      * Change the view to the one specified. No-op if the name doesn't exist.
      * Store the view name in sessionStorage.lastViewName.
      * 
-     * name - Unique identifier for the view.
+     * path - Unique path for the view.
      * settings - Non-null hash containing the settings for the view. The hash may be empty.
-     * 
-     * TODO post settings to the settings model
+     * Return nothing.
      */
     changeView: function(path, settings) {
         if(DEBUG_VIEWMODEL) console.log("ViewModel.changeView path=\""+path+"\" settings=\""+hashToUrl(settings)+"\"");
+        path = path.toLowerCase();
         
         this.currentView.cleanup();
+        // Try to cleanup some in case cleanup is not implemented properly.
+        globalDataModel.off(null, null, this.currentView);
+        globalSelectionModel.off(null, null, this.currentView);
+        globalFavoritesModel.off(null, null, this.currentView);
+        
+        this.currentPath = path; // Must go before the settings are set as the router listens for changes to update the url.
+        globalSelectionModel.set(settings); // alert any views that the selection has changed
         if(path === "")
             this.currentView = new this.rootViewClass({ el: $("#main-container") });
         else if(path in this.paths)
             this.currentView = new this.paths[path].viewClass({ el: $("#main-container") });
         else
             this.currentView = new DefaultView({ el: $("#main-container") });
-        this.currentView.render();
+        
         this.currentPath = path;
-        this.set({currentView: path }); // alert listeners that the property has changed
-        globalSelectionModel.set(settings); // alert any views that the selection has changed
+        this.currentView.render();
+        this.trigger("changeView");
+    },
+    
+    changeSettingsView: function(readableName) {
+        this.settingsView.cleanup();
+        if(readableName in this.settings) {
+            this.settingsView = new this.settings[readableName]({ el: $("#main-nav-settings-modal") });
+        } else {
+            this.settingsView = new DefaultView({ el: $("#main-nav-settings-modal") });
+        }
+        this.settingsView.render();
     },
     
     /*
      * Set the root view to the given class.
+     * Return nothing.
      */
     setRootViewClass: function(rootClass) {
         this.rootViewClass = rootClass;
@@ -178,9 +99,10 @@ var ViewModel = Backbone.Model.extend({
         // Create url path from readable path and store class.
         var pathList = [];
         _(readablePath).forEach(function(menuItem) {
-            pathList.push(escape(menuItem));
+            pathList.push(escape(menuItem.replace(/ /g, "_")));
         });
-        var path = pathList.join("/");
+        var path = pathList.join("/").toLowerCase();
+        if(DEBUG_VIEWMODEL) console.log("Path: " + path);
         
         // Check for already existent path.
         if(path in this.paths)
@@ -224,12 +146,41 @@ var ViewModel = Backbone.Model.extend({
             viewClass: viewClass
         };
         
-        this.set({ addedView: path });
         if(DEBUG_VIEWMODEL) console.log("ViewModel.addViewClass path=\""+path+"\"");
+        this.trigger("addedView");
     },
     
+    /*
+     * Add a settings view.
+     * settingsClass - A class inheriting from default.
+     */
     addSettingsClass: function(settingsClass) {
         this.settings[settingsClass.prototype.readableName] = settingsClass;
+        this.trigger("addedSettings");
+    },
+    
+    /*
+     * Set the help view class. 
+     * Warning: only set after the DOM is loaded.
+     */
+    setHelpViewClass: function(helpViewClass) {
+        this.helpViewClass = helpViewClass;
+        this.helpView.cleanup();
+        this.helpView = new helpViewClass({ el: $("#main-nav-help-modal") });
+        this.helpView.render();
+        this.trigger("addedSettings");
+    },
+    
+    /*
+     * Set the favorites quick select view class.
+     * Warning: only set after the DOM is loaded.
+     */
+    setFavoritesViewClass: function(favsViewClass) {
+        this.favsViewClass = favsViewClass;
+        this.favsView.cleanup();
+        this.favsView = new favsViewClass();
+        this.favsView.render();
+        this.trigger("addedSettings");
     },
 });
 var globalViewModel = new ViewModel();
@@ -241,16 +192,34 @@ var globalViewModel = new ViewModel();
 var NavigationView = Backbone.View.extend({
     // initialize must be called after the body is ready so the element is present
     initialize: function() {
-        this.render();
-        globalViewModel.on("change:currentView", this.render, this);
-        globalViewModel.on("change:addedView", this.render, this);
-        globalViewModel.on("change:removedView", this.render, this);
+        globalViewModel.on("changeView", this.render, this);
+        globalViewModel.on("addedView", this.render, this);
+        globalViewModel.on("removedView", this.render, this);
+        globalViewModel.on("addedSettings", this.render, this);
     },
     
     template: $("#main-nav-template").html(),
-    compiledItemTemplate: _.template($("#main-nav-item-template").html()),
-    compiledDropdownTemplate: _.template($("#main-nav-dropdown-template").html()),
-    compiledSettingsTemplate: _.template($("#main-nav-settings-template").html()),
+    compiledItemTemplate: _.template(
+        "<% if(active) { %>"+
+        "    <li class=\"active\">"+
+        "<% } else { %>"+
+        "    <li>"+
+        "<% } %>"+
+        "<a href=\"<%= href %>\"><%= name %></a></li>"
+    ),
+    compiledDropdownTemplate: _.template(
+        "<a class=\"dropdown-toggle\" data-toggle=\"dropdown\"><%= name %><% if(isTopMenu) { %><span class=\"caret\"></span><% } %></a>"+
+        "<ul class=\"dropdown-menu\" role=\"menu\"></ul>"
+    ),
+    settingsTemplate: 
+        "<ul class=\"nav navbar-nav navbar-right\">"+
+        "    <li><a id=\"main-nav-help\" style=\"cursor: pointer;\">"+icons.help+"</a></li>"+
+        "    <li><a id=\"main-nav-favs\" style=\"cursor: pointer;\">"+icons.filledStar+"</a></li>"+
+        "    <li class=\"dropdown\" style=\"cursor: pointer;\">"+
+        "        <a class=\"dropdown-toggle\" data-toggle=\"dropdown\">"+icons.settings+"</a>"+
+        "        <ul id=\"main-nav-settings\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
+        "    </li>"+
+        "</ul>",
     
     /*
      * Renders the navigation bar according to what views are available in the globalViewModel.
@@ -258,19 +227,60 @@ var NavigationView = Backbone.View.extend({
     render: function() {
         this.$el.html(this.template);
         
-        // render the rest of the navigation bar
+        // Render the rest of the navigation bar.
         var menu = globalViewModel.navigation;
         var bar = this.$el.find("#main-nav-bar");
         this.renderMenu(bar, menu, true);
         
-        // render the settings dropdown
-        bar.parent().append(this.compiledSettingsTemplate({}));
-        var settingsMenu = bar.parent().find("#main-nav-settings");
-        var settings = globalViewModel.settings;
-        for(name in settings) {
-            settingsMenu.append("<li><a>"+name+"</a></li>");
-        }
+        // Render the settings dropdown.
+        bar.parent().append(this.settingsTemplate);
+        var settingsMenu = d3.select(this.el).select("#main-nav-settings")
+            .selectAll("li")
+            .data(d3.entries(globalViewModel.settings))
+            .enter()
+            .append("li")
+            .on("click", function(d) {
+                globalViewModel.changeSettingsView(d.key);
+                $("#main-nav-settings-modal").modal("show");
+            })
+            .append("a")
+            .text(function(d) { return d.key; });
         
+        // Add help popover functionality.
+        $("#main-nav-help").on("click", function(elem) {
+            globalViewModel.helpView.render();
+            $("#main-nav-help-modal").modal("show");
+        });
+        
+        // Add favorites popover functionality.
+        var enter = function() { // Make the popover appear on hover.
+            var that = this;
+            $(this).popover("show");
+            $(".popover").on("mouseleave", function() {
+                $(that).popover("hide");
+            })
+        };
+        var exit = function() { // Make the popover disappear on hover out.
+            var that = this;
+            setTimeout(function() {
+                if(!$(".popover:hover").length) {
+                    $(that).popover("hide");
+                }
+            }, 100);
+        };
+        var favs = $("#main-nav-favs");
+        favs.popover({ // Create the settings.
+                "html": true,
+                "trigger": "manual",
+                "viewport": "body",
+                "container": "body",
+                "placement": "bottom",
+                "animation": true,
+                "title": function() { return globalViewModel.favsView.readableName; },
+                "content": function() { globalViewModel.favsView.render(); return globalViewModel.favsView.$el.html(); },
+            })
+            .on("mouseenter", enter)
+            .on("mouseleave", exit);
         
         return this;
     },
@@ -285,7 +295,9 @@ var NavigationView = Backbone.View.extend({
                 if(menu[key].path === globalViewModel.currentPath) {
                     isActive = isSelected = true;
                 }
-                bar.append(this.compiledItemTemplate({ "active": isActive, "href": "#"+menu[key].path, "name": key }));
+                // The reason for escaping the path here is because the href seems to get unescaped upon clicking.
+                // This would mess with the setup.
+                bar.append(this.compiledItemTemplate({ "active": isActive, "href": "#"+escape(menu[key].path), "name": key }));
             } else { // Found a menu.
                 bar.append("<li></li>");
                 var lastItem = bar.children("li").last();
@@ -313,8 +325,21 @@ var DEBUG_ROUTER = false;
 var Router = Backbone.Router.extend({
     
     initialize: function() {
+        // Catches all routes except for the root path.
         this.route(/^([^\\?]*)([\\?](.*))?$/, "changeView");
+        // Catches the special case of no fragment path or query string (the root path).
         this.route(/^$/, "rootView");
+        globalSelectionModel.on("multichange", this.updateQueryString, this);
+    },
+    
+    previousQuery: "",
+    
+    /*
+     * Updates the query string in the url bar and sets the history so the back button works.
+     */
+    updateQueryString: function() {
+        if(DEBUG_ROUTER) console.log("Updating query string, replacing in browser history.");
+        this.navigate(globalViewModel.currentPath +"?"+ hashToUrl(globalSelectionModel.attributes), {trigger: false, replace: false});
     },
     
     rootView: function() {
@@ -323,9 +348,18 @@ var Router = Backbone.Router.extend({
     },
     
     changeView: function(path, queryString) {
-        if(queryString===undefined || queryString===null) queryString = "";
-        else if(queryString.length > 0) queryString = queryString.slice(1);
         if(DEBUG_ROUTER) console.log("Router.changeView called with path=\""+path+"\" query=\""+queryString+"\"");
+        if(path === undefined || path === null) path = "";
+        if(queryString === undefined || queryString === null) queryString = ""; // Make sure queryString is non-null.
+        else if(queryString.length > 0) queryString = queryString.slice(1); // Chop off the '?'.
+        
+        if(queryString === "") {
+            // If the query string differs from the selection model attributes query string
+            // then replace the url without adding an entry in the browser history.
+            this.navigate(path +"?"+ hashToUrl(globalSelectionModel.attributes), {trigger: false, replace: true});
+        }
+        this.previousQuery = queryString;
+        if(DEBUG_ROUTER) console.log("Router.changeView end with path=\""+path+"\" query=\""+queryString+"\"");
         globalViewModel.changeView(path, urlToHash(queryString));
     },
 });
@@ -335,13 +369,16 @@ var Router = Backbone.Router.extend({
 // The views need some page elements that must be loaded in order to work.
 var router;
 var navView;
-$(document).ready(function() {
+$(function() {
+    // Cleanup cached api queries
     for(key in localStorage) {
-        if(key.slice(0,3) == "api") {
+        if(key.slice(0,3) === "api") {
             delete localStorage[key];
         }
     }
+    // Start the router
     navView = new NavigationView({ el: $("#main-nav") });
+    navView.render();
     router = new Router();
-    Backbone.history.start();
+    Backbone.history.start({ pushState: false });
 });

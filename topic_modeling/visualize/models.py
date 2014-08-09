@@ -56,6 +56,8 @@ class Dataset(models.Model):
     FIELDS = {
         'metadata': lambda x: {miv.info_type.name: miv.value() for miv in x.metainfovalues.iterator()},
         'metrics': lambda x: {mv.metric.name: mv.value for mv in x.datasetmetricvalues.iterator()},
+        'document_count': lambda dataset: dataset.documents.count(),
+        'analysis_count': lambda dataset: dataset.analyses.count(),
     }
     
     def __unicode__(self):
@@ -115,13 +117,31 @@ class Document(models.Model):
     full_path = models.TextField()
     dataset = models.ForeignKey(Dataset, related_name='documents')
     
+    ATTRIBUTES = {
+        'metadata': lambda doc: {miv.info_type.name: miv.value() for miv in doc.metainfovalues.iterator()},
+        'metrics': lambda doc: {mv.metric.name: mv.value for mv in doc.documentmetricvalues.iterator()},
+        'html': lambda doc: doc.text(),
+        'text': lambda doc: doc.text(),
+    }
+    
+    @property
+    def identifier(self):
+        return self.filename
+    
     def __unicode__(self):
         return unicode(self.filename)
 
     def raw_text(self):
         '''Get the document's raw text from the ... what?'''
         raise NotImplemented
-
+    
+    def attributes_to_dict(self, attributes, options):
+        result = {}
+        for attr in attributes:
+            if attr in self.ATTRIBUTES:
+                result[attr] = self.ATTRIBUTES[attr](self)
+        return result
+    
     def get_context_for_word(self, word_to_find, analysis, topic=None):
         '''Get the word in context
 
@@ -163,7 +183,35 @@ class Document(models.Model):
             if highlight:
                 parts.append(self.after_text)
         return ' '.join(parts)
-
+    
+    def html(self, kwic=None):
+        return self.text(kwic)
+    
+    def get_top_topics(self, analysis, document):
+        w = Widget('Top Topics', 'documents/top_topics')
+        from django.db import connection
+        c = connection.cursor()
+        c.execute('''SELECT wtt.topic_id, count(*) as cnt
+                        FROM visualize_wordtoken wt
+                        JOIN visualize_wordtoken_topics wtt
+                         on wtt.wordtoken_id = wt.id
+                        JOIN visualize_topic t
+                         on t.id = wtt.topic_id
+                            WHERE t.analysis_id = %d AND wt.document_id = %d
+                            GROUP BY wtt.topic_id
+                            ORDER BY cnt DESC'''%(analysis.id,document.id))
+        rows = c.fetchall()[:10]
+        total = 0
+        for obj in rows:
+            total += obj[1]
+        topics = []
+        for obj in rows:
+            topic_name = TopicName.objects.filter(topic__id=obj[0])[0]
+            t = WordSummary(topic_name, float(obj[1]) / total)
+            topics.append(t)
+        w['chart_address'] = get_chart(topics)
+        return w
+    
     def text(self, kwic=None):
         #file_dir = self.dataset.files_dir
         text = open(self.full_path, 'r').read().decode('utf-8')
@@ -321,19 +369,19 @@ class Topic(models.Model):
         'metadata': lambda topic: {miv.info_type.name: miv.value() for miv in topic.metainfovalues.iterator()},
         'metrics': lambda topic: {mv.metric.name: mv.value for mv in topic.topicmetricvalues.iterator()},
         'names': lambda topic: {name.name_scheme.name: name.name for name in topic.names.iterator()},
-        'top-10-documents': lambda topic: list(topic.topic_document_counts(sort=True)[:10]),
-        'top-10-words': lambda topic: { value['type__type']: {'count':value['count']} for value in topic.topic_word_counts(sort=True)[:10]},
     }
     
     @property
     def identifier(self):
         return self.number
     
-    def attributes_to_dict(self, attributes):
+    def attributes_to_dict(self, attributes, options):
         result = {}
         for attr in attributes:
             if attr in self.ATTRIBUTES:
                 result[attr] = self.ATTRIBUTES[attr](self)
+            if attr == 'pairwise':
+                result[attr] = self.get_pairwise_metrics(options)
         return result
     
     def __unicode__(self):
@@ -343,16 +391,38 @@ class Topic(models.Model):
         else:
             name = ' -- '
         return '%d: %s' % (self.number, name)
-
+    
+    def get_pairwise_metrics(self, options):
+        pairwise = self.pairwisetopicmetricvalue_originating.select_related()
+        if 'topic_pairwise' in options and options['topic_pairwise'] != '*':
+            pairwise = pairwise.filter(metric__in=options['topic_pairwise'])
+        result = {}
+        topicCount = Topic.objects.filter(analysis=self.analysis).count()
+        for value in pairwise:
+            if not value.metric.name in result:
+                result[value.metric.name] = [0 for i in range(topicCount)]
+            result[value.metric.name][value.topic2.number] = value.value
+        return result
+    
     def total_count(self):
         return self.tokens.count()
     
-    def top_n_words(self, words='*', topN=10):
+    def top_n_words(self, words='*', top_n=10):
         topicwords = self.tokens.values('type__type').annotate(count=Count('type__type'))
         if words != '*':
             topicwords = topicwords.filter(type__type__in=words)
         topicwords = topicwords.order_by('-count')
-        return {value['type__type']: {'token_count': value['count']} for value in topicwords[:topN]}
+        return {value['type__type']: {'token_count': value['count']} for value in topicwords[:top_n]}
+    
+    def top_n_documents(self, documents='*', top_n=10):
+        topicdocs = self.tokens.values('document__id', 'document__filename').annotate(count=Count('document__id'))
+        if documents != '*':
+            topicdocs = topicdocs.filter(document__filename__in=documents)
+        topicdocs = topicdocs.order_by('-count')
+        return {value['document__filename']: {'token_count': value['count']} for value in topicdocs[:top_n]}
+    
+    def top_n_topics(self, top_n=10):
+        raise Exception('top_n_topics not implemented yet.')
         
     
     def topic_word_counts(self, sort=False):

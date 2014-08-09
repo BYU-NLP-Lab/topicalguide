@@ -10,6 +10,8 @@
         {% block stylesheets %}
             <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/css/bootstrap.min.css" />
             <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/css/bootstrap-theme.min.css" />
+            <link rel="stylesheet" type="text/css" href="{{MEDIA}}/jquery-ui/jquery-ui.css" />
+            <link rel="stylesheet" type="text/css" href="{{MEDIA}}/jquery-ui/jquery-ui.theme.css" />
             <link rel="stylesheet" type="text/css" href="{{STYLES}}/base.css" />
         {% endblock %}
         
@@ -19,12 +21,127 @@
             <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/lodash.min.js"></script>
             <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/backbone.min.js"></script>
             <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/d3.v3.min.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/jquery-ui/jquery-ui.js"></script>
+            
+            <script id="main-nav-template" type="text/template">
+                <nav class="navbar navbar-default" role="navigation">
+                    <div class="container-fluid">
+                        <div id="main-nav-brand" class="navbar-header">
+                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#js-navbar-collapse-hook">
+                                <span class="sr-only">Toggle navigation</span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+                            <a href="#" class="navbar-brand" style="padding: 5px;">
+                                <svg width="180" height="100%" viewBox="0, 0, 300, 70" preserveAspectRatio="xMinYMid meet">
+                                    <g>
+                                        <text style="font-size:14px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+                                           x="50"
+                                           y="14">
+                                           <tspan sodipodi:role="line">The</tspan>
+                                        </text>
+                                        <text  style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:-1px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+                                           x="80" 
+                                           y="35">
+                                           <tspan sodipodi:role="line"><tspan style="line-height:1000%;fill:#008000">Topic</tspan>al</tspan>
+                                        </text>
+                                        <text style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:-1px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+                                           x="185"
+                                           y="67">
+                                           <tspan>Guide</tspan>
+                                        </text>
+                                        <g>
+                                            <rect
+                                               style="fill:#000000;fill-opacity:1"
+                                               width="50"
+                                               height="70"
+                                               x="0"
+                                               y="0"
+                                               ry="11"
+                                               rx="11" />
+                                            <rect
+                                               style="fill:#ffffff;fill-opacity:1"
+                                               width="40"
+                                               height="60"
+                                               x="5"
+                                               y="5"
+                                               rx="8"
+                                               ry="8" />
+                                            
+                                            <rect
+                                               style="fill:#0000cc;fill-opacity:1"
+                                               width="30"
+                                               height="6"
+                                               x="10"
+                                               y="15"
+                                               rx="4"
+                                               ry="4" />
+                                            <rect
+                                               style="fill:#00d000;fill-opacity:1"
+                                               width="30"
+                                               height="6"
+                                               x="10"
+                                               y="26"
+                                               rx="4"
+                                               ry="4" />
+                                            <rect
+                                               style="fill:#d30000;fill-opacity:1"
+                                               width="30"
+                                               height="6"
+                                               x="10"
+                                               y="37"
+                                               rx="4"
+                                               ry="4" />
+                                            <rect
+                                               style="fill:#ee7216;fill-opacity:1"
+                                               width="30"
+                                               height="6"
+                                               x="10"
+                                               y="48"
+                                               rx="4"
+                                               ry="4" />
+                                        </g>
+                                    </g>
+                                </svg>
+                            </a>
+                        </div>
+                        <div id="js-navbar-collapse-hook" class="collapse navbar-collapse">
+                            <ul id="main-nav-bar" class="nav navbar-nav"></ul>
+                        </div>
+                    </div>
+                </nav>
+            </script>
+            
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/utilities.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/model.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/view_templates.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/router.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/settings.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/scratch.js"></script>
+            
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/datasets_view.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/topics_view.js"></script>
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/documents_view.js"></script>
+<!--
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/visualizations/main_view.js"></script>
+            
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/visualizations/plots_view.js"></script>
+-->
+<!--
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/visualizations/topics_over_time.js"></script>
+-->
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/visualizations/chord_view.js"></script>
+            
+<!--
+            <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/words_view.js"></script>
+-->
         {% endblock %}
         
     </head>
     
     <body>
-        <div class="container-fluid">
+        <div id="all-content" class="container-fluid">
             {% block header %}
                 <header class="header">
                     <div id="main-nav" class="nav-bar">
@@ -33,9 +150,9 @@
                 </header>
             {% endblock %}
             
-            <div id="main-container" class="container">
-                {% block body %}{% endblock %}
-            </div>
+            <div id="main-container" class="container-fluid"></div>
+            <div id="main-nav-help-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="helpModal" aria-hidden="true"></div>
+            <div id="main-nav-settings-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="settingsModal" aria-hidden="true"></div>
             
             {% block footer %}
                 <footer class="footer">
