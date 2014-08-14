@@ -13,6 +13,7 @@ var ChordView = DefaultView.extend({
 
     controlsTemplate:   
 "<h3><b>Controls</b></h3>"+
+"<hr />"+
 "<div><label>Link Threshold</label></div>"+
 "<label id=\"chords-slider-min\" style=\"display: block; float: left;\">0.0%</label><label id=\"chords-slider-max\" style=\"display: block; float: right;\">100.0%</label>"+
 "<div id=\"chords-slider\" style=\"clear: both;\"></div>"+
@@ -344,6 +345,7 @@ var ChordView = DefaultView.extend({
                             return d.source.index === i || d.target.index === i;
                         })
                         .transition()
+                        .duration(600)
                         .style("opacity", 1)
                         .style("stroke-opacity", 1);
                     
@@ -357,6 +359,7 @@ var ChordView = DefaultView.extend({
                             return d.source.index !== i && d.target.index !== i;
                         })
                         .transition()
+                        .duration(600)
                         .style("opacity", 0.02);
                     
                     // Fade uninvolved groups.
@@ -364,14 +367,17 @@ var ChordView = DefaultView.extend({
                             return !(group.index in groupsWithLinks);
                         })
                         .transition()
+                        .duration(600)
                         .style("stroke-opacity", 0.02)
                         .style("opacity", 0.02);
                 } else { // Hide text re-show groups and chords.
                     text.style("display", "none");
                     chords.transition()
+                        .duration(600)
                         .style("stroke-opacity", 0)
                         .style("opacity", 0.8);
                     topicGroups.transition()
+                        .duration(600)
                         .style("stroke-opacity", 1)
                         .style("opacity", 1);
                 }

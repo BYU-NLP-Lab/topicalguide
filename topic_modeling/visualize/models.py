@@ -606,7 +606,7 @@ class MetaInfoValue(models.Model):
         if value_type == 'float':
             self.float_value = float(value)
         elif value_type == 'text':
-            self.text_value = str(value)
+            self.text_value = unicode(value)
         elif value_type == 'int':
             self.int_value = int(value)
         elif value_type == 'bool':
@@ -617,7 +617,7 @@ class MetaInfoValue(models.Model):
             raise Exception("Values of type '{0}' aren't supported by MetaInfoValue".format(value_type))
     
     def __str__(self):
-        return str(self.value())
+        return self.value()
 
     def value(self):
         result = None

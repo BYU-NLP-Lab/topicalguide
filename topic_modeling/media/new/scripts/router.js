@@ -87,7 +87,7 @@ var ViewModel = Backbone.Model.extend({
      * Add a view. Will not override another existing view.
      * 
      * readablePath - An array with human readable names that will be used to create the route
-     *                and update the navigation object.
+     *                and update the navigation bar.
      * view - The view class from which the view can be constructed.
      *        Must have render(settings) and cleanup() functions defined.
      *        Must have name and readableName variables defined on prototype.

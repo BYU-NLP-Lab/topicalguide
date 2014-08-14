@@ -43,6 +43,7 @@ var AllTopicSubView = DefaultView.extend({
     },
     
     renderForm: function() {
+        var that = this;
         var settings = this.model.attributes;
         var words = settings["words"].split(/[\s,]+/).join(" ");
         var topNWords = settings["topicTopNWords"];
@@ -54,7 +55,10 @@ var AllTopicSubView = DefaultView.extend({
         el.select("#words-input").property("value", words);
         el.select("#top-words-input").property("value", topNWords);
         el.select("#display-words-input").property("value", displayNWords);
-        el.select("form").on("submit", this.formSubmit.bind(this));
+        el.select("form").on("submit", function() {
+            d3.event.preventDefault();
+            that.formSubmit();
+        });
     },
     
     formSubmit: function() {
@@ -87,7 +91,7 @@ var AllTopicSubView = DefaultView.extend({
             "topics": "*",
             "words": settings["words"],
             "top_n_words": settings["topicTopNWords"],
-            "topic_attr": "metrics,names",
+            "topic_attr": ["metrics", "names", "top_n_words"],
             "dataset_attr": "metrics",
             "word_metrics": "token_count",
         }, function(data) {
@@ -130,6 +134,8 @@ var AllTopicSubView = DefaultView.extend({
                 bars: [2,5],
                 percentages: [2,5],
                 favicon: [0, "topics", this],
+                sortBy: 1,
+                sortAscending: true,
             });
         }.bind(this), this.renderError.bind(this));
     },
@@ -192,12 +198,13 @@ var SingleTopicView = DefaultView.extend({
             "datasets": selections["dataset"],
             "analyses": selections["analysis"],
             "topics": selections["topic"],
+            "topic_attr": "top_n_words",
             "word_metrics": "token_count",
             "words": "*",
             "top_n_words": "10",
         }, function(data) {
             container.html("");
-            var topic = extractTopics(data)[selections["topic"]];
+            var topic = extractTopics(data, this.selectionModel)[selections["topic"]];
             var words = [];
             for(key in topic["words"]) words.push({ key: key, value: topic["words"][key]});
             words.sort(function(a, b) { return b.value.token_count - a.value.token_count; });
@@ -207,7 +214,7 @@ var SingleTopicView = DefaultView.extend({
                 .text("Topic Number: "+selections["topic"]);
             container.append("h3")
                 .text(words.join(" "));
-        }, this.renderError.bind(this));
+        }.bind(this), this.renderError.bind(this));
     },
     
     renderTopDocuments: function(content) {
@@ -240,6 +247,8 @@ var SingleTopicView = DefaultView.extend({
                 bars: [3], 
                 percentages: [3],
                 favicon: [0, "documents", this],
+                sortBy: 3,
+                sortAscending: false,
             });
         }.bind(this), this.renderError.bind(this));
     },
@@ -299,6 +308,8 @@ var SingleTopicView = DefaultView.extend({
                     bars: percentageColumns, 
                     percentages: percentageColumns,
                     favicon: [0, "topics", this],
+                    sortBy: header.length-1,
+                    sortAscending: false,
                 });
             }.bind(this), this.renderError.bind(this));
         }.bind(this), this.renderError.bind(this));
@@ -367,7 +378,7 @@ var SingleTopicSubView = DefaultView.extend({
             .html("<span class=\"glyphicon glyphicon-chevron-left pewter\"></span> Back to All Topics")
             .on("click", function() {
                 this.selectionModel.set({ "topic": "" });
-            });
+            }.bind(this));
         container.append("hr");
         container = container.append("div");
         container.html(this.loadingTemplate);

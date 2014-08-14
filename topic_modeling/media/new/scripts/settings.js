@@ -171,6 +171,7 @@ var LoginView = DefaultSettingsView.extend({
             var password = body.select("#password-input");
             
             form.on("submit", function() {
+                d3.event.preventDefault();
                 globalUserModel.submitQueryByHash({username: username.property("value"), password: password.property("value") },
                     function(data) {
                         if("logged_in" in data && data["logged_in"]) {

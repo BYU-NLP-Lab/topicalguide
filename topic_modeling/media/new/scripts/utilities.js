@@ -2,9 +2,20 @@
  * The following are an assortment of useful utilities.
  */
 
+
+/*
+ * Maps datasets => dataset, analyses => analysis, etc. for just the common terms for this site.
+ */
 function makeSingular(word) {
     if(word === "analyses") return "analysis";
     else return word.slice(0, word.length - 1)
+}
+
+/*
+ * Return a string in title case.
+ */
+function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(substr){ return substr.charAt(0).toUpperCase() + substr.slice(1); });
 }
 
 /*
@@ -16,7 +27,7 @@ function urlToHash(args) {
     if(items[0] !== "") {
         for(i=0; i<items.length; i++) {
             var keyAndValue = items[i].split('=');
-            if(keyAndValue[1]===undefined) keyAndValue.push("")
+            if(keyAndValue[1]===undefined) keyAndValue.push("");
             hash[unescape(keyAndValue[0])] = unescape(keyAndValue[1]);
         }
     }
@@ -42,13 +53,19 @@ function hashToUrl(hash) {
             return escape(item.toString());
         }
     };
+    var keys = [];
+    _.forOwn(hash, function(value, key) { keys.push(key); });
+    keys.sort();
     var items = [];
-    _.forOwn(hash, function(value, key) {
-        items.push(escape(key) + '=' + normalize(value));
+    _.forEach(keys, function(key) {
+        items.push(escape(key) + '=' + normalize(hash[key]));
     });
     return items.join('&');
 }
 
+/*
+ * Return true if local storage is enabled.
+ */
 function hasLocalStorage() {
     try {
         localStorage["storage-test"] = "test";
@@ -71,32 +88,30 @@ function extractMetadata(hash, metadata, defaults) {
     }
 }
 
-/* 
- * Helper function to pull out a deeply nested sub-hash.
- * name - One of: datasets, analyses, topics
- * hash - The hash the data is being extracted from.
- * Return sub-hash if found; empty hash otherwise.
+/*
+ * Convenience method to extract documents.
+ * data - The data returned by the server in the form of hashes and arrays.
+ * [model] - The selection model, defaults to the global selection model if not provided.
  */
-function extractSubHash(name, hash) {
-    console.log("extractSubHash is deprecated");
-    var list = ["datasets", globalSelectionModel.get("dataset"), "analyses",
-                globalSelectionModel.get("analysis"), "topics", globalSelectionModel.get("topic")];
-    for(i=0; i<list.length; i++) {
-        hash = hash[list[i]];
-        if(list[i] === name) break;
+function extractDocuments(data, model) {
+    if(model === undefined) {
+        return data.datasets[globalSelectionModel.get("dataset")].analyses[globalSelectionModel.get("analysis")].documents;
+    } else {
+        return data.datasets[model.get("dataset")].analyses[model.get("analysis")].documents;
     }
-    return hash;
 }
 
-// TODO make extraction functions take a selection model or default to the global one.
-// Convenience method to extract documents.
-function extractDocuments(data) {
-    return data.datasets[globalSelectionModel.get("dataset")].documents;
-}
-
-// Convenience method to extract topics.
-function extractTopics(data) {
-    return data.datasets[globalSelectionModel.get("dataset")].analyses[globalSelectionModel.get("analysis")].topics;
+/*
+ * Convenience method to extract topics.
+ * data - The data returned by the server in the form of hashes and arrays.
+ * [model] - The selection model, defaults to the global selection model if not provided.
+ */
+function extractTopics(data, model) {
+    if(model === undefined) {
+        return data.datasets[globalSelectionModel.get("dataset")].analyses[globalSelectionModel.get("analysis")].topics;
+    } else {
+        return data.datasets[model.get("dataset")].analyses[model.get("analysis")].topics;
+    }
 }
 
 /*
@@ -112,6 +127,8 @@ function extractTopics(data) {
  * bars - Indicates the rows to display with percentage bars.
  * percentages - Indicates which rows should be displayed as percentages.
  * favicon - If specified it is an array of length 3 e.g. [indexOfFavsColumn, "datasets", view object].
+ * sortBy - The column to sort by on creation.
+ * sortAscending - How to sort the column, true for ascending, false for descending.
  * Return nothing.
  */
 function createSortableTable(table, options) {
@@ -123,6 +140,8 @@ function createSortableTable(table, options) {
         bars: [],
         percentages: [],
         favicon: false,
+        sortBy: 0,
+        sortAscending: true,
     };
     options = _.extend(defaults, options);
     // Find all of the maxes.
@@ -139,9 +158,23 @@ function createSortableTable(table, options) {
         percent[options.percentages[i].toString()] = null;
     }
     
+    // Sort functions where i is the column to sort by.
+    var makeSortAscending = function(i) {
+        var sortAscending = function(a, b) {
+            if($.isNumeric(a[i]) && $.isNumeric(b[i])) return parseFloat(a[i]) - parseFloat(b[i]);
+            else return a[i].localeCompare(b[i]);
+        };
+        return sortAscending;
+    }
+    var makeSortDescending = function(i) {
+        var sortAscending = makeSortAscending(i);
+        var sortDescending = function(a, b) { return sortAscending(b, a); };
+        return sortDescending;
+    }
+    
     // Variables for sorting.
-    var ascending = true;
-    var lastColumn = 0;
+    var ascending = options.sortAscending;
+    var lastColumn = options.sortBy;
     // Create column headers with sort icons.
     var headerRow = table.append("thead")
         .append("tr").selectAll("th")
@@ -151,19 +184,15 @@ function createSortableTable(table, options) {
         .append("a")
         .style("cursor", "pointer")
         .on("click", function(d, i) {
-            var sortAscending = function(a, b) {
-                if($.isNumeric(a[i]) && $.isNumeric(b[i])) return parseFloat(a[i]) - parseFloat(b[i]);
-                else return a[i].localeCompare(b[i]);
-            };
-            var sortDescending = function(a, b) { return sortAscending(b, a); };
+            // On click sort the table.
             if(lastColumn !== i) ascending = true;
             lastColumn = i;
             if(ascending) {
                 ascending = false;
-                tableRows.sort(sortAscending);
+                tableRows.sort(makeSortAscending(i));
             } else {
                 ascending = true;
-                tableRows.sort(sortDescending); 
+                tableRows.sort(makeSortDescending(i)); 
             }
         })
         .classed({ "nounderline": true })
@@ -240,6 +269,14 @@ function createSortableTable(table, options) {
                 .attr("padding-left", "5px");
         }
     });
+    
+    // Set initial sort.
+    if(ascending) {
+        tableRows.sort(makeSortAscending(lastColumn));
+    } else {
+        tableRows.sort(makeSortDescending(lastColumn));
+    }
+    ascending = !ascending;
 };
 
 /*

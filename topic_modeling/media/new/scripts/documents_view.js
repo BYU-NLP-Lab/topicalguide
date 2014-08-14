@@ -47,6 +47,7 @@ var AllDocumentsSubView = DefaultView.extend({
         var selection = this.selectionModel.attributes;
         this.dataModel.submitQueryByHash({
                 "datasets": selection["dataset"],
+                "analyses": selection["analysis"],
                 "dataset_attr": "document_count",
                 "documents": "*",
                 "document_continue": this.model.attributes["documentContinue"],
@@ -109,6 +110,8 @@ var AllDocumentsSubView = DefaultView.extend({
                 data: documents, 
                 onClick: { "1": onClick },
                 favicon: [0, "documents", this],
+                sortBy: 1,
+                sortAscending: true,
             });
         }.bind(this), this.renderError.bind(this));
     },
@@ -133,6 +136,7 @@ var DocumentInfoView = DefaultView.extend({
         var selection = this.selectionModel.attributes;
         globalDataModel.submitQueryByHash({
                 "datasets": selection["dataset"],
+                "analyses": selection["analysis"],
                 "documents": selection["document"],
                 "document_attr": ["html"],
         }, function(data) {
@@ -149,6 +153,7 @@ var DocumentInfoView = DefaultView.extend({
         var selection = this.selectionModel.attributes;
         this.dataModel.submitQueryByHash({
                 "datasets": selection["dataset"],
+                "analyses": selection["analysis"],
                 "documents": selection["document"],
                 "document_attr": ["metadata", "metrics"],
         }, function(data) {
