@@ -111,7 +111,7 @@ class Dataset(models.Model):
 LEFT_CONTEXT_SIZE = 40
 RIGHT_CONTEXT_SIZE = 40
 class Document(models.Model):
-    # Warning: this class doesn't have an auto-incrrementing primary key.
+    # Warning: this class doesn't have an auto-incrementing primary key.
     id = models.IntegerField(primary_key=True)
     filename = models.CharField(max_length=128, db_index=True)
     full_path = models.TextField()
@@ -120,8 +120,7 @@ class Document(models.Model):
     ATTRIBUTES = {
         'metadata': lambda doc: {miv.info_type.name: miv.value() for miv in doc.metainfovalues.iterator()},
         'metrics': lambda doc: {mv.metric.name: mv.value for mv in doc.documentmetricvalues.iterator()},
-        'html': lambda doc: doc.text(),
-        'text': lambda doc: doc.text(),
+        'text': lambda doc: doc.get_text(),
     }
     
     @property
@@ -131,15 +130,30 @@ class Document(models.Model):
     def __unicode__(self):
         return unicode(self.filename)
 
-    def raw_text(self):
-        '''Get the document's raw text from the ... what?'''
-        raise NotImplemented
-    
     def attributes_to_dict(self, attributes, options):
         result = {}
         for attr in attributes:
             if attr in self.ATTRIBUTES:
                 result[attr] = self.ATTRIBUTES[attr](self)
+        return result
+    
+    def get_word_token_topics_and_locations(self, analysis, words=[]):
+        """
+        Gather word token information including start index and the topic.
+        Note that the end index can be inferred by the word length and is thus omitted.
+        Return a dictionary of the form result[word] = [(topic, start_index), ...].
+        """
+        if words == '*':
+            tokens = self.tokens.filter(topics__analysis=analysis)
+        else:
+            tokens = self.tokens.filter(topics__analysis=analysis, type__type__in=words)
+        tokens.select_related()
+        result = {}
+        for token in tokens:
+            t = token.type.type
+            if t not in result:
+                result[t] = []
+            result[t].append((token.topics.filter(analysis=analysis)[0].number, token.start))
         return result
     
     def get_context_for_word(self, word_to_find, analysis, topic=None):
@@ -187,6 +201,30 @@ class Document(models.Model):
     def html(self, kwic=None):
         return self.text(kwic)
     
+    def get_text(self):
+        """Return the unicode text of the file used as input to the analyses."""
+        with open(self.full_path, 'r') as fin:
+            return unicode(fin.read().decode('utf-8'))
+    
+    def get_key_word_in_context(self, token_indices, pre=80, post=80):
+        word_tokens = self.tokens.filter(token_index__in=token_indices).order_by("start")
+        
+        result = {}
+        text = self.get_text()
+        for token in word_tokens:
+            pre_word = pre
+            start = token.start - pre_word
+            if start < 0:
+                pre_word = token.start
+                start = 0
+            word_len = len(token.type.type)
+            post_word = post
+            before = text[start: token.start]
+            word = text[token.start: token.start+word_len]
+            after = text[token.start+word_len: token.start+word_len+post_word]
+            result[token.token_index] = [before, word, after, token.type.type]
+        return result
+    
     def get_top_topics(self, analysis, document):
         w = Widget('Top Topics', 'documents/top_topics')
         from django.db import connection
@@ -230,7 +268,7 @@ class Document(models.Model):
         text = text.splitlines()
         text = [line for line in text if line]
         return '<br><br>'.join(text)
-
+    
     def get_text_for_kwic(self):
         return open(self.dataset.dataset_dir + "/" +
             self.filename, 'r').read()
@@ -290,7 +328,7 @@ class WordType(models.Model):
 class WordToken(models.Model):
     # Warning: this class doesn't have an auto-incrementing primary key.
     id = models.IntegerField(primary_key=True)
-    type = models.ForeignKey(WordType, related_name='tokens') #@ReservedAssignment
+    type = models.ForeignKey(WordType, related_name='tokens')
     token_index = models.IntegerField()
     start = models.IntegerField()
     
@@ -392,10 +430,43 @@ class Topic(models.Model):
             name = ' -- '
         return '%d: %s' % (self.number, name)
     
+    def get_word_tokens(self, words='*'):
+        if words == '*':
+            word_tokens = self.tokens.all()
+        else:
+            word_tokens = self.tokens.filter(type__type__in=words)
+        
+        result = {}
+        for token in word_tokens:
+            word_type = token.type.type
+            if word_type not in result:
+                result[word_type] = []
+            result[word_type].append([token.document.filename, token.token_index])
+        return result
+    
+    def get_word_token_documents_and_locations(self, documents=[]):
+        """
+        Get all word token start and end indices according to documents.
+        Return a dictionary of the form result[document] = [(start, end), ...].
+        """
+        if documents == '*':
+            tokens = self.tokens.all()
+        else:
+            tokens = self.tokens.filter(document__filename__in=documents)
+        result = {}
+        for token in tokens:
+            doc = token.document.identifier
+            if doc not in result:
+                result[doc] = []
+            start = token.start
+            result[doc].append((start, start+len(token.type.type)))
+        return result
+    
     def get_pairwise_metrics(self, options):
-        pairwise = self.pairwisetopicmetricvalue_originating.select_related()
+        pairwise = self.pairwisetopicmetricvalue_originating.all()
         if 'topic_pairwise' in options and options['topic_pairwise'] != '*':
             pairwise = pairwise.filter(metric__in=options['topic_pairwise'])
+        pairwise.select_related()
         result = {}
         topicCount = Topic.objects.filter(analysis=self.analysis).count()
         for value in pairwise:
@@ -408,11 +479,11 @@ class Topic(models.Model):
         return self.tokens.count()
     
     def top_n_words(self, words='*', top_n=10):
-        topicwords = self.tokens.values('type__type').annotate(count=Count('type__type'))
+        topic_words = self.tokens.values('type__type').annotate(count=Count('type__type'))
         if words != '*':
-            topicwords = topicwords.filter(type__type__in=words)
-        topicwords = topicwords.order_by('-count')
-        return {value['type__type']: {'token_count': value['count']} for value in topicwords[:top_n]}
+            topic_words = topic_words.filter(type__type__in=words)
+        topic_words = topic_words.order_by('-count')
+        return {value['type__type']: {'token_count': value['count']} for value in topic_words[:top_n]}
     
     def top_n_documents(self, documents='*', top_n=10):
         topicdocs = self.tokens.values('document__id', 'document__filename').annotate(count=Count('document__id'))

@@ -47,4 +47,24 @@ def root(request):
     template = loader.get_template('new/root.html')
     template_context = RequestContext(request, context)
     return HttpResponse(template.render(template_context))
+
+@gzip_page
+def rootdev(request):
+    STATIC = '/site-media/new'
+    context = {}
+    context['MEDIA'] = STATIC
+    context['SCRIPTS'] = STATIC + '/scripts'
+    context['STYLES'] = STATIC + '/styles'
+    context['IMAGES'] = STATIC + '/images'
+    context['FONTS'] = STATIC + '/fonts'
+    context['license'] = "http://www.gnu.org/licenses/agpl.html"
+    context['wiki_url'] = "https://github.com/BYU-NLP-Lab/topicalguide/wiki"
+    context['nlp_lab_url'] = "https://facwiki.cs.byu.edu/nlp/index.php/Main_Page"
+    context['cs_dept_url'] = "https://cs.byu.edu"
+    context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
+    context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
+    context['last_updated'] = "Last updated on %s" % time.strftime("%A, %d %B %Y %l:%M %P", time.gmtime(Repo(__file__).head.commit.committed_date))
     
+    template = loader.get_template('new/rootdev.html')
+    template_context = RequestContext(request, context)
+    return HttpResponse(template.render(template_context))

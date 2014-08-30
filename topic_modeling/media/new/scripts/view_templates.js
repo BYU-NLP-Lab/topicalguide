@@ -6,8 +6,31 @@
 /*
  * The DefaultView acts as an interface for other views to use so the proper methods and attributes
  * are implemented.
+ * 
+ * It is recommended that you use the listenTo function to bind to model events so it gets cleaned up
+ * for you.
+ * 
+ * It is also recommended that you work fully within the element (el or $el) given to the view.
  */
-var DefaultView = Backbone.View.extend({
+var DefaultView = function(options) {
+    var defaults = {
+        "dataModel": globalDataModel,
+        "selectionModel": globalSelectionModel,
+        "favsModel": new FavoritesModel(),
+        "settingsModel": new Backbone.Model(),
+    };
+    if(options !== undefined) {
+        for(key in defaults) {
+            if(key in options) {
+                defaults[key] = options[key];
+            }
+        }
+    }
+    _.extend(this, defaults);
+    Backbone.View.apply(this, arguments);
+}
+
+_.extend(DefaultView.prototype, Backbone.View.prototype, {
     
     // A human readable name for this view.
     readableName: "Default Page",
@@ -15,52 +38,54 @@ var DefaultView = Backbone.View.extend({
     // A handy loading shortcut.
     loadingTemplate: "<p class=\"text-center\"><img src=\"/site-media/images/large-spinner.gif\"/></p><p class=\"text-center\">Loading...</p>",
     
-    /* 
-     * It's recommended to use these models in case someone customizes your view.
-     * Don't forget to unbind events in the case that the objects are global models 
-     * otherwise they will maintain a reference to your view causing it not to get garbage
-     * collected (i.e. a memory leak).
-     */
-    dataModel: globalDataModel,
-    selectionModel: globalSelectionModel,
-    favsModel: globalFavoritesModel,
-    
     /*
      * Any needed model event binding should be done in here.
      */
-    initialize: function() {},
+    initialize: function(options) {},
     
     /*
      * Render visualization in the given element (i.e. this.el and this.$el).
      * To use d3 try d3.select(this.el).
      */
     render: function() {
-        this.$el.html("<p>Welcome to the Default Page. You're seeing this message either because this view is not implemented or this view doesn't exist.</p>");
+        this.$el.html("<p>Welcome to the Default Page. You're seeing this message either because this view is not implemented, this view doesn't exist, or an error occurred while trying to render the view.</p>");
     },
     
     /*
-     * Remove this from any model events this is bound to and call cleanup on any subviews.
-     * This is called when the view is being disposed of.
-     * This is done to prevent memory leaks.
-     * Also, it is really annoying to have a view you just disposed of to jump back onto the screen.
+     * Call dispose on any sub-views and perform any other necessary cleanup operations.
      */
     cleanup: function() {},
+    
+    /*
+     * Removes all events for you and removes the $el from the DOM.
+     */
+    dispose: function() {
+        this.cleanup();
+        if(this.dataModel) this.dataModel.off(null, null, this);
+        if(this.selectionModel) this.selectionModel.off(null, null, this);
+        if(this.favsModel) {
+            this.favsModel.off(null, null, this);
+            this.favsModel.dispose();
+        }
+        if(this.settingsModel) this.settingsModel.off(null, null, this);
+        this.remove();
+    },
     
     /*
      * Return the HTML of the help message desired.
      */
     renderHelpAsHtml: function() {
-        return "<p>The creators of this view didn't create a help page for you. "+
-               "If it helps any here's some music for you <span class=\"glyphicon glyphicon-music\"></span>.</p>";
+        return "<p>The creators of this view didn't create a help page for you.</p>";
     },
     
     /*
-     * Convinient function to render an error message in the $el element.
+     * Convenient function to render an error message in the $el element.
      */
     renderError: function(msg) {
         this.$el.html("<p>Oops, there was a server error: "+msg+"</p>");
     },
 });
+DefaultView.extend = Backbone.View.extend;
 
 /*
  * Easy to inject icons, most useful/common is the star icon for marking favorites.
@@ -69,5 +94,10 @@ var icons = {
     emptyStar: "<span class=\"glyphicon glyphicon-star-empty gold\"></span>",
     filledStar: "<span class=\"glyphicon glyphicon-star gold\"></span>",
     help: "<span class=\"glyphicon glyphicon-question-sign blue\"></span>",
-    settings: "<span class=\"glyphicon glyphicon-cog pewter\"></span>",
+    settings: "<span class=\"caret\" style=\"text-size: 1.5em\"></span>",
+    share: "<span class=\"glyphicon glyphicon-plus\"></span>",
+    document: "<span class=\"glyphicon glyphicon-book brown document\"></span>",
+    previous: "<span class=\"glyphicon glyphicon-chevron-left green previous\"></span>",
+    next: "<span class=\"glyphicon glyphicon-chevron-right green next\"></span>",
+    loading: "<p class=\"text-center\"><img src=\"/site-media/images/large-spinner.gif\"/></p><p class=\"text-center\">Loading...</p>",
 };

@@ -76,6 +76,7 @@ OPTIONS_FILTERS = {
     "document_limit": get_filter_int(low=1, high=1000),
     
     "word_metrics": filter_set_to_list,
+    "token_indices": filter_set_to_list,
 }
 
 # Filter the incoming get request.
@@ -130,13 +131,14 @@ def query_analyses(options, dataset):
     
     for analysis in analyses_queryset:
         analyses[analysis.identifier] = analysis.fields_to_dict(options.setdefault('analysis_attr', []))
+        
         if 'topic_count' in options['analysis_attr']:
             analyses[analysis.identifier]['topic_count'] = analysis.topics.count()
-        
         if 'topics' in options:
             analyses[analysis.identifier]['topics'] = query_topics(options, dataset, analysis)
         if 'documents' in options:
             analyses[analysis.identifier]['documents'] = query_documents(options, dataset, analysis)
+        
     
     return analyses
     
@@ -153,11 +155,17 @@ def query_topics(options, dataset, analysis):
         topics_queryset.select_related()
         for topic in topics_queryset:
             attributes = topic.attributes_to_dict(options.setdefault('topic_attr', []), options)
+            
             if 'top_n_words' in topic_attr and 'words' in options and 'top_n_words' in options:
                 attributes['words'] = topic.top_n_words(options['words'], top_n=options['top_n_words'])
             if 'top_n_documents' in options:
                 attributes['top_n_documents'] = topic.top_n_documents(top_n=options['top_n_documents'])
+            if 'words' in options and options['words'] != '*' and 'word_tokens' in topic_attr:
+                attributes['word_tokens'] = topic.get_word_tokens(options['words'])
+            if 'word_token_documents_and_locations' in topic_attr and 'documents' in options:
+                attributes['word_token_documents_and_locations'] = topic.get_word_token_documents_and_locations(options['documents'])
             topics[topic.identifier] = attributes
+            
     
     return topics
 
@@ -176,7 +184,7 @@ def query_documents(options, dataset, analysis):
        options['documents'] == '*' and 'analyses' in options and options['analyses'] != '*':
         from django.db import connection
         c = connection.cursor()
-        c.execute('''select wt.document_id, wtt.topic_id, count(*)
+        c.execute('''select wt.document_id, t.number, count(*)
                        from visualize_wordtoken wt
                         join visualize_wordtoken_topics wtt
                             on wtt.wordtoken_id = wt.id
@@ -196,12 +204,18 @@ def query_documents(options, dataset, analysis):
     documents_queryset.select_related()
     for document in documents_queryset:
         attributes = document.attributes_to_dict(document_attr, options)
-        documents[document.identifier] = attributes
+        
         if 'top_n_topics' in options['document_attr']:
             if document.id in top_n_topics:
-                documents[document.identifier]['topics'] = top_n_topics[document.id]
+                attributes['topics'] = top_n_topics[document.id]
             else:
-                documents[document.identifier]['topics'] = {}
+                attributes['topics'] = {}
+        if 'kwic' in document_attr and 'token_indices' in options:
+            attributes['kwic'] = document.get_key_word_in_context(options['token_indices'])
+        if 'word_token_topics_and_locations' in document_attr and 'words' in options:
+            attributes['word_token_topics_and_locations'] = document.get_word_token_topics_and_locations(analysis, options['words'])
+        
+        documents[document.identifier] = attributes
             
     return documents
 

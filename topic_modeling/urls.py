@@ -92,6 +92,7 @@ analysis_base = dataset_base + '/' + analysis
 
 urlpatterns = patterns('topic_modeling.visualize',
     url(r'^new$', 'root.root'),
+    url(r'^dev$', 'root.rootdev'),
     url(r'^api$', 'api.api'),
     url(r'^user-api$', 'user_api.user_api'),
 )

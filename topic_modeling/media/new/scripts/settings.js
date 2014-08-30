@@ -56,12 +56,15 @@ var FavoritesQuickSelectView = DefaultView.extend({
     },
     
     render: function() {
+        this.favsModel.off(null, null, this); // Cleanup any events previously created by favicons.
         var that = this;
-        this.$el.html("");
+        this.$el.empty();
         // Create containers.
         d3.select(this.el).append("div")
             .attr("id", "favs-popover");
         
+        var favorites = _.extend({}, this.favsModel.attributes);
+        var topics = favorites.topics;
         var container = d3.select(this.el).select("#favs-popover").selectAll("div")
             .data(d3.entries(this.favsModel.attributes))
             .enter()
@@ -88,8 +91,7 @@ var FavoritesQuickSelectView = DefaultView.extend({
                     .enter()
                     .append("li")
                     .append("a")
-                    .style("cursor", "pointer")
-                    .classed("nounderline", true)
+                    .classed("nounderline pointer", true)
                     .text(function(d, i) { return d.key; })
                     // The onclick is triggered like this because the elements don't exist yet and so events cannot be bound to them.
                     .attr("onclick", function(d, i) { return "var hash = {}; hash['"+d.value+"'] = '"+d.key+"'; globalSelectionModel.set(hash);"; });
@@ -154,6 +156,7 @@ var LoginView = DefaultSettingsView.extend({
             body.html(this.logoutTemplate);
             var form = body.select("form");
             form.on("submit", function() {
+                d3.event.preventDefault();
                 globalUserModel.submitQueryByHash({ logout: true }, function(data) {
                         if("logged_in" in data && !data["logged_in"]) {
                             globalUserModel.set({ loggedIn: false });
@@ -235,6 +238,7 @@ var LoadScriptsView = DefaultSettingsView.extend({
             .attr("id", "load-script-feedback");
         
         form.on("submit", function() {
+            d3.event.preventDefault();
             $.getScript(input.property("value"))
                 .done(function(script, textStatus) {
                     body.select("#load-script-feedback")
@@ -257,6 +261,6 @@ $(function() {
     globalViewModel.setHelpViewClass(HelpView);
     globalViewModel.setFavoritesViewClass(FavoritesQuickSelectView);
     globalViewModel.addSettingsClass(LoginView);
-    globalViewModel.addSettingsClass(EditFavoritesView);
-    globalViewModel.addSettingsClass(LoadScriptsView);
+    //~ globalViewModel.addSettingsClass(EditFavoritesView);
+    //~ globalViewModel.addSettingsClass(LoadScriptsView);
 });

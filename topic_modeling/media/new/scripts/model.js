@@ -41,6 +41,19 @@ DEBUG_DATA_MODEL = true;
  */
 var DataModel = Backbone.Model.extend({
     
+    // TODO the following requests are common enough that they should be be made convenient.
+    getDatasetsAndAnalyses: function() {
+    },
+    
+    getDatasetNames: function() {
+    },
+    
+    getAnalysisNames: function() {
+    },
+    
+    getTopicNames: function() {
+    },
+    
     /*
      * Submit a query to the server, the request hash is turned into a normalized url to ensure that
      * requests look the same when submitted.
@@ -192,12 +205,12 @@ var FavoritesModel = Backbone.Model.extend({
     },
     
     initialize: function() {
-        globalSelectionModel.on("multichange", this.selectionChanged, this);
+        this.listenTo(globalSelectionModel, "multichange", this.selectionChanged);
         this.loadFromLocalStorage();
     },
     
-    cleanup: function() {
-        globalSelectionModel.off(null, null, this);
+    dispose: function() {
+        this.remove();
     },
     
     /* 
@@ -246,6 +259,20 @@ var FavoritesModel = Backbone.Model.extend({
                 }
             }
             this.set(toSet);
+        }
+    },
+    
+    /*
+     * Remove all locally stored favorites.
+     * Return nothing.
+     */
+    deleteAllLocalStorage: function() {
+        if(hasLocalStorage()) {
+            for(key in localStorage) {
+                if(key.slice(0,5) === "favs-") {
+                    delete localStorage[key];
+                }
+            }
         }
     },
     
@@ -342,4 +369,3 @@ var FavoritesModel = Backbone.Model.extend({
     },
     
 });
-var globalFavoritesModel = new FavoritesModel();

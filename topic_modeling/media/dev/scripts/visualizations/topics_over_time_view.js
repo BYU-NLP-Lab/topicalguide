@@ -927,3 +927,4 @@ var TopicsOverTimeView = DefaultView.extend({
 });
 
 globalViewModel.addViewClass([], TopicsOverTimeView);
+
