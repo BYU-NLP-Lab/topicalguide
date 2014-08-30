@@ -16,7 +16,7 @@ var DefaultView = function(options) {
     var defaults = {
         "dataModel": globalDataModel,
         "selectionModel": globalSelectionModel,
-        "favsModel": new FavoritesModel(),
+        "favsModel": globalFavoritesModel,
         "settingsModel": new Backbone.Model(),
     };
     if(options !== undefined) {
@@ -63,10 +63,7 @@ _.extend(DefaultView.prototype, Backbone.View.prototype, {
         this.cleanup();
         if(this.dataModel) this.dataModel.off(null, null, this);
         if(this.selectionModel) this.selectionModel.off(null, null, this);
-        if(this.favsModel) {
-            this.favsModel.off(null, null, this);
-            this.favsModel.dispose();
-        }
+        if(this.favsModel) this.favsModel.off(null, null, this);
         if(this.settingsModel) this.settingsModel.off(null, null, this);
         this.remove();
     },

@@ -56,7 +56,7 @@ var FavoritesQuickSelectView = DefaultView.extend({
     },
     
     render: function() {
-        this.favsModel.off(null, null, this); // Cleanup any events previously created by favicons.
+        //~ this.favsModel.off(null, null, this); // Cleanup any events previously created by favicons.
         var that = this;
         this.$el.empty();
         // Create containers.

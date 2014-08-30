@@ -369,3 +369,4 @@ var FavoritesModel = Backbone.Model.extend({
     },
     
 });
+var globalFavoritesModel = new FavoritesModel();
