@@ -369,7 +369,11 @@ function createTableFromHash(container, hash, header, word) {
             .append("th")
             .text(function(d) { return d; });
         var entries = d3.entries(hash).map(function(entry) {
-            return [entry.key, entry.value.toString()];
+            if(entry.value == null) {
+                return [entry.key, "null"];
+            } else {
+                return [entry.key, entry.value.toString()];
+            }
         });
         table.append("tbody")
             .selectAll("tr")

@@ -36,8 +36,7 @@ var PlotView = DefaultView.extend({
     
     initialize: function() {
         this.selectionModel.on("change:analysis", this.render, this);
-        this.model = new Backbone.Model();
-        this.settings = new Backbone.Model();
+        this.model = new Backbone.Model(); // Used to store document data.
     },
     
     cleanup: function() {
@@ -257,26 +256,26 @@ var PlotView = DefaultView.extend({
         xAxis.on("change", function xAxisChange() {
             var group = $(this).find(":selected").parent().attr("value");
             var value = xAxis.property("value");
-            that.settings.set({ xSelection: { group: group, value: value } });
+            that.settingsModel.set({ xSelection: { group: group, value: value } });
         });
         yAxis.on("change", function yAxisChange() {
             var group = $(this).find(":selected").parent().attr("value");
             var value = yAxis.property("value");
-            that.settings.set({ ySelection: { group: group, value: value } });
+            that.settingsModel.set({ ySelection: { group: group, value: value } });
         });
         radius.on("change", function radiusAxisChange() {
             var group = $(this).find(":selected").parent().attr("value");
             var value = radius.property("value");
-            that.settings.set({ radiusSelection: { group: group, value: value } });
+            that.settingsModel.set({ radiusSelection: { group: group, value: value } });
         });
         color.on("change", function colorAxisChange() {
             var group = $(this).find(":selected").parent().attr("value");
             var value = color.property("value");
-            that.settings.set({ colorSelection: { group: group, value: value } });
+            that.settingsModel.set({ colorSelection: { group: group, value: value } });
         });
         
         // Set initial groups and values for selections.
-        this.settings.set({
+        this.settingsModel.set({
             xSelection: { group: group, value: value },
             ySelection: { group: group, value: value },
             radiusSelection: { group: "other", value: "uniform" },
@@ -287,7 +286,7 @@ var PlotView = DefaultView.extend({
         // Give the remove documents buttons functionality.
         d3.select(this.el).select("#plot-remove-documents")
             .on("click", function onRemoveDocumentsClick() {
-                var removing = that.settings.attributes.removing;
+                var removing = that.settingsModel.attributes.removing;
                 if(removing) {
                     d3.select(this).text("Remove Documents");
                     that.calculateXAxis();
@@ -296,7 +295,7 @@ var PlotView = DefaultView.extend({
                 } else {
                     d3.select(this).text("Stop Removing Documents");
                 }
-                that.settings.set({ removing: (!removing) });
+                that.settingsModel.set({ removing: (!removing) });
             });
         d3.select(this.el).select("#plot-add-all-removed-documents")
             .on("click", function onAddAllDocumentsClick() {
@@ -390,7 +389,7 @@ var PlotView = DefaultView.extend({
         
         // Funcionality for document click.
         function onDocumentClick(d, i) {
-            if(that.settings.attributes.removing) {
+            if(that.settingsModel.attributes.removing) {
                 that.removedDocuments[d.key] = true;
                 d3.select(this).transition()
                     .duration(duration)
@@ -401,10 +400,10 @@ var PlotView = DefaultView.extend({
         };
         
         // Create listeners.
-        this.settings.on("change:xSelection", this.calculateXAxis, this);
-        this.settings.on("change:ySelection", this.calculateYAxis, this);
-        this.settings.on("change:radiusSelection", this.calculateRadiusAxis, this);
-        this.settings.on("change:colorSelection", this.calculateColorAxis, this);
+        this.settingsModel.on("change:xSelection", this.calculateXAxis, this);
+        this.settingsModel.on("change:ySelection", this.calculateYAxis, this);
+        this.settingsModel.on("change:radiusSelection", this.calculateRadiusAxis, this);
+        this.settingsModel.on("change:colorSelection", this.calculateColorAxis, this);
         
         this.calculateAll();
     },
@@ -426,7 +425,7 @@ var PlotView = DefaultView.extend({
         var noData = {};
         for(key in data) {
             var val = data[key][group][value];
-            if(val === undefined) {
+            if(val === undefined && val === null) {
                 noData[key] = true;
             }
         }
@@ -444,22 +443,22 @@ var PlotView = DefaultView.extend({
     },
     
     calculateXAxis: function(transition) {
-        var selection = this.settings.attributes.xSelection;
+        var selection = this.settingsModel.attributes.xSelection;
         this.xInfo = _.extend(this.xInfo, this.getNoData(selection.group, selection.value));
         if(transition !== false) this.transition();
     },
     calculateYAxis: function(transition) {
-        var selection = this.settings.attributes.ySelection;
+        var selection = this.settingsModel.attributes.ySelection;
         this.yInfo = _.extend(this.yInfo, this.getNoData(selection.group, selection.value));
         if(transition !== false) this.transition();
     },
     calculateRadiusAxis: function(transition) {
-        var selection = this.settings.attributes.radiusSelection;
+        var selection = this.settingsModel.attributes.radiusSelection;
         this.radiusInfo = _.extend(this.radiusInfo, this.getNoData(selection.group, selection.value));
         if(transition !== false) this.transition();
     },
     calculateColorAxis: function(transition) {
-        var selection = this.settings.attributes.colorSelection;
+        var selection = this.settingsModel.attributes.colorSelection;
         this.colorInfo = _.extend(this.colorInfo, this.getNoData(selection.group, selection.value));
         if(transition !== false) this.transition();
     },
@@ -484,6 +483,7 @@ var PlotView = DefaultView.extend({
         var valueNames = this.model.attributes.valueNames;
         var min = Number.MAX_VALUE;
         var max = -Number.MAX_VALUE;
+        var avg = 0;
         var total = 0;
         var count = 0;
         var text = {}; // Used if the type is determined to be text.
@@ -504,6 +504,7 @@ var PlotView = DefaultView.extend({
             }
             
             if(type !== "text") {
+                val = parseFloat(val);
                 if(val < min) min = val;
                 if(val > max) max = val;
                 total += val;
@@ -525,10 +526,14 @@ var PlotView = DefaultView.extend({
             max = 0;
         }
         
+        if(count > 0) {
+            avg = total/count;
+        }
+        
         return {
             min: min, 
             max: max, 
-            avg: total/count,
+            avg: avg,
             type: type, 
             text: text, 
             title: groupNames[group]+": "+valueNames[group][value],
@@ -552,10 +557,10 @@ var PlotView = DefaultView.extend({
         var dim = model.dimensions;
         var radii = model.radii;
         var transitionDuration = model.duration;
-        var xSel = this.settings.attributes.xSelection;
-        var ySel = this.settings.attributes.ySelection;
-        var rSel = this.settings.attributes.radiusSelection;
-        var cSel = this.settings.attributes.colorSelection;
+        var xSel = this.settingsModel.attributes.xSelection;
+        var ySel = this.settingsModel.attributes.ySelection;
+        var rSel = this.settingsModel.attributes.radiusSelection;
+        var cSel = this.settingsModel.attributes.colorSelection;
         var xExclude = this.xInfo.noData;
         var yExclude = this.yInfo.noData;
         var radiusExclude = this.radiusInfo.noData;
@@ -730,4 +735,31 @@ var PlotView = DefaultView.extend({
     
 });
 
-globalViewModel.addViewClass(["Visualizations"], PlotView);
+var PlotViewManager = DefaultView.extend({
+    
+    readableName: "2D Plots",
+    
+    mainTemplate: 
+"<div id=\"plot-view-container\" class=\"container-fluid\"></div>"+
+"<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
+    
+    initialize: function() {
+        this.plotView = new PlotView({ selectionModel: this.selectionModel });
+        this.documentInfoView = new DocumentInfoView({ selectionModel: this.selectionModel });
+    },
+    
+    cleanup: function() {
+        this.plotView.dispose();
+        this.documentInfoView.dispose();
+    },
+    
+    render: function() {
+        this.$el.html(this.mainTemplate);
+        this.plotView.setElement(this.$el.find("#plot-view-container"));
+        this.documentInfoView.setElement(this.$el.find("#document-info-view-container"));
+        this.plotView.render();
+        this.documentInfoView.render();
+    },
+});
+
+globalViewModel.addViewClass(["Visualizations"], PlotViewManager);
