@@ -425,7 +425,7 @@ var PlotView = DefaultView.extend({
         var noData = {};
         for(key in data) {
             var val = data[key][group][value];
-            if(val === undefined && val === null) {
+            if(val === undefined || val === null) {
                 noData[key] = true;
             }
         }
