@@ -350,12 +350,10 @@ var Router = Backbone.Router.extend({
         this.route(/^([^\\?]*)([\\?](.*))?$/, "changeView");
         // Catches the special case of no fragment path or query string (the root path).
         this.route(/^$/, "rootView");
-        globalSelectionModel.on("multichange", this.updateQueryString, this);
+        globalViewModel.on("changeView", this.listenToNewView, this);
     },
     
-    dispose: function() {
-        globalSelectionModel.off(null, null, this);
-    },
+    dispose: function() {},
     
     previousQuery: "",
     
@@ -364,7 +362,9 @@ var Router = Backbone.Router.extend({
      */
     updateQueryString: function() {
         if(DEBUG_ROUTER) console.log("Updating query string, replacing in browser history.");
-        this.navigate(globalViewModel.currentPath +"?"+ hashToUrl(globalSelectionModel.attributes), {trigger: false, replace: false});
+        var hash = _.extend({ settings: JSON.stringify(globalViewModel.currentView.settingsModel) },
+            globalViewModel.currentView.selectionModel.attributes);
+        this.navigate(globalViewModel.currentPath +"?"+ hashToUrl(hash), {trigger: false, replace: false});
     },
     
     rootView: function() {
@@ -385,7 +385,19 @@ var Router = Backbone.Router.extend({
         }
         this.previousQuery = queryString;
         if(DEBUG_ROUTER) console.log("Router.changeView end with path=\""+path+"\" query=\""+queryString+"\"");
-        globalViewModel.changeView(path, { selection: urlToHash(queryString) });
+        var selection = urlToHash(queryString);
+        var settings = "";
+        if("settings" in selection) {
+            settings = JSON.parse(selection.settings);
+            delete selection.settings;
+        }
+        globalViewModel.changeView(path, { selection: selection, settings: settings });
+    },
+    
+    listenToNewView: function() {
+        this.stopListening();
+        this.listenTo(globalViewModel.currentView.selectionModel, "change", this.updateQueryString);
+        this.listenTo(globalViewModel.currentView.settingsModel, "change", this.updateQueryString);
     },
 });
 
@@ -396,11 +408,11 @@ var router;
 var navView;
 $(function startApplication() {
     // Cleanup cached api queries
-    for(key in localStorage) {
-        if(key.slice(0,3) === "api") {
-            delete localStorage[key];
-        }
-    }
+    //~ for(key in localStorage) {
+        //~ if(key.slice(0,3) === "api") {
+            //~ delete localStorage[key];
+        //~ }
+    //~ }
     // Start the router
     navView = new NavigationView({ el: $("#main-nav") });
     navView.render();

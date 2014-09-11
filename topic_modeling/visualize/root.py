@@ -44,6 +44,12 @@ def root(request):
     context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
     context['last_updated'] = "Last updated on %s" % time.strftime("%A, %d %B %Y %l:%M %P", time.gmtime(Repo(__file__).head.commit.committed_date))
     
+    version = 'Version not available.'
+    tags = Repo(__file__).tags
+    if tags:
+        version = unicode(tags[-1])
+    context['version'] = version
+    
     template = loader.get_template('new/root.html')
     template_context = RequestContext(request, context)
     return HttpResponse(template.render(template_context))

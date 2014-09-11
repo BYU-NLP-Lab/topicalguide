@@ -418,8 +418,6 @@ var DocumentInfoView = DefaultView.extend({
                     d3.select(this).text(d);
                 }
             });
-        
-        // NOTE: make sure to use .delegate for efficiency on word click.
     },
     
     renderMetadataAndMetrics: function(title, d3Element) {
@@ -498,7 +496,7 @@ var SingleDocumentSubView = DefaultView.extend({
         this.$el.html(this.mainTemplate);
         this.renderTopMatter();
         if(this.docInfoView === undefined) {
-            this.docInfoView = new DocumentInfoView({ el: $("#document-info-container"), settings: this.settingsModel });
+            this.docInfoView = new DocumentInfoView({ el: $("#document-info-container"), settingsModel: this.settingsModel, selectionModel: this.selectionModel });
         }
         this.docInfoView.render();
     },
@@ -527,7 +525,6 @@ var DocumentView = DefaultView.extend({
     initialize: function() {
         var defaults = { selectedTab: "Text" };
         this.settingsModel.set(_.extend(defaults, this.settingsModel.attributes));
-        this.listenTo(this.selectionModel, "change:analysis", this.render, this);
         this.listenTo(this.selectionModel, "change:document", this.render, this);
     },
     
@@ -536,9 +533,9 @@ var DocumentView = DefaultView.extend({
             this.$el.html("<div id=\"info\"></div>");
             this.cleanupViews();
             if(this.selectionModel.nonEmpty(["document"])) {
-                this.subView = new SingleDocumentSubView({ el: "#info", settingsModel: this.settingsModel });
+                this.subView = new SingleDocumentSubView({ el: "#info", selectionModel: this.selectionModel, settingsModel: this.settingsModel });
             } else {
-                this.subView = new AllDocumentsSubView({ el: "#info", settingsModel: this.settingsModel });
+                this.subView = new AllDocumentsSubView({ el: "#info", selectionModel: this.selectionModel, settingsModel: this.settingsModel });
             }
             this.subView.render();
         } else {

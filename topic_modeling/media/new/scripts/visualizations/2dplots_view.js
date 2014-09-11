@@ -251,6 +251,18 @@ var PlotView = DefaultView.extend({
                 select.property("value", "uniform"); // Set to uniform option.
             }
         }
+        if(this.settingsModel.has("xSelection")) {
+            xAxis.property("value", this.settingsModel.get("xSelection").value);
+        }
+        if(this.settingsModel.has("ySelection")) {
+            yAxis.property("value", this.settingsModel.get("ySelection").value);
+        }
+        if(this.settingsModel.has("radiusSelection")) {
+            radius.property("value", this.settingsModel.get("radiusSelection").value);
+        }
+        if(this.settingsModel.has("colorSelection")) {
+            color.property("value", this.settingsModel.get("colorSelection").value);
+        }
         
         // Set control listeners.
         xAxis.on("change", function xAxisChange() {
@@ -275,13 +287,14 @@ var PlotView = DefaultView.extend({
         });
         
         // Set initial groups and values for selections.
-        this.settingsModel.set({
+        var defaultSettings = {
             xSelection: { group: group, value: value },
             ySelection: { group: group, value: value },
             radiusSelection: { group: "other", value: "uniform" },
             colorSelection: { group: group, value: value },
             removing: false,
-        });
+        };
+        this.settingsModel.set(_.extend({}, defaultSettings, this.settingsModel.attributes));
         
         // Give the remove documents buttons functionality.
         d3.select(this.el).select("#plot-remove-documents")
@@ -744,8 +757,8 @@ var PlotViewManager = DefaultView.extend({
 "<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
     
     initialize: function() {
-        this.plotView = new PlotView({ selectionModel: this.selectionModel });
-        this.documentInfoView = new DocumentInfoView({ selectionModel: this.selectionModel });
+        this.plotView = new PlotView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
+        this.documentInfoView = new DocumentInfoView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
     },
     
     cleanup: function() {
@@ -759,6 +772,10 @@ var PlotViewManager = DefaultView.extend({
         this.documentInfoView.setElement(this.$el.find("#document-info-view-container"));
         this.plotView.render();
         this.documentInfoView.render();
+    },
+    
+    renderHelpAsHtml: function() {
+        return this.plotView.renderHelpAsHtml();
     },
 });
 
