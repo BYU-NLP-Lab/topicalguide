@@ -53,13 +53,16 @@ var ViewModel = Backbone.Model.extend({
         this.currentPath = path; // Must go before the settings are set as the router listens for changes to update the url.
         globalSelectionModel.set(settings.selection); // alert any views that the selection has changed
         
-        //
         $("#main-container").append("<div id=\"main-view-container\"></div>");
-        var settingsModel = new Backbone.Model();
+        var settingsModel = new SettingsModel();
+        settingsModel.setSelectionModel(globalSelectionModel);
+        settingsModel.setViewPath(path);
+        settingsModel.load();
         settingsModel.set(settings.settings);
         var init = {
             el: $("#main-view-container"),
             settingsModel: settingsModel,
+            selectionModel: globalSelectionModel,
         };
         if(path === "")
             this.currentView = new this.rootViewClass(init);
@@ -409,7 +412,7 @@ var navView;
 $(function startApplication() {
     // Cleanup cached api queries
     //~ for(key in localStorage) {
-        //~ if(key.slice(0,3) === "api") {
+        //~ if(key.slice(0,5) === "data-") {
             //~ delete localStorage[key];
         //~ }
     //~ }

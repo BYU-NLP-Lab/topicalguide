@@ -130,7 +130,7 @@ var DocumentInfoView = DefaultView.extend({
 "<div class=\"row\"><div class=\"col-xs-12\">"+
 "    <form id=\"text-highlight-form\" role=\"form\" class=\"input-group\">"+
 "        <span id=\"highlight-buttons\" class=\"input-group-btn\" data-toggle=\"buttons\">"+
-"            <label class=\"btn btn-primary active\">No Highlights<input type=\"radio\" name=\"options\" id=\"no-highlights\" checked></label>"+
+"            <label class=\"btn btn-primary\">No Highlights<input type=\"radio\" name=\"options\" id=\"no-highlights\" checked></label>"+
 "            <label class=\"btn btn-primary\">Topic Highlights<input type=\"radio\" name=\"options\" id=\"topic-highlights\"></label>"+
 "            <label class=\"btn btn-primary\">Word Highlights<input type=\"radio\" name=\"options\" id=\"word-highlights\"></label>"+
 "        </span>"+
@@ -202,6 +202,8 @@ var DocumentInfoView = DefaultView.extend({
                 var id = d3.select(this).select("input").attr("id");
                 that.settingsModel.set({ selectedHighlight: id });
             });
+            d3.select(d3.select("#"+this.settingsModel.get("selectedHighlight")).node().parentNode)
+                .classed("active", true);
             
             this.listenTo(this.settingsModel, "change:selectedHighlight", this.highlightChanged);
             this.listenTo(this.settingsModel, "change:words", this.requestWordHighlightData);

@@ -29,7 +29,7 @@ var AllTopicSubView = DefaultView.extend({
 "</form>",
     
     initialize: function() {
-        var settings = _.extend({ "words": "*", "topicTopNWords": 10, "topicDisplayNWords": 10 }, this.settingsModel.attributes)
+        var settings = _.extend({ "words": "*", "topicTopNWords": 10, "topicDisplayNWords": 10, "sortBy": 1, "sortAscending": true }, this.settingsModel.attributes)
         this.settingsModel.set(settings);
         this.listenTo(this.settingsModel, "multichange", this.renderTopicsTable);
     },
@@ -99,7 +99,7 @@ var AllTopicSubView = DefaultView.extend({
         }, function(data) {
             container.html("");
             
-            // Create table.
+            // Create HTML table element.
             var table = container.append("table")
                 .attr("id", "topics-table")
                 .classed("table table-hover table-condensed", true);
@@ -124,23 +124,28 @@ var AllTopicSubView = DefaultView.extend({
                 return total + ((innerArray[2] * innerArray[5])/10000);
             }, 0);
             // Function performed on row click.
-            var onClick = function(d, i) { 
+            var onClick = function(d, i) {
                 this.selectionModel.set({ "topic": d[0] }); 
+            }.bind(this);
+            // Function to record current column and how it is sorted.
+            var onSort = function(column, ascending) {
+                this.settingsModel.set({ sortBy: column, sortAscending: ascending });
             }.bind(this);
             // Make the table.
             var toCleanup = createSortableTable(table, {
                 header: header,
                 data: topics,
                 onClick: {  
-                        "1": onClick,
-                        "3": onClick,
-                        "4": onClick,
-                    },
+                    "1": onClick,
+                    "3": onClick,
+                    "4": onClick,
+                },
                 bars: [2,5],
                 percentages: [2,5],
                 favicon: [0, "topics", this],
-                sortBy: 1,
-                sortAscending: true,
+                sortBy: this.settingsModel.get("sortBy"),
+                sortAscending: this.settingsModel.get("sortAscending"),
+                onSort: onSort
             });
             // Add the word as percentage of corpus total at the bottom.
             var wordPercentageContainer = container.append("div");
@@ -152,7 +157,7 @@ var AllTopicSubView = DefaultView.extend({
     
     renderHelpAsHtml: function() {
         return "<h4>FilterTopics by Words</h4>"+
-        "<p>To filter the topics enter words separated by commas or spaces, use the splat ('*') symbol to indicate all words.</p>"+
+        "<p>To filter the topics enter words separated by commas or spaces, use the asterisk (*) to indicate all words.</p>"+
         "<h4>Top Words</h4>"+
         "<p>This field is to limit the results returned by the server. The results are used to determine the % of the topic they make up.</p>"+
         "<h4>Display Words</h4>"+

@@ -42,6 +42,7 @@ DEBUG_DATA_MODEL = true;
 var DataModel = Backbone.Model.extend({
     
     // TODO the following requests are common enough that they should be be made convenient.
+    // Maybe even pre-load the information.
     getDatasetsAndAnalyses: function() {
     },
     
@@ -74,8 +75,9 @@ var DataModel = Backbone.Model.extend({
      */
     submitQueryByUrl: function(url, dataReadyCallback, errorCallback) {
         if(DEBUG_DATA_MODEL) console.log(url);
-        if(url in localStorage) {
-            dataReadyCallback(JSON.parse(localStorage[url]));
+        var storageKey = "data-"+url;
+        if(hasLocalStorage() && storageKey in localStorage) {
+            dataReadyCallback(JSON.parse(localStorage[storageKey]));
         } else {
             d3.json(url, function(error, data) {
                 if(error !== null) {
@@ -83,7 +85,9 @@ var DataModel = Backbone.Model.extend({
                 } else if("error" in data) {
                     errorCallback(data["error"]);
                 } else {
-                    localStorage[url] = JSON.stringify(data);
+                    if(hasLocalStorage()) {
+                        localStorage[storageKey] = JSON.stringify(data);
+                    }
                     dataReadyCallback(data);
                 }
             });
@@ -370,3 +374,47 @@ var FavoritesModel = Backbone.Model.extend({
     
 });
 var globalFavoritesModel = new FavoritesModel();
+
+
+var SettingsModel = Backbone.Model.extend({
+    
+    selectionModel: null,
+    viewPath: null,
+    
+    setSelectionModel: function(selectionModel) {
+        this.selectionModel = selectionModel;
+    },
+    
+    setViewPath: function(viewPath) {
+        this.viewPath = viewPath;
+    },
+    
+    generateKey: function() {
+        if(this.selectionModel && this.viewPath) {
+            return "settings-"+this.selectionModel.get("dataset")+"-"+
+                   this.selectionModel.get("analysis")+"-"+this.viewPath;
+        } else {
+            return null;
+        }
+    },
+    
+    load: function() {
+        var settingsKey = this.generateKey();
+        if(hasLocalStorage() && settingsKey && settingsKey in localStorage) {
+            var savedSettings = JSON.parse(localStorage[settingsKey]);
+            this.set(_.extend({}, this.attributes, savedSettings));
+        }
+    },
+    
+    save: function() {
+        var settingsKey = this.generateKey();
+        if(hasLocalStorage() && settingsKey) {
+            localStorage[settingsKey] = JSON.stringify(this.attributes);
+        }
+    },
+    
+    set: function(attr, options) {
+        Backbone.Model.prototype.set.call(this, attr, options);
+        this.save();
+    },
+});

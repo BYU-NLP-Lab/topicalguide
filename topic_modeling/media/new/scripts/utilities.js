@@ -75,6 +75,18 @@ function hasLocalStorage() {
         return false;
     }
 }
+/*
+ * Return true if session storage is enabled.
+ */
+function hasSessionStorage() {
+    try {
+        sessionStorage["storage-test"] = "test";
+        delete sessionStorage["storage-test"];
+        return true;
+    } catch(e) {
+        return false;
+    }
+}
 
 // Helper function to pull out information such as readable_name, description, and anything else
 function extractMetadata(hash, metadata, defaults) {
@@ -123,7 +135,9 @@ function extractTopics(data, model) {
  *        Must be a d3 array object.
  * rowOnClick - Function specifying the action if a row is clicked on.
  *              e.g. function(d, i) { } where d is an inner array.
- * onClick - Maps columns to click functions with d as the inner array (not element of inner array).
+ * onClick - Maps columns to click functions with the argument being the inner array as the inner array (not element of inner array).
+ * onSort - Function called when a column is sorted.
+ *          e.g. function(column, ascending) where column is an index into the header array and ascending is a boolean.
  * bars - Indicates the rows to display with percentage bars.
  * percentages - Indicates which rows should be displayed as percentages.
  * favicon - If specified it is an array of length 3 e.g. [indexOfFavsColumn, "datasets", view object].
@@ -136,6 +150,7 @@ function createSortableTable(table, options) {
         header: [],
         data: [],
         rowOnClick: false,
+        onSort: false,
         onClick: {},
         bars: [],
         percentages: [],
@@ -193,6 +208,9 @@ function createSortableTable(table, options) {
             } else {
                 ascending = true;
                 tableRows.sort(makeSortDescending(i)); 
+            }
+            if(options.onSort) {
+                options.onSort(i, !ascending);
             }
         })
         .classed({ "nounderline": true })
@@ -309,7 +327,7 @@ function createTabbedContent(container, options) {
         }
     }
     
-    // Active function.
+    // Active function, return true if the tab is the one selected.
     var active = function(d, i) { 
         if(d.key === options.selected) {
             return true;
