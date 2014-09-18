@@ -28,7 +28,8 @@ from django.db.models.aggregates import Count
 from topic_modeling.visualize.models import Analysis, TopicNameScheme
 
 class TopNTopicNamer:
-    def __init__(self, dataset_name, analysis_name, n):
+    def __init__(self, database_id, dataset_name, analysis_name, n):
+        self.database_id = database_id
         self.dataset_name = dataset_name
         self.analysis_name = analysis_name
         self.n = n
@@ -39,13 +40,12 @@ class TopNTopicNamer:
     # @transaction.commit_manually
     def name_all_topics(self):
         # try:
-            analysis = Analysis.objects.get(dataset__name=self.dataset_name, name=self.analysis_name)
-            name_scheme,created = analysis.topicnameschemes.get_or_create(name=self.scheme_name())
+            analysis = Analysis.objects.using(self.database_id).get(dataset__name=self.dataset_name, name=self.analysis_name)
+            name_scheme, created = analysis.topicnameschemes.get_or_create(name=self.scheme_name())
             
             if created:
                 for i, topic in enumerate(analysis.topics.all()):
                     name = self.topic_name(topic)
-                    print 'topic #%i: %s' % (i, name.encode('utf-8'))
                     name_scheme.names.create(topic=topic, name=name)
                 #name_scheme.save()
                 # transaction.commit()
@@ -55,12 +55,14 @@ class TopNTopicNamer:
         # except:
             # transaction.rollback()
             # raise
-
+    
+    def get_identifier(self):
+        return self.analysis_name + str(self.n)
     
     # @transaction.commit_manually
     def unname_all_topics(self):
         try:
-            analysis = Analysis.objects.get(dataset__name=self.dataset_name, name=self.analysis_name)
+            analysis = Analysis.objects.using(self.database_id).get(dataset__name=self.dataset_name, name=self.analysis_name)
             name_scheme = analysis.topicnameschemes.get(name=self.scheme_name())
             name_scheme.delete()
             # transaction.commit()

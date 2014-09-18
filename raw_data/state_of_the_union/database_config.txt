@@ -1,0 +1,2 @@
+ENGINE: django.db.backends.sqlite3
+NAME: state_of_the_union.sqlite3

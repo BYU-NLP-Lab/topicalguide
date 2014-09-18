@@ -25,6 +25,7 @@
 import os
 import sys
 
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -35,33 +36,97 @@ ADMINS = (
 )
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-if not os.path.exists(os.path.join(BASE_DIR, 'import_tool/local_settings.py')):
-    print >> sys.stderr, "Import error looking for local_settings.py. "\
-            "Look at import_tool/local_settings.py.sample for help"
-    raise Exception("You need to set up your import_tool/local_settings.py")
 sys.path.append(BASE_DIR)
-try:
-    from import_tool.local_settings import DB_CONFIG, DBTYPE, SQLITE_CONFIG, MYSQL_CONFIG
-    from import_tool import local_settings
-except ImportError as e:
-    raise Exception("Error imporing import_tool/local_settings.py: %s" % e)
+
+
+USE_GUNICORN = False
+
+# this is the path to the default sqlite database e.g.: TOPICAL_GUIDE_ROOT/working/tg.sqlite3
+DB_FILE = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '../working')), 'tg.sqlite3')
+DB_OPTIONS = {
+    'sqlite3': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': DB_FILE
+    },
+    'mysql': {
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': '',
+        'SERVER': 'localhost',
+        'PASSWORD': '',
+        'NAME': ''
+    },
+    'postgres': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': '',                      
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': ''
+    }
+}
 
 MANAGERS = ADMINS
 
+
 DATABASES = {
-    'default': DB_CONFIG
+    'default': DB_OPTIONS['sqlite3'],
 }
 
-def database_type():
-    return DBTYPE
+DATASET_TO_DATABASE_MAPPING = {}
+
+def get_keys_to_compare(engine):
+    """
+    Returns the main keys required to determine if a database is identical.
+    """
+    keys_to_check = ['NAME']
+    if engine == 'django.db.backends.mysql' or \
+       engine == 'django.db.backends.postgresql_psycopg2' or \
+       engine == 'django.db.backends.oracle':
+        additional_keys = ['USER', 'PASSWORD', 'HOST', 'PORT']
+        keys_to_check.append(additional_keys)
+    return keys_to_check
+
+def is_database_config_equal(database_id, database_config):
+    """
+    Determine if the database configurations are identical (or close enough.)
+    """
+    if DATABASES[database_id]['ENGINE'] == database_config['ENGINE']:
+        keys_to_check = get_keys_to_compare(database_config['ENGINE'])
+        for k in keys_to_check:
+            if not (k in DATABASES[database_id] and \
+                    k in database_config and \
+                    DATABASES[database_id][k] == database_config[k]):
+                return False
+        return True
+            
+    return False
+
+def is_database_config_present(database_config):
+    """
+    Determine if the given configurations are already present in DATABASES.
+    Return None if they aren't present.
+    Return the key to the configurations if they are present.
+    """
+    for database_id in DATABASES:
+        if is_database_config_equal(database_id, database_config):
+            return database_id
+    return None
+
+def database_type(database_id='default'):
+    """Return the type of the database as a string, ex: 'sqlite3'."""
+    engine = DATABASES[database_id]['ENGINE']
+    if engine == 'django.db.backends.sqlite3':
+        return 'sqlite3'
+    elif engine == 'django.db.backends.mysql':
+        return 'mysql'
+    elif engine == 'django.db.backends.postgresql_psycopg2':
+        return 'postgres'
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'America/Denver'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -80,6 +145,7 @@ STATICFILES_ROOT = os.path.join(_base_dir, 'media')
 SCRIPTS_ROOT = os.path.join(STATICFILES_ROOT, 'scripts')
 STYLES_ROOT = os.path.join(STATICFILES_ROOT, 'styles')
 ALLOWED_INCLUDE_ROOTS = (SCRIPTS_ROOT, STYLES_ROOT)
+STATIC_URL = STATICFILES_ROOT + '/'
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -96,7 +162,6 @@ MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
-#TODO Set this before deploying a server
 SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
@@ -111,6 +176,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'topic_modeling.profiling_middleware.ProfileMiddleware',
+    'topic_modeling.routers.DatabaseRouterMiddleware',
 )
 
 ROOT_URLCONF = 'topic_modeling.urls'
@@ -121,18 +187,19 @@ TEMPLATE_DIRS = (os.path.join(BASE_DIR, '../topic_modeling/templates'))
 
 INSTALLED_APPS = (
     'topic_modeling.visualize',
-#    'django.contrib.admin',
-#    'django.contrib.auth',
-#    'django.contrib.contenttypes',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
     'django.contrib.sessions',
 #    'django.contrib.sites',
+    'django.contrib.staticfiles',
 )
 
 try:
     import django_extensions
     INSTALLED_APPS += ('django_extensions',)
 except ImportError:
-    print 'Notice: django_extensions not installed. runserver_plus not available'
+    #~ print 'Notice: django_extensions not installed. runserver_plus not available'
     django_extensions = False
 
 try:
@@ -146,7 +213,7 @@ try:
     import gunicorn
     INSTALLED_APPS += ('gunicorn',)
 except ImportError:
-    print 'Notice: guniocorn not installed.'
+    #~ print 'Notice: gunicorn not installed.'
     gunicorn = False
 
 INTERNAL_IPS = '127.0.0.1',
@@ -160,4 +227,7 @@ CACHES = {
         'LOCATION': 'unique-topicalguide'
     }
 }
+
+# Database router
+DATABASE_ROUTERS = ['topic_modeling.routers.DatabaseRouter']
 

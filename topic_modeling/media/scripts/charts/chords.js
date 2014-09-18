@@ -49,7 +49,7 @@ var ChordInfo = InfoView.extend({
   }
 });
 
-
+// TODO change step to be based on number of topics? or something more sensible than 20...
 var ChordControls = Backbone.View.extend({
   initialize: function (options) {
     var parent = this.parent = options.parent;
@@ -289,6 +289,7 @@ var ChordViewer = MainView.add({
     /*
     // Add the group label (but only for large groups, where it will fit).
     // An alternative labeling mechanism would be nice for the small groups.
+    // maybe smaller text?
     g.append("svg:text")
         .attr("x", 6)
         .attr("dy", 15)

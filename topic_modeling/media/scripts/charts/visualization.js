@@ -33,6 +33,7 @@ var SelectUI = function (el, items) {
   for (var i=0; i<items.length; i++) {
     this.titles[items[i][0]] = items[i][1];
   }
+  
   this.render = function () {
     this.title.html(items[this.selected][1]);
     this.body.empty();
@@ -51,11 +52,13 @@ var SelectUI = function (el, items) {
         .appendTo(this.body);
     }
   };
+  
   this.select = function (i) {
     if (items[i][2]() === false) return;
     this.selected = i;
     this.render();
   };
+  
   this.set_selected = function (value) {
     for (var i=0; i<items.length; i++) {
       if (value === items[i][0]) {
@@ -66,6 +69,7 @@ var SelectUI = function (el, items) {
     }
     return false;
   };
+  
   this.render();
   return this;
 };

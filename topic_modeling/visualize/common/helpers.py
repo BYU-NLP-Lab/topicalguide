@@ -64,7 +64,13 @@ def get_word_cloud(words, open_='', close='', url=True):
     scale = words[idx].percent
 
     def cmpWord(x, y):
-        return cmp(str(x.word).lower(), str(y.word).lower())
+        x_word = x.word
+        if x_word is not str or x_word is not unicode:
+            x_word = unicode(x.word)
+        y_word = y.word
+        if y_word is not str or y_word is not unicode:
+            y_word = unicode(y.word)
+        return cmp(x_word.lower(), y_word.lower())
 #        return cmp(str(x.word).lower(), str(y.word).lower())
     words = sorted(words, cmpWord)
 
@@ -72,8 +78,11 @@ def get_word_cloud(words, open_='', close='', url=True):
     for word in words:
         if url:
             cloud += '<a href="%s" title="%s%%">' % (word.url, word.percent)
-        size = word.percent / scale * 100 + 50
-        text = open_ + str(word.word).lower() + close
+        size = word.percent / (scale * 100 + 1) + 50
+        tmp_word = word.word
+        if tmp_word is not str or tmp_word is not unicode:
+            tmp_word = unicode(word.word)
+        text = open_ + tmp_word.lower() + close
         cloud += '<span style="font-size:%d%%" title="%s%%">%s</span> ' % (size, word.percent,text)
         if url:
             cloud += '</a>'

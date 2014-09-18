@@ -130,7 +130,7 @@ def metrics_widget(document):
     return w
 
 def metadata_widget(document):
-    w = Widget('Metadata ars Cool', 'documents/metadata_backcompat')
+    w = Widget('', 'documents/metadata_backcompat')
     # FIXME
 #    w['docattrval_mgr'] = document.attributevaluedocument_set
     w['metainfovalues'] = document.metainfovalues.all()

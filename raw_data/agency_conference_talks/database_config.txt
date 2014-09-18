@@ -1,0 +1,2 @@
+ENGINE: django.db.backends.sqlite3
+NAME: agency_conference_talks.sqlite3

@@ -38,45 +38,38 @@ etc.); they're listed in the `requirements.txt` file.
 .. include:: requirements.txt
    :literal:
 
-3. Configure local settings
----------------------------
-
-Copy `import_tool/local_settings.py.sample` to
-`import_tool/local_settings.py` and make any changes you want. The defaults
-should be reasonable::
-
-    cp import_tool/local_settings.py.sample import_tool/local_settings.py
-
-4. Generate the SECRET_KEY
+3. Generate the SECRET_KEY
 --------------------------
 
 Go to this website to generate your SECRET_KEY 
 http://www.miniwebtool.com/django-secret-key-generator/
 
 Navigate to topicalguide/topic_modeling/settings.py.  
-Insert your generated SECRET_KEY where is says 
+Insert your generated SECRET_KEY where it says
+
 	SECRET_KEY=''
 
 Be sure not to commit/push your settings.py file with your SECRET_KEY in it.
 
-5. Create the Database
-----------------------
+4. Sync the database
+--------------------
 
-Run::
+Run `topic_modeling/manage.py syncdb`. Note that this requires the user to select whether or not
+to enter a super user password for the site. Currently it doesn't matter if you select yes or no.
 
-   python topic_modeling/manage.py syncdb
-
-6. Import a dataset
+5. Import a dataset
 -------------------
 
-In local settings you can configure what dataset to import (default is the
-'state of the union addresses'), and then run `./run_import.py` to run the
-import.
+Run `./topicalguide.py import raw_data/state_of_the_union` to run the default import.
+Run `./topicalguide.py -h` for more options.
+Alternatively you can create your own custom import by inheriting from the `AbstractDataset` 
+class in the `import_tool/dataset_classes/abstract_dataset.py` and use the methods available in 
+`import_tool/import_utilities.py` to import a dataset, run analyses, or run metrics.
 
-7. Done!
+6. Done!
 --------
 
-Start up the web server with the following command::
+Start up the development web server with the following command::
 
    python topic_modeling/manage.py runserver
 
@@ -85,18 +78,7 @@ and then open a web browser and navigate to http://localhost:8000/.
 Dependencies
 -------------
 
-- python
-   - django
-   - nltk
-   - numpy
-
-   [optional]
-   - django-extensions
-   - gunicorn
-   - django-debug-toolbar
-   - docopt
-
-- java [for mallet]
+See `requirements.txt`
 
 POSTGRESQL
 ==========
@@ -111,34 +93,27 @@ get it to behave, here's how to do it on Fedora::
    sudo postgresql-setup initdb
    sudo -u postgres createdb topicalguide
 
-In your local_settings.py you'll then need to switch DBTYPE to 'postgres' and
+In your settings.py you'll then need to switch DBTYPE to 'postgres' and
 update the settings for the postgres database. For a local connection, we
 prefer to use peer authentication, so we leave the user and password blank.
 If you prefer to use md5 authentication, set the user and password
 appropriately. Update the name field to 'topicalguide', or whatever you named
 the database created for the topical guide.
 
-Once the database is setup, you'll need to import the data.
-This can be done as follows::
-
-   sudo -u postgres python topic_modeling/manage.py syncdb
-   sudo -u postgres python run_import.py
-
-Assuming that everything imported without error,
-you are now ready to run the server::
-
-   sudo -u postgres python run_server.py
+Once the database is setup run the commands starting at step 4 with the prefix
+`sudo -u postgres`.
 
 Apache
 ======
 
-As an example, the following is the apache configuration file in
-/etc/httpd/conf.d which we use on our demo server::
+As an example, the following template apache configuration file could be 
+filled in and placed in /etc/httpd/conf.d to run your server assuming your 
+project is located at /srv/topicalguide::
 
-   ServerAdmin jefflund@gmail.com
-   ServerName coherence.byu.edu
-   ErrorLog /var/log/httpd/coherence-error_log
-   CustomLog /var/log/httpd/coherence-access_log common
+   ServerAdmin your_admin_email@somewhere.com
+   ServerName your.server.com
+   ErrorLog /var/log/httpd/your-error_log
+   CustomLog /var/log/httpd/your-access_log common
    LogLevel warn
 
    Alias /scripts /srv/topicalguide/topic_modeling/media/scripts/
@@ -192,7 +167,7 @@ Canada.
 Licence
 =======
 
-This file is part of the Topical Guide <http://nlp.cs.byu.edu/topicalguide>.
+This file is part of the Topical Guide <http://github.com/BYU-NLP-Lab/topicalguide/wiki>.
 
 The Topical Guide is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by the

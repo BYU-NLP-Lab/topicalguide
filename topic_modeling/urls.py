@@ -90,7 +90,15 @@ dataset_base = r'^' + dataset
 analyses_base = dataset_base + '/analyses'
 analysis_base = dataset_base + '/' + analysis
 
-urlpatterns = patterns('',
+urlpatterns = patterns('topic_modeling.visualize',
+    url(r'^$', 'root.root'),
+    url(r'^new$', 'root.root'),
+    url(r'^dev$', 'root.rootdev'),
+    url(r'^api$', 'api.api'),
+    url(r'^user-api$', 'user_api.user_api'),
+)
+
+urlpatterns += patterns('',
 # Dataset View
     url(r'^$', DatasetView.as_view(), name='tg-datasets'),
     url(r'^' + dataset + '$', DatasetView.as_view(), name='tg-dataset'),

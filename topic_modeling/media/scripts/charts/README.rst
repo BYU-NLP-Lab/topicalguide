@@ -1,7 +1,7 @@
 Visualizations
 ==============
 
-In order to create a a new visualization, a few steps are needed:
+In order to create a new visualization, a few steps are needed:
 
 1. make a new JS file with the following template: (viz.js.example)
 
@@ -16,7 +16,7 @@ In order to create a a new visualization, a few steps are needed:
 
   2. Infos:
 
-      in <div id="info"></div> that looks like <div id="controls-[name]"></div>
+      in <div id="info"></div> that looks like <div id="info-[name]"></div>
   
   3. Menu:
       
