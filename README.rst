@@ -38,10 +38,14 @@ etc.); they're listed in the `requirements.txt` file.
 .. include:: requirements.txt
    :literal:
 
-3. Generate the SECRET_KEY
+3. Create settings.py
 --------------------------
 
-Go to this website to generate your SECRET_KEY 
+In order for django to run it needs settings.py to be created.
+First, copy the template:
+    `cp topic_modeling/settings.py.template topic_modeling/settings.py`
+
+Second, go to this website to generate your SECRET_KEY 
 http://www.miniwebtool.com/django-secret-key-generator/
 
 Navigate to topicalguide/topic_modeling/settings.py.  
@@ -50,6 +54,9 @@ Insert your generated SECRET_KEY where it says
 	SECRET_KEY=''
 
 Be sure not to commit/push your settings.py file with your SECRET_KEY in it.
+
+Third, set your database settings. You could use sqlite, which is configured
+for you. If you want to use Postgres there are instructions below.
 
 4. Sync the database
 --------------------
@@ -65,6 +72,8 @@ Run `./topicalguide.py -h` for more options.
 Alternatively you can create your own custom import by inheriting from the `AbstractDataset` 
 class in the `import_tool/dataset_classes/abstract_dataset.py` and use the methods available in 
 `import_tool/import_utilities.py` to import a dataset, run analyses, or run metrics.
+
+If you want to keep your datasets in the topicalguide directory tree. Put them in a folder called `datasets`, that way git ignores them.
 
 6. Done!
 --------
