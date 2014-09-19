@@ -75,6 +75,19 @@ function hasLocalStorage() {
         return false;
     }
 }
+
+/*
+ * Remove every item from the hash where the key starts with the prefix.
+ */
+function deletePrefixFromHash(prefix, hash) {
+    var len = prefix.length;
+    for(key in hash) {
+        if(key.slice(0, len) === prefix) {
+            delete hash[key];
+        }
+    }
+}
+
 /*
  * Return true if session storage is enabled.
  */

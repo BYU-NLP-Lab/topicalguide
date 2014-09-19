@@ -411,11 +411,7 @@ var router;
 var navView;
 $(function startApplication() {
     // Cleanup cached api queries
-    for(key in localStorage) {
-        if(key.slice(0,5) === "data-") {
-            delete localStorage[key];
-        }
-    }
+    deletePrefixFromHash("data-", localStorage);
     // Start the router
     navView = new NavigationView({ el: $("#main-nav") });
     navView.render();

@@ -37,7 +37,7 @@ DEBUG_DATA_MODEL = true;
 /*
  * The DataModel is responsible for managing the dataset and analysis data locally.
  * The localStorage variable is used so other browser windows will have the same data available to them.
- * Each item should have 4 states for data requests, "loaded", "unloaded", "loading", "error".
+ * The data is stored as localStorage["data-"+requestUrl] = JSON.stringify(data).
  */
 var DataModel = Backbone.Model.extend({
     
@@ -86,7 +86,14 @@ var DataModel = Backbone.Model.extend({
                     errorCallback(data["error"]);
                 } else {
                     if(hasLocalStorage()) {
-                        localStorage[storageKey] = JSON.stringify(data);
+                        try {
+                            localStorage[storageKey] = JSON.stringify(data);
+                        } catch(e) {
+                            deletePrefixFromHash("data-", localStorage);
+                            try {
+                                localStorage[storageKey] = JSON.stringify(data);
+                            } catch(e) {}
+                        }
                     }
                     dataReadyCallback(data);
                 }
