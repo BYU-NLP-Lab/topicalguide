@@ -1,6 +1,7 @@
 django
 nltk
 numpy
+scipy
 chardet
 git
 # optional

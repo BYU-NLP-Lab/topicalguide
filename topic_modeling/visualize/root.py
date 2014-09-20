@@ -42,12 +42,18 @@ def root(request):
     context['cs_dept_url'] = "https://cs.byu.edu"
     context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
     context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
-    context['last_updated'] = "Last updated on %s" % time.strftime("%A, %d %B %Y %l:%M %P", time.gmtime(Repo(__file__).head.commit.committed_date))
-    
+    try:
+        context['last_updated'] = "Last updated on %s" % time.strftime("%A, %d %B %Y %l:%M %P", time.gmtime(Repo(__file__).head.commit.committed_date))
+    except:
+        context['last_updated'] = "Last updated info not available."
+
     version = 'Version not available.'
-    tags = Repo(__file__).tags
-    if tags:
-        version = unicode(tags[-1])
+    try:
+        tags = Repo(__file__).tags
+        if tags:
+            version = unicode(tags[-1])
+    except:
+        pass
     context['version'] = version
     
     template = loader.get_template('new/root.html')
