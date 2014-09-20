@@ -282,7 +282,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer dataset entry
     print('Creating dataset entry...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         if not Dataset.objects.using(to_db_id).filter(name=dataset_id).exists():
             dataset = Dataset.objects.using(from_db_id).get(name=dataset_id)
             dataset.id = None
@@ -294,7 +294,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer dataset metadata
     print('Migrating dataset metadata...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         if DatasetMetaInfoValue.objects.using(from_db_id).filter(dataset__name=dataset_id).count() != \
            DatasetMetaInfoValue.objects.using(to_db_id).filter(dataset__name=dataset_id).count():
             # create DatasetMetaInfo and key mappings
@@ -326,7 +326,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     # transfer dataset metrics
     # NOTE: The amount of data is minimal and thus this is not optimized.
     print('Migrating dataset metrics...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         if not DatasetMetricValue.objects.using(to_db_id).filter(dataset_id=to_dataset_pk).exists():
             metric_values = DatasetMetricValue.objects.using(from_db_id).filter(dataset_id=from_dataset_pk)
             for value in metric_values:
@@ -339,7 +339,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     # transfer documents
     # TODO change full_path info
     print('Migrating documents...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         if Document.objects.using(from_db_id).filter(dataset__name=dataset_id).count() != \
            Document.objects.using(to_db_id).filter(dataset__name=dataset_id).count():
             curr_doc_id = get_max_pk(Document, to_db_id) + 1
@@ -362,7 +362,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer document metadata
     print('Migrating document metadata...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         # get largest primary key
         
         from_meta_values = DocumentMetaInfoValue.objects.using(from_db_id).filter(document__dataset__name=dataset_id)
@@ -390,7 +390,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     # transfer analyses
     print('Migrating analyses...')
     # note that analyses is the plural form of analysis
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         if not Analysis.objects.using(to_db_id).filter(dataset__name=dataset_id).exists():
             from_analyses = Analysis.objects.using(from_db_id).filter(dataset_id=from_dataset_pk)
             for analysis in from_analyses:
@@ -407,7 +407,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer analyses metrics
     print('Migrating analyses metrics...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         for analysis in from_analyses:
             if not AnalysisMetricValue.objects.using(to_db_id).filter(analysis_id=analysis_pk_map[analysis.id]).exists():
                 metric_values = AnalysisMetricValue.objects.using(from_db_id).filter(analysis_id=analysis.id)
@@ -420,7 +420,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer topics, topic names, and topic name schemes
     print('Migrating topics, topic names, and topic name schemes...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         to_topic_name_schemes = TopicNameScheme.objects.using(to_db_id).all()
         for analysis in from_analyses:
             if not Topic.objects.using(to_db_id).filter(analysis_id=analysis_pk_map[analysis.id]).exists():
@@ -447,7 +447,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer document metrics
     print('Migrating document metrics...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         for document in from_documents:
             if not DocumentMetricValue.objects.using(to_db_id).filter(document_id=document_pk_map[document.id]).exists():
                 metric_values = DocumentMetricValue.objects.using(from_db_id).filter(document_id=document.id)
@@ -460,7 +460,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer topic metrics
     print('Migrating topic metrics...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         for topic in from_topics:
             if not TopicMetricValue.objects.using(to_db_id).filter(topic_id=topic_pk_map[topic.id]).exists():
                 metric_values = TopicMetricValue.objects.using(from_db_id).filter(topic_id=topic.id)
@@ -473,7 +473,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer word tokens, word types, and word token to topics relations
     print('Migrating word tokens, word types, and word token to topics relations...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         if not WordToken.objects.using(to_db_id).filter(document__dataset__name=dataset_id).exists():
             word_type_pk = get_max_pk(WordType, to_db_id) + 1
             word_token_pk = get_max_pk(WordToken, to_db_id) + 1
@@ -523,7 +523,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer pairwise document metric values
     print('Migrating pairwise document metric values...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         # used to map document id's in the from database to those in the to database
         from_pairwise_document_metric = PairwiseDocumentMetric.objects.using(from_db_id).all()
         to_pairwise_document_metric = PairwiseDocumentMetric.objects.using(to_db_id).all()
@@ -553,7 +553,7 @@ def migrate_dataset(dataset_id, from_db_id, to_db_id):
     
     # transfer pairwise topic metric values
     print('Migrating pairwise topic metric values...')
-    with transaction.commit_on_success():
+    with transaction.commit_on_success(using=to_db_id):
         from_pairwise_document_metric = PairwiseTopicMetric.objects.using(from_db_id).all()
         to_pairwise_document_metric = PairwiseTopicMetric.objects.using(to_db_id).all()
         metric_pk_map = None

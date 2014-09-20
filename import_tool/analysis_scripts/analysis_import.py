@@ -75,7 +75,7 @@ def import_analysis(database_id, dataset_name, analysis):
     
     # create the token to topic relations
     if not has_token_topic_relations(database_id, analysis_db):
-        with transaction.commit_on_success():
+        with transaction.commit_on_success(using=database_id):
             bad_docs = set()
             current_doc_name = None
             current_doc = None # used to store a Document object, prevent hitting the database for each line

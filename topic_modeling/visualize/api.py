@@ -190,7 +190,7 @@ def query_documents(options, dataset, analysis):
                             on wtt.wordtoken_id = wt.id
                         join visualize_topic t on t.id = wtt.topic_id
                             where t.analysis_id = %d
-                            group by wtt.topic_id, wt.document_id'''%(analysis.id,))
+                            group by t.number, wt.document_id;'''%(analysis.id))
         rows = c.fetchall()
         top_n_topics = {}
         for doc_id, topic_id, count in rows:

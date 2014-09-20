@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import os
 import re
-from chardet.universaldetector import UniversalDetector
 from HTMLParser import HTMLParser
 
 
@@ -199,6 +198,8 @@ def get_unicode_content(file_path, encoding=None):
     Note that this uses the chardet library and may cause problems, if an error is thrown then
     a utf-8 encoding is assumed and unrecognize caracters are discarded.
     """
+    from chardet.universaldetector import UniversalDetector
+    
     try:
         if not encoding:
             detector = UniversalDetector()
