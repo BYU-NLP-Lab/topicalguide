@@ -6,10 +6,14 @@ such as favorites, notes, etc.
 from topic_modeling.visualize.models import *
 from django.views.decorators.http import require_POST
 from django.views.decorators.gzip import gzip_page
+from django.views.decorators.cache import cache_control
 from topic_modeling.visualize.common.http_responses import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 
+
+@cache_control(private=True)
 @require_POST
+@gzip_page
 def user_api(request):
     result = {}
     post = request.POST

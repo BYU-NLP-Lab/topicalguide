@@ -56,7 +56,9 @@ Insert your generated SECRET_KEY where it says
 Be sure not to commit/push your settings.py file with your SECRET_KEY in it.
 
 Third, set your database settings. You could use sqlite, which is configured
-for you. If you want to use Postgres there are instructions below.
+for you. If you want to use Postgres there are instructions below for seting up on Fedora.
+
+Four, configure the site caching method, otherwise local memory is used by default.
 
 4. Sync the database
 --------------------

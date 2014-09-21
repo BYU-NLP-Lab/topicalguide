@@ -26,7 +26,9 @@ from git import Repo
 from django.http import HttpResponse
 from django.template import RequestContext, loader
 from django.views.decorators.gzip import gzip_page
+from django.views.decorators.cache import never_cache
 
+@never_cache
 @gzip_page
 def root(request):
     STATIC = '/site-media/new'
@@ -60,6 +62,7 @@ def root(request):
     template_context = RequestContext(request, context)
     return HttpResponse(template.render(template_context))
 
+@never_cache
 @gzip_page
 def rootdev(request):
     STATIC = '/site-media/new'

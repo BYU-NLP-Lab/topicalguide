@@ -22,9 +22,12 @@
 
 import sys
 from topic_modeling.visualize.models import *
+from django.core.cache import cache # Get the 'default' cache.
 from django.views.decorators.http import require_GET
 from django.views.decorators.gzip import gzip_page
-from topic_modeling.visualize.common.http_responses import JsonResponse
+from django.http import HttpResponse
+from topic_modeling import anyjson
+from django.views.decorators.cache import cache_control
 
 DEBUG = True
 
@@ -34,7 +37,7 @@ def filter_set_to_list(s):
         result = set()
     elif s == '*':
         return '*'
-    elif s.find('%') >= 0: # handle any unencoded unicode
+    elif s.find('%') >= 0: # Handle any unencoded unicode.
         result = set(s.encode('utf8').replace('%u', '\\u').decode('unicode_escape').split(','))
     else:
         result = set(s.split(','))
@@ -42,7 +45,7 @@ def filter_set_to_list(s):
         result.remove('')
     return list(result)
 
-# Turn string s into an int within the bounds given.
+# Turn a string into an int within the bounds given.
 def get_filter_int(low=0, high=sys.maxint):
     def filter_int(s):
         result = int(s)
@@ -89,9 +92,22 @@ def filter_request(get, filters):
             raise Exception("No such value as "+key)
     return result
 
+@cache_control(must_revalidate=True, max_age=3600) # Upstream caches must revalidate every hour.
 @gzip_page
 @require_GET
 def api(request):
+    """
+    This is the main gateway for retrieving data.
+    Only publicly available data is accessible through this api.
+    """
+    # Check the cache.
+    path = request.get_full_path()
+    DJANGO_CACHE_KEY_LENGTH_LIMIT = 250
+    if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and cache.has_key(path):
+        return HttpResponse(cache.get(path), content_type='application/json')
+    start_time = time.time()
+    
+    # Generate the response.
     GET = request.GET
     options = filter_request(GET, OPTIONS_FILTERS)
     result = {}
@@ -100,7 +116,17 @@ def api(request):
             result['datasets'] = query_datasets(options)
     except Exception as e:
         result['error'] = str(e)
-    return JsonResponse(result)
+    
+    # Cache the request, if it is time consuming.
+    # Don't cache anything requesting all datasets or all analyses.
+    total_time = time.time() - start_time
+    request_containing_all = ('datasets' in options and options['datasets'] == '*') or \
+                             ('analyses' in options and options['analyses'] == '*')
+    if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and not request_containing_all:
+        if total_time > 2:
+            cache.set(path, anyjson.dumps(result))
+    
+    return HttpResponse(anyjson.dumps(result), content_type='application/json')
 
 def query_datasets(options):
     """Gather the information for each dataset listed."""

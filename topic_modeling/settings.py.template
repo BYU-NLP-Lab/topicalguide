@@ -222,9 +222,14 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 CACHES = {
+    # Just uses the machines local memory.
+    # By these settings, 300 items may be cached. Half will be culled if 300 is reached.
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-topicalguide'
+        'LOCATION': 'unique-topicalguide',
+        'OPTIONS': {
+            'CULL_FREQUENCY': 2,
+        }
     }
 }
 
