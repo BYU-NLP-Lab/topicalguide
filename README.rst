@@ -69,7 +69,7 @@ to enter a super user password for the site. Currently it doesn't matter if you 
 5. Import a dataset
 -------------------
 
-Run `./topicalguide.py import raw_data/state_of_the_union` to run the default import.
+Run `./topicalguide.py import default_datasets/state_of_the_union` to run the default import.
 Run `./topicalguide.py -h` for more options.
 Alternatively you can create your own custom import by inheriting from the `AbstractDataset` 
 class in the `import_tool/dataset_classes/abstract_dataset.py` and use the methods available in 

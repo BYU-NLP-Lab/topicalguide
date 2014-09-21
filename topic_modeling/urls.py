@@ -20,7 +20,7 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.conf import settings
 from django.http import Http404
 
