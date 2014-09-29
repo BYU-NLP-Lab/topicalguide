@@ -18,7 +18,7 @@ class MALLETAnalysis(AbstractAnalysis):
     running the analysis to avoid naming conflicts or inconsistencies.
     """
     
-    def __init__(self, topical_guide_root_dir, dataset_dir, number_of_topics=50, number_of_iterations=100, token_regex=r'[\p{L}]+'):
+    def __init__(self, topical_guide_root_dir, dataset_dir, number_of_topics=50, number_of_iterations=100, token_regex=r'[\p{L}_]+'):
         """
         The dataset_dir is just in case the working_directory path is not set.
         The token regex must be MALLET compatible.
