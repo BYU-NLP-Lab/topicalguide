@@ -92,7 +92,8 @@ def filter_request(get, filters):
             raise Exception("No such value as "+key)
     return result
 
-@cache_control(must_revalidate=True, max_age=3600) # Upstream caches must revalidate every hour.
+# The following line is commented out to prevent browsers from caching requests during development.
+# @cache_control(must_revalidate=True, max_age=3600) # Upstream caches must revalidate every hour.
 @gzip_page
 @require_GET
 def api(request):

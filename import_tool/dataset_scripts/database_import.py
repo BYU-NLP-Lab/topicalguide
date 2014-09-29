@@ -51,7 +51,7 @@ def create_dataset_db_entry(database_id, dataset, dataset_dir, files_dir):
         return Dataset.objects.using(database_id).get(name=dataset.get_identifier())
     else:
         dataset_db = None
-        with transaction.commit_on_success(using=database_id):
+        with transaction.atomic(using=database_id):
             dataset_db = Dataset.objects.using(database_id)\
                                 .create(name=dataset.get_identifier(), 
                                         dataset_dir=dataset_dir, 
@@ -67,7 +67,7 @@ def import_documents_into_database(database_id, dataset_identifier, documents):
         return
     
     # create the document entries
-    with transaction.commit_on_success(using=database_id):
+    with transaction.atomic(using=database_id):
         # get unique primary key
         primary_key = 0
         if Document.objects.using(database_id).all().exists():
@@ -128,7 +128,7 @@ def import_document_word_tokens(database_id, dataset_identifier, words):
     word_types_to_create = []
     word_tokens_to_create = []
     print('  Creating WordTokens...')
-    with transaction.commit_on_success(using=database_id):
+    with transaction.atomic(using=database_id):
         for doc_id in words:
             doc = document_query.get(filename=doc_id, dataset=dataset)
             

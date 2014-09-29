@@ -26,7 +26,7 @@ def import_analysis_metadata_into_database(database_id, analysis_db, analysis_me
         return
     
     # try to put dataset metadata into database
-    with transaction.commit_on_success(using=database_id):
+    with transaction.atomic(using=database_id):
         meta_info_value_id = 0 # use this to assign primary keys for metadata values
         # check to see if there are other entries in the table, if so get the id of the most recently added
         if AnalysisMetaInfoValue.objects.using(database_id).exists():
@@ -56,7 +56,7 @@ def import_dataset_metadata_into_database(database_id, dataset_db, dataset_metad
         return
     
     # try to put dataset metadata into database
-    with transaction.commit_on_success(using=database_id):
+    with transaction.atomic(using=database_id):
         meta_info_value_id = 0 # use this to assign primary keys for metadata values
         # check to see if there are other entries in the table, if so get the id of the most recently added
         if DatasetMetaInfoValue.objects.using(database_id).exists():
@@ -88,7 +88,7 @@ def import_document_metadata_into_database(database_id, dataset_db, document_met
     timer = TimeLongThing(total_metadata_count)
     
     # try to put document metadata into database
-    with transaction.commit_on_success(using=database_id):
+    with transaction.atomic(using=database_id):
         meta_info_value_id = 0 # use this to assign primary keys for metadata values
         # check to see if there are other entries in the table, if so get the id of the most recently added
         if DocumentMetaInfoValue.objects.using(database_id).exists():

@@ -19,7 +19,7 @@ def run_dataset_metric(database_id, dataset_name, analysis_name, metric_module):
     for name in names:
         metric, _ = DatasetMetric.objects.using(database_id).get_or_create(name=name)
         if not DatasetMetricValue.objects.using(database_id).filter(metric=metric, dataset=dataset).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric_module.add_metric(database_id, dataset)
 
 def run_document_metric(database_id, dataset_name, analysis_name, metric_module):
@@ -28,7 +28,7 @@ def run_document_metric(database_id, dataset_name, analysis_name, metric_module)
     analysis = Analysis.objects.using(database_id).get(name=analysis_name, dataset__name=dataset_name)
     for name in names:
         if not DocumentMetric.objects.using(database_id).filter(analysis=analysis, name=name).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric_module.add_metric(database_id, dataset_name, analysis_name)
 
 def run_analysis_metric(database_id, dataset_name, analysis_name, metric_module):
@@ -38,7 +38,7 @@ def run_analysis_metric(database_id, dataset_name, analysis_name, metric_module)
     for name in names:
         metric, _ = AnalysisMetric.objects.using(database_id).get_or_create(name=name)
         if not AnalysisMetricValue.objects.using(database_id).filter(metric=metric, analysis_id=analysis.id).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric_module.add_metric(database_id, analysis)
 
 def run_topic_metric(database_id, dataset_name, analysis_name, metric_module):
@@ -47,7 +47,7 @@ def run_topic_metric(database_id, dataset_name, analysis_name, metric_module):
     analysis = Analysis.objects.using(database_id).get(name=analysis_name, dataset__name=dataset_name)
     for name in names:
         if not TopicMetric.objects.using(database_id).filter(name=name, analysis=analysis).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric_module.add_metric(database_id, dataset_name, analysis_name)
 
 def run_document_pairwise_metric(database_id, dataset_name, analysis_name, metric_module):
@@ -56,7 +56,7 @@ def run_document_pairwise_metric(database_id, dataset_name, analysis_name, metri
     analysis = Analysis.objects.using(database_id).get(name=analysis_name, dataset__name=dataset_name)
     for name in names:
         if not PairwiseDocumentMetric.objects.using(database_id).filter(analysis=analysis, name=name).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric_module.add_metric(database_id, dataset_name, analysis_name)
 
 def run_topic_pairwise_metric(database_id, dataset_name, analysis_name, metric_module):
@@ -65,7 +65,7 @@ def run_topic_pairwise_metric(database_id, dataset_name, analysis_name, metric_m
     analysis = Analysis.objects.using(database_id).get(name=analysis_name, dataset__name=dataset_name)
     for name in names:
         if not PairwiseTopicMetric.objects.using(database_id).filter(analysis=analysis, name=name).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric_module.add_metric(database_id, dataset_name, analysis_name)
 
 
@@ -77,7 +77,7 @@ def remove_dataset_metric(database_id, dataset_name, analysis_name, metric_modul
     for name in names:
         metric, _ = DatasetMetric.objects.using(database_id).get_or_create(name=name)
         if DatasetMetricValue.objects.using(database_id).filter(metric=metric, dataset=dataset).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 DatasetMetricValue.objects.using(database_id).filter(metric=metric, dataset=dataset).delete()
 
 def remove_document_metric(database_id, dataset_name, analysis_name, metric_module):
@@ -86,7 +86,7 @@ def remove_document_metric(database_id, dataset_name, analysis_name, metric_modu
     analysis = Analysis.objects.using(database_id).get(name=analysis_name, dataset__name=dataset_name)
     for name in names:
         if DocumentMetric.objects.using(database_id).filter(analysis=analysis, name=name).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric = DocumentMetric.objects.using(database_id).get(analysis=analysis, name=name)
                 DocumentMetricValue.objects.using(database_id).filter(metric=metric).delete()
                 metric.delete()
@@ -98,7 +98,7 @@ def remove_analysis_metric(database_id, dataset_name, analysis_name, metric_modu
     for name in names:
         metric, _ = AnalysisMetric.objects.using(database_id).get_or_create(name=name)
         if AnalysisMetricValue.objects.using(database_id).filter(metric=metric, analysis=analysis).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 AnalysisMetricValue.objects.using(database_id).filter(metric=metric, analysis=analysis).delete()
 
 def remove_topic_metric(database_id, dataset_name, analysis_name, metric_module):
@@ -107,7 +107,7 @@ def remove_topic_metric(database_id, dataset_name, analysis_name, metric_module)
     analysis = Analysis.objects.using(database_id).get(name=analysis_name, dataset__name=dataset_name)
     for name in names:
         if TopicMetric.objects.using(database_id).filter(name=name, analysis=analysis).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric = TopicMetric.objects.using(database_id).get(name=name, analysis=analysis)
                 TopicMetricValue.objects.using(database_id).filter(metric=metric).delete()
                 metric.delete()
@@ -118,7 +118,7 @@ def remove_document_pairwise_metric(database_id, dataset_name, analysis_name, me
     analysis = Analysis.objects.using(database_id).get(name=analysis_name, dataset__name=dataset_name)
     for name in names:
         if PairwiseDocumentMetric.objects.using(database_id).filter(analysis=analysis, name=name).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric = PairwiseDocumentMetric.objects.using(database_id).get(analysis=analysis, name=name)
                 PairwiseDocumentMetricValue.objects.using(database_id).filter(metric=metric).delete()
                 metric.delete()
@@ -129,7 +129,7 @@ def remove_topic_pairwise_metric(database_id, dataset_name, analysis_name, metri
     analysis = Analysis.objects.using(database_id).get(name=analysis_name, dataset__name=dataset_name)
     for name in names:
         if PairwiseTopicMetric.objects.using(database_id).filter(analysis=analysis, name=name).exists():
-            with transaction.commit_on_success(using=database_id):
+            with transaction.atomic(using=database_id):
                 metric = PairwiseTopicMetric.objects.using(database_id).get(analysis=analysis, name=name)
                 PairwiseTopicMetricValue.objects.using(database_id).filter(metric=metric).delete()
                 metric.delete()
