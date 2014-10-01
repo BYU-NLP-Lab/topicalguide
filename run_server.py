@@ -17,12 +17,13 @@ import os
 import sys
 
 from topic_modeling import settings
-from django.core.management import execute_manager
+from django.core.management import execute_from_command_line
 
 
 
 def run(cmd):
-    execute_manager(settings, ['run_server.py', cmd])
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'topic_modeling.settings')
+    execute_from_command_line(['run_server.py', cmd])
 
 def plain_main():
     if getattr(settings, 'USE_GUNICORN', False):
