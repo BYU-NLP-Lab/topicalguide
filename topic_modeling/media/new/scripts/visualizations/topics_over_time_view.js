@@ -81,109 +81,209 @@
   //~ }
 //~ 
 //~ });
+//
 
 
-/** The main visualization class
- *
- * Instance Variables:
- *   svg:      the $(svg) element
- *   maing:    the <g> element that you should add things to that are to be
- *             effected by the zoom object.
- *   zoom:     a zoom object for resizing your visualization
- *   options:  a dictionary of the {dict} passed in at initialization,
- *             extending the "defaults" dict
- *   info:     the info object
- *   menu:     the menu object
- *   controls: the controls object
- **/
 var TopicsOverTimeView = DefaultView.extend({
+
+    mainTemplate:
+        "<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>"+
+        "<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
+
     readableName: "Topics Over Time",
 
     initialize: function() {
+        this.selectionModel.on("change:analysis", this.render, this);
+        this.model = new Backbone.Model();
+        this.settings = new Backbone.Model();
     },
     
     cleanup: function() {
+        this.selectionModel.off(null, null, this);
     },
-
+    
+    getQueryHash: function() {
+        var selections = this.selectionModel.attributes;
+        return {
+            "datasets": selections.dataset,
+            "analyses": selections.analysis,
+            "topics": "*",
+            "topic_attr": "names",
+            "documents": "*",
+            "document_attr": ["metadata", "metrics", "top_n_topics"],
+            "document_continue": 0,
+            "document_limit": 1000,
+        };
+    },
+    
     /** setup the d3 layout, etc. Everything you can do without data **/
     render: function () {
-        this.$el.html("<svg id=\"tot-svg\"></svg>");
-        this.svg = this.$el.find("#tot-svg");
-        this.maing = d3.select(this.el).select("#tot-svg").append("g");
-        this.setUpProperties();
-        this.setUpAxes();    
-        this.tooltip = d3.select("body").append("div")
-                                        .attr("class", "tooltip")
-                                        .style("opacity", 0)
-                                        .style("height", "38px");
+        this.$el.empty();
+
+        if(!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
+            this.$el.html("<p>You should select a <a href=\"#\">dataset and analysis</a> before proceeding.</p>");
+            return;
+        }
+        
+        d3.select(this.el).html(this.loadingTemplate);
+        console.log(this.selectionModel);
+        var selections = this.selectionModel.attributes;
+        this.dataModel.submitQueryByHash(this.getQueryHash(), function(data) {
+            this.$el.html(this.mainTemplate);
+            
+            var analysisData = data.datasets[selections['dataset']].analyses[selections['analysis']];
+            var processedAnalysis = this.processAnalysis(analysisData);
+            console.log(processedAnalysis);
+            this.model.set(processedAnalysis);
+
+            this.renderPlot();
+        }.bind(this), this.renderError.bind(this));
+
+        
+//        this.svg = this.$el.find("#tot-svg");
+//        this.maing = d3.select(this.el).select("#tot-svg").append("g");
+//        this.setUpProperties();
+//        this.setUpAxes();    
+//        this.tooltip = d3.select("body").append("div")
+//                                        .attr("class", "tooltip")
+//                                        .style("opacity", 0)
+//                                       .style("height", "38px");
     },
 
+    renderPlot: function() {
+        var that = this;
+
+        this.setUpProperties();
+
+        var dim = this.model.attributes.dimensions;
+
+//        var margins = {left : (dim.width / 12), // for y tick labels 
+//                        bottom : (dim.height / 12), // for x axis tick labels, and x/r axis labels
+//                        top : (dim.height / 18), // for y axis label and doc count
+//                        right : (dim.width / 30)}; // so circles centers don't land on the border
+        var view = d3.select(this.el).select('#plot-view').html("");
+
+        var svg = this.svg = view.append('svg')
+            .attr("width", "100%")
+            .attr("height", "90%")
+            .attr("viewBox", "0, 0, "+dim.width+", "+dim.height)
+            .attr("preserveAspectRatio", "xMidYMin meet")
+            .append("g");
+
+        // Render scatter plot container.
+        this.plot = svg.append("g")
+            .attr("id", "plot");
+
+        this.setUpAxes();
+        this.selectTopics();
+    },
+
+    getScale: function(info, range) {
+        var scale = d3.scale.linear().domain([info.min, info.max]).range(range);
+        if(info.type === "text") {
+            scale = d3.scale.ordinal().domain(info.text).rangePoints(range);
+        }
+        return scale;
+    },
+    
   setUpProperties: function() {
 
-    this.margins = {left : (this.width / 12), // for y tick labels 
-                    bottom : (this.height / 12), // for x axis tick labels, and x/r axis labels
-                    top : (this.height / 18), // for y axis label and doc count
-                    right : (this.width / 30)}; // so circles centers don't land on the border
+    this.model.set({
+        dimensions: {
+            width: 800,
+            height: 800
+        },
+    });
 
-    // x range function, left and right padding
-    this.xRange = d3.scale.linear().range([this.margins.left, this.width - this.margins.right]);
+    var dim = this.model.attributes.dimensions;
 
-    // y range function
-    this.yRange = d3.scale.linear().range([this.height - this.margins.bottom, this.margins.top]);
+    this.model.set({
+        duration: 800,
 
-    this.documents = null;
-    this.topicData = null;
-    this.selectedTopicIds = null;
-    this.selectedTopicData = null;
+        topLabelSpacing: Math.round(dim.height / 32),
+
+        xAxisMargin: Math.round(dim.height / 13),
+
+        margin: {
+            top: 10,
+            bottom: 10,
+            left: 0,
+            right: 0
+        },
+
+        tickLength: Math.round(dim.width / 80),
+
+        barWidth: 3,
+
+        fontSize: 16
+    });
+
+    var margin = this.model.attributes.margin;
+
+    this.xScale = d3.scale.linear()
+        .range([margin.left, dim.width - margin.right]);
+
+    this.yScale = d3.scale.linear()
+        .range([dim.height - margin.bottom, margin.top]);
+
     this.lineChart = null;
     this.bars = null;
-    this.topLabelSpacing = Math.round(this.height / 32);
-    this.xAxisMargin = Math.round(this.height / 13);
-    this.tickLength = Math.round(this.width / 80);
-    this.barWidth = 3;
     this.colors = d3.scale.category20(); // Get ordinal scale of 20 colors
     // this.colors = [ "#000000", "#FFFF00", "#800080", "#FFA500", "#ADD8E6", "#CD0000", "#F5DEB3", "#A9A9A9", "#228B22",
     //   "#FF00FF", "#0000CD", "#F4A460", "#EE82EE", "#FF4500", "#191970", "#ADFF2F", "#A52A2A", "#808000", "#DB7093",
     //   "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ];
-    this.fontSize = $('body').css('font-size');
     //console.log(this);
-    _.bindAll(this, "selectTopics", "resize");
-    this.event_aggregator.bind("tot:select-topics", this.selectTopics);
-    this.event_aggregator.bind("resize", this.resize);
+//    _.bindAll(this, "selectTopics", "resize");
+//    this.event_aggregator.bind("tot:select-topics", this.selectTopics);
+//    this.event_aggregator.bind("resize", this.resize);
 
   },
 
   setUpAxes: function() {
-    this.xAxis = d3.svg.axis().scale(this.xRange).tickSize(this.tickLength).tickSubdivide(true); // x axis function
-    this.yAxis = d3.svg.axis().scale(this.yRange).tickSize(this.tickLength).orient("left").tickSubdivide(true); // y axis function
+    var tickLe = this.model.attributes.tickLength;
+    var dim = this.model.attributes.dimensions;
+
+    this.xAxis = d3.svg.axis()
+        .scale(this.xScale)
+        .orient("bottom");
+//        .tickSubdivide(true);
+
+    this.yAxis = d3.svg.axis()
+        .scale(this.yScale)
+        .orient("left");
+//        .tickSubdivide(true);
 
     // add in the x axis
-    this.maing.append("svg:g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + (this.height - this.margins.bottom) + ")") 
-      .call(this.xAxis);
+    this.svg.append("g")
+        .attr("id", "x-axis")
+        .attr("transform", "translate(0," + dim.height + ")") 
+        .call(this.xAxis)
+        .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" })
+        .style("opacity", 0);
 
     // add in the y axis
-    this.maing.append("svg:g")
-      .attr("class", "y axis")
-      .attr("transform", "translate(" + this.margins.left + ", 0)")
-      .call(this.yAxis);
+    this.svg.append("g")
+        .attr("id", "y-axis")
+        .attr("transform", "translate(0, 0)")
+        .call(this.yAxis)
+        .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" })
+        .style("opacity", 0);
     
     //these are for svg saving to include the css inline
-    $('.axis path').attr("opacity", 1);
-    $('.axis text').attr("fill", "#000000");
+//    $('.axtransformis path').attr("opacity", 1);
+//    $('.axis text').attr("fill", "#000000");
     //$('.axis .tick').attr("style", "stroke:#000000; opacity:1");
   },
+    
+    scaleRanges: function(left) {
+        this.xScale.range([this.margins.left, this.width - this.margins.right]);
+        this.yScale.range([this.height - this.margins.bottom, this.margins.top]);
 
-  scaleRanges: function() {
-    this.xRange.range([this.margins.left, this.width - this.margins.right]);
-    this.yRange.range([this.height - this.margins.bottom, this.margins.top]);
-
-    this.xAxis.scale(this.xRange);
-    this.yAxis.scale(this.yRange);
-    // d3.selectAll('.x.axis').attr("transform", "translate(0," + (this.height - this.margins.bottom) + ")");
-    // console.log(d3.selectAll('.x.axis').attr("transform"));
-  },
+        this.xAxis.scale(this.xScale);
+        this.yAxis.scale(this.yScale);
+        // d3.selectAll('.x.axis').attr("transform", "translate(0," + (this.height - this.margins.bottom) + ")");
+        // console.log(d3.selectAll('.x.axis').attr("transform"));
+    },
 
   /** populate everything! data is the JSON response from your url(). For
    * information on the return values of specific urls, look at the docs for
@@ -204,7 +304,7 @@ var TopicsOverTimeView = DefaultView.extend({
     this.topicData.min = -1;
     this.topicData.max = -1;
     for(var topicId in this.topics) {
-      this.topicData[topicId] = this.formatTopicData(topicId);
+      this.topicData[topicId] = this.processTopicData(topicId);
     }
 
     this.selectTopics(); // Select all topics by default
@@ -221,20 +321,20 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   selectTopics: function() {
 
-    if (!this.topics) {
+    if (!this.model.attributes.raw_topics) {
         return;
     }
 
     var topicIds = Array.prototype.slice.call(arguments, 0)[0];
-    if (!topicIds) { // If there are no arguments (select all)
-      topicIds = [];
+    if (!topicIds) {
+        topicIds = this.model.attributes.selectedTopics = [];
     }
-    this.selectedTopicIds = topicIds;
 
-    if (topicIds.length > this.topics.length) {
-      throw new Error('More topics selected than exist');
-    }
-    else if (topicIds.length > 1 || topicIds.length === 0) {
+//    if (topicIds.length > this.model.attributes.topics.length) {
+//      throw new Error('More topics selected than exist');
+//    }
+//    else 
+    if (topicIds.length > 1 || topicIds.length === 0) {
       this.showLineChart(topicIds);
       return;
     }
@@ -246,7 +346,9 @@ var TopicsOverTimeView = DefaultView.extend({
     var topicId = topicIds[0];
 
     // Select the topic data
-    this.selectedTopicData = this.topicData[topicId];
+    this.model.set({
+        selectedTopicData: this.model.attributes.topics[topicId],
+    });
 
     // Transition the line chart into hiding
     this.transitionLineChart(null, 1000);
@@ -268,10 +370,11 @@ var TopicsOverTimeView = DefaultView.extend({
       this.unsetBarChart();
     }
 
+    var topics = this.model.attributes.topics;
     var minMax = this.getMinMaxTopicValues(topicIds);
-    this.scale = minMax.max / this.topicData.max;
-    this.topicData.min = minMax.min;
-    this.topicData.max = minMax.max;
+//    this.scale = minMax.max / topics.max;
+    topics.min = minMax.min;
+    topics.max = minMax.max;
 
     // Scale axes to lineChart (data for all topics)
     this.scaleLineChartAxes();
@@ -327,7 +430,8 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   scaleTopicAxes: function() {
 
-    var data = this.selectedTopicData.data;
+    var dim = this.model.attributes.dimensions;
+    var data = this.model.attributes.selectedTopicData.data;
     var maxStack = 0;
 
     // Calculate x domain
@@ -335,10 +439,10 @@ var TopicsOverTimeView = DefaultView.extend({
       return i;
     });
 
-    var range = this.getYearRange(this.documents);
-    this.xRange.domain([ range.min, range.max ]);
+    var range = this.getYearRange(this.model.attributes.documents);
+    this.xScale.domain([ range.min, range.max ]);
 
-    this.barWidth = (this.width - this.margins.right - this.margins.left) / (range.max - range.min);
+    this.model.attributes.barWidth = dim.width / (range.max - range.min);
 
     // Calculate y domain
     var yMin = 0;
@@ -354,7 +458,7 @@ var TopicsOverTimeView = DefaultView.extend({
     yMax *= 100;
     yMax = Math.ceil(yMax);
     yMax /= 100;
-    this.yRange.domain([ yMin, yMax ]);
+    this.yScale.domain([ yMin, yMax ]);
 
     // Set color domain
     this.colors.domain(_.range(0, maxStack));//[ 0, maxStack ]);
@@ -362,21 +466,21 @@ var TopicsOverTimeView = DefaultView.extend({
 
   /**
    * Scale the axes for all topics
-   *
+   *nsform
    * Precondition: The topic data is set
    * Postcondition: The lineChart can now be initialized
    */
   scaleLineChartAxes: function() {
 
     // Set x domain
-    var range = this.getYearRange(this.documents);
-    this.xRange.domain([ range.min, range.max ]);
+    var range = this.getYearRange(this.model.attributes.documents);
+    this.xScale.domain([ range.min, range.max ]);
 
     // Set y domain
-    this.yRange.domain([ 0, this.topicData.max ]);
+    this.yScale.domain([ 0, this.model.attributes.topics.max ]);
 
     // set color domain
-    var topicKeys = $.map(this.topics, function(value, key) { return key; }); // Get all topic IDs (they are the keys)
+    var topicKeys = $.map(this.model.attributes.raw_topics, function(value, key) { return key; }); // Get all topic IDs (they are the keys)
     this.colors.domain(_.range(topicKeys[0], topicKeys[topicKeys.length - 1]));// [ topicKeys[0], topicKeys[topicKeys.length - 1] ]);
   },
 
@@ -388,14 +492,17 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   initBars: function() {
 
-    var xRange = this.xRange;
-    var yRange = this.yRange;
-    var height = this.height;
-    var bottomMargin = this.margins.bottom;
-    var tooltip = this.tooltip;
+    var dim = this.model.attributes.dimensions;
+    var xScale = this.xScale;
+    var yScale = this.yScale;
+    var height = dim.height;
+//    var bottomMargin = this.margins.bottom;
+//    var tooltip = this.tooltip;
     var svg = this.svg;
-    var data = this.selectedTopicData.data;
+    var selTopicData = this.model.attributes.selectedTopicData;
+    var data = selTopicData.data;
     var colors = this.colors;
+    var barWidth = this.model.attributes.barWidth;
 
     var getOnBarMouseover = this.getOnBarMouseover;
     var getOnBarMouseout = this.getOnBarMouseout;
@@ -403,19 +510,19 @@ var TopicsOverTimeView = DefaultView.extend({
     var vis = this;
 
     // Delete existing elements to conserve memory
-    this.svg.selectAll(".bar").data([]).exit().remove();
+    this.plot.selectAll(".bar").data([]).exit().remove();
 
     // Set the data for the bars
-    this.bars = this.svg.selectAll(".bar")
-          .data(this.selectedTopicData.yearIndices);
+    this.bars = this.plot.selectAll(".bar")
+          .data(selTopicData.yearIndices);
 
     // Append SVG elements with class "bar"
     this.bars.enter()
           .append("svg:rect")
           .attr("class", "bar")
-          .attr("x", function(d) { return xRange(d.year); })
-          .attr("y", this.height - bottomMargin)
-          .attr("width", this.barWidth)
+          .attr("x", function(d) { return xScale(d.year); })
+          .attr("y", height)
+          .attr("width", barWidth)
           .attr("height", 0)
           .style("padding", 10)
           .style("fill", function(d) { return colors(d.index); })
@@ -437,21 +544,23 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   initLineChart: function() {
 
-    var xRange = this.xRange;
-    var yRange = this.yRange;
+    var dim = this.model.attributes.dimensions;
+    var xScale = this.xScale;
+    var yScale = this.yScale;
     var colors = this.colors;
-    var topics = this.topics;
-    var tooltip = this.tooltip;
-    var height = this.height;
-    var bottomMargin = this.margins.bottom;
-    var leftMargin = this.margins.left;
+    var raw_topics = this.model.attributes.raw_topics;
+    var topics = this.model.attributes.topics;
+//    var tooltip = this.tooltip;
+    var height = dim.height;
+//    var bottomMargin = this.margins.bottom;
+//    var leftMargin = this.margins.left;
     var data = null;
 
     // Function for creating lines - sets x and y value at every point on the line
     var line = d3.svg.line()
         .interpolate("basis")
-        .x(function(d, i) { return xRange(d.year); })
-        .y(function(d, i) { return yRange(data[d.year].totalProbability); }); // Use the total value for this year
+        .x(function(d, i) { return xScale(d.year); })
+        .y(function(d, i) { return yScale(data[d.year].totalProbability); }); // Use the total value for this year
 
     // Delete existing lines to conserve memory (this could be optimized)
     this.svg.selectAll(".chart.line").data([]).exit().remove();
@@ -459,13 +568,13 @@ var TopicsOverTimeView = DefaultView.extend({
     this.lineChart = {};
 
     // Append SVG element path for each requested topic
-    for (var topicId in this.topics) {
-        var topic = this.topicData[topicId];
+    for (var topicId in raw_topics) {
+        var topic = topics[topicId];
         var indices = topic.yearIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
         indices.topicId = topic.yearIndices.topicId;
         data = topic.data;
         // Create lineChart SVG line element for this topic
-        var path = this.svg.append("svg:path")
+        var path = this.plot.append("svg:path")
           .datum(indices)
           .attr("class", "chart line")
           .attr("d", line)
@@ -490,30 +599,111 @@ var TopicsOverTimeView = DefaultView.extend({
   /**
    * Transitions the axes into the set domains and ranges
    *
-   * Precondition: xRange and yRange have been set to the correct domain and range
+   * Precondition: xScale and yScale have been set to the correct domain and range
    * Postcondition: Bars can be initialized and will fit within the axes
    *
    * duration - The duration of the transition in ms (0 is instant)
    */
   transitionAxes: function(duration) {
 
-    var t = this.svg.transition().duration(duration);//.ease("exp-in-out");
-    t.select(".x.axis").call(this.xAxis);
-    t.select(".y.axis").call(this.yAxis);
+    var dim = this.model.attributes.dimensions;
+    var margin = this.model.attributes.margin;
+
+    var xAxisEl = this.svg.select("#x-axis");
+    var xAxis = this.xAxis;
+    var xScale = this.xScale;
+
+    var yAxisEl = this.svg.select("#y-axis");
+    var yAxis = this.yAxis;
+    var yScale = this.yScale;
+
+    var xAxisDim;
+    var yAxisDim;
+
+    var endall = function(transition, callback) {
+        var n = 0;
+        transition
+            .each(function() { ++n; })
+            .each("end", function() {
+                var axis = d3.select(this);
+                --n;
+                if (n == 1) {
+                    axis.call(xAxis);
+                    xAxisDim = axis[0][0].getBBox();
+                }
+                else if (n == 0) {
+                    axis.call(yAxis);
+                    yAxisDim = axis[0][0].getBBox();
+                }
+                if (!n)
+                    callback.apply(this, arguments); 
+            });
+    }
+
+    var halfDur = duration / 2;
+    var t = this.svg.transition().duration(halfDur);//.ease("exp-in-out");
+    t.selectAll("#x-axis, #y-axis")
+        .style("opacity", 0)
+        .call(endall, function() {
+            console.log(xAxisDim, yAxisDim);
+            xScale
+                .range([
+                    margin.left + yAxisDim.width,
+                    dim.width - margin.right
+                ]);
+            yScale
+                .range([
+                    dim.height - margin.bottom - xAxisDim.height,
+                    margin.top
+                ]);
+            xAxis.scale(xScale);
+            yAxis.scale(yScale);
+            xAxisEl.call(xAxis);
+            yAxisEl.call(yAxis);
+        });
+//    each("end", function(d, i) {
+//        var transition = d3.select(this);
+//        if (i == 0) {
+//            d3.select(this).call(xAxis);
+//        }
+//        else if (i == 1) {
+//            d3.select(this).call(yAxis);
+//        }
+//        console.log(i, d3.select(this), d3.select(this)[0][0].getBBox());
+//        xAxisEl.call(xAxis);
+//    });
+//    t.select("#x-axis").style("opacity", 0).each("end", function() {
+//        xAxisEl.call(xAxis);
+//    });
+//    t.select("#y-axis").style("opacity", 0).each("end", function() {
+//        yAxisEl.call(yAxis);
+//    });
+
+    var dim = this.model.attributes.dimensions;
+    
+    t = t.transition();
+    t.select("#x-axis").style("opacity", 1);
+    t.select("#y-axis").style("opacity", 1);
+
+    
+
+   // t.select("#x-axis")
+     //   .attr("transform", "translate(0," + (dim.height - 24) + ")");
 
     // Translate x axis in case the whole visualization moves
-    var xAxisEl = $('#topics-over-time .x.axis');
-    var translate = this.parseTransformAttr(xAxisEl.attr("transform")).translate;
-    $({ transform : translate[1] }).animate({ transform : this.height - this.margins.bottom }, // Magical jQuery attribute animation
-                                            { duration : duration,
-                                              step : function(now) {
-                                                xAxisEl.attr("transform", "translate(" + translate[0] + "," + now + ")");
-                                              }
-                                            });
+    //var xAxisEl = $('#x-axis');
+    //console.log(xAxisEl);
+    //var translate = this.parseTransformAttr(xAxisEl.attr("transform")).translate;
+  //  $({ transform : translate[1] }).animate({ transform : dim.height }, // Magical jQuery attribute animation
+  //                                          { duration : duration,
+   //                                           step : function(now) {
+   //                                             xAxisEl.attr("transform", "translate(" + translate[0] + "," + now + ")");
+   //                                          }
+   //                                        });
     
     //this makes the css inline for saving the svg
-    $('.axis .tick').attr("style", "stroke:#000000; opacity:1");
-    $('.axis text').css("font-size", "this.fontSize");
+//    $('.axis .tick').attr("style", "stroke:#000000; opacity:1");
+//    $('.axis text').css("font-size", "this.fontSize");
   },
 
   /**
@@ -527,11 +717,12 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   transitionBarsUp: function(duration) {
 
-    var xRange = this.xRange;
-    var yRange = this.yRange;
-    var height = this.height;
-    var bottomMargin = this.margins.bottom;
-    var data = this.selectedTopicData.data;
+    var dim = this.model.attributes.dimensions;
+    var xScale = this.xScale;
+    var yScale = this.yScale;
+    var height = dim.height;
+//    var bottomMargin = this.margins.bottom;
+    var data = this.model.attributes.selectedTopicData.data;
 
     // Make opaque and transition y and height into final positions
     var bars = this.svg.selectAll(".bar")
@@ -544,13 +735,13 @@ var TopicsOverTimeView = DefaultView.extend({
               probability += value.probability;
             }
           });
-          return yRange(probability);
+          return yScale(probability);
         })
-      .attr("height", function(d) { return height - yRange(data[d.year][d.index].probability) - bottomMargin; });
+      .attr("height", function(d) { return height - yScale(data[d.year][d.index].probability); });
   },
 
   /**
-   * Transition the bars in the chart into hiding (from end height to hformatTopicDataeight 0 and end y to bottom y)
+   * Transition the bars in the chart into hiding (from end height to height 0 and end y to bottom y)
    *
    * Precondition: Bars have been initialized
    *
@@ -559,14 +750,15 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   transitionBarsDown: function(duration) {
 
-    var height = this.height;
-    var bottomMargin = this.margins.bottom;
+    var dim = this.model.attributes.dimensions;
+    var height = dim.height;
+//    var bottomMargin = this.margins.bottom;
 
     // Make transparent and transition y and height to 0
     var bars = this.svg.selectAll(".bar")
       .transition().duration(duration)
       .style("opacity", 0)
-      .attr("y", height - bottomMargin)
+      .attr("y", height)
       .attr("height", 0);
   },
 
@@ -581,13 +773,13 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   transitionLineChart: function(topicIds, duration) {
 
-    var topics = _.extend({}, this.topics);
+    var raw_topics = _.extend({}, this.model.attributes.raw_topics);
 
     if (topicIds === null) {
       topicIds = []; // Hide all topics
     }
     else if (topicIds.length === 0) { // If we want ALL topics (default)
-      topicIds = $.map(topics, function(value, key) { return key; }); // Copy topic id keys into id array
+      topicIds = $.map(raw_topics, function(value, key) { return key; }); // Copy topic id keys into id array
     }
 
     // Transition wanted topics into view
@@ -595,11 +787,11 @@ var TopicsOverTimeView = DefaultView.extend({
     var delayOrder = 0;
     for (var topicIdIndex in topicIds) {
       var topicId = topicIds[topicIdIndex];
-      if (topics[topicId] === undefined)
+      if (raw_topics[topicId] === undefined)
         throw new Error('Invalid topic id given');
       else {
         this.transitionLineOut(this.lineChart[topicId], topicId, delayOrder, duration);
-        delete topics[topicId];
+        delete raw_topics[topicId];
       }
       ++delayOrder;
     }
@@ -607,7 +799,7 @@ var TopicsOverTimeView = DefaultView.extend({
     // Hide unwanted topics
     // Loop through topics left in topic map because they were not specified in topicIds
     delayOrder = 0;
-    for (var topicId in topics) {
+    for (var topicId in raw_topics) {
       this.transitionLineIn(this.lineChart[topicId], delayOrder, duration);
       ++delayOrder;
     }
@@ -623,9 +815,9 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   transitionLineOut: function(path, topicId, delayOrder, duration) {
 
-    var xRange = this.xRange;
-    var yRange = this.yRange;
-    var topicData = this.topicData;
+    var xScale = this.xScale;
+    var yScale = this.yScale;
+    var topics = this.model.attributes.topics;
     var colors = this.colors;
 
     // Register event variables
@@ -637,9 +829,9 @@ var TopicsOverTimeView = DefaultView.extend({
     // Function for creating lines - sets x and y value at every point on the line
     var line = d3.svg.line()
         .interpolate("basis")
-        .x(function(d, i) { return xRange(d.year); })
-        .y(function(d, i) { var data = topicData[topicId].data;
-                            return yRange(data[d.year].totalProbability);
+        .x(function(d, i) { return xScale(d.year); })
+        .y(function(d, i) { var data = topics[topicId].data;
+                            return yScale(data[d.year].totalProbability);
                           });
 
     path
@@ -651,7 +843,6 @@ var TopicsOverTimeView = DefaultView.extend({
         });
 
     // Make lines opaque and do magical line unfolding transition
-    var scale = this.scale;
     // var pathTween = this.pathTween;
     path.transition().duration(duration)
       .delay(delayOrder * 15)
@@ -670,7 +861,7 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   transitionLineIn: function(path, delayOrder, duration) {
 
-    var tooltip = this.tooltip;
+//    var tooltip = this.tooltip;
     // var length = path.node().getTotalLength();
 
     path
@@ -679,9 +870,9 @@ var TopicsOverTimeView = DefaultView.extend({
       .on("click", null);
 
     // Make sure tooltip disappears
-    tooltip.transition()
-      .duration(200)
-      .style("opacity", 0.0);
+//    tooltip.transition()
+//      .duration(200)
+//      .style("opacity", 0.0);
 
     // Make lines transparent and do magical line folding
     path.transition().duration(duration)
@@ -692,10 +883,10 @@ var TopicsOverTimeView = DefaultView.extend({
 
   resize: function(options) { 
 
-    VisualizationView.prototype.resize.call(this, options);
+//    VisualizationView.prototype.resize.call(this, options);
 
-    this.scaleRanges();
-    this.selectTopics(this.selectedTopicIds);
+//    this.scaleRanges();
+//    this.selectTopics();
   },
 
   /**
@@ -735,6 +926,43 @@ var TopicsOverTimeView = DefaultView.extend({
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++    HELPERS    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
 
+    /**
+     * Formats the data for all topics
+     * 
+     * topics and documents - 
+     */
+    processAnalysis: function(analysisData) {
+        var documents = {};
+        var topics = {};
+        var raw_topics = {};
+        var selectedTopics = [];
+        if ('topics' in analysisData && 'documents' in analysisData) {
+//            for (topic in analysisData.topics) {
+//                topics[topic] = toTitleCase(topics[topic].names.Top3);
+//            }
+//            this.model.set({ topics: topics });
+            raw_topics = analysisData.topics;
+            documents = analysisData.documents;
+            for (doc in documents) {
+                documents[doc].topics = this.normalizeTopicPercentage(documents[doc].topics);
+            }
+
+            for (topic in analysisData.topics) {
+                topics[topic] = this.processTopicData(topic, documents);
+                topics[topic].name = toTitleCase(analysisData.topics[topic].names.Top3);
+                selectedTopics.push(topic);
+            }
+        }
+        topics.min = -1;
+        topics.max = -1;
+        return {
+            documents: documents,
+            topics: topics,
+            selectedTopics: selectedTopics,
+            raw_topics: raw_topics,
+        }
+    },
+
   /**
    * Formats the data for the selected topic
    * Sorts year indices array in ascending order
@@ -744,8 +972,9 @@ var TopicsOverTimeView = DefaultView.extend({
    * Postcondition: The axes and bars can now be initialized and set
    *
    * topicId - The ID of the selected topic
+   * documents - The data for all of the analyzed documents
    */
-  formatTopicData: function(topicId) {
+  processTopicData: function(topicId, documents) {
 
     var topicData = {};
     topicData.yearIndices = [];
@@ -759,54 +988,77 @@ var TopicsOverTimeView = DefaultView.extend({
     var data = topicData.data;
       
     // Get topic percentage in all documents
-    for(var docid in this.documents) {
-      if (this.documents.hasOwnProperty(docid)) {
-        var thisDocument = this.documents[docid];
-        var topicProbability = thisDocument.fields[topicId];
+    for(var doc_id in documents) {
+        var doc = documents[doc_id];
+        var topicProbability = doc.topics[topicId];
         var documentData = {};
+        documentData.doc_id = doc_id;
         
+        // Preserve the document metadata in the top level of the document
+        if ('metadata' in doc) {
+            _.extend(documentData, doc.metadata);
+        }
+
         // Not all topics are defined for each document
         if (topicProbability !== undefined) {
 
-          // Get relevant topic-document info
-          documentData.probability = topicProbability;
-          documentData.title = thisDocument.fields.title;
-          documentData.author = thisDocument.fields.author_name;
-          documentData.docId = docid;
-          var year = thisDocument.fields.year;
+            // Get relevant topic-document info
+            documentData.probability = topicProbability;
+            documentData.doc_id = doc_id;
+            var year = doc.metadata.year; //TODO Make this work for any metadata
 
-          // Get all previously found entries for the same year as this document (this is for stacking purposes)
-          var yearData = data[year];
-          if (yearData === undefined) { // Or initialize if necessary
-            yearData = [];
-            yearData.totalProbability = 0;
-            data[year] = yearData;
-          }
+            // Get all previously found entries for the same year as this document (this is for stacking purposes)
+            var yearData = data[year];
+            if (yearData === undefined) { // Or initialize if necessary
+              yearData = [];
+              yearData.totalProbability = 0;
+              data[year] = yearData;
+            }
 
-          // Add this document to the data for this year
-          yearData.totalProbability += documentData.probability;
-          yearData.push(documentData);
+            // Add this document to the data for this year
+            yearData.totalProbability += documentData.probability;
+            yearData.push(documentData);
 
-          // Get min and max probability to help set domain for y axis
-          if (topicData.min === -1 || topicData.min > yearData.totalProbability)
-            topicData.min = yearData.totalProbability;
+            // Get min and max probability to help set domain for y axis
+            if (topicData.min === -1 || topicData.min > yearData.totalProbability)
+              topicData.min = yearData.totalProbability;
 
-          if (topicData.max === -1 || topicData.max < yearData.totalProbability)
-            topicData.max = yearData.totalProbability;
+            if (topicData.max === -1 || topicData.max < yearData.totalProbability)
+              topicData.max = yearData.totalProbability;
 
-          // Add to index so we can stack them in bar chart
-          var yearIndex = { year : year,
-                            index : yearData.length - 1 };
+            // Add to index so we can stack them in bar chart
+            var yearIndex = { year : year,
+                              index : yearData.length - 1 };
 
-          yearIndices.push(yearIndex);
+            yearIndices.push(yearIndex);
         }
-      }
     }
 
     // Sort topics by year so that line chart gets drawn correctly
     topicData.yearIndices.sort(function(a, b) { return d3.ascending(a.year, b.year); });
 
     return topicData;
+  },
+
+  /**
+   * Normalizes the topic data in each document to give the percentage in the document rather than the number of tokens in the document
+   *
+   * rawDocumentTopics - JS object with each topic as a property, keyed by ID with the number of tokens from the topic in the document as the value
+   */
+  normalizeTopicPercentage: function(rawDocumentTopics) {
+      var topics = {};
+      _.extend(topics, rawDocumentTopics);
+      var keys = _.keys(topics);
+      var totalTokens = 0;
+      // Get normalizing count
+      for (topic in topics) {
+          totalTokens += topics[topic];
+      }
+      // Normalize topic percentages
+      for (topic in topics) {
+          topics[topic] = topics[topic] / totalTokens;
+      }
+      return topics;
   },
 
   /**
@@ -819,19 +1071,20 @@ var TopicsOverTimeView = DefaultView.extend({
 
     var min = -1;
     var max = -1;
+    var topicData = this.model.attributes.topics;
 
     if (topicIds.length === 0) {
-      topicIds = $.map(this.topics, function(value, key) { return key; });
+      topicIds = $.map(topicData, function(value, key) { return key; });
     }
 
     for (var index in topicIds) {
       var topicId = topicIds[index];
       // Get min and max probability for the given topic
-      if (min === -1 || min > this.topicData[topicId].min)
-        min = this.topicData[topicId].min;
+      if (min === -1 || min > topicData[topicId].min)
+        min = topicData[topicId].min;
 
-      if (max === -1 || max < this.topicData[topicId].max)
-        max = this.topicData[topicId].max;
+      if (max === -1 || max < topicData[topicId].max)
+        max = topicData[topicId].max;
     }
 
     return { min: min,
@@ -847,8 +1100,8 @@ var TopicsOverTimeView = DefaultView.extend({
 
     var minYear = -1;
     var maxYear = -1;
-    for(var docid in documents) {
-      var docYear = documents[docid].fields.year;
+    for(var doc_id in documents) {
+      var docYear = documents[doc_id].metadata.year;
       if (minYear === -1 || docYear < minYear) {
         minYear = docYear;
       }
@@ -860,20 +1113,42 @@ var TopicsOverTimeView = DefaultView.extend({
     return { min: minYear, max: maxYear };
   },
 
+    /**
+     * Hashes the html transform attribute
+     * i.e. parseTransformAttr('translate(6,5),scale(3,3.5),a(1,1),b(2,23,-34),c(300)')
+     *      RETURNS
+     *      {
+     *          translate: [ '6', '5' ],
+     *          scale: [ '3', '3.5' ],
+     *          a: [ '1', '1' ],
+     *          b: [ '2', '23', '-34' ],
+     *          c: [ '300' ]
+     *      }
+     */
+    parseTransformAttr: function(attributes) {
+        var b={};
+        for (var i in attributes = attributes.match(/(\w+\((\-?\d+\.?\d*,?)+\))+/g)) // for all valid attributes (including negative and decimal)
+        {
+            var c = attributes[i].match(/[\w\.\-]+/g); // Split transform name and values into array
+            b[c.shift()] = c; // First item is name, equal to array of values left
+        }
+        return b;
+    },
+
 //+++++++++++++++++++++++++++++++++++++++++++++++    EVENT HANDLERS    +++++++++++++++++++++++++++++++++++++++++++++++\\
 
   getOnBarMouseover: function(context) {
 
     return function(d) {
-      var tooltip = context.tooltip;
-      var data = context.selectedTopicData.data;
+//      var tooltip = context.tooltip;
+//      var data = context.model.attributes.selectedTopicData.data;
 
-      tooltip.transition()
-        .duration(200)
-        .style("opacity", 0.9);
-      tooltip.html(data[d.year][d.index].title + " " + d.year)
-        .style("left", (d3.event.pageX + 8) + "px")
-        .style("top", (d3.event.pageY) + "px");
+//      tooltip.transition()
+//        .duration(200)
+//        .style("opacity", 0.9);
+//      tooltip.html(data[d.year][d.index].title + " " + d.year)
+//        .style("left", (d3.event.pageX + 8) + "px")
+//        .style("top", (d3.event.pageY) + "px");
       d3.select(this)
         .style("fill", "brown");
     }
@@ -882,12 +1157,12 @@ var TopicsOverTimeView = DefaultView.extend({
   getOnBarMouseout: function(context) {
 
     return function(d) {
-      var tooltip = context.tooltip;
+//      var tooltip = context.tooltip;
       var colors = context.colors;
 
-      tooltip.transition()
-        .duration(200)
-        .style("opacity", 0.0); 
+//      tooltip.transition()
+//        .duration(200)
+//        .style("opacity", 0.0); 
       d3.select(this)
         .style("fill", colors(d.index)); 
     }
@@ -896,15 +1171,15 @@ var TopicsOverTimeView = DefaultView.extend({
   getOnPathMouseover: function(context) {
 
     return function(d) {
-      var tooltip = context.tooltip;
-      var topics = context.topics;
+//      var tooltip = context.tooltip;
+//      var topics = context.topics;
 
-      tooltip.transition()
-        .duration(200)
-        .style("opacity", 0.9)
-      tooltip.html(d.topicId + " " + topics[d.topicId])
-        .style("left", (d3.event.pageX + 8) + "px")
-        .style("top", (d3.event.pageY) + "px");
+//      tooltip.transition()
+//        .duration(200)
+//        .style("opacity", 0.9)
+//      tooltip.html(d.topicId + " " + topics[d.topicId])
+//        .style("left", (d3.event.pageX + 8) + "px")
+//        .style("top", (d3.event.pageY) + "px");
       d3.select(this)
         .style("stroke", "brown"); 
     }
@@ -913,12 +1188,12 @@ var TopicsOverTimeView = DefaultView.extend({
   getOnPathMouseout: function(context) {
 
     return function(d) {
-      var tooltip = context.tooltip;
+//      var tooltip = context.tooltip;
       var colors = context.colors;
 
-      tooltip.transition()
-        .duration(200)
-        .style("opacity", 0.0); 
+//      tooltip.transition()
+//        .duration(200)
+//        .style("opacity", 0.0); 
       d3.select(this)
         .style("stroke", colors(d.topicId));
     }
@@ -926,5 +1201,5 @@ var TopicsOverTimeView = DefaultView.extend({
 
 });
 
-globalViewModel.addViewClass([], TopicsOverTimeView);
+globalViewModel.addViewClass(["Visualizations"], TopicsOverTimeView);
 
