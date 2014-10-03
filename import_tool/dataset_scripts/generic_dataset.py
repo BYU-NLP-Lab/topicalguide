@@ -41,9 +41,8 @@ class GenericDataset(AbstractDataset):
             identifier = self.metadata['readable_name']
         self.set_identifier(basic_tools.remove_punctuation(identifier))
         
-        # a list of functions that filter text
-        self.filters = []
-        self.stopwords = set()
+        # used to efficiently retreive the length after it is computed the first time
+        self.length = None
     
     @property
     def readable_name(self):
@@ -89,21 +88,15 @@ class GenericDataset(AbstractDataset):
         """
         return self.identifier
     
-    # Do not add any filters that replace or add anything to the text as it may make it so your
-    # tokens don't line up.
-    def add_filters(self, filters):
-        """
-        Take a list of strings and add the appropriate filters and 
-        stopwords.  All filters are functions that take a string as 
-        an argument and return a string.
-        Supported filter identifiers are:
-        remove-html-tags
-        replace-html-entities
-        stopwords:"<file name>"
-        """
-        for f in filters:
-            if f == 'replace-html-entities':
-                self.filters.append(basic_tools.replace_html_entities)
+    def __len__(self):
+        """Return the total number of documents."""
+        if self.length:
+            return self.length
+        count = 0
+        for doc in self:
+            count += 1
+        self.length = count
+        return count
     
     def __iter__(self):
         """Return a GenericDocument iterator."""
@@ -122,7 +115,6 @@ class GenericDataset(AbstractDataset):
             file_path = self.list_of_documents[index]
             try:
                 document = GenericDocument(self.documents_directory, file_path)
-                document.set_filters(self.filters)
                 return document
             except Exception as e:
                 print('Error: Could not import %s because of %s' % (file_path, e))
@@ -146,10 +138,6 @@ class GenericDocument(AbstractDocument):
             text = unicode(f.read(), encoding='utf-8', errors='ignore')
         metadata, self.content = basic_tools.seperate_metadata_and_content(text)
         self.metadata = basic_tools.metadata_to_dict(metadata)
-        self.filters = []
-    
-    def set_filters(self, filters):
-        self.filters = filters
     
     def get_identifier(self):
         """
@@ -172,8 +160,6 @@ class GenericDocument(AbstractDocument):
     
     def get_content(self):
         """Returns the raw text of the document in a utf-8 encoding."""
-        for f in self.filters:
-            self.content = f(self.content)
         return self.content
 
 

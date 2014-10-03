@@ -42,7 +42,6 @@ logger = logging.getLogger('root')
 
 def get_or_create_analysis(database_id, dataset_name, analysis):
     """Return Analysis."""
-    print(dataset_name)
     dataset_pk = Dataset.objects.using(database_id).get(name=dataset_name).id
     if Analysis.objects.using(database_id).filter(name=analysis.get_identifier(), dataset_id=dataset_pk).exists():
         analysis_db = Analysis.objects.using(database_id).get(name=analysis.get_identifier(), dataset_id=dataset_pk)

@@ -4,6 +4,7 @@ import os
 import json
 import codecs
 import subprocess
+import re
 from os.path import join, abspath
 
 from import_tool import basic_tools
@@ -11,20 +12,21 @@ from abstract_analysis import AbstractAnalysis
 from topic_modeling.tools import TimeLongThing
 
 
-class MALLETAnalysis(AbstractAnalysis):
+class MalletLdaAnalysis(AbstractAnalysis):
     """
     The AbstractAnalysis allows the TopicalGuide import system to run 
     different analyses.  All settings should be set before preparing or 
     running the analysis to avoid naming conflicts or inconsistencies.
     """
     
-    def __init__(self, topical_guide_root_dir, dataset_dir, number_of_topics=50, number_of_iterations=100, token_regex=r'[\p{L}_]+'):
+    def __init__(self, topical_guide_root_dir, dataset_dir, 
+                 number_of_topics=50, number_of_iterations=100, 
+                 mallet_token_regex=r"[\S]+"): # r"[\p{L}0-9_'\-,]+"
         """
         The dataset_dir is just in case the working_directory path is not set.
         The token regex must be MALLET compatible.
         """
-        self.filters = [] # a list of functions that take text as an argument and return text
-        self.stopwords = set()
+        self.stopwords = {}
         self.create_subdocuments_method = None
         self.optimize_interval = 10
         self.num_topics = number_of_topics
@@ -33,7 +35,8 @@ class MALLETAnalysis(AbstractAnalysis):
         self.dataset_dir = dataset_dir
         self.mallet_path = abspath(join(topical_guide_root_dir, 'tools/mallet/mallet'))
         
-        self.token_regex = token_regex
+        self.mallet_token_regex = mallet_token_regex
+        self.python_token_regex_pattern = re.compile(r'[a-zA-z0-9_]', re.UNICODE)
         
         self.metadata = {}
         
@@ -88,43 +91,17 @@ class MALLETAnalysis(AbstractAnalysis):
     def get_metadata(self):
         return self.metadata
     
-    # Do not add any filters that replace or add anything to the text as it may make it so your
-    # tokens don't line up.
-    def add_filters(self, filters):
-        """
-        Take a list of strings and add the appropriate filters and 
-        stopwords.  All filters are functions that take a string as 
-        an argument and return a string.
-        Supported filter identifiers are:
-        remove-html-tags
-        stopwords:"<file name>"
-        
-        Note that any filter that replaces or adds text may make importing the token to topic relationships break.
-        """
-        for f in filters:
-            if f == 'remove-html-tags':
-                self.filters.append(basic_tools.remove_html_tags)
-            elif f.startswith('stopwords'):
-                file_path = f.split(':', 1)[1][1:-1]
-                with codecs.open(file_path, 'r', 'utf-8') as word_file:
-                    words = word_file.readlines()
-                    words = [word.strip() for word in words]
-                    self.add_stopwords(words)
-    
     def add_stopwords(self, stopwords):
         """Add a list of strings to the stopwords."""
         for word in stopwords:
-            self.stopwords.add(word)
-    
-    def filter_text(self, text):
-        """Take a bit of text and run it through all available filters."""
-        for text_filter in self.filters:
-            text = text_filter(text)
-        return text
+            self.stopwords[word] = True
     
     def set_create_subdocuments_method(self, method):
         """Set how the subdocuments should be created."""
         self.create_subdocuments_method = method
+    
+    def set_python_token_regex(self, token_regex):
+        self.python_token_regex_pattern = re.compile(token_regex, re.UNICODE)
     
     def create_subdocuments(self, name, content):
         """
@@ -157,8 +134,13 @@ class MALLETAnalysis(AbstractAnalysis):
                     subdocuments = self.create_subdocuments(doc_name, doc_content)
                     for subdoc_name, subdoc_content in subdocuments:
                         subdoc_to_doc_map[subdoc_name] = doc_name
-                        text = subdoc_content.replace(u'\n', u' ').replace(u'\r', u' ')
-                        w.write(u'{0} all {1}\n'.format(subdoc_name, self.filter_text(text)))
+                        tokens = []
+                        for match in self.python_token_regex_pattern.finditer(subdoc_content):
+                            token = match.group()
+                            if token not in self.stopwords:
+                                tokens.append(token)
+                        text = u' '.join(tokens)
+                        w.write(u'{0} all {1}\n'.format(subdoc_name, text))
                 if not count:
                     raise Exception('No files processed.')
             # record which subdocuments belong to which documents
@@ -194,9 +176,9 @@ class MALLETAnalysis(AbstractAnalysis):
             if self.stopwords:
                 cmd.append(' --extra-stopwords ')
                 cmd.append(self.stopwords_file)
-            if self.token_regex:
+            if self.mallet_token_regex:
                 cmd.append(' --token-regex ')
-                cmd.append(self.token_regex)
+                cmd.append(self.mallet_token_regex)
             
             try:
                 subprocess.check_call(cmd)
