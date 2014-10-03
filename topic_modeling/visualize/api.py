@@ -28,6 +28,7 @@ from django.views.decorators.gzip import gzip_page
 from django.http import HttpResponse
 from topic_modeling import anyjson
 from django.views.decorators.cache import cache_control
+from topic_modeling.utils import resevoir_sample
 
 DEBUG = True
 
@@ -55,7 +56,7 @@ def get_filter_int(low=0, high=sys.maxint):
             result = high
         return result
     return filter_int
-        
+
 
 # Specify how to filter the incoming request by "key: filter_function" pairs.
 OPTIONS_FILTERS = {
@@ -64,20 +65,21 @@ OPTIONS_FILTERS = {
     "topics": filter_set_to_list,
     "documents": filter_set_to_list,
     "words": filter_set_to_list,
-    
+
     "dataset_attr": filter_set_to_list,
     "analysis_attr": filter_set_to_list,
     "topic_attr": filter_set_to_list,
     "document_attr": filter_set_to_list,
     "word_attr": filter_set_to_list,
-    
+
     "topic_pairwise": filter_set_to_list,
     "top_n_documents": get_filter_int(low=0),
     "top_n_words": get_filter_int(low=0),
-    
+
     "document_continue": get_filter_int(low=0),
     "document_limit": get_filter_int(low=1, high=1000),
-    
+    "document_seed": get_filter_int(),
+
     "word_metrics": filter_set_to_list,
     "token_indices": filter_set_to_list,
 }
@@ -107,7 +109,7 @@ def api(request):
     if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and cache.has_key(path):
         return HttpResponse(cache.get(path), content_type='application/json')
     start_time = time.time()
-    
+
     # Generate the response.
     GET = request.GET
     options = filter_request(GET, OPTIONS_FILTERS)
@@ -117,7 +119,7 @@ def api(request):
             result['datasets'] = query_datasets(options)
     except Exception as e:
         result['error'] = str(e)
-    
+
     # Cache the request, if it is time consuming.
     # Don't cache anything requesting all datasets or all analyses.
     total_time = time.time() - start_time
@@ -126,63 +128,63 @@ def api(request):
     if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and not request_containing_all:
         if total_time > 2:
             cache.set(path, anyjson.dumps(result))
-    
+
     return HttpResponse(anyjson.dumps(result), content_type='application/json')
 
 def query_datasets(options):
     """Gather the information for each dataset listed."""
     datasets = {}
-    
+
     if options['datasets'] == '*':
         datasets_queryset = Dataset.objects.filter(visible=True)
     else:
         datasets_queryset = Dataset.objects.filter(name__in=options['datasets'], visible=True)
     datasets_queryset.select_related()
-    
+
     for dataset in datasets_queryset:
         datasets[dataset.identifier] = dataset.fields_to_dict(options.setdefault('dataset_attr', []))
-        
+
         if 'analyses' in options:
             datasets[dataset.identifier]['analyses'] = query_analyses(options, dataset)
-        
+
     return datasets
 
 def query_analyses(options, dataset):
     analyses = {}
-    
+
     if options['analyses'] == '*':
         analyses_queryset = Analysis.objects.filter(dataset=dataset)
     else:
         analyses_queryset = Analysis.objects.filter(dataset=dataset, name__in=options['analyses'])
     analyses_queryset.select_related()
-    
+
     for analysis in analyses_queryset:
         analyses[analysis.identifier] = analysis.fields_to_dict(options.setdefault('analysis_attr', []))
-        
+
         if 'topic_count' in options['analysis_attr']:
             analyses[analysis.identifier]['topic_count'] = analysis.topics.count()
         if 'topics' in options:
             analyses[analysis.identifier]['topics'] = query_topics(options, dataset, analysis)
         if 'documents' in options:
             analyses[analysis.identifier]['documents'] = query_documents(options, dataset, analysis)
-        
-    
+
+
     return analyses
-    
+
 def query_topics(options, dataset, analysis):
     topics = {}
     if 'topic_attr' in options:
         topic_attr = options['topic_attr']
-        
+
         if options['topics'] == '*':
             topics_queryset = Topic.objects.filter(analysis=analysis)
         else:
             topics_queryset = Topic.objects.filter(analysis=analysis, number__in=options['topics'])
-        
+
         topics_queryset.select_related()
         for topic in topics_queryset:
             attributes = topic.attributes_to_dict(options.setdefault('topic_attr', []), options)
-            
+
             if 'top_n_words' in topic_attr and 'words' in options and 'top_n_words' in options:
                 attributes['words'] = topic.top_n_words(options['words'], top_n=options['top_n_words'])
             if 'top_n_documents' in options:
@@ -192,21 +194,21 @@ def query_topics(options, dataset, analysis):
             if 'word_token_documents_and_locations' in topic_attr and 'documents' in options:
                 attributes['word_token_documents_and_locations'] = topic.get_word_token_documents_and_locations(options['documents'])
             topics[topic.identifier] = attributes
-            
-    
+
+
     return topics
 
 def query_documents(options, dataset, analysis):
     documents = {}
-    
+
     document_attr = options.setdefault('document_attr', [])
     if options['documents'] == '*':
         documents_queryset = Document.objects.filter(dataset=dataset)
     else:
         documents_queryset = Document.objects.filter(dataset=dataset, filename__in=options['documents'])
-    
+
     documents_queryset.order_by('filename')
-    
+
     if 'top_n_topics' in document_attr and \
        options['documents'] == '*' and 'analyses' in options and options['analyses'] != '*':
         from django.db import connection
@@ -224,14 +226,21 @@ def query_documents(options, dataset, analysis):
             if not doc_id in top_n_topics:
                 top_n_topics[doc_id] = {}
             top_n_topics[doc_id][topic_id] = count
-    
-    start = options.setdefault('document_continue', 0)
-    limit = options.setdefault('document_limit', 1000)
-    documents_queryset = documents_queryset[start:start+limit]
-    documents_queryset.select_related()
+
+    count = documents_queryset.count()
+    sample_size = 100
+    if 'document_seed' in options and count > sample_size:
+        sample_indices = resevoir_sample(sample_size, count, options['document_seed'])
+        documents_queryset = [documents_queryset[x] for x in sample_indices]
+    else:
+        start = options.setdefault('document_continue', 0)
+        limit = options.setdefault('document_limit', 1000)
+        documents_queryset = documents_queryset[start:start+limit]
+        documents_queryset.select_related()
+
     for document in documents_queryset:
         attributes = document.attributes_to_dict(document_attr, options)
-        
+
         if 'top_n_topics' in options['document_attr']:
             if document.id in top_n_topics:
                 attributes['topics'] = top_n_topics[document.id]
@@ -241,8 +250,8 @@ def query_documents(options, dataset, analysis):
             attributes['kwic'] = document.get_key_word_in_context(options['token_indices'])
         if 'word_token_topics_and_locations' in document_attr and 'words' in options:
             attributes['word_token_topics_and_locations'] = document.get_word_token_topics_and_locations(analysis, options['words'])
-        
+
         documents[document.identifier] = attributes
-            
+
     return documents
 
