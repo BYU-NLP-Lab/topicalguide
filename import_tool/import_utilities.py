@@ -88,7 +88,7 @@ def import_dataset(database_id, dataset, directories,
     """
     dataset_dir = directories['dataset']
     document_dir = directories['documents']
-    print(len(dataset))
+    stopwords_file = os.path.join(dataset_dir, "stopwords.json")
     
     # Test database existence of dataset to prevent re-bigram finding, etc.
     if not Dataset.objects.using(database_id).filter(name=dataset.get_identifier()).exists():
@@ -130,7 +130,6 @@ def import_dataset(database_id, dataset, directories,
                 f.write(content)
         
         # Store stopwords.
-        stopwords_file = os.path.join(dataset_dir, "stopwords.json")
         with codecs.open(stopwords_file, 'w', 'utf-8') as stop_f:
             stop_f.write(json.dumps(stopwords))
     
@@ -143,7 +142,8 @@ def import_dataset(database_id, dataset, directories,
                                                          document_dir)
 
     # Import each document, tokens, types, and metadata into the database.
-    
+    with codecs.open(stopwords_file, 'r', 'utf-8') as stop_f:
+        stopwords = json.loads(stop_f.read())
     # transfer all documents and collect document info
     doc_identifiers = {}
     all_words = {}
@@ -161,8 +161,9 @@ def import_dataset(database_id, dataset, directories,
         words = []
         for word_index, match in enumerate(re.finditer(token_regex, content, re.UNICODE)):
             word = match.group().lower()
-            start = match.start()
-            words.append((word, word_index, start))
+            if word not in stopwords:
+                start = match.start()
+                words.append((word, word_index, start))
         all_words[doc_id] = words
     
     # create entries for each document
