@@ -96,7 +96,11 @@ def import_dataset(database_id, dataset, directories,
         if not stopwords:
             stopwords = {}
         
+        temp_stopword_count = len(stopwords)
+        print('Stopword count: '+str(temp_stopword_count))
+        
         if not keep_singletons:
+            print('Finding singletons...')
             word_type_count_threshold = max(1, int(math.log(len(dataset), 10)) - 2)
             temp_word_type_counts = {}
             for doc in dataset:
@@ -107,11 +111,11 @@ def import_dataset(database_id, dataset, directories,
                 if count <= word_type_count_threshold:
                     stopwords[word_type] = True
             temp_word_type_counts = None
+            print('Singleton count: '+str(len(stopwords)-temp_stopword_count))
         
-        if 'united' in stopwords:
-            raise Exception('united in stopwords')
         # Bigrams, iterate through documents and train.
         if find_bigrams:
+            print('Finding bigrams...')
             from simple_bigram_finder import SimpleBigramFinder
             bigram_finder = SimpleBigramFinder(stopwords=stopwords, token_regex=token_regex)
             def text_iterator():
@@ -120,6 +124,7 @@ def import_dataset(database_id, dataset, directories,
             bigram_finder.train(text_iterator())
             bigram_finder.print_bigrams()
         
+        print('Copying documents...')
         # Copy documents.
         for doc in dataset:
             content = doc.get_content()
@@ -129,6 +134,7 @@ def import_dataset(database_id, dataset, directories,
             with codecs.open(full_path, 'w', 'utf-8') as f:
                 f.write(content)
         
+        print('Storing stopwords...')
         # Store stopwords.
         with codecs.open(stopwords_file, 'w', 'utf-8') as stop_f:
             stop_f.write(json.dumps(stopwords))
@@ -136,6 +142,7 @@ def import_dataset(database_id, dataset, directories,
     # Once all copied documents are present in the documents folder we're done preprocessing.
     # Now the database import begins.
     # Create database entry for dataset.
+    print('Creating dataset database entry...')
     dataset_db = database_import.create_dataset_db_entry(database_id, 
                                                          dataset, 
                                                          dataset_dir, 
