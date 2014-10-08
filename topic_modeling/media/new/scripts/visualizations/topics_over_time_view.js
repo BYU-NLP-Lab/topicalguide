@@ -96,6 +96,7 @@ var TopicsOverTimeView = DefaultView.extend({
         this.selectionModel.on("change:analysis", this.render, this);
         this.model = new Backbone.Model();
         this.settings = new Backbone.Model();
+        this.lineChart = null;
     },
     
     cleanup: function() {
@@ -112,72 +113,267 @@ var TopicsOverTimeView = DefaultView.extend({
             "documents": "*",
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
-            "document_limit": 1000,
+            "document_limit": 50,
+            "document_seed": 0,
         };
     },
     
-    /** setup the d3 layout, etc. Everything you can do without data **/
-    render: function () {
+    render: function() {
         this.$el.empty();
-
+        
         if(!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
             this.$el.html("<p>You should select a <a href=\"#\">dataset and analysis</a> before proceeding.</p>");
             return;
         }
         
         d3.select(this.el).html(this.loadingTemplate);
-        console.log(this.selectionModel);
         var selections = this.selectionModel.attributes;
         this.dataModel.submitQueryByHash(this.getQueryHash(), function(data) {
             this.$el.html(this.mainTemplate);
             
             var analysisData = data.datasets[selections['dataset']].analyses[selections['analysis']];
             var processedAnalysis = this.processAnalysis(analysisData);
-            console.log(processedAnalysis);
             this.model.set(processedAnalysis);
-
+            this.model.set({
+                // Dimensions of svg viewBox.
+                dimensions: {
+                    width: 800,
+                    height: 800,
+                },
+                
+                // Duration of the transitions.
+                duration: 800, // 8/10 of a second
+                
+                textHeight: 16,
+            });
+            var range = this.getYearRange(this.model.attributes.documents);
+//            this.xScale.domain([ range.min, range.max ]);
+            var topics = this.model.attributes.topics;
+            var minMax = this.getMinMaxTopicValues([]);
+            this.xInfo = {
+                min: range.min,
+                max: range.max,
+                type: "int",
+                title: "year",
+                text: [],
+                rangeMax: 800,
+                noData: {},
+            };
+            this.yInfo = {
+                min: minMax.min,
+                max: minMax.max,
+                type: "float",
+                title: "topic percentage",
+                text: [],
+                rangeMax: 800,
+                noData: {},
+            };
+            
+           // this.renderControls();
             this.renderPlot();
+            this.model.on("change", this.transition, this);
         }.bind(this), this.renderError.bind(this));
-
-        
-//        this.svg = this.$el.find("#tot-svg");
-//        this.maing = d3.select(this.el).select("#tot-svg").append("g");
-//        this.setUpProperties();
-//        this.setUpAxes();    
-//        this.tooltip = d3.select("body").append("div")
-//                                        .attr("class", "tooltip")
-//                                        .style("opacity", 0)
-//                                       .style("height", "38px");
     },
 
     renderPlot: function() {
         var that = this;
-
-        this.setUpProperties();
-
+        
+        // Data variables.
+        var documents = this.model.attributes.documents;
+        var topics = this.model.attributes.topics;
+        var selectedTopics = this.model.attributes.selectedTopics;
+        var raw_topics = this.model.attributes.raw_topics;
+        // Dimensions.
         var dim = this.model.attributes.dimensions;
-
-//        var margins = {left : (dim.width / 12), // for y tick labels 
-//                        bottom : (dim.height / 12), // for x axis tick labels, and x/r axis labels
-//                        top : (dim.height / 18), // for y axis label and doc count
-//                        right : (dim.width / 30)}; // so circles centers don't land on the border
-        var view = d3.select(this.el).select('#plot-view').html("");
-
-        var svg = this.svg = view.append('svg')
+        var textHeight = this.model.attributes.textHeight;
+        var duration = this.model.attributes.duration;
+        
+        // Create scales and axes.
+        var xScale = d3.scale.linear()
+            .domain([0, 1])
+            .range([0, dim.width]);
+        var yScale = d3.scale.linear()
+            .domain([0, 1])
+            .range([dim.height, 0]);
+        var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+        var yAxis = d3.svg.axis().scale(yScale).orient("left");
+        
+        // Render the scatter plot.
+        var view = d3.select(this.el).select("#plot-view").html("");
+        
+        var svg = this.svg = view.append("svg")
             .attr("width", "100%")
             .attr("height", "90%")
             .attr("viewBox", "0, 0, "+dim.width+", "+dim.height)
             .attr("preserveAspectRatio", "xMidYMin meet")
             .append("g");
-
+        // Hidden group to render the axis before making transitions so everything appears correctly.
+        this.xAxisHidden = svg.append("g")
+            .attr("id", "x-hidden")
+            .attr("transform", "translate(0,"+dim.height+")")
+            .style({ "opacity": "0", "fill": "none", "stroke": "white", "shape-rendering": "crispedges" });
+        this.yAxisHidden = svg.append("g")
+            .attr("id", "y-hidden")
+            .attr("transform", "translate(0,0)")
+            .style({ "opacity": "0", "fill": "none", "stroke": "white", "shape-rendering": "crispedges" });
+        // Render xAxis.
+        this.xAxisGroup = svg.append("g")
+            .attr("id", "x-axis")
+            .attr("transform", "translate(0,"+dim.height+")")
+            .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" });
+        this.xAxisText = this.xAxisGroup.append("text");
+        this.yAxisGroup = svg.append("g")
+            .attr("id", "y-axis")
+            .attr("transform", "translate(0,0)")
+            .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" });
+        this.yAxisText = this.yAxisGroup.append("text");
         // Render scatter plot container.
         this.plot = svg.append("g")
             .attr("id", "plot");
-
-        this.setUpAxes();
-        this.selectTopics();
+        
+        // Funcionality for document click.
+       /* function onDocumentClick(d, i) {
+            if(that.settingsModel.attributes.removing) {
+                that.removedDocuments[d.key] = true;
+                d3.select(this).transition()
+                    .duration(duration)
+                    .attr("r", 0);
+            } else {
+                that.selectionModel.set({ document: d.key });
+            }
+        };*/
+        
+        // Create listeners.
+//        this.settingsModel.on("change:xSelection", this.calculateXAxis, this);
+//        this.settingsModel.on("change:ySelection", this.calculateYAxis, this);
+//        this.settingsModel.on("change:radiusSelection", this.calculateRadiusAxis, this);
+//        this.settingsModel.on("change:colorSelection", this.calculateColorAxis, this);
+        
+        this.calculateAll();
     },
-
+    
+    getType: function(value) {
+        var type = "text";
+        if($.isNumeric(value) && !(value instanceof String)) {
+            if(Math.floor(value) === value) {
+                type = "int";
+            } else {
+                type = "float";
+            }
+        }
+        return type;
+    },
+    
+    getNoData: function(group, value) {
+        var data = this.model.attributes.data;
+        var noData = {};
+        for(key in data) {
+            var val = data[key][group][value];
+            if(val === undefined || val === null) {
+                noData[key] = true;
+            }
+        }
+        
+        return {
+            noData: noData,
+        };
+    },
+    
+    calculateAll: function() {
+        this.calculateXAxis(false);
+        this.calculateYAxis();
+//        this.calculateRadiusAxis(false);
+//        this.calculateColorAxis();
+    },
+    
+    calculateXAxis: function(transition) {
+//        var selection = this.settingsModel.attributes.xSelection;
+//        this.xInfo = _.extend(this.xInfo, this.getNoData(selection.group, selection.value));
+        if(transition !== false) this.transition();
+    },
+    calculateYAxis: function(transition) {
+//        var selection = this.settingsModel.attributes.ySelection;
+//        this.yInfo = _.extend(this.yInfo, this.getNoData(selection.group, selection.value));
+        if(transition !== false) this.transition();
+    },
+    
+    getFormat: function(type) {
+        if(type === "float") {
+            return d3.format(",.2f");
+        } else if (type === "int") {
+            return d3.format(".0f");
+        } else {
+            return function(s) { 
+                if(s === undefined) return "undefined";
+                else return s.slice(0, 20); 
+            };
+        }
+    },
+    
+    // Find the min, max, type, title, and text for the given selection.
+    getSelectionInfo: function(group, value, excluded) {
+        var data = this.model.attributes.data;
+        var groupNames = this.model.attributes.groupNames;
+        var valueNames = this.model.attributes.valueNames;
+        var min = Number.MAX_VALUE;
+        var max = -Number.MAX_VALUE;
+        var avg = 0;
+        var total = 0;
+        var count = 0;
+        var text = {}; // Used if the type is determined to be text.
+        var type = false;
+        for(key in data) {
+            if(key in excluded) continue;
+            var val = data[key][group][value];
+            
+            if(!type) { // Set the type.
+                type = this.getType(val);
+                if(type === "text") {
+                    min = 0;
+                    max = 0;
+                } else {
+                    min = val;
+                    max = val;
+                }
+            }
+            
+            if(type !== "text") {
+                val = parseFloat(val);
+                if(val < min) min = val;
+                if(val > max) max = val;
+                total += val;
+                count++;
+            } else {
+                text[val] = true;
+            }
+        }
+        
+        if(type === "text") {
+            var domain = [];
+            for(k in text) domain.push(k);
+            domain.sort();
+            text = domain;
+        }
+        
+        if(min === Number.MAX_VALUE && max === -Number.MAX_VALUE) {
+            min = 0;
+            max = 0;
+        }
+        
+        if(count > 0) {
+            avg = total/count;
+        }
+        
+        return {
+            min: min, 
+            max: max, 
+            avg: avg,
+            type: type, 
+            text: text, 
+            title: groupNames[group]+": "+valueNames[group][value],
+        };
+    },
+    
     getScale: function(info, range) {
         var scale = d3.scale.linear().domain([info.min, info.max]).range(range);
         if(info.type === "text") {
@@ -186,130 +382,149 @@ var TopicsOverTimeView = DefaultView.extend({
         return scale;
     },
     
-  setUpProperties: function() {
-
-    this.model.set({
-        dimensions: {
-            width: 800,
-            height: 800
-        },
-    });
-
-    var dim = this.model.attributes.dimensions;
-
-    this.model.set({
-        duration: 800,
-
-        topLabelSpacing: Math.round(dim.height / 32),
-
-        xAxisMargin: Math.round(dim.height / 13),
-
-        margin: {
-            top: 10,
-            bottom: 10,
-            left: 0,
-            right: 0
-        },
-
-        tickLength: Math.round(dim.width / 80),
-
-        barWidth: 3,
-
-        fontSize: 16
-    });
-
-    var margin = this.model.attributes.margin;
-
-    this.xScale = d3.scale.linear()
-        .range([margin.left, dim.width - margin.right]);
-
-    this.yScale = d3.scale.linear()
-        .range([dim.height - margin.bottom, margin.top]);
-
-    this.lineChart = null;
-    this.bars = null;
-    this.colors = d3.scale.category20(); // Get ordinal scale of 20 colors
-    // this.colors = [ "#000000", "#FFFF00", "#800080", "#FFA500", "#ADD8E6", "#CD0000", "#F5DEB3", "#A9A9A9", "#228B22",
-    //   "#FF00FF", "#0000CD", "#F4A460", "#EE82EE", "#FF4500", "#191970", "#ADFF2F", "#A52A2A", "#808000", "#DB7093",
-    //   "#F08080", "#8A2B2E", "#7FFFD4", "#FF0000", "#00FF00", "#008000", ];
-    //console.log(this);
-//    _.bindAll(this, "selectTopics", "resize");
-//    this.event_aggregator.bind("tot:select-topics", this.selectTopics);
-//    this.event_aggregator.bind("resize", this.resize);
-
-  },
-
-  setUpAxes: function() {
-    var tickLe = this.model.attributes.tickLength;
-    var dim = this.model.attributes.dimensions;
-
-    this.xAxis = d3.svg.axis()
-        .scale(this.xScale)
-        .orient("bottom");
-//        .tickSubdivide(true);
-
-    this.yAxis = d3.svg.axis()
-        .scale(this.yScale)
-        .orient("left");
-//        .tickSubdivide(true);
-
-    // add in the x axis
-    this.svg.append("g")
-        .attr("id", "x-axis")
-        .attr("transform", "translate(0," + dim.height + ")") 
-        .call(this.xAxis)
-        .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" })
-        .style("opacity", 0);
-
-    // add in the y axis
-    this.svg.append("g")
-        .attr("id", "y-axis")
-        .attr("transform", "translate(0, 0)")
-        .call(this.yAxis)
-        .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" })
-        .style("opacity", 0);
-    
-    //these are for svg saving to include the css inline
-//    $('.axtransformis path').attr("opacity", 1);
-//    $('.axis text').attr("fill", "#000000");
-    //$('.axis .tick').attr("style", "stroke:#000000; opacity:1");
-  },
-    
-    scaleRanges: function(left) {
-        this.xScale.range([this.margins.left, this.width - this.margins.right]);
-        this.yScale.range([this.height - this.margins.bottom, this.margins.top]);
-
-        this.xAxis.scale(this.xScale);
-        this.yAxis.scale(this.yScale);
-        // d3.selectAll('.x.axis').attr("transform", "translate(0," + (this.height - this.margins.bottom) + ")");
-        // console.log(d3.selectAll('.x.axis').attr("transform"));
+    getInfo: function(group, value) {
     },
+    
+    transition: function() {
+        // Collect needed information.
+        var model = this.model.attributes;
+        var dim = model.dimensions;
+//        var radii = model.radii;
+        var transitionDuration = model.duration;
+        var xSel = this.settingsModel.attributes.xSelection;
+        var ySel = this.settingsModel.attributes.ySelection;
+//        var rSel = this.settingsModel.attributes.radiusSelection;
+        var cSel = this.settingsModel.attributes.colorSelection;
+        var xExclude = this.xInfo.noData;
+        var yExclude = this.yInfo.noData;
+//        var radiusExclude = this.radiusInfo.noData;
+//        var colorExclude = this.colorInfo.noData;
+//        var docExclude = this.removedDocuments;
+        var allExclude = _.extend({}, xExclude, yExclude);
+        var xInfo = this.xInfo;// = _.extend(this.xInfo, this.getSelectionInfo(xSel.group, xSel.value, allExclude));
+        var yInfo = this.yInfo;// = _.extend(this.yInfo, this.getSelectionInfo(ySel.group, ySel.value, allExclude));
+//        var radiusInfo = this.radiusInfo = _.extend(this.radiusInfo, this.getSelectionInfo(rSel.group, rSel.value, allExclude));
+//        var colorInfo = this.colorInfo = _.extend(this.colorInfo, this.getSelectionInfo(cSel.group, cSel.value, _.extend({}, allExclude, colorExclude)));
+        
+        var textHeight = model.textHeight;
+        
+        // Set axes at a starting point.
+//        var xScale = this.getScale(xInfo, [0, xInfo.rangeMax]);
+        var yScale = this.getScale(yInfo, [yInfo.rangeMax, 0]);
+        var yFormat = this.getFormat(yInfo.type);
+        var yAxis = d3.svg.axis().scale(yScale).orient("left").tickFormat(yFormat);
+        this.yAxisHidden.call(yAxis);
+        var yAxisDim = this.yAxisHidden[0][0].getBBox();
+        
+        var xScale = this.getScale(xInfo, [0, xInfo.rangeMax]);
+        var xFormat = this.getFormat(xInfo.type);
+        var xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(xFormat);
+        this.xAxisHidden.call(xAxis);
+        this.xAxisHidden.selectAll("g").selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", "rotate(-65)");
+        var xAxisDim = this.xAxisHidden[0][0].getBBox();
+        
+        // Move the hidden axes.
+        var yAxisX = textHeight + yAxisDim.width;
+        var yAxisY = textHeight/2;
+        var yAxisLength = yInfo.rangeMax = dim.height - textHeight - yAxisY - xAxisDim.height;
+        yScale = this.getScale(yInfo, [yInfo.rangeMax, 0]);
+        yAxis = d3.svg.axis().scale(yScale).orient("left").tickFormat(yFormat);
+        this.yAxisHidden.attr("transform", "translate("+yAxisX+","+yAxisY+")")
+            .call(yAxis);
+        yAxisDim = this.yAxisHidden[0][0].getBBox();
+        var yAxisBar = this.yAxisHidden.select(".domain")[0][0].getBBox();
+        
+        var xAxisX = yAxisX;
+        var xAxisY = yAxisY + yAxisBar.height;
+        var xAxisLength = xInfo.rangeMax = dim.width - xAxisX - textHeight/2;
+        xScale = this.getScale(xInfo, [0, xInfo.rangeMax]);
+        xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(xFormat);
+        this.xAxisHidden.attr("transform", "translate("+xAxisX+","+xAxisY+")")
+            .call(xAxis)
+            .selectAll("g").selectAll("text")
+                .style("text-anchor", "end")
+                .attr("dx", "-.8em")
+                .attr("dy", ".15em")
+                .attr("transform", "rotate(-65)");
+        xAxisDim = this.xAxisHidden[0][0].getBBox();
+        
+        // Transition the visible axes to final spot.
+        yAxisX = textHeight + yAxisDim.width;
+        yAxisY = textHeight/2;
+        yAxisLength = yInfo.rangeMax = dim.height - textHeight - yAxisY - xAxisDim.height;
+        yScale = this.getScale(yInfo, [yInfo.rangeMax, 0]);
+        yAxis = d3.svg.axis().scale(yScale).orient("left").tickFormat(yFormat);
+        this.yAxisGroup.transition()
+            .duration(transitionDuration)
+            .attr("transform", "translate("+yAxisX+","+yAxisY+")")
+            .call(yAxis);
+        this.yAxisText.transition()
+            .duration(transitionDuration)
+            .attr("transform", "rotate(-90)")
+            .attr("x", -yAxisLength/2)
+            .attr("y", -yAxisDim.width - 4)
+            .style("text-anchor", "middle")
+            .text(yInfo.title);
+        
+        xAxisX = yAxisX;
+        xAxisY = yAxisY + yAxisBar.height;
+        xAxisLength = xInfo.rangeMax = dim.width - xAxisX - textHeight/2;
+        xScale = this.getScale(xInfo, [0, xInfo.rangeMax]);
+        xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(xFormat);
+        this.xAxisGroup.transition()
+            .duration(transitionDuration)
+            .attr("transform", "translate("+xAxisX+","+xAxisY+")")
+            .call(xAxis)
+            .selectAll("g").selectAll("text")
+                .style("text-anchor", "end")
+                .attr("dx", "-.8em")
+                .attr("dy", ".15em")
+                .attr("transform", "rotate(-65)");
+        this.xAxisText.transition()
+            .duration(transitionDuration)
+            .attr("x", xAxisLength/2)
+            .attr("y", xAxisDim.height)
+            .style({ "text-anchor": "middle", "dominant-baseline": "hanging" })
+            .text(xInfo.title);
+        
+        // Transition scatter plot.
+        this.plot.transition()
+            .duration(transitionDuration)
+            .attr("transform", "translate("+xAxisX+","+yAxisY+")");
 
-  /** populate everything! data is the JSON response from your url(). For
-   * information on the return values of specific urls, look at the docs for
-   * the function (probably in topic_modeling/visualize/topics/ajax.py)
-   *
-   * NOTE: this data is cached in localStorage unless you click "refresh" at
-   * the bottom of the right-hand bar
-   */
-  load: function(data) {
-    console.log(data);
-
-    this.metrics = data.metrics;
-    this.metadata = data.metadata;
-    this.topics = data.topics;
-    this.documents = data.documents;
-
-    this.topicData = {};
-    this.topicData.min = -1;
-    this.topicData.max = -1;
-    for(var topicId in this.topics) {
-      this.topicData[topicId] = this.processTopicData(topicId);
-    }
-
-    this.selectTopics(); // Select all topics by default
-    this.event_aggregator.trigger("tot:loaded", this.topics);
-  },
+        this.selectTopics();
+        
+        // Transition circles.
+        var colorScale = null;
+            // All this allows us to map onto a spectrum of colors.
+            var colors = ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", 
+                          "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", 
+                          "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", 
+                          "#17becf", "#9edae5"];
+            var colorDomain = d3.scale.ordinal().domain(colors).rangePoints([0, 1], 0).range();
+            var numToColor = d3.scale.linear().domain(colorDomain).range(colors);
+            colorScale = function ordinalColorScale(val) { return numToColor(ordToNum(val)); };
+        
+        var totalDocuments = _.size(model.data);
+        var totalDisplayed = totalDocuments - _.size(allExclude);
+        //this.nodeCount.text("Showing "+totalDisplayed+" of "+totalDocuments + " Documents");
+    },
+    
+    renderHelpAsHtml: function() {
+        return "<p>Note that with all the selections (except Color) a document is dropped if that document doesn't have the selected datum.</p>"+
+               "<h4>X and Y Axes</h4>"+
+               "<p>Select the data to sort the documents according to the data along the specified axis.</p>"+
+               "<h4>Radius</h4>"+
+               "<p>With text data that smaller the radius the earlier in the alphabet the text occurs.</p>"+
+               "<h4>Color</h4>"+
+               "<p>With text data the color is chosen from a spectrum of colors. With numeric data the color "+
+               "is between blue, off-white, and red. Off-white is average, blue is below average and red is above average. "+
+               "Note that documents without the selected data value will be displayed as steelblue.</p>";
+    },
 
   /**
    * Select a number of topics
@@ -326,6 +541,7 @@ var TopicsOverTimeView = DefaultView.extend({
     }
 
     var topicIds = Array.prototype.slice.call(arguments, 0)[0];
+    console.log(topicIds);
     if (!topicIds) {
         topicIds = this.model.attributes.selectedTopics = [];
     }
@@ -335,8 +551,9 @@ var TopicsOverTimeView = DefaultView.extend({
 //    }
 //    else 
     if (topicIds.length > 1 || topicIds.length === 0) {
-      this.showLineChart(topicIds);
-      return;
+        console.log("showing line chart!");
+        this.showLineChart(topicIds);
+        return;
     }
     else if (topicIds.length < 0) {
       throw new Error('Something is wrong with your array length...');
@@ -349,6 +566,7 @@ var TopicsOverTimeView = DefaultView.extend({
     this.model.set({
         selectedTopicData: this.model.attributes.topics[topicId],
     });
+    console.log(this.model.attributes.selectedTopicData);
 
     // Transition the line chart into hiding
     this.transitionLineChart(null, 1000);
@@ -372,15 +590,8 @@ var TopicsOverTimeView = DefaultView.extend({
 
     var topics = this.model.attributes.topics;
     var minMax = this.getMinMaxTopicValues(topicIds);
-//    this.scale = minMax.max / topics.max;
     topics.min = minMax.min;
     topics.max = minMax.max;
-
-    // Scale axes to lineChart (data for all topics)
-    this.scaleLineChartAxes();
-
-    // Make the axes transition to the domain of the full lineChart
-    this.transitionAxes(1500);
 
     // Initialize the line chart
     if (this.lineChart === null) { // Conditional breaks scaling
@@ -400,14 +611,11 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   setBarChart: function() {
 
-    // Scale axes to topic data
-    this.scaleTopicAxes();
-
     // Initialize bars
     this.initBars();
 
     // Make the axes transition to the new data domain
-    this.transitionAxes(1500);
+//    this.transitionAxes(1500);
 
     // Transition the bars into place
     this.transitionBarsUp(1500);
@@ -492,9 +700,11 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   initBars: function() {
 
+    console.log("init bars!");
     var dim = this.model.attributes.dimensions;
-    var xScale = this.xScale;
-    var yScale = this.yScale;
+    var yInfo = this.yInfo;
+    var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
+    var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
     var height = dim.height;
 //    var bottomMargin = this.margins.bottom;
 //    var tooltip = this.tooltip;
@@ -502,7 +712,11 @@ var TopicsOverTimeView = DefaultView.extend({
     var selTopicData = this.model.attributes.selectedTopicData;
     var data = selTopicData.data;
     var colors = this.colors;
-    var barWidth = this.model.attributes.barWidth;
+    console.log(xScale.domain());
+    var yearDomain = xScale.domain();
+    var yearRange = xScale.range();
+    console.log(yearRange);
+    var barWidth = (yearRange[1] - yearRange[0]) / (yearDomain[1] - yearDomain[0]);
 
     var getOnBarMouseover = this.getOnBarMouseover;
     var getOnBarMouseout = this.getOnBarMouseout;
@@ -517,15 +731,16 @@ var TopicsOverTimeView = DefaultView.extend({
           .data(selTopicData.yearIndices);
 
     // Append SVG elements with class "bar"
+    console.log(yInfo, yScale(yInfo.min));
     this.bars.enter()
           .append("svg:rect")
           .attr("class", "bar")
           .attr("x", function(d) { return xScale(d.year); })
-          .attr("y", height)
+          .attr("y", function() { return yScale(yInfo.min); })
           .attr("width", barWidth)
           .attr("height", 0)
           .style("padding", 10)
-          .style("fill", function(d) { return colors(d.index); })
+          .style("fill", function(d) { return "steelblue"; })
           .style("opacity", 0)
           .on("mouseover", getOnBarMouseover(vis))
           .on("mouseout", getOnBarMouseout(vis))
@@ -533,6 +748,7 @@ var TopicsOverTimeView = DefaultView.extend({
               select.call(vis);
             });
 
+    console.log(this.bars);
     return this.bars;
   },
 
@@ -543,10 +759,12 @@ var TopicsOverTimeView = DefaultView.extend({
    * Postcondition: Line chart can be transitioned into place
    */
   initLineChart: function() {
-
+ 
     var dim = this.model.attributes.dimensions;
-    var xScale = this.xScale;
-    var yScale = this.yScale;
+//    var xScale = this.xScale;
+//    var yScale = this.yScale;
+        var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
+        var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
     var colors = this.colors;
     var raw_topics = this.model.attributes.raw_topics;
     var topics = this.model.attributes.topics;
@@ -556,6 +774,7 @@ var TopicsOverTimeView = DefaultView.extend({
 //    var leftMargin = this.margins.left;
     var data = null;
 
+    console.log(xScale, yScale);
     // Function for creating lines - sets x and y value at every point on the line
     var line = d3.svg.line()
         .interpolate("basis")
@@ -579,7 +798,7 @@ var TopicsOverTimeView = DefaultView.extend({
           .attr("class", "chart line")
           .attr("d", line)
           .style("opacity", 0)
-          .style("stroke", colors(topicId))
+          .style("stroke", "steelblue")
           .style("fill", "none");
 
         // This is to initialize the magical unfolding transition
@@ -642,6 +861,8 @@ var TopicsOverTimeView = DefaultView.extend({
 
     var halfDur = duration / 2;
     var t = this.svg.transition().duration(halfDur);//.ease("exp-in-out");
+    console.log(xScale.range(), yScale.range());
+    console.log(this.svg.selectAll("#x-axis, #y-axis"));
     t.selectAll("#x-axis, #y-axis")
         .style("opacity", 0)
         .call(endall, function() {
@@ -658,9 +879,11 @@ var TopicsOverTimeView = DefaultView.extend({
                 ]);
             xAxis.scale(xScale);
             yAxis.scale(yScale);
+            console.log(xScale.range(), yScale.range());
             xAxisEl.call(xAxis);
             yAxisEl.call(yAxis);
         });
+    console.log(xScale.range(), yScale.range());
 //    each("end", function(d, i) {
 //        var transition = d3.select(this);
 //        if (i == 0) {
@@ -706,39 +929,40 @@ var TopicsOverTimeView = DefaultView.extend({
 //    $('.axis text').css("font-size", "this.fontSize");
   },
 
-  /**
-   * Transitions the bars in the chart into place (from height 0 to end height and bottom y to end y)
-   *
-   * Precondition: Bars have been initialized
-   * Precondition: Bars are at the correct x coordinates
-   *
-   * bars - D3 entered bar element to transition
-   * duration - The duration of the transition in ms (0 is instant)
-   */
-  transitionBarsUp: function(duration) {
+    /**
+     * Transitions the bars in the chart into place (from height 0 to end height and bottom y to end y)
+     *
+     * Precondition: Bars have been initialized
+     * Precondition: Bars are at the correct x coordinates   
+     *
+     * bars - D3 entered bar element to transition
+     * duration - The duration of the transition in ms (0 is instant)
+     */
+    transitionBarsUp: function(duration) {
 
-    var dim = this.model.attributes.dimensions;
-    var xScale = this.xScale;
-    var yScale = this.yScale;
-    var height = dim.height;
-//    var bottomMargin = this.margins.bottom;
-    var data = this.model.attributes.selectedTopicData.data;
+        var dim = this.model.attributes.dimensions;
+        var yInfo = this.yInfo;
+        var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
+        var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
+        var height = dim.height;
+//        var bottomMargin = this.margins.bottom;
+        var data = this.model.attributes.selectedTopicData.data;
 
-    // Make opaque and transition y and height into final positions
-    var bars = this.svg.selectAll(".bar")
-      .transition().duration(duration)
-      .style("opacity", 1)
-      .attr("y", function(d) {
-          var probability = data[d.year][d.index].probability;
-          data[d.year].forEach(function(value, index, array) { // Get cumulative value (stack 'em up)
-            if (index < d.index) {
-              probability += value.probability;
-            }
-          });
-          return yScale(probability);
-        })
-      .attr("height", function(d) { return height - yScale(data[d.year][d.index].probability); });
-  },
+        // Make opaque and transition y and height into final positions
+        var bars = this.svg.selectAll(".bar")
+            .transition().duration(duration)
+            .style("opacity", 1)
+            .attr("y", function(d) {
+                var probability = data[d.year][d.index].probability;
+                data[d.year].forEach(function(value, index, array) { // Get cumulative value (stack 'em up)
+                    if (index < d.index) {
+                    probability += value.probability;
+                    }
+                });
+                return yScale(probability);
+                })
+            .attr("height", function(d) { return yScale(yInfo.min) - yScale(data[d.year][d.index].probability); });
+        },
 
   /**
    * Transition the bars in the chart into hiding (from end height to height 0 and end y to bottom y)
@@ -815,8 +1039,10 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   transitionLineOut: function(path, topicId, delayOrder, duration) {
 
-    var xScale = this.xScale;
-    var yScale = this.yScale;
+//    var xScale = this.xScale;
+//    var yScale = this.yScale;
+        var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
+        var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
     var topics = this.model.attributes.topics;
     var colors = this.colors;
 
@@ -835,7 +1061,7 @@ var TopicsOverTimeView = DefaultView.extend({
                           });
 
     path
-        .style("stroke", function(d) { return colors(d.topicId); })
+        .style("stroke", function(d) { return "steelblue"; })
         .on("mouseover", getOnPathMouseover(vis))
         .on("mouseout", getOnPathMouseout(vis))
         .on("click", function(d) {
@@ -1164,7 +1390,7 @@ var TopicsOverTimeView = DefaultView.extend({
 //        .duration(200)
 //        .style("opacity", 0.0); 
       d3.select(this)
-        .style("fill", colors(d.index)); 
+        .style("fill", "steelblue"); 
     }
   },
 
@@ -1195,7 +1421,7 @@ var TopicsOverTimeView = DefaultView.extend({
 //        .duration(200)
 //        .style("opacity", 0.0); 
       d3.select(this)
-        .style("stroke", colors(d.topicId));
+        .style("stroke", "steelblue");
     }
   },
 

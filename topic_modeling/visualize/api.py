@@ -229,6 +229,9 @@ def query_documents(options, dataset, analysis):
 
     count = documents_queryset.count()
     sample_size = 100
+    if 'document_limit' in options and options['document_limit'] < sample_size:
+        sample_size = options['document_limit']
+
     if 'document_seed' in options and count > sample_size:
         sample_indices = resevoir_sample(sample_size, count, options['document_seed'])
         documents_queryset = [documents_queryset[x] for x in sample_indices]
