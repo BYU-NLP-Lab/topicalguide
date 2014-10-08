@@ -5,6 +5,7 @@ import json
 import random
 import re
 import codecs
+import math
 
 from topic_modeling import settings
 from django.core.management import call_command
@@ -24,6 +25,7 @@ from metric_scripts import metric_import
 
 from topic_modeling.visualize.models import *
 
+TOKEN_REGEX = r"(([^\W])+([-',])?)+([^\W])+"
 BASIC_METRICS = [
     'dataset_token_count', 'dataset_type_count',
     'document_token_count', 'document_type_count', 'document_topic_entropy', 
@@ -51,7 +53,7 @@ def get_common_working_directories(dataset_identifier):
     dataset_dir = os.path.join(working_dir, 'datasets', dataset_identifier) # not the directory containing the source dataset information
     if not os.path.exists(dataset_dir):
         os.makedirs(dataset_dir)
-    document_dir = os.path.join(dataset_dir, 'files')
+    document_dir = os.path.join(dataset_dir, 'files') # TODO change this to documents
     if not os.path.exists(document_dir):
         os.makedirs(document_dir)
     directories = {
@@ -77,25 +79,82 @@ def run_syncdb(database_info):
     call_command('syncdb', database=dataset_identifier)
     return dataset_identifier
 
-def import_dataset(database_id, dataset, directories, token_regex=r'([^\W0-9]|[_])+'):
+def import_dataset(database_id, dataset, directories, 
+                   token_regex=TOKEN_REGEX, 
+                   stopwords=None, find_bigrams=False, keep_singletons=False):
     """Transfer document content and metadata to database.
     By default token_regex is set to recogize sequences of unicode alpha characters.
     Return unique dataset name as found in database.
     """
     dataset_dir = directories['dataset']
     document_dir = directories['documents']
+    stopwords_file = os.path.join(dataset_dir, "stopwords.json")
     
-    # create database entry for dataset
+    # Test database existence of dataset to prevent re-bigram finding, etc.
+    if not Dataset.objects.using(database_id).filter(name=dataset.get_identifier()).exists():
+        # Get stopwords list, if any, and add word types below the threshold to it.
+        if not stopwords:
+            stopwords = {}
+        
+        temp_stopword_count = len(stopwords)
+        print('Stopword count: '+str(temp_stopword_count))
+        
+        if not keep_singletons:
+            print('Finding singletons...')
+            word_type_count_threshold = max(1, int(math.log(len(dataset), 10)) - 2)
+            temp_word_type_counts = {}
+            for doc in dataset:
+                for word_index, match in enumerate(re.finditer(token_regex, doc.get_content(), re.UNICODE)):
+                    word_type = match.group().lower()
+                    temp_word_type_counts[word_type] = temp_word_type_counts.setdefault(word_type, 0) + 1
+            for word_type, count in temp_word_type_counts.iteritems(): # add singletons to stopword list
+                if count <= word_type_count_threshold:
+                    stopwords[word_type] = True
+            temp_word_type_counts = None
+            print('Singleton count: '+str(len(stopwords)-temp_stopword_count))
+        
+        # Bigrams, iterate through documents and train.
+        if find_bigrams:
+            print('Finding bigrams...')
+            from simple_bigram_finder import SimpleBigramFinder
+            bigram_finder = SimpleBigramFinder(stopwords=stopwords, token_regex=token_regex)
+            def text_iterator():
+                for doc in dataset:
+                    yield doc.get_identifier(), doc.get_content()
+            bigram_finder.train(text_iterator())
+            bigram_finder.print_bigrams()
+        
+        print('Copying documents...')
+        # Copy documents.
+        for doc in dataset:
+            content = doc.get_content()
+            if find_bigrams: # Apply bigrams.
+                content = bigram_finder.combine_bigrams(content)
+            full_path = os.path.join(document_dir, doc.get_identifier())
+            with codecs.open(full_path, 'w', 'utf-8') as f:
+                f.write(content)
+        
+        print('Storing stopwords...')
+        # Store stopwords.
+        with codecs.open(stopwords_file, 'w', 'utf-8') as stop_f:
+            stop_f.write(json.dumps(stopwords))
+    
+    # Once all copied documents are present in the documents folder we're done preprocessing.
+    # Now the database import begins.
+    # Create database entry for dataset.
+    print('Creating dataset database entry...')
     dataset_db = database_import.create_dataset_db_entry(database_id, 
                                                          dataset, 
                                                          dataset_dir, 
                                                          document_dir)
-    
+
+    # Import each document, tokens, types, and metadata into the database.
+    with codecs.open(stopwords_file, 'r', 'utf-8') as stop_f:
+        stopwords = json.loads(stop_f.read())
     # transfer all documents and collect document info
     doc_identifiers = {}
     all_words = {}
     all_doc_metadata = {}
-    
     for doc in dataset:
         doc_id = doc.get_identifier()
         # get document full path
@@ -104,17 +163,15 @@ def import_dataset(database_id, dataset, directories, token_regex=r'([^\W0-9]|[_
         # get metadata
         all_doc_metadata[doc_id] = doc.get_metadata()
         # get words
-        content = doc.get_content()
+        with codecs.open(full_path, 'r', 'utf-8') as f:
+            content = f.read()
         words = []
         for word_index, match in enumerate(re.finditer(token_regex, content, re.UNICODE)):
             word = match.group().lower()
-            start = match.start()
-            words.append((word, word_index, start))
+            if word not in stopwords:
+                start = match.start()
+                words.append((word, word_index, start))
         all_words[doc_id] = words
-        # copy content to new location
-        if not os.path.exists(full_path):
-            with codecs.open(full_path, 'w', 'utf-8') as f:
-                f.write(content)
     
     # create entries for each document
     print('Importing documents into database...')
@@ -173,6 +230,14 @@ def link_dataset(database_id, dataset_name):
 def run_analysis(database_id, dataset_name, analysis, directories):
     """Import the given analysis.  Return unique analysis name for dataset."""
     print('Running analysis...')
+    stopwords = {}
+    stopwords_file = os.path.join(directories['dataset'], 'stopwords.json')
+    if os.path.exists(stopwords_file):
+        with codecs.open(stopwords_file, 'r', 'utf-8') as stop_f:
+            stopwords = json.loads(stop_f.read())
+    analysis.add_stopwords(stopwords)
+    analysis.set_python_token_regex(TOKEN_REGEX)
+    
     def document_iterator(doc_dir):
         for root, dirs, file_names in os.walk(doc_dir):
             for file_name in file_names:

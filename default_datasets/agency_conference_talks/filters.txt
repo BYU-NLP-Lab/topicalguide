@@ -1,3 +1,0 @@
-remove-html-tags
-replace-html-entities
-stopwords:"stopwords/en.txt"

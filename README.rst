@@ -58,7 +58,7 @@ Be sure not to commit/push your settings.py file with your SECRET_KEY in it.
 Third, set your database settings. You could use sqlite, which is configured
 for you. If you want to use Postgres there are instructions below for seting up on Fedora.
 
-Four, configure the site caching method, otherwise local memory is used by default.
+Fourth, optional, configure the site caching method; local memory is used by default.
 
 4. Sync the database
 --------------------
@@ -69,11 +69,14 @@ to enter a super user password for the site. Currently it doesn't matter if you 
 5. Import a dataset
 -------------------
 
-Run `./topicalguide.py import default_datasets/state_of_the_union` to run the default import.
-Run `./topicalguide.py -h` for more options.
-Alternatively you can create your own custom import by inheriting from the `AbstractDataset` 
-class in the `import_tool/dataset_classes/abstract_dataset.py` and use the methods available in 
-`import_tool/import_utilities.py` to import a dataset, run analyses, or run metrics.
+The first time you import after cloning you need to wait around for the first few seconds of the import to setup an administrator password for the database. Other than that it's all automated.
+You can run `./default_datasets/import_state_of_the_union.sh` to run the default import.
+Or you can run the following commands::
+    
+    python topicalguide.py import default_datasets/state_of_the_union/ --identifier state_of_the_union
+    python topicalguide.py analyze state_of_the_union --number-of-topics 100
+
+For more information run `python topicalguide.py -h`.
 
 If you want to keep your datasets in the topicalguide directory tree. Put them in a folder called `datasets`, that way git ignores them.
 

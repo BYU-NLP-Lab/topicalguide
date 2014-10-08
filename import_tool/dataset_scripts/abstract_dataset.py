@@ -33,6 +33,10 @@ class AbstractDataset(object):
     def __iter__(self):
         """Return an AbstractDocument iterator."""
         raise NotImplementedError('__iter__ is not implemented')
+    
+    def __len__(self):
+        """Return the number of documents to be imported."""
+        raise NotImplementedError('__len__ is not implemented')
 
 
 class AbstractDocument(object):
