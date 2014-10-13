@@ -35,10 +35,11 @@ BASIC_METRICS = [
     'topic_pairwise_document_correlation', 'topic_pairwise_word_correlation',
 ]
 
+topical_guide_dir = os.path.abspath(os.path.dirname(__file__))
+working_dir = os.environ['TOPICAL_GUIDE_WORKING_DIR'] or os.path.join(topical_guide_dir, 'working')
+
 def make_working_dir():
     """Make the 'working/' dir and return the absolute path."""
-    topical_guide_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    working_dir = os.path.join(topical_guide_dir, 'working')
     if not os.path.exists(working_dir):
         os.makedirs(working_dir)
     return working_dir

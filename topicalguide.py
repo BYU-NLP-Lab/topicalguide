@@ -19,6 +19,8 @@ from import_tool.analysis_scripts.mallet_analysis import MalletLdaAnalysis
 # For help:
 # python topicalguide.py -h
 
+topical_guide_dir = os.path.abspath(os.path.dirname(__file__))
+working_dir = os.environ['TOPICAL_GUIDE_WORKING_DIR'] or os.path.join(topical_guide_dir, 'working')
 
 def get_database_configurations(file_path):
     """
@@ -40,9 +42,8 @@ def get_database_configurations(file_path):
             del database_config[key.lower()]
     # make sure that the relative path is relative to the working directory
     if 'NAME' in database_config and not isdir(database_config['NAME']):
-        if not isabs(database_config['NAME']): # create an absolute path if a relative one is specified
-            topical_guide_dir = os.path.abspath(os.path.dirname(__file__))
-            database_config['NAME'] = os.path.join(topical_guide_dir, 'working', database_config['NAME'])
+        if not os.path.isabs(database_config['NAME']): # create an absolute path if a relative one is specified
+            database_config['NAME'] = os.path.join(working_dir, database_config['NAME'])
     
     return database_config
 
