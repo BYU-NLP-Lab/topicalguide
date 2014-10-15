@@ -90,6 +90,14 @@ var TopicsOverTimeView = DefaultView.extend({
         "<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>"+
         "<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
 
+    controlsTemplate:
+        "<h3><b>Controls</b></h3>"+
+        "<hr />"+
+        "<div>"+
+        "    <label for=\"topics-control\">Topics</label>"+
+        "    <select id=\"topics-control\" type=\"selection\" class=\"form-control\" name=\"Topics\" multiple></select>"+
+        "</div>",
+
     readableName: "Topics Over Time",
 
     initialize: function() {
@@ -169,10 +177,28 @@ var TopicsOverTimeView = DefaultView.extend({
                 noData: {},
             };
             
-           // this.renderControls();
+            this.renderControls();
             this.renderPlot();
             this.model.on("change", this.transition, this);
         }.bind(this), this.renderError.bind(this));
+    },
+
+    renderControls: function() {
+        var that = this;
+        var controls = d3.select(this.el).select("#plot-controls");
+        controls.html(this.controlsTemplate);
+
+        // Get selects to be populated
+        var topics = this.topicsSelect = controls.select("#topics-control");
+        var raw_topics = this.model.attributes.raw_topics;
+        for (key in raw_topics) {
+            topic = raw_topics[key];
+            topics
+                .append("option")
+                .attr("value", key)
+                .text(topic.names.Top3);
+        }
+        
     },
 
     renderPlot: function() {
@@ -541,7 +567,6 @@ var TopicsOverTimeView = DefaultView.extend({
     }
 
     var topicIds = Array.prototype.slice.call(arguments, 0)[0];
-    console.log(topicIds);
     if (!topicIds) {
         topicIds = this.model.attributes.selectedTopics = [];
     }
@@ -551,7 +576,6 @@ var TopicsOverTimeView = DefaultView.extend({
 //    }
 //    else 
     if (topicIds.length > 1 || topicIds.length === 0) {
-        console.log("showing line chart!");
         this.showLineChart(topicIds);
         return;
     }
@@ -736,7 +760,7 @@ var TopicsOverTimeView = DefaultView.extend({
           .append("svg:rect")
           .attr("class", "bar")
           .attr("x", function(d) { return xScale(d.year); })
-          .attr("y", function() { return yScale(yInfo.min); })
+          .attr("y", yScale(yInfo.min))
           .attr("width", barWidth)
           .attr("height", 0)
           .style("padding", 10)
@@ -774,7 +798,6 @@ var TopicsOverTimeView = DefaultView.extend({
 //    var leftMargin = this.margins.left;
     var data = null;
 
-    console.log(xScale, yScale);
     // Function for creating lines - sets x and y value at every point on the line
     var line = d3.svg.line()
         .interpolate("basis")
@@ -976,13 +999,15 @@ var TopicsOverTimeView = DefaultView.extend({
 
     var dim = this.model.attributes.dimensions;
     var height = dim.height;
+    var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
+    var yInfo = this.yInfo;
 //    var bottomMargin = this.margins.bottom;
 
     // Make transparent and transition y and height to 0
     var bars = this.svg.selectAll(".bar")
       .transition().duration(duration)
       .style("opacity", 0)
-      .attr("y", height)
+      .attr("y", yScale(yInfo.min))
       .attr("height", 0);
   },
 
