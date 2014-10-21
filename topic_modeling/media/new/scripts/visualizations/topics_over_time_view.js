@@ -201,16 +201,12 @@ var TopicsOverTimeView = DefaultView.extend({
 
         topics.on("change", function selectTopics() {
             var selected = $(this).find(":selected");
-            $.each(selected, function() {
-                console.log($(this).attr("value"));
-            });
             var selected_array = selected.map(function() {
                 return this.value;
             })
             .get();
 
             that.selectTopics(selected_array);
-            console.log(selected_array);
         });
         
     },
