@@ -601,7 +601,6 @@ var TopicsOverTimeView = DefaultView.extend({
     this.model.set({
         selectedTopicData: this.model.attributes.topics[topicId],
     });
-    console.log(this.model.attributes.selectedTopicData);
 
     // Transition the line chart into hiding
     this.transitionLineChart(null, 1000);
@@ -735,7 +734,6 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   initBars: function() {
 
-    console.log("init bars!");
     var dim = this.model.attributes.dimensions;
     var yInfo = this.yInfo;
     var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
@@ -747,10 +745,8 @@ var TopicsOverTimeView = DefaultView.extend({
     var selTopicData = this.model.attributes.selectedTopicData;
     var data = selTopicData.data;
     var colors = this.colors;
-    console.log(xScale.domain());
     var yearDomain = xScale.domain();
     var yearRange = xScale.range();
-    console.log(yearRange);
     var barWidth = (yearRange[1] - yearRange[0]) / (yearDomain[1] - yearDomain[0]);
 
     var getOnBarMouseover = this.getOnBarMouseover;
@@ -766,7 +762,6 @@ var TopicsOverTimeView = DefaultView.extend({
           .data(selTopicData.yearIndices);
 
     // Append SVG elements with class "bar"
-    console.log(yInfo, yScale(yInfo.min));
     this.bars.enter()
           .append("svg:rect")
           .attr("class", "bar")
@@ -783,7 +778,6 @@ var TopicsOverTimeView = DefaultView.extend({
               select.call(vis);
             });
 
-    console.log(this.bars);
     return this.bars;
   },
 
