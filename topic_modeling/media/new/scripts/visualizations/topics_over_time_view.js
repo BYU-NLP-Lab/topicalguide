@@ -95,7 +95,7 @@ var TopicsOverTimeView = DefaultView.extend({
         "<hr />"+
         "<div>"+
         "    <label for=\"topics-control\">Topics</label>"+
-        "    <select id=\"topics-control\" type=\"selection\" class=\"form-control\" name=\"Topics\" multiple></select>"+
+        "    <select id=\"topics-control\" type=\"selection\" class=\"form-control\" name=\"Topics\" style=\"height:200px\" multiple></select>"+
         "</div>",
 
     readableName: "Topics Over Time",
@@ -198,6 +198,20 @@ var TopicsOverTimeView = DefaultView.extend({
                 .attr("value", key)
                 .text(topic.names.Top3);
         }
+
+        topics.on("change", function selectTopics() {
+            var selected = $(this).find(":selected");
+            $.each(selected, function() {
+                console.log($(this).attr("value"));
+            });
+            var selected_array = selected.map(function() {
+                return this.value;
+            })
+            .get();
+
+            that.selectTopics(selected_array);
+            console.log(selected_array);
+        });
         
     },
 
@@ -568,8 +582,9 @@ var TopicsOverTimeView = DefaultView.extend({
 
     var topicIds = Array.prototype.slice.call(arguments, 0)[0];
     if (!topicIds) {
-        topicIds = this.model.attributes.selectedTopics = [];
+        topicIds = [];
     }
+    this.model.attributes.selectedTopics = topicIds;
 
 //    if (topicIds.length > this.model.attributes.topics.length) {
 //      throw new Error('More topics selected than exist');
@@ -1027,9 +1042,9 @@ var TopicsOverTimeView = DefaultView.extend({
     if (topicIds === null) {
       topicIds = []; // Hide all topics
     }
-    else if (topicIds.length === 0) { // If we want ALL topics (default)
-      topicIds = $.map(raw_topics, function(value, key) { return key; }); // Copy topic id keys into id array
-    }
+//    else if (topicIds.length === 0) { // If we want ALL topics (default)
+//      topicIds = $.map(raw_topics, function(value, key) { return key; }); // Copy topic id keys into id array
+//    }
 
     // Transition wanted topics into view
     // Start with map of all topics - remove wanted ones and leave unwanted ones
@@ -1186,7 +1201,6 @@ var TopicsOverTimeView = DefaultView.extend({
         var documents = {};
         var topics = {};
         var raw_topics = {};
-        var selectedTopics = [];
         if ('topics' in analysisData && 'documents' in analysisData) {
 //            for (topic in analysisData.topics) {
 //                topics[topic] = toTitleCase(topics[topic].names.Top3);
@@ -1201,7 +1215,6 @@ var TopicsOverTimeView = DefaultView.extend({
             for (topic in analysisData.topics) {
                 topics[topic] = this.processTopicData(topic, documents);
                 topics[topic].name = toTitleCase(analysisData.topics[topic].names.Top3);
-                selectedTopics.push(topic);
             }
         }
         topics.min = -1;
@@ -1209,7 +1222,7 @@ var TopicsOverTimeView = DefaultView.extend({
         return {
             documents: documents,
             topics: topics,
-            selectedTopics: selectedTopics,
+            selectedTopics: [],
             raw_topics: raw_topics,
         }
     },
