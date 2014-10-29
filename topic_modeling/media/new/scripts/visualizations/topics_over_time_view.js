@@ -96,6 +96,11 @@ var TopicsOverTimeView = DefaultView.extend({
         "<div>"+
         "    <label for=\"topics-control\">Topics</label>"+
         "    <select id=\"topics-control\" type=\"selection\" class=\"form-control\" name=\"Topics\" style=\"height:200px\" multiple></select>"+
+        "</div>"+
+        "<br />"+
+        "<div>"+
+        "    <label for=\"metadata-control\">Metadata</label>"+
+        "    <select id=\"metadata-control\" type=\"selection\" class=\"form-control\" name=\"Metadata\" style=\"height:200px\"></select>"+
         "</div>",
 
     readableName: "Topics Over Time",
@@ -140,7 +145,9 @@ var TopicsOverTimeView = DefaultView.extend({
             this.$el.html(this.mainTemplate);
             
             var analysisData = data.datasets[selections['dataset']].analyses[selections['analysis']];
+            console.log(analysisData);
             var processedAnalysis = this.processAnalysis(analysisData);
+            console.log(processedAnalysis);
             this.model.set(processedAnalysis);
             this.model.set({
                 // Dimensions of svg viewBox.
@@ -176,6 +183,7 @@ var TopicsOverTimeView = DefaultView.extend({
                 rangeMax: 800,
                 noData: {},
             };
+            this.meta = "",
             
             this.renderControls();
             this.renderPlot();
@@ -189,17 +197,17 @@ var TopicsOverTimeView = DefaultView.extend({
         controls.html(this.controlsTemplate);
 
         // Get selects to be populated
-        var topics = this.topicsSelect = controls.select("#topics-control");
+        var topicSelect = this.topicsSelect = controls.select("#topics-control");
         var raw_topics = this.model.attributes.raw_topics;
         for (key in raw_topics) {
             topic = raw_topics[key];
-            topics
+            topicSelect
                 .append("option")
                 .attr("value", key)
                 .text(topic.names.Top3);
         }
 
-        topics.on("change", function selectTopics() {
+        topicSelect.on("change", function selectTopics() {
             var selected = $(this).find(":selected");
             var selected_array = selected.map(function() {
                 return this.value;
@@ -208,6 +216,26 @@ var TopicsOverTimeView = DefaultView.extend({
 
             that.selectTopics(selected_array);
         });
+
+        // Get Metadata options
+        var metadataSelect = this.metadataSelect = controls.select("#metadata-control");
+        var metadata = this.model.attributes.metadata_types;
+        for (index in metadata) {
+            var type = metadata[index];
+            metadataSelect
+                .append("option")
+                .attr("value", type)
+                .text(type);
+        }
+
+        metadataSelect.on("change", function selectMetadata() {
+            var selected = $(this).find(":selected");
+            var selected_array = selected.map(function() {
+                return this.value;
+            })
+            .get();
+
+            //TODO Add selectionModel and use it for these
         
     },
 
@@ -757,15 +785,16 @@ var TopicsOverTimeView = DefaultView.extend({
     // Delete existing elements to conserve memory
     this.plot.selectAll(".bar").data([]).exit().remove();
 
+    console.log(selTopicData);
     // Set the data for the bars
     this.bars = this.plot.selectAll(".bar")
-          .data(selTopicData.yearIndices);
+          .data(selTopicData['year'].metaIndices);
 
     // Append SVG elements with class "bar"
     this.bars.enter()
           .append("svg:rect")
           .attr("class", "bar")
-          .attr("x", function(d) { return xScale(d.year); })
+          .attr("x", function(d) { return xScale(d.meta); })
           .attr("y", yScale(yInfo.min))
           .attr("width", barWidth)
           .attr("height", 0)
@@ -792,8 +821,8 @@ var TopicsOverTimeView = DefaultView.extend({
     var dim = this.model.attributes.dimensions;
 //    var xScale = this.xScale;
 //    var yScale = this.yScale;
-        var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
-        var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
+    var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
+    var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
     var colors = this.colors;
     var raw_topics = this.model.attributes.raw_topics;
     var topics = this.model.attributes.topics;
@@ -804,10 +833,12 @@ var TopicsOverTimeView = DefaultView.extend({
     var data = null;
 
     // Function for creating lines - sets x and y value at every point on the line
+    console.log("X", xScale.range(), xScale.domain());
+    console.log("Y", yScale.range(), yScale.domain());
     var line = d3.svg.line()
         .interpolate("basis")
-        .x(function(d, i) { return xScale(d.year); })
-        .y(function(d, i) { return yScale(data[d.year].totalProbability); }); // Use the total value for this year
+        .x(function(d, i) { return xScale(d.meta); })
+        .y(function(d, i) { return yScale(data[d.meta].totalProbability); }); // Use the total value for this year
 
     // Delete existing lines to conserve memory (this could be optimized)
     this.svg.selectAll(".chart.line").data([]).exit().remove();
@@ -815,11 +846,13 @@ var TopicsOverTimeView = DefaultView.extend({
     this.lineChart = {};
 
     // Append SVG element path for each requested topic
+    console.log(topics);
     for (var topicId in raw_topics) {
         var topic = topics[topicId];
-        var indices = topic.yearIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
-        indices.topicId = topic.yearIndices.topicId;
-        data = topic.data;
+        var metaTopic = topic['year'] // TODO make this switchable GENERALIZED
+        var indices = metaTopic.metaIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
+        indices.topicId = topicId;
+        data = metaTopic.data;
         // Create lineChart SVG line element for this topic
         var path = this.plot.append("svg:path")
           .datum(indices)
@@ -974,22 +1007,23 @@ var TopicsOverTimeView = DefaultView.extend({
         var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
         var height = dim.height;
 //        var bottomMargin = this.margins.bottom;
-        var data = this.model.attributes.selectedTopicData.data;
+        var data = this.model.attributes.selectedTopicData['year'].data;
+        console.log(this.model.attributes.selectedTopicData);
 
         // Make opaque and transition y and height into final positions
         var bars = this.svg.selectAll(".bar")
             .transition().duration(duration)
             .style("opacity", 1)
             .attr("y", function(d) {
-                var probability = data[d.year][d.index].probability;
-                data[d.year].forEach(function(value, index, array) { // Get cumulative value (stack 'em up)
+                var probability = data[d.meta][d.index].probability;
+                data[d.meta].forEach(function(value, index, array) { // Get cumulative value (stack 'em up)
                     if (index < d.index) {
                     probability += value.probability;
                     }
                 });
                 return yScale(probability);
                 })
-            .attr("height", function(d) { return yScale(yInfo.min) - yScale(data[d.year][d.index].probability); });
+            .attr("height", function(d) { return yScale(yInfo.min) - yScale(data[d.meta][d.index].probability); });
         },
 
   /**
@@ -1069,10 +1103,9 @@ var TopicsOverTimeView = DefaultView.extend({
    */
   transitionLineOut: function(path, topicId, delayOrder, duration) {
 
-//    var xScale = this.xScale;
-//    var yScale = this.yScale;
-        var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
-        var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
+    // Get data objects
+    var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
+    var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
     var topics = this.model.attributes.topics;
     var colors = this.colors;
 
@@ -1083,11 +1116,12 @@ var TopicsOverTimeView = DefaultView.extend({
     var vis = this;
 
     // Function for creating lines - sets x and y value at every point on the line
+    console.log(topics);
     var line = d3.svg.line()
         .interpolate("basis")
-        .x(function(d, i) { return xScale(d.year); })
-        .y(function(d, i) { var data = topics[topicId].data;
-                            return yScale(data[d.year].totalProbability);
+        .x(function(d, i) { return xScale(d.meta); })
+        .y(function(d, i) { var data = topics[topicId]['year'].data;
+                            return yScale(data[d.meta].totalProbability);
                           });
 
     path
@@ -1191,6 +1225,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var documents = {};
         var topics = {};
         var raw_topics = {};
+        var metadata_types = [];
         if ('topics' in analysisData && 'documents' in analysisData) {
 //            for (topic in analysisData.topics) {
 //                topics[topic] = toTitleCase(topics[topic].names.Top3);
@@ -1203,7 +1238,9 @@ var TopicsOverTimeView = DefaultView.extend({
             }
 
             for (topic in analysisData.topics) {
-                topics[topic] = this.processTopicData(topic, documents);
+                processedTopic = this.processTopicData(topic, documents);
+                topics[topic] = processedTopic.data
+                metadata_types = _.union(processedTopic.metadata, metadata_types)
                 topics[topic].name = toTitleCase(analysisData.topics[topic].names.Top3);
             }
         }
@@ -1214,6 +1251,7 @@ var TopicsOverTimeView = DefaultView.extend({
             topics: topics,
             selectedTopics: [],
             raw_topics: raw_topics,
+            metadata_types: metadata_types,
         }
     },
 
@@ -1231,16 +1269,17 @@ var TopicsOverTimeView = DefaultView.extend({
   processTopicData: function(topicId, documents) {
 
     var topicData = {};
+    var metadata_list = [];
+/*
     topicData.yearIndices = [];
-    topicData.data = {};
     topicData.min = -1;
     topicData.max = -1;
-
+*/
     // Because I don't want to type that again
-    var yearIndices = topicData.yearIndices;
+/*    var yearIndices = topicData.yearIndices;
     yearIndices.topicId = topicId;
     var data = topicData.data;
-      
+*/      
     // Get topic percentage in all documents
     for(var doc_id in documents) {
         var doc = documents[doc_id];
@@ -1249,8 +1288,8 @@ var TopicsOverTimeView = DefaultView.extend({
         documentData.doc_id = doc_id;
         
         // Preserve the document metadata in the top level of the document
-        if ('metadata' in doc) {
-            _.extend(documentData, doc.metadata);
+        if (!('metadata' in doc)) {
+            continue;
         }
 
         // Not all topics are defined for each document
@@ -1259,7 +1298,44 @@ var TopicsOverTimeView = DefaultView.extend({
             // Get relevant topic-document info
             documentData.probability = topicProbability;
             documentData.doc_id = doc_id;
-            var year = doc.metadata.year; //TODO Make this work for any metadata
+            var metadata = doc.metadata;
+            for (meta in metadata) {
+                if (metadata_list.indexOf(meta) <= 0)
+                    metadata_list.push(meta);
+
+                if (!(meta in topicData)) { // initialize metadata for this topic
+                    topicData[meta] = {};
+                    topicData[meta].data = {};
+                    topicData[meta].metaIndices = [];
+                    topicData[meta].min = -1;
+                    topicData[meta].max = -1;
+                }
+
+                var data = topicData[meta].data;
+                var datum = metadata[meta];
+
+                var metaData = data[datum];
+                if (metaData === undefined) {
+                    metaData = [];
+                    metaData.totalProbability = 0;
+                    data[datum] = metaData;
+                }
+
+                metaData.totalProbability += documentData.probability;
+                metaData.push(documentData);
+
+                if (topicData[meta].min === -1 || topicData[meta].min > metaData.totalProbability)
+                    topicData[meta].min = metaData.totalProbability
+                
+                if (topicData[meta].max === -1 || topicData[meta].max < metaData.totalProbability)
+                    topicData[meta].max = metaData.totalProbability;
+
+                var metaIndex = { meta : datum,
+                                  index : metaData.length - 1 };
+
+                topicData[meta].metaIndices.push(metaIndex);
+            }
+/*            var year = doc.metadata.year; //TODO Make this work for any metadata
 
             // Get all previously found entries for the same year as this document (this is for stacking purposes)
             var yearData = data[year];
@@ -1284,14 +1360,29 @@ var TopicsOverTimeView = DefaultView.extend({
             var yearIndex = { year : year,
                               index : yearData.length - 1 };
 
-            yearIndices.push(yearIndex);
+            yearIndices.push(yearIndex);*/
         }
     }
 
+    // How do we sort metadata values?
+    // TODO do something with metadata list
+    for (i in metadata_list) {
+        var meta = metadata_list[i];
+        topicData[meta].metaIndices.sort(function(a, b) {
+            var order = d3.ascending(a.meta, b.meta);
+            if (order === 0) {
+                order = d3.ascending(a.index, b.index);
+            }
+            return order;
+        });
+    }
     // Sort topics by year so that line chart gets drawn correctly
-    topicData.yearIndices.sort(function(a, b) { return d3.ascending(a.year, b.year); });
+    //topicData.yearIndices.sort(function(a, b) { return d3.ascending(a.year, b.year); });
 
-    return topicData;
+    return {
+        data: topicData,
+        metadata: metadata_list
+    }
   },
 
   /**
@@ -1328,17 +1419,17 @@ var TopicsOverTimeView = DefaultView.extend({
     var topicData = this.model.attributes.topics;
 
     if (topicIds.length === 0) {
-      topicIds = $.map(topicData, function(value, key) { return key; });
+      topicIds = $.map(this.model.attributes.raw_topics, function(value, key) { return key; });
     }
 
     for (var index in topicIds) {
       var topicId = topicIds[index];
       // Get min and max probability for the given topic
-      if (min === -1 || min > topicData[topicId].min)
-        min = topicData[topicId].min;
+      if (min === -1 || min > topicData[topicId]['year'].min) //TODO make this switchable GENERALIZED
+        min = topicData[topicId]['year'].min;
 
-      if (max === -1 || max < topicData[topicId].max)
-        max = topicData[topicId].max;
+      if (max === -1 || max < topicData[topicId]['year'].max)
+        max = topicData[topicId]['year'].max;
     }
 
     return { min: min,
