@@ -36,7 +36,7 @@ BASIC_METRICS = [
 ]
 
 topical_guide_dir = os.path.abspath(os.path.dirname(__file__))
-working_dir = os.environ['TOPICAL_GUIDE_WORKING_DIR'] or os.path.join(topical_guide_dir, 'working')
+working_dir = os.environ['TOPICAL_GUIDE_WORKING_DIR'] if os.environ.has_key('TOPICAL_GUIDE_WORKING_DIR') else os.path.join(topical_guide_dir, 'working')
 
 def make_working_dir():
     """Make the 'working/' dir and return the absolute path."""

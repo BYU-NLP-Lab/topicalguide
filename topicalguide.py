@@ -20,7 +20,7 @@ from import_tool.analysis_scripts.mallet_analysis import MalletLdaAnalysis
 # python topicalguide.py -h
 
 topical_guide_dir = os.path.abspath(os.path.dirname(__file__))
-working_dir = os.environ['TOPICAL_GUIDE_WORKING_DIR'] or os.path.join(topical_guide_dir, 'working')
+working_dir = os.environ['TOPICAL_GUIDE_WORKING_DIR'] if os.environ.has_key('TOPICAL_GUIDE_WORKING_DIR') else os.path.join(topical_guide_dir, 'working')
 
 def get_database_configurations(file_path):
     """
