@@ -100,7 +100,7 @@ var TopicsOverTimeView = DefaultView.extend({
         "<br />"+
         "<div>"+
         "    <label for=\"metadata-control\">Metadata</label>"+
-        "    <select id=\"metadata-control\" type=\"selection\" class=\"form-control\" name=\"Metadata\" style=\"height:200px\"></select>"+
+        "    <select id=\"metadata-control\" type=\"selection\" class=\"form-control\" name=\"Metadata\" style=\"height:30px\"></select>"+
         "</div>",
 
     readableName: "Topics Over Time",
@@ -145,9 +145,7 @@ var TopicsOverTimeView = DefaultView.extend({
             this.$el.html(this.mainTemplate);
             
             var analysisData = data.datasets[selections['dataset']].analyses[selections['analysis']];
-            console.log(analysisData);
             var processedAnalysis = this.processAnalysis(analysisData);
-            console.log(processedAnalysis);
             this.model.set(processedAnalysis);
             this.model.set({
                 // Dimensions of svg viewBox.
@@ -161,6 +159,10 @@ var TopicsOverTimeView = DefaultView.extend({
                 
                 textHeight: 16,
             });
+            this.settings.set({
+                metadata: "",
+            });
+
             var range = this.getYearRange(this.model.attributes.documents);
 //            this.xScale.domain([ range.min, range.max ]);
             var topics = this.model.attributes.topics;
@@ -207,36 +209,47 @@ var TopicsOverTimeView = DefaultView.extend({
                 .text(topic.names.Top3);
         }
 
-        topicSelect.on("change", function selectTopics() {
-            var selected = $(this).find(":selected");
-            var selected_array = selected.map(function() {
-                return this.value;
-            })
-            .get();
-
-            that.selectTopics(selected_array);
-        });
-
         // Get Metadata options
         var metadataSelect = this.metadataSelect = controls.select("#metadata-control");
         var metadata = this.model.attributes.metadata_types;
+        var defaultMetadata = null;
         for (index in metadata) {
             var type = metadata[index];
+            if (defaultMetadata === null) defaultMetadata = type;
             metadataSelect
                 .append("option")
                 .attr("value", type)
                 .text(type);
         }
 
-        metadataSelect.on("change", function selectMetadata() {
+        if (this.settingsModel.has("topicSelection")) {
+            var jTopicSelect = $('#topics-control');
+            jTopicSelect.val(this.settingsModel.get("topicSelection"));
+        }
+        if (this.settingsModel.has("metadataSelection")) {
+            metadataSelect.property("value", this.settingsModel.get("metadataSelection"));
+        }
+
+        topicSelect.on("change", function topicChange() {
             var selected = $(this).find(":selected");
             var selected_array = selected.map(function() {
                 return this.value;
             })
             .get();
+            that.settingsModel.set({ topicSelection: selected_array });
+        });
+        metadataSelect.on("change", function metadataChange() {
+            var value = metadataSelect.property("value");
+            that.settingsModel.set({ metadataSelection: value });
+        });
 
-            //TODO Add selectionModel and use it for these
-        
+        var defaultSettings = {
+            topicSelection: [],
+            metadataSelection: defaultMetadata,
+        }
+
+        this.settingsModel.set(_.extend({}, defaultSettings, this.settingsModel.attributes));
+
     },
 
     renderPlot: function() {
@@ -245,7 +258,7 @@ var TopicsOverTimeView = DefaultView.extend({
         // Data variables.
         var documents = this.model.attributes.documents;
         var topics = this.model.attributes.topics;
-        var selectedTopics = this.model.attributes.selectedTopics;
+        var selectedTopics = this.settings.attributes.topicSelection;//model.attributes.selectedTopics;
         var raw_topics = this.model.attributes.raw_topics;
         // Dimensions.
         var dim = this.model.attributes.dimensions;
@@ -295,19 +308,9 @@ var TopicsOverTimeView = DefaultView.extend({
         this.plot = svg.append("g")
             .attr("id", "plot");
         
-        // Funcionality for document click.
-       /* function onDocumentClick(d, i) {
-            if(that.settingsModel.attributes.removing) {
-                that.removedDocuments[d.key] = true;
-                d3.select(this).transition()
-                    .duration(duration)
-                    .attr("r", 0);
-            } else {
-                that.selectionModel.set({ document: d.key });
-            }
-        };*/
-        
         // Create listeners.
+        this.settingsModel.on("change:topicSelection", this.calculateYAxis, this);
+        this.settingsModel.on("change:metadataSelection", this.calculateXAxis, this);
 //        this.settingsModel.on("change:xSelection", this.calculateXAxis, this);
 //        this.settingsModel.on("change:ySelection", this.calculateYAxis, this);
 //        this.settingsModel.on("change:radiusSelection", this.calculateRadiusAxis, this);
@@ -328,9 +331,10 @@ var TopicsOverTimeView = DefaultView.extend({
         return type;
     },
     
-    getNoData: function(group, value) {
+    getNoData: function(value) {
         var data = this.model.attributes.data;
         var noData = {};
+        var group = "metadata";
         for(key in data) {
             var val = data[key][group][value];
             if(val === undefined || val === null) {
@@ -351,8 +355,8 @@ var TopicsOverTimeView = DefaultView.extend({
     },
     
     calculateXAxis: function(transition) {
-//        var selection = this.settingsModel.attributes.xSelection;
-//        this.xInfo = _.extend(this.xInfo, this.getNoData(selection.group, selection.value));
+        var selection = this.settingsModel.attributes.metadataSelection;
+        this.xInfo = _.extend(this.xInfo, this.getNoData(selection.value));
         if(transition !== false) this.transition();
     },
     calculateYAxis: function(transition) {
@@ -375,10 +379,9 @@ var TopicsOverTimeView = DefaultView.extend({
     },
     
     // Find the min, max, type, title, and text for the given selection.
-    getSelectionInfo: function(group, value, excluded) {
-        var data = this.model.attributes.data;
-        var groupNames = this.model.attributes.groupNames;
-        var valueNames = this.model.attributes.valueNames;
+    getSelectionInfo: function(value, excluded) {
+        var data = this.model.attributes.documents;
+        var group = "metadata";
         var min = Number.MAX_VALUE;
         var max = -Number.MAX_VALUE;
         var avg = 0;
@@ -434,14 +437,16 @@ var TopicsOverTimeView = DefaultView.extend({
             avg: avg,
             type: type, 
             text: text, 
-            title: groupNames[group]+": "+valueNames[group][value],
+            title: value,
         };
     },
     
     getScale: function(info, range) {
         var scale = d3.scale.linear().domain([info.min, info.max]).range(range);
+        scale.type = "LINEAR";
         if(info.type === "text") {
             scale = d3.scale.ordinal().domain(info.text).rangePoints(range);
+            scale.type = "ORDINAL";
         }
         return scale;
     },
@@ -453,27 +458,20 @@ var TopicsOverTimeView = DefaultView.extend({
         // Collect needed information.
         var model = this.model.attributes;
         var dim = model.dimensions;
-//        var radii = model.radii;
         var transitionDuration = model.duration;
-        var xSel = this.settingsModel.attributes.xSelection;
-        var ySel = this.settingsModel.attributes.ySelection;
-//        var rSel = this.settingsModel.attributes.radiusSelection;
-        var cSel = this.settingsModel.attributes.colorSelection;
+        //console.log(this.settingsModel);
+        var metadataSelection = this.settingsModel.attributes.metadataSelection;
+        //var ySel = this.settingsModel.attributes.ySelection;
+        //var cSel = this.settingsModel.attributes.colorSelection;
         var xExclude = this.xInfo.noData;
-        var yExclude = this.yInfo.noData;
-//        var radiusExclude = this.radiusInfo.noData;
-//        var colorExclude = this.colorInfo.noData;
-//        var docExclude = this.removedDocuments;
+        var yExclude = {};//this.yInfo.noData;
         var allExclude = _.extend({}, xExclude, yExclude);
-        var xInfo = this.xInfo;// = _.extend(this.xInfo, this.getSelectionInfo(xSel.group, xSel.value, allExclude));
+        var xInfo = _.extend(this.xInfo, this.getSelectionInfo(metadataSelection, allExclude));
         var yInfo = this.yInfo;// = _.extend(this.yInfo, this.getSelectionInfo(ySel.group, ySel.value, allExclude));
-//        var radiusInfo = this.radiusInfo = _.extend(this.radiusInfo, this.getSelectionInfo(rSel.group, rSel.value, allExclude));
-//        var colorInfo = this.colorInfo = _.extend(this.colorInfo, this.getSelectionInfo(cSel.group, cSel.value, _.extend({}, allExclude, colorExclude)));
         
         var textHeight = model.textHeight;
         
         // Set axes at a starting point.
-//        var xScale = this.getScale(xInfo, [0, xInfo.rangeMax]);
         var yScale = this.getScale(yInfo, [yInfo.rangeMax, 0]);
         var yFormat = this.getFormat(yInfo.type);
         var yAxis = d3.svg.axis().scale(yScale).orient("left").tickFormat(yFormat);
@@ -604,16 +602,8 @@ var TopicsOverTimeView = DefaultView.extend({
         return;
     }
 
-    var topicIds = Array.prototype.slice.call(arguments, 0)[0];
-    if (!topicIds) {
-        topicIds = [];
-    }
-    this.model.attributes.selectedTopics = topicIds;
+    var topicIds = this.settingsModel.attributes.topicSelection;
 
-//    if (topicIds.length > this.model.attributes.topics.length) {
-//      throw new Error('More topics selected than exist');
-//    }
-//    else 
     if (topicIds.length > 1 || topicIds.length === 0) {
         this.showLineChart(topicIds);
         return;
@@ -631,7 +621,8 @@ var TopicsOverTimeView = DefaultView.extend({
     });
 
     // Transition the line chart into hiding
-    this.transitionLineChart(null, 1000);
+    if (this.lineChart !== null)
+        this.transitionLineChart(null, 1000);
 
     // Initialize and make the bar chart for the selected topic visible
     this.setBarChart();
@@ -775,7 +766,7 @@ var TopicsOverTimeView = DefaultView.extend({
     var colors = this.colors;
     var yearDomain = xScale.domain();
     var yearRange = xScale.range();
-    var barWidth = (yearRange[1] - yearRange[0]) / (yearDomain[1] - yearDomain[0]);
+    var barWidth = this.getBarWidth(xScale);
 
     var getOnBarMouseover = this.getOnBarMouseover;
     var getOnBarMouseout = this.getOnBarMouseout;
@@ -785,10 +776,10 @@ var TopicsOverTimeView = DefaultView.extend({
     // Delete existing elements to conserve memory
     this.plot.selectAll(".bar").data([]).exit().remove();
 
-    console.log(selTopicData);
     // Set the data for the bars
+    var selectedMetadata = this.settingsModel.get("metadataSelection");
     this.bars = this.plot.selectAll(".bar")
-          .data(selTopicData['year'].metaIndices);
+          .data(selTopicData[selectedMetadata].metaIndices);
 
     // Append SVG elements with class "bar"
     this.bars.enter()
@@ -809,6 +800,25 @@ var TopicsOverTimeView = DefaultView.extend({
 
     return this.bars;
   },
+
+
+    getBarWidth: function(scale) {
+        var dDomain = null;
+        var width = 3;
+        var domain = scale.domain();
+        var range = scale.range();
+        if(scale.type === "ORDINAL") {
+            var diff = range[1] - range[0];
+            var diffD = diff / 10;
+            width = diff - diffD < width ? width : diff - diffD;
+        }
+        else if(scale.type === "LINEAR") {
+            var pWidth = (range[1] - range[0]) / (domain[1] - domain[0]);
+            var pWidthD = pWidth / 10;
+            width = pWidth - pWidthD < width ? width : pWidth - pWidthD;
+        }
+        return width;
+    },
 
   /**
    * Initializes the line chart for all topics
@@ -846,10 +856,10 @@ var TopicsOverTimeView = DefaultView.extend({
     this.lineChart = {};
 
     // Append SVG element path for each requested topic
-    console.log(topics);
+    //console.log(topics);
     for (var topicId in raw_topics) {
         var topic = topics[topicId];
-        var metaTopic = topic['year'] // TODO make this switchable GENERALIZED
+        var metaTopic = topic[this.settingsModel.get("metadataSelection")] // TODO make this switchable GENERALIZED
         var indices = metaTopic.metaIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
         indices.topicId = topicId;
         data = metaTopic.data;
@@ -1007,8 +1017,8 @@ var TopicsOverTimeView = DefaultView.extend({
         var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
         var height = dim.height;
 //        var bottomMargin = this.margins.bottom;
-        var data = this.model.attributes.selectedTopicData['year'].data;
-        console.log(this.model.attributes.selectedTopicData);
+        var selectedMetadata = this.settingsModel.get("metadataSelection");
+        var data = this.model.attributes.selectedTopicData[selectedMetadata].data;
 
         // Make opaque and transition y and height into final positions
         var bars = this.svg.selectAll(".bar")
@@ -1108,6 +1118,7 @@ var TopicsOverTimeView = DefaultView.extend({
     var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
     var topics = this.model.attributes.topics;
     var colors = this.colors;
+    var selectedMetadata = this.settingsModel.get("metadataSelection");
 
     // Register event variables
     var getOnPathMouseover = this.getOnPathMouseover;
@@ -1116,11 +1127,11 @@ var TopicsOverTimeView = DefaultView.extend({
     var vis = this;
 
     // Function for creating lines - sets x and y value at every point on the line
-    console.log(topics);
+    //console.log(topics);
     var line = d3.svg.line()
         .interpolate("basis")
         .x(function(d, i) { return xScale(d.meta); })
-        .y(function(d, i) { var data = topics[topicId]['year'].data;
+        .y(function(d, i) { var data = topics[topicId][selectedMetadata].data;
                             return yScale(data[d.meta].totalProbability);
                           });
 
@@ -1249,7 +1260,6 @@ var TopicsOverTimeView = DefaultView.extend({
         return {
             documents: documents,
             topics: topics,
-            selectedTopics: [],
             raw_topics: raw_topics,
             metadata_types: metadata_types,
         }
@@ -1335,37 +1345,10 @@ var TopicsOverTimeView = DefaultView.extend({
 
                 topicData[meta].metaIndices.push(metaIndex);
             }
-/*            var year = doc.metadata.year; //TODO Make this work for any metadata
-
-            // Get all previously found entries for the same year as this document (this is for stacking purposes)
-            var yearData = data[year];
-            if (yearData === undefined) { // Or initialize if necessary
-              yearData = [];
-              yearData.totalProbability = 0;
-              data[year] = yearData;
-            }
-
-            // Add this document to the data for this year
-            yearData.totalProbability += documentData.probability;
-            yearData.push(documentData);
-
-            // Get min and max probability to help set domain for y axis
-            if (topicData.min === -1 || topicData.min > yearData.totalProbability)
-              topicData.min = yearData.totalProbability;
-
-            if (topicData.max === -1 || topicData.max < yearData.totalProbability)
-              topicData.max = yearData.totalProbability;
-
-            // Add to index so we can stack them in bar chart
-            var yearIndex = { year : year,
-                              index : yearData.length - 1 };
-
-            yearIndices.push(yearIndex);*/
         }
     }
 
     // How do we sort metadata values?
-    // TODO do something with metadata list
     for (i in metadata_list) {
         var meta = metadata_list[i];
         topicData[meta].metaIndices.sort(function(a, b) {
