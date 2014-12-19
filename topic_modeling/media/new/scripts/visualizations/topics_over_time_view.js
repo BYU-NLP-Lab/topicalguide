@@ -146,6 +146,7 @@ var TopicsOverTimeView = DefaultView.extend({
             
             var analysisData = data.datasets[selections['dataset']].analyses[selections['analysis']];
             var processedAnalysis = this.processAnalysis(analysisData);
+            console.log(processedAnalysis);
             this.model.set(processedAnalysis);
             this.model.set({
                 // Dimensions of svg viewBox.
@@ -158,11 +159,12 @@ var TopicsOverTimeView = DefaultView.extend({
                 duration: 800, // 8/10 of a second
                 
                 textHeight: 16,
-            });
-            this.settings.set({
-                metadata: "",
-            });
 
+                colorSpectrum: {
+                    a: "#B2007D",
+                    b: "#19B200"
+                },
+            });
             var range = this.getYearRange(this.model.attributes.documents);
 //            this.xScale.domain([ range.min, range.max ]);
             var topics = this.model.attributes.topics;
@@ -258,7 +260,6 @@ var TopicsOverTimeView = DefaultView.extend({
         // Data variables.
         var documents = this.model.attributes.documents;
         var topics = this.model.attributes.topics;
-        var selectedTopics = this.settings.attributes.topicSelection;//model.attributes.selectedTopics;
         var raw_topics = this.model.attributes.raw_topics;
         // Dimensions.
         var dim = this.model.attributes.dimensions;
@@ -307,6 +308,14 @@ var TopicsOverTimeView = DefaultView.extend({
         // Render scatter plot container.
         this.plot = svg.append("g")
             .attr("id", "plot");
+        this.legend = svg.append("g")
+            .attr("class", "legend")
+            .attr("transform", "translate(80,30)")
+            .style("fill", "white")
+            .style("stroke", "black")
+            .style("opacity", 0.8)
+            .style("font-size", "12px")
+            .style("shape-rendering", "crispedges");
         
         // Create listeners.
         this.settingsModel.on("change:topicSelection", this.calculateYAxis, this);
@@ -450,6 +459,69 @@ var TopicsOverTimeView = DefaultView.extend({
         }
         return scale;
     },
+
+    getColorScale: function(a, b, count) {
+        var interval = 1.0 / (count - 1);
+        interpolator = d3.interpolateHsl(a, b);
+        scale = function(val) {
+            if (val * interval > 1.0) return interpolator(1.0);
+            return interpolator(val * interval);
+        };
+        return scale;
+    },
+
+    callLegend: function() {
+        this.legend.call(d3.legend);
+        var that = this;
+        var gItems = this.legend.select(".legend-items"),
+            items = this.legend.selectAll(".legend-items text"),
+            color = "steelblue",
+            text = null,
+            textBack = null,
+            path = null,
+            rect = null;
+
+        var gBox = gItems.node().getBBox();
+        var x = gBox.x;
+        var width = gBox.width;
+        items
+            .on("mouseover", function(d, i) {
+                path = d3.select('path.chart.line[data-legend="'+d.key+'"]');
+                rect = d3.select('rect.bar[data-legend="'+d.key+'"]');
+                text = d3.select(this);
+                console.log(text);
+                var bbox = text.node().getBBox();
+                textBack = d3.select(this.parentNode).insert("rect", "text")
+                    .attr("x", x)
+                    .attr("y", bbox.y)
+                    .attr("height", bbox.height)
+                    .attr("width", width)
+                    .style("fill", "lightgray")
+                    .style("stroke", "none");
+                if (path && !path.empty()) {
+                    color = path.style("stroke");
+                    path.style("stroke", "steelblue");
+                }
+                else if (rect && !rect.empty()) {
+                    color = rect.style("fill");
+                    rect.style("fill", "steelblue");
+                }
+                else {
+                    path = rect = text = null;
+                }
+
+            })
+            .on("mouseout", function(d, i) {
+                textBack.remove();
+                if (path && !path.empty()) {
+                    path.style("stroke", color);
+                }
+                else if (rect && !rect.empty()) {
+                    rect.style("fill", color);
+                }
+                path = rect = text = null;
+            });
+    },
     
     getInfo: function(group, value) {
     },
@@ -459,10 +531,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var model = this.model.attributes;
         var dim = model.dimensions;
         var transitionDuration = model.duration;
-        //console.log(this.settingsModel);
         var metadataSelection = this.settingsModel.attributes.metadataSelection;
-        //var ySel = this.settingsModel.attributes.ySelection;
-        //var cSel = this.settingsModel.attributes.colorSelection;
         var xExclude = this.xInfo.noData;
         var yExclude = {};//this.yInfo.noData;
         var allExclude = _.extend({}, xExclude, yExclude);
@@ -559,21 +628,8 @@ var TopicsOverTimeView = DefaultView.extend({
             .attr("transform", "translate("+xAxisX+","+yAxisY+")");
 
         this.selectTopics();
+        this.callLegend();
         
-        // Transition circles.
-        var colorScale = null;
-            // All this allows us to map onto a spectrum of colors.
-            var colors = ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", 
-                          "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", 
-                          "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", 
-                          "#17becf", "#9edae5"];
-            var colorDomain = d3.scale.ordinal().domain(colors).rangePoints([0, 1], 0).range();
-            var numToColor = d3.scale.linear().domain(colorDomain).range(colors);
-            colorScale = function ordinalColorScale(val) { return numToColor(ordToNum(val)); };
-        
-        var totalDocuments = _.size(model.data);
-        var totalDisplayed = totalDocuments - _.size(allExclude);
-        //this.nodeCount.text("Showing "+totalDisplayed+" of "+totalDocuments + " Documents");
     },
     
     renderHelpAsHtml: function() {
@@ -602,7 +658,7 @@ var TopicsOverTimeView = DefaultView.extend({
         return;
     }
 
-    var topicIds = this.settingsModel.attributes.topicSelection;
+    var topicIds = this.settingsModel.get("topicSelection");
 
     if (topicIds.length > 1 || topicIds.length === 0) {
         this.showLineChart(topicIds);
@@ -616,9 +672,7 @@ var TopicsOverTimeView = DefaultView.extend({
     var topicId = topicIds[0];
 
     // Select the topic data
-    this.model.set({
-        selectedTopicData: this.model.attributes.topics[topicId],
-    });
+    this.settingsModel.set({ selectedTopicData: this.model.attributes.topics[topicId] });
 
     // Transition the line chart into hiding
     if (this.lineChart !== null)
@@ -637,8 +691,8 @@ var TopicsOverTimeView = DefaultView.extend({
   showLineChart: function(topicIds) {
 
     // Hide the bar chart
-    if (this.bars !== null) {
-      this.unsetBarChart();
+    if (this.bars) {
+        this.unsetBarChart();
     }
 
     var topics = this.model.attributes.topics;
@@ -648,7 +702,7 @@ var TopicsOverTimeView = DefaultView.extend({
 
     // Initialize the line chart
     if (this.lineChart === null) { // Conditional breaks scaling
-      this.initLineChart();
+        this.initLineChart();
     }
 
     // Transition the line chart into view
@@ -681,6 +735,11 @@ var TopicsOverTimeView = DefaultView.extend({
 
     // Transition the bars into hiding
     this.transitionBarsDown(1500);
+
+    this.bars
+        .attr("data-legend", null);
+        
+    this.bars = null;
   },
 
   /**
@@ -692,7 +751,7 @@ var TopicsOverTimeView = DefaultView.extend({
   scaleTopicAxes: function() {
 
     var dim = this.model.attributes.dimensions;
-    var data = this.model.attributes.selectedTopicData.data;
+    var data = this.settingsModel.get("selectedTopicData").data;
     var maxStack = 0;
 
     // Calculate x domain
@@ -757,13 +816,14 @@ var TopicsOverTimeView = DefaultView.extend({
     var yInfo = this.yInfo;
     var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
     var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
+    var colors = this.model.get("colorSpectrum");
+    var documents = this.model.get("documents");
     var height = dim.height;
 //    var bottomMargin = this.margins.bottom;
 //    var tooltip = this.tooltip;
     var svg = this.svg;
-    var selTopicData = this.model.attributes.selectedTopicData;
+    var selTopicData = this.settingsModel.get("selectedTopicData");
     var data = selTopicData.data;
-    var colors = this.colors;
     var yearDomain = xScale.domain();
     var yearRange = xScale.range();
     var barWidth = this.getBarWidth(xScale);
@@ -771,32 +831,42 @@ var TopicsOverTimeView = DefaultView.extend({
     var getOnBarMouseover = this.getOnBarMouseover;
     var getOnBarMouseout = this.getOnBarMouseout;
     var select = this.selectTopics;
-    var vis = this;
+    var that = this;
 
     // Delete existing elements to conserve memory
     this.plot.selectAll(".bar").data([]).exit().remove();
 
     // Set the data for the bars
     var selectedMetadata = this.settingsModel.get("metadataSelection");
+    var data = selTopicData[selectedMetadata].data;
+    var indices = selTopicData[selectedMetadata].metaIndices;
+
+    console.log(selTopicData);
     this.bars = this.plot.selectAll(".bar")
-          .data(selTopicData[selectedMetadata].metaIndices);
+        .data(indices);
+
+    var colorScale = this.getColorScale(colors.a, colors.b, indices.length);
 
     // Append SVG elements with class "bar"
     this.bars.enter()
-          .append("svg:rect")
-          .attr("class", "bar")
-          .attr("x", function(d) { return xScale(d.meta); })
-          .attr("y", yScale(yInfo.min))
-          .attr("width", barWidth)
-          .attr("height", 0)
-          .style("padding", 10)
-          .style("fill", function(d) { return "steelblue"; })
-          .style("opacity", 0)
-          .on("mouseover", getOnBarMouseover(vis))
-          .on("mouseout", getOnBarMouseout(vis))
-          .on("click", function(d) {
-              select.call(vis);
-            });
+        .append("svg:rect")
+        .attr("class", "bar")
+        .attr("x", function(d) { return xScale(d.meta); })
+        .attr("y", yScale(yInfo.min))
+        .attr("data-legend", function(d) { return data[d.meta][d.index].doc_id; })
+        .attr("width", barWidth)
+        .attr("height", 0)
+        .style("padding", 10)
+        .style("fill", function(d, i) { return colorScale(i); })
+        .style("opacity", 0)
+//        .on("mouseover", getOnBarMouseover(that))
+//        .on("mouseout", getOnBarMouseout(that))
+//        .on("click", function(d) {
+//            select.call(that);
+//        });
+
+//    this.bars
+//        .attr("data-legend", selTopicData.name);
 
     return this.bars;
   },
@@ -829,22 +899,15 @@ var TopicsOverTimeView = DefaultView.extend({
   initLineChart: function() {
  
     var dim = this.model.attributes.dimensions;
-//    var xScale = this.xScale;
-//    var yScale = this.yScale;
     var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
     var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
-    var colors = this.colors;
-    var raw_topics = this.model.attributes.raw_topics;
-    var topics = this.model.attributes.topics;
-//    var tooltip = this.tooltip;
+    var raw_topics = this.model.get("raw_topics");
+    var topicIds = this.settingsModel.get("topicSelection");
+    var topics = this.model.get("topics");
     var height = dim.height;
-//    var bottomMargin = this.margins.bottom;
-//    var leftMargin = this.margins.left;
     var data = null;
 
     // Function for creating lines - sets x and y value at every point on the line
-    console.log("X", xScale.range(), xScale.domain());
-    console.log("Y", yScale.range(), yScale.domain());
     var line = d3.svg.line()
         .interpolate("basis")
         .x(function(d, i) { return xScale(d.meta); })
@@ -932,12 +995,9 @@ var TopicsOverTimeView = DefaultView.extend({
 
     var halfDur = duration / 2;
     var t = this.svg.transition().duration(halfDur);//.ease("exp-in-out");
-    console.log(xScale.range(), yScale.range());
-    console.log(this.svg.selectAll("#x-axis, #y-axis"));
     t.selectAll("#x-axis, #y-axis")
         .style("opacity", 0)
         .call(endall, function() {
-            console.log(xAxisDim, yAxisDim);
             xScale
                 .range([
                     margin.left + yAxisDim.width,
@@ -950,11 +1010,9 @@ var TopicsOverTimeView = DefaultView.extend({
                 ]);
             xAxis.scale(xScale);
             yAxis.scale(yScale);
-            console.log(xScale.range(), yScale.range());
             xAxisEl.call(xAxis);
             yAxisEl.call(yAxis);
         });
-    console.log(xScale.range(), yScale.range());
 //    each("end", function(d, i) {
 //        var transition = d3.select(this);
 //        if (i == 0) {
@@ -1018,7 +1076,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var height = dim.height;
 //        var bottomMargin = this.margins.bottom;
         var selectedMetadata = this.settingsModel.get("metadataSelection");
-        var data = this.model.attributes.selectedTopicData[selectedMetadata].data;
+        var data = this.settingsModel.get("selectedTopicData")[selectedMetadata].data;
 
         // Make opaque and transition y and height into final positions
         var bars = this.svg.selectAll(".bar")
@@ -1117,14 +1175,16 @@ var TopicsOverTimeView = DefaultView.extend({
     var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
     var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
     var topics = this.model.attributes.topics;
-    var colors = this.colors;
+    var topicSelection = this.settingsModel.get("topicSelection");
     var selectedMetadata = this.settingsModel.get("metadataSelection");
+    var colors = this.model.get("colorSpectrum");
+    var colorScale = this.getColorScale(colors.a, colors.b, topicSelection.length);
 
     // Register event variables
     var getOnPathMouseover = this.getOnPathMouseover;
     var getOnPathMouseout = this.getOnPathMouseout;
     var select = this.selectTopics;
-    var vis = this;
+    var that = this;
 
     // Function for creating lines - sets x and y value at every point on the line
     //console.log(topics);
@@ -1135,21 +1195,18 @@ var TopicsOverTimeView = DefaultView.extend({
                             return yScale(data[d.meta].totalProbability);
                           });
 
+    var data = this.model.get("topics");
     path
-        .style("stroke", function(d) { return "steelblue"; })
-        .on("mouseover", getOnPathMouseover(vis))
-        .on("mouseout", getOnPathMouseout(vis))
+        .attr("data-legend", function(d) { return data[topicId].name; })
+        .style("stroke", function(d) { return colorScale(delayOrder); })
         .on("click", function(d) {
-          select.call(vis, [d.topicId]);
+          select.call(that, [d.topicId]);
         });
 
-    // Make lines opaque and do magical line unfolding transition
-    // var pathTween = this.pathTween;
+    // Make lines opaque
     path.transition().duration(duration)
       .delay(delayOrder * 15)
       .attr("d", line)
-      // .attrTween("d", pathTween(d1, 4))
-      // .attr("stroke-dashoffset", 0) // Unfold lines
       .style("opacity", 1);
   },
 
@@ -1166,9 +1223,8 @@ var TopicsOverTimeView = DefaultView.extend({
     // var length = path.node().getTotalLength();
 
     path
-      .on("mouseover", null)
-      .on("mouseout", null)
-      .on("click", null);
+        .attr("data-legend", null)
+        .on("click", null);
 
     // Make sure tooltip disappears
 //    tooltip.transition()
@@ -1177,9 +1233,9 @@ var TopicsOverTimeView = DefaultView.extend({
 
     // Make lines transparent and do magical line folding
     path.transition().duration(duration)
-      .delay(delayOrder * 15)
+        .delay(delayOrder * 15)
       // .attr("stroke-dashoffset", length) // Fold lines
-      .style("opacity", 0.0);
+        .style("opacity", 0.0);
   },
 
   resize: function(options) { 
@@ -1468,15 +1524,6 @@ var TopicsOverTimeView = DefaultView.extend({
   getOnBarMouseover: function(context) {
 
     return function(d) {
-//      var tooltip = context.tooltip;
-//      var data = context.model.attributes.selectedTopicData.data;
-
-//      tooltip.transition()
-//        .duration(200)
-//        .style("opacity", 0.9);
-//      tooltip.html(data[d.year][d.index].title + " " + d.year)
-//        .style("left", (d3.event.pageX + 8) + "px")
-//        .style("top", (d3.event.pageY) + "px");
       d3.select(this)
         .style("fill", "brown");
     }
@@ -1485,45 +1532,8 @@ var TopicsOverTimeView = DefaultView.extend({
   getOnBarMouseout: function(context) {
 
     return function(d) {
-//      var tooltip = context.tooltip;
-      var colors = context.colors;
-
-//      tooltip.transition()
-//        .duration(200)
-//        .style("opacity", 0.0); 
       d3.select(this)
         .style("fill", "steelblue"); 
-    }
-  },
-
-  getOnPathMouseover: function(context) {
-
-    return function(d) {
-//      var tooltip = context.tooltip;
-//      var topics = context.topics;
-
-//      tooltip.transition()
-//        .duration(200)
-//        .style("opacity", 0.9)
-//      tooltip.html(d.topicId + " " + topics[d.topicId])
-//        .style("left", (d3.event.pageX + 8) + "px")
-//        .style("top", (d3.event.pageY) + "px");
-      d3.select(this)
-        .style("stroke", "brown"); 
-    }
-  },
-
-  getOnPathMouseout: function(context) {
-
-    return function(d) {
-//      var tooltip = context.tooltip;
-      var colors = context.colors;
-
-//      tooltip.transition()
-//        .duration(200)
-//        .style("opacity", 0.0); 
-      d3.select(this)
-        .style("stroke", "steelblue");
     }
   },
 
