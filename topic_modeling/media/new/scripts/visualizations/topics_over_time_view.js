@@ -1,88 +1,3 @@
-/*
- * The Topics Over Time View.
- */
-
-//~ /** The Info **/
-//~ var TopicsOverTimeInfo = InfoView.extend({
-//~ 
-  //~ initialize: function () {
-    //~ InfoView.prototype.initialize.apply(this, arguments);
-//~ 
-    //~ var label = this.appendItem('<p>Some stuff here</p>');
-  //~ },
-//~ 
-  //~ clear: function () {
-    //~ this.$('tbody').empty();
-  //~ },
-//~ 
-  //~ view_plot: function () {
-  //~ },
-//~ 
-  //~ load_topic: function (tid, info) {
-    //~ // show yourself
-    //~ this.$el.show();
-  //~ },
-//~ 
-  //~ show: function () {
-    //~ InfoView.prototype.show.apply(this, arguments);
-  //~ },
-//~ 
-  //~ hide: function () {
-    //~ InfoView.prototype.hide.apply(this, arguments);
-  //~ },
-//~ 
-//~ });
-//~ 
-//~ 
-//~ /** The Controls **/
-//~ var TopicsOverTimeControls = ControlsView.extend({
-//~ 
-  //~ initialize: function (options) {
-//~ 
-    //~ ControlsView.prototype.initialize.apply(this, arguments);
-//~ 
-    //~ this.loaded = false;
-    //~ _.bindAll(this, "load");
-    //~ this.event_aggregator.bind("tot:loaded", this.load);
-  //~ },
-//~ 
-  //~ load: function (topics) {
-//~ 
-    //~ if (!this.loaded) {
-      //~ // Set up the topic selector once the data has been loaded
-      //~ var html = '<p>Topics</p><select id="topic-selector" size="' + topics.length + '" multiple>';
-      //~ for (var topicId in topics) {
-        //~ var topic = topics[topicId];
-        //~ html += '<option value="' + topicId + '">' + topic + ' ' + topicId + '</option>';
-      //~ }
-      //~ html += '</select>';
-//~ 
-      //~ var topicSelector = this.appendItem(html);
-      //~ var event_aggregator = this.event_aggregator;
-//~ 
-      //~ $('#topic-selector').change(function() {
-        //~ var topicIds = [];
-        //~ $('#topic-selector option:selected').each(function() {
-          //~ topicIds.push($(this).val());
-        //~ });
-        //~ event_aggregator.trigger("tot:select-topics", topicIds);
-      //~ });
-//~ 
-      //~ this.loaded = true;
-    //~ }
-  //~ },
-//~ 
-  //~ show: function () {
-    //~ ControlsView.prototype.show.call(this, arguments);
-  //~ },
-//~ 
-  //~ hide: function () {
-    //~ ControlsView.prototype.hide.apply(this, arguments);
-  //~ }
-//~ 
-//~ });
-//
-
 
 var TopicsOverTimeView = DefaultView.extend({
 
@@ -146,7 +61,6 @@ var TopicsOverTimeView = DefaultView.extend({
             
             var analysisData = data.datasets[selections['dataset']].analyses[selections['analysis']];
             var processedAnalysis = this.processAnalysis(analysisData);
-            console.log(processedAnalysis);
             this.model.set(processedAnalysis);
             this.model.set({
                 // Dimensions of svg viewBox.
@@ -201,14 +115,14 @@ var TopicsOverTimeView = DefaultView.extend({
         controls.html(this.controlsTemplate);
 
         // Get selects to be populated
-        var topicSelect = this.topicsSelect = controls.select("#topics-control");
+        var topicSelect = this.topicSelect = controls.select("#topics-control");
         var raw_topics = this.model.attributes.raw_topics;
         for (key in raw_topics) {
             topic = raw_topics[key];
             topicSelect
                 .append("option")
                 .attr("value", key)
-                .text(topic.names.Top3);
+                .text(toTitleCase(topic.names.Top3));
         }
 
         // Get Metadata options
@@ -232,15 +146,17 @@ var TopicsOverTimeView = DefaultView.extend({
             metadataSelect.property("value", this.settingsModel.get("metadataSelection"));
         }
 
-        topicSelect.on("change", function topicChange() {
-            var selected = $(this).find(":selected");
+        this.topicChanged =  function topicChange() {
+            var selected = $("#plot-controls #topics-control").find(":selected");
             var selected_array = selected.map(function() {
                 return this.value;
             })
             .get();
             that.settingsModel.set({ topicSelection: selected_array });
-        });
-        metadataSelect.on("change", function metadataChange() {
+        };
+
+        topicSelect.on("change", this.topicChanged);
+        metadataSelect.on("change", function metadataChanged() {
             var value = metadataSelect.property("value");
             that.settingsModel.set({ metadataSelection: value });
         });
@@ -316,6 +232,7 @@ var TopicsOverTimeView = DefaultView.extend({
             .style("opacity", 0.8)
             .style("font-size", "12px")
             .style("shape-rendering", "crispedges");
+        this.tip = null;
         
         // Create listeners.
         this.settingsModel.on("change:topicSelection", this.calculateYAxis, this);
@@ -487,9 +404,8 @@ var TopicsOverTimeView = DefaultView.extend({
         items
             .on("mouseover", function(d, i) {
                 path = d3.select('path.chart.line[data-legend="'+d.key+'"]');
-                rect = d3.select('rect.bar[data-legend="'+d.key+'"]');
+                rect = d3.selectAll('rect.bar[data-legend="'+d.key+'"]');
                 text = d3.select(this);
-                console.log(text);
                 var bbox = text.node().getBBox();
                 textBack = d3.select(this.parentNode).insert("rect", "text")
                     .attr("x", x)
@@ -512,7 +428,7 @@ var TopicsOverTimeView = DefaultView.extend({
 
             })
             .on("mouseout", function(d, i) {
-                textBack.remove();
+                if (textBack) textBack.remove();
                 if (path && !path.empty()) {
                     path.style("stroke", color);
                 }
@@ -520,6 +436,17 @@ var TopicsOverTimeView = DefaultView.extend({
                     rect.style("fill", color);
                 }
                 path = rect = text = null;
+            })
+            .on("click", function(d, i) {
+                var textValue = text.text();
+                var topicSelect = $("#plot-controls #topics-control");
+                var value = topicSelect.find("option").filter(function() {
+                    return $(this).html().toLowerCase() === textValue.toLowerCase();
+                })
+                .val();
+                topicSelect.val(value);
+                if (textBack) textBack.remove();
+                that.topicChanged();
             });
     },
     
@@ -833,6 +760,7 @@ var TopicsOverTimeView = DefaultView.extend({
     var select = this.selectTopics;
     var that = this;
 
+
     // Delete existing elements to conserve memory
     this.plot.selectAll(".bar").data([]).exit().remove();
 
@@ -841,11 +769,19 @@ var TopicsOverTimeView = DefaultView.extend({
     var data = selTopicData[selectedMetadata].data;
     var indices = selTopicData[selectedMetadata].metaIndices;
 
-    console.log(selTopicData);
     this.bars = this.plot.selectAll(".bar")
         .data(indices);
 
-    var colorScale = this.getColorScale(colors.a, colors.b, indices.length);
+    // Init d3 tip
+    this.tip = d3.tip(this.svg.nearestViewportElement)
+        .attr("class", "d3-tip")
+        .offset([-73, 0])
+        .html(function(d) {
+            return "<strong>Document:</strong> <span style='color:red'>" + data[d.meta][d.index].doc_id + "</span>";
+        });
+    this.svg.call(this.tip);
+
+    var colorScale = this.getColorScale(colors.a, colors.b, 1);
 
     // Append SVG elements with class "bar"
     this.bars.enter()
@@ -853,20 +789,27 @@ var TopicsOverTimeView = DefaultView.extend({
         .attr("class", "bar")
         .attr("x", function(d) { return xScale(d.meta); })
         .attr("y", yScale(yInfo.min))
-        .attr("data-legend", function(d) { return data[d.meta][d.index].doc_id; })
+//        .attr("data-legend", function(d) { return data[d.meta][d.index].doc_id; })
         .attr("width", barWidth)
         .attr("height", 0)
         .style("padding", 10)
-        .style("fill", function(d, i) { return colorScale(i); })
+        .style("fill", function(d, i) { return colorScale(1); })
         .style("opacity", 0)
-//        .on("mouseover", getOnBarMouseover(that))
-//        .on("mouseout", getOnBarMouseout(that))
+        .on("mouseover", function(d) {
+//            that.tip.offset([-1*(d3.event.pageY*(70.0/840)), 0]);
+            that.tip.show(d);
+            d3.select(this).style("fill", "red");
+        })
+        .on("mouseout", function(d) {
+            that.tip.hide(d);
+            d3.select(this).style("fill", colorScale(1));
+        });
 //        .on("click", function(d) {
 //            select.call(that);
 //        });
 
-//    this.bars
-//        .attr("data-legend", selTopicData.name);
+    this.bars
+        .attr("data-legend", selTopicData.name);
 
     return this.bars;
   },
@@ -1294,10 +1237,6 @@ var TopicsOverTimeView = DefaultView.extend({
         var raw_topics = {};
         var metadata_types = [];
         if ('topics' in analysisData && 'documents' in analysisData) {
-//            for (topic in analysisData.topics) {
-//                topics[topic] = toTitleCase(topics[topic].names.Top3);
-//            }
-//            this.model.set({ topics: topics });
             raw_topics = analysisData.topics;
             documents = analysisData.documents;
             for (doc in documents) {
@@ -1336,16 +1275,7 @@ var TopicsOverTimeView = DefaultView.extend({
 
     var topicData = {};
     var metadata_list = [];
-/*
-    topicData.yearIndices = [];
-    topicData.min = -1;
-    topicData.max = -1;
-*/
-    // Because I don't want to type that again
-/*    var yearIndices = topicData.yearIndices;
-    yearIndices.topicId = topicId;
-    var data = topicData.data;
-*/      
+    //
     // Get topic percentage in all documents
     for(var doc_id in documents) {
         var doc = documents[doc_id];
