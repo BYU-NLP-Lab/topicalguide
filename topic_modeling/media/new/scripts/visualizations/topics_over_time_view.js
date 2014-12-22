@@ -41,8 +41,8 @@ var TopicsOverTimeView = DefaultView.extend({
             "documents": "*",
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
-            "document_limit": 50,
-            "document_seed": 0,
+            "document_limit": 500,
+//            "document_seed": 0,
         };
     },
     
@@ -281,13 +281,13 @@ var TopicsOverTimeView = DefaultView.extend({
     },
     
     calculateXAxis: function(transition) {
-        var selection = this.settingsModel.attributes.metadataSelection;
+        var selection = this.settingsModel.get("metadataSelection");
         this.xInfo = _.extend(this.xInfo, this.getNoData(selection.value));
         if(transition !== false) this.transition();
     },
     calculateYAxis: function(transition) {
-//        var selection = this.settingsModel.attributes.ySelection;
-//        this.yInfo = _.extend(this.yInfo, this.getNoData(selection.group, selection.value));
+        var selection = this.settingsModel.get("topicSelection");
+        this.yInfo = _.extend(this.yInfo, this.getNoData(selection.value));
         if(transition !== false) this.transition();
     },
     
@@ -306,7 +306,7 @@ var TopicsOverTimeView = DefaultView.extend({
     
     // Find the min, max, type, title, and text for the given selection.
     getSelectionInfo: function(value, excluded) {
-        var data = this.model.attributes.documents;
+        var data = this.model.get("documents");
         var group = "metadata";
         var min = Number.MAX_VALUE;
         var max = -Number.MAX_VALUE;
@@ -364,6 +364,23 @@ var TopicsOverTimeView = DefaultView.extend({
             type: type, 
             text: text, 
             title: value,
+        };
+    },
+
+    getTopicSelectionInfo: function(topicIds, excluded) {
+        var minMax = this.getMinMaxTopicValues(topicIds);
+        var avg = 0;
+        var type = "float";
+        var text = {};
+        var title = "Topic Proportion";
+        
+        return {
+            min: 0, 
+            max: minMax.max, 
+            avg: avg,
+            type: type, 
+            text: text, 
+            title: title,
         };
     },
     
@@ -458,12 +475,13 @@ var TopicsOverTimeView = DefaultView.extend({
         var model = this.model.attributes;
         var dim = model.dimensions;
         var transitionDuration = model.duration;
-        var metadataSelection = this.settingsModel.attributes.metadataSelection;
+        var metadataSelection = this.settingsModel.get("metadataSelection");
+        var topicSelection = this.settingsModel.get("topicSelection");
         var xExclude = this.xInfo.noData;
         var yExclude = {};//this.yInfo.noData;
         var allExclude = _.extend({}, xExclude, yExclude);
         var xInfo = _.extend(this.xInfo, this.getSelectionInfo(metadataSelection, allExclude));
-        var yInfo = this.yInfo;// = _.extend(this.yInfo, this.getSelectionInfo(ySel.group, ySel.value, allExclude));
+        var yInfo = _.extend(this.yInfo, this.getTopicSelectionInfo(topicSelection, allExclude));
         
         var textHeight = model.textHeight;
         
@@ -581,7 +599,7 @@ var TopicsOverTimeView = DefaultView.extend({
      */
     selectTopics: function() {
 
-        if (!this.model.attributes.raw_topics) {
+        if (!this.model.get("raw_topics")) {
             return;
         }
 
@@ -622,7 +640,7 @@ var TopicsOverTimeView = DefaultView.extend({
             this.unsetBarChart();
         }
 
-        var topics = this.model.attributes.topics;
+        var topics = this.model.get("topics");
         var minMax = this.getMinMaxTopicValues(topicIds);
         topics.min = minMax.min;
         topics.max = minMax.max;
@@ -776,11 +794,17 @@ var TopicsOverTimeView = DefaultView.extend({
             .attr("class", "d3-tip")
             .offset([-73, 0])
             .html(function(d) {
-                return "<strong>Document:</strong> <span style='color:red'>" + data[d.meta][d.index].doc_id + "</span>";
+                var datum = data[d.meta][d.index];
+                var roundedProb = Math.round((datum.probability*1000).toFixed(2))/10;
+                var html = "<strong>Document:</strong> <span style='color:red'>" + datum.doc_id + "</span>"+
+                    "<br />"+
+                    "<strong>Percentage:</strong> <span style='color:red'>" + roundedProb + "%</span>";
+                return html;
             });
         this.svg.call(this.tip);
 
         var colorScale = this.getColorScale(colors.a, colors.b, 1);
+        console.log(yScale.domain(), yScale.range());
 
         // Append SVG elements with class "bar"
         this.bars.enter()
@@ -1241,6 +1265,7 @@ var TopicsOverTimeView = DefaultView.extend({
             for (doc in documents) {
                 documents[doc].topics = this.normalizeTopicPercentage(documents[doc].topics);
             }
+            this.normalizeDocumentPercentage(documents);
 
             for (topic in analysisData.topics) {
                 processedTopic = this.processTopicData(topic, documents);
@@ -1374,6 +1399,35 @@ var TopicsOverTimeView = DefaultView.extend({
         return topics;
     },
 
+    normalizeDocumentPercentage: function(documents) {
+        var metadataToDoc = {};
+        var tokenCounts = {};
+        for (doc_id in documents) {
+            var doc = documents[doc_id];
+            var tokenCount = doc.metrics['Number of tokens'];
+            for (topic_id in doc.topics) {
+                var percentage = doc.topics[topic_id];
+                var topicTokenCount = percentage * tokenCount;
+                if (!(topic_id in tokenCounts)) tokenCounts[topic_id] = 0;
+                tokenCounts[topic_id] += topicTokenCount;
+            }
+        }
+        for (topic_id in tokenCounts) {
+            var round = Math.round(tokenCounts[topic_id]);
+            tokenCounts[topic_id] = round;
+        }
+        for (doc_id in documents) {
+            var doc = documents[doc_id];
+            var tokenCount = doc.metrics['Number of tokens'];
+            for (topic_id in doc.topics) {
+                var percentage = doc.topics[topic_id];
+                var topicTokenCount = percentage * tokenCount;
+                var newPercentage = topicTokenCount / tokenCounts[topic_id];
+                doc.topics[topic_id] = newPercentage;
+            }
+        }
+    },
+
     /**
      * Gets the min and max probabilities for all of the given topics
      * Useful for finding the appropriate range of y values for the line chart
@@ -1384,7 +1438,8 @@ var TopicsOverTimeView = DefaultView.extend({
 
         var min = -1;
         var max = -1;
-        var topicData = this.model.attributes.topics;
+        var topicData = this.model.get("topics");
+        var selectedMetadata = this.settingsModel.get("metadataSelection");
 
         if (topicIds.length === 0) {
             topicIds = $.map(this.model.attributes.raw_topics, function(value, key) { return key; });
@@ -1393,11 +1448,11 @@ var TopicsOverTimeView = DefaultView.extend({
         for (var index in topicIds) {
             var topicId = topicIds[index];
             // Get min and max probability for the given topic
-            if (min === -1 || min > topicData[topicId]['year'].min) //TODO make this switchable GENERALIZED
-                min = topicData[topicId]['year'].min;
+            if (min === -1 || min > topicData[topicId][selectedMetadata].min)
+                min = topicData[topicId][selectedMetadata].min;
 
-            if (max === -1 || max < topicData[topicId]['year'].max)
-                max = topicData[topicId]['year'].max;
+            if (max === -1 || max < topicData[topicId][selectedMetadata].max)
+                max = topicData[topicId][selectedMetadata].max;
         }
 
         return { min: min,
