@@ -9,13 +9,19 @@ var TopicsOverTimeView = DefaultView.extend({
         "<h3><b>Controls</b></h3>"+
         "<hr />"+
         "<div>"+
-        "    <label for=\"topics-control\">Topics</label>"+
-        "    <select id=\"topics-control\" type=\"selection\" class=\"form-control\" name=\"Topics\" style=\"height:200px\" multiple></select>"+
+        "   <label for=\"topics-control\">Topics</label>"+
+        "   <select id=\"topics-control\" type=\"selection\" class=\"form-control\" name=\"Topics\" style=\"height:200px\" multiple></select>"+
         "</div>"+
         "<br />"+
         "<div>"+
-        "    <label for=\"metadata-control\">Metadata</label>"+
-        "    <select id=\"metadata-control\" type=\"selection\" class=\"form-control\" name=\"Metadata\" style=\"height:30px\"></select>"+
+        "   <label for=\"metadata-control\">Metadata</label>"+
+        "   <select id=\"metadata-control\" type=\"selection\" class=\"form-control\" name=\"Metadata\" style=\"height:30px\"></select>"+
+        "</div>"+
+        "<br />"+
+        "<div>"+
+        "   <label for=\"graph-control\">Graph Type</label>"+
+        "   <br />"+
+        "   <input id=\"graph-control\" type=\"checkbox\" checked data-toggle=\"toggle\" data-on=\"Layered\" data-off=\"Overlayed\" data-onstyle=\"success\" data-offstyle=\"warning\" data-size=\"small\">"+
         "</div>",
 
     readableName: "Topics Over Time",
@@ -135,8 +141,10 @@ var TopicsOverTimeView = DefaultView.extend({
             metadataSelect
                 .append("option")
                 .attr("value", type)
-                .text(type);
+                .text(toTitleCase(type.replace('_', ' ')));
         }
+
+        $("#plot-controls #graph-control").bootstrapToggle();
 
         if (this.settingsModel.has("topicSelection")) {
             var jTopicSelect = $('#topics-control');
@@ -285,6 +293,7 @@ var TopicsOverTimeView = DefaultView.extend({
         this.xInfo = _.extend(this.xInfo, this.getNoData(selection.value));
         if(transition !== false) this.transition();
     },
+
     calculateYAxis: function(transition) {
         var selection = this.settingsModel.get("topicSelection");
         this.yInfo = _.extend(this.yInfo, this.getNoData(selection.value));
@@ -304,7 +313,6 @@ var TopicsOverTimeView = DefaultView.extend({
         }
     },
     
-    // Find the min, max, type, title, and text for the given selection.
     getSelectionInfo: function(value, excluded) {
         var data = this.model.get("documents");
         var group = "metadata";
@@ -363,7 +371,7 @@ var TopicsOverTimeView = DefaultView.extend({
             avg: avg,
             type: type, 
             text: text, 
-            title: value,
+            title: toTitleCase(value.replace('_', ' ')),
         };
     },
 
@@ -777,7 +785,6 @@ var TopicsOverTimeView = DefaultView.extend({
         var select = this.selectTopics;
         var that = this;
 
-
         // Delete existing elements to conserve memory
         this.plot.selectAll(".bar").data([]).exit().remove();
 
@@ -798,7 +805,10 @@ var TopicsOverTimeView = DefaultView.extend({
                 var roundedProb = Math.round((datum.probability*1000).toFixed(2))/10;
                 var html = "<strong>Document:</strong> <span style='color:red'>" + datum.doc_id + "</span>"+
                     "<br />"+
-                    "<strong>Percentage:</strong> <span style='color:red'>" + roundedProb + "%</span>";
+                    "<strong>Percent of Topic:</strong> <span style='color:red'>" + roundedProb + "%</span>"+
+                    "<br />"+
+                    "<strong>" + toTitleCase(selectedMetadata.replace('_', ' ')) + ":</strong> <span style='color:red'>" + d.meta + "</span>";
+
                 return html;
             });
         this.svg.call(this.tip);
@@ -827,9 +837,6 @@ var TopicsOverTimeView = DefaultView.extend({
                 that.tip.hide(d);
                 d3.select(this).style("fill", colorScale(1));
             });
-    //        .on("click", function(d) {
-    //            select.call(that);
-    //        });
 
         this.bars
             .attr("data-legend", selTopicData.name);
@@ -979,23 +986,6 @@ var TopicsOverTimeView = DefaultView.extend({
                 xAxisEl.call(xAxis);
                 yAxisEl.call(yAxis);
             });
-//    each("end", function(d, i) {
-//        var transition = d3.select(this);
-//        if (i == 0) {
-//            d3.select(this).call(xAxis);
-//        }
-//        else if (i == 1) {
-//            d3.select(this).call(yAxis);
-//        }
-//        console.log(i, d3.select(this), d3.select(this)[0][0].getBBox());
-//        xAxisEl.call(xAxis);
-//    });
-//    t.select("#x-axis").style("opacity", 0).each("end", function() {
-//        xAxisEl.call(xAxis);
-//    });
-//    t.select("#y-axis").style("opacity", 0).each("end", function() {
-//        yAxisEl.call(yAxis);
-//    });
 
         var dim = this.model.attributes.dimensions;
     
@@ -1003,25 +993,6 @@ var TopicsOverTimeView = DefaultView.extend({
         t.select("#x-axis").style("opacity", 1);
         t.select("#y-axis").style("opacity", 1);
 
-    
-
-   // t.select("#x-axis")
-     //   .attr("transform", "translate(0," + (dim.height - 24) + ")");
-
-    // Translate x axis in case the whole visualization moves
-    //var xAxisEl = $('#x-axis');
-    //console.log(xAxisEl);
-    //var translate = this.parseTransformAttr(xAxisEl.attr("transform")).translate;
-  //  $({ transform : translate[1] }).animate({ transform : dim.height }, // Magical jQuery attribute animation
-  //                                          { duration : duration,
-   //                                           step : function(now) {
-   //                                             xAxisEl.attr("transform", "translate(" + translate[0] + "," + now + ")");
-   //                                          }
-   //                                        });
-    
-    //this makes the css inline for saving the svg
-//    $('.axis .tick').attr("style", "stroke:#000000; opacity:1");
-//    $('.axis text').css("font-size", "this.fontSize");
     },
 
     /**
@@ -1100,9 +1071,6 @@ var TopicsOverTimeView = DefaultView.extend({
         if (topicIds === null) {
             topicIds = []; // Hide all topics
         }
-        //    else if (topicIds.length === 0) { // If we want ALL topics (default)
-        //      topicIds = $.map(raw_topics, function(value, key) { return key; }); // Copy topic id keys into id array
-        //    }
 
         // Transition wanted topics into view
         // Start with map of all topics - remove wanted ones and leave unwanted ones
@@ -1211,41 +1179,6 @@ var TopicsOverTimeView = DefaultView.extend({
 //    this.scaleRanges();
 //    this.selectTopics();
     },
-
-  /**
-   * For computing the path between line transitions (for use with the attrTween option on path transitions)
-   * This is VERY slow for large amounts of data
-   *
-   * I stole this from a Mike Bostock example
-   * 
-   * d1 - SVG path string to transition to
-   * precision - How accurate the transition should be (less accurate is faster)
-   */
-  // pathTween: function(d1, precision) {
-
-  //   return function() {
-  //     var path0 = this,
-  //         path1 = path0.cloneNode(),
-  //         n0 = path0.getTotalLength(),
-  //         n1 = (path1.setAttribute("d", d1), path1).getTotalLength();
-
-  //     // Uniform sampling of distance based on specified precision.
-  //     var distances = [0], i = 0, dt = precision / Math.max(n0, n1);
-  //     while ((i += dt) < 1) distances.push(i);
-  //     distances.push(1);
-
-  //     // Compute point-interpolators at each distance.
-  //     var points = distances.map(function(t) {
-  //       var p0 = path0.getPointAtLength(t * n0),
-  //           p1 = path1.getPointAtLength(t * n1);
-  //       return d3.interpolate([p0.x, p0.y], [p1.x, p1.y]);
-  //     });
-
-  //     return function(t) {
-  //       return t < 1 ? "M" + points.map(function(p) { return p(t); }).join("L") : d1;
-  //     };
-  //   };
-  // },
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++    HELPERS    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
 
@@ -1369,8 +1302,6 @@ var TopicsOverTimeView = DefaultView.extend({
                 return order;
             });
         }
-        // Sort topics by year so that line chart gets drawn correctly
-        //topicData.yearIndices.sort(function(a, b) { return d3.ascending(a.year, b.year); });
 
         return {
             data: topicData,
