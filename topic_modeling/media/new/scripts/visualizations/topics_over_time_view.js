@@ -21,7 +21,7 @@ var TopicsOverTimeView = DefaultView.extend({
         "<div>"+
         "   <label for=\"graph-control\">Graph Type</label>"+
         "   <br />"+
-        "   <input id=\"graph-control\" type=\"checkbox\" checked data-toggle=\"toggle\" data-on=\"Layered\" data-off=\"Overlayed\" data-onstyle=\"success\" data-offstyle=\"warning\" data-size=\"small\">"+
+        "   <input id=\"graph-control\" type=\"checkbox\" checked data-toggle=\"toggle\" data-on=\"Stacked\" data-off=\"Overlaid\" data-onstyle=\"success\" data-offstyle=\"warning\" data-size=\"small\">"+
         "</div>",
 
     readableName: "Topics Over Time",
@@ -47,7 +47,7 @@ var TopicsOverTimeView = DefaultView.extend({
             "documents": "*",
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
-            "document_limit": 500,
+            "document_limit": 50,
 //            "document_seed": 0,
         };
     },
@@ -83,6 +83,13 @@ var TopicsOverTimeView = DefaultView.extend({
                 colorSpectrum: {
                     a: "#B2007D",
                     b: "#19B200"
+                },
+
+                graphToggleMap: {
+                    "on": "Stacked",
+                    "off": "Overlaid",
+                    "Stacked": "on",
+                    "Overlaid": "off",
                 },
             });
             var range = this.getYearRange(this.model.attributes.documents);
@@ -144,7 +151,8 @@ var TopicsOverTimeView = DefaultView.extend({
                 .text(toTitleCase(type.replace('_', ' ')));
         }
 
-        $("#plot-controls #graph-control").bootstrapToggle();
+        var graphTypeToggle = this.graphTypeToggle = $("#plot-controls #graph-control").bootstrapToggle();
+        var gtMap = this.model.get("graphToggleMap");
 
         if (this.settingsModel.has("topicSelection")) {
             var jTopicSelect = $('#topics-control');
@@ -152,6 +160,10 @@ var TopicsOverTimeView = DefaultView.extend({
         }
         if (this.settingsModel.has("metadataSelection")) {
             metadataSelect.property("value", this.settingsModel.get("metadataSelection"));
+        }
+        if (this.settingsModel.has("graphType")) {
+            var checkboxProp = gtMap[this.settingsModel.get("graphType")];
+            graphTypeToggle.bootstrapToggle(checkboxProp);
         }
 
         this.topicChanged =  function topicChange() {
@@ -168,10 +180,15 @@ var TopicsOverTimeView = DefaultView.extend({
             var value = metadataSelect.property("value");
             that.settingsModel.set({ metadataSelection: value });
         });
+        graphTypeToggle.on("change", function graphTypeChanged() {
+            var value = gtMap[graphTypeToggle.prop("checked") ? "on" : "off"];
+            that.settingsModel.set({ "graphType": value });
+        });
 
         var defaultSettings = {
             topicSelection: [],
             metadataSelection: defaultMetadata,
+            graphType: gtMap["on"],
         }
 
         this.settingsModel.set(_.extend({}, defaultSettings, this.settingsModel.attributes));
@@ -245,6 +262,7 @@ var TopicsOverTimeView = DefaultView.extend({
         // Create listeners.
         this.settingsModel.on("change:topicSelection", this.calculateYAxis, this);
         this.settingsModel.on("change:metadataSelection", this.calculateXAxis, this);
+        this.settingsModel.on("change:graphType", this.calculateYAxis, this);
 //        this.settingsModel.on("change:xSelection", this.calculateXAxis, this);
 //        this.settingsModel.on("change:ySelection", this.calculateYAxis, this);
 //        this.settingsModel.on("change:radiusSelection", this.calculateRadiusAxis, this);
@@ -814,7 +832,6 @@ var TopicsOverTimeView = DefaultView.extend({
         this.svg.call(this.tip);
 
         var colorScale = this.getColorScale(colors.a, colors.b, 1);
-        console.log(yScale.domain(), yScale.range());
 
         // Append SVG elements with class "bar"
         this.bars.enter()
@@ -828,6 +845,8 @@ var TopicsOverTimeView = DefaultView.extend({
             .style("padding", 10)
             .style("fill", function(d, i) { return colorScale(1); })
             .style("opacity", 0)
+            .style("stroke", "white")
+            .style("stroke-opacity", 0.3)
             .on("mouseover", function(d) {
     //            that.tip.offset([-1*(d3.event.pageY*(70.0/840)), 0]);
                 that.tip.show(d);
@@ -1014,21 +1033,33 @@ var TopicsOverTimeView = DefaultView.extend({
 //        var bottomMargin = this.margins.bottom;
         var selectedMetadata = this.settingsModel.get("metadataSelection");
         var data = this.settingsModel.get("selectedTopicData")[selectedMetadata].data;
+        var graphType = this.settingsModel.get("graphType");
+        var barWidth = this.getBarWidth(xScale);
 
         // Make opaque and transition y and height into final positions
         var bars = this.svg.selectAll(".bar")
             .transition().duration(duration)
             .style("opacity", 1)
+            .attr("x", function(d) {
+                var x = xScale(d.meta);
+                if (graphType === "Overlaid") x += 2*d.index;
+                return x
+            })
             .attr("y", function(d) {
                 var probability = data[d.meta][d.index].probability;
                 data[d.meta].forEach(function(value, index, array) { // Get cumulative value (stack 'em up)
-                    if (index < d.index) {
-                        probability += value.probability;
+                    if (graphType !== "Overlaid") {
+                        if (index < d.index) probability += value.probability;
                     }
                 });
                 return yScale(probability);
             })
-            .attr("height", function(d) { return yScale(yInfo.min) - yScale(data[d.meta][d.index].probability); });
+            .attr("height", function(d) { return yScale(yInfo.min) - yScale(data[d.meta][d.index].probability); })
+            .attr("width", function(d) {
+                var width = barWidth;
+                if (graphType === "Overlaid") width -= 2*d.index;
+                return width;
+            })
     },
 
     /**
@@ -1232,7 +1263,7 @@ var TopicsOverTimeView = DefaultView.extend({
 
         var topicData = {};
         var metadata_list = [];
-        //
+
         // Get topic percentage in all documents
         for(var doc_id in documents) {
             var doc = documents[doc_id];
@@ -1250,7 +1281,6 @@ var TopicsOverTimeView = DefaultView.extend({
 
                 // Get relevant topic-document info
                 documentData.probability = topicProbability;
-                documentData.doc_id = doc_id;
                 var metadata = doc.metadata;
                 for (meta in metadata) {
                     if (metadata_list.indexOf(meta) <= 0)
@@ -1283,10 +1313,24 @@ var TopicsOverTimeView = DefaultView.extend({
                     if (topicData[meta].max === -1 || topicData[meta].max < metaData.totalProbability)
                         topicData[meta].max = metaData.totalProbability;
 
-                    var metaIndex = { meta : datum,
-                                      index : metaData.length - 1 };
+                }
+            }
+        }
 
-                    topicData[meta].metaIndices.push(metaIndex);
+        for (meta in topicData) {
+            var data = topicData[meta].data;
+            var indices = topicData[meta].metaIndices;
+            for (datum in data) {
+                var values = data[datum];
+                values.sort(function(a, b) {
+                    return d3.descending(a.probability, b.probability);
+                });
+                for (index in values) {
+                    if (index === "totalProbability") continue;
+                    var value = values[index];
+                    var metaIndex = { meta : datum,
+                                        index: parseInt(index) };
+                    indices.push(metaIndex);
                 }
             }
         }
