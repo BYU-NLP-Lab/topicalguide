@@ -92,15 +92,14 @@ var TopicsOverTimeView = DefaultView.extend({
                     "Overlaid": "off",
                 },
             });
-            var range = this.getYearRange(this.model.attributes.documents);
-//            this.xScale.domain([ range.min, range.max ]);
-            var topics = this.model.attributes.topics;
+
+            var topics = this.model.get("topics");
             var minMax = this.getMinMaxTopicValues([]);
             this.xInfo = {
-                min: range.min,
-                max: range.max,
+                min: 0,
+                max: 0,
                 type: "int",
-                title: "year",
+                title: "",
                 text: [],
                 rangeMax: 800,
                 noData: {},
@@ -646,7 +645,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var topicId = topicIds[0];
 
         // Select the topic data
-        this.settingsModel.set({ selectedTopicData: this.model.attributes.topics[topicId] });
+        this.settingsModel.set({ selectedTopicData: this.model.get("topics")[topicId] });
 
         // Transition the line chart into hiding
         if (this.lineChart !== null)
@@ -717,67 +716,6 @@ var TopicsOverTimeView = DefaultView.extend({
     },
 
     /**
-     * Scale the axes for the selected topic
-     *
-     * Precondition: A topic has been selected and the topic data is set
-     * Postcondition: The bars can now be initialized
-     */
-    scaleTopicAxes: function() {
-
-        var dim = this.model.attributes.dimensions;
-        var data = this.settingsModel.get("selectedTopicData").data;
-        var maxStack = 0;
-
-        // Calculate x domain
-        var keys = $.map(data, function(v, i){
-            return i;
-        });
-
-        var range = this.getYearRange(this.model.attributes.documents);
-        this.xScale.domain([ range.min, range.max ]);
-
-        this.model.attributes.barWidth = dim.width / (range.max - range.min);
-
-        // Calculate y domain
-        var yMin = 0;
-        var yMax = d3.max(keys, function(d) { 
-            var sum = 0;
-            // Values for each stacked ordinal are summed (because we are looking at the cumulative value)
-            data[d].forEach(function(value, index, array) {
-                if (index > maxStack) maxStack = index; // Calculate maximum height of stack for color domain
-                sum += value.probability;
-            });
-            return sum;
-        });
-        yMax *= 100;
-        yMax = Math.ceil(yMax);
-        yMax /= 100;
-        this.yScale.domain([ yMin, yMax ]);
-
-        // Set color domain
-        this.colors.domain(_.range(0, maxStack));//[ 0, maxStack ]);
-    },
-
-    /**
-     * Scale the axes for all topics
-     * Precondition: The topic data is set
-     * Postcondition: The lineChart can now be initialized
-     */
-    scaleLineChartAxes: function() {
-
-        // Set x domain
-        var range = this.getYearRange(this.model.attributes.documents);
-        this.xScale.domain([ range.min, range.max ]);
-
-        // Set y domain
-        this.yScale.domain([ 0, this.model.attributes.topics.max ]);
-
-        // set color domain
-        var topicKeys = $.map(this.model.attributes.raw_topics, function(value, key) { return key; }); // Get all topic IDs (they are the keys)
-        this.colors.domain(_.range(topicKeys[0], topicKeys[topicKeys.length - 1]));// [ topicKeys[0], topicKeys[topicKeys.length - 1] ]);
-    },
-
-    /**
      * Initializes the dimensions, colors, and events of each bar in the bar chart
      *
      * Precondition: Axes are correctly set for the selected topic
@@ -792,8 +730,6 @@ var TopicsOverTimeView = DefaultView.extend({
         var colors = this.model.get("colorSpectrum");
         var documents = this.model.get("documents");
         var height = dim.height;
-    //    var bottomMargin = this.margins.bottom;
-    //    var tooltip = this.tooltip;
         var svg = this.svg;
         var selTopicData = this.settingsModel.get("selectedTopicData");
         var data = selTopicData.data;
@@ -894,6 +830,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var dim = this.model.attributes.dimensions;
         var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
         var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
+        console.log(yScale.domain(), yScale.range());
         var raw_topics = this.model.get("raw_topics");
         var topicIds = this.settingsModel.get("topicSelection");
         var topics = this.model.get("topics");
@@ -904,7 +841,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var line = d3.svg.line()
             .interpolate("basis")
             .x(function(d, i) { return xScale(d.meta); })
-            .y(function(d, i) { return yScale(data[d.meta].totalProbability); }); // Use the total value for this year
+            .y(function(d, i) { return yScale(data[d.meta].totalProbability); }); // Use the total value for this metadata value
 
         // Delete existing lines to conserve memory (this could be optimized)
         this.svg.selectAll(".chart.line").data([]).exit().remove();
@@ -912,7 +849,6 @@ var TopicsOverTimeView = DefaultView.extend({
         this.lineChart = {};
 
         // Append SVG element path for each requested topic
-        //console.log(topics);
         for (var topicId in raw_topics) {
             var topic = topics[topicId];
             var metaTopic = topic[this.settingsModel.get("metadataSelection")];
@@ -927,16 +863,6 @@ var TopicsOverTimeView = DefaultView.extend({
               .style("opacity", 0)
               .style("stroke", "steelblue")
               .style("fill", "none");
-
-            // This is to initialize the magical unfolding transition
-            // NOTE: disabled because this gets screwed up when the axes scale
-            //        The length is not updated when the lines are scaled, so they do not get entirely drawn out
-            //        It would be cool to fix, but I don't want to waste too much time on it
-            //
-            // var length = path.node().getTotalLength();
-            // path
-            //   .attr("stroke-dasharray", length + " " + length)
-            //   .attr("stroke-dashoffset", length);
 
            this.lineChart[topicId] = path;
         }
@@ -1326,8 +1252,11 @@ var TopicsOverTimeView = DefaultView.extend({
         }
 
         for (meta in topicData) {
-            var data = topicData[meta].data;
-            var indices = topicData[meta].metaIndices;
+            var topicMeta = topicData[meta];
+            var data = topicMeta.data;
+            var indices = topicMeta.metaIndices;
+            var min, max;
+            min = max = -1;
             for (datum in data) {
                 var values = data[datum];
                 values.sort(function(a, b) {
@@ -1336,11 +1265,20 @@ var TopicsOverTimeView = DefaultView.extend({
                 for (index in values) {
                     if (index === "totalProbability") continue;
                     var value = values[index];
+
+                    // Get min and max single index values
+                    if (min === -1 || min > value.probability)
+                        min = value.probability;
+                    if (max === -1 || max < value.probability)
+                        max = value.probability;
+
                     var metaIndex = { meta : datum,
                                       index: parseInt(index) };
                     indices.push(metaIndex);
                 }
             }
+            topicMeta.singleMin = min;
+            topicMeta.singleMax = max;
         }
 
         // How do we sort metadata values?
@@ -1425,67 +1363,34 @@ var TopicsOverTimeView = DefaultView.extend({
         var max = -1;
         var topicData = this.model.get("topics");
         var selectedMetadata = this.settingsModel.get("metadataSelection");
+        var selectedTopicData = this.settingsModel.get("selectedTopicData");
+        var graphType = this.settingsModel.get("graphType");
 
+        var minKey = "min";
+        var maxKey = "max";
         if (topicIds.length === 0) {
-            topicIds = $.map(this.model.attributes.raw_topics, function(value, key) { return key; });
+            topicIds = _.keys(this.model.get("raw_topics"));
+        }
+        else if (topicIds.length === 1 && graphType === "Overlaid") {
+            minKey = "singleMin";
+            maxKey = "singleMax";
+        }
+        else if (topicIds.length > 1 && graphType === "Stacked") {
+            // handle stacked lines
         }
 
         for (var index in topicIds) {
             var topicId = topicIds[index];
             // Get min and max probability for the given topic
-            if (min === -1 || min > topicData[topicId][selectedMetadata].min)
-                min = topicData[topicId][selectedMetadata].min;
+            if (min === -1 || min > topicData[topicId][selectedMetadata][minKey])
+                min = topicData[topicId][selectedMetadata][minKey];
 
-            if (max === -1 || max < topicData[topicId][selectedMetadata].max)
-                max = topicData[topicId][selectedMetadata].max;
+            if (max === -1 || max < topicData[topicId][selectedMetadata][maxKey])
+                max = topicData[topicId][selectedMetadata][maxKey];
         }
 
         return { min: min,
                  max: max };
-    },
-
-    /**
-     * Gets the range of years over all documents
-     * 
-     * return { min: minimum year, max: maximum year }
-     */
-    getYearRange: function(documents) {
-
-        var minYear = -1;
-        var maxYear = -1;
-        for(var doc_id in documents) {
-            var docYear = documents[doc_id].metadata.year;
-            if (minYear === -1 || docYear < minYear) {
-                minYear = docYear;
-            }
-            if (maxYear === -1 || docYear > maxYear) {
-                maxYear = docYear;
-            }
-        }
-
-        return { min: minYear, max: maxYear };
-    },
-
-    /**
-     * Hashes the html transform attribute
-     * i.e. parseTransformAttr('translate(6,5),scale(3,3.5),a(1,1),b(2,23,-34),c(300)')
-     *      RETURNS
-     *      {
-     *          translate: [ '6', '5' ],
-     *          scale: [ '3', '3.5' ],
-     *          a: [ '1', '1' ],
-     *          b: [ '2', '23', '-34' ],
-     *          c: [ '300' ]
-     *      }
-     */
-    parseTransformAttr: function(attributes) {
-        var b={};
-        for (var i in attributes = attributes.match(/(\w+\((\-?\d+\.?\d*,?)+\))+/g)) // for all valid attributes (including negative and decimal)
-        {
-            var c = attributes[i].match(/[\w\.\-]+/g); // Split transform name and values into array
-            b[c.shift()] = c; // First item is name, equal to array of values left
-        }
-        return b;
     },
 
 //+++++++++++++++++++++++++++++++++++++++++++++++    EVENT HANDLERS    +++++++++++++++++++++++++++++++++++++++++++++++\\
