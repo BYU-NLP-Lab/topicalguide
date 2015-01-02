@@ -367,6 +367,9 @@ var TopicsOverTimeView = DefaultView.extend({
             }
         }
         
+        this.settingsModel.set({ metadataOptions: _.keys(text) });
+        //console.log(this.settingsModel.get("metadataOptions"));
+
         if(type === "text") {
             var domain = [];
             for(k in text) domain.push(k);
@@ -839,7 +842,6 @@ var TopicsOverTimeView = DefaultView.extend({
             .attr("class", "bar")
             .attr("x", function(d) { return xScale(d.meta); })
             .attr("y", yScale(yInfo.min))
-    //        .attr("data-legend", function(d) { return data[d.meta][d.index].doc_id; })
             .attr("width", barWidth)
             .attr("height", 0)
             .style("padding", 10)
@@ -848,7 +850,6 @@ var TopicsOverTimeView = DefaultView.extend({
             .style("stroke", "white")
             .style("stroke-opacity", 0.3)
             .on("mouseover", function(d) {
-    //            that.tip.offset([-1*(d3.event.pageY*(70.0/840)), 0]);
                 that.tip.show(d);
                 d3.select(this).style("fill", "red");
             })
@@ -914,7 +915,7 @@ var TopicsOverTimeView = DefaultView.extend({
         //console.log(topics);
         for (var topicId in raw_topics) {
             var topic = topics[topicId];
-            var metaTopic = topic[this.settingsModel.get("metadataSelection")] // TODO make this switchable GENERALIZED
+            var metaTopic = topic[this.settingsModel.get("metadataSelection")];
             var indices = metaTopic.metaIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
             indices.topicId = topicId;
             data = metaTopic.data;
@@ -1076,7 +1077,6 @@ var TopicsOverTimeView = DefaultView.extend({
         var height = dim.height;
         var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
         var yInfo = this.yInfo;
-//      var bottomMargin = this.margins.bottom;
 
     // Make transparent and transition y and height to 0
     var bars = this.svg.selectAll(".bar")
@@ -1139,7 +1139,7 @@ var TopicsOverTimeView = DefaultView.extend({
         // Get data objects
         var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
         var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
-        var topics = this.model.attributes.topics;
+        var topics = this.model.get("topics");
         var topicSelection = this.settingsModel.get("topicSelection");
         var selectedMetadata = this.settingsModel.get("metadataSelection");
         var colors = this.model.get("colorSpectrum");
@@ -1157,11 +1157,19 @@ var TopicsOverTimeView = DefaultView.extend({
             .interpolate("basis")
             .x(function(d, i) { return xScale(d.meta); })
             .y(function(d, i) { var data = topics[topicId][selectedMetadata].data;
+                                //console.log(d, data, data[d.meta]);
                                 return yScale(data[d.meta].totalProbability);
                             });
 
+        var topic = topics[topicId];
+        var metaTopic = topic[this.settingsModel.get("metadataSelection")]
+        var indices = metaTopic.metaIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
+        indices.topicId = topicId;
+        data = metaTopic.data;
+
         var data = this.model.get("topics");
         path
+            .datum(indices)
             .attr("data-legend", function(d) { return data[topicId].name; })
             .style("stroke", function(d) { return colorScale(delayOrder); })
             .on("click", function(d) {
@@ -1250,7 +1258,7 @@ var TopicsOverTimeView = DefaultView.extend({
 
     /**
      * Formats the data for the selected topic
-     * Sorts year indices array in ascending order
+     * Sorts indices array in ascending order
      *
      * Precondition: Given topic exists in the dataset
      * Precondition: Documents object has been initialized from data
@@ -1329,7 +1337,7 @@ var TopicsOverTimeView = DefaultView.extend({
                     if (index === "totalProbability") continue;
                     var value = values[index];
                     var metaIndex = { meta : datum,
-                                        index: parseInt(index) };
+                                      index: parseInt(index) };
                     indices.push(metaIndex);
                 }
             }
@@ -1340,6 +1348,8 @@ var TopicsOverTimeView = DefaultView.extend({
             var meta = metadata_list[i];
             topicData[meta].metaIndices.sort(function(a, b) {
                 var order = d3.ascending(a.meta, b.meta);
+                if (!isNaN(a.meta - b.meta))
+                    order = a.meta - b.meta;
                 if (order === 0) {
                     order = d3.ascending(a.index, b.index);
                 }
