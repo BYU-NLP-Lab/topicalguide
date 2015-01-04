@@ -139,7 +139,7 @@ var TopicsOverTimeView = DefaultView.extend({
 
         // Get Metadata options
         var metadataSelect = this.metadataSelect = controls.select("#metadata-control");
-        var metadata = this.model.attributes.metadata_types;
+        var metadata = this.model.get("metadata_types");
         var defaultMetadata = null;
         for (index in metadata) {
             var type = metadata[index];
@@ -1156,7 +1156,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var documents = {};
         var topics = {};
         var raw_topics = {};
-        var metadata_types = [];
+        var metadataInfo = {};
         if ('topics' in analysisData && 'documents' in analysisData) {
             raw_topics = analysisData.topics;
             documents = analysisData.documents;
@@ -1164,13 +1164,14 @@ var TopicsOverTimeView = DefaultView.extend({
                 documents[doc].topics = this.normalizeTopicPercentage(documents[doc].topics);
             }
             this.normalizeDocumentPercentage(documents);
+            metadataInfo = this.getMetadataInfo(documents);
 
             for (topic in analysisData.topics) {
                 processedTopic = this.processTopicData(topic, documents);
-                topics[topic] = processedTopic.data
-                metadata_types = _.union(processedTopic.metadata, metadata_types)
+                var topicData = topics[topic] = processedTopic.data
                 topics[topic].name = toTitleCase(analysisData.topics[topic].names.Top3);
             }
+
         }
         topics.min = -1;
         topics.max = -1;
@@ -1178,8 +1179,32 @@ var TopicsOverTimeView = DefaultView.extend({
             documents: documents,
             topics: topics,
             raw_topics: raw_topics,
-            metadata_types: metadata_types,
+            metadata_types: _.keys(metadataInfo),
+            metadataInfo: metadataInfo,
         }
+    },
+
+    getMetadataInfo: function(documents) {
+        var metadataInfo = {};
+        // loop through documents
+        for (var docId in documents) {
+            var doc = documents[docId];
+            // get document metadata
+            if (!("metadata" in doc)) continue;
+            var metadata = doc.metadata;
+            for (meta in metadata) {
+                // add metadata type to object
+                if (!(meta in metadataInfo))
+                    metadataInfo[meta] = [];
+                var info = metadataInfo[meta];
+
+                // add metadatum to object
+                var datum = metadata[meta];
+                if (info.indexOf(datum) <= 0)
+                    info.push(datum);
+            }
+        }
+        return metadataInfo;
     },
 
     /**
@@ -1205,10 +1230,7 @@ var TopicsOverTimeView = DefaultView.extend({
             var documentData = {};
             documentData.doc_id = doc_id;
             
-            // Preserve the document metadata in the top level of the document
-            if (!('metadata' in doc)) {
-                continue;
-            }
+            if (!("metadata" in doc)) continue;
 
             // Not all topics are defined for each document
             if (topicProbability !== undefined) {
@@ -1217,15 +1239,12 @@ var TopicsOverTimeView = DefaultView.extend({
                 documentData.probability = topicProbability;
                 var metadata = doc.metadata;
                 for (meta in metadata) {
-                    if (metadata_list.indexOf(meta) <= 0)
-                        metadata_list.push(meta);
-
                     if (!(meta in topicData)) { // initialize metadata for this topic
                         topicData[meta] = {};
                         topicData[meta].data = {};
                         topicData[meta].metaIndices = [];
-                        topicData[meta].min = -1;
-                        topicData[meta].max = -1;
+                        topicData[meta].topicMin = -1;
+                        topicData[meta].topicMax = -1;
                     }
 
                     var data = topicData[meta].data;
@@ -1241,11 +1260,11 @@ var TopicsOverTimeView = DefaultView.extend({
                     metaData.totalProbability += documentData.probability;
                     metaData.push(documentData);
 
-                    if (topicData[meta].min === -1 || topicData[meta].min > metaData.totalProbability)
-                        topicData[meta].min = metaData.totalProbability
+                    if (topicData[meta].topicMin === -1 || topicData[meta].topicMin > metaData.totalProbability)
+                        topicData[meta].topicMin = metaData.totalProbability
                     
-                    if (topicData[meta].max === -1 || topicData[meta].max < metaData.totalProbability)
-                        topicData[meta].max = metaData.totalProbability;
+                    if (topicData[meta].topicMax === -1 || topicData[meta].topicMax < metaData.totalProbability)
+                        topicData[meta].topicMax = metaData.totalProbability;
 
                 }
             }
@@ -1277,14 +1296,14 @@ var TopicsOverTimeView = DefaultView.extend({
                     indices.push(metaIndex);
                 }
             }
-            topicMeta.singleMin = min;
-            topicMeta.singleMax = max;
+            topicMeta.docMin = min;
+            topicMeta.docMax = max;
         }
 
         // How do we sort metadata values?
-        for (i in metadata_list) {
-            var meta = metadata_list[i];
-            topicData[meta].metaIndices.sort(function(a, b) {
+        for (meta in topicData) {
+            var topicMeta = topicData[meta];
+            topicMeta.metaIndices.sort(function(a, b) {
                 var order = d3.ascending(a.meta, b.meta);
                 if (!isNaN(a.meta - b.meta))
                     order = a.meta - b.meta;
@@ -1294,10 +1313,10 @@ var TopicsOverTimeView = DefaultView.extend({
                 return order;
             });
         }
+            console.log(indices);
 
         return {
             data: topicData,
-            metadata: metadata_list
         }
     },
 
@@ -1361,33 +1380,57 @@ var TopicsOverTimeView = DefaultView.extend({
 
         var min = -1;
         var max = -1;
-        var topicData = this.model.get("topics");
+        var topics = this.model.get("topics");
         var selectedMetadata = this.settingsModel.get("metadataSelection");
         var selectedTopicData = this.settingsModel.get("selectedTopicData");
         var graphType = this.settingsModel.get("graphType");
 
-        var minKey = "min";
-        var maxKey = "max";
+        var minKey = "topicMin";
+        var maxKey = "topicMax";
         if (topicIds.length === 0) {
             topicIds = _.keys(this.model.get("raw_topics"));
         }
         else if (topicIds.length === 1 && graphType === "Overlaid") {
-            minKey = "singleMin";
-            maxKey = "singleMax";
+            minKey = "docMin";
+            maxKey = "docMax";
         }
         else if (topicIds.length > 1 && graphType === "Stacked") {
-            // handle stacked lines
+            return this.getMinMaxAggregatedTopicMetadata(topics, topicIds, selectedMetadata);
         }
 
         for (var index in topicIds) {
             var topicId = topicIds[index];
             // Get min and max probability for the given topic
-            if (min === -1 || min > topicData[topicId][selectedMetadata][minKey])
-                min = topicData[topicId][selectedMetadata][minKey];
+            if (min === -1 || min > topics[topicId][selectedMetadata][minKey])
+                min = topics[topicId][selectedMetadata][minKey];
 
-            if (max === -1 || max < topicData[topicId][selectedMetadata][maxKey])
-                max = topicData[topicId][selectedMetadata][maxKey];
+            if (max === -1 || max < topics[topicId][selectedMetadata][maxKey])
+                max = topics[topicId][selectedMetadata][maxKey];
         }
+
+        return { min: min,
+                 max: max };
+    },
+
+    getMinMaxAggregatedTopicMetadata: function(topics, topicIds, metadataSelection) {
+        var info = this.model.get("metadataInfo")[meta];
+        var min, max;
+        min = max = -1;
+        for (datum in info) {
+            var datumTotal = 0;
+            for (var topicId in topicIds) {
+                console.log(topicId, meta, datum, topics[topicId][meta]);
+                var topicData = topics[topicId][meta].data;
+                if (!(datum in topicData)) continue;
+                var prob = topicData[datum].totalProbability;
+                datumTotal += prob;
+            }
+            if (min === -1 || min > datumTotal)
+                min = datumTotal;
+            if (max === -1 || max < datumTotal)
+                max = datumTotal;
+        }
+        console.log(min, max);
 
         return { min: min,
                  max: max };
