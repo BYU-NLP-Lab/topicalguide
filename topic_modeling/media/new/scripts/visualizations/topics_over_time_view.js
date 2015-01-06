@@ -47,7 +47,7 @@ var TopicsOverTimeView = DefaultView.extend({
             "documents": "*",
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
-            "document_limit": 50,
+            "document_limit": 5000,
 //            "document_seed": 0,
         };
     },
@@ -972,7 +972,9 @@ var TopicsOverTimeView = DefaultView.extend({
                 return x
             })
             .attr("y", function(d) {
-                var probability = data[d.meta][d.index].probability;
+                var probability = 0;
+                if (d.index in data[d.meta])
+                    probability = data[d.meta][d.index].probability;
                 data[d.meta].forEach(function(value, index, array) { // Get cumulative value (stack 'em up)
                     if (graphType !== "Overlaid") {
                         if (index < d.index) probability += value.probability;
@@ -980,7 +982,12 @@ var TopicsOverTimeView = DefaultView.extend({
                 });
                 return yScale(probability);
             })
-            .attr("height", function(d) { return yScale(yInfo.min) - yScale(data[d.meta][d.index].probability); })
+            .attr("height", function(d) {
+                var probability = 0;
+                if (d.index in data[d.meta])
+                    probability = data[d.meta][d.index].probability;
+                return yScale(yInfo.min) - yScale(probability); 
+                })
             .attr("width", function(d) {
                 var width = barWidth;
                 if (graphType === "Overlaid") width -= 2*d.index;
