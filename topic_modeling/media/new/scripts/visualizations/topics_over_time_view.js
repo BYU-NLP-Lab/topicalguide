@@ -367,12 +367,12 @@ var TopicsOverTimeView = DefaultView.extend({
         }
         
         this.settingsModel.set({ metadataOptions: _.keys(text) });
-        //console.log(this.settingsModel.get("metadataOptions"));
 
         if(type === "text") {
             var domain = [];
             for(var k in text) domain.push(k);
             domain.sort();
+            domain.push("");
             text = domain;
         }
         
@@ -387,7 +387,7 @@ var TopicsOverTimeView = DefaultView.extend({
         
         return {
             min: min, 
-            max: max, 
+            max: max+1, 
             avg: avg,
             type: type, 
             text: text, 
@@ -595,6 +595,7 @@ var TopicsOverTimeView = DefaultView.extend({
             .style({ "text-anchor": "middle", "dominant-baseline": "hanging" })
             .text(xInfo.title);
         
+        //d3.select(this.svg.selectAll("#x-axis text")[0].pop()).remove();
         // Transition scatter plot.
         this.plot.transition()
             .duration(transitionDuration)
@@ -953,10 +954,10 @@ var TopicsOverTimeView = DefaultView.extend({
 
         var dim = this.model.attributes.dimensions;
         var yInfo = this.yInfo;
+        var xInfo = this.xInfo;
         var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
         var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
         var height = dim.height;
-//        var bottomMargin = this.margins.bottom;
         var selectedMetadata = this.settingsModel.get("metadataSelection");
         var data = this.settingsModel.get("selectedTopicData")[selectedMetadata].data;
         var graphType = this.settingsModel.get("graphType");
@@ -966,11 +967,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var bars = this.svg.selectAll(".bar")
             .transition().duration(duration)
             .style("opacity", 1)
-            .attr("x", function(d) {
-                var x = xScale(d.meta);
-                if (graphType === "Overlaid") x += 2*d.index;
-                return x
-            })
+            .attr("x", function(d) { return xScale(d.meta); })
             .attr("y", function(d) {
                 var probability = 0;
                 if (d.index in data[d.meta])
@@ -990,7 +987,8 @@ var TopicsOverTimeView = DefaultView.extend({
                 })
             .attr("width", function(d) {
                 var width = barWidth;
-                if (graphType === "Overlaid") width -= 2*d.index;
+                if (graphType === "Overlaid")
+                    width = width - 2*d.index < 2 ? 2 : width - 2*d.index;
                 return width;
             })
     },
