@@ -4,6 +4,7 @@ MAINTAINER Ethan Garofolo <ethan@suchsoftware.com>
 RUN useradd web -d /home/web -s /bin/bash
 RUN yum install -y \
   automake \
+  blas-devel \
   blas \ 
   curl-devel \
   expat-devel \
@@ -13,6 +14,7 @@ RUN yum install -y \
   git \
   ipython \
   java-1.7.0-openjdk \
+  lapack-devel \
   make \
   numpy \
   openssl-devel \
