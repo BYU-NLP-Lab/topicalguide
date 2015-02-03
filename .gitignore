@@ -14,5 +14,5 @@ yamba
 datasets/
 /Main.vim.sess
 /tg.sqlite3
-/topic_modeling/settings.py
+/topicalguide/settings.py
 /working/

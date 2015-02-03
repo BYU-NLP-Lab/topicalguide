@@ -1,4 +1,0 @@
-readable_name: Unicode Testing
-description: The dataset is strictly for making sure that unicode datasets don't break import or the web application.
-creator: Craig Jacobson
-source: Google translate. Google famous story teller collaboration.
