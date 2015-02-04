@@ -1,7 +1,7 @@
-from __future__ import print_function
-
+from __future__ import division, print_function, unicode_literals
 import os
 import re
+from DateTime import DateTime
 from HTMLParser import HTMLParser
 
 
@@ -98,9 +98,14 @@ def get_type(value):
         return 'float'
     except:
         pass
-    value = value.lower()
-    if value == 'true' or value == 'false' or value == 't' or value == 'f':
+    lower_value = value.lower()
+    if lower_value == 'true' or lower_value == 'false' or lower_value == 't' or lower_value == 'f':
         return 'bool'
+    try:
+        DateTime(value)
+        return 'datetime'
+    except:
+        pass
     return 'text'
 
 def collect_types(metadata_types, metadata):
@@ -116,11 +121,13 @@ def collect_types(metadata_types, metadata):
         if not meta_key in metadata_types:
             metadata_types[meta_key] = t
         else:
-            if not metadata_types[meta_key] == t:
+            if not metadata_types[meta_key] == t and metadata_types[meta_key] != 'text':
                 if t == 'float' and metadata_types[meta_key] == 'int':
                     metadata_types[meta_key] = 'float'
                 elif t == 'int' and metadata_types[meta_key] == 'float':
                     pass
+                elif t == 'text' and metadata_types[meta_key] == 'date':
+                    metadata_types[meta_key] = 'date'
                 else:
                     metadata_types[meta_key] = 'text'
 
@@ -143,7 +150,7 @@ def create_subdocuments(name, content, major_delimiter='\n', min_chars=1000):
         subdoc_number += 1
     
     while content != '':
-        content = content.strip()
+        #~ content = content.strip()
         index = 0
         while index < min_chars:
             index = content.find(major_delimiter, index + 1)
