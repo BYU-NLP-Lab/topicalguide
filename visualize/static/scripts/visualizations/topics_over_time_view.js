@@ -47,8 +47,7 @@ var TopicsOverTimeView = DefaultView.extend({
             "documents": "*",
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
-            "document_limit": 5000,
-//            "document_seed": 0,
+            "document_limit": 1000,
         };
     },
     
@@ -1182,9 +1181,8 @@ var TopicsOverTimeView = DefaultView.extend({
             }
 
         } else {
-            colsole.log('here');
+            console.log('Error with data returned from server');
         }
-        console.log(topics);
         topics.min = 0;
         topics.max = 0;
         return {
@@ -1377,7 +1375,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var tokenCounts = {};
         for (var doc_id in documents) {
             var doc = documents[doc_id];
-            var tokenCount = doc.metrics['Number of tokens'];
+            var tokenCount = doc.metrics['Token Count'];
             for (var topic_id in doc.topics) {
                 var percentage = doc.topics[topic_id];
                 var topicTokenCount = percentage * tokenCount;
@@ -1391,7 +1389,7 @@ var TopicsOverTimeView = DefaultView.extend({
         }
         for (var doc_id in documents) {
             var doc = documents[doc_id];
-            var tokenCount = doc.metrics['Number of tokens'];
+            var tokenCount = doc.metrics['Token Count'];
             for (var topic_id in doc.topics) {
                 var percentage = doc.topics[topic_id];
                 var topicTokenCount = percentage * tokenCount;
@@ -1448,8 +1446,6 @@ var TopicsOverTimeView = DefaultView.extend({
 
                 for (var index in topicIds) {
                     var topicId = topicIds[index];
-                    console.log("Selected metadata");
-                    console.log(selectedMetadata);
                     // Get min and max probability for the given topic
                     if (min === 0 || min > topics[topicId][selectedMetadata][minKey])
                         min = topics[topicId][selectedMetadata][minKey];
