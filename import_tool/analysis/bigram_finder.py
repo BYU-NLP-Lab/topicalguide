@@ -10,6 +10,7 @@ import scipy.stats as stats
 from StringIO import StringIO
 
 
+# Based on Chapter 5 of "Foundations of Statistical Natural Language Processing"
 class BigramFinder(object):
     """BigramFinder uses likelihood ratios to determine bigrams.
     This BigramFinder is made for the English language.

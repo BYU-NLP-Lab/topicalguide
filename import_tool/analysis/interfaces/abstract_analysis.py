@@ -74,6 +74,9 @@ class AbstractAnalysis(object):
         token_abstraction -- unicode string representing a type, e.g. the stem of the word
         topic_number_list -- a list of topic numbers
         Note that all 'token_index's must be returned in order.
+        WARNING! The token and token_abstraction unicode strings cannot exceed the maximum
+        character limit in the database. See MAX_TOKEN_LENGTH in import_system_utilities.py or
+        as a rule of thumb keep token lengths less than 64 characters.
         """
         raise NotImplementedError('get_token_iterator is not implemented')
     

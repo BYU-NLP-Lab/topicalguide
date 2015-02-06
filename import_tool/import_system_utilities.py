@@ -29,7 +29,9 @@ from analysis.name_schemes.tf_itf import TfitfTopicNamer
 from metadata.utilities import get_all_metadata_types
 from visualize.models import *
 
-DATABASE_OPTIMIZE_DEBUG = False # settings.DEBUG
+DATABASE_OPTIMIZE_DEBUG = settings.DEBUG
+
+MAX_TOKEN_LENGTH = WordType._meta.get_field('word').max_length
 
 TOKEN_REGEX = u"(([^\\W])+([-'\u2019,])?)+([^\\W])+"
 BASIC_DATASET_METRICS = [
@@ -262,6 +264,8 @@ def check_analysis(database_id, dataset_name, analysis, directories,
             assert token_abstraction != None
             assert token in word_types_db or token in new_word_types
             assert token_abstraction in word_types_db or token_abstraction in new_word_types
+            assert len(token) < MAX_TOKEN_LENGTH, 'Max length of token strings is %d.'%(MAX_TOKEN_LENGTH)
+            assert len(token_abstraction) < MAX_TOKEN_LENGTH, 'Max length of token abstraction strings is %d.'%(MAX_TOKEN_LENGTH)
             for topic_num in topic_number_list:
                 if topic_num not in topics:
                     topics[topic_num] = True

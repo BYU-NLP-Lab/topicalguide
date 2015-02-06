@@ -220,7 +220,6 @@ var SingleTopicView = DefaultView.extend({
             "analyses": selections["analysis"],
             "topics": selections["topic"],
             "topic_attr": "top_n_words",
-            "word_metrics": "token_count",
             "words": "*",
             "top_n_words": "10",
         }, function(data) {
@@ -365,7 +364,6 @@ var SingleTopicView = DefaultView.extend({
             "topic_attr": "top_n_words",
             "words": "*",
             "top_n_words": 100,
-            "word_metrics": "token_count",
         }, function(data) {
             // Containers.
             content.html("");
@@ -560,7 +558,6 @@ var SingleTopicSubView = DefaultView.extend({
             "topics": '*',
             "topic_attr": "metrics,names",
             "analysis_attr": "metrics",
-            "word_metrics": "token_count",
         }, function(data) { // Render the content
             container.html(this.dropdownTemplate);
             

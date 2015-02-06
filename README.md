@@ -43,6 +43,9 @@ Insert your generated `SECRET_KEY` where it says
 Third, set your database settings. You could use sqlite, which is configured for you. 
 If you want to use Postgres there are instructions below for setting it up on Fedora.
 
+Fourth, set `DEBUG = True` to use the developement server.
+If DEBUG is set to False then ALLOWED_HOSTS must be set. See Django's documentation for further details.
+
 Optionally, configure other various django options.
 
 ### 4. Import a Dataset

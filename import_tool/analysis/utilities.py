@@ -8,6 +8,7 @@ from django.db.models import Max
 from import_tool.metadata.utilities import create_metadata_types, create_metadata
 
 MAX_TOKENS_IN_MEMORY = 500000
+MAX_TOKEN_LENGTH = WordType._meta("word").max_length
 
 def get_all_word_types(database_id):
     """Return a dictionary mapping word_types as unicode strings to the
@@ -115,6 +116,9 @@ def create_tokens(database_id, analysis_db, word_types_db, tokens, verbose=False
         token_index = 0
         prev_document_index = None
         for document_index, start_index, token, token_abstraction, topic_number_list in tokens:
+            if len(token) > MAX_TOKEN_LENGTH or len(token_abstraction) > MAX_TOKEN_LENGTH:
+                continue
+            
             if prev_document_index != document_index:
                 prev_document_index = document_index
                 token_index = 0
