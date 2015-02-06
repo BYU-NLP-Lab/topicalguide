@@ -29,7 +29,7 @@ from analysis.name_schemes.tf_itf import TfitfTopicNamer
 from metadata.utilities import get_all_metadata_types
 from visualize.models import *
 
-DATABASE_OPTIMIZE_DEBUG = settings.DEBUG
+DATABASE_OPTIMIZE_DEBUG = True # settings.DEBUG
 
 MAX_TOKEN_LENGTH = WordType._meta.get_field('word').max_length
 
@@ -436,9 +436,9 @@ def run_metrics(database_id, dataset_name, analysis_name, metrics):
         run_metric(database_id, dataset_db, analysis_db, metrics_db, all_tables[metric_name], all_metrics[metric_name], all_metrics_exists[metric_name])
         if DATABASE_OPTIMIZE_DEBUG:
             print("%s made %d queries."%(metric_name, len(con.queries) - query_count))
-            if (len(con.queries) - query_count) > 10:
-                for query in con.queries[query_count:]:
-                    print(query)
+            #~ if (len(con.queries) - query_count) > 10:
+                #~ for query in con.queries[query_count:query_count+3]:
+                    #~ print(query)
 
 # Warning! This code hasn't been updated.
 # The purpose was to remove metrics from a dataset/analysis.

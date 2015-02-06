@@ -8,7 +8,7 @@ from django.db.models import Max
 from import_tool.metadata.utilities import create_metadata_types, create_metadata
 
 MAX_TOKENS_IN_MEMORY = 500000
-MAX_TOKEN_LENGTH = WordType._meta("word").max_length
+MAX_TOKEN_LENGTH = WordType._meta.get_field('word').max_length
 
 def get_all_word_types(database_id):
     """Return a dictionary mapping word_types as unicode strings to the
