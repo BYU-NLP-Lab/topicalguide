@@ -95,7 +95,6 @@ var AllTopicSubView = DefaultView.extend({
             "top_n_words": settings["topicTopNWords"],
             "topic_attr": ["metrics", "names", "top_n_words"],
             "analysis_attr": "metrics",
-            "word_metrics": "token_count",
         }, function(data) {
             container.html("");
             

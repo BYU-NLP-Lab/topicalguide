@@ -475,7 +475,7 @@ class TopicName(models.Model):
 
 class WordType(models.Model):
     """This stores how a word is spelled."""
-    word = models.CharField(max_length=64, unique=True)
+    word = models.CharField(max_length=255, unique=True)
     
     def __unicode__(self):
         return unicode(self.word)
