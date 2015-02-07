@@ -26,6 +26,11 @@ Dependencies are listed in the `requirements.txt` file and can be easily install
 
     pip install -r requirements.txt
 
+If you want to use the word stemmer then run the following:
+    
+    cd tools/stemmer/
+    ./make_english_stemmer.sh
+
 ### 3. Create Settings
 
 In order for django to run it needs `settings.py` to be created.
