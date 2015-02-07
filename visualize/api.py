@@ -86,7 +86,6 @@ OPTIONS_FILTERS = {
     "document_seed": get_filter_int(),
     "document_limit": get_filter_int(low=1, high=MAX_DOCUMENTS_PER_REQUEST),
     
-    "word_metrics": filter_set_to_list,
     "token_indices": filter_set_to_list,
 }
 

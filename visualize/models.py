@@ -268,9 +268,6 @@ class Document(models.Model):
         Note that the end index can be inferred by the word length and is thus omitted.
         Return a dictionary of the form result[word] = [(topic, start_index), ...].
         """
-        if not self.public_documents:
-            return {}
-        
         if words == '*':
             tokens = self.tokens.filter(topics__analysis=analysis)
         else:
@@ -475,7 +472,7 @@ class TopicName(models.Model):
 
 class WordType(models.Model):
     """This stores how a word is spelled."""
-    word = models.CharField(max_length=64, unique=True)
+    word = models.CharField(max_length=128, unique=True)
     
     def __unicode__(self):
         return unicode(self.word)

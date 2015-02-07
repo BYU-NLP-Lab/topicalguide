@@ -26,6 +26,11 @@ Dependencies are listed in the `requirements.txt` file and can be easily install
 
     pip install -r requirements.txt
 
+If you want to use the word stemmer then run the following:
+    
+    cd tools/stemmer/
+    ./make_english_stemmer.sh
+
 ### 3. Create Settings
 
 In order for django to run it needs `settings.py` to be created.
@@ -42,6 +47,9 @@ Insert your generated `SECRET_KEY` where it says
 
 Third, set your database settings. You could use sqlite, which is configured for you. 
 If you want to use Postgres there are instructions below for setting it up on Fedora.
+
+Fourth, set `DEBUG = True` to use the developement server.
+If DEBUG is set to False then ALLOWED_HOSTS must be set. See Django's documentation for further details.
 
 Optionally, configure other various django options.
 
