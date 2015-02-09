@@ -29,7 +29,7 @@ from analysis.name_schemes.tf_itf import TfitfTopicNamer
 from metadata.utilities import get_all_metadata_types
 from visualize.models import *
 
-DATABASE_OPTIMIZE_DEBUG = True # settings.DEBUG
+DATABASE_OPTIMIZE_DEBUG = False # settings.DEBUG
 
 MAX_TOKEN_LENGTH = WordType._meta.get_field('word').max_length
 
