@@ -80,7 +80,7 @@ OPTIONS_FILTERS = {
     
     "topic_pairwise": filter_set_to_list,
     "top_n_documents": get_filter_int(low=0),
-    "top_n_words": get_filter_int(low=0),
+    "top_n_words": get_filter_int(low=1),
     
     "document_continue": get_filter_int(low=0),
     "document_seed": get_filter_int(),
@@ -271,11 +271,28 @@ def query_topics(options, dataset_db, analysis_db):
             
             topics[topic_db.number] = attributes
     
-        # An attempt at getting token counts faster by using one or two queries.
-        #~ if 'top_n_words' in topic_attr and 'words' in options and 'top_n_words' in options:
+        # Two attempts at getting token counts faster by using one or two queries.
+        #~ if 'top_n_words' in topic_attr and 'words' in options and options['words'] == '*' and 'top_n_words' in options:
             #~ topics_queryset = topics_queryset.prefetch_related('tokens', 'tokens__word_type')
             #~ temp = topics_queryset.values('number', 'tokens__word_type__word').annotate(count=Count('tokens__word_type__word')).order_by('-count')
             #~ topics['temp'] = [[value['number'], value['tokens__word_type__word'], value['count']] for value in temp]
+        #~ if 'top_n_words' in topic_attr and 'words' in options and 'top_n_words' in options:
+            #~ words = options['words']
+            #~ top_n = options['top_n_words']
+            #~ topic_words = analysis_db.tokens.values('topics__number', 'word_type__word').annotate(count=Count('word_type__word'))
+            #~ if words != '*':
+                #~ topic_words = topic_words.filter(word_type__word__in=words)
+            #~ topic_words = topic_words.order_by('topics__number', '-count')
+            #~ topic_top_n_words = {}
+            #~ topic_counts = {}
+            #~ for row in topic_words:
+                #~ topic_num = row['topics__number']
+                #~ if topic_num not in topic_top_n_words:
+                    #~ topic_top_n_words[topic_num] = {}
+                    #~ topic_counts[topic_num] = 0
+                #~ if topic_counts[topic_num] < top_n:
+                    #~ topic_top_n_words[topic_num][row['word_type__word']] = {'token_count': row['count']}
+                    #~ topic_counts[topic_num] += 1
     
     return topics
 
