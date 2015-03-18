@@ -63,7 +63,7 @@ var DataModel = Backbone.Model.extend({
      * errorCallback - The function called if there is an error message in the returned data.
      */
     submitQueryByHash: function(request, dataReadyCallback, errorCallback) {
-        var url = "api?" + hashToUrl(request);
+        var url = "/api?" + hashToUrl(request);
         this.submitQueryByUrl(url, dataReadyCallback, errorCallback);
     },
     
