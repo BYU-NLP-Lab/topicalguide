@@ -410,7 +410,7 @@ def query_documents(options, dataset_db, analysis_db):
                 attributes[attr] = DOCUMENT_ATTR[attr](document_db)
         
         if 'metrics' in document_attr:
-            attributes['metrics']['Length'] = document_db.length
+            attributes['metrics']['Length in Characters'] = document_db.length
         if 'top_n_topics' in options['document_attr'] and \
            options['documents'] == '*' and 'analyses' in options and options['analyses'] != '*':
             if document_db.id in top_n_topics:
