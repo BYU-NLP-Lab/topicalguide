@@ -41,7 +41,7 @@ var ChordView = DefaultView.extend({
     
     render: function() {
         if(!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
-            this.$el.html("<p>You should select a <a href=\"#\">dataset and analysis</a> before proceeding.</p>");
+            this.$el.html("<p>You should select a <a href=\"#datasets\">dataset and analysis</a> before proceeding.</p>");
             return;
         }
         this.$el.html(this.mainTemplate);

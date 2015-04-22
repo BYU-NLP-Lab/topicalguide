@@ -62,6 +62,7 @@ def root(request, *args, **kwargs):
     template_context = RequestContext(request, context)
     return HttpResponse(template.render(template_context))
 
+@never_cache
 @gzip_page
 def terms(request, *args, **kwargs):
     template = loader.get_template('terms.html')

@@ -35,24 +35,114 @@ globalUserModel = new UserModel();
 
 DEBUG_DATA_MODEL = true;
 /*
- * The DataModel is responsible for managing the dataset and analysis data locally.
- * The localStorage variable is used so other browser windows will have the same data available to them.
- * The data is stored as localStorage["data-"+requestUrl] = JSON.stringify(data).
+ * The DataModel is responsible for managing data requests and providing convenience functions.
  */
 var DataModel = Backbone.Model.extend({
     
-    // TODO the following requests are common enough that they should be be made convenient.
-    // Maybe even pre-load the information.
-    getDatasetsAndAnalyses: function() {
+    datasetsAndAnalyses: null,
+    datasetAndAnalysesError: false,
+    
+    /**
+     * Loads commonly needed data, storing the data locally.
+     */
+    loadDatasetsAndAnalyses: function(dataReadyCallback, errorCallback) {
+        var that = this;
+        var query = {
+            "datasets": "*",
+            "analyses": "*",
+            "dataset_attr": ["metadata", "metrics"],
+            "analysis_attr": ["metadata", "metrics"],
+        };
+        this.datasetAndAnalysesError = false;
+        if(dataReadyCallback === null || dataReadyCallback === undefined ||
+           errorCallback === null || errorCallback === undefined) {
+            this.submitQueryByHash(query, function(data) {
+                that.datasetsAndAnalyses = data['datasets'];
+            }, function(error) {
+                that.datasetAndAnalysesError = true;
+            });
+        } else {
+            this.submitQueryByHash(query, function(data) {
+                that.datasetsAndAnalyses = data['datasets'];
+                dataReadyCallback(that.datasetsAndAnalyses);
+            }, function(error) {
+                that.datasetAndAnalysesError = true;
+                errorCallback(error);
+            });
+        }
     },
     
+    /**
+     * This method becomes synchronous if either of both arguments are not defined.
+     * Return an object with all of the datasets and analyses, as well as metadata and metrics.
+     */
+    getDatasetsAndAnalyses: function(dataReadyCallback, errorCallback) {
+        if(this.datasetsAndAnalyses !== null) {
+            dataReadyCallback(this.datasetsAndAnalyses);
+        } else {
+            this.loadDatasetsAndAnalyses(dataReadyCallback, errorCallback);
+        }
+    },
+    
+    /**
+     * Return true if there was no error.
+     */
+    synchronousLoadDatasetsAndAnalyses: function() {
+        this.loadDatasetsAndAnalyses();
+        for(var i = 0; i < 100 && this.datasetsAndAnalyses === null && !this.datasetsAndAnalysesError; i++) {
+            setTimeout(function(){}, 100);
+        }
+        if(this.datasetsAndAnalyses === null || this.datasetsAndAnalysesError) {
+            return false;
+        } else {
+            return true;
+        }
+    },
+    
+    /**
+     * Synchronous method to get dataset names.
+     * Return list of available datasets; empty list if none or error.
+     */
     getDatasetNames: function() {
+        var success = true;
+        if(this.datasetsAndAnalyses === null) {
+            success = this.synchronousLoadDatasetsAndAnalyses();
+        }
+        var result = [];
+        if(success) {
+            for(key in this.datasetsAndAnalyses) {
+                result.push(key);
+            }
+        } else {
+            reportReadableErrorToUser("Server request timed out.");
+        }
+        return result;
     },
     
-    getAnalysisNames: function() {
+    /**
+     * Synchronous method to get analysis names.
+     * Return list of available analyses; empty list if none or error.
+     */
+    getAnalysisNames: function(datasetName) {
+        var success = true;
+        if(this.datasetsAndAnalyses === null) {
+            success = this.synchronousLoadDatasetsAndAnalyses();
+        }
+        var result = [];
+        if(success) {
+            try {
+                for(key in this.datasetsAndAnalyses[datasetName].analyses) {
+                    result.push(key);
+                }
+            } catch(err) {}
+        } else {
+            reportReadableErrorToUser("Server request timed out.");
+        }
+        return result;
     },
     
-    getTopicNames: function() {
+    getTopicNames: function(dataset_name, analysis_name) {
+        
     },
     
     /*
@@ -75,35 +165,20 @@ var DataModel = Backbone.Model.extend({
      */
     submitQueryByUrl: function(url, dataReadyCallback, errorCallback) {
         if(DEBUG_DATA_MODEL) console.log(url);
-        var storageKey = "data-"+url;
-        if(hasLocalStorage() && storageKey in localStorage) {
-            dataReadyCallback(JSON.parse(localStorage[storageKey]));
-        } else {
-            d3.json(url, function(error, data) {
-                if(error !== null) {
-                    errorCallback("Odds are you couldn't connect to your server. Here is some error info: "+JSON.stringify(error));
-                } else if("error" in data) {
-                    errorCallback(data["error"]);
-                } else {
-                    if(hasLocalStorage()) {
-                        try {
-                            localStorage[storageKey] = JSON.stringify(data);
-                        } catch(e) {
-                            deletePrefixFromHash("data-", localStorage);
-                            try {
-                                localStorage[storageKey] = JSON.stringify(data);
-                            } catch(e) {}
-                        }
-                    }
-                    dataReadyCallback(data);
-                }
-            });
-        }
+        d3.json(url, function(error, data) {
+            if(error !== null) {
+                errorCallback("Odds are you couldn't connect to your server. Here is some error info: "+JSON.stringify(error));
+            } else if("error" in data) {
+                errorCallback(data["error"]);
+            } else {
+                dataReadyCallback(data);
+            }
+        });
     },
 });
 var globalDataModel = new DataModel();
 
-DEBUG_SELECITON_MODEL = false;
+DEBUG_SELECTION_MODEL = false;
 /*
  * The Selection Model is responsible for tracking which specific topic(s), document(s), or word(s) 
  * are selected. It is recommended that the setMany function is used when setting any attributes, 
@@ -133,7 +208,7 @@ var SelectionModel = Backbone.Model.extend({
      * new attribute.
      */
     set: function(attr, options) {
-        if(DEBUG_SELECITON_MODEL) console.log("SelectionModel.set before: " + hashToUrl(this.attributes));
+        if(DEBUG_SELECTION_MODEL) console.log("SelectionModel.set before: " + hashToUrl(this.attributes));
         // Some items need to trigger events such as change:topic if the dataset or analysis changes.
         // This function helps trigger those changes in attributes.
         var resetHelper = function (toSet, itemsToTrigger) {
@@ -162,10 +237,10 @@ var SelectionModel = Backbone.Model.extend({
             } else if("analysis" in toSet) {
                  resetHelper(toSet, ["topic"]);
             }
-            if(DEBUG_SELECITON_MODEL) console.log("SelectionModel.set middle: " + hashToUrl(this.attributes));
+            if(DEBUG_SELECTION_MODEL) console.log("SelectionModel.set middle: " + hashToUrl(this.attributes));
             Backbone.Model.prototype.set.call(this, toSet, options);
             this.trigger("multichange");
-            if(DEBUG_SELECITON_MODEL) console.log("SelectionModel.set after: " + hashToUrl(this.attributes));
+            if(DEBUG_SELECTION_MODEL) console.log("SelectionModel.set after: " + hashToUrl(this.attributes));
         }
     },
     
@@ -212,7 +287,7 @@ var FavoritesModel = Backbone.Model.extend({
         "analyses": true,
         "topics": true,
         "documents": true,
-        "words": true,
+        //~ "words": true, // Not currently used.
     },
     
     initialize: function() {

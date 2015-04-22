@@ -200,6 +200,12 @@ var EditFavoritesView = DefaultSettingsView.extend({
     },
 });
 
+/*
+ * This allows new views or code to be loaded by the user.
+ * It is disabled because there really isn't a need for it.
+ * Also, it poses potential security threats.
+ */
+/*
 var LoadScriptsView = DefaultSettingsView.extend({
     readableName: "Load Scripts",
     
@@ -255,6 +261,7 @@ var LoadScriptsView = DefaultSettingsView.extend({
         });
     },
 });
+*/
 
 // Add when the DOM is ready so the modal elements are present.
 $(function() {

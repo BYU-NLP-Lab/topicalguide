@@ -72,6 +72,23 @@ TEMPLATE_DIRS = [
     os.path.join(BASE_DIR, 'topicalguide', 'templates'),
 ]
 
+# Caching
+# https://docs.djangoproject.com/en/1.7/ref/settings/#caches
+
+if DEBUG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-topicalguide-memcache'
+        },
+    }
+else: # Not enabled by default on production servers
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        },
+    }
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 

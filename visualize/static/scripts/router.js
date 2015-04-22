@@ -76,6 +76,7 @@ var ViewModel = Backbone.Model.extend({
             this.currentView.render();
         } catch(err) {
             console.log("The following error occurred while trying to render the view: " + err);
+            console.log(err.stack);
         }
         
         
@@ -417,4 +418,5 @@ $(function startApplication() {
     navView.render();
     router = new Router();
     Backbone.history.start({ pushState: false });
+    globalDataModel.loadDatasetsAndAnalyses();
 });

@@ -29,7 +29,7 @@ from django.core.cache import cache # Get the 'default' cache.
 from django.views.decorators.http import require_GET
 from django.views.decorators.gzip import gzip_page
 from django.http import HttpResponse
-from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import cache_control, patch_cache_control
 from django.db import connections
 from topicalguide import settings
 from utils import reservoir_sample
@@ -66,6 +66,7 @@ def get_filter_int(low=-2147483648, high=2147483647):
     return filter_int
 
 # Specify how to filter the incoming request by "key: filter_function" pairs.
+# The filter_function must throw an error on invalid values or return sanitized values.
 OPTIONS_FILTERS = {
     "datasets": filter_set_to_list,
     "analyses": filter_set_to_list,
@@ -89,12 +90,12 @@ OPTIONS_FILTERS = {
     "token_indices": filter_set_to_list,
 }
 
-# Filter the incoming get request.
-def filter_request(get, filters):
+# Filter the incoming request.
+def filter_request(request_keys, filters):
     result = {}
-    for key in get:
+    for key in request_keys:
         if key in filters:
-            result[key] = filters[key](get[key])
+            result[key] = filters[key](request_keys[key])
         else:
             raise Exception("No such value as "+key)
     return result
@@ -102,51 +103,68 @@ def filter_request(get, filters):
 # The following line is commented out to prevent browsers from caching requests during development.
 # @cache_control(must_revalidate=True, max_age=3600) # Upstream caches must revalidate every hour.
 @gzip_page
-@require_GET # TODO allow POST
+@require_GET # TODO allow POST for users
 def api(request):
     """
     This is the main gateway for retrieving data.
     Only publicly available data is accessible through this api.
     """
-    # Check the cache.
+    # Variables used to control caching
     path = request.get_full_path()
-    DJANGO_CACHE_KEY_LENGTH_LIMIT = 250
-    if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and cache.has_key(path):
-        return HttpResponse(cache.get(path), content_type='application/json')
-    start_time = time.time()
-    
-    if DEBUG:
-        con = connections['default']
-        query_count = len(con.queries)
-    
-    # Generate the response.
-    GET = request.GET
-    options = filter_request(GET, OPTIONS_FILTERS)
-    result = {}
-    try:
-        if 'datasets' in options:
-            result['datasets'] = query_datasets(options)
-    except Exception as e:
-        result['error'] = str(e)
-        if DEBUG:
-            raise
-    
-    # Cache the request, if it is time consuming.
-    # Don't cache anything requesting all datasets or all analyses.
-    total_time = time.time() - start_time
+    options = filter_request(request.GET, OPTIONS_FILTERS)
     request_containing_all = ('datasets' in options and options['datasets'] == '*') or \
                              ('analyses' in options and options['analyses'] == '*')
+    DJANGO_CACHE_KEY_LENGTH_LIMIT = 250
     
-    if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and not request_containing_all and not DEBUG:
-        if total_time > 1: # if the request takes longer than a second
+    if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and cache.has_key(path): # Check the cache.
+        if DEBUG: print('API request hit cache.')
+        response = HttpResponse(cache.get(path), content_type='application/json')
+    else:
+        start_time = time.time()
+        
+        if DEBUG:
+            con = connections['default']
+            query_count = len(con.queries)
+        
+        # Generate the response.
+        result = {}
+        try:
+            if 'datasets' in options:
+                result['datasets'] = query_datasets(options)
+        except Exception as e:
+            result['error'] = str(e)
+            if DEBUG:
+                raise
+        
+        # SERVER CACHING
+        # Cache the request, if it is time consuming.
+        # Don't cache anything requesting all datasets or all analyses.
+        # Requests for all datasets/analyses are not cached so new versions can be detected.
+        # Requests for all datasets/analyses are limited so this won't cause the server to get bogged down.
+        total_time = time.time() - start_time
+        
+        
+        if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and not request_containing_all:
+            # if total_time > 0.5: # if the request takes longer than a second
             cache.set(path, json.dumps(result))
+        
+        if DEBUG:
+            stats = {}
+            stats['query_count'] = len(con.queries) - query_count
+            stats['queries'] = con.queries[query_count:]
+            stats['total_time'] = total_time
+            result['server_stats'] = stats
+            print('API request hit server.')
+        response = HttpResponse(json.dumps(result, indent=4), content_type='application/json')
     
-    if DEBUG:
-        result['query_count'] = len(con.queries) - query_count
-        result['queries'] = con.queries[query_count:]
-        result['total_time'] = total_time
+    # CACHING USING HEADERS
+    if request_containing_all:
+        patch_cache_control(response, private=True)
+    else:
+        # Set upstream caching. Caches must revalidate every 24 hours.
+        patch_cache_control(response, public=True, must_revalidate=True, max_age=60*60*24)
     
-    return HttpResponse(json.dumps(result, indent=4), content_type='application/json')
+    return response
 
 def query_datasets(options):
     """Gather the information for each dataset listed."""
@@ -164,6 +182,7 @@ def query_datasets(options):
         'metrics': lambda dataset: {mv.metric.name: mv.value for mv in dataset.metric_values.all()},
         'document_count': lambda dataset: int(dataset.metric_values.filter(metric__name='Document Count')[0].value),
         'analysis_count': lambda dataset: dataset.analyses.count(),
+        'document_metadata_types': lambda dataset: dataset.get_document_metadata_types(),
     }
     
     # Get the list of attributes the user wants.
@@ -206,21 +225,26 @@ def query_analyses(options, dataset_db):
     
     analysis_attr = options.setdefault('analysis_attr', [])
     
+    # Prefetch needed data to reduce number of database queries
     if 'metadata' in analysis_attr:
         analyses_queryset = analyses_queryset.prefetch_related('metadata_values', 'metadata_values__metadata_type')
     if 'metrics' in analysis_attr:
         analyses_queryset = analyses_queryset.prefetch_related('metric_values', 'metric_values__metric')
     
+    # Gather information about each analysis
     for analysis_db in analyses_queryset:
+        # Gather basic attributes
         attributes = {}
         for attr in analysis_attr:
             if attr in ANALYSIS_ATTR:
                 attributes[attr] = ANALYSIS_ATTR[attr](analysis_db)
         
-        if 'topics' in options:
-            attributes['topics'] = query_topics(options, dataset_db, analysis_db)
-        if 'documents' in options:
-            attributes['documents'] = query_documents(options, dataset_db, analysis_db)
+        # Gather complex attributes
+        if options['analyses'] != '*' and options['datasets'] != '*':
+            if 'topics' in options:
+                attributes['topics'] = query_topics(options, dataset_db, analysis_db)
+            if 'documents' in options:
+                attributes['documents'] = query_documents(options, dataset_db, analysis_db)
         
         analyses[analysis_db.name] = attributes
     
@@ -322,31 +346,11 @@ def query_documents(options, dataset_db, analysis_db):
         documents_queryset = documents_queryset.prefetch_related('dataset')
     
     
-    #~ if 'top_n_topics' in document_attr and \
-       #~ options['documents'] == '*' and 'analyses' in options and options['analyses'] != '*':
-        #~ from django.db import connection
-        #~ c = connection.cursor()
-        #~ c.execute('''select wt.document_id, t.number, count(*)
-                       #~ from visualize_wordtoken wt
-                        #~ join visualize_wordtokentopic wtt
-                            #~ on wtt.token_id = wt.id
-                        #~ join visualize_topic t on t.id = wtt.topic_id
-                            #~ where t.analysis_id = %d
-                            #~ group by t.number, wt.document_id;'''%(analysis_db.id))
-        #~ 
-        #~ rows = c.fetchall()
-        #~ top_n_topics = {}
-        #~ for doc_id, topic_id, count in rows:
-            #~ if not doc_id in top_n_topics:
-                #~ top_n_topics[doc_id] = {}
-            #~ top_n_topics[doc_id][topic_id] = count
-    
-    
     # WARNING: because of the query chaining to prevent too large of queries
-    # this next section of code must come after any prefetching
+    #          this next section of code must come after any prefetching
     limit = options.setdefault('document_limit', MAX_DOCUMENTS_PER_REQUEST)
     doc_count = dataset_db.documents.count()
-    if doc_count > limit:
+    if doc_count > limit: # Restrict the documents to a certain range
         if 'document_seed' in options:
             sample_indices = reservoir_sample(limit, doc_count, options['document_seed'])
             documents['sample_indices'] = sample_indices
@@ -371,7 +375,7 @@ def query_documents(options, dataset_db, analysis_db):
     # Must come after range filtering since similar variables are used.
     if 'top_n_topics' in document_attr and \
        options['documents'] == '*' and 'analyses' in options and options['analyses'] != '*':
-        query = analysis_db.tokens.values('document', 'topics__number').annotate(count=Count('document'))
+        query = analysis_db.tokens.values_list('document', 'topics__number').annotate(count=Count('document'))
         if doc_count > limit:
             if 'document_seed' in options:
                 i = 0
@@ -392,10 +396,7 @@ def query_documents(options, dataset_db, analysis_db):
         
         top_n_topics = {}
         topics_db = {topic.id: topic.number for topic in analysis_db.topics.all()}
-        for row in query:
-            doc_id = row['document']
-            topic_id = row['topics__number']
-            count = row['count']
+        for doc_id, topic_id, count in query:
             if not doc_id in top_n_topics:
                 top_n_topics[doc_id] = {}
             top_n_topics[doc_id][topic_id] = count

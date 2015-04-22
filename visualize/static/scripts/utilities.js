@@ -2,6 +2,36 @@
  * The following are an assortment of useful utilities.
  */
 
+/**
+ * Types recognized by the import system.
+ */
+var globalTypes = {
+    "int": "Integer",
+    "float": "Float",
+    "datetime": "Date/Time",
+    "bool": "Boolean",
+    "text": "Text",
+    "ordinal": "Ordinal",
+};
+
+/**
+ * Handles printing a nice message to the user.
+ */
+function reportReadableErrorToUser(message) {
+    alert(message);
+}
+
+
+/**
+ * Returns true if the object is a string; false otherwise.
+ */
+function isString(str) {
+    if(typeof str === "string" || str instanceof String) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 /*
  * Maps datasets => dataset, analyses => analysis, etc. for just the common terms for this site.

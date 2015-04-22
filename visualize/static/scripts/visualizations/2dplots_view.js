@@ -61,7 +61,7 @@ var PlotView = DefaultView.extend({
         this.$el.empty();
         
         if(!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
-            this.$el.html("<p>You should select a <a href=\"#\">dataset and analysis</a> before proceeding.</p>");
+            this.$el.html("<p>You should select a <a href=\"#datasets\">dataset and analysis</a> before proceeding.</p>");
             return;
         }
         
@@ -376,12 +376,12 @@ var PlotView = DefaultView.extend({
         this.xAxisGroup = svg.append("g")
             .attr("id", "x-axis")
             .attr("transform", "translate(0,"+dim.height+")")
-            .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" });
+            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.25px", "shape-rendering": "crispedges" });
         this.xAxisText = this.xAxisGroup.append("text");
         this.yAxisGroup = svg.append("g")
             .attr("id", "y-axis")
             .attr("transform", "translate(0,0)")
-            .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" });
+            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.25px", "shape-rendering": "crispedges" });
         this.yAxisText = this.yAxisGroup.append("text");
         // Render scatter plot container.
         this.plot = svg.append("g")

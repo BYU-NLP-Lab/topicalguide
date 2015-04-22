@@ -542,7 +542,7 @@ var DocumentView = DefaultView.extend({
             }
             this.subView.render();
         } else {
-            this.$el.html("<p>You should select a <a href=\"#\">dataset and analysis</a> before proceeding.</p>");
+            this.$el.html("<p>You should select a <a href=\"#datasets\">dataset and analysis</a> before proceeding.</p>");
         }
     },
     
