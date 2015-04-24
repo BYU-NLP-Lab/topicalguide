@@ -302,6 +302,13 @@ class Document(models.Model):
                 result[t] = []
             result[t].append((token.topics.filter(analysis=analysis)[0].number, token.start_index))
         return result
+    
+    def get_top_n_words(self, words='*', top_n=10):
+        word_counts = self.tokens.values_list('word_type__word').annotate(count=Count('word_type__word'))
+        if words != '*':
+            word_counts = word_counts.filter(word_type__word__in=words)
+        word_counts = word_counts.order_by('-count')
+        return {row[0]: {'token_count': row[1]} for row in word_counts[:top_n]}
 
 class DocumentMetadataValue(MetadataValue):
     document = models.ForeignKey('Document', related_name='metadata_values')
