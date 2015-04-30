@@ -34,9 +34,7 @@ var AllTopicSubView = DefaultView.extend({
         this.listenTo(this.settingsModel, "multichange", this.renderTopicsTable);
     },
     
-    cleanup: function(topics) {
-        // Not bound to external models.
-    },
+    cleanup: function(topics) {},
     
     render: function() {
         this.$el.html(this.baseTemplate);

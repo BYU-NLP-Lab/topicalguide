@@ -377,6 +377,14 @@ class Analysis(models.Model):
         for _, word in word_type_query:
             result[word] = result.setdefault(word, 0) + 1
         return result
+    
+    def get_topic_name_schemes(self):
+        """Return a list of all topic name schemes available for this analysis."""
+        result = []
+        query = self.topics.values_list("schemes__name").distinct()
+        for row in query:
+            result.append(row[0])
+        return result
 
 class AnalysisMetadataValue(MetadataValue):
     analysis = models.ForeignKey('Analysis', related_name='metadata_values')

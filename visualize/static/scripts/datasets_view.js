@@ -17,13 +17,10 @@ var DatasetView = DefaultView.extend({
     },
     
     render: function() {
-        this.$el.html(this.loadingTemplate);
-        this.dataModel.getDatasetsAndAnalyses(this.renderDatasets.bind(this), this.renderError.bind(this));
-    },
-    
-    renderDatasets: function(datasets) {
+        this.selectionModel.selectFirst(false);
+        this.$el.html("");
+        var datasets = this.dataModel.getDatasetsAndAnalyses();
         var that = this;
-        console.log(datasets);
         
         function getMetadataValue(key, object, defaultValue) {
             if(!(key in object)) {

@@ -53,22 +53,9 @@ var HomeView = DefaultView.extend({
     //++++++++++++++++++++++++++++++++++++++++++++++++++    EVENTS    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
     
     clickGetStarted: function(e) {
-        dataset = null;
-        analysis = null;
-        datasets = this.dataModel.getDatasetNames();
-        // Find dataset and analysis if possible
-        for(d in datasets) {
-            dataset = datasets[d];
-            analyses = this.dataModel.getAnalysisNames(dataset);
-            for(a in analyses) {
-                analysis = analyses[a];
-                break;
-            }
-            break;
-        }
+        this.selectionModel.selectRandom();
         // Redirect user accordingly.
-        if(dataset !== null && analysis !== null) {
-            this.selectionModel.set({ dataset: dataset, analysis: analysis });
+        if(this.selectionModel.get("dataset") !== "" && this.selectionModel.get("dataset") !== "") {
             window.location.href = "#visualizations/metadata_map";
         } else {
             window.location.href = "#datasets";

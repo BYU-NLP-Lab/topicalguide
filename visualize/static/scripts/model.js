@@ -4,6 +4,14 @@
  * upon anything outside this file with the exception of libraries.
  */
 
+
+var globalUserModel = null;
+var globalDataModel = null;
+var globalSelectionModel = null;
+var globalFavoritesModel = null;
+
+
+
 var UserModel = Backbone.Model.extend({
     
     initialize: function() {
@@ -30,73 +38,36 @@ var UserModel = Backbone.Model.extend({
             });
     },
 });
-globalUserModel = new UserModel();
 
-
-DEBUG_DATA_MODEL = true;
-/*
+/**
  * The DataModel is responsible for managing data requests and providing convenience functions.
+ * Note that the DataModel listens to the selection model so topic names can
+ * be pre-loaded and used throughout the site.
+ * Most of the pre-loaded data is stored in an HTML script tag on page load and is
+ * parsed and stored for quick access.
+ * This way refreshing the site ensures the latest datasets and analyses, and 
+ * eliminates the need to perform synchronous calls to the web server.
  */
+DEBUG_DATA_MODEL = true; // Used to display the api request to the console.
 var DataModel = Backbone.Model.extend({
     
-    datasetsAndAnalyses: null,
-    datasetAndAnalysesError: false,
+    serverInfo: {},
+    datasetsAndAnalyses: {},
+    analysisTopicNameSchemes: {},
     
     /**
-     * Loads commonly needed data, storing the data locally.
+     * Return an object with basic server information.
      */
-    loadDatasetsAndAnalyses: function(dataReadyCallback, errorCallback) {
-        var that = this;
-        var query = {
-            "datasets": "*",
-            "analyses": "*",
-            "dataset_attr": ["metadata", "metrics"],
-            "analysis_attr": ["metadata", "metrics"],
-        };
-        this.datasetAndAnalysesError = false;
-        if(dataReadyCallback === null || dataReadyCallback === undefined ||
-           errorCallback === null || errorCallback === undefined) {
-            this.submitQueryByHash(query, function(data) {
-                that.datasetsAndAnalyses = data['datasets'];
-            }, function(error) {
-                that.datasetAndAnalysesError = true;
-            });
-        } else {
-            this.submitQueryByHash(query, function(data) {
-                that.datasetsAndAnalyses = data['datasets'];
-                dataReadyCallback(that.datasetsAndAnalyses);
-            }, function(error) {
-                that.datasetAndAnalysesError = true;
-                errorCallback(error);
-            });
-        }
+    getServerInfo: function() {
+        return this.serverInfo;
     },
     
     /**
-     * This method becomes synchronous if either of both arguments are not defined.
-     * Return an object with all of the datasets and analyses, as well as metadata and metrics.
+     * Return an object with all of the datasets and analyses, as well as 
+     * metadata, metrics, and other information.
      */
-    getDatasetsAndAnalyses: function(dataReadyCallback, errorCallback) {
-        if(this.datasetsAndAnalyses !== null) {
-            dataReadyCallback(this.datasetsAndAnalyses);
-        } else {
-            this.loadDatasetsAndAnalyses(dataReadyCallback, errorCallback);
-        }
-    },
-    
-    /**
-     * Return true if there was no error.
-     */
-    synchronousLoadDatasetsAndAnalyses: function() {
-        this.loadDatasetsAndAnalyses();
-        for(var i = 0; i < 100 && this.datasetsAndAnalyses === null && !this.datasetsAndAnalysesError; i++) {
-            setTimeout(function(){}, 100);
-        }
-        if(this.datasetsAndAnalyses === null || this.datasetsAndAnalysesError) {
-            return false;
-        } else {
-            return true;
-        }
+    getDatasetsAndAnalyses: function() {
+        return this.datasetsAndAnalyses;
     },
     
     /**
@@ -104,18 +75,20 @@ var DataModel = Backbone.Model.extend({
      * Return list of available datasets; empty list if none or error.
      */
     getDatasetNames: function() {
-        var success = true;
-        if(this.datasetsAndAnalyses === null) {
-            success = this.synchronousLoadDatasetsAndAnalyses();
-        }
         var result = [];
-        if(success) {
-            for(key in this.datasetsAndAnalyses) {
-                result.push(key);
-            }
-        } else {
-            reportReadableErrorToUser("Server request timed out.");
+        for(key in this.datasetsAndAnalyses) {
+            result.push(key);
         }
+        return result;
+    },
+    
+    /**
+     * Synchronous method to get number of documents in the dataset.
+     * datasetName -- the name of a dataset
+     * Return number of documents in datasetName; 0 if the dataset doesn't exist.
+     */
+    getDatasetDocumentCount: function(datasetName) {
+        result = this.datasetsAndAnalyses[datasetName].metrics["Document Count"];
         return result;
     },
     
@@ -124,59 +97,136 @@ var DataModel = Backbone.Model.extend({
      * Return list of available analyses; empty list if none or error.
      */
     getAnalysisNames: function(datasetName) {
-        var success = true;
-        if(this.datasetsAndAnalyses === null) {
-            success = this.synchronousLoadDatasetsAndAnalyses();
-        }
-        var result = [];
-        if(success) {
-            try {
-                for(key in this.datasetsAndAnalyses[datasetName].analyses) {
-                    result.push(key);
-                }
-            } catch(err) {}
-        } else {
-            reportReadableErrorToUser("Server request timed out.");
+        result = [];
+        for(key in this.datasetsAndAnalyses[datasetName].analyses) {
+            result.push(key);
         }
         return result;
     },
     
-    getTopicNames: function(dataset_name, analysis_name) {
-        
+    /**
+     * Synchronous method to get analysis name schemes.
+     * Return list of analysis name schemes available; empty if none.
+     */
+    getTopicNameSchemes: function(datasetName, analysisName) {
+        result = [];
+        if(datasetName !== "" && analysisName !== "") {
+            result = this.datasetsAndAnalyses[datasetName].analyses[analysisName].topic_name_schemes;
+        }
+        return result;
     },
     
-    /*
+    /**
+     * topicNumber -- the number of the topic
+     * Return the name of a topic according to the currently selected dataset, 
+     * analysis, and topic name scheme; the "Top3" name if the selected namer 
+     * isn't available; the topicNumber as a string otherwise.
+     */
+    getTopicNameRaw: function(topicNumber) {
+        var topicNumberString = topicNumber.toString();
+        var nameScheme = globalSelectionModel.get("topicNameScheme");
+        var result = topicNumberString;
+        try {
+            result = this.analysisTopicNameSchemes[topicNumberString][nameScheme];
+        } catch(e) {}
+        return result;
+    },
+    
+    /**
+     * topicNumber -- the number of the topic
+     * Return a human readable name.
+     */
+    getTopicName: function(topicNumber) {
+        var name = this.getTopicNameRaw(topicNumber);
+        if(name === topicNumber.toString()) {
+            return "Topic #" + name;
+        } else {
+            return name + " (#" + topicNumber + ")";
+        }
+    },
+    
+    /**
+     * Synchronous method to get topic names upon a change in analysis.
+     */
+    changeAnalysis: function() {
+        var s = globalSelectionModel;
+        if(s.get("analysis") !== "") {
+            var data = this.synchronousQueryByHash({
+                datasets: s.get("dataset"),
+                analyses: s.get("analysis"),
+                topics: "*",
+                topic_attr: ["names"],
+            });
+            if(data) {
+                var temp = {};
+                var topics = extractTopics(data, globalSelectionModel);
+                for(topicNumber in topics) {
+                    temp[topicNumber] = topics[topicNumber].names;
+                }
+                this.analysisTopicNameSchemes = temp;
+            } else {
+                this.analysisTopicNameSchemes = {};
+            }
+        }
+    },
+    
+    /**
+     * Return the request data if there was no error; null otherwise.
+     */
+    synchronousQueryByHash: function(request) {
+        var result = null;
+        this.submitQueryByHash(request, function(data) {
+            result = data;
+        }, function() {}, false);
+        return result;
+    },
+    
+    /**
      * Submit a query to the server, the request hash is turned into a normalized url to ensure that
      * requests look the same when submitted.
      * request - A hash containing the properties being requested.
      * dataReadyCallback - The function called upon success.
      * errorCallback - The function called if there is an error message in the returned data.
      */
-    submitQueryByHash: function(request, dataReadyCallback, errorCallback) {
+    submitQueryByHash: function(request, dataReadyCallback, errorCallback, async) {
         var url = "api?" + hashToUrl(request);
-        this.submitQueryByUrl(url, dataReadyCallback, errorCallback);
+        if(async === undefined || async === null) async = true;
+        this.submitQueryByUrl(url, dataReadyCallback, errorCallback, async);
     },
     
-    /*
+    /**
      * Submit a query to the server for json formatted data.
-     * url - The url where the data is found.
-     * dataReadyCallback - The function called upon success.
-     * errorCallback - The function called if there is an error message in the returned data.
+     * url -- The url where the data is found.
+     * dataReadyCallback -- The function called upon success.
+     * errorCallback -- The function called if there is an error message in the returned data.
+     * async -- perform the call asynchronously if true
+     * Return nothing.
      */
-    submitQueryByUrl: function(url, dataReadyCallback, errorCallback) {
+    submitQueryByUrl: function(url, dataReadyCallback, errorCallback, async) {
         if(DEBUG_DATA_MODEL) console.log(url);
-        d3.json(url, function(error, data) {
-            if(error !== null) {
-                errorCallback("Odds are you couldn't connect to your server. Here is some error info: "+JSON.stringify(error));
-            } else if("error" in data) {
-                errorCallback(data["error"]);
-            } else {
-                dataReadyCallback(data);
-            }
-        });
+        if(async) {
+            d3.json(url, function(error, data) {
+                if(error !== null) {
+                    errorCallback("Odds are you couldn't connect to your server. Here is some error info: "+JSON.stringify(error));
+                } else if("error" in data) {
+                    errorCallback(data["error"]);
+                } else {
+                    dataReadyCallback(data);
+                }
+            });
+        } else {
+            var jsonData;
+            jQuery.ajax({
+                dataType: "json",
+                url: url,
+                async: async,
+                success: dataReadyCallback,
+                error: errorCallback,
+            });
+        }
     },
 });
-var globalDataModel = new DataModel();
+
 
 DEBUG_SELECTION_MODEL = false;
 /*
@@ -186,12 +236,13 @@ DEBUG_SELECTION_MODEL = false;
  */
 var SelectionModel = Backbone.Model.extend({
     
+    // This is mostly for reference and convenience, this object doesn't change.
     availableSelections: {
         "dataset": String, 
         "analysis": String, 
         "topic": String, 
         "document": String, 
-        "word": String
+        "topicNameScheme": String,
     },
     
     initialize: function() {
@@ -202,10 +253,10 @@ var SelectionModel = Backbone.Model.extend({
         this.set(hash);
     },
     
-    /*
+    /**
      * This function will trigger a "multichange" event.
-     * This is preferred for views and the router so multiple events aren't triggered with each
-     * new attribute.
+     * This is preferred for views and the router so multiple events aren't 
+     * triggered with each new attribute.
      */
     set: function(attr, options) {
         if(DEBUG_SELECTION_MODEL) console.log("SelectionModel.set before: " + hashToUrl(this.attributes));
@@ -244,7 +295,7 @@ var SelectionModel = Backbone.Model.extend({
         }
     },
     
-    /*
+    /**
      * Ensure that the given items are non-empty strings.
      * Return true if they are non-empty; false otherwise.
      */
@@ -257,7 +308,7 @@ var SelectionModel = Backbone.Model.extend({
         return true;
     },
     
-    /*
+    /**
      * Pass in a list of items to get, if the item exists it will be returned in the hash.
      */
     getListed: function(list) {
@@ -269,8 +320,72 @@ var SelectionModel = Backbone.Model.extend({
         }
         return hash;
     },
+    
+    /**
+     * Auto select a dataset, analysis, and topic name scheme.
+     */
+    selectRandom: function() {
+        var dataset = "";
+        var analysis = "";
+        var topicNameScheme = "";
+        
+        var gdm = globalDataModel;
+        var datasets = gdm.getDatasetNames();
+        if(datasets.length > 0) {
+            dataset = datasets[getRandomIntegerInRange(0, datasets.length)];
+            var analyses = gdm.getAnalysisNames(dataset);
+            if(analyses.length > 0) {
+                analysis = analyses[getRandomIntegerInRange(0, analyses.length)];
+                var nameSchemes = gdm.getTopicNameSchemes(dataset, analysis);
+                if(nameSchemes.length > 0) {
+                    var topicNameScheme = nameSchemes[getRandomIntegerInRange(0, nameSchemes.length)];
+                }
+            }
+        }
+        
+        this.set({
+            dataset: dataset,
+            analysis: analysis,
+            topicNameScheme: topicNameScheme,
+        });
+    },
+    
+    /**
+     * Select the first dataset, analysis, and topic name scheme available.
+     */
+    selectFirst: function(allowOverride) {
+        if(!allowOverride && this.get("dataset") !== "") {
+            return;
+        }
+        var dataset = "";
+        var analysis = "";
+        var topicNameScheme = "";
+        
+        var gdm = globalDataModel;
+        var datasets = gdm.getDatasetNames();
+        for(d in datasets) {
+            dataset = datasets[d];
+            var analyses = gdm.getAnalysisNames(dataset);
+            for(a in analyses) {
+                analysis = analyses[a];
+                var nameSchemes = gdm.getTopicNameSchemes(dataset, analysis);
+                for(n in nameSchemes) {
+                    topicNameScheme = n;
+                    break;
+                }
+                break;
+            }
+            break;
+        }
+        
+        this.set({
+            dataset: dataset,
+            analysis: analysis,
+            topicNameScheme: topicNameScheme,
+        });
+    },
 });
-var globalSelectionModel = new SelectionModel();
+
 
 /*
  * The Favorites Model allows the user to select favorites.
@@ -287,7 +402,7 @@ var FavoritesModel = Backbone.Model.extend({
         "analyses": true,
         "topics": true,
         "documents": true,
-        //~ "words": true, // Not currently used.
+        "topicNameScheme": true,
     },
     
     initialize: function() {
@@ -310,7 +425,7 @@ var FavoritesModel = Backbone.Model.extend({
             "analyses": "dataset-"+dataset+"-analyses",
             "topics": "dataset-"+dataset+"-analysis-"+analysis+"-topics",
             "documents": "dataset-"+dataset+"-analysis-"+analysis+"-documents",
-            "words": "dataset-"+dataset+"-analysis-"+analysis+"-words",
+            "topicNameScheme": "dataset-"+dataset+"-analysis-"+analysis+"-topicNameScheme",
         };
         return result;
     },
@@ -455,8 +570,6 @@ var FavoritesModel = Backbone.Model.extend({
     },
     
 });
-var globalFavoritesModel = new FavoritesModel();
-
 
 var SettingsModel = Backbone.Model.extend({
     
@@ -500,3 +613,14 @@ var SettingsModel = Backbone.Model.extend({
         this.save();
     },
 });
+
+var globalUserModel = new UserModel();
+var globalDataModel = new DataModel();
+var globalSelectionModel = new SelectionModel();
+var globalFavoritesModel = new FavoritesModel();
+
+/**
+ * Add the data model to be a listener to the selection model to pre-load some
+ * data.
+ */
+globalSelectionModel.on("change:analysis", globalDataModel.changeAnalysis.bind(globalDataModel));

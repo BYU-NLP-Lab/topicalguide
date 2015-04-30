@@ -27,16 +27,10 @@ import json
 import itertools
 from git import Repo
 from visualize.models import *
-from django.core.cache import cache # Get the 'default' cache.
-from django.views.decorators.http import require_GET
-from django.views.decorators.gzip import gzip_page
-from django.http import HttpResponse
-from django.views.decorators.cache import cache_control, patch_cache_control
-from django.db import connections
 from visualize.utils import reservoir_sample
 
 MAX_DOCUMENTS_PER_REQUEST = 500
-MAX_DOCUMENTS_PER_SQL_QUERY = 10
+MAX_DOCUMENTS_PER_SQL_QUERY = 500
 
 # Get function to turn a csv string into a list and check that the arguments are valid.
 def get_list_filter(allowed_values, allow_star=False):
@@ -97,7 +91,7 @@ OPTIONS_FILTERS = {
     'words': filter_csv_to_list,
     
     'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types']),
-    'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count']),
+    'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes']),
     'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens', 'word_token_documents_and_locations']),
     'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations']),
     
@@ -242,6 +236,7 @@ def query_analyses(options, dataset_db):
         'metadata': lambda analysis_db: {md.metadata_type.name: md.value() for md in analysis_db.metadata_values.all()},
         'metrics': lambda analysis_db: {mv.metric.name: mv.value for mv in analysis_db.metric_values.all()},
         'topic_count': lambda analysis_db: analysis_db.topics.count(),
+        'topic_name_schemes': lambda analysis_db: analysis_db.get_topic_name_schemes()
     }
     
     analysis_attr = options.setdefault('analysis_attr', [])
@@ -406,8 +401,7 @@ def query_documents(options, dataset_db, analysis_db):
             raise Exception("Too many documents.")
     
     # Must come after range filtering since similar variables are used.
-    if 'top_n_topics' in document_attr and \
-       options['documents'] == '*' and 'analyses' in options and options['analyses'] != '*':
+    if 'top_n_topics' in document_attr:
         query = analysis_db.tokens.values_list('document', 'topics__number').annotate(count=Count('document'))
         if options['documents'] == '*':
             if doc_count > limit:
@@ -428,7 +422,7 @@ def query_documents(options, dataset_db, analysis_db):
                         i += chunk_size
                     query = itertools.chain(*chain)
         else:
-            query.filter(document_id__in=options['documents'])
+            query.filter(document__filename__in=options['documents'])
         
         top_n_topics = {}
         topics_db = {topic.id: topic.number for topic in analysis_db.topics.all()}
@@ -447,8 +441,7 @@ def query_documents(options, dataset_db, analysis_db):
         
         if 'metrics' in document_attr:
             attributes['metrics']['Length in Characters'] = document_db.length
-        if 'top_n_topics' in options['document_attr'] and \
-           options['documents'] == '*' and 'analyses' in options and options['analyses'] != '*':
+        if 'top_n_topics' in options['document_attr']:
             if document_db.id in top_n_topics:
                 attributes['topics'] = top_n_topics[document_db.id]
             else:

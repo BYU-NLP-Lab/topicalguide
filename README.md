@@ -24,7 +24,7 @@ Then navigate to the `topicalguide` directory and optionally switch over to the 
 
 Dependencies are listed in the `requirements.txt` file and can be easily installed with:
 
-    pip install -r requirements.txt
+    sudo pip install -r requirements.txt
 
 If you want to use the word stemmer then run the following:
     
