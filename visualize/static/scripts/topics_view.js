@@ -190,6 +190,7 @@ var SingleTopicView = DefaultView.extend({
             "Top Documents": this.renderTopDocuments.bind(this) ,
             "Metadata and Metrics": this.renderMetadataAndMetrics.bind(this),
             "Words and Words in Context": this.renderWords.bind(this),
+            "Word Statistics": this.renderWordStats.bind(this),
         };
         
         var tabOnClick = function(tab) {
@@ -272,6 +273,49 @@ var SingleTopicView = DefaultView.extend({
         }.bind(this), this.renderError.bind(this));
     },
     
+    renderWordStats: function(tab, content) {
+        content.html(this.loadingTemplate);
+        var selection = this.selectionModel.attributes;
+        this.dataModel.submitQueryByHash({
+            "datasets": selection["dataset"],
+            "analyses": selection["analysis"],
+            "topics": selection["topic"],
+            "topic_attr": ["top_n_words", "metrics"],
+            "words": "*",
+            "top_n_words": 100, // TODO: need to get all words
+        }, function(data) {
+            content.html("");
+            var topicNumber = this.selectionModel.get("topic");
+            var topic = extractTopics(data)[topicNumber];
+            console.log(topic);
+            var topWords = topic["words"];
+            console.log(topWords);
+            var tokenCount = parseFloat(topic.metrics["Token Count"]);
+            var words = d3.entries(topWords).map(function(entry) {
+                //~ return [entry];
+                return [entry.key, entry.value.token_count, (entry.value.token_count/tokenCount)*100];
+            });
+            console.log(words);
+            var table = content.append("table")
+                .classed("table table-hover table-condensed", true);
+            //~ TODO: go to word view some day
+            //~ var onClick = function(d, i) {
+                //~ this.selectionModel.set({ "document": d[0] });
+                //~ window.location.href = "#documents";
+            //~ }.bind(this);
+            createSortableTable(table, {
+                header: ["Word", "Token Count", "% of Topic"], 
+                data: words, 
+                //~ onClick: { "1": onClick }, 
+                bars: [2], 
+                percentages: [2],
+                //~ favicon: [0, "documents", this],
+                sortBy: 2,
+                sortAscending: false,
+            });
+        }.bind(this), this.renderError.bind(this));
+    },
+    
     renderSimilarTopics: function(tab, content) {
         var that = this;
         content.html(this.loadingTemplate);
@@ -280,7 +324,7 @@ var SingleTopicView = DefaultView.extend({
                 "datasets": selections["dataset"],
                 "analyses": selections["analysis"],
                 "topics": selections["topic"],
-                "topic_attr": "metrics,names,pairwise",
+                "topic_attr": ["metrics","names","pairwise"],
         }, function(data) {
             this.dataModel.submitQueryByHash({
                 "datasets": selections["dataset"],
@@ -342,7 +386,7 @@ var SingleTopicView = DefaultView.extend({
                 "datasets": selections["dataset"],
                 "analyses": selections["analysis"],
                 "topics": selections["topic"],
-                "topic_attr": "metrics,metadata",
+                "topic_attr": ["metrics","metadata"],
         }, function(data) {
             content.html("<div id=\"single-topic-metadata\" class=\"row container-fluid\"></div><div id=\"single-topic-metrics\" class=\"row container-fluid\"></div>");
             var topic = extractTopics(data)[selections["topic"]];
@@ -554,7 +598,7 @@ var SingleTopicSubView = DefaultView.extend({
             "datasets": selections["dataset"],
             "analyses": selections["analysis"],
             "topics": '*',
-            "topic_attr": "metrics,names",
+            "topic_attr": ["metrics","names"],
             "analysis_attr": "metrics",
         }, function(data) { // Render the content
             container.html(this.dropdownTemplate);
