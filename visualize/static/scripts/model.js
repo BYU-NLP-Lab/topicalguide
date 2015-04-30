@@ -571,6 +571,9 @@ var FavoritesModel = Backbone.Model.extend({
     
 });
 
+/**
+ * Used to store view specific settings per page visit.
+ */
 var SettingsModel = Backbone.Model.extend({
     
     selectionModel: null,
