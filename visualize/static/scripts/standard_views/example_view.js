@@ -67,4 +67,4 @@ var ExampleView = DefaultView.extend({
 /*
  * Add strings to the list (below) to nest this view under menus.
  */
-globalViewModel.addViewClass(["Menu 1", "Sub Menu 2", "Sub Menu 3"], ExampleView);
+addViewClass(["Menu 1", "Sub Menu 2", "Sub Menu 3"], ExampleView);

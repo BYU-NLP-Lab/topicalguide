@@ -1,11 +1,30 @@
-/*
+/**
  * The following are an assortment of useful utilities.
  */
 
 /**
+ * Add a new view class. This is a convenience function to aid forwards
+ * compatibility.
+ * nesting -- a list specifying how to nest the view
+ *      eg: [] will put the view on the menu bar
+ *          ["menu", "submenu"] will put the view under menu>submenu>your_view
+ * cls -- the view class, which must be a Backbone View
+ */
+function addViewClass(nesting, cls) {
+    $(function startApplication() {
+        try{
+            globalTopicalGuideView.viewModel.addViewClass(nesting, cls);
+            return true;
+        } catch(e) {
+            return false;
+        }
+    });
+}
+
+/**
  * Types recognized by the import system.
  */
-var globalTypes = {
+var readableTypes = {
     "int": "Integer",
     "float": "Float",
     "datetime": "Date/Time",
@@ -188,11 +207,7 @@ function extractMetadata(hash, metadata, defaults) {
  * [model] - The selection model, defaults to the global selection model if not provided.
  */
 function extractDocuments(data, model) {
-    if(model === undefined) {
-        return data.datasets[globalSelectionModel.get("dataset")].analyses[globalSelectionModel.get("analysis")].documents;
-    } else {
-        return data.datasets[model.get("dataset")].analyses[model.get("analysis")].documents;
-    }
+    return data.datasets[model.get("dataset")].analyses[model.get("analysis")].documents;
 }
 
 /*
@@ -201,11 +216,7 @@ function extractDocuments(data, model) {
  * [model] - The selection model, defaults to the global selection model if not provided.
  */
 function extractTopics(data, model) {
-    if(model === undefined) {
-        return data.datasets[globalSelectionModel.get("dataset")].analyses[globalSelectionModel.get("analysis")].topics;
-    } else {
-        return data.datasets[model.get("dataset")].analyses[model.get("analysis")].topics;
-    }
+    return data.datasets[model.get("dataset")].analyses[model.get("analysis")].topics;
 }
 
 /*

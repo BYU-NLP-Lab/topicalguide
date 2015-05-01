@@ -105,7 +105,7 @@ var AllTopicSubView = DefaultView.extend({
             // Format data.
             var totalTokens = data.datasets[this.selectionModel.get("dataset")].analyses[this.selectionModel.get("analysis")].metrics["Token Count"];
             var displayNWords = settings['topicDisplayNWords'];
-            var topics = extractTopics(data);
+            var topics = extractTopics(data, this.selectionModel);
             topics = d3.entries(topics).map(function(d) {
                 var wordObjects = d.value["words"];
                 var wordTypes = [];
@@ -271,7 +271,7 @@ var SingleTopicView = DefaultView.extend({
         }, function(data) {
             content.html("");
             var topicNumber = this.selectionModel.get("topic");
-            var topic = extractTopics(data)[topicNumber];
+            var topic = extractTopics(data, this.selectionModel)[topicNumber];
             var topDocs = topic["top_n_documents"];
             var tokenCount = parseFloat(topic.metrics["Token Count"]);
             var documents = d3.entries(topDocs).map(function(entry) {
@@ -588,9 +588,9 @@ var SingleTopicView = DefaultView.extend({
                 "topic_attr": "names",
             },function(allTopicsData) {
                 content.html("");
-                var allTopics = extractTopics(allTopicsData);
+                var allTopics = extractTopics(allTopicsData, this.selectionModel);
                 var currentTopic = that.selectionModel.get("topic");
-                var topic = extractTopics(data)[currentTopic];
+                var topic = extractTopics(data, this.selectionModel)[currentTopic];
                 var header = ["", "#", "Topic Name"];
                 var updateHeader = true;
                 var percentageColumns = [];
@@ -644,10 +644,10 @@ var SingleTopicView = DefaultView.extend({
                 "topic_attr": ["metrics","metadata"],
         }, function(data) {
             content.html("<div id=\"single-topic-metadata\" class=\"row container-fluid\"></div><div id=\"single-topic-metrics\" class=\"row container-fluid\"></div>");
-            var topic = extractTopics(data)[selections["topic"]];
+            var topic = extractTopics(data, this.selectionModel)[selections["topic"]];
             createTableFromHash(content.select("#single-topic-metadata"), topic.metadata, ["Key", "Value"], "metadata");
             createTableFromHash(content.select("#single-topic-metrics"), topic.metrics, ["Metric", "Value"]), "metrics";
-        }, this.renderError.bind(this));
+        }.bind(this), this.renderError.bind(this));
     },
     
     renderWords: function(tab, content) {
@@ -859,7 +859,7 @@ var SingleTopicSubView = DefaultView.extend({
             container.html(this.dropdownTemplate);
             
             var sortList = [];
-            var topics = extractTopics(data);
+            var topics = extractTopics(data, this.selectionModel);
             topics = d3.entries(topics).map(function(d) {
                 
                 var items = {};
@@ -940,6 +940,7 @@ var TopicView = DefaultView.extend({
     readableName: "Topics",
     
     initialize: function() {
+        console.log(this.dataModel);
         this.listenTo(this.selectionModel, "change:topic", this.render);
     },
     
@@ -979,4 +980,4 @@ var TopicView = DefaultView.extend({
 });
 
 // Add the Topic View to the top level menu
-globalViewModel.addViewClass([], TopicView);
+addViewClass([], TopicView);

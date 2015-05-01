@@ -232,7 +232,7 @@ var AllDocumentsSubView = DefaultView.extend({
                 "document_continue": this.getDocumentContinue(),
                 "document_limit": this.settingsModel.get("docsPerPage"),
         }, function(data) {
-            var documents = extractDocuments(data);
+            var documents = extractDocuments(data, this.selectionModel);
             var documentCount = data.datasets[selection["dataset"]].document_count;
             var documentContinue = this.settingsModel.attributes["documentContinue"];
             var displayNDocuments = this.settingsModel.attributes["displayNDocuments"];
@@ -1185,4 +1185,4 @@ var DocumentView = DefaultView.extend({
 });
 
 // Add the Document View to the top level menu
-globalViewModel.addViewClass([], DocumentView);
+addViewClass([], DocumentView);

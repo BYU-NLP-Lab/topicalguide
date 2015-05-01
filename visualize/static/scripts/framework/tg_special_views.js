@@ -28,9 +28,9 @@ var HelpView = DefaultView.extend({
         this.$el.html(this.template);
         var container = d3.select(this.el);
         var title = container.select(".modal-title");
-        title.text(globalViewModel.currentView.readableName + " Help");
+        title.text(this.viewModel.currentView.readableName + " Help");
         var body = container.select(".modal-body");
-        body.html(globalViewModel.currentView.renderHelpAsHtml());
+        body.html(this.viewModel.currentView.renderHelpAsHtml());
     },
     
     cleanup: function() {
@@ -139,11 +139,11 @@ var LoginView = DefaultSettingsView.extend({
 "</form>",
 
     initialize: function() {
-        globalUserModel.on("change:loggedIn", this.render, this);
+        this.userModel.on("change:loggedIn", this.render, this);
     },
     
     cleanup: function() {
-        globalUserModel.off(null, null, this);
+        this.userModel.off(null, null, this);
     },
     
     render: function() {
@@ -152,12 +152,12 @@ var LoginView = DefaultSettingsView.extend({
         container.select(".modal-title").text(this.readableName);
         var body = container.select(".modal-body");
         
-        if(globalUserModel.get("loggedIn")) {
+        if(this.userModel.get("loggedIn")) {
             body.html(this.logoutTemplate);
             var form = body.select("form");
             form.on("submit", function() {
                 d3.event.preventDefault();
-                globalUserModel.submitQueryByHash({ logout: true }, function(data) {
+                this.userModel.submitQueryByHash({ logout: true }, function(data) {
                         if("logged_in" in data && !data["logged_in"]) {
                             globalUserModel.set({ loggedIn: false });
                         }
@@ -165,7 +165,7 @@ var LoginView = DefaultSettingsView.extend({
                     function(error){
                         form.select("#error-msg").text(error);
                     });
-            });
+            }.bind(this));
         } else {
             body.html(this.loginTemplate);
             
@@ -175,7 +175,7 @@ var LoginView = DefaultSettingsView.extend({
             
             form.on("submit", function() {
                 d3.event.preventDefault();
-                globalUserModel.submitQueryByHash({username: username.property("value"), password: password.property("value") },
+                this.userModel.submitQueryByHash({username: username.property("value"), password: password.property("value") },
                     function(data) {
                         if("logged_in" in data && data["logged_in"]) {
                             globalUserModel.set({ loggedIn: true });
@@ -184,7 +184,7 @@ var LoginView = DefaultSettingsView.extend({
                     function(error) {
                         form.select("#error-msg").text(error);
                     });
-            });
+            }.bind(this));
         }
     },
 });
@@ -262,12 +262,3 @@ var LoadScriptsView = DefaultSettingsView.extend({
     },
 });
 */
-
-// Add when the DOM is ready so the modal elements are present.
-$(function() {
-    globalViewModel.setHelpViewClass(HelpView);
-    globalViewModel.setFavoritesViewClass(FavoritesQuickSelectView);
-    globalViewModel.addSettingsClass(LoginView);
-    //~ globalViewModel.addSettingsClass(EditFavoritesView);
-    //~ globalViewModel.addSettingsClass(LoadScriptsView);
-});

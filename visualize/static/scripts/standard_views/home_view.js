@@ -64,5 +64,7 @@ var HomeView = DefaultView.extend({
     
 });
 
-// Add the Datasets View as the root view
-globalViewModel.setRootViewClass(HomeView);
+// Add the Home View as the root view
+$(function startApplication() {
+    globalTopicalGuideView.viewModel.setRootViewClass(HomeView);
+});

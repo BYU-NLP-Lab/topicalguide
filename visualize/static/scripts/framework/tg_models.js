@@ -4,14 +4,6 @@
  * upon anything outside this file with the exception of libraries.
  */
 
-
-var globalUserModel = null;
-var globalDataModel = null;
-var globalSelectionModel = null;
-var globalFavoritesModel = null;
-
-
-
 var UserModel = Backbone.Model.extend({
     
     initialize: function() {
@@ -39,195 +31,6 @@ var UserModel = Backbone.Model.extend({
     },
 });
 
-/**
- * The DataModel is responsible for managing data requests and providing convenience functions.
- * Note that the DataModel listens to the selection model so topic names can
- * be pre-loaded and used throughout the site.
- * Most of the pre-loaded data is stored in an HTML script tag on page load and is
- * parsed and stored for quick access.
- * This way refreshing the site ensures the latest datasets and analyses, and 
- * eliminates the need to perform synchronous calls to the web server.
- */
-DEBUG_DATA_MODEL = true; // Used to display the api request to the console.
-var DataModel = Backbone.Model.extend({
-    
-    serverInfo: {},
-    datasetsAndAnalyses: {},
-    analysisTopicNameSchemes: {},
-    
-    /**
-     * Return an object with basic server information.
-     */
-    getServerInfo: function() {
-        return this.serverInfo;
-    },
-    
-    /**
-     * Return an object with all of the datasets and analyses, as well as 
-     * metadata, metrics, and other information.
-     */
-    getDatasetsAndAnalyses: function() {
-        return this.datasetsAndAnalyses;
-    },
-    
-    /**
-     * Synchronous method to get dataset names.
-     * Return list of available datasets; empty list if none or error.
-     */
-    getDatasetNames: function() {
-        var result = [];
-        for(key in this.datasetsAndAnalyses) {
-            result.push(key);
-        }
-        return result;
-    },
-    
-    /**
-     * Synchronous method to get number of documents in the dataset.
-     * datasetName -- the name of a dataset
-     * Return number of documents in datasetName; 0 if the dataset doesn't exist.
-     */
-    getDatasetDocumentCount: function(datasetName) {
-        result = this.datasetsAndAnalyses[datasetName].metrics["Document Count"];
-        return result;
-    },
-    
-    /**
-     * Synchronous method to get analysis names.
-     * Return list of available analyses; empty list if none or error.
-     */
-    getAnalysisNames: function(datasetName) {
-        result = [];
-        for(key in this.datasetsAndAnalyses[datasetName].analyses) {
-            result.push(key);
-        }
-        return result;
-    },
-    
-    /**
-     * Synchronous method to get analysis name schemes.
-     * Return list of analysis name schemes available; empty if none.
-     */
-    getTopicNameSchemes: function(datasetName, analysisName) {
-        result = [];
-        if(datasetName !== "" && analysisName !== "") {
-            result = this.datasetsAndAnalyses[datasetName].analyses[analysisName].topic_name_schemes;
-        }
-        return result;
-    },
-    
-    /**
-     * topicNumber -- the number of the topic
-     * Return the name of a topic according to the currently selected dataset, 
-     * analysis, and topic name scheme; the "Top3" name if the selected namer 
-     * isn't available; the topicNumber as a string otherwise.
-     */
-    getTopicNameRaw: function(topicNumber) {
-        var topicNumberString = topicNumber.toString();
-        var nameScheme = globalSelectionModel.get("topicNameScheme");
-        var result = topicNumberString;
-        try {
-            result = this.analysisTopicNameSchemes[topicNumberString][nameScheme];
-        } catch(e) {}
-        return result;
-    },
-    
-    /**
-     * topicNumber -- the number of the topic
-     * Return a human readable name.
-     */
-    getTopicName: function(topicNumber) {
-        var name = this.getTopicNameRaw(topicNumber);
-        if(name === topicNumber.toString()) {
-            return "Topic #" + name;
-        } else {
-            return name + " (#" + topicNumber + ")";
-        }
-    },
-    
-    /**
-     * Synchronous method to get topic names upon a change in analysis.
-     */
-    changeAnalysis: function() {
-        var s = globalSelectionModel;
-        if(s.get("analysis") !== "") {
-            var data = this.synchronousQueryByHash({
-                datasets: s.get("dataset"),
-                analyses: s.get("analysis"),
-                topics: "*",
-                topic_attr: ["names"],
-            });
-            if(data) {
-                var temp = {};
-                var topics = extractTopics(data, globalSelectionModel);
-                for(topicNumber in topics) {
-                    temp[topicNumber] = topics[topicNumber].names;
-                }
-                this.analysisTopicNameSchemes = temp;
-            } else {
-                this.analysisTopicNameSchemes = {};
-            }
-        }
-    },
-    
-    /**
-     * Return the request data if there was no error; null otherwise.
-     */
-    synchronousQueryByHash: function(request) {
-        var result = null;
-        this.submitQueryByHash(request, function(data) {
-            result = data;
-        }, function() {}, false);
-        return result;
-    },
-    
-    /**
-     * Submit a query to the server, the request hash is turned into a normalized url to ensure that
-     * requests look the same when submitted.
-     * request - A hash containing the properties being requested.
-     * dataReadyCallback - The function called upon success.
-     * errorCallback - The function called if there is an error message in the returned data.
-     */
-    submitQueryByHash: function(request, dataReadyCallback, errorCallback, async) {
-        var url = "api?" + hashToUrl(request);
-        if(async === undefined || async === null) async = true;
-        this.submitQueryByUrl(url, dataReadyCallback, errorCallback, async);
-    },
-    
-    /**
-     * Submit a query to the server for json formatted data.
-     * url -- The url where the data is found.
-     * dataReadyCallback -- The function called upon success.
-     * errorCallback -- The function called if there is an error message in the returned data.
-     * async -- perform the call asynchronously if true
-     * Return nothing.
-     */
-    submitQueryByUrl: function(url, dataReadyCallback, errorCallback, async) {
-        if(DEBUG_DATA_MODEL) console.log(url);
-        if(async) {
-            d3.json(url, function(error, data) {
-                if(error !== null) {
-                    errorCallback("Odds are you couldn't connect to your server. Here is some error info: "+JSON.stringify(error));
-                } else if("error" in data) {
-                    errorCallback(data["error"]);
-                } else {
-                    dataReadyCallback(data);
-                }
-            });
-        } else {
-            var jsonData;
-            jQuery.ajax({
-                dataType: "json",
-                url: url,
-                async: async,
-                success: dataReadyCallback,
-                error: errorCallback,
-            });
-        }
-    },
-});
-
-
 DEBUG_SELECTION_MODEL = false;
 /*
  * The Selection Model is responsible for tracking which specific topic(s), document(s), or word(s) 
@@ -251,6 +54,14 @@ var SelectionModel = Backbone.Model.extend({
             hash[key] = "";
         }
         this.set(hash);
+    },
+    
+    /**
+     * Must be set before use.
+     * The data model and selection model reference eachother for certain tasks.
+     */
+    setDataModel: function(dm) {
+        this.dataModel = dm;
     },
     
     /**
@@ -329,17 +140,13 @@ var SelectionModel = Backbone.Model.extend({
         var analysis = "";
         var topicNameScheme = "";
         
-        var gdm = globalDataModel;
+        var gdm = this.dataModel;
         var datasets = gdm.getDatasetNames();
         if(datasets.length > 0) {
             dataset = datasets[getRandomIntegerInRange(0, datasets.length)];
             var analyses = gdm.getAnalysisNames(dataset);
             if(analyses.length > 0) {
                 analysis = analyses[getRandomIntegerInRange(0, analyses.length)];
-                var nameSchemes = gdm.getTopicNameSchemes(dataset, analysis);
-                if(nameSchemes.length > 0) {
-                    var topicNameScheme = nameSchemes[getRandomIntegerInRange(0, nameSchemes.length)];
-                }
             }
         }
         
@@ -361,18 +168,13 @@ var SelectionModel = Backbone.Model.extend({
         var analysis = "";
         var topicNameScheme = "";
         
-        var gdm = globalDataModel;
+        var gdm = this.dataModel;
         var datasets = gdm.getDatasetNames();
         for(d in datasets) {
             dataset = datasets[d];
             var analyses = gdm.getAnalysisNames(dataset);
             for(a in analyses) {
                 analysis = analyses[a];
-                var nameSchemes = gdm.getTopicNameSchemes(dataset, analysis);
-                for(n in nameSchemes) {
-                    topicNameScheme = n;
-                    break;
-                }
                 break;
             }
             break;
@@ -405,8 +207,12 @@ var FavoritesModel = Backbone.Model.extend({
         "topicNameScheme": true,
     },
     
-    initialize: function() {
-        this.listenTo(globalSelectionModel, "multichange", this.selectionChanged);
+    /**
+     * models -- must contain the selectionModel, used for storing favorites in local storage
+     */
+    initialize: function(models) {
+        this.selectionModel = models.selectionModel;
+        this.listenTo(this.selectionModel, "multichange", this.selectionChanged);
         this.loadFromLocalStorage();
     },
     
@@ -418,8 +224,8 @@ var FavoritesModel = Backbone.Model.extend({
      * Generates a list of keys to properly save and load items.
      */
     generateKeys: function() {
-        var dataset = globalSelectionModel.get("dataset");
-        var analysis = globalSelectionModel.get("analysis");
+        var dataset = this.selectionModel.get("dataset");
+        var analysis = this.selectionModel.get("analysis");
         var result = {
             "datasets": "datasets",
             "analyses": "dataset-"+dataset+"-analyses",
@@ -617,13 +423,203 @@ var SettingsModel = Backbone.Model.extend({
     },
 });
 
-var globalUserModel = new UserModel();
-var globalDataModel = new DataModel();
-var globalSelectionModel = new SelectionModel();
-var globalFavoritesModel = new FavoritesModel();
-
 /**
- * Add the data model to be a listener to the selection model to pre-load some
- * data.
+ * The DataModel is responsible for managing data requests and providing convenience functions.
+ * Note that the DataModel listens to the selection model so topic names can
+ * be pre-loaded and used throughout the site.
+ * Most of the pre-loaded data is stored in an HTML script tag on page load and is
+ * parsed and stored for quick access.
+ * This way refreshing the site ensures the latest datasets and analyses, and 
+ * eliminates the need to perform synchronous calls to the web server.
  */
-globalSelectionModel.on("change:analysis", globalDataModel.changeAnalysis.bind(globalDataModel));
+DEBUG_DATA_MODEL = true; // Used to display the api request to the console.
+var DataModel = Backbone.Model.extend({
+    
+    serverInfo: {},
+    datasetsAndAnalyses: {},
+    analysisTopicNameSchemes: {},
+    
+    /**
+     * models -- the must contain the selectionModel to listen to, used to preload topic names
+     */
+    initialize: function(models) {
+        this.selectionModel = models.selectionModel;
+        this.listenTo(this.selectionModel, "change:analysis", this.changeAnalysis);
+        
+        // Make sure that dataset and analyses data is available.
+        var defaultData = JSON.parse($("#global-dataset-and-analyses-info").html());
+        this.datasetsAndAnalyses = defaultData['datasets'];
+        this.serverInfo = defaultData['server'];
+    },
+    
+    /**
+     * Return an object with basic server information.
+     */
+    getServerInfo: function() {
+        return this.serverInfo;
+    },
+    
+    /**
+     * Return an object with all of the datasets and analyses, as well as 
+     * metadata, metrics, and other information.
+     */
+    getDatasetsAndAnalyses: function() {
+        return this.datasetsAndAnalyses;
+    },
+    
+    /**
+     * Synchronous method to get dataset names.
+     * Return list of available datasets; empty list if none or error.
+     */
+    getDatasetNames: function() {
+        var result = [];
+        for(key in this.datasetsAndAnalyses) {
+            result.push(key);
+        }
+        return result;
+    },
+    
+    /**
+     * Synchronous method to get number of documents in the dataset.
+     * datasetName -- the name of a dataset
+     * Return number of documents in datasetName; 0 if the dataset doesn't exist.
+     */
+    getDatasetDocumentCount: function(datasetName) {
+        result = this.datasetsAndAnalyses[datasetName].metrics["Document Count"];
+        return result;
+    },
+    
+    /**
+     * Synchronous method to get analysis names.
+     * Return list of available analyses; empty list if none or error.
+     */
+    getAnalysisNames: function(datasetName) {
+        result = [];
+        for(key in this.datasetsAndAnalyses[datasetName].analyses) {
+            result.push(key);
+        }
+        return result;
+    },
+    
+    /**
+     * Synchronous method to get analysis name schemes.
+     * Return list of analysis name schemes available; empty if none.
+     */
+    getTopicNameSchemes: function(datasetName, analysisName) {
+        result = [];
+        if(datasetName !== "" && analysisName !== "") {
+            result = this.datasetsAndAnalyses[datasetName].analyses[analysisName].topic_name_schemes;
+        }
+        return result;
+    },
+    
+    /**
+     * topicNumber -- the number of the topic
+     * Return the name of a topic according to the currently selected dataset, 
+     * analysis, and topic name scheme; the "Top3" name if the selected namer 
+     * isn't available; the topicNumber as a string otherwise.
+     */
+    getTopicNameRaw: function(topicNumber) {
+        var topicNumberString = topicNumber.toString();
+        var nameScheme = this.selectionModel.get("topicNameScheme");
+        var result = topicNumberString;
+        try {
+            result = this.analysisTopicNameSchemes[topicNumberString][nameScheme];
+        } catch(e) {}
+        return result;
+    },
+    
+    /**
+     * topicNumber -- the number of the topic
+     * Return a human readable name.
+     */
+    getTopicName: function(topicNumber) {
+        var name = this.getTopicNameRaw(topicNumber);
+        if(name === topicNumber.toString()) {
+            return "Topic #" + name;
+        } else {
+            return name + " (#" + topicNumber + ")";
+        }
+    },
+    
+    /**
+     * Synchronous method to get topic names upon a change in analysis.
+     */
+    changeAnalysis: function() {
+        var s = this.selectionModel;
+        if(s.get("analysis") !== "") {
+            var data = this.synchronousQueryByHash({
+                datasets: s.get("dataset"),
+                analyses: s.get("analysis"),
+                topics: "*",
+                topic_attr: ["names"],
+            });
+            if(data) {
+                var temp = {};
+                var topics = extractTopics(data, this.selectionModel);
+                for(topicNumber in topics) {
+                    temp[topicNumber] = topics[topicNumber].names;
+                }
+                this.analysisTopicNameSchemes = temp;
+            } else {
+                this.analysisTopicNameSchemes = {};
+            }
+        }
+    },
+    
+    /**
+     * Return the request data if there was no error; null otherwise.
+     */
+    synchronousQueryByHash: function(request) {
+        var result = null;
+        this.submitQueryByHash(request, function(data) {
+            result = data;
+        }, function() {}, false);
+        return result;
+    },
+    
+    /**
+     * Submit a query to the server, the request hash is turned into a normalized url to ensure that
+     * requests look the same when submitted.
+     * request - A hash containing the properties being requested.
+     * dataReadyCallback - The function called upon success.
+     * errorCallback - The function called if there is an error message in the returned data.
+     */
+    submitQueryByHash: function(request, dataReadyCallback, errorCallback, async) {
+        var url = "api?" + hashToUrl(request);
+        if(async === undefined || async === null) async = true;
+        this.submitQueryByUrl(url, dataReadyCallback, errorCallback, async);
+    },
+    
+    /**
+     * Submit a query to the server for json formatted data.
+     * url -- The url where the data is found.
+     * dataReadyCallback -- The function called upon success.
+     * errorCallback -- The function called if there is an error message in the returned data.
+     * async -- perform the call asynchronously if true
+     * Return nothing.
+     */
+    submitQueryByUrl: function(url, dataReadyCallback, errorCallback, async) {
+        if(DEBUG_DATA_MODEL) console.log(url);
+        if(async) {
+            d3.json(url, function(error, data) {
+                if(error !== null) {
+                    errorCallback("Odds are you couldn't connect to your server. Here is some error info: "+JSON.stringify(error));
+                } else if("error" in data) {
+                    errorCallback(data["error"]);
+                } else {
+                    dataReadyCallback(data);
+                }
+            });
+        } else {
+            var jsonData;
+            jQuery.ajax({
+                dataType: "json",
+                url: url,
+                async: async,
+                success: dataReadyCallback,
+                error: errorCallback,
+            });
+        }
+    },
+});
