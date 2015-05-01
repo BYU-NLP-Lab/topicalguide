@@ -99,7 +99,7 @@ var DatasetView = DefaultView.extend({
                     .text(function(d, i) { return " "+getMetadataValue("readable_name", d.value.metadata, toTitleCase(d.key.replace(/[_]/g, " "))); })
                     .on("click", function(d, i) {
                         that.selectionModel.set({ analysis: d.key }, { silent: true });
-                        router.navigate("topics", { trigger: true });
+                        window.location.href = "#topics";
                     })
                     .style("cursor", "pointer");
                 // Make the active analysis pills change with the selectionModel
@@ -146,4 +146,4 @@ var DatasetView = DefaultView.extend({
 });
 
 // Add the Datasets View as the root view
-globalViewModel.addViewClass([], DatasetView);
+addViewClass([], DatasetView);

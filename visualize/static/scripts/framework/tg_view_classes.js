@@ -23,6 +23,8 @@ var icons = {
     loading: "<p class=\"text-center\"><img src=\"/static/images/large-spinner.gif\"/></p><p class=\"text-center\">Loading...</p>",
 };
 
+var globalDefaultModels = null;
+
 /**
  * The DefaultView acts as an interface for other views to use so the proper methods and attributes
  * are implemented.
@@ -33,20 +35,23 @@ var icons = {
  * It is also recommended that you work fully within the element (el or $el) given to the view.
  */
 var DefaultView = function(options) {
+    console.log(options);
     var defaults = {
-        "dataModel": globalDataModel,
-        "selectionModel": globalSelectionModel,
-        "favsModel": globalFavoritesModel,
-        "settingsModel": new Backbone.Model(),
+        userModel: new Backbone.Model(),
+        dataModel: new Backbone.Model(),
+        selectionModel: new Backbone.Model(),
+        favsModel: new Backbone.Model(),
+        settingsModel: new Backbone.Model(),
+        viewModel: new Backbone.Model(),
     };
-    if(options !== undefined) {
-        for(key in defaults) {
-            if(key in options) {
-                defaults[key] = options[key];
-            }
-        }
+    if(options === undefined || options === null) {
+        options = {};
     }
-    _.extend(this, defaults);
+    if(globalDefaultModels !== null) {
+        _.extend(options, globalDefaultModels);
+    }
+    _.extend(this, options);
+    
     Backbone.View.apply(this, arguments);
 }
 
