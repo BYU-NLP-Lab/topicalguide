@@ -323,11 +323,6 @@ var DocumentInfoView = DefaultView.extend({
         this.listenTo(this.settingsModel, "change:maxTopicIndex", this.updateSliderInfo);
         this.listenTo(this.settingsModel, "change:minTopicIndex", this.updatePieChartAndLegend);
         this.listenTo(this.settingsModel, "change:maxTopicIndex", this.updatePieChartAndLegend);
-        $("body").tooltip({
-            container: "body",
-            selector: ".tg-topic-tooltip",
-            title: "hi",
-        });
         
         // Track which topics are selected.
         this.selectedTopics = {};
@@ -606,11 +601,11 @@ var DocumentInfoView = DefaultView.extend({
             .classed({
                 "single-doc-topic": true,
                 //~ "single-doc-topic-pie-slice": true,
-                "tg-topic-tooltip": true,
+                "tg-tooltip": true,
                 "pointer": true,
             })
-            .attr("data-original-title", function(d, i) { // Tool tip text.
-                return that.dataModel.getTopicName(d.data.topicNumber);
+            .attr("data-tg-topic-number", function(d, i) { // Store the topic number on the element for tooltips.
+                return d.data.topicNumber;
             })
             .attr("data-placement", "left")
             .attr("data-topic-number", function(d, i) { // Store the topic number on the element.
@@ -934,7 +929,15 @@ var DocumentInfoView = DefaultView.extend({
             .classed("highlighted-word", isFragmentToDisplay)
             .classed("single-doc-topic", isFragmentToDisplay)
             .classed("pointer", isFragmentToDisplay)
+            .classed("tg-tooltip", isFragmentToDisplay)
             .attr("data-topic-number", function(d, i) {
+                if(isFragmentToDisplay(d, i)) {
+                    return textFragmentToTopic[i.toString()];
+                } else {
+                    return null;
+                }
+            })
+            .attr("data-tg-topic-number", function(d, i) {
                 if(isFragmentToDisplay(d, i)) {
                     return textFragmentToTopic[i.toString()];
                 } else {
@@ -1032,7 +1035,7 @@ var DocumentInfoView = DefaultView.extend({
             .style("outline-style", "solid")
             .style("outline-color", function(d, i) {
                 var num = d3.select(this).attr("data-topic-number");
-                return d3.rgb(that.topicColorScale(num)).darker(2);
+                return d3.rgb(that.topicColorScale(num)); //.darker(1);
             });
     },
     

@@ -2,6 +2,56 @@
  * The following are an assortment of useful utilities.
  */
 
+
+var tg = {
+    /**
+     * Small library to makeup for inconsistencies in JavaScript and across 
+     * browsers.
+     * Basic DOM functions for convenience.
+     */
+    dom: {
+        /**
+         * domElement -- DOM element
+         * attrName -- string of the attribute name
+         * Return true if the attribute exists; false otherwise.
+         */
+        hasAttr: function(domElement, attrName) {
+            var a = $(domElement).attr(attrName);
+            return typeof a !== typeof undefined && a !== false;
+        },
+    },
+    
+    /**
+     * Small library to makeup for inconsistencies in JavaScript and across 
+     * browsers.
+     * Basic functions for type checking or otherwise.
+     */
+    js: {
+        /**
+         * i -- a number
+         * Return true if it is an integer; false otherwise.
+         */
+        isInteger: function(i) {
+            return !isNaN(i) && 
+                   parseInt(Number(i)) == i && 
+                   !isNaN(parseInt(i, 10));
+        },
+        
+        /**
+         * s -- an object
+         * Return true if it is a string; false otherwise.
+         */
+        isString: function(str) {
+            if(typeof str === "string" || str instanceof String) {
+                return true;
+            } else {
+                return false;
+            }
+        },
+    },
+};
+
+
 /**
  * Add a new view class. This is a convenience function to aid forwards
  * compatibility.

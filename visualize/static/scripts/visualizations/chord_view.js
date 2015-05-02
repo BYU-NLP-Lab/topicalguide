@@ -403,4 +403,4 @@ var ChordView = DefaultView.extend({
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], ChordView);
+addViewClass(["Visualizations"], ChordView);

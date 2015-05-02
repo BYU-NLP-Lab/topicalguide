@@ -426,5 +426,5 @@ var ForceView = DefaultView.extend({
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], ForceView);
+addViewClass(["Visualizations"], ForceView);
 

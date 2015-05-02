@@ -394,7 +394,11 @@ var PlotView = DefaultView.extend({
             .attr("cx", 0)
             .attr("cy", 0)
             .style("cursor", "pointer")
-            .on("click", onDocumentClick);
+            .on("click", onDocumentClick)
+            .classed("tg-tooltip", true)
+            .attr("data-tg-document-name", function(d, i) {
+                return d.key;
+            });
         // Render the node count.
         this.nodeCount = svg.append("g")
             .attr("transform", "translate("+dim.width/2+",0)")
@@ -780,4 +784,4 @@ var PlotViewManager = DefaultView.extend({
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], PlotViewManager);
+addViewClass(["Visualizations"], PlotViewManager);

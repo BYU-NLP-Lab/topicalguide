@@ -4,32 +4,7 @@
  * upon anything outside this file with the exception of libraries.
  */
 
-var UserModel = Backbone.Model.extend({
-    
-    initialize: function() {
-        this.set({ loggedIn: false });
-    },
-    
-    submitQueryByHash: function(sendData, dataReadyCallback, errorCallback) {
-        $.ajax({
-                type: "POST",
-                url: "http://"+window.location.host+"/user-api",
-                data: sendData,
-                dataType: "json",
-                
-            })
-            .done(function(data, textStatus, jqXHR) {
-                if("error" in data) {
-                    errorCallback(data["error"]);
-                } else {
-                    dataReadyCallback(data);
-                }
-            })
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                errorCallback(errorThrown);
-            });
-    },
-});
+
 
 DEBUG_SELECTION_MODEL = false;
 /*
@@ -522,10 +497,20 @@ var DataModel = Backbone.Model.extend({
     getTopicNameRaw: function(topicNumber) {
         var topicNumberString = topicNumber.toString();
         var nameScheme = this.selectionModel.get("topicNameScheme");
+        // Select a default name scheme if none is selected.
+        if(nameScheme === "" || nameScheme === undefined || nameScheme === null) {
+            nameScheme = "Top3";
+        }
+        
         var result = topicNumberString;
         try {
             result = this.analysisTopicNameSchemes[topicNumberString][nameScheme];
         } catch(e) {}
+        
+        if(result === undefined || result === null) {
+            result = topicNumberString;
+        }
+        
         return result;
     },
     
@@ -621,5 +606,32 @@ var DataModel = Backbone.Model.extend({
                 error: errorCallback,
             });
         }
+    },
+});
+
+var UserModel = Backbone.Model.extend({
+    
+    initialize: function() {
+        this.set({ loggedIn: false });
+    },
+    
+    submitQueryByHash: function(sendData, dataReadyCallback, errorCallback) {
+        $.ajax({
+                type: "POST",
+                url: "http://"+window.location.host+"/user-api",
+                data: sendData,
+                dataType: "json",
+                
+            })
+            .done(function(data, textStatus, jqXHR) {
+                if("error" in data) {
+                    errorCallback(data["error"]);
+                } else {
+                    dataReadyCallback(data);
+                }
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                errorCallback(errorThrown);
+            });
     },
 });
