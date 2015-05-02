@@ -1482,4 +1482,4 @@ var PlotViewManager = DefaultView.extend({
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], PlotViewManager);
+addViewClass(["Visualizations"], PlotViewManager);

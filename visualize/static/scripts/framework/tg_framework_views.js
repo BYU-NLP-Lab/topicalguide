@@ -502,6 +502,16 @@ var Router = Backbone.Router.extend({
 
 /**
  * The entire page.
+ * 
+ * Document Tooltips:
+ * Requires the class "tg-tooltip" class to be set.
+ * Requires a name stored under the "data-tg-document-name" attribute.
+ * 
+ * Topic Tooltips:
+ * Requires the class "tg-tooltip" class to be set.
+ * Requires a number stored under the "data-tg-topic-number" attribute.
+ * 
+ * 
  */
 var TopicalGuideView = DefaultView.extend({
     readableName: "The Topical Guide",
@@ -538,6 +548,27 @@ var TopicalGuideView = DefaultView.extend({
             favsModel: this.favsModel,
             viewModel: this.viewModel,
         };
+        
+        var that = this;
+        
+        // Create site-wide tooltip functionality.
+        $("body").tooltip({
+            placement: "auto",
+            container: "body",
+            selector: ".tg-tooltip",
+            title: function() {
+                console.log('trigger');
+                var el = $(this);
+                if(tg.dom.hasAttr(el, "data-tg-document-name")) {
+                    var docName = el.attr("data-tg-document-name");
+                    return docName;
+                } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
+                    var topicNumber = el.attr("data-tg-topic-number");
+                    return that.dataModel.getTopicName(topicNumber);
+                }
+                throw new Exception();
+            },
+        });
     },
     
     setRouter: function(router) {

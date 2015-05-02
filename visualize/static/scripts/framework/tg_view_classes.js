@@ -35,7 +35,6 @@ var globalDefaultModels = null;
  * It is also recommended that you work fully within the element (el or $el) given to the view.
  */
 var DefaultView = function(options) {
-    console.log(options);
     var defaults = {
         userModel: new Backbone.Model(),
         dataModel: new Backbone.Model(),
