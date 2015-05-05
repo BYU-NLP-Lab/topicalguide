@@ -730,7 +730,7 @@ var ViewModel = Backbone.Model.extend({
         return this.get("currentView");
     },
     
-    /*
+    /**
      * Change the view to the one specified. No-op if the name doesn't exist.
      * path - url path to view as string
      */

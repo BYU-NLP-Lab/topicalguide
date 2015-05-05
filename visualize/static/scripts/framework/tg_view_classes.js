@@ -278,7 +278,11 @@ var NavigationView = DefaultView.extend({
     },
     
     events: {
-        "click #main-nav-help": clickHelp,
+        "click #main-nav-help": "clickHelp",
+    },
+    
+    clickHelp: function() {
+        
     },
     
     
@@ -462,7 +466,7 @@ var TopicalGuideView = DefaultView.extend({
         // Create new settings for the new view.
         var settingsModel = new SettingsModel();
         var init = {
-            el: $("#main-view-container"),
+            el: $("#tg-current-view-container"),
             settingsModel: settingsModel,
             selectionModel: this.selectionModel,
         };
@@ -487,6 +491,7 @@ var TopicalGuideView = DefaultView.extend({
         this.currentView = new viewClass(init);
         
         try {
+            console.log("Rendering " + this.viewModel.get("currentView"));
             this.currentView.render();
         } catch(err) {
             console.log("The following error occurred while trying to render the view: " + err);
