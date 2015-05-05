@@ -277,6 +277,32 @@ var NavigationView = DefaultView.extend({
         return isSelected;
     },
     
+    events: {
+        "click #main-nav-help": clickHelp,
+    },
+    
+    
+    //~ /**
+     //~ * Change the settings view to the one specified.
+     //~ * Return nothing.
+     //~ */
+    //~ changeSettingsView: function(readableName) {
+        //~ this.settingsView.dispose();
+        //~ $("#main-nav-settings-modal").remove();
+        //~ $("#main-all-modals-container").append("<div id=\"main-nav-settings-modal\"  class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"settingsModal\" aria-hidden=\"true\"></div>");
+        //~ var init = {
+            //~ el: $("#main-nav-settings-modal"),
+        //~ }
+        //~ _.extend(init, this.models);
+        //~ 
+        //~ if(readableName in this.settings) {
+            //~ this.settingsView = new this.settings[readableName](init);
+        //~ } else {
+            //~ this.settingsView = new DefaultView(init);
+        //~ }
+        //~ this.settingsView.render();
+    //~ },
+    
     
 });
 
@@ -328,6 +354,8 @@ var TopicalGuideView = DefaultView.extend({
         
         // Create dummy views as placeholders for those that will be added.
         this.currentView = new DefaultView();
+        
+        // TODO move this functionality to the navView
         this.helpView = new DefaultView();
         this.favsView = new DefaultView();
         this.topicNamesView = new DefaultView();
@@ -363,6 +391,7 @@ var TopicalGuideView = DefaultView.extend({
         this.router = new Router({
             viewModel: this.viewModel,
             selectionModel: this.selectionModel,
+            tgView: this,
         });
         Backbone.history.start({ pushState: false });
     },
@@ -425,12 +454,12 @@ var TopicalGuideView = DefaultView.extend({
     },
     
     changeCurrentView: function() {
-        console.log('here');
+        // Destroy current view.
         this.currentView.dispose();
-        console.log('here');
         $("#tg-current-view-container").remove();
+        // Create new div element.
         $("#tg-views-container").append("<div id=\"tg-current-view-container\"></div>");
-        console.log('here');
+        // Create new settings for the new view.
         var settingsModel = new SettingsModel();
         var init = {
             el: $("#main-view-container"),
@@ -438,21 +467,24 @@ var TopicalGuideView = DefaultView.extend({
             selectionModel: this.selectionModel,
         };
         _.extend(init, this.models);
-        console.log('here');
+        
+        // Find the current class to display.
         var viewClass = null;
         if(this.viewModel.get("currentView") === "") {
             var homeView = this.viewModel.get("rootView");
             if(homeView !== "") {
                 viewClass = this.viewModel.getViewClass(homeView);
-            } else {
-                viewClass = DefaultView;
             }
         } else {
             viewClass = this.viewModel.getCurrentViewClass();
         }
+        // Resort to the default view if the current view isn't registered yet.
+        if(viewClass === undefined || viewClass === null) {
+            viewClass = DefaultView;
+        }
         
+        // Create the new view.
         this.currentView = new viewClass(init);
-        console.log('here');
         
         try {
             this.currentView.render();

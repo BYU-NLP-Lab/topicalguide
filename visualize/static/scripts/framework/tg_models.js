@@ -70,9 +70,9 @@ var SelectionModel = Backbone.Model.extend({
         
         if(signalTrigger) {
             if("dataset" in toSet) {
-                resetHelper(toSet, ["analysis", "topic", "document", "word"]);
+                resetHelper(toSet, ["analysis", "topic", "document", "topicNameScheme"]);
             } else if("analysis" in toSet) {
-                 resetHelper(toSet, ["topic"]);
+                 resetHelper(toSet, ["topic", "topicNameScheme"]);
             }
             if(DEBUG_SELECTION_MODEL) console.log("SelectionModel.set middle: " + hashToUrl(this.attributes));
             Backbone.Model.prototype.set.call(this, toSet, options);
@@ -723,6 +723,13 @@ var ViewModel = Backbone.Model.extend({
         return this.availableViewClassPaths;
     },
     
+    /**
+     * Used by the router to create part of the URL.
+     */
+    getCurrentPath: function() {
+        return this.get("currentView");
+    },
+    
     /*
      * Change the view to the one specified. No-op if the name doesn't exist.
      * path - url path to view as string
@@ -739,27 +746,6 @@ var ViewModel = Backbone.Model.extend({
         console.log(path);
         this.set({ "currentView": currentView });
     },
-    
-    //~ /**
-     //~ * Change the settings view to the one specified.
-     //~ * Return nothing.
-     //~ */
-    //~ changeSettingsView: function(readableName) {
-        //~ this.settingsView.dispose();
-        //~ $("#main-nav-settings-modal").remove();
-        //~ $("#main-all-modals-container").append("<div id=\"main-nav-settings-modal\"  class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"settingsModal\" aria-hidden=\"true\"></div>");
-        //~ var init = {
-            //~ el: $("#main-nav-settings-modal"),
-        //~ }
-        //~ _.extend(init, this.models);
-        //~ 
-        //~ if(readableName in this.settings) {
-            //~ this.settingsView = new this.settings[readableName](init);
-        //~ } else {
-            //~ this.settingsView = new DefaultView(init);
-        //~ }
-        //~ this.settingsView.render();
-    //~ },
     
     hasViewClass: function(name) {
         return name in this.availableViewClasses;
