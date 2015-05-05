@@ -6,12 +6,9 @@ var navView;
 var globalTopicalGuideView = null;
 $(function startApplication() {
     // Show the page.
-    globalTopicalGuideView = new TopicalGuideView();
+    globalTopicalGuideView = new TopicalGuideView({ el: $("#tg-all-content") });
     // Cleanup local data.
     deletePrefixFromHash("settings-", localStorage);
-    
-    // TODO remove temporary hack to keep visualizations working
-    globalDefaultModels = globalTopicalGuideView.models;
     
     // Render the Topical Guide View ... show time!
     globalTopicalGuideView.render();

@@ -206,7 +206,7 @@ var FavoritesModel = Backbone.Model.extend({
             "analyses": "dataset-"+dataset+"-analyses",
             "topics": "dataset-"+dataset+"-analysis-"+analysis+"-topics",
             "documents": "dataset-"+dataset+"-analysis-"+analysis+"-documents",
-            "topicNameScheme": "dataset-"+dataset+"-analysis-"+analysis+"-topicNameScheme",
+            "topicNameSchemes": "dataset-"+dataset+"-analysis-"+analysis+"-topicNameScheme",
         };
         return result;
     },
@@ -216,7 +216,7 @@ var FavoritesModel = Backbone.Model.extend({
      * datasets is stored in favs-datasets
      * analyses is stored in favs-dataset-<dataset name>-analyses
      * topics is stored in favs-dataset-<dataset name>-analysis-<analysis name>-topics
-     * documents and words are the same as topics
+     * documents and topicNameSchemes are the same as topics
      */
     saveToLocalStorage: function() {
         if(hasLocalStorage()) {
@@ -488,6 +488,10 @@ var DataModel = Backbone.Model.extend({
         return result;
     },
     
+    getDatasetReadableName: function(datasetName) {
+        return "name";
+    },
+    
     /**
      * topicNumber -- the number of the topic
      * Return the name of a topic according to the currently selected dataset, 
@@ -526,6 +530,8 @@ var DataModel = Backbone.Model.extend({
             return name + " (#" + topicNumber + ")";
         }
     },
+    
+    
     
     /**
      * Synchronous method to get topic names upon a change in analysis.
@@ -633,5 +639,210 @@ var UserModel = Backbone.Model.extend({
             .fail(function(jqXHR, textStatus, errorThrown) {
                 errorCallback(errorThrown);
             });
+    },
+});
+
+var DEBUG_VIEWMODEL = false;
+/*
+ * The ViewModel is responsible for tracking which view is selected.
+ * Bindable events include:
+ *      change:rootView -- note that availableViews gets triggered with this one
+ *      change:currentView
+ *      change:availableViews
+ *      change:helpView
+ *      change:favsView
+ *      change:topicNamesView
+ *      change:settingsViews
+ */
+var ViewModel = Backbone.Model.extend({
+    
+    initialize: function() {
+        var defaults = {
+            "rootView": "",
+            "currentView": "", 
+            "availableViews": "", 
+            "helpView": "", 
+            "favsView": "", 
+            "topicNamesView": "",
+            "settingsViews": "",
+        };
+        this.set(defaults);
+    },
+    
+    availableViewClasses: {},
+    availableViewClassPaths: {}, // Used for building the navigation bar.
+    helpViewClass: null,
+    favsViewClass: null,
+    topicNamesViewClass: null,
+    settingsViewClasses: {},
+    
+    /**
+     * Add a view. Will not override another existing view.
+     * menus - an array with human readable names that will be used to create the 
+     *         route and update the navigation bar; null means that the view
+     *         does not appear on the navigation bar
+     * view - a view class inheriting from DefaultView
+     */
+    addViewClass: function(menus, viewClass) {
+        var shortName = viewClass.prototype.shortName;
+        if(shortName in this.availableViewClasses) {
+            console.log("View class with short name \""+shortName+"\" already exists.");
+            return;
+        }
+        
+        if(menus !== null) {
+            this.availableViewClassPaths[shortName] = menus;
+        }
+        
+        this.availableViewClasses[shortName] = viewClass;
+        this.set({ "availableViews": this._hashKeysToList(this.availableViewClasses) });
+    },
+    
+    getCurrentViewClass: function() {
+        return this.availableViewClasses[this.get("currentView")];
+    },
+    
+    getReadableViewName: function(name) {
+        var result = null;
+        if(name in this.availableViewClasses) {
+            result = this.availableViewClasses[name].prototype.readableName;
+        }
+        return result;
+    },
+    
+    _hashKeysToList: function(hash) {
+        var arr = _.reduce(hash, function(result, val, key) {
+            result.push(key);
+            return result;
+        }, []);
+        arr.sort();
+        return arr.join(",");
+    },
+    
+    getAvailableViewClassPaths: function() {
+        return this.availableViewClassPaths;
+    },
+    
+    /*
+     * Change the view to the one specified. No-op if the name doesn't exist.
+     * path - url path to view as string
+     */
+    changeView: function(path) {
+        if(DEBUG_VIEWMODEL) console.log("ViewModel.changeView path=\""+path+"\" settings=\""+hashToUrl(settings)+"\"");
+        
+        var pathParts = path.split("/")
+        var currentView = pathParts[pathParts.length - 1];
+        
+        if(currentView === "") {
+            currentView = this.get("rootView");
+        }
+        console.log(path);
+        this.set({ "currentView": currentView });
+    },
+    
+    //~ /**
+     //~ * Change the settings view to the one specified.
+     //~ * Return nothing.
+     //~ */
+    //~ changeSettingsView: function(readableName) {
+        //~ this.settingsView.dispose();
+        //~ $("#main-nav-settings-modal").remove();
+        //~ $("#main-all-modals-container").append("<div id=\"main-nav-settings-modal\"  class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"settingsModal\" aria-hidden=\"true\"></div>");
+        //~ var init = {
+            //~ el: $("#main-nav-settings-modal"),
+        //~ }
+        //~ _.extend(init, this.models);
+        //~ 
+        //~ if(readableName in this.settings) {
+            //~ this.settingsView = new this.settings[readableName](init);
+        //~ } else {
+            //~ this.settingsView = new DefaultView(init);
+        //~ }
+        //~ this.settingsView.render();
+    //~ },
+    
+    hasViewClass: function(name) {
+        return name in this.availableViewClasses;
+    },
+    
+    /**
+     * attrKey -- one of the attribute keys
+     * name -- a name under one of them
+     * Return true if name is in the list attrKey; false otherwise.
+     */
+    _has: function(attrKey, name) {
+        var attr = this.attributes[attrKey];
+        if(attr === "") {
+            return false;
+        }
+        var uniqueDict = _.reduce(attr.split[","], function(result, n) {
+            result[n] = true;
+            return result;
+        }, {});
+        return name in uniqueDict;
+    },
+    
+    /**
+     * Set the root view to the given class.
+     * Return nothing.
+     */
+    setRootViewClass: function(rootClass) {
+        var shortName = rootClass.prototype.shortName;
+        if(shortName in this.availableViewClasses) {
+            console.log("Cannot set \""+shortName+"\" as the root view because a view with that name already exists.");
+            return;
+        }
+        this.set({ "rootView": shortName });
+        this.addViewClass(null, rootClass);
+    },
+    
+    /**
+     * Add a settings view.
+     * settingsClass - A class inheriting from default.
+     */
+    addSettingsClass: function(settingsClass) {
+        var shortName = settingsClass.prototype.shortName;
+        if(shortName in this.settingsViewClasses) {
+            console.log("Settings class with short name \""+shortName+"\" already exists.");
+            return;
+        }
+        
+        this.settingsViewClasses[shortName] = settingsClass;
+        this.set({ "settingsViews": this._hashKeysToList(this.settingsViewClasses) });
+    },
+    
+    /**
+     * Set the help view class. 
+     * Warning: only set after the DOM is loaded.
+     */
+    setHelpViewClass: function(helpViewClass) {
+        this.helpViewClass = helpViewClass;
+        this.set({ "helpView": helpViewClass.prototype.shortName });
+    },
+    
+    getHelpViewClass: function() {
+        return this.helpViewClass;
+    },
+    
+    /**
+     * Set the favorites quick select view class.
+     * Warning: only set after the DOM is loaded.
+     */
+    setFavoritesViewClass: function(favsViewClass) {
+        this.favsViewClass = favsViewClass;
+        this.set({ "favsView": favsViewClass.prototype.shortName });
+    },
+    
+    getFavoritesViewClass: function() {
+        return this.favsViewClass;
+    },
+    
+    setTopicNamesViewClass: function(topicNamesViewClass) {
+        this.topicNamesViewClass = topicNamesViewClass;
+        this.set({ "topicNamesView": topicNamesViewClass.prototype.shortName });
+    },
+    
+    getTopicNamesViewClass: function() {
+        this.topicNamesViewClass;
     },
 });

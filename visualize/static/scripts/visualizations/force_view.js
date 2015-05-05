@@ -2,6 +2,7 @@
 
 var ForceView = DefaultView.extend({
     readableName: "Force Diagram",
+    shortName: "force",
     
     visualizationTemplate:
 "<div id=\"force-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>"+

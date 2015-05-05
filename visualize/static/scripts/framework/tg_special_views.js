@@ -4,6 +4,7 @@
 
 var HelpView = DefaultView.extend({
     readableName: "Help",
+    shortName: "help",
     
     template: 
 "<div class=\"modal-dialog\">"+
@@ -28,9 +29,9 @@ var HelpView = DefaultView.extend({
         this.$el.html(this.template);
         var container = d3.select(this.el);
         var title = container.select(".modal-title");
-        title.text(this.viewModel.currentView.readableName + " Help");
+        title.text(globalTopicalGuideView.currentView.readableName + " Help");
         var body = container.select(".modal-body");
-        body.html(this.viewModel.currentView.renderHelpAsHtml());
+        body.html(globalTopicalGuideView.currentView.renderHelpAsHtml());
     },
     
     cleanup: function() {
@@ -39,6 +40,7 @@ var HelpView = DefaultView.extend({
 
 var FavoritesQuickSelectView = DefaultView.extend({
     readableName: "Favorites Quick Select",
+    shortName: "favs_quick_select",
     
     initialize: function() {
         this.selectionModel.on("change:dataset", this.forceHide, this);
@@ -117,6 +119,7 @@ var DefaultSettingsView = DefaultView.extend({
 
 var LoginView = DefaultSettingsView.extend({
     readableName: "Login",
+    shortName: "login",
     
     loginTemplate:
 "<form role=\"form\">"+
@@ -191,6 +194,7 @@ var LoginView = DefaultSettingsView.extend({
 
 var EditFavoritesView = DefaultSettingsView.extend({
     readableName: "Edit Favorites",
+    shortName: "edit_favs",
     
     render: function() {
         this.$el.html(this.template);
@@ -199,66 +203,3 @@ var EditFavoritesView = DefaultSettingsView.extend({
         container.select(".modal-body").text("Edit favorites coming soon.");
     },
 });
-
-/*
- * This allows new views or code to be loaded by the user.
- * It is disabled because there really isn't a need for it.
- * Also, it poses potential security threats.
- */
-/*
-var LoadScriptsView = DefaultSettingsView.extend({
-    readableName: "Load Scripts",
-    
-    render: function() {
-        this.$el.html(this.template);
-        
-        var container = d3.select(this.el);
-        
-        container.select(".modal-title").text(this.readableName);
-        var body = container.select(".modal-body");
-        body.html("");
-        body.append("p")
-            .classed("label-warning", true)
-            .text("WARNING! Any script you load gains access to all data on this site. "+
-                  "Some of the data could be data only accessible by your account and may include your username and password. "+
-                  "Only load scripts from trusted sources. ");
-        var form = body.append("form")
-            .attr("role", "form");
-        var group = form.append("div")
-            .classed("form-group", true);
-        group.append("label")
-            .attr("for", "script-input")
-            .text("Load Script:");
-        var input = group.append("input")
-            .attr("type", "text")
-            .classed("form-control", true)
-            .attr("id", "script-input")
-            .attr("placeholder", "Enter the web address of the script...");
-        form.append("button")
-            .attr("type", "submit")
-            .classed("btn btn-default", true)
-            .text("Load");
-            
-        body.append("span")
-            .classed("label", true)
-            .attr("id", "load-script-feedback");
-        
-        form.on("submit", function() {
-            d3.event.preventDefault();
-            $.getScript(input.property("value"))
-                .done(function(script, textStatus) {
-                    body.select("#load-script-feedback")
-                        .classed("label-success", true)
-                        .classed("label-danger", false)
-                        .text("Script loaded!");
-                })
-                .fail(function(jqxhr, settings, exception) {
-                    body.select("#load-script-feedback")
-                        .classed("label-danger", true)
-                        .classed("label-success", false)
-                        .text("Error: "+exception);
-                });
-        });
-    },
-});
-*/

@@ -3,13 +3,65 @@
  */
 
 
-var tg = {
+var tg = function() {
+    
     /**
-     * Small library to makeup for inconsistencies in JavaScript and across 
-     * browsers.
-     * Basic DOM functions for convenience.
+     * Basic site functions for convenience.
      */
-    dom: {
+    this.site = {
+        /**
+         * Initializes the span for you so that the global TG View can
+         * keep it updated on clicking.
+         * The dom element must have one of the following data attributes set:
+         *      tg-data-dataset-name
+         *      tg-data-analysis-name
+         *      tg-data-topic-number
+         *      tg-data-document-name
+         *      tg-data-topic-name-scheme
+         */
+        initFav: function(domElement, favsModel) {
+            var el = d3.select(domElement);
+            var type = null;
+            var clsName = null;
+            if(this.dom.hasAttr(domElement, "tg-data-dataset-name")) {
+                type = "datasets";
+                clsName = "tg-data-dataset-name";
+            } else if(this.dom.hasAttr(domElement, "tg-data-analyis-name")) {
+                type = "analyses";
+                clsName = "tg-data-analyis-name";
+            } else if(this.dom.hasAttr(domElement, "tg-data-topic-number")) {
+                type = "topics";
+                clsName = "tg-data-topic-number";
+            } else if(this.dom.hasAttr(domElement, "tg-data-document-name")) {
+                type = "documents";
+                clsName = "tg-data-document-name";
+            } else if(this.dom.hasAttr(domElement, "tg-data-topic-name-scheme")) {
+                type = "topicNameSchemes";
+                clsName = "tg-data-topic-name-scheme";
+            }
+            if(clsName !== null) {
+                if(favsModel.has(type, el.attr(clsName).toString())) {
+                    el.classed({ "glyphicon": true, "glyphicon-star": true, "glyphicon-star-empty": false, "gold": true });
+                } else {
+                    el.classed({ "glyphicon": true, "glyphicon-star": false, "glyphicon-star-empty": true, "gold": true });
+                }
+            }
+        },
+    };
+    
+    this.rand = {
+        /**
+         * Return an integer in [min, max).
+         */
+        getRandomIntegerInRange: function(min, max) {
+            return Math.floor(Math.random()*(max - min)) + min;
+        },
+    };
+    
+    /**
+     * Basic DOM convenience functions.
+     */
+    this.dom = {
         /**
          * domElement -- DOM element
          * attrName -- string of the attribute name
@@ -19,14 +71,14 @@ var tg = {
             var a = $(domElement).attr(attrName);
             return typeof a !== typeof undefined && a !== false;
         },
-    },
+    };
     
     /**
      * Small library to makeup for inconsistencies in JavaScript and across 
      * browsers.
      * Basic functions for type checking or otherwise.
      */
-    js: {
+    this.js = {
         /**
          * i -- a number
          * Return true if it is an integer; false otherwise.
@@ -48,7 +100,7 @@ var tg = {
                 return false;
             }
         },
-    },
+    };
 };
 
 

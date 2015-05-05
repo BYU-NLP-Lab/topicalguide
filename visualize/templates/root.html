@@ -26,7 +26,38 @@
         
         <script src="https://apis.google.com/js/platform.js" async defer></script>
         
-        <script id="main-nav-template" type="text/template">
+        <script id="tg-main-template" type="text/template">
+            
+            <header class="header">
+                <div id="tg-nav" class="nav-bar"></div>
+                <div id="tg-breadcrumbs" class=""></div>
+                <div id="tg-errors" class=""></div>
+            </header>
+            
+            <div id="tg-views-container" class="container-fluid"></div>
+            <div id="tg-all-modals-container">
+                <div id="tg-nav-help-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="helpModal" aria-hidden="true"></div>
+                <div id="tg-nav-settings-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="settingsModal" aria-hidden="true"></div>
+            </div>
+            <footer class="footer">
+                <p><a href="{{nlp_lab_url|safe}}"><img width="135px" height="135px" src="{{nlp_lab_logo_url|safe}}"/></a></p>
+                <div class="text-center">
+                    <ul class="nav nav-pills centered-pills">
+                        <li><a href="{{wiki_url|safe}}">Topical Guide Wiki</a></li>
+                        <li><a href="{% url 'terms' %}">Terms of Use</a></li>
+                        <li><a href="{{nlp_lab_url|safe}}">NLP Home</a></li>
+                        <li><a href="{{cs_dept_url|safe}}">CS Department Home</a></li>
+                        <li><a href="http://www.byu.edu">BYU Home</a></li>
+                    </ul>
+                </div>
+                <p id="tg-last-updated">{{last_updated}}</p>
+                <p>Version:&nbsp;<span id="tg-version">{{version}}</span></p>
+                <p>Developed by the BYU Natural Language Processing Lab</p>
+                <p>Copyright &copy; 2010-2011 Brigham Young University</p>
+            </footer>
+        </script>
+        
+        <script id="tg-nav-template" type="text/template">
             <nav class="navbar navbar-default" role="navigation">
                 <div class="container-fluid">
                     <div id="main-nav-brand" class="navbar-header">
@@ -110,7 +141,7 @@
                         </a>
                     </div>
                     <div id="js-navbar-collapse-hook" class="collapse navbar-collapse">
-                        <ul id="main-nav-bar" class="nav navbar-nav"></ul>
+                        <ul id="tg-nav-bar" class="nav navbar-nav"></ul>
                     </div>
                 </div>
             </nav>
@@ -124,9 +155,9 @@
 
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_global.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_utilities.js"></script>
+        <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_router.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_models.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_view_classes.js"></script>
-        <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_framework_views.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_special_views.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_start.js"></script>
         
@@ -150,7 +181,6 @@
     
     <body>
         <div id="fb-root"></div>
-        <div id="fb-root"></div>
         <script>
             (function(d, s, id) {
               var js, fjs = d.getElementsByTagName(s)[0];
@@ -161,20 +191,22 @@
             }(document, 'script', 'facebook-jssdk'));
         </script>
         
+        <div id="tg-share" class="share text-center">
+            <div id="share-facebook"><div class="fb-share-button"></div></div>
+            <div id="share-google-plus"><div class="g-plus" data-action="share" data-annotation="none"></div></div>
+        </div>
         
-        <div id="all-content" class="container-fluid">
+        <div id="tg-all-content" class="container-fluid">
             <header class="header">
-                <div id="main-share" class="share text-center">
-                    <div id="share-facebook"><div class="fb-share-button"></div></div>
-                    <div id="share-google-plus"><div class="g-plus" data-action="share" data-annotation="none"></div></div>
-                </div>
-                <div id="main-nav" class="nav-bar"></div>
+                <div id="tg-nav" class="nav-bar"></div>
+                <div id="tg-breadcrumbs" class=""></div>
+                <div id="tg-errors" class=""></div>
             </header>
             
-            <div id="main-container" class="container-fluid"></div>
-            <div id="main-all-modals-container">
-                <div id="main-nav-help-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="helpModal" aria-hidden="true"></div>
-                <div id="main-nav-settings-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="settingsModal" aria-hidden="true"></div>
+            <div id="tg-views-container" class="container-fluid"></div>
+            <div id="tg-all-modals-container">
+                <div id="tg-nav-help-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="helpModal" aria-hidden="true"></div>
+                <div id="tg-nav-settings-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="settingsModal" aria-hidden="true"></div>
             </div>
             <footer class="footer">
                 <p><a href="{{nlp_lab_url|safe}}"><img width="135px" height="135px" src="{{nlp_lab_logo_url|safe}}"/></a></p>
@@ -187,8 +219,8 @@
                         <li><a href="http://www.byu.edu">BYU Home</a></li>
                     </ul>
                 </div>
-                <p>{{last_updated}}</p>
-                <p>Version:&nbsp;{{version}}</p>
+                <p id="tg-last-updated">{{last_updated}}</p>
+                <p>Version:&nbsp;<span id="tg-version">{{version}}</span></p>
                 <p>Developed by the BYU Natural Language Processing Lab</p>
                 <p>Copyright &copy; 2010-2011 Brigham Young University</p>
             </footer>

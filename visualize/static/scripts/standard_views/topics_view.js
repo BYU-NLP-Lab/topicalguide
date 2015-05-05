@@ -4,6 +4,9 @@
  */
 var AllTopicSubView = DefaultView.extend({
     
+    readableName: "All Topics",
+    shortName: "all_topics",
+    
     baseTemplate:
 "<div id=\"form-container\" class=\"row container-fluid\"></div>"+
 "<div id=\"table-container\" class=\"row container-fluid\"></div>",
@@ -639,6 +642,7 @@ var SingleTopicSubView = DefaultView.extend({
 var TopicView = DefaultView.extend({
     
     readableName: "Topics",
+    shortName: "topics",
     
     initialize: function() {
         console.log(this.dataModel);

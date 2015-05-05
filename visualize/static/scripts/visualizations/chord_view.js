@@ -2,6 +2,7 @@
 
 var ChordView = DefaultView.extend({
     readableName: "Chord Diagram",
+    shortName: "chord",
     
     mainTemplate:
 "<div id=\"chord-diagram-container\" class=\"row\"></div>"+
