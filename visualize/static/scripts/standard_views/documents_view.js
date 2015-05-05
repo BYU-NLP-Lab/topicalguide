@@ -5,6 +5,7 @@
  */
 var AllDocumentsSubView = DefaultView.extend({
     readableName: "All Documents",
+    shortName: "all_docs",
     
     initialize: function() {
         var defaults = {
@@ -271,6 +272,7 @@ var AllDocumentsSubView = DefaultView.extend({
  */
 var DocumentInfoView = DefaultView.extend({
     readableName: "Single Document Information",
+    shortName: "one_doc_info",
     
     htmlTemplate:
 "<h3>Document: <span id=\"single-doc-name\"></span></h3>"+
@@ -1146,6 +1148,7 @@ var SingleDocumentSubView = DefaultView.extend({
 var DocumentView = DefaultView.extend({
     
     readableName: "Documents",
+    shortName: "documents",
     
     initialize: function() {
         var defaults = { selectedTab: "Text" };

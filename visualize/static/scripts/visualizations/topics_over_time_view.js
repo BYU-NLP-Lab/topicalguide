@@ -25,6 +25,7 @@ var TopicsOverTimeView = DefaultView.extend({
         "</div>",
 
     readableName: "Topics Over Time",
+    shortName: "topics_over_time",
 
     initialize: function() {
         this.selectionModel.on("change:analysis", this.render, this);

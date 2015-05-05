@@ -33,6 +33,7 @@ var PlotView = DefaultView.extend({
 "</div>",
 
     readableName: "2D Plots",
+    shortName: "2dplots",
     
     initialize: function() {
         this.selectionModel.on("change:analysis", this.render, this);
@@ -756,6 +757,7 @@ var PlotView = DefaultView.extend({
 var PlotViewManager = DefaultView.extend({
     
     readableName: "2D Plots",
+    shortName: "2dplots",
     
     mainTemplate: 
 "<div id=\"plot-view-container\" class=\"container-fluid\"></div>"+

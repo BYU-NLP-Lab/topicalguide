@@ -1,6 +1,7 @@
 var DatasetView = DefaultView.extend({
     
     readableName: "Datasets",
+    shortName: "datasets",
     
     compiledTemplate: _.template(
         "<% if(hasDatasets) { %>"+
@@ -59,9 +60,19 @@ var DatasetView = DefaultView.extend({
                 that.favsModel.selectionChanged();
             });
         bold.append("a") // Add favs icon.
-            .each( function(d, i) {
-                createFavsIcon(d3.select(this), "datasets", d.key, that);
+            .html(icons.emptyStar)
+            .select("span")
+            
+            .attr("data-tg-dataset-name", function(d, i) {
+                return d.key;
+            })
+            .classed("tg-fav", true)
+            .each(function(d, i) {
+                tg.site.initFav(this, that.favsModel);
             });
+            //~ .each( function(d, i) {
+                //~ createFavsIcon(d3.select(this), "datasets", d.key, that);
+            //~ });
         
         // Create div for dataset content.
         var panel = panels.append("div")

@@ -1,6 +1,7 @@
 var HomeView = DefaultView.extend({
     
     readableName: "Home Page",
+    shortName: "home",
     
     homePageHtml: 
 "<div id=\"home-page-intro\" class=\"col-xs-6\"></div>"+

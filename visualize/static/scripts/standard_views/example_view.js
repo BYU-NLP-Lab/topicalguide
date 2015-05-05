@@ -1,6 +1,10 @@
 /* How to make a view in the TopicalGuide.
  * Step 1: Copy and rename this file.
  * Step 2: Change the readableName to the name as you want it displayed to the user.
+ *         Then change the shortName to be a url friendly name with no spaces,
+ *         no special characters ('_' is okay), and all lowercase; this is the name other 
+ *         views can reference your view by for navigation purposes. This name 
+ *         must be unique.
  * Step 3: Change the class name from ExampleView to a class name you pick that doesn't 
  *         conflict with any others in the project.
  * Step 4: Determine where on the navigation bar your view is put.
@@ -13,6 +17,7 @@
  */
 var ExampleView = DefaultView.extend({
     readableName: "Example",
+    shortName: "example",
     
     /*
      * Remember that your view automatically comes with the following models:

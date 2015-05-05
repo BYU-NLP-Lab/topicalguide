@@ -8,6 +8,7 @@
 var MetadataMapView = DefaultView.extend({
     
     readableName: "Metadata Map",
+    shortName: "metadata_map",
 
     initialize: function() {
         this.selectionModel.on("change:analysis", this.render, this);
@@ -1448,6 +1449,7 @@ var MetadataMapView = DefaultView.extend({
 var PlotViewManager = DefaultView.extend({
     
     readableName: "Metadata Map",
+    shortName: "metadata_map",
     
     mainTemplate: 
 "<div id=\"metadata-map-view-container\" class=\"container-fluid\">"+
