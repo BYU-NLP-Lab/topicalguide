@@ -178,8 +178,31 @@ var SingleTopicView = DefaultView.extend({
 "<div id=\"single-topic-title\" class=\"row\"></div>"+
 "<div id=\"single-topic-info\" class=\"row\"></div>",
     
+    wordStatTemplate: 
+"<div id=\"word-stat-table\" class=\"col-xs-8\"></div>"+
+"<div id=\"word-stat-pie\" class=\"col-xs-4\"></div>",
+
+    pieChartTemplate:
+"<div id=\"single-topic-pie-chart\" class=\"row\">"+
+"</div>"+
+"<h4 class=\"text-center\">Word Types</h4>"+
+"<p class=\"text-center\">(sorted by token count)</p>"+
+"<div id=\"single-topic-pie-chart-word-type-selector\" class=\"row\">"+
+"</div>"+
+"<p class=\"text-center\"><span>Showing <span id=\"single-topic-showing-n-word-types\">__</span> of <span id=\"single-topic-total-word-types\">__</span></span></p>"+
+"<div id=\"single-topic-pie-chart-legend\" class=\"row\">"+
+"</div>",
+
+    
     initialize: function() {
         this.listenTo(this.selectionModel, "change:topic", this.render);
+        this.listenTo(this.settingsModel, "change:minWordTypeIndex", this.changeSelectedWordTypesRange);
+        this.listenTo(this.settingsModel, "change:maxWordTypeIndex", this.changeSelectedWordTypesRange);
+        this.listenTo(this.settingsModel, "change:minWordTypeIndex", this.updateSliderInfo);
+        this.listenTo(this.settingsModel, "change:maxWordTypeIndex", this.updateSliderInfo);
+        this.listenTo(this.settingsModel, "change:minWordTypeIndex", this.updatePieChartAndLegend);
+        this.listenTo(this.settingsModel, "change:maxWordTypeIndex", this.updatePieChartAndLegend);
+        
     },
     
     render: function() {
@@ -284,19 +307,20 @@ var SingleTopicView = DefaultView.extend({
             "words": "*",
             "top_n_words": 100, // TODO: need to get all words
         }, function(data) {
-            content.html("");
+            content.html(this.wordStatTemplate);
             var topicNumber = this.selectionModel.get("topic");
             var topic = extractTopics(data)[topicNumber];
-            console.log(topic);
+            this.renderPieChartContent(content.select("#word-stat-pie"), topic);
+            //console.log(topic);
             var topWords = topic["words"];
-            console.log(topWords);
+            //console.log(topWords);
             var tokenCount = parseFloat(topic.metrics["Token Count"]);
             var words = d3.entries(topWords).map(function(entry) {
                 //~ return [entry];
                 return [entry.key, entry.value.token_count, (entry.value.token_count/tokenCount)*100];
             });
-            console.log(words);
-            var table = content.append("table")
+            //console.log(words);
+            var table = content.select("#word-stat-table").append("table")
                 .classed("table table-hover table-condensed", true);
             //~ TODO: go to word view some day
             //~ var onClick = function(d, i) {
@@ -314,6 +338,237 @@ var SingleTopicView = DefaultView.extend({
                 sortAscending: false,
             });
         }.bind(this), this.renderError.bind(this));
+    },
+    
+    renderPieChartContent: function(container, topic) {
+        // Extract the needed data.
+        var topWordTypes = topic["words"];
+        this.selectedWordTypes = {};
+
+        this.sortedTokenCounts = [];
+        for(wordType in topWordTypes) {
+            this.sortedTokenCounts.push({
+                wordType: wordType,
+                tokenCount: topWordTypes[wordType].token_count,
+            });
+        }
+        
+        // Sort descending by token counts.
+        this.sortedTokenCounts = _.sortBy(this.sortedTokenCounts, function(d) {
+            return -d.tokenCount;
+        });
+        
+        // Create base containers.
+        container.html(this.pieChartTemplate);
+        
+        // Set number of word types
+        d3.select("#single-topic-total-word-types").text(this.sortedTokenCounts.length);
+        
+        // Default indices
+        var low = 0;
+        var high = Math.min(7, this.sortedTokenCounts.length - 1);
+        
+        // Create the color scale.
+        // Space word types far enough apart that they won't be confused.
+        var wordTypeNames = [];
+        var tempStripeLength = colorPalettes.pastels.length;
+        for(var i = 0; i < colorPalettes.pastels.length; i++) {
+            for(var j = i; j < this.sortedTokenCounts.length; j += tempStripeLength) {
+                wordTypeNames.push(this.sortedTokenCounts[j].wordType.toString());
+            }
+        }
+        this.wordTypeColorScale = colorPalettes.getDiscreteColorScale(wordTypeNames, colorPalettes.pastels);
+        
+        // Render initial pie chart framework.
+        var wordTypePieContainer = d3.select("#single-topic-pie-chart");
+        
+        var width = wordTypePieContainer[0][0].clientWidth;
+        var buffer = 6;
+        var pieChartSVG = wordTypePieContainer.append("svg")
+            .attr("width", width + buffer)
+            .attr("height", width + buffer)
+            .classed({ "single-word-type-pie-chart": true });
+            //~ .attr("id", "test-id");
+        
+        var x = width/2 + buffer/2;
+        var y = x;
+        var radius = width/2;
+        this.pieChartRadius = radius;
+        this.pieGroup = pieChartSVG.append("g")
+            .classed("topic-pie-chart", true)
+            .attr("transform", "translate("+x+","+y+")");
+        
+        // Create convenience reference for legend.
+        this.legendGroup = d3.select("#single-topic-pie-chart-legend");
+        
+        // Render the slider and set slider events.
+        this.$el.find("#single-topic-pie-chart-word-type-selector").slider({
+            range: true,
+            min: 0,
+            max: this.sortedTokenCounts.length,
+            step: 1,
+            values: [low, high],
+            slide: function(event, ui) {
+                this.settingsModel.set({
+                    minWordTypeIndex: ui.values[0],
+                    maxWordTypeIndex: ui.values[1],
+                });
+            }.bind(this),
+            change: function(event, ui) {
+                this.settingsModel.set({
+                    minWordTypeIndex: ui.values[0],
+                    maxWordTypeIndex: ui.values[1],
+                });
+            }.bind(this),
+        });
+        this.settingsModel.set({
+            minWordTypeIndex: low,
+            maxWordTypeIndex: high,
+        });
+        
+        
+        
+        this.changeSelectedWordTypeRange(); // Update which word types are visible.
+        this.updateSliderInfo();
+        this.updatePieChartAndLegend();
+    },
+    
+    /**
+     * When the word type range changes, then the selected word types must be updated.
+     */
+    changeSelectedWordTypeRange: function() {
+        var wordTypes = this.getWordTypesInSliderRange();
+        wordTypes = _.reduce(wordTypes, function(result, wordTypeObject) {
+            result[wordTypeObject] = true;
+            return result;
+        }, {});
+        for(wordType in this.selectedWordTypes) {
+            if(wordType in wordTypes) {
+                this.selectedWordTypes[wordType] = true;
+            } else {
+                this.selectedWordTypes[wordType] = false;
+            }
+        }
+    },
+    
+    /**
+     * Change the number of word types shown.
+     */
+    updateSliderInfo: function() {
+        var low = this.settingsModel.get("minWordTypeIndex");
+        var high = this.settingsModel.get("maxWordTypeIndex");
+        d3.select("#single-topic-showing-n-word-types").text(high - low);
+    },
+    
+    /**
+     * Currently nukes the current display and redraws it.
+     */
+    updatePieChartAndLegend: function() {
+        var data = this.getWordTypesInSliderRange();
+        //console.log(data);
+        var dataWordTypeNames = [];
+        for(i in data) {
+            dataWordTypeNames.push(data[i].wordType.toString());
+        }
+        var colorScale = colorPalettes.getDiscreteColorScale(dataWordTypeNames, colorPalettes.pastels);
+        
+        var outerRadius = this.pieChartRadius;
+        var innerRadius = outerRadius * (1/10);
+        var bufferRadius = outerRadius * (1/10);
+        var allocatedAngleBuffer = (0.03)*2*Math.PI;
+        var padAngle = allocatedAngleBuffer*(1/data.length)
+        
+        var arc = d3.svg.arc()
+            .padRadius(outerRadius)
+            .innerRadius(innerRadius);
+        var pie = d3.layout.pie()
+            .padAngle(padAngle)
+            .sort(null)
+            .value(function(d) { return d.tokenCount; });
+        
+        var that = this;
+        
+        // Update the pie chart.
+        this.pieGroup.selectAll("path").remove();
+        var arcs = this.pieGroup.selectAll("path");
+        arcs.data(pie(data.reverse()))
+            .enter().append("path")
+            .each(function(d) { d.outerRadius = outerRadius - bufferRadius; }) // Modify the outer radius manually to be 1/10th of the full radius.
+            .style("stroke", function(d, i) {
+                return d3.rgb(that.wordTypeColorScale(d.data.wordType)).darker(2);
+            })
+            .style("stroke-width", "1.5px")
+            .style("fill", function(d, i) {
+                return that.wordTypeColorScale(d.data.wordType);
+            })
+            .attr("d", arc)
+            .classed({
+                "single-topic-word-type": true,
+                //~ "single-topic-word-type-pie-slice": true,
+                "tg-word-type-tooltip": true,
+                "pointer": true,
+            })
+            .attr("data-original-title", function(d, i) { // Tool tip text.
+                return d.data.wordType;
+            });
+        
+        data.reverse(); // List was reversed for the pie chart, resetting it.
+        
+        // Update the legend.
+        this.legendGroup.selectAll(".single-topic-word-type-in-legend").remove();
+        var wordTypes = this.legendGroup.selectAll(".single-topic-word-type-in-legend");
+        var legendEntries = wordTypes.data(data)
+            .enter().append("div")
+            .classed({ "row": true, "single-topic-word-type-in-legend": true })
+            .classed("pointer", true);
+        
+        legendEntries.append("span") // Add a color swatch.
+            .html("&nbsp;")
+            .style("display", "inline-block")
+            .style("width", "1em")
+            .style("background-color", function(d, i) {
+                return that.wordTypeColorScale(d.wordType);
+            })
+            .classed("single-topic-word-type", true)
+            .attr("data-word-type-number", function(d, i) { return d.wordType; });
+        legendEntries.append("span") // Add a space between color swatch and text.
+            .html("&nbsp;&nbsp;");
+        legendEntries.append("span")
+            .text(function(d, i) {
+                return d.wordType;
+            })
+            .attr("id", function(d, i) { // Label the span for hover effects.
+                return "single-topic-legend-word-type-"+d.wordType;
+            })
+            .classed({ "single-topic-word-type": true })
+            .attr("data-word-type-number", function(d, i) {
+                return d.wordType;
+            });
+        
+        // Store the "tween" function for mouseover/out events.
+        this.mouseoverArcTween = function() {
+            d3.select(this).transition().attrTween("d", function(d) {
+                var i = d3.interpolate(d.outerRadius, outerRadius);
+                return function(t) { d.outerRadius = i(t); return arc(d); }
+            });
+        };
+        this.mouseoutArcTween = function() {
+            d3.select(this).transition().attrTween("d", function(d) {
+                var i = d3.interpolate(d.outerRadius, outerRadius-bufferRadius);
+                return function(t) { d.outerRadius = i(t); return arc(d); }
+            });
+        };
+    },
+    
+    
+    /**
+     * Return a sorted list of word type objects of the form:
+     *     { wordType: string, tokenCount: # }.
+     */
+    getWordTypesInSliderRange: function() {
+        var low = this.settingsModel.get("minWordTypeIndex");
+        var high = this.settingsModel.get("maxWordTypeIndex");
+        return this.sortedTokenCounts.slice(low, high + 1);
     },
     
     renderSimilarTopics: function(tab, content) {
