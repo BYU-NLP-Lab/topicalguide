@@ -1,9 +1,9 @@
+"use strict";
+
 /**
  * The following are an assortment of useful utilities.
  */
-
-
-var tg = function() {
+var tg = new function() {
     
     /**
      * Basic site functions for convenience.
@@ -23,27 +23,27 @@ var tg = function() {
             var el = d3.select(domElement);
             var type = null;
             var clsName = null;
-            if(this.dom.hasAttr(domElement, "tg-data-dataset-name")) {
+            if(tg.dom.hasAttr(domElement, "data-tg-dataset-name")) {
                 type = "datasets";
-                clsName = "tg-data-dataset-name";
-            } else if(this.dom.hasAttr(domElement, "tg-data-analyis-name")) {
+                clsName = "data-tg-dataset-name";
+            } else if(tg.dom.hasAttr(domElement, "data-tg-analyis-name")) {
                 type = "analyses";
-                clsName = "tg-data-analyis-name";
-            } else if(this.dom.hasAttr(domElement, "tg-data-topic-number")) {
+                clsName = "data-tg-analyis-name";
+            } else if(tg.dom.hasAttr(domElement, "data-tg-topic-number")) {
                 type = "topics";
-                clsName = "tg-data-topic-number";
-            } else if(this.dom.hasAttr(domElement, "tg-data-document-name")) {
+                clsName = "data-tg-topic-number";
+            } else if(tg.dom.hasAttr(domElement, "data-tg-document-name")) {
                 type = "documents";
-                clsName = "tg-data-document-name";
-            } else if(this.dom.hasAttr(domElement, "tg-data-topic-name-scheme")) {
+                clsName = "data-tg-document-name";
+            } else if(tg.dom.hasAttr(domElement, "data-tg-topic-name-scheme")) {
                 type = "topicNameSchemes";
                 clsName = "tg-data-topic-name-scheme";
             }
             if(clsName !== null) {
                 if(favsModel.has(type, el.attr(clsName).toString())) {
-                    el.classed({ "glyphicon": true, "glyphicon-star": true, "glyphicon-star-empty": false, "gold": true });
+                    el.classed({ "glyphicon": true, "glyphicon-star": true, "glyphicon-star-empty": false, "gold": true, "pointer": true });
                 } else {
-                    el.classed({ "glyphicon": true, "glyphicon-star": false, "glyphicon-star-empty": true, "gold": true });
+                    el.classed({ "glyphicon": true, "glyphicon-star": false, "glyphicon-star-empty": true, "gold": true, "pointer": true });
                 }
             }
         },
@@ -116,9 +116,7 @@ function addViewClass(nesting, cls) {
     $(function startApplication() {
         try{
             globalTopicalGuideView.viewModel.addViewClass(nesting, cls);
-            return true;
         } catch(e) {
-            return false;
         }
     });
 }
@@ -215,7 +213,7 @@ function urlToHash(args) {
     var hash = {};
     var items = args.split('&');
     if(items[0] !== "") {
-        for(i=0; i<items.length; i++) {
+        for(var i = 0; i<items.length; i++) {
             var keyAndValue = items[i].split('=');
             if(keyAndValue[1]===undefined) keyAndValue.push("");
             hash[decodeURIComponent(keyAndValue[0])] = decodeURIComponent(keyAndValue[1]);
@@ -235,7 +233,7 @@ function hashToUrl(hash) {
         } else if(item instanceof Array) {
             item = item.slice(0); // Clone the array.
             item.sort();
-            for(i=0; i<item.length; i++) {
+            for(var i = 0; i<item.length; i++) {
                 item[0] = normalize(item[0]);
             }
             return item.join(",");
@@ -271,7 +269,7 @@ function hasLocalStorage() {
  */
 function deletePrefixFromHash(prefix, hash) {
     var len = prefix.length;
-    for(key in hash) {
+    for(var key in hash) {
         if(key.slice(0, len) === prefix) {
             delete hash[key];
         }

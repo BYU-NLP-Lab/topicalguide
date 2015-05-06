@@ -1,3 +1,5 @@
+"use strict";
+
 var DEBUG_ROUTER = false;
 /*
  * The router ensures that the correct visualization is displayed using Backbone's routing scheme.
@@ -27,9 +29,20 @@ var Router = Backbone.Router.extend({
      * Builds the current URL.
      */
     generateURL: function() {
+        var settings = "";
+        var selection = {};
+        
+        if(this.settingsModel !== null && this.settingsModel !== undefined) {
+            settings = JSON.stringify(this.tgView.currentView.settingsModel.attributes);
+        }
+        
+        if(this.selectionModel !== null && this.selectionModel !== undefined) {
+            selection = this.selectionModel.attributes;
+        }
+        
         var hash = _.extend(
-            { settings: JSON.stringify(this.tgView.currentView.settingsModel.attributes) },
-            this.selectionModel.attributes
+            { settings: settings },
+            selection
         );
         return this.viewModel.getCurrentPath()+"?"+hashToUrl(hash);
     },

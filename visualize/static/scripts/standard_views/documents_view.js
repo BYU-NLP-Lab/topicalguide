@@ -766,7 +766,6 @@ var DocumentInfoView = DefaultView.extend({
     
     requestTopicHighlightData: function() {
         var topics = this.settingsModel.get("topics");
-        console.log(topics);
         if(topics.length === 0) {
             this.highlightText();
             return;
@@ -1096,8 +1095,6 @@ var DocumentInfoView = DefaultView.extend({
                 return d.topicNumber.toString() === topicNumber.toString();
             })
             .each(function(d) {
-                console.log(d.topicNumber);
-                console.log(that.isTopicSelected(d.topicNumber));
                 d3.select(this).property("checked", that.isTopicSelected(d.topicNumber));
             });
     },
@@ -1121,7 +1118,7 @@ var SingleDocumentSubView = DefaultView.extend({
         this.$el.html(this.mainTemplate);
         this.renderTopMatter();
         if(this.docInfoView === undefined) {
-            this.docInfoView = new DocumentInfoView({ el: $("#document-info-container"), settingsModel: this.settingsModel, selectionModel: this.selectionModel });
+            this.docInfoView = new DocumentInfoView(_.extend({ el: $("#document-info-container")}, this.getAllModels()));
         }
         this.docInfoView.render();
     },
@@ -1172,9 +1169,9 @@ var DocumentView = DefaultView.extend({
             this.$el.html("<div id=\"info\"></div>");
             this.cleanupViews();
             if(this.selectionModel.nonEmpty(["document"])) {
-                this.subView = new SingleDocumentSubView({ el: "#info", selectionModel: this.selectionModel, settingsModel: this.settingsModel });
+                this.subView = new SingleDocumentSubView(_.extend({ el: "#info"}, this.getAllModels()));
             } else {
-                this.subView = new AllDocumentsSubView({ el: "#info", selectionModel: this.selectionModel, settingsModel: this.settingsModel });
+                this.subView = new AllDocumentsSubView(_.extend({ el: "#info"}, this.getAllModels()));
             }
             this.subView.render();
         } else {

@@ -1,3 +1,5 @@
+"use strict";
+
 var DatasetView = DefaultView.extend({
     
     readableName: "Datasets",
@@ -62,7 +64,6 @@ var DatasetView = DefaultView.extend({
         bold.append("a") // Add favs icon.
             .html(icons.emptyStar)
             .select("span")
-            
             .attr("data-tg-dataset-name", function(d, i) {
                 return d.key;
             })
@@ -70,9 +71,6 @@ var DatasetView = DefaultView.extend({
             .each(function(d, i) {
                 tg.site.initFav(this, that.favsModel);
             });
-            //~ .each( function(d, i) {
-                //~ createFavsIcon(d3.select(this), "datasets", d.key, that);
-            //~ });
         
         // Create div for dataset content.
         var panel = panels.append("div")
@@ -102,6 +100,10 @@ var DatasetView = DefaultView.extend({
                 var a = li.append("a");
                 // Create favs icons.
                 a.append("span")
+                    .attr("data-tg-analysis-name", function(d, i) {
+                        return d.key;
+                    })
+                    .classed("tg-fav", true)
                     .each(function(d, i) {
                         createFavsIcon(d3.select(this), "analyses", d.key, that);
                     });
@@ -134,7 +136,7 @@ var DatasetView = DefaultView.extend({
             if(_.size(d.value.metadata) === 0) {
                 el.html("<p>No metadata available for this dataset.</p>");
             } else {
-                createTableFromHash(el, d.value.metadata, ["Key", "Value"], "metadata");
+                createTableFromHash(el, d.value.metadata, ["Metadata", "Value"], "metadata");
             }
         });
         // Create metrics table.

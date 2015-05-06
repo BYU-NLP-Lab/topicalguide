@@ -2,12 +2,12 @@
 
 file_concat_list=(
 
-static/scripts/libs/jquery-1.11.1.min.js
-whitespace.txt
-static/scripts/libs/lodash.min.js
-whitespace.txt
-static/scripts/libs/backbone.min.js
-whitespace.txt
+#~ static/scripts/libs/jquery-1.11.1.min.js
+#~ whitespace.txt
+#~ static/scripts/libs/lodash.min.js
+#~ whitespace.txt
+#~ static/scripts/libs/backbone.min.js
+#~ whitespace.txt
 static/scripts/libs/d3.v3.min.js
 whitespace.txt
 static/scripts/libs/d3.layout.cloud.js
@@ -38,13 +38,13 @@ whitespace.txt
         
 static/scripts/standard_views/home_view.js
 whitespace.txt
-#~ static/scripts/standard_views/datasets_view.js
-#~ whitespace.txt
-#~ static/scripts/standard_views/topics_view.js
-#~ whitespace.txt
-#~ static/scripts/standard_views/documents_view.js
-#~ whitespace.txt
-        #~ 
+static/scripts/standard_views/datasets_view.js
+whitespace.txt
+static/scripts/standard_views/topics_view.js
+whitespace.txt
+static/scripts/standard_views/documents_view.js
+whitespace.txt
+        
 #~ static/scripts/visualizations/2dplots_view.js
 #~ whitespace.txt
 #~ static/scripts/visualizations/chord_view.js
