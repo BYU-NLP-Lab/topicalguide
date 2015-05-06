@@ -101,6 +101,37 @@ var tg = new function() {
             }
         },
     };
+    
+    this.str = {
+        /**
+         * Returns a new string with the start of each word capitalized.
+         */
+        toTitleCase: function(str) {
+            return str.replace(/\w\S*/g, function(substr){ return substr.charAt(0).toUpperCase() + substr.slice(1); });
+        },
+        
+        
+    };
+    
+    this.color = {
+        pastels: ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", 
+                  "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", 
+                  "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", 
+                  "#17becf", "#9edae5"],
+        blueToRed: ["blue", "#F0EAD6", "red"],
+        black: ["black"],
+        /**
+         * Return a function that takes and index in the range of listOfValues 
+         * and maps to a color.
+         */
+        getDiscreteColorScale: function(listOfValues, colorPalette) {
+            var colorDomain = d3.scale.ordinal().domain(colorPalette).rangePoints([0, 1], 0).range();
+            var ordinalRange = d3.scale.ordinal().domain(listOfValues).rangePoints([0, 1], 0).range();
+            var ordToNum = d3.scale.ordinal().domain(listOfValues).range(ordinalRange);
+            var numToColor = d3.scale.linear().domain(colorDomain).range(colorPalette);
+            return function ordinalColorScale(val) { return numToColor(ordToNum(val)); };
+        },
+    };
 };
 
 
@@ -291,7 +322,7 @@ function hasSessionStorage() {
 
 // Helper function to pull out information such as readable_name, description, and anything else
 function extractMetadata(hash, metadata, defaults) {
-    for(key in defaults) {
+    for(var key in defaults) {
         if(key in metadata) {
             hash[key] = metadata[key];
             delete metadata[key];
@@ -354,7 +385,7 @@ function createSortableTable(table, options) {
     options = _.extend(defaults, options);
     // Find all of the maxes.
     var maxes = {};
-    for(i=0; i<options.bars.length; i++) {
+    for(var i = 0; i<options.bars.length; i++) {
         var index = options.bars[i];
         maxes[index] = options.data.reduce(function(p, c, i, a) { 
             return (p > c[index])?p:c[index]; 
@@ -362,7 +393,7 @@ function createSortableTable(table, options) {
     }
     // Turn percentages to array.
     var percent = {};
-    for(i=0; i<options.percentages.length; i++) {
+    for(var i = 0; i<options.percentages.length; i++) {
         percent[options.percentages[i].toString()] = null;
     }
     
@@ -450,7 +481,7 @@ function createSortableTable(table, options) {
         });
             
         // Create the percentage bars.
-        for(key in maxes) {
+        for(var key in maxes) {
             var maxIndex = parseFloat(key);
             var max = maxes[key];
             var column = td.filter(function(d, i) { return (i === maxIndex)?true:false; });
@@ -514,7 +545,7 @@ function createTabbedContent(container, options) {
                    "<div class=\"tab-content\"></div>");
     // Make sure a tab is selected to begin with.
     if(!(options.selected in options.tabs)) {
-        for(key in options.tabs) {
+        for(var key in options.tabs) {
             options.selected = key;
             break;
         }

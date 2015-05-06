@@ -89,7 +89,7 @@ var SelectionModel = Backbone.Model.extend({
      * Return true if they are non-empty; false otherwise.
      */
     nonEmpty: function(list) {
-        for(var i = 0; i<list.length; i++) {
+        for(var i = 0; i < list.length; i++) {
             if(this.get(list[i]) === "") {
                 return false;
             }
@@ -182,7 +182,6 @@ var FavoritesModel = Backbone.Model.extend({
         "analyses": true,
         "topics": true,
         "documents": true,
-        "topicNameScheme": true,
     },
     
     /**
@@ -198,6 +197,14 @@ var FavoritesModel = Backbone.Model.extend({
         this.remove();
     },
     
+    getAllFavorites: function() {
+        var result = {};
+        for(var key in this.availableFavorites) {
+            result[key] = this.get(key);
+        }
+        return result;
+    },
+    
     /* 
      * Generates a list of keys to properly save and load items.
      */
@@ -209,7 +216,6 @@ var FavoritesModel = Backbone.Model.extend({
             "analyses": "dataset-"+dataset+"-analyses",
             "topics": "dataset-"+dataset+"-analysis-"+analysis+"-topics",
             "documents": "dataset-"+dataset+"-analysis-"+analysis+"-documents",
-            "topicNameSchemes": "dataset-"+dataset+"-analysis-"+analysis+"-topicNameScheme",
         };
         return result;
     },
@@ -463,7 +469,7 @@ var DataModel = Backbone.Model.extend({
      * Return number of documents in datasetName; 0 if the dataset doesn't exist.
      */
     getDatasetDocumentCount: function(datasetName) {
-        result = this.datasetsAndAnalyses[datasetName].metrics["Document Count"];
+        var result = this.datasetsAndAnalyses[datasetName].metrics["Document Count"];
         return result;
     },
     
@@ -484,15 +490,11 @@ var DataModel = Backbone.Model.extend({
      * Return list of analysis name schemes available; empty if none.
      */
     getTopicNameSchemes: function(datasetName, analysisName) {
-        result = [];
+        var result = [];
         if(datasetName !== "" && analysisName !== "") {
             result = this.datasetsAndAnalyses[datasetName].analyses[analysisName].topic_name_schemes;
         }
         return result;
-    },
-    
-    getDatasetReadableName: function(datasetName) {
-        return "name";
     },
     
     /**
@@ -534,7 +536,30 @@ var DataModel = Backbone.Model.extend({
         }
     },
     
+    getReadableTopicName: function(topicNumber) {
+        return this.getTopicName(topicNumber);
+    },
     
+    getReadableDatasetName: function(datasetName) {
+        try {
+            var metadata = this.datasetsAndAnalyses[datasetName].metadata;
+            if("readable_name" in metadata) {
+                return metadata["readable_name"];
+            }
+        } catch(e) {}
+        return datasetName;
+    },
+    
+    getReadableAnalysisName: function(analysisName) {
+        var datasetName = this.selectionModel.get("dataset");
+        try {
+            var metadata = this.datasetsAndAnalyses[datasetName].analyses[analysisName].metadata;
+            if("readable_name" in metadata) {
+                return metadata["readable_name"];
+            }
+        } catch(e) {}
+        return analysisName;
+    },
     
     /**
      * Synchronous method to get topic names upon a change in analysis.
@@ -661,6 +686,7 @@ var ViewModel = Backbone.Model.extend({
     
     initialize: function() {
         var defaults = {
+            "atRoot": false,
             "rootView": "",
             "currentView": "", 
             "availableViews": "", 
@@ -753,10 +779,13 @@ var ViewModel = Backbone.Model.extend({
         var pathParts = path.split("/")
         var currentView = pathParts[pathParts.length - 1];
         
+        var toSet = {};
         if(currentView === "") {
-            currentView = this.get("rootView");
+            toSet["currentView"] = this.get("rootView");
+        } else {
+            toSet["currentView"] = currentView;
         }
-        this.set({ "currentView": currentView });
+        this.set(toSet);
     },
     
     /**
@@ -771,24 +800,9 @@ var ViewModel = Backbone.Model.extend({
     },
     
     /**
-     * attrKey -- one of the attribute keys
-     * name -- a name under one of them
-     * Return true if name is in the list attrKey; false otherwise.
-     */
-    _has: function(attrKey, name) {
-        var attr = this.attributes[attrKey];
-        if(attr === "") {
-            return false;
-        }
-        var uniqueDict = _.reduce(attr.split[","], function(result, n) {
-            result[n] = true;
-            return result;
-        }, {});
-        return name in uniqueDict;
-    },
-    
-    /**
      * Set the root view to the given class.
+     * If the current view isn't set to anything, set the current view to be
+     * the root view.
      * Return nothing.
      */
     setRootViewClass: function(rootClass) {
@@ -799,6 +813,10 @@ var ViewModel = Backbone.Model.extend({
         }
         this.set({ "rootView": shortName });
         this.addViewClass(null, rootClass);
+        
+        if(this.get("currentView") === "") {
+            this.set({ "currentView": shortName });
+        }
     },
     
     /**
@@ -814,40 +832,5 @@ var ViewModel = Backbone.Model.extend({
         
         this.settingsViewClasses[shortName] = settingsClass;
         this.set({ "settingsViews": this._hashKeysToList(this.settingsViewClasses) });
-    },
-    
-    /**
-     * Set the help view class. 
-     * Warning: only set after the DOM is loaded.
-     */
-    setHelpViewClass: function(helpViewClass) {
-        this.helpViewClass = helpViewClass;
-        this.set({ "helpView": helpViewClass.prototype.shortName });
-    },
-    
-    getHelpViewClass: function() {
-        return this.helpViewClass;
-    },
-    
-    /**
-     * Set the favorites quick select view class.
-     * Warning: only set after the DOM is loaded.
-     */
-    setFavoritesViewClass: function(favsViewClass) {
-        this.favsViewClass = favsViewClass;
-        this.set({ "favsView": favsViewClass.prototype.shortName });
-    },
-    
-    getFavoritesViewClass: function() {
-        return this.favsViewClass;
-    },
-    
-    setTopicNamesViewClass: function(topicNamesViewClass) {
-        this.topicNamesViewClass = topicNamesViewClass;
-        this.set({ "topicNamesView": topicNamesViewClass.prototype.shortName });
-    },
-    
-    getTopicNamesViewClass: function() {
-        this.topicNamesViewClass;
     },
 });

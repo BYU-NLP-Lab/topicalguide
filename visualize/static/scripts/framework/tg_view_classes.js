@@ -30,8 +30,11 @@ var icons = {
 var globalDefaultModels = null;
 
 /**
- * The DefaultView acts as an interface for other views to use so the proper methods and attributes
- * are implemented.
+ * The DefaultView acts as an interface for other views to use so the proper 
+ * methods and attributes are implemented.
+ * 
+ * Also, this view allows certain models to be injected into the "this" context
+ * of your class.
  * 
  * It is recommended that you use the listenTo function to bind to model events so it gets cleaned up
  * for you.
@@ -130,13 +133,18 @@ _.extend(DefaultView.prototype, Backbone.View.prototype, {
 DefaultView.extend = Backbone.View.extend;
 
 
-/*
- * The NavigationView is responsible for updating the navigation bar to reflect the appropriate selection.
+/**
+ * The NavigationView is responsible for updating the navigation bar to 
+ * reflect the appropriate selection and available views.
  */
 var NavigationView = DefaultView.extend({
-    // initialize must be called after the body is ready so the element is present
+    
     initialize: function() {
         this.listenTo(this.viewModel, "change", this.render);
+        this.listenTo(this.selectionModel, "change:dataset", this.hideTopicNameSchemes);
+        this.listenTo(this.selectionModel, "change:analysis", this.hideTopicNameSchemes);
+        this.listenTo(this.selectionModel, "change:dataset", this.hideFavorites);
+        this.listenTo(this.selectionModel, "change:analysis", this.hideFavorites);
     },
     
     template: $("#tg-nav-template").html(),
@@ -216,7 +224,7 @@ var NavigationView = DefaultView.extend({
                 "html": true,
                 "trigger": "manual",
                 "viewport": "body",
-                "container": "body",
+                "container": "#tg-all-content",
                 "placement": "bottom",
                 "animation": true,
                 "title": "Favorites Quick Select",
@@ -243,7 +251,7 @@ var NavigationView = DefaultView.extend({
                 "html": true,
                 "trigger": "manual",
                 "viewport": "body",
-                "container": "body",
+                "container": "#tg-all-content",
                 "placement": "bottom",
                 "animation": true,
                 "title": "Topic Name Schemes",
@@ -319,12 +327,94 @@ var NavigationView = DefaultView.extend({
         "click #tg-nav-help": "clickHelp",
     },
     
+    hideTopicNameSchemes: function() {
+        $("#tg-nav-topic-name-schemes").popover("hide");
+    },
+    
     hoverTopicNameSchemes: function() {
-        return "<p>Hello</p>";
+        var newEl = document.createElement("div");
+        var datasetName = this.selectionModel.get("dataset");
+        var analysisName = this.selectionModel.get("analysis");
+        var topicNameSchemes = this.dataModel.getTopicNameSchemes(datasetName, analysisName);
+        var container = d3.select(newEl).append("div");
+        if(topicNameSchemes.length === 0) {
+            container.append("p")
+                .text("No name schemes available. Make sure that you have an analysis selected.");
+        } else {
+            container.append("ol").selectAll("li")
+                .data(topicNameSchemes)
+                .enter()
+                .append("li")
+                .append("a")
+                .attr("data-tg-topic-name-scheme", function(d, i) {
+                    return d;
+                })
+                .classed("tg-select nounderline pointer", true)
+                .text(function(d, i) {
+                    return d;
+                });
+        }
+        return container.html();
+    },
+    
+    hideFavorites: function() {
+        $("#tg-nav-favs").popover("hide");
     },
     
     hoverFavorites: function() {
-        return "<p>Hello</p>";
+        var that = this;
+        var newEl = document.createElement("div");
+        // Create containers.
+        var container = d3.select(newEl);
+        var containers = container.selectAll("div")
+            .data(d3.entries(this.favsModel.getAllFavorites()))
+            .enter()
+            .append("div");
+        // Create headers.
+        containers.append("h5")
+            .append("b")
+            .text(function(d, i) { return tg.str.toTitleCase(d.key); });
+        // Create lists.
+        containers.each(function(favObj, i) {
+            var el = d3.select(this);
+            if(_.size(favObj.value) === 0) {
+                el.append("p")
+                    .text("No " + favObj.key + " favorited.");
+            } else {
+                var type = favObj.key;
+                var dataAttr = "";
+                var nameFunction = function(x) { return x; };
+                if(type === "datasets") {
+                    dataAttr = "dataset-name";
+                    nameFunction = that.dataModel.getReadableDatasetName.bind(that.dataModel);
+                } else if(type === "analyses") {
+                    dataAttr = "analysis-name";
+                    nameFunction = that.dataModel.getReadableAnalysisName.bind(that.dataModel);
+                } else if(type === "topics") {
+                    dataAttr = "topic-number";
+                    nameFunction = that.dataModel.getReadableTopicName.bind(that.dataModel);
+                } else if(type === "documents") {
+                    dataAttr = "document-name";
+                }
+                
+                el.append("ol")
+                    .selectAll("li")
+                    .data(d3.entries(favObj.value).map(function(entry) { 
+                            entry.value = makeSingular(favObj.key);
+                            return entry;
+                    }))
+                    .enter()
+                    .append("li")
+                    .append("a")
+                    .attr("data-tg-"+dataAttr, function(d, i) {
+                        return d.key;
+                    })
+                    .classed("nounderline pointer", true)
+                    .classed("tg-select", true)
+                    .text(function(d, i) { return nameFunction(d.key); });
+            }
+        });
+        return container.html();
     },
     
     clickHelp: function() {
@@ -369,22 +459,71 @@ var NavigationView = DefaultView.extend({
 });
 
 
+var BreadcrumbsView = DefaultView.extend({
 
+    baseTemplate:
+"<div class=\"row\">"+
+"<bold class=\"\">Dataset:</bold>"+
+"</div>",
+    
+    initialize: function() {
+        this.listenTo(this.selectionModel, "change:dataset", this.updateDataset);
+        this.listenTo(this.selectionModel, "change:analysis", this.updateAnalysis);
+        this.listenTo(this.selectionModel, "change:topic", this.updateTopic);
+        this.listenTo(this.selectionModel, "change:document", this.updateDocument);
+        this.listenTo(this.selectionModel, "change:topicNameScheme", this.updateTopicNameScheme);
+    },
+    
+    cleanup: function() {
+    },
+    
+    render: function() {
+        this.$el.html(this.baseTemplate);
+        this.updateDataset();
+        this.updateAnalysis();
+        this.updateTopic();
+        this.updateDocument();
+        this.updateTopicNameScheme();
+    },
+    
+    updateDataset: function() {
+    },
+    
+    updateAnalysis: function() {
+    },
+    
+    updateTopic: function() {
+    },
+    
+    updateDocument: function() {
+    },
+    
+    updateTopicNameScheme: function() {
+    },
+    
+});
 
 /**
  * The entire page.
  * 
- * Document Tooltips:
- * Requires the class "tg-tooltip" class to be set.
- * Requires a name stored under the "data-tg-document-name" attribute.
+ * Data Attributes:
+ *      data-tg-dataset-name
+ *      data-tg-analysis-name
+ *      data-tg-topic-number
+ *      data-tg-document-name
+ *      data-tg-topic-name-scheme
  * 
- * Topic Tooltips:
- * Requires the class "tg-tooltip" class to be set.
- * Requires a number stored under the "data-tg-topic-number" attribute.
+ * Selection:
+ * Set the class "tg-select" and the data will be pulled from the data attribute.
+ * 
+ * Tooltips:
+ * Set the class "tg-tooltip" and the data will be pulled from the data attribute.
  * 
  * Favorites:
- * Add the class "tg-fav" to the ...
- * 
+ * Set the class "tg-fav" and the data will be pulled from the data attribute.
+ * You are responsible for initializing the element.
+ * To help you out there is a function called tg.site.initFav (see the 
+ * documentation in tg_utilities.js.
  */
 var TopicalGuideView = DefaultView.extend({
     
@@ -474,6 +613,8 @@ var TopicalGuideView = DefaultView.extend({
         
         this.navView = new NavigationView(_.extend({ el: $("#tg-nav"), tgView: this }, this.models));
         this.navView.render();
+        this.breadcrumbsView = new BreadcrumbsView(_.extend({ el: $("#tg-breadcrumbs"), tgView: this }, this.models));
+        this.breadcrumbsView.render();
     },
     
     renderHelpAsHtml: function() {
@@ -486,6 +627,7 @@ var TopicalGuideView = DefaultView.extend({
     
     events: {
         "click .tg-fav": "clickFavorite", // Create site wide favorites functionality.
+        "click .tg-select": "clickSelect", // Create site wide selection functionality.
     },
     
     clickFavorite: function(e) {
@@ -570,8 +712,10 @@ var TopicalGuideView = DefaultView.extend({
     },
     
     changeAvailableViews: function() {
-        var name = this.viewModel.get("currentView");
-        if(this.currentView.shortName !== name && this.viewModel.hasViewClass(name)) {
+        var currView = this.viewModel.get("currentView");
+        // If the current view doesn't match the view the viewModel is set to 
+        // and that view is registered with the viewModel.
+        if(this.currentView.shortName !== currView && this.viewModel.hasViewClass(currView)) {
             this.changeCurrentView();
         }
     },
@@ -585,6 +729,24 @@ var TopicalGuideView = DefaultView.extend({
         var topicNamesViewClass = this.viewModel.getTopicNamesViewClass();
         this.topicNamesView = new topicNameViewClass(init);
         this.topicNamesView.render();
+    },
+    
+    clickSelect: function(e) {
+        var el = e.target;
+        var selection = {};
+        if(tg.dom.hasAttr(el, "data-tg-dataset-name")) {
+            selection["dataset"] = $(el).attr("data-tg-dataset-name");
+        } else if(tg.dom.hasAttr(el, "data-tg-analysis-name")) {
+            selection["analysis"] = $(el).attr("data-tg-analysis-name");
+            console.log(selection);
+        } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
+            selection["topic"] = $(el).attr("data-tg-topic-number");
+        } else if(tg.dom.hasAttr(el, "data-tg-document-name")) {
+            selection["document"] = $(el).attr("data-tg-document-name");
+        } else if(tg.dom.hasAttr(el, "data-tg-topic-name-scheme")) {
+            selection["topicNameScheme"] = $(el).attr("data-tg-topic-name-scheme");
+        }
+        this.selectionModel.set(selection);
     },
     
 });

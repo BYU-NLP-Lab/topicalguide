@@ -1,3 +1,5 @@
+"use strict";
+
 
 var PlotView = DefaultView.extend({
     
@@ -156,28 +158,28 @@ var PlotView = DefaultView.extend({
         // Put data into the correct format.
         var documents = analysis.documents;
         // Make sure that topic relations are in percentage forms.
-        for(docKey in documents) {
+        for(var docKey in documents) {
             var doc = documents[docKey];
             var totalTokens = 0;
             var topics = doc.topics;
-            for(key in topics) {
+            for(var key in topics) {
                 totalTokens += topics[key];
             }
-            for(key in topics) {
+            for(var key in topics) {
                 topics[key] = topics[key]/totalTokens;
             }
             // Add uniform property.
             doc.other = {};
             doc.other.uniform = 0;
             
-            for(key in doc) {
+            for(var key in doc) {
                 groupNames[key] = toTitleCase(key.replace(/_/g, " "));
                 if(!(key in valueNames)) {
                     valueNames[key] = {};
                     valueTypes[key] = {};
                 }
                 var group = doc[key];
-                for(valKey in group){
+                for(var valKey in group){
                     if(!(valKey in valueNames[key])) {
                         valueNames[key][valKey] = toTitleCase(valKey.replace(/_/g, " "));
                         valueTypes[key][valKey] = this.getType(group[valKey]);
@@ -191,7 +193,7 @@ var PlotView = DefaultView.extend({
         console.log(valueNames);
         if("topics" in valueNames) {
             var valueTopics = valueNames.topics;
-            for(topKey in valueTopics) {
+            for(var topKey in valueTopics) {
                 valueTopics[topKey] = toTitleCase(allTopics[topKey].names.Top3);
             }
         }
@@ -442,7 +444,7 @@ var PlotView = DefaultView.extend({
     getNoData: function(group, value) {
         var data = this.model.attributes.data;
         var noData = {};
-        for(key in data) {
+        for(var key in data) {
             var val = data[key][group][value];
             if(val === undefined || val === null) {
                 noData[key] = true;
@@ -507,7 +509,7 @@ var PlotView = DefaultView.extend({
         var count = 0;
         var text = {}; // Used if the type is determined to be text.
         var type = false;
-        for(key in data) {
+        for(var key in data) {
             if(key in excluded) continue;
             var val = data[key][group][value];
             
@@ -535,7 +537,7 @@ var PlotView = DefaultView.extend({
         
         if(type === "text") {
             var domain = [];
-            for(k in text) domain.push(k);
+            for(var k in text) domain.push(k);
             domain.sort();
             text = domain;
         }
@@ -764,8 +766,8 @@ var PlotViewManager = DefaultView.extend({
 "<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
     
     initialize: function() {
-        this.plotView = new PlotView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
-        this.documentInfoView = new DocumentInfoView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
+        this.plotView = new PlotView(_.extend({}, this.getAllModels()));
+        this.documentInfoView = new DocumentInfoView(_.extend({}, this.getAllModels()));
     },
     
     cleanup: function() {

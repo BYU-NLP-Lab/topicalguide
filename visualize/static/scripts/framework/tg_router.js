@@ -7,10 +7,11 @@ var DEBUG_ROUTER = false;
 var Router = Backbone.Router.extend({
     
     initialize: function(args) {
-        // Catches all routes except for the root path.
-        this.route(/^([^\\?]*)([\\?](.*))?$/, "changeView");
         // Catches the special case of no fragment path or query string (the root path).
         this.route(/^$/, "rootView");
+        // Catches all routes except for the root path.
+        this.route(/^([^\\?]*)([\\?](.*))?$/, "changeView");
+        
         // Listen to various models.
         this.viewModel = args.viewModel;
         this.selectionModel = args.selectionModel;

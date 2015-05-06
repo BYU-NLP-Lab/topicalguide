@@ -1,3 +1,4 @@
+"use strict";
 
 /**
  * Responsible for rendering the lists of documents for the user to select a
@@ -337,7 +338,7 @@ var DocumentInfoView = DefaultView.extend({
                 return result;
             }
         }, []);
-        for(t in topics) {
+        for(var t in topics) {
             this.selectedTopics[t] = false; // Nothing is visible until the pie chart's data is loaded.
         }
     },
@@ -388,7 +389,7 @@ var DocumentInfoView = DefaultView.extend({
      */
     updateSelectedTopicsSettings: function() {
         var s = [];
-        for(t in this.selectedTopics) {
+        for(var t in this.selectedTopics) {
             s.push(t);
         }
         s.sort();
@@ -401,7 +402,7 @@ var DocumentInfoView = DefaultView.extend({
     changeSelectedTopicsRange: function() {
         var topics = this.getTopicsInSliderRange();
         topics = _.reduce(topics, function(r, t) { r[t.topicNumber.toString()] = true; return r; }, {});
-        for(t in this.selectedTopics) {
+        for(var t in this.selectedTopics) {
             if(t in topics) {
                 this.selectedTopics[t] = true;
             } else {
@@ -462,7 +463,7 @@ var DocumentInfoView = DefaultView.extend({
             // Extract the needed data.
             var topicTokenCounts = documents[doc].topics;
             this.sortedTopicTokenCounts = [];
-            for(topicNum in topicTokenCounts) {
+            for(var topicNum in topicTokenCounts) {
                 this.sortedTopicTokenCounts.push({
                     topicNumber: topicNum,
                     tokenCount: topicTokenCounts[topicNum],
@@ -565,7 +566,7 @@ var DocumentInfoView = DefaultView.extend({
     updatePieChartAndLegend: function() {
         var data = this.getTopicsInSliderRange();
         var dataTopicNames = [];
-        for(i in data) {
+        for(var i in data) {
             dataTopicNames.push(data[i].topicNumber.toString());
         }
         var colorScale = colorPalettes.getDiscreteColorScale(dataTopicNames, colorPalettes.pastels);
@@ -678,7 +679,7 @@ var DocumentInfoView = DefaultView.extend({
     },
     
     renderTabbedContent: function() {
-        tabs = {
+        var tabs = {
             "Plain Text": this.renderText.bind(this),
             "Metadata and Metrics": this.renderMetadataAndMetrics.bind(this),
         };
@@ -783,7 +784,7 @@ var DocumentInfoView = DefaultView.extend({
             var topics = extractTopics(data, this.selectionModel);
             var justTopics = {};
             var tokens = [];
-            for(topic in topics) {
+            for(var topic in topics) {
                 var docTokens = topics[topic].word_token_documents_and_locations;
                 if(doc in docTokens) {
                     var docTokens = docTokens[doc];
@@ -816,7 +817,7 @@ var DocumentInfoView = DefaultView.extend({
             var topicsAndLocations = extractDocuments(data, this.selectionModel)[selection.document].word_token_topics_and_locations;
             var topics = {};
             var tokens = [];
-            for(word in topicsAndLocations) {
+            for(var word in topicsAndLocations) {
                 var tempTokens = topicsAndLocations[word];
                 for(var i = 0; i < tempTokens.length; i++) {
                     topics[tempTokens[i][0]] = true;
