@@ -1462,8 +1462,8 @@ var PlotViewManager = DefaultView.extend({
 //~ "<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
     
     initialize: function() {
-        this.metadataMapView = new MetadataMapView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
-        this.documentInfoView = new DocumentInfoView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
+        this.metadataMapView = new MetadataMapView(_.extend({}, this.getAllModels()));
+        this.documentInfoView = new DocumentInfoView(_.extend({}, this.getAllModels()));
     },
     
     cleanup: function() {

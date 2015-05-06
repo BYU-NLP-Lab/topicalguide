@@ -3,72 +3,8 @@
  * The following are small views used for manipulating various settings.
  */
 
-var FavoritesQuickSelectView = DefaultView.extend({
-    readableName: "Favorites Quick Select",
-    shortName: "favs_quick_select",
-    
-    initialize: function() {
-        this.selectionModel.on("change:dataset", this.forceHide, this);
-        this.selectionModel.on("change:analysis", this.forceHide, this);
-    },
-    
-    cleanup: function() {
-        this.favsModel.off(null, null, this);
-    },
-    
-    // Force the popover to hide if it needs to re-render.
-    // It only re-renders if the user mouses over the popover button.
-    forceHide: function() {
-        $("#main-nav-favs").popover("hide");
-    },
-    
-    render: function() {
-        //~ this.favsModel.off(null, null, this); // Cleanup any events previously created by favicons.
-        var that = this;
-        this.$el.empty();
-        // Create containers.
-        d3.select(this.el).append("div")
-            .attr("id", "favs-popover");
-        
-        var favorites = _.extend({}, this.favsModel.attributes);
-        var topics = favorites.topics;
-        var container = d3.select(this.el).select("#favs-popover").selectAll("div")
-            .data(d3.entries(this.favsModel.attributes))
-            .enter()
-            .append("div");
-        // Create headers.
-        container.append("h5")
-            .append("b")
-            .text(function(d, i) { return d.key[0].toUpperCase() + d.key.slice(1); });
-        // Create lists.
-        container.each(function(d, i) {
-            var el = d3.select(this);
-            if(_.size(d.value) === 0) {
-                el.append("p")
-                    .text("No " + d.key);
-            } else {
-                el.append("ol")
-                    .selectAll("li")
-                    .data(function(d, i) { 
-                        return d3.entries(d.value).map(function(entry) { 
-                            entry.value = makeSingular(d.key);
-                            return entry;
-                        })
-                    })
-                    .enter()
-                    .append("li")
-                    .append("a")
-                    .classed("nounderline pointer", true)
-                    .text(function(d, i) { return d.key; })
-                    // The onclick is triggered like this because the elements don't exist yet and so events cannot be bound to them.
-                    .attr("onclick", function(d, i) { return "var hash = {}; hash['"+d.value+"'] = '"+d.key+"'; globalSelectionModel.set(hash);"; });
-            }
-        });
-    },
-});
-
 var DefaultSettingsView = DefaultView.extend({
-    template:   "<div class=\"modal-dialog\">"+
+    modalTemplate:   "<div class=\"modal-dialog\">"+
                 "    <div class=\"modal-content\">"+
                 "        <div class=\"modal-header\">"+
                 "            <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>"+
@@ -115,7 +51,7 @@ var LoginView = DefaultSettingsView.extend({
     },
     
     render: function() {
-        this.$el.html(this.template);
+        this.$el.html(this.modalTemplate);
         var container = d3.select(this.el);
         container.select(".modal-title").text(this.readableName);
         var body = container.select(".modal-body");
@@ -162,7 +98,7 @@ var EditFavoritesView = DefaultSettingsView.extend({
     shortName: "edit_favs",
     
     render: function() {
-        this.$el.html(this.template);
+        this.$el.html(this.modalTemplate);
         var container = d3.select(this.el);
         container.select(".modal-title").text(this.readableName);
         container.select(".modal-body").text("Edit favorites coming soon.");

@@ -1,3 +1,4 @@
+"use strict";
 
 /*
  * Displays all topics in a table format that can be sorted.
@@ -112,7 +113,7 @@ var AllTopicSubView = DefaultView.extend({
             topics = d3.entries(topics).map(function(d) {
                 var wordObjects = d.value["words"];
                 var wordTypes = [];
-                for(key in wordObjects) wordTypes.push(key);
+                for(var key in wordObjects) wordTypes.push(key);
                 wordTypes.sort(function(a, b) { return wordObjects[b]["token_count"]-wordObjects[a]["token_count"]; });
                 var words = wordTypes.slice(0, displayNWords).join(" ");
                 var wordsTokenCount = _.reduce(wordTypes, function(sum, word) { return sum + wordObjects[word]["token_count"]; }, 0);
@@ -207,6 +208,7 @@ var SingleTopicView = DefaultView.extend({
     },
 
     renderTopicTitle: function() {
+        console.log(this.selectionModel);
         if(!this.selectionModel.nonEmpty(["topic"])) {
             this.$el.html("<p>Select a topic to display its information.</p>");
             return;
@@ -227,7 +229,7 @@ var SingleTopicView = DefaultView.extend({
             container.html("");
             var topic = extractTopics(data, this.selectionModel)[selections["topic"]];
             var words = [];
-            for(key in topic["words"]) words.push({ key: key, value: topic["words"][key]});
+            for(var key in topic["words"]) words.push({ key: key, value: topic["words"][key]});
             words.sort(function(a, b) { return b.value.token_count - a.value.token_count; });
             words = _.map(words, function(entry) { return entry.key; });
             
@@ -306,7 +308,7 @@ var SingleTopicView = DefaultView.extend({
                         var result = [entry.key, entry.key, entry.value.names.Top3];
                         var index = parseFloat(entry.key);
                         var pairwise = topic["pairwise"];
-                        for(key in pairwise) {
+                        for(var key in pairwise) {
                             result.push(pairwise[key][index]*100);
                             if(updateHeader) {
                                 header.push(key);
@@ -534,7 +536,7 @@ var SingleTopicSubView = DefaultView.extend({
         if(this.info !== undefined) {
             this.info.cleanup();
         }
-        this.info = new SingleTopicView({ el: $("#topic-info"), settingsModel: this.settingsModel });
+        this.info = new SingleTopicView(_.extend({ el: $("#topic-info") }, this.getAllModels()));
         this.info.render();
     },
     
@@ -567,15 +569,15 @@ var SingleTopicSubView = DefaultView.extend({
             topics = d3.entries(topics).map(function(d) {
                 
                 var items = {};
-                for(key in d.value.names) {
+                for(var key in d.value.names) {
                     items[key] = d.value.names[key];
                 }
-                for(key in d.value.metrics) {
+                for(var key in d.value.metrics) {
                     items[key] = d.value.metrics[key];
                 }
                 items["Number"] = d.key;
                 if(d.key === "0") {
-                    for(key in items) sortList.push(key);
+                    for(var key in items) sortList.push(key);
                 }
                 return [d.key, d.value.names.Top3, items];
             });

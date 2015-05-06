@@ -1,4 +1,4 @@
-
+"use strict";
 
 var ForceView = DefaultView.extend({
     readableName: "Force Diagram",

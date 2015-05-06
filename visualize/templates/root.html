@@ -58,9 +58,15 @@
         </script>
         
         <script id="tg-nav-template" type="text/template">
-            <nav class="navbar navbar-default" role="navigation">
+            <nav class="navbar navbar-default" role="navigation" style="margin-bottom: 1px;">
                 <div class="container-fluid">
-                    <div id="main-nav-brand" class="navbar-header">
+                    <div id="tg-nav-brand" class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#js-navbar-collapse-hook">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
                         <a href="#" class="navbar-brand" style="padding: 5px;">
                             <svg width="180" height="100%" viewBox="0, 0, 300, 70" preserveAspectRatio="xMinYMid meet">
                                 <g>
@@ -152,7 +158,7 @@
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_router.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_models.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_view_classes.js"></script>
-        <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_special_views.js"></script>
+        <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_settings_views.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/framework/tg_start.js"></script>
         
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/standard_views/home_view.js"></script>
