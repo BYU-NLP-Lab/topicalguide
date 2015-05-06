@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * To create a view extend the DefaultView and then call globalViewModel.addViewClass as specified
  * to add the view to the nav bar.
@@ -38,6 +40,7 @@ var globalDefaultModels = null;
  */
 var DefaultView = function(options) {
     var defaults = {
+        tgView: null,
         userModel: new Backbone.Model(),
         dataModel: new Backbone.Model(),
         selectionModel: new Backbone.Model(),
@@ -45,13 +48,28 @@ var DefaultView = function(options) {
         settingsModel: new Backbone.Model(),
         viewModel: new Backbone.Model(),
     };
-    if(options === undefined || options === null) {
-        options = {};
+    
+    if(options !== undefined) {
+        for(var key in defaults) {
+            if(key in options) {
+                defaults[key] = options[key];
+                delete options[key];
+            }
+        }
     }
-    if(globalDefaultModels !== null) {
-        _.extend(options, globalDefaultModels);
-    }
-    _.extend(this, options);
+    
+    _.assign(this, defaults);
+    
+    this.getAllModels = function() {
+        return {
+            userModel: this.userModel,
+            dataModel: this.dataModel,
+            selectionModel: this.selectionModel,
+            favsModel: this.favsModel,
+            settingsModel: this.settingsModel,
+            viewModel: this.viewModel,
+        };
+    }.bind(this);
     
     Backbone.View.apply(this, arguments);
 }
@@ -122,25 +140,33 @@ var NavigationView = DefaultView.extend({
     },
     
     template: $("#tg-nav-template").html(),
-    compiledItemTemplate: _.template(
-        "<% if(active) { %>"+
-        "    <li class=\"active\">"+
-        "<% } else { %>"+
-        "    <li>"+
-        "<% } %>"+
-        "<a href=\"<%= href %>\"><%= name %></a></li>"
-    ),
     settingsTemplate: 
         "<ul class=\"nav navbar-nav navbar-right\">"+
-        "    <li><a id=\"main-nav-favs\" style=\"cursor: pointer;\">"+icons.filledStar+"</a></li>"+
-        "    <li><a id=\"main-nav-help\" style=\"cursor: pointer;\">"+icons.help+"</a></li>"+
-        "    <li class=\"dropdown\" style=\"cursor: pointer;\">"+
+        "    <li><a id=\"tg-nav-topic-name-schemes\" class=\"pointer\">"+icons.pencil+"</a></li>"+
+        "    <li><a id=\"tg-nav-favs\" class=\"pointer\">"+icons.filledStar+"</a></li>"+
+        "    <li><a id=\"tg-nav-help\" class=\"pointer\">"+icons.help+"</a></li>"+
+        "    <li class=\"dropdown\" class=\"pointer\">"+
         "        <a class=\"dropdown-toggle\" data-toggle=\"dropdown\">"+icons.settings+"</a>"+
-        "        <ul id=\"main-nav-settings\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
+        "        <ul id=\"tg-nav-settings\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
         "    </li>"+
         "</ul>",
+    helpTemplate: 
+"<div class=\"modal-dialog\">"+
+"    <div class=\"modal-content\">"+
+"        <div class=\"modal-header\">"+
+"            <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>"+
+"            <h3 class=\"modal-title\">Modal title</h3>"+
+"        </div>"+
+"        <div class=\"modal-body\">"+
+"            Modal Body"+
+"        </div>"+
+"        <div class=\"modal-footer\">"+
+"            <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button>"+
+"        </div>"+
+"    </div>"+
+"</div>",
     
-    /*
+    /**
      * Renders the navigation bar according to what views are available in the
      * provided viewModel.
      */
@@ -148,88 +174,109 @@ var NavigationView = DefaultView.extend({
         var that = this;
         this.$el.html(this.template);
         
-        // Get data.
+        // Create menus.
         var paths = this.viewModel.getAvailableViewClassPaths();
-        
-        for(key in paths) {
-            this.addViewToMenuBar(key, paths[key]);
+        for(var viewName in paths) {
+            this.addViewToMenuBar(viewName, paths[viewName]);
+        }
+        var selectedName = this.viewModel.get("currentView");
+        if(selectedName in paths) {
+            this.highlightViewPath(selectedName, paths[selectedName]);
         }
         
-        return;
-        //~ 
-        //~ // Render the navigation bar.
-        //~ var menu = this.viewModel.navigation;
-        //~ var bar = this.$el.find("#main-nav-bar");
-        //~ this.renderMenu(bar, menu, true);
+        // Create settings icons.
+        var bar = this.$el.find("#tg-nav-bar");
+        bar.parent().append(this.settingsTemplate);
         
-        // Render the settings dropdown.
-        //~ bar.parent().append(this.settingsTemplate);
-        //~ var settingsMenu = d3.select(this.el).select("#main-nav-settings")
-            //~ .selectAll("li")
-            //~ .data(d3.entries(this.viewModel.settings))
-            //~ .enter()
-            //~ .append("li")
-            //~ .on("click", function(d) {
-                //~ that.viewModel.changeSettingsView(d.key);
-                //~ $("#main-nav-settings-modal").modal("show");
-            //~ })
-            //~ .append("a")
-            //~ .text(function(d) { return d.key; });
-        
-        // Add help modal functionality.
-        $("#main-nav-help").on("click", function(elem) {
-            that.viewModel.helpView.render();
-            $("#main-nav-help-modal").modal("show");
-        });
+        // Create settings menu.
+        var settingsMenu = d3.select("#tg-nav-settings")
+            .selectAll("li")
+            .data(d3.entries(this.viewModel.getAvailableSettingsViewClasses()))
+            .enter()
+            .append("li")
+            .on("click", this.clickSettings.bind(this))
+            .append("a")
+            .text(function(d) { return d.value.prototype.readableName; });
         
         // Add favorites popover functionality.
-        var enter = function() { // Make the popover appear on hover.
+        var enterFavs = function() { // Make the popover appear on hover.
             $(this).popover("show");
             $(".popover").on("mouseleave", function() {
-                $("#main-nav-favs").popover("hide");
-            })
+                $("#tg-nav-favs").popover("hide");
+            });
         };
-        var exit = function() { // Make the popover disappear on hover out.
+        var exitFavs = function() { // Make the popover disappear on hover out.
             setTimeout(function() {
                 if(!$(".popover:hover").length) {
-                    $("#main-nav-favs").popover("hide");
+                    $("#tg-nav-favs").popover("hide");
                 }
             }, 100);
         };
-        var favs = $("#main-nav-favs");
-        favs.popover({ // Create the settings.
+        $("#tg-nav-favs").popover({ // Create the settings.
                 "html": true,
                 "trigger": "manual",
                 "viewport": "body",
                 "container": "body",
                 "placement": "bottom",
                 "animation": true,
-                "title": function() { return that.viewModel.favsView.readableName; },
-                "content": function() { 
-                    that.viewModel.favsView.render(); 
-                    return that.viewModel.favsView.$el.html();
-                },
+                "title": "Favorites Quick Select",
+                "content": this.hoverFavorites.bind(this),
             })
-            .on("mouseenter", enter)
-            .on("mouseleave", exit);
+            .on("mouseenter", enterFavs)
+            .on("mouseleave", exitFavs);
+        
+        // Add topic name schemes popover functionality.
+        var enterTopicNameSchemes = function() { // Make the popover appear on hover.
+            $(this).popover("show");
+            $(".popover").on("mouseleave", function() {
+                $("#tg-nav-topic-name-schemes").popover("hide");
+            });
+        };
+        var exitTopicNameSchemes = function() { // Make the popover disappear on hover out.
+            setTimeout(function() {
+                if(!$(".popover:hover").length) {
+                    $("#tg-nav-topic-name-schemes").popover("hide");
+                }
+            }, 100);
+        };
+        $("#tg-nav-topic-name-schemes").popover({ // Create the settings.
+                "html": true,
+                "trigger": "manual",
+                "viewport": "body",
+                "container": "body",
+                "placement": "bottom",
+                "animation": true,
+                "title": "Topic Name Schemes",
+                "content": this.hoverTopicNameSchemes.bind(this),
+            })
+            .on("mouseenter", enterTopicNameSchemes)
+            .on("mouseleave", exitTopicNameSchemes);
     },
     
     addViewToMenuBar: function(viewName, path) {
         var bar = d3.select("#tg-nav-bar");
         var insertionPoint = bar;
-        for(i in path) {
+        for(var i in path) {
             var readableName = path[i];
             var menuName = encodeURIComponent(readableName);
             var menuId = "tg-nav-bar-menu-item-"+menuName;
             if(insertionPoint.select("#"+menuId).empty()) { // Add menu.
+                var dropdownMenuType = "dropdown-submenu";
+                var showCaret = false;
+                if(i === "0") {
+                    dropdownMenuType = "dropdown";
+                    showCaret = true;
+                }
                 var menuComponent = insertionPoint.append("li")
-                    .classed("dropdown", true);
-                menuComponent.append("a")
+                    .classed(dropdownMenuType, true);
+                var menuComponentSpan = menuComponent.append("a")
                     .classed({ "dropdown-toggle": true, "pointer": true })
                     .attr("data-toggle", "dropdown")
                     .text(readableName)
-                    .append("span")
-                    .classed("caret", true);
+                    .append("span");
+                if(showCaret) {
+                    menuComponentSpan.classed("caret", true);
+                }
                 menuComponent.append("ul")
                     .classed("dropdown-menu", true)
                     .attr("role", "menu")
@@ -241,47 +288,58 @@ var NavigationView = DefaultView.extend({
         }
 
         insertionPoint.append("li")
+            .attr("data-tg-view-name", viewName)
             .append("a")
             .attr("href", "#"+viewName)
             .text(this.viewModel.getReadableViewName(viewName));
     },
     
-    // Helper function for rendering menus.
-    // Return true if an item is the current selection; false otherwise.
-    renderMenu: function(bar, menu, isTopMenu) {
-        var isSelected = false;
-        for(key in menu) {
-            if(!menu[key].menu) { // Found a leaf node.
-                var isActive = false;
-                if(menu[key].path === this.viewModel.currentPath) {
-                    isActive = isSelected = true;
-                }
-                // The reason for escaping the path here is because the href seems to get unescaped upon clicking.
-                // This would mess with the setup.
-                bar.append(this.compiledItemTemplate({ "active": isActive, "href": "#"+encodeURIComponent(menu[key].path), "name": key }));
-            } else { // Found a menu.
-                bar.append("<li></li>");
-                var lastItem = bar.children("li").last();
-                if(isTopMenu) {
-                    lastItem.addClass("dropdown");
-                } else {
-                    lastItem.addClass("dropdown-submenu");
-                }
-                
-                lastItem.html(this.compiledDropdownTemplate({ "name": key, "isTopMenu": isTopMenu}));
-                var subBar = lastItem.children("ul").last();
-                if(this.renderMenu(subBar, menu[key].items, false))
-                    lastItem.addClass("active");
-            }
+    highlightViewPath: function(viewName, path) {
+        var menu = d3.select("#tg-nav-bar");
+        for(var i in path) {
+            var readableName = path[i];
+            var menuName = encodeURIComponent(readableName);
+            var menuId = "tg-nav-bar-menu-item-"+menuName;
+            menu = d3.select(menu.select("#"+menuId)[0][0].parentNode);
+            menu.classed("active", true);
         }
-        return isSelected;
+        menu.selectAll("li")
+            .filter(function() {
+                var el = d3.select(this);
+                if(el.attr("data-tg-view-name") === viewName) {
+                    return true;
+                } else {
+                    return false;
+                }
+            })
+            .classed("active", true);
     },
     
     events: {
-        "click #main-nav-help": "clickHelp",
+        "click #tg-nav-help": "clickHelp",
+    },
+    
+    hoverTopicNameSchemes: function() {
+        return "<p>Hello</p>";
+    },
+    
+    hoverFavorites: function() {
+        return "<p>Hello</p>";
     },
     
     clickHelp: function() {
+        var el = $("#tg-nav-help-modal");
+        el.html(this.helpTemplate);
+        
+        el.find(".modal-title").text(this.tgView.currentView.readableName + " Help");
+        el.find(".modal-body").html(this.tgView.currentView.renderHelpAsHtml());
+        
+        el.modal("show");
+    },
+    
+    clickSettings: function(viewClassObject) {
+        console.log(viewClassObject);
+        var viewClass = viewClassObject.value;
         
     },
     
@@ -368,9 +426,7 @@ var TopicalGuideView = DefaultView.extend({
         
         // Bind to the viewModel to create and destroy views as needed.
         this.listenTo(this.viewModel, "change:currentView", this.changeCurrentView);
-        this.listenTo(this.viewModel, "change:helpView", this.changeHelpView);
-        this.listenTo(this.viewModel, "change:favsView", this.changeFavsView);
-        this.listenTo(this.viewModel, "change:topicNamesView", this.changeTopicNamesView);
+        this.listenTo(this.viewModel, "change:availableViews", this.changeAvailableViews);
         
         // Create site-wide tooltip functionality.
         $("body").tooltip({
@@ -378,14 +434,22 @@ var TopicalGuideView = DefaultView.extend({
             container: "body",
             selector: ".tg-tooltip",
             title: function() {
-                console.log('trigger');
                 var el = $(this);
-                if(tg.dom.hasAttr(el, "data-tg-document-name")) {
-                    var docName = el.attr("data-tg-document-name");
-                    return docName;
+                if(tg.dom.hasAttr(el, "data-tg-dataset-name")) {
+                    var datasetName = el.attr("data-tg-dataset-name");
+                    return that.dataModel.getReadableDatasetName(datasetName);
+                } else if(tg.dom.hasAttr(el, "data-tg-analysis-name")) {
+                    var analysisName = el.attr("data-tg-analysis-name");
+                    return that.dataModel.getReadableAnalysisName(anlaysisName);
                 } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
                     var topicNumber = el.attr("data-tg-topic-number");
-                    return that.dataModel.getTopicName(topicNumber);
+                    return that.dataModel.getReadableTopicName(topicNumber);
+                } else if(tg.dom.hasAttr(el, "data-tg-document-name")) {
+                    var docName = el.attr("data-tg-document-name");
+                    return docName;
+                } else if(tg.dom.hasAttr(el, "data-tg-word-type")) {
+                    var wordType = el.attr("data-tg-word-type");
+                    return wordType;
                 }
                 throw new Exception("No data was set for the tooltip to properly display.");
             },
@@ -417,7 +481,7 @@ var TopicalGuideView = DefaultView.extend({
     },
     
     cleanup: function() {
-        this.navView
+        this.navView.dispose();
     },
     
     events: {
@@ -429,30 +493,33 @@ var TopicalGuideView = DefaultView.extend({
         var type = null;
         var clsName = null;
         var favsModel = this.favsModel;
-        if(this.dom.hasAttr(el, "tg-data-dataset-name")) {
+        if(tg.dom.hasAttr(el, "data-tg-dataset-name")) {
             type = "datasets";
-            clsName = "tg-data-dataset-name";
-        } else if(this.dom.hasAttr(el, "tg-data-analyis-name")) {
+            clsName = "data-tg-dataset-name";
+        } else if(tg.dom.hasAttr(el, "data-tg-analyis-name")) {
             type = "analyses";
-            clsName = "tg-data-analyis-name";
-        } else if(this.dom.hasAttr(el, "tg-data-topic-number")) {
+            clsName = "data-tg-analyis-name";
+        } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
             type = "topics";
-            clsName = "tg-data-topic-number";
-        } else if(this.dom.hasAttr(el, "tg-data-document-name")) {
+            clsName = "data-tg-topic-number";
+        } else if(tg.dom.hasAttr(el, "data-tg-document-name")) {
             type = "documents";
-            clsName = "tg-data-document-name";
-        } else if(this.dom.hasAttr(el, "tg-data-topic-name-scheme")) {
+            clsName = "data-tg-document-name";
+        } else if(tg.dom.hasAttr(el, "data-tg-topic-name-scheme")) {
             type = "topicNames";
-            clsName = "tg-data-topic-name-scheme";
+            clsName = "data-tg-topic-name-scheme";
         }
         if(clsName !== null) {
-            var value = $(el).attr(clsName).toString();
+            el = d3.select(el);
+            var value = el.attr(clsName).toString();
+            var favs = {};
+            favs[type] = value;
             if(favsModel.has(type, value)) {
-                favsModel.remove({ type: value });
-                el.classed({ "glyphicon": true, "glyphicon-star": false, "glyphicon-star-empty": true, "gold": true });
+                favsModel.remove(favs);
+                el.classed({ "glyphicon-star": false, "glyphicon-star-empty": true });
             } else {
-                favsModel.add({ type: value });
-                el.classed({ "glyphicon": true, "glyphicon-star": true, "glyphicon-star-empty": false, "gold": true });
+                favsModel.add(favs);
+                el.classed({ "glyphicon-star": true, "glyphicon-star-empty": false });
             }
         }
     },
@@ -463,12 +530,12 @@ var TopicalGuideView = DefaultView.extend({
         $("#tg-current-view-container").remove();
         // Create new div element.
         $("#tg-views-container").append("<div id=\"tg-current-view-container\"></div>");
+        
         // Create new settings for the new view.
         var settingsModel = new SettingsModel();
         var init = {
             el: $("#tg-current-view-container"),
             settingsModel: settingsModel,
-            selectionModel: this.selectionModel,
         };
         _.extend(init, this.models);
         
@@ -487,11 +554,11 @@ var TopicalGuideView = DefaultView.extend({
             viewClass = DefaultView;
         }
         
+        
         // Create the new view.
         this.currentView = new viewClass(init);
         
         try {
-            console.log("Rendering " + this.viewModel.get("currentView"));
             this.currentView.render();
         } catch(err) {
             console.log("The following error occurred while trying to render the view: " + err);
@@ -502,30 +569,11 @@ var TopicalGuideView = DefaultView.extend({
         $("head").find("title").html("Topical Guide &mdash; "+this.currentView.readableName);
     },
     
-    changeHelpView: function() {
-        this.helpView.dispose();
-        $("#tg-nav-help-modal").remove();
-        $("#tg-all-modals-container").append("<div id=\"main-nav-help-modal\"  class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"helpModal\" aria-hidden=\"true\"></div>");
-        
-        var init = {
-            el: $("#main-nav-help-modal"),
-        };
-        _.extend(init, this.models);
-        
-        var helpViewClass = this.viewModel.getHelpViewClass();
-        this.helpView = new helpViewClass(init);
-        this.helpView.render();
-    },
-    
-    changeFavsView: function() {
-        this.favsView.dispose();
-        
-        var init = {};
-        _.extend(init, this.models);
-        
-        var favsViewClass = this.viewModel.getFavoritesViewClass();
-        this.favsView = new favsViewClass(init);
-        this.favsView.render();
+    changeAvailableViews: function() {
+        var name = this.viewModel.get("currentView");
+        if(this.currentView.shortName !== name && this.viewModel.hasViewClass(name)) {
+            this.changeCurrentView();
+        }
     },
     
     changeTopicNamesView: function() {

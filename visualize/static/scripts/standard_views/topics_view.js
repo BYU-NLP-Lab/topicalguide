@@ -645,7 +645,6 @@ var TopicView = DefaultView.extend({
     shortName: "topics",
     
     initialize: function() {
-        console.log(this.dataModel);
         this.listenTo(this.selectionModel, "change:topic", this.render);
     },
     
@@ -655,9 +654,9 @@ var TopicView = DefaultView.extend({
             this.$el.html("<div id=\"topics-over-time\"></div><div id=\"info\"></div>");
             this.disposeOfViews();
             if(this.selectionModel.nonEmpty(["topic"])) {
-                this.subView = new SingleTopicSubView({ el: "#info", settingsModel: this.settingsModel });
+                this.subView = new SingleTopicSubView(_.extend({ el: "#info" }, this.getAllModels()));
             } else {
-                this.subView = new AllTopicSubView({ el: "#info", settingsModel: this.settingsModel });
+                this.subView = new AllTopicSubView(_.extend({ el: "#info" }, this.getAllModels()));
             }
             this.subView.render();
         } else {

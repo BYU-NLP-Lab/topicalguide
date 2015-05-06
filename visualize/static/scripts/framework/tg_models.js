@@ -1,4 +1,6 @@
-/*
+"use strict";
+
+/**
  * All of the following models are independent of the rest of the system.
  * Some of the models may depend upon eachother, but none should depend 
  * upon anything outside this file with the exception of libraries.
@@ -6,8 +8,8 @@
 
 
 
-DEBUG_SELECTION_MODEL = false;
-/*
+var DEBUG_SELECTION_MODEL = false;
+/**
  * The Selection Model is responsible for tracking which specific topic(s), document(s), or word(s) 
  * are selected. It is recommended that the setMany function is used when setting any attributes, 
  * this is so updating many attributes will trigger a single event ("multichange").
@@ -25,7 +27,7 @@ var SelectionModel = Backbone.Model.extend({
     
     initialize: function() {
         var hash = {};
-        for(key in this.availableSelections) {
+        for(var key in this.availableSelections) {
             hash[key] = "";
         }
         this.set(hash);
@@ -34,6 +36,7 @@ var SelectionModel = Backbone.Model.extend({
     /**
      * Must be set before use.
      * The data model and selection model reference eachother for certain tasks.
+     * The data model is used for auto selecting a dataset and analysis.
      */
     setDataModel: function(dm) {
         this.dataModel = dm;
@@ -49,7 +52,7 @@ var SelectionModel = Backbone.Model.extend({
         // Some items need to trigger events such as change:topic if the dataset or analysis changes.
         // This function helps trigger those changes in attributes.
         var resetHelper = function (toSet, itemsToTrigger) {
-            for(i=0; i<itemsToTrigger.length; i++) {
+            for(var i = 0; i<itemsToTrigger.length; i++) {
                 if(!(itemsToTrigger[i] in toSet)) {
                     toSet[itemsToTrigger[i]] = "";
                     if(this.attributes[itemsToTrigger[i]] === "") {
@@ -61,7 +64,7 @@ var SelectionModel = Backbone.Model.extend({
         
         var toSet = {};
         var signalTrigger = false;
-        for(key in attr) {
+        for(var key in attr) {
             if(key in this.availableSelections && attr[key] !== this.get(key)) {
                 signalTrigger = true;
                 toSet[key] = attr[key];
@@ -86,7 +89,7 @@ var SelectionModel = Backbone.Model.extend({
      * Return true if they are non-empty; false otherwise.
      */
     nonEmpty: function(list) {
-        for(i=0; i<list.length; i++) {
+        for(var i = 0; i<list.length; i++) {
             if(this.get(list[i]) === "") {
                 return false;
             }
@@ -99,7 +102,7 @@ var SelectionModel = Backbone.Model.extend({
      */
     getListed: function(list) {
         var hash = {};
-        for(i=0; i<list.length; i++) {
+        for(var i = 0; i<list.length; i++) {
             if(this.has(list[i])) {
                 hash[list[i]] = this.get(list[i]);
             }
@@ -145,10 +148,10 @@ var SelectionModel = Backbone.Model.extend({
         
         var gdm = this.dataModel;
         var datasets = gdm.getDatasetNames();
-        for(d in datasets) {
+        for(var d in datasets) {
             dataset = datasets[d];
             var analyses = gdm.getAnalysisNames(dataset);
-            for(a in analyses) {
+            for(var a in analyses) {
                 analysis = analyses[a];
                 break;
             }
@@ -164,7 +167,7 @@ var SelectionModel = Backbone.Model.extend({
 });
 
 
-/*
+/**
  * The Favorites Model allows the user to select favorites.
  * The events "addedFavorites" and "removedFavorites" are triggered 
  * when favorites are added or removed, respectively. Also, the "multichange" is triggered any time
@@ -221,7 +224,7 @@ var FavoritesModel = Backbone.Model.extend({
     saveToLocalStorage: function() {
         if(hasLocalStorage()) {
             var keys = this.generateKeys();
-            for(key in keys) {
+            for(var key in keys) {
                 localStorage["favs-"+keys[key]] = JSON.stringify(this.attributes[key]);
             }
         }
@@ -232,7 +235,7 @@ var FavoritesModel = Backbone.Model.extend({
         if(hasLocalStorage()) {
             var toSet = {};
             var keys = this.generateKeys();
-            for(key in keys) {
+            for(var key in keys) {
                 var localKey = "favs-"+keys[key];
                 if(localKey in localStorage) {
                     toSet[key] = JSON.parse(localStorage[localKey]);
@@ -250,7 +253,7 @@ var FavoritesModel = Backbone.Model.extend({
      */
     deleteAllLocalStorage: function() {
         if(hasLocalStorage()) {
-            for(key in localStorage) {
+            for(var key in localStorage) {
                 if(key.slice(0,5) === "favs-") {
                     delete localStorage[key];
                 }
@@ -267,7 +270,7 @@ var FavoritesModel = Backbone.Model.extend({
     add: function(attr) {
         var toSet = {};
         var isChanged = false;
-        for(key in attr) {
+        for(var key in attr) {
             // Only pay attention to valid attributes.
             if(key in this.availableFavorites) {
                 var attribute = this.get(key);
@@ -294,7 +297,7 @@ var FavoritesModel = Backbone.Model.extend({
     remove: function(attr) {
         var toSet = {};
         var isChanged = false;
-        for(key in attr) {
+        for(var key in attr) {
             // Only pay attention to valid attributes.
             if(key in this.availableFavorites) {
                 var attribute = this.get(key);
@@ -407,7 +410,7 @@ var SettingsModel = Backbone.Model.extend({
  * This way refreshing the site ensures the latest datasets and analyses, and 
  * eliminates the need to perform synchronous calls to the web server.
  */
-DEBUG_DATA_MODEL = true; // Used to display the api request to the console.
+var DEBUG_DATA_MODEL = true; // Used to display the api request to the console.
 var DataModel = Backbone.Model.extend({
     
     serverInfo: {},
@@ -448,7 +451,7 @@ var DataModel = Backbone.Model.extend({
      */
     getDatasetNames: function() {
         var result = [];
-        for(key in this.datasetsAndAnalyses) {
+        for(var key in this.datasetsAndAnalyses) {
             result.push(key);
         }
         return result;
@@ -469,8 +472,8 @@ var DataModel = Backbone.Model.extend({
      * Return list of available analyses; empty list if none or error.
      */
     getAnalysisNames: function(datasetName) {
-        result = [];
-        for(key in this.datasetsAndAnalyses[datasetName].analyses) {
+        var result = [];
+        for(var key in this.datasetsAndAnalyses[datasetName].analyses) {
             result.push(key);
         }
         return result;
@@ -548,7 +551,7 @@ var DataModel = Backbone.Model.extend({
             if(data) {
                 var temp = {};
                 var topics = extractTopics(data, this.selectionModel);
-                for(topicNumber in topics) {
+                for(var topicNumber in topics) {
                     temp[topicNumber] = topics[topicNumber].names;
                 }
                 this.analysisTopicNameSchemes = temp;
@@ -661,9 +664,6 @@ var ViewModel = Backbone.Model.extend({
             "rootView": "",
             "currentView": "", 
             "availableViews": "", 
-            "helpView": "", 
-            "favsView": "", 
-            "topicNamesView": "",
             "settingsViews": "",
         };
         this.set(defaults);
@@ -675,6 +675,10 @@ var ViewModel = Backbone.Model.extend({
     favsViewClass: null,
     topicNamesViewClass: null,
     settingsViewClasses: {},
+    
+    getAvailableSettingsViewClasses: function() {
+        return this.settingsViewClasses;
+    },
     
     /**
      * Add a view. Will not override another existing view.
@@ -699,7 +703,16 @@ var ViewModel = Backbone.Model.extend({
     },
     
     getCurrentViewClass: function() {
-        return this.availableViewClasses[this.get("currentView")];
+        var name = this.get("currentView");
+        return this.getViewClass(name);
+    },
+    
+    getViewClass: function(name) {
+        var result = null;
+        if(this.hasViewClass(name)) {
+            result = this.availableViewClasses[name];
+        }
+        return result;
     },
     
     getReadableViewName: function(name) {
@@ -743,12 +756,18 @@ var ViewModel = Backbone.Model.extend({
         if(currentView === "") {
             currentView = this.get("rootView");
         }
-        console.log(path);
         this.set({ "currentView": currentView });
     },
     
+    /**
+     * Return true if the view class is available.
+     */
     hasViewClass: function(name) {
-        return name in this.availableViewClasses;
+        if(name in this.availableViewClasses) {
+            return true;
+        } else {
+            return false;
+        }
     },
     
     /**

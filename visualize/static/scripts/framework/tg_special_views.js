@@ -1,42 +1,7 @@
+"use strict";
 /*
  * The following are small views used for manipulating various settings.
  */
-
-var HelpView = DefaultView.extend({
-    readableName: "Help",
-    shortName: "help",
-    
-    template: 
-"<div class=\"modal-dialog\">"+
-"    <div class=\"modal-content\">"+
-"        <div class=\"modal-header\">"+
-"            <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>"+
-"            <h3 class=\"modal-title\">Modal title</h3>"+
-"        </div>"+
-"        <div class=\"modal-body\">"+
-"            Modal Body"+
-"        </div>"+
-"        <div class=\"modal-footer\">"+
-"            <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button>"+
-"        </div>"+
-"    </div>"+
-"</div>",
-
-    initialize: function() {
-    },
-    
-    render: function() {
-        this.$el.html(this.template);
-        var container = d3.select(this.el);
-        var title = container.select(".modal-title");
-        title.text(globalTopicalGuideView.currentView.readableName + " Help");
-        var body = container.select(".modal-body");
-        body.html(globalTopicalGuideView.currentView.renderHelpAsHtml());
-    },
-    
-    cleanup: function() {
-    },
-});
 
 var FavoritesQuickSelectView = DefaultView.extend({
     readableName: "Favorites Quick Select",
