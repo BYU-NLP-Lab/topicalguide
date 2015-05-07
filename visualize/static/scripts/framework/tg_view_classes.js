@@ -1,35 +1,6 @@
 "use strict";
 
 /**
- * To create a view extend the DefaultView and then call globalViewModel.addViewClass as specified
- * to add the view to the nav bar.
- */
-
-/**
- * Easy to inject icons used throughout the site.
- */
-var icons = {
-    emptyStar: "<span class=\"glyphicon glyphicon-star-empty gold\"></span>",
-    filledStar: "<span class=\"glyphicon glyphicon-star gold\"></span>",
-    
-    help: "<span class=\"glyphicon glyphicon-question-sign blue\"></span>",
-    settings: "<span class=\"caret\" style=\"text-size: 1.5em\"></span>",
-    share: "<span class=\"glyphicon glyphicon-plus\"></span>",
-    
-    document: "<span class=\"glyphicon glyphicon-book brown document\"></span>",
-    previous: "<span class=\"glyphicon glyphicon-chevron-left green previous\"></span>",
-    next: "<span class=\"glyphicon glyphicon-chevron-right green next\"></span>",
-    beginning: "<span class=\"glyphicon glyphicon-step-backward green beginning\"></span>",
-    end: "<span class=\"glyphicon glyphicon-step-forward green end\"></span>",
-    
-    loading: "<p class=\"text-center\"><img src=\"/static/images/large-spinner.gif\"/></p><p class=\"text-center\">Loading...</p>",
-    
-    pencil: "<span class=\"glyphicon glyphicon-pencil purple\"></span>",
-};
-
-var globalDefaultModels = null;
-
-/**
  * The DefaultView acts as an interface for other views to use so the proper 
  * methods and attributes are implemented.
  * 
@@ -140,6 +111,7 @@ DefaultView.extend = Backbone.View.extend;
 var NavigationView = DefaultView.extend({
     
     initialize: function() {
+        this.settingsView = new DefaultView();
         this.listenTo(this.viewModel, "change", this.render);
         this.listenTo(this.selectionModel, "change:dataset", this.hideTopicNameSchemes);
         this.listenTo(this.selectionModel, "change:analysis", this.hideTopicNameSchemes);
@@ -158,7 +130,7 @@ var NavigationView = DefaultView.extend({
         "        <ul id=\"tg-nav-settings\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
         "    </li>"+
         "</ul>",
-    helpTemplate: 
+    modalTemplate: 
 "<div class=\"modal-dialog\">"+
 "    <div class=\"modal-content\">"+
 "        <div class=\"modal-header\">"+
@@ -202,7 +174,10 @@ var NavigationView = DefaultView.extend({
             .data(d3.entries(this.viewModel.getAvailableSettingsViewClasses()))
             .enter()
             .append("li")
-            .on("click", this.clickSettings.bind(this))
+            .attr("data-settings-view-name", function(d, i) {
+                return d.key;
+            })
+            .classed("tg-nav-settings-click pointer", true)
             .append("a")
             .text(function(d) { return d.value.prototype.readableName; });
         
@@ -325,6 +300,8 @@ var NavigationView = DefaultView.extend({
     
     events: {
         "click #tg-nav-help": "clickHelp",
+        "click .tg-nav-settings-click": "clickSettings",
+        "hidden.bs.modal #tg-nav-settings-modal": "hiddenSettingsModal",
     },
     
     hideTopicNameSchemes: function() {
@@ -417,9 +394,9 @@ var NavigationView = DefaultView.extend({
         return container.html();
     },
     
-    clickHelp: function() {
+    clickHelp: function(e) {
         var el = $("#tg-nav-help-modal");
-        el.html(this.helpTemplate);
+        el.html(this.modalTemplate);
         
         el.find(".modal-title").text(this.tgView.currentView.readableName + " Help");
         el.find(".modal-body").html(this.tgView.currentView.renderHelpAsHtml());
@@ -427,34 +404,33 @@ var NavigationView = DefaultView.extend({
         el.modal("show");
     },
     
-    clickSettings: function(viewClassObject) {
-        console.log(viewClassObject);
-        var viewClass = viewClassObject.value;
-        
+    clickSettings: function(e) {
+        var el = e.currentTarget;
+        if(tg.dom.hasAttr(el, "data-settings-view-name")) {
+            var viewName = $(el).attr("data-settings-view-name");
+            var viewClass = this.viewModel.getSettingsViewClass(viewName);
+            if(viewClass !== null) {
+                var modalContainer = $("#tg-nav-settings-modal");
+                modalContainer.html(this.modalTemplate);
+                modalContainer.find(".modal-title").text(viewClass.prototype.readableName);
+                
+                var init = {
+                    el: modalContainer.find(".modal-content"),
+                };
+                _.extend(init, this.getAllModels());
+                this.settingsView = new viewClass(init);
+                this.settingsView.render();
+                $("#tg-nav-settings-modal").modal("show");
+            }
+        }
     },
     
-    
-    //~ /**
-     //~ * Change the settings view to the one specified.
-     //~ * Return nothing.
-     //~ */
-    //~ changeSettingsView: function(readableName) {
-        //~ this.settingsView.dispose();
-        //~ $("#main-nav-settings-modal").remove();
-        //~ $("#main-all-modals-container").append("<div id=\"main-nav-settings-modal\"  class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"settingsModal\" aria-hidden=\"true\"></div>");
-        //~ var init = {
-            //~ el: $("#main-nav-settings-modal"),
-        //~ }
-        //~ _.extend(init, this.models);
-        //~ 
-        //~ if(readableName in this.settings) {
-            //~ this.settingsView = new this.settings[readableName](init);
-        //~ } else {
-            //~ this.settingsView = new DefaultView(init);
-        //~ }
-        //~ this.settingsView.render();
-    //~ },
-    
+    /**
+     * Dispose settingsView upon closing the dialog.
+     */
+    hiddenSettingsModal: function(e) {
+        this.settingsView.dispose();
+    },
     
 });
 
@@ -462,8 +438,19 @@ var NavigationView = DefaultView.extend({
 var BreadcrumbsView = DefaultView.extend({
 
     baseTemplate:
-"<div class=\"row\">"+
-"<bold class=\"\">Dataset:</bold>"+
+"<div class=\"well\" style=\"text-align: justify; margin: 0px 0px 20px 0px; padding: 0px 10px 0px 10px;\">"+
+"<div style=\"vertical-align: middle; display: table; width: 100%;\">"+
+//~ "<span style=\"display: table-cell;\"> </span>"+
+//~ "<span style=\"display: table-cell;\">hi</span>"+
+//~ "<span style=\"display: table-cell;\"> </span>"+
+//~ "<span style=\"display: table-cell;\">there</span>"+
+//~ "<span style=\"display: table-cell;\"> </span>"+
+"<span class=\"tg-nav-breadcrumb-span\"><span>Dataset:&nbsp;</span><span class=\"tg-nav-breadcrumb-dataset blue\"></span><span>&nbsp;&nbsp;&nbsp;</span></span>"+
+"<span class=\"tg-nav-breadcrumb-span\">Analysis:&nbsp;<span class=\"tg-nav-breadcrumb-analysis blue\"></span><span>&nbsp;&nbsp;&nbsp;</span></span>"+
+//~ "<span>Topic:&nbsp;</span><span class=\"tg-nav-breadcrumb-topic\"></span><span>&nbsp;&nbsp;&nbsp;</span>"+
+//~ "<span>Document:&nbsp;</span><span class=\"tg-nav-breadcrumb-document\"></span><span>&nbsp;&nbsp;&nbsp;</span>"+
+//~ "<span>Topic Name Scheme:&nbsp;</span><span class=\"tg-nav-breadcrumb-topic-name-scheme\"></span><span>&nbsp;&nbsp;&nbsp;</span>"+
+"</div>"+
 "</div>",
     
     initialize: function() {
@@ -472,6 +459,7 @@ var BreadcrumbsView = DefaultView.extend({
         this.listenTo(this.selectionModel, "change:topic", this.updateTopic);
         this.listenTo(this.selectionModel, "change:document", this.updateDocument);
         this.listenTo(this.selectionModel, "change:topicNameScheme", this.updateTopicNameScheme);
+        this.listenTo(this.selectionModel, "change:topicNameScheme", this.updateTopic);
     },
     
     cleanup: function() {
@@ -481,24 +469,62 @@ var BreadcrumbsView = DefaultView.extend({
         this.$el.html(this.baseTemplate);
         this.updateDataset();
         this.updateAnalysis();
-        this.updateTopic();
-        this.updateDocument();
-        this.updateTopicNameScheme();
+        //~ this.updateTopic();
+        //~ this.updateDocument();
+        //~ this.updateTopicNameScheme();
+        d3.select(this.el).selectAll(".tg-nav-breadcrumb-span")
+            .style({ "font-size": "0.7em", "display": "table-cell", "text-align": "center", "vertical-align": "middle" });
     },
     
     updateDataset: function() {
+        var selector = ".tg-nav-breadcrumb-dataset";
+        var name = this.selectionModel.get("dataset");
+        if(name === "") {
+            name = "No dataset selected.";
+        } else {
+            name = this.dataModel.getReadableDatasetName(name);
+        }
+        this.$el.find(selector).text(name);
     },
     
     updateAnalysis: function() {
+        var selector = ".tg-nav-breadcrumb-analysis";
+        var name = this.selectionModel.get("analysis");
+        if(name === "") {
+            name = "No analysis selected.";
+        } else {
+            name = this.dataModel.getReadableAnalysisName(name);
+        }
+        this.$el.find(selector).text(name);
     },
     
     updateTopic: function() {
+        var selector = ".tg-nav-breadcrumb-topic";
+        var name = this.selectionModel.get("topic");
+        if(name === "") {
+            name = "No topic selected.";
+        } else {
+            name = this.dataModel.getReadableTopicName(name);
+        }
+        this.$el.find(selector).text(name);
     },
     
     updateDocument: function() {
+        var selector = ".tg-nav-breadcrumb-document";
+        var name = this.selectionModel.get("document");
+        if(name === "") {
+            name = "No document selected.";
+        }
+        this.$el.find(selector).text(name);
     },
     
     updateTopicNameScheme: function() {
+        var selector = ".tg-nav-breadcrumb-topic-name-scheme";
+        var name = this.selectionModel.get("topicNameScheme");
+        if(name === "") {
+            name = "No name scheme selected.";
+        }
+        this.$el.find(selector).text(name);
     },
     
 });
@@ -555,13 +581,6 @@ var TopicalGuideView = DefaultView.extend({
         
         // Create dummy views as placeholders for those that will be added.
         this.currentView = new DefaultView();
-        
-        // TODO move this functionality to the navView
-        this.helpView = new DefaultView();
-        this.favsView = new DefaultView();
-        this.topicNamesView = new DefaultView();
-        this.settingsView = new DefaultView();
-        
         
         // Bind to the viewModel to create and destroy views as needed.
         this.listenTo(this.viewModel, "change:currentView", this.changeCurrentView);
@@ -631,7 +650,7 @@ var TopicalGuideView = DefaultView.extend({
     },
     
     clickFavorite: function(e) {
-        var el = e.target;
+        var el = e.currentTarget;
         var type = null;
         var clsName = null;
         var favsModel = this.favsModel;
@@ -732,7 +751,7 @@ var TopicalGuideView = DefaultView.extend({
     },
     
     clickSelect: function(e) {
-        var el = e.target;
+        var el = e.currentTarget;
         var selection = {};
         if(tg.dom.hasAttr(el, "data-tg-dataset-name")) {
             selection["dataset"] = $(el).attr("data-tg-dataset-name");

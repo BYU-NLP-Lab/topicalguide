@@ -769,6 +769,14 @@ var ViewModel = Backbone.Model.extend({
         return this.get("currentView");
     },
     
+    getSettingsViewClass: function(name) {
+        var result = null;
+        if(name in this.settingsViewClasses) {
+            result = this.settingsViewClasses[name];
+        }
+        return result;
+    },
+    
     /**
      * Change the view to the one specified. No-op if the name doesn't exist.
      * path - url path to view as string

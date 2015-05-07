@@ -1,24 +1,10 @@
 "use strict";
+
 /*
  * The following are small views used for manipulating various settings.
  */
 
-var DefaultSettingsView = DefaultView.extend({
-    modalTemplate:   "<div class=\"modal-dialog\">"+
-                "    <div class=\"modal-content\">"+
-                "        <div class=\"modal-header\">"+
-                "            <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>"+
-                "            <h3 class=\"modal-title\"></h3>"+
-                "        </div>"+
-                "        <div class=\"modal-body\"></div>"+
-                "        <div class=\"modal-footer\">"+
-                "            <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button>"+
-                "        </div>"+
-                "    </div>"+
-                "</div>",
-});
-
-var LoginView = DefaultSettingsView.extend({
+var LoginView = DefaultView.extend({
     readableName: "Login",
     shortName: "login",
     
@@ -51,7 +37,6 @@ var LoginView = DefaultSettingsView.extend({
     },
     
     render: function() {
-        this.$el.html(this.modalTemplate);
         var container = d3.select(this.el);
         container.select(".modal-title").text(this.readableName);
         var body = container.select(".modal-body");
@@ -93,12 +78,12 @@ var LoginView = DefaultSettingsView.extend({
     },
 });
 
-var EditFavoritesView = DefaultSettingsView.extend({
+var EditFavoritesView = DefaultView.extend({
     readableName: "Edit Favorites",
     shortName: "edit_favs",
     
     render: function() {
-        this.$el.html(this.modalTemplate);
+        this.$el.html("");
         var container = d3.select(this.el);
         container.select(".modal-title").text(this.readableName);
         container.select(".modal-body").text("Edit favorites coming soon.");

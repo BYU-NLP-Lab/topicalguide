@@ -35,10 +35,6 @@
             </header>
             
             <div id="tg-views-container" class="container-fluid"></div>
-            <div id="tg-all-modals-container">
-                <div id="tg-nav-help-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="helpModal" aria-hidden="true"></div>
-                <div id="tg-nav-settings-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="settingsModal" aria-hidden="true"></div>
-            </div>
             <footer class="footer">
                 <p><a href="{{nlp_lab_url|safe}}"><img width="135px" height="135px" src="{{nlp_lab_logo_url|safe}}"/></a></p>
                 <div class="text-center">
@@ -145,6 +141,10 @@
                     </div>
                 </div>
             </nav>
+            <div id="tg-nav-modals-container">
+                <div id="tg-nav-help-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="helpModal" aria-hidden="true"></div>
+                <div id="tg-nav-settings-modal"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="settingsModal" aria-hidden="true"></div>
+            </div>
         </script>
         
         <script id="global-dataset-and-analyses-info" type="text/template">
