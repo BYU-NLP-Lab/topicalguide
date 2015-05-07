@@ -134,6 +134,28 @@ var tg = new function() {
     };
 };
 
+/**
+ * Easy to inject icons used throughout the site.
+ */
+var icons = {
+    emptyStar: "<span class=\"glyphicon glyphicon-star-empty gold\"></span>",
+    filledStar: "<span class=\"glyphicon glyphicon-star gold\"></span>",
+    
+    help: "<span class=\"glyphicon glyphicon-question-sign blue\"></span>",
+    settings: "<span class=\"caret\" style=\"text-size: 1.5em\"></span>",
+    share: "<span class=\"glyphicon glyphicon-plus\"></span>",
+    
+    document: "<span class=\"glyphicon glyphicon-book brown document\"></span>",
+    previous: "<span class=\"glyphicon glyphicon-chevron-left green previous\"></span>",
+    next: "<span class=\"glyphicon glyphicon-chevron-right green next\"></span>",
+    beginning: "<span class=\"glyphicon glyphicon-step-backward green beginning\"></span>",
+    end: "<span class=\"glyphicon glyphicon-step-forward green end\"></span>",
+    
+    loading: "<p class=\"text-center\"><img src=\"/static/images/large-spinner.gif\"/></p><p class=\"text-center\">Loading...</p>",
+    
+    pencil: "<span class=\"glyphicon glyphicon-pencil purple\"></span>",
+};
+
 
 /**
  * Add a new view class. This is a convenience function to aid forwards
