@@ -42,6 +42,14 @@ var SelectionModel = Backbone.Model.extend({
         this.dataModel = dm;
     },
     
+    getAllSelections: function() {
+        var result = {};
+        for(var key in this.availableSelections) {
+            result[key] = this.get(key);
+        }
+        return result;
+    },
+    
     /**
      * This function will trigger a "multichange" event.
      * This is preferred for views and the router so multiple events aren't 
@@ -550,8 +558,12 @@ var DataModel = Backbone.Model.extend({
         return datasetName;
     },
     
-    getReadableAnalysisName: function(analysisName) {
+    getReadableAnalysisNameInContext: function(analysisName) {
         var datasetName = this.selectionModel.get("dataset");
+        return this.getReadableAnalysisName(datasetName, analysisName);
+    },
+    
+    getReadableAnalysisName: function(datasetName, analysisName) {
         try {
             var metadata = this.datasetsAndAnalyses[datasetName].analyses[analysisName].metadata;
             if("readable_name" in metadata) {

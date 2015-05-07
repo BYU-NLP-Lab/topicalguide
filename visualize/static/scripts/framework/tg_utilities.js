@@ -12,12 +12,14 @@ var tg = new function() {
         /**
          * Initializes the span for you so that the global TG View can
          * keep it updated on clicking.
+         * domElement -- must be a "span"
          * The dom element must have one of the following data attributes set:
          *      tg-data-dataset-name
          *      tg-data-analysis-name
          *      tg-data-topic-number
          *      tg-data-document-name
          *      tg-data-topic-name-scheme
+         * favsModel -- must be the favoritesModel to pull from
          */
         initFav: function(domElement, favsModel) {
             var el = d3.select(domElement);
@@ -99,6 +101,14 @@ var tg = new function() {
             } else {
                 return false;
             }
+        },
+        
+        /**
+         * obj -- any javascript object
+         * Return true if obj isn't undefined or null; false otherwise;
+         */
+        isDefined: function(obj) {
+            return (obj !== null && obj !== undefined);
         },
     };
     

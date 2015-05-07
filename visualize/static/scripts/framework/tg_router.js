@@ -1,6 +1,6 @@
 "use strict";
 
-var DEBUG_ROUTER = false;
+var DEBUG_ROUTER = true;
 /*
  * The router ensures that the correct visualization is displayed using Backbone's routing scheme.
  */
@@ -38,7 +38,7 @@ var Router = Backbone.Router.extend({
         }
         
         if(this.selectionModel !== null && this.selectionModel !== undefined) {
-            selection = this.selectionModel.attributes;
+            selection = this.selectionModel.getAllSelections();
         }
         
         var hash = _.extend(
@@ -54,6 +54,7 @@ var Router = Backbone.Router.extend({
      * Changes the URL and creates a new entry in the site history.
      */
     changeCurrentView: function() {
+        if(DEBUG_ROUTER) console.log("Router.changeCurrentView");
         this.stopListening(this.settingsModel);
         this.settingsModel = this.tgView.currentView.settingsModel;
         this.listenTo(this.settingsModel, "change", this.changeSettings);
@@ -65,6 +66,7 @@ var Router = Backbone.Router.extend({
      * Changes the URL and creates a new entry in the site history.
      */
     changeSelection: function() {
+        if(DEBUG_ROUTER) console.log("Router.changeSelection");
         this.navigate(this.generateURL(), { trigger: false, replace: false });
     },
     
@@ -73,6 +75,7 @@ var Router = Backbone.Router.extend({
      * Changes the URL and updates the current entry in the site history.
      */
     changeSettings: function() {
+        if(DEBUG_ROUTER) console.log("Router.changeSettings");
         this.navigate(this.generateURL(), { trigger: false, replace: true });
     },
     

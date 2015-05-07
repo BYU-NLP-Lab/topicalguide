@@ -366,7 +366,7 @@ var NavigationView = DefaultView.extend({
                     nameFunction = that.dataModel.getReadableDatasetName.bind(that.dataModel);
                 } else if(type === "analyses") {
                     dataAttr = "analysis-name";
-                    nameFunction = that.dataModel.getReadableAnalysisName.bind(that.dataModel);
+                    nameFunction = that.dataModel.getReadableAnalysisNameInContext.bind(that.dataModel);
                 } else if(type === "topics") {
                     dataAttr = "topic-number";
                     nameFunction = that.dataModel.getReadableTopicName.bind(that.dataModel);
@@ -493,7 +493,7 @@ var BreadcrumbsView = DefaultView.extend({
         if(name === "") {
             name = "No analysis selected.";
         } else {
-            name = this.dataModel.getReadableAnalysisName(name);
+            name = this.dataModel.getReadableAnalysisNameInContext(name);
         }
         this.$el.find(selector).text(name);
     },
@@ -598,7 +598,7 @@ var TopicalGuideView = DefaultView.extend({
                     return that.dataModel.getReadableDatasetName(datasetName);
                 } else if(tg.dom.hasAttr(el, "data-tg-analysis-name")) {
                     var analysisName = el.attr("data-tg-analysis-name");
-                    return that.dataModel.getReadableAnalysisName(anlaysisName);
+                    return that.dataModel.getReadableAnalysisNameInContext(anlaysisName);
                 } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
                     var topicNumber = el.attr("data-tg-topic-number");
                     return that.dataModel.getReadableTopicName(topicNumber);
@@ -757,7 +757,6 @@ var TopicalGuideView = DefaultView.extend({
             selection["dataset"] = $(el).attr("data-tg-dataset-name");
         } else if(tg.dom.hasAttr(el, "data-tg-analysis-name")) {
             selection["analysis"] = $(el).attr("data-tg-analysis-name");
-            console.log(selection);
         } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
             selection["topic"] = $(el).attr("data-tg-topic-number");
         } else if(tg.dom.hasAttr(el, "data-tg-document-name")) {
