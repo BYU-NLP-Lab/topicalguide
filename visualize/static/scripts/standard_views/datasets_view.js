@@ -16,7 +16,9 @@ var DatasetView = DefaultView.extend({
     ),
     
     initialize: function() {
-        this.listenTo(this.selectionModel, "change:dataset", this.render);
+        this.initialized = 
+        this.listenTo(this.selectionModel, "change:dataset", this.updateDataset);
+        this.listenTo(this.selectionModel, "change:analysis", this.updateAnalysis);
     },
     
     render: function() {
@@ -38,7 +40,7 @@ var DatasetView = DefaultView.extend({
         var accordion = d3.select("#accordion");
         
         // Create panels for each dataset.
-        var panels = accordion.selectAll("div")
+        this.panels = var panels = accordion.selectAll("div")
             .data(d3.entries(datasets))
             .enter()
             .append("div")
@@ -51,16 +53,17 @@ var DatasetView = DefaultView.extend({
             .classed("panel-title", true)
             .append("b");
         bold.append("a") // Add dataset name.
+            .attr("data-tg-dataset-name", function(d, i) {
+                return d.key;
+            })
+            .classed("tg-select pointer", true)
             .classed("nounderline", true)
             .attr("data-toggle", "collapse")
             .attr("data-parent", "#accordion")
             .attr("href", function(d, i) { return "#collapse-"+d.key; })
-            .text(function(d, i) { return getMetadataValue("readable_name", d.value.metadata, toTitleCase(d.key.replace(/[_]/g, " ")))+" "; })
-            .on("click", function(d, i) {
-                that.selectionModel.set({ dataset: d.key }, { silent: true }); // Don't want to re-render, except from outside events.
-                that.selectionModel.trigger("change:analysis"); // Make sure that analysis active status is updated.
-                that.favsModel.selectionChanged();
-            });
+            .text(function(d, i) { return that.dataModel.getReadableDatasetName(d.key); });
+        bold.append("span") // Add a space between the name and the favicon.
+            .text(" ");
         bold.append("a") // Add favs icon.
             .html(icons.emptyStar)
             .select("span")
@@ -76,7 +79,9 @@ var DatasetView = DefaultView.extend({
         var panel = panels.append("div")
             .attr("id", function(d, i) { return "collapse-"+d.key; })
             .classed("panel-collapse collapse", true)
-            .classed("in", function(d, i) { return d.key === that.selectionModel.get("dataset"); })
+            .classed("in", function(d, i) {
+                return d.key === that.selectionModel.get("dataset");
+            })
             .append("div")
             .classed("panel-body", true)
             .append("div")
@@ -85,6 +90,7 @@ var DatasetView = DefaultView.extend({
             .classed("col-xs-4", true);
         analyses.each(function(d, i) {
             var el = d3.select(this);
+            var datasetName = d.key;
             if(_.size(d.value.analyses) === 0) {
                 el.html("<p>No analyses available for this dataset. Import one using <code>python topicalguide.py -h</code>.</p>");
             } else {
@@ -96,7 +102,9 @@ var DatasetView = DefaultView.extend({
                     .data(d3.entries(d.value.analyses))
                     .enter()
                     .append("li")
-                    .classed("active", function(d, i) { return d.key === that.selectionModel.get("analysis"); });
+                    .classed("active", function(d, i) {
+                        return d.key === that.selectionModel.get("analysis");
+                    });
                 var a = li.append("a");
                 // Create favs icons.
                 a.append("span")
@@ -109,17 +117,19 @@ var DatasetView = DefaultView.extend({
                     });
                 // Create analysis text.
                 a.append("span")
-                    .text(function(d, i) { return " "+getMetadataValue("readable_name", d.value.metadata, toTitleCase(d.key.replace(/[_]/g, " "))); })
-                    .on("click", function(d, i) {
-                        that.selectionModel.set({ analysis: d.key }, { silent: true });
-                        window.location.href = "#topics";
+                    .text(" ");
+                a.append("span")
+                    .attr("data-tg-analysis-name", function(d, i) {
+                        return d.key;
+                    })
+                    .classed("pointer tg-select", true)
+                    .text(function(d, i) {
+                        return that.dataModel.getReadableAnalysisName(datasetName, d.key);
                     })
                     .style("cursor", "pointer");
-                // Make the active analysis pills change with the selectionModel
-                var activeOnChange = function(){
-                    li.classed("active", function(d, i) { return d.key === that.selectionModel.get("analysis"); });
-                };
-                that.selectionModel.on("change:analysis", activeOnChange, that);
+                li.selectAll("a")
+                    .on("click", function(d, i) {
+                        if(
             }
         });
         var body = panel.append("div")
@@ -149,6 +159,29 @@ var DatasetView = DefaultView.extend({
                 createTableFromHash(el, d.value.metrics, ["Metric", "Value"], "metrics");
             }
         });
+    },
+    
+    events: {
+        "click .datasets-analysis-click": "clickAnalysis",
+    },
+    
+    clickAnalysis: function(e) {
+        var el = e.currentTarget;
+        var el = d3.select(el).parent().parent();
+        console.log(el);
+        var currentlyActive = false;
+        if(el.classed("active")) {
+            currentlyActive = true;
+        }
+        el.classed("active", !currentlyActive);
+    },
+    
+    updateDataset: function() {
+        
+    },
+    
+    updateAnalysis: function() {
+        
     },
     
     renderHelpAsHtml: function() {
