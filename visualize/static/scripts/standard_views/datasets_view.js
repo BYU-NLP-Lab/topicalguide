@@ -113,6 +113,10 @@ var DatasetView = DefaultView.extend({
                     .data(d3.entries(d.value.analyses))
                     .enter()
                     .append("li")
+                    .attr("data-tg-analysis-name", function(d, i) {
+                        return d.key;
+                    })
+                    .classed("pointer tg-select", true)
                     .classed("datasets-analysis-active-element", true) // Used to reselect the selection.
                     .classed("active", function(d, i) {
                         return d.key === that.selectionModel.get("analysis");
@@ -131,14 +135,23 @@ var DatasetView = DefaultView.extend({
                 a.append("span")
                     .text(" ");
                 a.append("span")
-                    .attr("data-tg-analysis-name", function(d, i) {
-                        return d.key;
-                    })
-                    .classed("pointer tg-select", true)
+                    //~ .attr("data-tg-analysis-name", function(d, i) {
+                        //~ return d.key;
+                    //~ })
+                    //~ .classed("pointer tg-select", true)
                     .text(function(d, i) {
                         return that.dataModel.getReadableAnalysisName(datasetName, d.key);
                     })
                     .style("cursor", "pointer");
+                a.append("button")
+                    .attr("type", "button")
+                    .classed("btn btn-success", true)
+                    .attr("data-tg-analysis-name", function(d, i) {
+                        return d.key;
+                    })
+                    .classed("tg-select datasets-explore", true)
+                    .style({ "float": "right", "padding": "1px 4px" })
+                    .text("Explore!");
             }
         });
         
@@ -177,19 +190,29 @@ var DatasetView = DefaultView.extend({
     },
     
     events: {
-        "click .datasets-analysis-click": "clickAnalysis",
+        "click .datasets-explore": "clickExplore",
+    },
+    
+    clickExplore: function(e) {
+        // This is a way to allow the event to propagate before switching views.
+        setTimeout(function() {
+            console.log('htere');
+            this.viewModel.set({ "currentView": "topics" });
+        }.bind(this), 100);
     },
     
     updateDataset: function() {
-        console.log("change dataset");
-        var datasetName = this.selectionModel.get("dataset");
-        $(".collapse.in").collapse('hide');
-        this.panels.selectAll(".collapse")
-            .each(function(d, i) {
-                if(d.key === datasetName) {
-                    $(this).collapse('show');
-                }
-            });
+        if(this.panels !== undefined) {
+            console.log("change dataset");
+            var datasetName = this.selectionModel.get("dataset");
+            $(".collapse.in").collapse('hide');
+            this.panels.selectAll(".collapse")
+                .each(function(d, i) {
+                    if(d.key === datasetName) {
+                        $(this).collapse('show');
+                    }
+                });
+        }
     },
     
     updateAnalysis: function(msg) {
@@ -197,14 +220,16 @@ var DatasetView = DefaultView.extend({
         var datasetName = this.selectionModel.get("dataset");
         var analysisName = this.selectionModel.get("analysis");
         if(datasetName !== "") {
-            var panel = this.panels.filter(function(d, i) {
-                return d.key === datasetName;
-            });
-            
-            panel.selectAll(".datasets-analysis-active-element")
-                .classed("active", function(d, i) {
-                    return d.key === analysisName;
+            if(this.panels !== undefined) {
+                var panel = this.panels.filter(function(d, i) {
+                    return d.key === datasetName;
                 });
+                
+                panel.selectAll(".datasets-analysis-active-element")
+                    .classed("active", function(d, i) {
+                        return d.key === analysisName;
+                    });
+            }
         }
     },
     

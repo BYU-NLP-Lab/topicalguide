@@ -761,6 +761,7 @@ var TopicalGuideView = DefaultView.extend({
             selection["topicNameScheme"] = $(el).attr("data-tg-topic-name-scheme");
         }
         this.selectionModel.set(selection);
+        e.stopPropagation();
     },
     
 });
