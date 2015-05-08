@@ -29,6 +29,13 @@
     color: purple;
 }
 
+.black-text-blue-hover {
+    color: black;
+}
+.black-text-blue-hover:hover {
+    color: blue;
+}
+
 /* Header */
 .header {
 	top: 0;

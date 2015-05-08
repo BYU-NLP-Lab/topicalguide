@@ -1,6 +1,6 @@
 "use strict";
 
-var DEBUG_ROUTER = true;
+var DEBUG_ROUTER = false;
 /*
  * The router ensures that the correct visualization is displayed using Backbone's routing scheme.
  */

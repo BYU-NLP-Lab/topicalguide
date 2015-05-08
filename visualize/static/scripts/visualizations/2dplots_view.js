@@ -190,7 +190,6 @@ var PlotView = DefaultView.extend({
         
         // Make sure the topic's readable name is set.
         var allTopics = analysis.topics;
-        console.log(valueNames);
         if("topics" in valueNames) {
             var valueTopics = valueNames.topics;
             for(var topKey in valueTopics) {
