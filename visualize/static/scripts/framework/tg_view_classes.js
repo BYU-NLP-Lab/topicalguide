@@ -440,16 +440,11 @@ var BreadcrumbsView = DefaultView.extend({
     baseTemplate:
 "<div class=\"well\" style=\"text-align: justify; margin: 0px 0px 20px 0px; padding: 0px 10px 0px 10px;\">"+
 "<div style=\"vertical-align: middle; display: table; width: 100%;\">"+
-//~ "<span style=\"display: table-cell;\"> </span>"+
-//~ "<span style=\"display: table-cell;\">hi</span>"+
-//~ "<span style=\"display: table-cell;\"> </span>"+
-//~ "<span style=\"display: table-cell;\">there</span>"+
-//~ "<span style=\"display: table-cell;\"> </span>"+
-"<span class=\"tg-nav-breadcrumb-span\"><span>Dataset:&nbsp;</span><span class=\"tg-nav-breadcrumb-dataset blue\"></span><span>&nbsp;&nbsp;&nbsp;</span></span>"+
-"<span class=\"tg-nav-breadcrumb-span\">Analysis:&nbsp;<span class=\"tg-nav-breadcrumb-analysis blue\"></span><span>&nbsp;&nbsp;&nbsp;</span></span>"+
-//~ "<span>Topic:&nbsp;</span><span class=\"tg-nav-breadcrumb-topic\"></span><span>&nbsp;&nbsp;&nbsp;</span>"+
-//~ "<span>Document:&nbsp;</span><span class=\"tg-nav-breadcrumb-document\"></span><span>&nbsp;&nbsp;&nbsp;</span>"+
-//~ "<span>Topic Name Scheme:&nbsp;</span><span class=\"tg-nav-breadcrumb-topic-name-scheme\"></span><span>&nbsp;&nbsp;&nbsp;</span>"+
+"<span class=\"tg-nav-breadcrumb-span\"><span>Dataset:&nbsp;</span><span class=\"tg-nav-breadcrumb-dataset blue\"></span></span>"+
+"<span class=\"tg-nav-breadcrumb-span\">Document:&nbsp;<span class=\"tg-nav-breadcrumb-document blue\"></span></span>"+
+"<span class=\"tg-nav-breadcrumb-span\">Analysis:&nbsp;<span class=\"tg-nav-breadcrumb-analysis blue\"></span></span>"+
+"<span class=\"tg-nav-breadcrumb-span\">Topic:&nbsp;<span class=\"tg-nav-breadcrumb-topic blue\"></span></span>"+
+"<span class=\"tg-nav-breadcrumb-span\">Topic Name Scheme:&nbsp;<span class=\"tg-nav-breadcrumb-topic-name-scheme blue\"></span></span>"+
 "</div>"+
 "</div>",
     
@@ -469,9 +464,9 @@ var BreadcrumbsView = DefaultView.extend({
         this.$el.html(this.baseTemplate);
         this.updateDataset();
         this.updateAnalysis();
-        //~ this.updateTopic();
-        //~ this.updateDocument();
-        //~ this.updateTopicNameScheme();
+        this.updateTopic();
+        this.updateDocument();
+        this.updateTopicNameScheme();
         d3.select(this.el).selectAll(".tg-nav-breadcrumb-span")
             .style({ "font-size": "0.7em", "display": "table-cell", "text-align": "center", "vertical-align": "middle" });
     },
@@ -683,6 +678,7 @@ var TopicalGuideView = DefaultView.extend({
                 el.classed({ "glyphicon-star": true, "glyphicon-star-empty": false });
             }
         }
+        e.stopPropagation();
     },
     
     changeCurrentView: function() {

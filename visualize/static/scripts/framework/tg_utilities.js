@@ -119,8 +119,6 @@ var tg = new function() {
         toTitleCase: function(str) {
             return str.replace(/\w\S*/g, function(substr){ return substr.charAt(0).toUpperCase() + substr.slice(1); });
         },
-        
-        
     };
     
     this.color = {
@@ -568,6 +566,7 @@ function createSortableTable(table, options) {
 function createTabbedContent(container, options) {
     var defaults = {
         tabs: {},
+        rendered: {},
         selected: null,
         tabOnClick: function() {},
     };
@@ -595,12 +594,17 @@ function createTabbedContent(container, options) {
     // Set up the content
     var content = container.select("div.tab-content");
     var contentPanes = content.selectAll("div.tab-pane");
-    contentPanes.data(d3.entries(options.tabs))
+    var renderedAreas = contentPanes.data(d3.entries(options.tabs))
         .enter()
         .append("div")
         .classed("tab-pane", true)
         .classed("active", active)
-        .each(function(d, i) { options.tabs[d.key](d.key, d3.select(this)); });
+        .each(function(d, i) { 
+            if(active(d, i)) { // Only render the content of the tab when clicked.
+                options.tabs[d.key](d.key, d3.select(this));
+                options.rendered[d.key] = true;
+            }
+        });
     
     // Set up tabbed navigation
     var nav = container.select("ul.nav-tabs");
@@ -617,6 +621,17 @@ function createTabbedContent(container, options) {
                 options.selected = d.key;
                 nav.selectAll("li").classed("active", active);
                 content.selectAll("div.tab-pane").classed("active", active);
+                if(!(d.key in options.rendered)) {
+                    console.log("here");
+                    console.log(active(d, i));
+                    renderedAreas.filter(active)
+                        .each(function(d, i) {
+                            console.log("rendering");
+                            options.tabs[d.key](d.key, d3.select(this));
+                        });
+                    console.log("here2");
+                    options.rendered[d.key] = true;
+                }
                 options.tabOnClick(d.key);
             }
         });

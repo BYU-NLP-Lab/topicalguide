@@ -40,28 +40,39 @@ var DatasetView = DefaultView.extend({
         var accordion = d3.select("#accordion");
         
         // Create panels for each dataset.
-        this.panels = var panels = accordion.selectAll("div")
+        var panels = accordion.selectAll("div")
             .data(d3.entries(datasets))
             .enter()
             .append("div")
             .classed("panel panel-default", true);
+        this.panels = panels;
         
         // Create the panel title.
         var bold = panels.append("div")
-            .classed("panel-heading text-center", true)
-            .append("h3")
-            .classed("panel-title", true)
-            .append("b");
-        bold.append("a") // Add dataset name.
             .attr("data-tg-dataset-name", function(d, i) {
                 return d.key;
             })
             .classed("tg-select pointer", true)
-            .classed("nounderline", true)
+            .classed("panel-heading text-center", true)
             .attr("data-toggle", "collapse")
             .attr("data-parent", "#accordion")
             .attr("href", function(d, i) { return "#collapse-"+d.key; })
-            .text(function(d, i) { return that.dataModel.getReadableDatasetName(d.key); });
+            .append("h3")
+            .classed("panel-title", true)
+            .append("b");
+        bold.append("a") // Add dataset name.
+            //~ .attr("data-tg-dataset-name", function(d, i) {
+                //~ return d.key;
+            //~ })
+            //~ .classed("tg-select pointer", true)
+            .classed("nounderline black-text-blue-hover", true)
+            //~ .attr("data-toggle", "collapse")
+            //~ .attr("data-parent", "#accordion")
+            //~ .attr("href", function(d, i) { return "#collapse-"+d.key; })
+            //~ .style("color", "black")
+            .text(function(d, i) {
+                return that.dataModel.getReadableDatasetName(d.key);
+            });
         bold.append("span") // Add a space between the name and the favicon.
             .text(" ");
         bold.append("a") // Add favs icon.
@@ -102,6 +113,7 @@ var DatasetView = DefaultView.extend({
                     .data(d3.entries(d.value.analyses))
                     .enter()
                     .append("li")
+                    .classed("datasets-analysis-active-element", true) // Used to reselect the selection.
                     .classed("active", function(d, i) {
                         return d.key === that.selectionModel.get("analysis");
                     });
@@ -127,11 +139,9 @@ var DatasetView = DefaultView.extend({
                         return that.dataModel.getReadableAnalysisName(datasetName, d.key);
                     })
                     .style("cursor", "pointer");
-                li.selectAll("a")
-                    .on("click", function(d, i) {
-                        if(
             }
         });
+        
         var body = panel.append("div")
             .classed("col-xs-8", true);
         // Create description.
@@ -143,10 +153,15 @@ var DatasetView = DefaultView.extend({
         var metadata = body.append("div");
         metadata.each(function(d, i) {
             var el = d3.select(this);
+            var datasetMetadata = _.reduce(d.value.metadata, function(result, value, key) {
+                var newKey = tg.str.toTitleCase(key.replace(/_/g, " "));
+                result[newKey] = value;
+                return result;
+            }, {});
             if(_.size(d.value.metadata) === 0) {
                 el.html("<p>No metadata available for this dataset.</p>");
             } else {
-                createTableFromHash(el, d.value.metadata, ["Metadata", "Value"], "metadata");
+                createTableFromHash(el, datasetMetadata, ["Metadata", "Value"], "metadata");
             }
         });
         // Create metrics table.
@@ -165,23 +180,32 @@ var DatasetView = DefaultView.extend({
         "click .datasets-analysis-click": "clickAnalysis",
     },
     
-    clickAnalysis: function(e) {
-        var el = e.currentTarget;
-        var el = d3.select(el).parent().parent();
-        console.log(el);
-        var currentlyActive = false;
-        if(el.classed("active")) {
-            currentlyActive = true;
-        }
-        el.classed("active", !currentlyActive);
-    },
-    
     updateDataset: function() {
-        
+        console.log("change dataset");
+        var datasetName = this.selectionModel.get("dataset");
+        $(".collapse.in").collapse('hide');
+        this.panels.selectAll(".collapse")
+            .each(function(d, i) {
+                if(d.key === datasetName) {
+                    $(this).collapse('show');
+                }
+            });
     },
     
-    updateAnalysis: function() {
-        
+    updateAnalysis: function(msg) {
+        console.log(msg)
+        var datasetName = this.selectionModel.get("dataset");
+        var analysisName = this.selectionModel.get("analysis");
+        if(datasetName !== "") {
+            var panel = this.panels.filter(function(d, i) {
+                return d.key === datasetName;
+            });
+            
+            panel.selectAll(".datasets-analysis-active-element")
+                .classed("active", function(d, i) {
+                    return d.key === analysisName;
+                });
+        }
     },
     
     renderHelpAsHtml: function() {
