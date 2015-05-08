@@ -18,7 +18,7 @@ Clone the source with the following:
     
     git clone https://github.com/BYU-NLP-Lab/topicalguide.git
 
-Then navigate to the `topicalguide` directory.
+Then navigate to the `topicalguide` directory and optionally switch over to the `dev` branch for development.
 
 ### 2. Install Dependencies
 
