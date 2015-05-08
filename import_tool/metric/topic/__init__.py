@@ -11,6 +11,7 @@ import token_count
 import type_count
 import document_entropy
 import word_entropy
+import temperature
 
 
 database_table = TopicMetricValue
@@ -25,6 +26,7 @@ metrics = OrderedDict([
     ('type_count', type_count), 
     ('document_entropy', document_entropy), 
     ('word_entropy', word_entropy), 
+    ('temperature', temperature), 
 ])
 
 def metric_exists(database_id, dataset_db, analysis_db, metric_db):

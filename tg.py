@@ -156,13 +156,13 @@ def exec_list(args):
     os.environ['DJANGO_SETTINGS_MODULE'] = 'topicalguide.settings'
     from django.core.wsgi import get_wsgi_application
     application = get_wsgi_application()
-    from visualize.api import query_datasets
+    from visualize.api import LATEST_API_VERSION
     options = { 
         'datasets': '*', 'dataset_attr': ['metadata'],
         'analyses': '*', 'analysis_attr': ['metadata'],
     }
     
-    datasets = query_datasets(options)
+    datasets = LATEST_API_VERSION.query_datasets(options)
     if len(datasets) == 0:
         print('No datasets in database.')
     else:
