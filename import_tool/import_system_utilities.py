@@ -29,7 +29,7 @@ from analysis.name_schemes.tf_itf import TfitfTopicNamer
 from metadata.utilities import get_all_metadata_types
 from visualize.models import *
 
-DATABASE_OPTIMIZE_DEBUG = True # settings.DEBUG
+DATABASE_OPTIMIZE_DEBUG = False # settings.DEBUG
 
 MAX_TOKEN_LENGTH = WordType._meta.get_field('word').max_length
 
@@ -254,6 +254,7 @@ def check_analysis(database_id, dataset_name, analysis, directories,
     topics = {}
     curr_doc = -1
     curr_text = ''
+    word_token_count = 0
     for document_index, start_index, token, token_abstraction, topic_number_list in analysis.get_token_iterator():
         try:
             if document_index != curr_doc:
@@ -271,11 +272,13 @@ def check_analysis(database_id, dataset_name, analysis, directories,
                     topics[topic_num] = True
                 assert topic_num >= 0
                 assert type(topic_num) == int
+            word_token_count += 1
         except AssertionError:
             print(document_index, start_index, token, token_abstraction, topic_number_list, curr_text[start_index: start_index + len(token)])
             print(curr_text)
             raise
     print('Basic token check passes.')
+    print('Number of Word Tokens:', word_token_count)
     print('Number of Topics:', len(topics))
     
     parent_children = {}

@@ -4,7 +4,7 @@
  * Step 3: Change the class name from ExampleView to a class name you pick that doesn't 
  *         conflict with any others in the project.
  * Step 4: Determine where on the navigation bar your view is put.
- *         [] will put your view right up front
+ *         [] will put your view name directly on the menu bar
  *         ["Menu"] will put your view under a menu named "Menu"
  *         ["Menu", "SubMenu", "SubSubMenu"] will nest your view accordingly
  * Step 5: Add the javascript file to the views list in root.html.
@@ -56,15 +56,15 @@ var ExampleView = DefaultView.extend({
     
     /*
      * Other Hints:
-     * Use the global variable icons (found in view_templates.js) where-ever possible. If an icon needs to be changed across
-     * the site it can be done painlessly.
-     * Of especial use is icons.loading which you can display while waiting on the server.
-     * Also there is a function this.renderError which you can use to have error information
-     * displayed automatically.
+     * 1. Use the global variable icons (found in view_templates.js) where-ever possible.
+     *    If an icon needs to be changed across the site it can be done painlessly.
+     *    Of especial use is icons.loading which you can display while waiting on the server.
+     * 2. Also there is a function this.renderError which you can use to have error information
+     *    displayed automatically.
      */
 });
 
 /*
  * Add strings to the list (below) to nest this view under menus.
  */
-globalViewModel.addViewClass(["Menu1", "Menu2", "Menu3"], ExampleView);
+globalViewModel.addViewClass(["Menu 1", "Sub Menu 2", "Sub Menu 3"], ExampleView);

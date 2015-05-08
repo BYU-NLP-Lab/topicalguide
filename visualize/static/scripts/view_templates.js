@@ -1,24 +1,29 @@
-/*
+/**
  * To create a view extend the DefaultView and then call globalViewModel.addViewClass as specified
  * to add the view to the nav bar.
  */
 
-/*
- * Easy to inject icons, most useful/common is the star icon for marking favorites.
+/**
+ * Easy to inject icons used throughout the site.
  */
 var icons = {
     emptyStar: "<span class=\"glyphicon glyphicon-star-empty gold\"></span>",
     filledStar: "<span class=\"glyphicon glyphicon-star gold\"></span>",
+    
     help: "<span class=\"glyphicon glyphicon-question-sign blue\"></span>",
     settings: "<span class=\"caret\" style=\"text-size: 1.5em\"></span>",
     share: "<span class=\"glyphicon glyphicon-plus\"></span>",
+    
     document: "<span class=\"glyphicon glyphicon-book brown document\"></span>",
     previous: "<span class=\"glyphicon glyphicon-chevron-left green previous\"></span>",
     next: "<span class=\"glyphicon glyphicon-chevron-right green next\"></span>",
+    beginning: "<span class=\"glyphicon glyphicon-step-backward green beginning\"></span>",
+    end: "<span class=\"glyphicon glyphicon-step-forward green end\"></span>",
+    
     loading: "<p class=\"text-center\"><img src=\"/static/images/large-spinner.gif\"/></p><p class=\"text-center\">Loading...</p>",
 };
 
-/*
+/**
  * The DefaultView acts as an interface for other views to use so the proper methods and attributes
  * are implemented.
  * 
@@ -53,12 +58,12 @@ _.extend(DefaultView.prototype, Backbone.View.prototype, {
     // A handy loading shortcut.
     loadingTemplate: icons.loading,
     
-    /*
+    /**
      * Any needed model event binding should be done in here.
      */
     initialize: function(options) {},
     
-    /*
+    /**
      * Render visualization in the given element (i.e. this.el and this.$el).
      * To use d3 try d3.select(this.el).
      */
@@ -66,12 +71,12 @@ _.extend(DefaultView.prototype, Backbone.View.prototype, {
         this.$el.html("<p>Welcome to the Default Page. You're seeing this message either because this view is not implemented, this view doesn't exist, or an error occurred while trying to render the view.</p>");
     },
     
-    /*
+    /**
      * Call dispose on any sub-views and perform any other necessary cleanup operations.
      */
     cleanup: function() {},
     
-    /*
+    /**
      * Removes all events for you and removes the $el from the DOM.
      */
     dispose: function() {
@@ -83,14 +88,14 @@ _.extend(DefaultView.prototype, Backbone.View.prototype, {
         this.remove();
     },
     
-    /*
+    /**
      * Return the HTML of the help message desired.
      */
     renderHelpAsHtml: function() {
         return "<p>The creators of this view didn't create a help page for you.</p>";
     },
     
-    /*
+    /**
      * Convenient function to render an error message in the $el element.
      */
     renderError: function(msg) {

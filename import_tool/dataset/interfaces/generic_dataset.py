@@ -129,7 +129,7 @@ class GenericDocument(AbstractDocument):
     @property
     def source(self):
         """Return the document's uri."""
-        return None
+        return self._document_path
     
     def _read_document(self):
         """Must set the self._content and self._metadata variables."""

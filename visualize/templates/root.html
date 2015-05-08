@@ -5,8 +5,8 @@
         <title>Topical Guide</title>
         <link rel="shortcut icon" href="{{nlp_lab_small_logo_url}}" />
         
-        <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/css/bootstrap.min.css" />
-        <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/css/bootstrap-theme.min.css" />
+        <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/3.3.4/css/bootstrap.min.css" />
+        <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/3.3.4/css/bootstrap-theme.min.css" />
         <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap-toggle/css/bootstrap-toggle.min.css" />
         <link rel="stylesheet" type="text/css" href="{{MEDIA}}/jquery-ui/jquery-ui.css" />
         <link rel="stylesheet" type="text/css" href="{{MEDIA}}/jquery-ui/jquery-ui.theme.css" />
@@ -14,14 +14,16 @@
         <link rel="stylesheet" type="text/css" href="{{STYLES}}/tip-styles.css" />
         
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/jquery-1.11.1.min.js"></script>
-        <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/bootstrap/js/bootstrap.js"></script>
-        <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/bootstrap-toggle/js/bootstrap-toggle.js"></script>
+        
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/lodash.min.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/backbone.min.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/d3.v3.min.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/d3.layout.cloud.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/d3.tip.v0.6.3.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/jquery-ui/jquery-ui.js"></script>
+        <!-- Note that jQuery UI conflicts with bootstrap's tooltip functionality, thus bootstrap is loaded afterwards -->
+        <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/bootstrap/3.3.4/js/bootstrap.js"></script>
+        <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/bootstrap-toggle/js/bootstrap-toggle.js"></script>
         
         <script src="https://apis.google.com/js/platform.js" async defer></script>
         
@@ -115,12 +117,19 @@
             </nav>
         </script>
         
+        <script id="global-dataset-and-analyses-info" type="text/template">
+            {% autoescape off %}
+                {{datasets_and_analyses}}
+            {% endautoescape %}
+        </script>
+
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/utilities.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/model.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/view_templates.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/router.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/settings.js"></script>
         
+        <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/home_view.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/datasets_view.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/topics_view.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/documents_view.js"></script>
@@ -129,6 +138,7 @@
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/visualizations/chord_view.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/visualizations/topics_over_time_view.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/visualizations/legend.js"></script>
+        <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/visualizations/metadata_map_view.js"></script>
 <!--
         THIS VISUALIZATION IS ONLY PARTIALLY WORKING.
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/visualizations/force_view.js"></script>

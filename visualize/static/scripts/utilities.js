@@ -2,6 +2,75 @@
  * The following are an assortment of useful utilities.
  */
 
+/**
+ * Types recognized by the import system.
+ */
+var globalTypes = {
+    "int": "Integer",
+    "float": "Float",
+    "datetime": "Date/Time",
+    "bool": "Boolean",
+    "text": "Text",
+    "ordinal": "Ordinal",
+};
+
+
+var colorPalettes = {
+    pastels: ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", 
+              "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", 
+              "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", 
+              "#17becf", "#9edae5"],
+    blueToRed: ["blue", "#F0EAD6", "red"],
+    black: ["black"],
+    
+    /**
+     * Return a function that takes and index in the range of listOfValues 
+     * and maps to a color.
+     */
+    getDiscreteColorScale: function(listOfValues, colorPalette) {
+        var colorDomain = d3.scale.ordinal().domain(colorPalette).rangePoints([0, 1], 0).range();
+        var ordinalRange = d3.scale.ordinal().domain(listOfValues).rangePoints([0, 1], 0).range();
+        var ordToNum = d3.scale.ordinal().domain(listOfValues).range(ordinalRange);
+        var numToColor = d3.scale.linear().domain(colorDomain).range(colorPalette);
+        return function ordinalColorScale(val) { return numToColor(ordToNum(val)); };
+    },
+};
+
+/**
+ * Return true if the given number or object is an integer.
+ */
+function isInteger(i) {
+    return !isNaN(i) && 
+        parseInt(Number(i)) == i && 
+        !isNaN(parseInt(i, 10));
+}
+
+/**
+ * Return an integer in [min, max).
+ */
+function getRandomIntegerInRange(min, max) {
+    return Math.floor(Math.random()*(max - min)) + min;
+}
+
+
+/**
+ * Handles printing a nice message to the user.
+ */
+function reportReadableErrorToUser(message) {
+    alert(message);
+}
+
+
+/**
+ * Returns true if the object is a string; false otherwise.
+ */
+function isString(str) {
+    if(typeof str === "string" || str instanceof String) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 /*
  * Maps datasets => dataset, analyses => analysis, etc. for just the common terms for this site.

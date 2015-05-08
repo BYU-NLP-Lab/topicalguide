@@ -76,6 +76,7 @@ var ViewModel = Backbone.Model.extend({
             this.currentView.render();
         } catch(err) {
             console.log("The following error occurred while trying to render the view: " + err);
+            console.log(err.stack);
         }
         
         
@@ -410,8 +411,13 @@ var Router = Backbone.Router.extend({
 var router;
 var navView;
 $(function startApplication() {
+    // Make sure that dataset and analyses data is available.
+    defaultData = JSON.parse($("#global-dataset-and-analyses-info").html());
+    globalDataModel.datasetsAndAnalyses = defaultData['datasets'];
+    globalDataModel.serverInfo = defaultData['server'];
     // Cleanup cached api queries
     deletePrefixFromHash("data-", localStorage);
+    deletePrefixFromHash("settings-", localStorage);
     // Start the router
     navView = new NavigationView({ el: $("#main-nav") });
     navView.render();

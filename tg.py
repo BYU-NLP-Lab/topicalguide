@@ -112,7 +112,8 @@ def get_analysis(args, directories):
     # must come before getting stopwords
     analysis.token_regex = args.token_regex
     if args.stopwords:
-        analysis.add_stopwords_file(args.stopwords)
+        for stopwords_file in args.stopwords:
+            analysis.add_stopwords_file(stopwords_file)
     if args.subdocuments:
         analysis.set_create_subdocuments_method(basic_tools.create_subdocuments)
     analysis.num_topics = args.number_of_topics
@@ -155,13 +156,13 @@ def exec_list(args):
     os.environ['DJANGO_SETTINGS_MODULE'] = 'topicalguide.settings'
     from django.core.wsgi import get_wsgi_application
     application = get_wsgi_application()
-    from visualize.api import query_datasets
+    from visualize.api import LATEST_API_VERSION
     options = { 
         'datasets': '*', 'dataset_attr': ['metadata'],
         'analyses': '*', 'analysis_attr': ['metadata'],
     }
     
-    datasets = query_datasets(options)
+    datasets = LATEST_API_VERSION.query_datasets(options)
     if len(datasets) == 0:
         print('No datasets in database.')
     else:
@@ -309,7 +310,7 @@ def main():
                                  help='Optionally set the identifier for this analysis. The import system will set this if not specified.')
     analysis_parser.add_argument('-l', '--number-of-levels', type=int, action='store', default=2, 
                                  help='Used only in heirarchical topic models. The number of levels in the tree.')
-    analysis_parser.add_argument('--stopwords', type=str, action='store', default=None, 
+    analysis_parser.add_argument('--stopwords', type=str, action='append', default=None, 
                                 help='Specify a file containing a carriage return separated list of words to exclude.')
     analysis_parser.add_argument('--remove-singletons', action='store_true', default=False, 
                                 help='Remove word types that occur infrequently: count <= max(1, log(|documents|) - 2).')
@@ -394,22 +395,19 @@ def main():
     
     # execute command
     start_time = time.time()
-    if args.which == 'import':
-        exec_import_dataset(args)
-    elif args.which == 'check':
-        exec_check_dataset(args)
-    elif args.which == 'analyze':
-        exec_run_analysis(args)
-    elif args.which == 'list':
-        exec_list(args)
-    elif args.which == 'measure':
-        exec_run_metrics(args)
-    elif args.which == 'link':
-        exec_link(args)
-    elif args.which == 'migrate':
-        exec_migrate_dataset(args)
-    elif args.which == 'remove-metrics':
-        exec_remove_metrics(args)
+    execute = {
+        'import': exec_import_dataset,
+        'analyze': exec_run_analysis,
+        'list': exec_list,
+        'measure': exec_run_metrics,
+        'link': exec_link,
+        'migrate': exec_migrate_dataset,
+        'remove-metrics': exec_remove_metrics,
+    }
+    if args.which in execute:
+        execute[args.which](args)
+    else:
+        print('That subparser isn\'t recognized.')
     print('Total time taken: %s seconds'%str(datetime.timedelta(seconds=time.time() - start_time)))
 
 if __name__ == '__main__':

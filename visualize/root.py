@@ -26,6 +26,8 @@ from django.http import HttpResponse
 from django.template import RequestContext, loader
 from django.views.decorators.gzip import gzip_page
 from django.views.decorators.cache import never_cache
+import api
+import json
 
 
 @never_cache
@@ -44,24 +46,38 @@ def root(request, *args, **kwargs):
     context['cs_dept_url'] = "https://cs.byu.edu"
     context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
     context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"
+    
+    # Request dataset and analyses data by default
+    api_data_request = {
+        'datasets': '*',
+        'analyses': '*',
+        'dataset_attr': 'metadata,metrics',
+        'analysis_attr': 'metadata,metrics,topic_name_schemes',
+        'server': '*',
+    }
+    context['datasets_and_analyses'] = json.dumps(api.LATEST_API_VERSION.query_api(api_data_request))
+    
     try:
         context['last_updated'] = "Last updated on %s" % time.strftime("%A, %d %B %Y %l:%M %P", time.gmtime(Repo(__file__).head.commit.committed_date))
     except:
         context['last_updated'] = "Last updated info not available."
 
     version = 'Version not available.'
+    
     try:
         tags = Repo(__file__).tags
         if tags:
             version = unicode(tags[-1])
     except:
         pass
+    
     context['version'] = version
     
     template = loader.get_template('root.html')
     template_context = RequestContext(request, context)
     return HttpResponse(template.render(template_context))
 
+@never_cache
 @gzip_page
 def terms(request, *args, **kwargs):
     template = loader.get_template('terms.html')

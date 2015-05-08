@@ -17,19 +17,18 @@ var DatasetView = DefaultView.extend({
     },
     
     render: function() {
-        this.$el.html(this.loadingTemplate);
-        this.dataModel.submitQueryByHash({
-            "datasets": "*",
-            "analyses": "*",
-            "dataset_attr": ["metadata", "metrics"],
-            "analysis_attr": ["metadata", "metrics"],
-        }, this.renderDatasets.bind(this), this.renderError.bind(this));
-    },
-    
-    renderDatasets: function(data) {
+        this.selectionModel.selectFirst(false);
+        this.$el.html("");
+        var datasets = this.dataModel.getDatasetsAndAnalyses();
         var that = this;
-        var datasets = data["datasets"];
-        this.modifyMetadata(datasets);
+        
+        function getMetadataValue(key, object, defaultValue) {
+            if(!(key in object)) {
+                return defaultValue;
+            } else {
+                return object[key];
+            }
+        }
         
         // Create basic outline
         this.$el.html(this.compiledTemplate({ "hasDatasets": (_.size(datasets) !== 0) }));
@@ -53,7 +52,7 @@ var DatasetView = DefaultView.extend({
             .attr("data-toggle", "collapse")
             .attr("data-parent", "#accordion")
             .attr("href", function(d, i) { return "#collapse-"+d.key; })
-            .text(function(d, i) { return d.value.readable_name+" "; })
+            .text(function(d, i) { return getMetadataValue("readable_name", d.value.metadata, toTitleCase(d.key.replace(/[_]/g, " ")))+" "; })
             .on("click", function(d, i) {
                 that.selectionModel.set({ dataset: d.key }, { silent: true }); // Don't want to re-render, except from outside events.
                 that.selectionModel.trigger("change:analysis"); // Make sure that analysis active status is updated.
@@ -97,7 +96,7 @@ var DatasetView = DefaultView.extend({
                     });
                 // Create analysis text.
                 a.append("span")
-                    .text(function(d, i) { return " "+d.value.readable_name; })
+                    .text(function(d, i) { return " "+getMetadataValue("readable_name", d.value.metadata, toTitleCase(d.key.replace(/[_]/g, " "))); })
                     .on("click", function(d, i) {
                         that.selectionModel.set({ analysis: d.key }, { silent: true });
                         router.navigate("topics", { trigger: true });
@@ -116,7 +115,7 @@ var DatasetView = DefaultView.extend({
         body.append("h4")
             .text("Description");
         body.append("p")
-            .text(function(d, i) { return d.value.description; });
+            .text(function(d, i) { return getMetadataValue("description", d.value.metadata, "No description available."); });
         // Create metadata table.
         var metadata = body.append("div");
         metadata.each(function(d, i) {
@@ -139,25 +138,6 @@ var DatasetView = DefaultView.extend({
         });
     },
     
-    // Add readable_name and description properties.
-    modifyMetadata: function(datasets) {
-        for(key in datasets) {
-            var dataset = datasets[key];
-            extractMetadata(dataset, dataset["metadata"], {
-                "readable_name": key.replace("_", " ").toUpperCase(),
-                "description": "No description available"
-            });
-            var analyses = dataset["analyses"];
-            for(key2 in analyses) {
-                var analysis = analyses[key2];
-                extractMetadata(analysis, analysis["metadata"], {
-                    "readable_name": key2.replace("_", " ").toUpperCase(),
-                    "description": "No description available"
-                });
-            }
-        }
-    },
-    
     renderHelpAsHtml: function() {
         return "<p>To get started click on a dataset name. "+
         "As the panel shows up select an analysis by clicking on it. "+
@@ -166,4 +146,4 @@ var DatasetView = DefaultView.extend({
 });
 
 // Add the Datasets View as the root view
-globalViewModel.setRootViewClass(DatasetView);
+globalViewModel.addViewClass([], DatasetView);

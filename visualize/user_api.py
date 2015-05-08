@@ -49,3 +49,7 @@ def user_api(request):
 
 def query_user_info(user, options):
     return {"favorites": {}}
+
+def update_dataset(options):
+    pass
+

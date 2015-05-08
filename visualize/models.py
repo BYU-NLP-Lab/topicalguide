@@ -2,6 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 import os
 import io
+from dateutil import tz
 from DateTime import DateTime
 from django.db import models
 from django.db import connection
@@ -37,12 +38,26 @@ class MetricValue(models.Model):
 class MetadataType(models.Model):
     name = models.CharField(max_length=128)
     datatype = models.CharField(max_length=64)
+    ordinal = models.ForeignKey('Ordinal', null=True)
     
     class Meta(object):
-        unique_together=('name', 'datatype')
+        unique_together = ('name', 'datatype')
     
     def __unicode__(self):
-        return unicode(self.name)
+        is_ordinal = ordinal is not None
+        return 'Name: %s\nDatatype: %s\nOrdinal: %s'%(unicode(self.name), unicode(self.datatype), unicode(is_ordinal))
+
+class Ordinal(models.Model):
+    def __unicode__(self):
+        return unicode(self.id)
+
+class OrdinalValues(models.Model):
+    sequence = models.ForeignKey('Ordinal', related_name='values') # An id for the entire sequence
+    index = models.PositiveIntegerField()
+    value = models.CharField(max_length=64)
+    
+    def __unicode__(self):
+        return unicode(self.index) + ':' + value
 
 class MetadataValue(models.Model):
     metadata_type = models.ForeignKey('MetadataType')
@@ -61,7 +76,7 @@ class MetadataValue(models.Model):
     def set(self, value, value_type='text'):
         if value_type == 'float':
             self.float_value = float(value)
-        elif value_type == 'text':
+        elif value_type == 'text' or value_type == 'ordinal':
             self.text_value = unicode(value)
         elif value_type == 'int':
             self.int_value = int(value)
@@ -149,7 +164,7 @@ class View(models.Model):
 
 class ExternalDataset(models.Model):
     """Tracks external datasets by storing a json string representing the database settings."""
-    name = models.SlugField(unique=True) # TODO what is a slug field?
+    name = models.SlugField(unique=True)
     database_settings = models.TextField()
     # Used by the database router to correctly route the table creation and usage correctly
     _MODEL_NAME = 'ExternalDataset'
@@ -176,6 +191,13 @@ class Dataset(models.Model):
     
     def __unicode__(self):
         return self.name
+    
+    def get_document_metadata_types(self):
+        query = self.documents.values_list('metadata_values__metadata_type__name', 'metadata_values__metadata_type__datatype').distinct()
+        result = {}
+        for name, datatype in query:
+            result[name] = datatype
+        return result
     
     @property
     def readable_name(self):
@@ -280,6 +302,13 @@ class Document(models.Model):
                 result[t] = []
             result[t].append((token.topics.filter(analysis=analysis)[0].number, token.start_index))
         return result
+    
+    def get_top_n_words(self, words='*', top_n=10):
+        word_counts = self.tokens.values_list('word_type__word').annotate(count=Count('word_type__word'))
+        if words != '*':
+            word_counts = word_counts.filter(word_type__word__in=words)
+        word_counts = word_counts.order_by('-count')
+        return {row[0]: {'token_count': row[1]} for row in word_counts[:top_n]}
 
 class DocumentMetadataValue(MetadataValue):
     document = models.ForeignKey('Document', related_name='metadata_values')
@@ -340,14 +369,21 @@ class Analysis(models.Model):
             return 'No description available.'
     
     def topic_word_type_occurrences(self):
-        """Finds the number of times a word type (not token) is assigned to a topic.
+        """Find the number of times a word type (not token) is assigned to a topic.
         Return a dict with word types as the keys and topic counts as the values.
         """
-        word_type_query = self.topics.values('number', 'tokens__word_type__word').distinct()
+        word_type_query = self.topics.values_list('number', 'tokens__word_type__word').distinct()
         result = {}
-        for value in word_type_query:
-            word = value['tokens__word_type__word']
+        for _, word in word_type_query:
             result[word] = result.setdefault(word, 0) + 1
+        return result
+    
+    def get_topic_name_schemes(self):
+        """Return a list of all topic name schemes available for this analysis."""
+        result = []
+        query = self.topics.values_list("schemes__name").distinct()
+        for row in query:
+            result.append(row[0])
         return result
 
 class AnalysisMetadataValue(MetadataValue):

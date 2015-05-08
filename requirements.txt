@@ -4,6 +4,7 @@ numpy>=1.8.2
 scipy>=0.14.0
 GitPython
 DateTime
+pytz
 
 # optional
 django-debug-toolbar

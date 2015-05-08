@@ -18,13 +18,13 @@ Clone the source with the following:
     
     git clone https://github.com/BYU-NLP-Lab/topicalguide.git
 
-Then navigate to the `topicalguide` directory.
+Then navigate to the `topicalguide` directory and optionally switch over to the `dev` branch for development.
 
 ### 2. Install Dependencies
 
 Dependencies are listed in the `requirements.txt` file and can be easily installed with:
 
-    pip install -r requirements.txt
+    sudo pip install -r requirements.txt
 
 If you want to use the word stemmer then run the following:
     
