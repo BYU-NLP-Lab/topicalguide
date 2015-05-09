@@ -611,7 +611,7 @@ var DocumentInfoView = DefaultView.extend({
                 return d.data.topicNumber;
             })
             .attr("data-placement", "left")
-            .attr("data-topic-number", function(d, i) { // Store the topic number on the element.
+            .attr("data-tg-topic-number", function(d, i) { // Store the topic number on the element.
                 return d.data.topicNumber;
             });
         
@@ -628,7 +628,7 @@ var DocumentInfoView = DefaultView.extend({
         legendEntries.append("label").append("input") // Add checkboxes.
             .classed({ "single-doc-topic-legend-checkbox": true })
             .attr("type", "checkbox")
-            .attr("data-topic-number", function(d, i) {
+            .attr("data-tg-topic-number", function(d, i) {
                 return d.topicNumber;
             })
             .attr("id", function(d, i) { // Label the checkbox for updates.
@@ -648,7 +648,7 @@ var DocumentInfoView = DefaultView.extend({
                 return that.topicColorScale(d.topicNumber);
             })
             .classed("single-doc-topic", true)
-            .attr("data-topic-number", function(d, i) { return d.topicNumber; });
+            .attr("data-tg-topic-number", function(d, i) { return d.topicNumber; });
         legendEntries.append("span") // Add a space between color swatch and text.
             .html("&nbsp;");
         legendEntries.append("span")
@@ -658,8 +658,8 @@ var DocumentInfoView = DefaultView.extend({
             .attr("id", function(d, i) { // Label the span for hover effects.
                 return "single-doc-legend-topic-"+d.topicNumber;
             })
-            .classed({ "single-doc-topic": true })
-            .attr("data-topic-number", function(d, i) {
+            .classed({ "single-doc-topic tg-topic-name-auto-update": true })
+            .attr("data-tg-topic-number", function(d, i) {
                 return d.topicNumber;
             });
         
@@ -932,7 +932,7 @@ var DocumentInfoView = DefaultView.extend({
             .classed("single-doc-topic", isFragmentToDisplay)
             .classed("pointer", isFragmentToDisplay)
             .classed("tg-tooltip", isFragmentToDisplay)
-            .attr("data-topic-number", function(d, i) {
+            .attr("data-tg-topic-number", function(d, i) {
                 if(isFragmentToDisplay(d, i)) {
                     return textFragmentToTopic[i.toString()];
                 } else {
@@ -1004,12 +1004,12 @@ var DocumentInfoView = DefaultView.extend({
      * Return the topic number.
      */
     getTopicNumberFromEvent: function(e) {
-        return d3.select(e.target).attr("data-topic-number");
+        return d3.select(e.target).attr("data-tg-topic-number");
     },
     
     /**
      * Highlight the topic when the user hovers over a topic based element.
-     * Relies on the data-topic-number attribute of the event element to work properly.
+     * Relies on the data-tg-topic-number attribute of the event element to work properly.
      */
     mouseoverHighlightTopics: function(e) {
         var that = this;
@@ -1031,19 +1031,19 @@ var DocumentInfoView = DefaultView.extend({
         // Increase size of word highlights.
         d3.select("#highlighted-text").selectAll(".highlighted-word")
             .filter(function(d, i) {
-                var num = d3.select(this).attr("data-topic-number");
+                var num = d3.select(this).attr("data-tg-topic-number");
                 return num.toString() === topicNumber.toString();
             })
             .style("outline-style", "solid")
             .style("outline-color", function(d, i) {
-                var num = d3.select(this).attr("data-topic-number");
+                var num = d3.select(this).attr("data-tg-topic-number");
                 return d3.rgb(that.topicColorScale(num)); //.darker(1);
             });
     },
     
     /**
      * Unhighlights the topic when the user stops hovering over a topic based element.
-     * Relies on the data-topic-number attribute of the event element to work properly.
+     * Relies on the data-tg-topic-number attribute of the event element to work properly.
      */
     mouseoutHighlightTopics: function(e) {
         var that = this;
@@ -1065,7 +1065,7 @@ var DocumentInfoView = DefaultView.extend({
         // Increase size of word highlights.
         d3.select("#highlighted-text").selectAll(".highlighted-word")
             .filter(function(d, i) {
-                var num = d3.select(this).attr("data-topic-number");
+                var num = d3.select(this).attr("data-tg-topic-number");
                 return num.toString() === topicNumber.toString();
             })
             .style("outline-style", null)

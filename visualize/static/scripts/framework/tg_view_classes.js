@@ -272,8 +272,8 @@ var NavigationView = DefaultView.extend({
 
         insertionPoint.append("li")
             .attr("data-tg-view-name", viewName)
+            .classed("tg-nav-to-view pointer", true)
             .append("a")
-            .attr("href", "#"+viewName)
             .text(this.viewModel.getReadableViewName(viewName));
     },
     
@@ -299,6 +299,7 @@ var NavigationView = DefaultView.extend({
     },
     
     events: {
+        "click .tg-nav-to-view": "clickView",
         "click #tg-nav-help": "clickHelp",
         "click .tg-nav-settings-click": "clickSettings",
         "hidden.bs.modal #tg-nav-settings-modal": "hiddenSettingsModal",
@@ -392,6 +393,13 @@ var NavigationView = DefaultView.extend({
             }
         });
         return container.html();
+    },
+    
+    clickView: function(e) {
+        var el = e.currentTarget;
+        if(tg.dom.hasAttr(el, "data-tg-view-name")) {
+            this.viewModel.set({ "currentView": $(el).attr("data-tg-view-name") });
+        }
     },
     
     clickHelp: function(e) {
@@ -545,6 +553,12 @@ var BreadcrumbsView = DefaultView.extend({
  * You are responsible for initializing the element.
  * To help you out there is a function called tg.site.initFav (see the 
  * documentation in tg_utilities.js.
+ * 
+ * Topic Name Schemes:
+ * Set the class "tg-topic-name-auto-update" and set the 
+ * "data-tg-topic-number" data attribute.
+ * When a topic name scheme changes it is useful to have the topic names change
+ * as well. This will do it automatically.
  */
 var TopicalGuideView = DefaultView.extend({
     
@@ -576,6 +590,9 @@ var TopicalGuideView = DefaultView.extend({
         
         // Create dummy views as placeholders for those that will be added.
         this.currentView = new DefaultView();
+        
+        // Bind to the selectionModel to update topic name schemes.
+        this.listenTo(this.selectionModel, "change:topicNameScheme", this.changeTopicNameScheme);
         
         // Bind to the viewModel to create and destroy views as needed.
         this.listenTo(this.viewModel, "change:currentView", this.changeCurrentView);
@@ -717,6 +734,7 @@ var TopicalGuideView = DefaultView.extend({
         
         try {
             this.currentView.render();
+            this.viewModel.set({ "currentViewInstance": this.currentView });
         } catch(err) {
             console.log("The following error occurred while trying to render the view: " + err);
             console.log(err.stack);
@@ -762,6 +780,18 @@ var TopicalGuideView = DefaultView.extend({
         }
         this.selectionModel.set(selection);
         e.stopPropagation();
+    },
+    
+    changeTopicNameScheme: function() {
+        var that = this;
+        d3.selectAll(".tg-topic-name-auto-update")
+            .each(function() {
+                if(tg.dom.hasAttr(this, "data-tg-topic-number")) {
+                    var el = d3.select(this);
+                    var topicNumber = el.attr("data-tg-topic-number");
+                    el.text(that.dataModel.getReadableTopicName(topicNumber));
+                }
+            });
     },
     
 });

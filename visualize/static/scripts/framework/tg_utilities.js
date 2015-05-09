@@ -622,14 +622,10 @@ function createTabbedContent(container, options) {
                 nav.selectAll("li").classed("active", active);
                 content.selectAll("div.tab-pane").classed("active", active);
                 if(!(d.key in options.rendered)) {
-                    console.log("here");
-                    console.log(active(d, i));
                     renderedAreas.filter(active)
                         .each(function(d, i) {
-                            console.log("rendering");
                             options.tabs[d.key](d.key, d3.select(this));
                         });
-                    console.log("here2");
                     options.rendered[d.key] = true;
                 }
                 options.tabOnClick(d.key);

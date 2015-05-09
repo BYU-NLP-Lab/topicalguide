@@ -221,18 +221,19 @@ var SingleTopicView = DefaultView.extend({
         };
         
         var tabOnClick = function(tab) {
-            this.settingsModel.set({ selected: tab });
+            console.log("clicked "+tab);
+            console.log(this.settingsModel);
+            this.settingsModel.set({ selectedTab: tab });
         }.bind(this);
         
         createTabbedContent(d3.select(this.el).select("#single-topic-info"), {
             tabs: tabs,
-            selected: this.settingsModel.get("selected"),
+            selected: this.settingsModel.get("selectedTab"),
             tabOnClick: tabOnClick,
         });
     },
 
     renderTopicTitle: function() {
-        console.log(this.selectionModel);
         if(!this.selectionModel.nonEmpty(["topic"])) {
             this.$el.html("<p>Select a topic to display its information.</p>");
             return;
@@ -314,7 +315,7 @@ var SingleTopicView = DefaultView.extend({
         }, function(data) {
             content.html(this.wordStatTemplate);
             var topicNumber = this.selectionModel.get("topic");
-            var topic = extractTopics(data)[topicNumber];
+            var topic = extractTopics(data, this.selectionModel)[topicNumber];
             this.renderPieChartContent(content.select("#word-stat-pie"), topic);
             //console.log(topic);
             var topWords = topic["words"];
@@ -351,7 +352,7 @@ var SingleTopicView = DefaultView.extend({
         this.selectedWordTypes = {};
 
         this.sortedTokenCounts = [];
-        for(wordType in topWordTypes) {
+        for(var wordType in topWordTypes) {
             this.sortedTokenCounts.push({
                 wordType: wordType,
                 tokenCount: topWordTypes[wordType].token_count,
@@ -447,7 +448,7 @@ var SingleTopicView = DefaultView.extend({
             result[wordTypeObject] = true;
             return result;
         }, {});
-        for(wordType in this.selectedWordTypes) {
+        for(var wordType in this.selectedWordTypes) {
             if(wordType in wordTypes) {
                 this.selectedWordTypes[wordType] = true;
             } else {
@@ -472,7 +473,7 @@ var SingleTopicView = DefaultView.extend({
         var data = this.getWordTypesInSliderRange();
         //console.log(data);
         var dataWordTypeNames = [];
-        for(i in data) {
+        for(var i in data) {
             dataWordTypeNames.push(data[i].wordType.toString());
         }
         var colorScale = colorPalettes.getDiscreteColorScale(dataWordTypeNames, colorPalettes.pastels);

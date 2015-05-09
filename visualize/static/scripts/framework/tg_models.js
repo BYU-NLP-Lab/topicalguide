@@ -700,6 +700,7 @@ var ViewModel = Backbone.Model.extend({
         var defaults = {
             "atRoot": false,
             "rootView": "",
+            "currentViewInstance": {},
             "currentView": "", 
             "availableViews": "", 
             "settingsViews": "",
