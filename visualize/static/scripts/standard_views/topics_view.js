@@ -234,6 +234,7 @@ var SingleTopicView = DefaultView.extend({
     },
 
     renderTopicTitle: function() {
+        console.log(this.selectionModel);
         if(!this.selectionModel.nonEmpty(["topic"])) {
             this.$el.html("<p>Select a topic to display its information.</p>");
             return;

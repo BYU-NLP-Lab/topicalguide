@@ -196,7 +196,6 @@ var DatasetView = DefaultView.extend({
     clickExplore: function(e) {
         // This is a way to allow the event to propagate before switching views.
         setTimeout(function() {
-            console.log('htere');
             this.viewModel.set({ "currentView": "topics" });
         }.bind(this), 100);
     },

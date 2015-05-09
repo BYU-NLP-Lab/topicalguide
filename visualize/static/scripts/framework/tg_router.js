@@ -60,6 +60,7 @@ var Router = Backbone.Router.extend({
     },
     
     /**
+<<<<<<< HEAD
      * Called after the view instance is created.
      * Unbinds from the current view's settings events and re-binds to the new views events.
      */

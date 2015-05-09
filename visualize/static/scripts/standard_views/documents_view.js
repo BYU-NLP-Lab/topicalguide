@@ -939,13 +939,6 @@ var DocumentInfoView = DefaultView.extend({
                     return null;
                 }
             })
-            .attr("data-tg-topic-number", function(d, i) {
-                if(isFragmentToDisplay(d, i)) {
-                    return textFragmentToTopic[i.toString()];
-                } else {
-                    return null;
-                }
-            })
             .each(function(d) {
                 if(d === "") {
                     d3.select(this).html("<br><br>");
