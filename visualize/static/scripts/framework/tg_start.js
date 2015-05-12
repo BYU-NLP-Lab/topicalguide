@@ -17,3 +17,21 @@ $(function startApplication() {
     // Add special sub views to help manage favorites, help content, and other items.
     globalTopicalGuideView.viewModel.addSettingsClass(LoginView);
 });
+
+
+/**
+ * Add a new view class. This is a convenience function to aid forwards
+ * compatibility.
+ * nesting -- a list specifying how to nest the view
+ *      eg: [] will put the view on the menu bar
+ *          ["menu", "submenu"] will put the view under menu>submenu>your_view
+ * cls -- the view class, which must be a Backbone View
+ */
+function addViewClass(nesting, cls) {
+    $(function startApplication() {
+        try{
+            globalTopicalGuideView.viewModel.addViewClass(nesting, cls);
+        } catch(e) {
+        }
+    });
+}

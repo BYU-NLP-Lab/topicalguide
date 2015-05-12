@@ -19,19 +19,21 @@
 # If you have inquiries regarding any further use of the Topical Guide, please
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
-
+from __future__ import division, print_function, unicode_literals
 import time
 from git import Repo
 from django.http import HttpResponse
 from django.template import RequestContext, loader
 from django.views.decorators.gzip import gzip_page
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import ensure_csrf_cookie
 import api
 import json
 
 
 @never_cache
 @gzip_page
+@ensure_csrf_cookie
 def root(request, *args, **kwargs):
     STATIC = '/static'
     context = {}

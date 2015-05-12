@@ -36,8 +36,24 @@ class MetricValue(models.Model):
         return unicode(self.value)
 
 class MetadataType(models.Model):
+    
+    INTEGER = 'int'
+    FLOAT = 'float'
+    TEXT = 'text'
+    BOOLEAN = 'bool'
+    DATETIME = 'datetime'
+    ORDINAL = 'ordinal'
+    DATATYPE_CHOICES = (
+        (INTEGER, 'Integer'),
+        (FLOAT, 'Float'),
+        (TEXT, 'Text'),
+        (BOOLEAN, 'Boolean'),
+        (DATETIME, 'Date/Time'),
+        (ORDINAL, 'Ordinal'),
+    )
+    
     name = models.CharField(max_length=128)
-    datatype = models.CharField(max_length=64)
+    datatype = models.CharField(max_length=64, choices=DATATYPE_CHOICES, default=TEXT)
     ordinal = models.ForeignKey('Ordinal', null=True)
     
     class Meta(object):
@@ -229,6 +245,10 @@ class Dataset(models.Model):
 
 class DatasetMetadataValue(MetadataValue):
     dataset = models.ForeignKey('Dataset', related_name='metadata_values')
+
+class DatasetEmptyDocumentMetadataType(models.Model):
+    dataset = models.ForeignKey('Dataset', related_name='empty_document_metadata_types')
+    metadata_type = models.ForeignKey('MetadataType')
 
 class DatasetMetricValue(MetricValue):
     dataset = models.ForeignKey('Dataset', related_name='metric_values')
