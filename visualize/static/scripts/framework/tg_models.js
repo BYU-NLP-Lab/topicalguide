@@ -671,9 +671,38 @@ var UserModel = Backbone.Model.extend({
         });
     },
     
+    /**
+     * s -- an object
+     * if s is array => return comma separated list of elements
+     * if s is string => do nothing
+     * if s is number => return string of number
+     * if s is object => return json string
+     */
+    stringify: function(obj) {
+        var result = null;
+        if(tg.js.isString(obj)) {
+            result = obj;
+        } else if(obj instanceof Number) {
+            result = obj.toString();
+        } else if(obj instanceof Array) {
+            obj = obj.slice(0); // Clone the array.
+            obj.sort();
+            for(var i = 0; i < obj.length; i++) {
+                obj[0] = obj[0].toString();
+            }
+            result = obj.join(",");
+        } else {
+            result = JSON.stringify(obj);
+        }
+        return result;
+    },
+    
     submitQueryByHash: function(sendData, dataReadyCallback, errorCallback) {
+        
+        console.log(sendData);
+        
         for(var key in sendData) {
-            sendData[key.toString()] = tg.url.stringify(sendData[key]);
+            sendData[key.toString()] = this.stringify(sendData[key]);
         }
         
         if(DEBUG_USER_MODEL) {

@@ -60,7 +60,7 @@ class MetadataType(models.Model):
         unique_together = ('name', 'datatype')
     
     def __unicode__(self):
-        is_ordinal = ordinal is not None
+        is_ordinal = self.ordinal is not None
         return 'Name: %s\nDatatype: %s\nOrdinal: %s'%(unicode(self.name), unicode(self.datatype), unicode(is_ordinal))
 
 class Ordinal(models.Model):
