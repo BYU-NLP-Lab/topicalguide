@@ -105,7 +105,7 @@ var AllTopicSubView = DefaultView.extend({
                 .attr("id", "topics-table")
                 .classed("table table-hover table-condensed", true);
             // Table header.
-            var header = ["", "#", "% of Corpus", "Name", "Top Words", "% of Topic"];
+            var header = ["", "#", "% of Corpus", "Name", "Top Words", "% of Topic", "Temperature"];
             // Format data.
             var totalTokens = data.datasets[this.selectionModel.get("dataset")].analyses[this.selectionModel.get("analysis")].metrics["Token Count"];
             var displayNWords = settings['topicDisplayNWords'];
@@ -118,7 +118,16 @@ var AllTopicSubView = DefaultView.extend({
                 var words = wordTypes.slice(0, displayNWords).join(" ");
                 var wordsTokenCount = _.reduce(wordTypes, function(sum, word) { return sum + wordObjects[word]["token_count"]; }, 0);
                 var topicTokenCount = parseFloat(d.value.metrics["Token Count"]);
-                return [parseFloat(d.key), parseFloat(d.key), (topicTokenCount*100)/totalTokens, d.value.names["Top3"], words, (wordsTokenCount*100)/topicTokenCount];
+                var topicTemperature = parseFloat(d.value.metrics["Temperature"].toPrecision(4));
+                return [
+                    parseFloat(d.key),
+                    parseFloat(d.key),
+                    (topicTokenCount*100)/totalTokens,
+                    d.value.names["Top3"],
+                    words,
+                    (wordsTokenCount*100)/topicTokenCount,
+                    topicTemperature
+                ];
             });
             topics = topics.filter(function(item) { return item[3] != ""; });
             var wordPercentage = _.reduce(topics, function(total, innerArray) {
@@ -142,6 +151,7 @@ var AllTopicSubView = DefaultView.extend({
                     "4": onClick,
                 },
                 bars: [2,5],
+                temperatures: [6],
                 percentages: [2,5],
                 favicon: [0, "topics", this],
                 sortBy: this.settingsModel.get("sortBy"),

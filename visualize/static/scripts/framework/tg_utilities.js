@@ -408,25 +408,39 @@ function createSortableTable(table, options) {
         onClick: {},
         bars: [],
         percentages: [],
+        temperatures: [],
         favicon: false,
         sortBy: 0,
         sortAscending: true,
     };
     options = _.extend(defaults, options);
-    // Find all of the maxes.
-    var maxes = {};
+    // Find all of the maxes for columns containing bars
+    var barmaxes = {};
     for(var i = 0; i<options.bars.length; i++) {
         var index = options.bars[i];
-        maxes[index] = options.data.reduce(function(p, c, i, a) { 
+        barmaxes[index] = options.data.reduce(function(p, c, i, a) { 
             return (p > c[index])?p:c[index]; 
         }, 0);
     }
+    // Find all of the maxes and mins for columns containing temperatures
+    var tempmaxes = {};
+    var tempmins = {};
+    for(var i = 0; i<options.temperatures.length; i++) {
+        var index = options.temperatures[i];
+        tempmaxes[index] = options.data.reduce(function(p, c, i, a) { 
+            return (p > c[index])?p:c[index];
+        }, 0);
+        tempmins[index] = options.data.reduce(function(p, c, i, a) {
+            return (p < c[index])?p:c[index];
+        }, 0);
+    }
+
     // Turn percentages to array.
     var percent = {};
     for(var i = 0; i<options.percentages.length; i++) {
         percent[options.percentages[i].toString()] = null;
     }
-    
+   
     // Sort functions where i is the column to sort by.
     var makeSortAscending = function(i) {
         var sortAscending = function(a, b) {
@@ -492,7 +506,7 @@ function createSortableTable(table, options) {
             .enter()
             .append("td");
         // Fill in table values
-        td.filter(function(d, i) { return (i in maxes)?false:true; })
+        td.filter(function(d, i) { return ((i in barmaxes) || (i in tempmaxes))?false:true; })
             .append("a")
             .style("color", "black")
             .classed("nounderline", true)
@@ -509,37 +523,10 @@ function createSortableTable(table, options) {
                     .on("click", function() { return options.onClick[i](rowData, index); });
             }
         });
-            
-        // Create the percentage bars.
-        for(var key in maxes) {
-            var maxIndex = parseFloat(key);
-            var max = maxes[key];
-            var column = td.filter(function(d, i) { return (i === maxIndex)?true:false; });
-            var svg = column.append("svg")
-                .attr("width", 60)
-                .attr("height", "1em");
-            // Create bar.
-            svg.append("rect")
-                .attr("height", "100%")
-                .attr("width", "100%")
-                .attr("fill", "blue");
-            // Fill in part of bar with whitesmoke.
-            svg.append("rect")
-                .attr("height", "100%")
-                .attr("width", function(d) {
-                    if(max === 0) return 60;
-                    else return (1-(d/max)) * 60;
-                })
-                .attr("fill", "whitesmoke");
-            // Append text.
-            column.append("span")
-                .text(function(d) {
-                    if(maxIndex.toString() in percent) return " "+d.toFixed(2)+"%";
-                    else return " "+d;
-                })
-                .attr("fill", "black")
-                .attr("padding-left", "5px");
-        }
+        
+        createPercentageGauge(td, barmaxes, percent);
+        
+        createTemperatureGauge(td, tempmaxes, tempmins);
     });
     
     // Set initial sort.
@@ -549,6 +536,90 @@ function createSortableTable(table, options) {
         tableRows.sort(makeSortDescending(lastColumn));
     }
     ascending = !ascending;
+};
+
+function createPercentageGauge(td, barmaxes, percent) {
+    // Create the percentage bars.
+    for(var key in barmaxes) {
+        var maxIndex = parseFloat(key);
+        var max = barmaxes[key];
+        var column = td.filter(function(d, i) { return (i === maxIndex)?true:false; });
+        var svg = column.append("svg")
+            .attr("width", 60)
+            .attr("height", "1em");
+        // Create bar.
+        svg.append("rect")
+            .attr("height", "100%")
+            .attr("width", "100%")
+            .attr("fill", "blue");
+        // Fill in part of bar with whitesmoke.
+        svg.append("rect")
+            .attr("height", "100%")
+            .attr("width", function(d) {
+                if(max === 0) return 60;
+                else return (1-(d/max)) * 60;
+            })
+            .attr("fill", "whitesmoke");
+        // Append text.
+        column.append("span")
+            .text(function(d) {
+                if(maxIndex.toString() in percent) return " "+d.toFixed(2)+"%";
+                else return " "+d;
+            })
+            .attr("fill", "black")
+            .attr("padding-left", "5px");
+    }
+};
+
+
+function createTemperatureGauge(td, tempmaxes, tempmins) {
+    // Create the thermometer bars.
+    for(var key in tempmaxes) {
+        var index = parseFloat(key);
+        var max = tempmaxes[key];
+        var min = tempmins[key];
+        var range = max - min;
+        var zero = (Math.abs(min) / range) * 60;
+        if (range !== 0.0) {
+            var column = td.filter(function(d, i) { return (i === index)?true:false; });
+            var svg = column.append("svg")
+                .attr("width", 60)
+                .attr("height", "1em")
+                .style("background-color", "whitesmoke");
+            // Create bar.
+            svg.append("rect")
+                .each(function(d) {
+                    var rect = d3.select(this);
+                    var width = Math.abs(d)/range * 60;
+                    rect.attr("height", "100%")
+                        .attr("width", width)
+                        .attr("fill", (d > 0.0 ? "red" : "blue"))
+                        .attr("transform", "translate("+ (d>0.0 ? zero : zero-width) +","+0+")");
+                });
+            // Fill in part of bar with whitesmoke.
+            //~ group.append("rect")
+                //~ .attr("height", "100%")
+                //~ .attr("width", function(d) {
+                    //~ if(max === 0) return 60;
+                    //~ else return (1-(d/max)) * 60;
+                //~ })
+                //~ .attr("fill", "whitesmoke");
+            // Append text.
+            svg.append("line")
+                .attr("x1", zero)
+                .attr("y1", 0)
+                .attr("x2", zero)
+                .attr("y2", "1em")
+                .attr("stroke", "black")
+                .attr("strokewidth", "1.5px");
+        }
+        column.append("span")
+            .text(function(d) {
+                return " "+d;
+            })
+            .attr("fill", "black")
+            .attr("padding-left", "5px");
+    }
 };
 
 /*
