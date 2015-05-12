@@ -655,16 +655,40 @@ var DataModel = Backbone.Model.extend({
     },
 });
 
+
+/**
+ * In order to prevent cross-site request forgery you must make sure that no
+ * data is sent outside this domain.
+ * See the following for more information:
+ * https://docs.djangoproject.com/en/1.7/ref/contrib/csrf/
+ */
+var DEBUG_USER_MODEL = true; // TODO change this to be false
 var UserModel = Backbone.Model.extend({
     
-    initialize: function() {
-        this.set({ loggedIn: false });
+    initialize: function(args) {
+        this.set({
+            loggedIn: false,
+        });
     },
     
     submitQueryByHash: function(sendData, dataReadyCallback, errorCallback) {
+        for(var key in sendData) {
+            sendData[key.toString()] = tg.url.stringify(sendData[key]);
+        }
+        
+        if(DEBUG_USER_MODEL) {
+            sendData["username"] = "temp";
+            sendData["password"] = "temp";
+        }
+        
+        console.log(sendData);
+        
+        // This is to help prevent cross-site request forgery.
+        sendData["csrfmiddlewaretoken"] = tg.js.getCookie("csrftoken"); // DO NOT REMOVE!
+        
         $.ajax({
                 type: "POST",
-                url: "http://"+window.location.host+"/user-api",
+                url: (DEBUG_USER_MODEL?"http":"https")+"://"+window.location.host+"/user_api",
                 data: sendData,
                 dataType: "json",
                 

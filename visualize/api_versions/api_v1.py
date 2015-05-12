@@ -20,7 +20,7 @@
 # If you have inquiries regarding any further use of the Topical Guide, please
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
-
+from __future__ import division, print_function, unicode_literals
 import sys
 import time
 import json
@@ -28,6 +28,7 @@ import itertools
 from git import Repo
 from visualize.models import *
 from visualize.utils import reservoir_sample
+from visualize.api_utilities import get_list_filter, filter_csv_to_list, get_filter_int, filter_nothing, filter_request
 
 MAX_DOCUMENTS_PER_REQUEST = 500
 MAX_DOCUMENTS_PER_SQL_QUERY = 500
@@ -126,16 +127,6 @@ ANY ACTIVITIES USING THE WEBSITE OR OUR SERVICE INCLUDING BUT NOT LIMITED TO ILL
 
 WE RESERVE THE RIGHT TO MAKE CHANGES TO THESE TERMS FROM TIME TO TIME WITHOUT NOTIFICATION. IF YOU USE THE SERVICE AFTER THE TERMS HAVE CHANGED, WE WILL TREAT YOUR USE AS ACCEPTANCE OF THE UPDATED TERMS.
 """
-
-# Filter the incoming request to make sure that bogus values are removed and errors are thrown.
-def filter_request(request_keys, filters):
-    result = {}
-    for key in request_keys:
-        if key in filters:
-            result[key] = filters[key](request_keys[key])
-        else:
-            raise Exception("No such value as "+key+".")
-    return result
 
 def query_api(unfiltered_options):
     options = filter_request(unfiltered_options, OPTIONS_FILTERS)

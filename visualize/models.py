@@ -63,6 +63,7 @@ class MetadataType(models.Model):
     name = models.CharField(max_length=128)
     datatype = models.CharField(max_length=64, choices=DATATYPE_CHOICES, default=TEXT)
     meaning = models.CharField(max_length=32, choices=MEANING_CHOICES, default=UNKNOWN)
+    ordinal = models.ForeignKey('Ordinal', null=True)
     
     class Meta(object):
         unique_together = ('dataset', 'name', 'datatype')
@@ -313,6 +314,10 @@ class Dataset(models.Model):
 
 class DatasetMetadataValue(MetadataValue):
     dataset = models.ForeignKey('Dataset', related_name='metadata_values')
+
+class DatasetEmptyDocumentMetadataType(models.Model):
+    dataset = models.ForeignKey('Dataset', related_name='empty_document_metadata_types')
+    metadata_type = models.ForeignKey('MetadataType')
 
 class DatasetMetricValue(MetricValue):
     dataset = models.ForeignKey('Dataset', related_name='metric_values')
