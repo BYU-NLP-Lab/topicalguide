@@ -187,6 +187,7 @@ var tg = new function() {
         toTitleCase: function(str) {
             return str.replace(/\w\S*/g, function(substr){ return substr.charAt(0).toUpperCase() + substr.slice(1); });
         },
+        
     };
     
     this.color = {
@@ -213,7 +214,7 @@ var tg = new function() {
         /**
          * Turns arrays and other objects to URI friendly strings.
          */
-        stringify: function(item) {
+        uriStringify: function(item) {
             var result = null;
             if(item instanceof String) {
                 result = encodeURIComponent(item);
@@ -256,7 +257,7 @@ var tg = new function() {
             keys.sort();
             var items = [];
             _.forEach(keys, function(key) {
-                items.push(encodeURIComponent(key) + '=' + tg.url.strigify(hash[key]));
+                items.push(encodeURIComponent(key) + '=' + tg.url.uriStringify(hash[key]));
             });
             return items.join('&');
         },

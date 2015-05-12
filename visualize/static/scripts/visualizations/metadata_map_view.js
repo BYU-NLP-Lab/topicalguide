@@ -211,7 +211,7 @@ var MetadataSelectionView = DefaultView.extend({
         this.userModel.submitQueryByHash({
             dataset: datasetName,
             dataset_add: ['document_metadata_type'],
-            metadata_type: JSON.stringify({ name: name, datatype: type }),
+            metadata_type: { name: name, datatype: type },
         }, function(data) {
             console.log(data);
         }, function(error) {
