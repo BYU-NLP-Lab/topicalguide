@@ -36,15 +36,25 @@ class MetricValue(models.Model):
         return unicode(self.value)
 
 class MetadataType(models.Model):
+    
+    TIME = 'time'
+    UNKNOWN = 'unknown'
+    MEANING_CHOICES = (
+        (TIME, 'Time'),
+        (UNKNOWN, 'Unknown'),
+    )
+    
+    dataset = models.ForeignKey('Dataset', related_name='metadata_types')
     name = models.CharField(max_length=128)
     datatype = models.CharField(max_length=64)
     ordinal = models.ForeignKey('Ordinal', null=True)
+    meaning = models.CharField(max_length=32, choices=MEANING_CHOICES, default=UNKNOWN)
     
     class Meta(object):
-        unique_together = ('name', 'datatype')
+        unique_together = ('dataset', 'name', 'datatype')
     
     def __unicode__(self):
-        is_ordinal = ordinal is not None
+        is_ordinal = self.ordinal is not None
         return 'Name: %s\nDatatype: %s\nOrdinal: %s'%(unicode(self.name), unicode(self.datatype), unicode(is_ordinal))
 
 class Ordinal(models.Model):

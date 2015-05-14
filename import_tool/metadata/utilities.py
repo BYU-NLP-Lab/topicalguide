@@ -4,16 +4,16 @@ from django.db import transaction
 from django.db import connections
 from visualize.models import *
 
-def get_all_metadata_types(database_id):
+def get_all_metadata_types(database_id, dataset_db):
     """Return all types by name and type in the form of a dictionary.
     The keys are a tuple (name, datatype) and the values are the database
     objects.
     database_id -- the dict key specifying the database in django
     """
     return {(t.name, t.datatype): t for t in \
-        MetadataType.objects.using(database_id).all()}
+        MetadataType.objects.using(database_id).filter(dataset=dataset_db)}
 
-def create_metadata_types(database_id, metadata_types, meta_types_db):
+def create_metadata_types(database_id, dataset_db, metadata_types, meta_types_db):
     """Add entries for all metadata types and add to existing hash.
     database_id -- the dict key specifying the database in django
     metadata_types -- the dictionary mapping keys to types
@@ -29,7 +29,7 @@ def create_metadata_types(database_id, metadata_types, meta_types_db):
             if (name, t) not in meta_types_db:
                 meta_type_names.append(name)
                 meta_types.append(t)
-                to_commit.append(MetadataType(name=name, datatype=t))
+                to_commit.append(MetadataType(dataset=dataset_db, name=name, datatype=t))
         MetadataType.objects.using(database_id).bulk_create(to_commit)
         
         # requery to get newly created ones

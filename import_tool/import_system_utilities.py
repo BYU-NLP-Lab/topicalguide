@@ -188,7 +188,7 @@ def import_dataset(database_id, dataset, directories, **kwargs):
         con = connections[database_id]
         query_count = len(con.queries)
     
-    meta_types_db = get_all_metadata_types(database_id)
+    meta_types_db = {}
     
     if verbose: print('Creating dataset entry.')
     dataset_db = create_dataset(database_id, dataset, dataset_dir, meta_types_db, **kwargs)
@@ -213,6 +213,12 @@ def import_dataset(database_id, dataset, directories, **kwargs):
     if verbose: print('Done importing '+dataset.name+'.')
     
     return dataset.name
+
+# TODO take the output of the function and store the document metadata values
+# in the database
+def run_document_metadata_generator(database_id, dataset_name, function):
+    dataset_db = Dataset.objects.using(database_id).get(name=dataset_name)
+    metadata_values = function(dataset_db, dataset_db.documents.all())
 
 def check_analysis(database_id, dataset_name, analysis, directories, 
                  topic_namers=None, verbose=False):
@@ -325,7 +331,7 @@ def run_analysis(database_id, dataset_name, analysis, directories,
     dataset_db = Dataset.objects.using(database_id).get(name=dataset_name)
     # word types should be relatively sparse, so we load all of them into memory
     word_types_db = get_all_word_types(database_id)
-    meta_types_db = get_all_metadata_types(database_id)
+    meta_types_db = get_all_metadata_types(database_id, dataset_db)
     
     if verbose: print('Creating analysis entry.')
     analysis_db = create_analysis(database_id, dataset_db, analysis, meta_types_db)

@@ -1,4 +1,5 @@
 from __future__ import division, print_function, unicode_literals
+from visualize.models import MetadataType
 from django.db.models import Count
 from django.db import connections
 import scipy.stats
@@ -34,17 +35,18 @@ def compute_metric(database_id, dataset_db, analysis_db):
     results = []
     
     for topic in topics_iter:
-        topic_token_counts_query = topic.tokens.values_list('document__metadata_values__int_value', 'document__metadata_values__metadata_type__name')
+        topic_token_counts_query = topic.tokens.values_list('document__metadata_values__int_value', 'document__metadata_values__metadata_type__meaning')
         yearcounter = {}
         for row in topic_token_counts_query:
-            if row[1] == 'year':
+            if row[1] == MetadataType.TIME:
                 yearcounter[row[0]] = yearcounter.setdefault(row[0],0)+1
-        xypairs = [(k, yearcounter[k]) for k in yearcounter]
-        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(xypairs)
-        results.append({
-            'topic_id': topic.id,
-            'value': slope,
-        })
+        if len(yearcounter) > 1:
+            xypairs = [(k, yearcounter[k]) for k in yearcounter]
+            slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(xypairs)
+            results.append({
+                'topic_id': topic.id,
+                'value': slope,
+            })
     #~ print('\n'.join([unicode(e) for e in results]))
     #~ raise Exception('stop')
     

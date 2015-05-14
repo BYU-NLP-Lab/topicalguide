@@ -38,7 +38,7 @@ def create_dataset(database_id, dataset, dataset_dir, meta_types_db, **kwargs):
             dataset_db.visible = False
             dataset_db.save()
             metadata_types = dataset.metadata_types
-            create_metadata_types(database_id, metadata_types, meta_types_db)
+            create_metadata_types(database_id, dataset_db, metadata_types, meta_types_db)
             create_metadata(database_id, [dataset_db], 
                             DatasetMetadataValue, 'dataset',
                             metadata_types, 
@@ -58,7 +58,7 @@ def create_documents(database_id, dataset_db, dataset,
     """
     document_dir = join(dataset_db.dataset_dir, RELATIVE_DOCUMENT_DIRECTORY)
     document_metadata_types = dataset.document_metadata_types
-    create_metadata_types(database_id, document_metadata_types,
+    create_metadata_types(database_id, dataset_db, document_metadata_types,
                           meta_types_db)
     # Helper function
     def bulk_create_documents(documents, metadata):
