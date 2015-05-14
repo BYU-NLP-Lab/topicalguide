@@ -123,7 +123,7 @@ def dataset_add(options):
                 doc_mdt_db, created2 = DatasetEmptyDocumentMetadataType.objects.get_or_create(dataset=dataset_db, metadata_type=metadata_type_db)
                 added['document_metadata_type'] = {
                     "success": True,
-                    "created": created || created2,
+                    "created": created or created2,
                 }
     
     return result
