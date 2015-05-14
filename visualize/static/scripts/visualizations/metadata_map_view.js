@@ -74,8 +74,10 @@ var MetadataSelectionView = DefaultView.extend({
     },
     
     /**
-     * Display the metadata options for the user to select from.
-     * Also, allows the user to create a new metadata attribute.
+     * Show the loading icon.
+     * Request the data.
+     * Drop in the template for the forms to use.
+     * Bind needed listeners for updating.
      */
     render: function() {
         this.$el.html(this.loadingTemplate);
@@ -87,6 +89,7 @@ var MetadataSelectionView = DefaultView.extend({
         }, function(data) {
             this.$el.html(this.selectMetadataTemplate);
             
+            // Grab only the number types.
             var data = data.datasets[dataset].document_metadata_types;
             var validTypes = { "int": true, "float": true, "date": true };
             var metadataTypes = _.reduce(data, function(result, value, key) {
@@ -98,7 +101,7 @@ var MetadataSelectionView = DefaultView.extend({
             
             this.listenTo(this.model, "change:selectedName", this.updateMetadataSelection);
             this.listenTo(this.model, "change:metadataTypes", this.updateMetadataOptions);
-            this.model.set({ // Let the event call updateMetadataOptions.
+            this.model.set({ // Let the event trigger the call to updateMetadataOptions.
                 "metadataTypes": metadataTypes,
             });
             this.listenTo(this.userModel, "change:loggedIn", this.updateMetadataOptions);
@@ -107,7 +110,7 @@ var MetadataSelectionView = DefaultView.extend({
     },
     
     /**
-     * Update the metadata names available.
+     * Update the metadata names available, show the data type, and render the button.
      */
     updateMetadataOptions: function() {
         var container = d3.select(this.el).select(".choose-metadata");
@@ -167,7 +170,6 @@ var MetadataSelectionView = DefaultView.extend({
      */
     updateAddMetadata: function() {
         var container = d3.select(this.el).select(".add-metadata");
-        console.log('update add ability');
         if(this.userModel.get("loggedIn") || true) {// TODO make it so the user's logged in status is checked.
             container.html(this.addMetadataTemplate);
         } else {
@@ -181,10 +183,18 @@ var MetadataSelectionView = DefaultView.extend({
         "click #metadata-add-submit": "clickAddMetadata",
     },
     
+    /**
+     * Set "metadataName" and let the parent view handle switching views.
+     */
     clickGetStarted: function(e) {
-        console.log('click');
+        var selection = document.getElementById("metadata-name-control");
+        var name = selection.options[selection.selectedIndex].value;
+        this.settingsModel.set({ metadataName: name });
     },
     
+    /**
+     * Change the selected name, this is so the datatype gets updated.
+     */
     changeMetadataName: function(e) {
         var metadataName = e["target"]["value"];
         this.model.set({
@@ -192,19 +202,24 @@ var MetadataSelectionView = DefaultView.extend({
         });
     },
     
+    /**
+     * Verify that the name is not empty.
+     * Normalize the name (replace spaces with "_" and put it in lowercase.
+     * Submit the query to the server.
+     */
     clickAddMetadata: function(e) {
         var inputName = d3.select(this.el).select("#metadata-add-name-control").property("value");
         var selection = document.getElementById("metadata-add-type-control");
         var type = selection.options[selection.selectedIndex].value;
-        console.log("name:"+inputName);
-        console.log("type:"+type);
         var name = inputName.replace(/ /g, "_").toLowerCase();
+        
         if(name === "") {
             alert("That is an invalid name.");
             return;
         }
-        console.log("name:"+name);
+        
         var container = d3.select(this.el).select(".metadata-add-messages");
+        container.html("");
         var messageToUser = container.append("h4")
             .text("Your request to add "+inputName+"("+tg.site.readableTypes[type]+") is pending...");
         var datasetName = this.selectionModel.get("dataset");
@@ -213,10 +228,24 @@ var MetadataSelectionView = DefaultView.extend({
             dataset_add: ['document_metadata_type'],
             metadata_type: { name: name, datatype: type },
         }, function(data) {
-            console.log(data);
-        }, function(error) {
-            console.log(error);
-        });
+            this.model.get("metadataTypes")[name] = type;
+            this.updateMetadataOptions();
+            container.html("");
+            container.append("h4")
+                .text("You successfully added "+inputName+"("+tg.site.readableTypes[type]+").");
+        }.bind(this), function(error) {
+            container.html("");
+            container.append("h4")
+                .text("There was an error adding the new metadata item.");
+        }.bind(this));
+    },
+    
+    renderHelpAsHtml: function() {
+        return ''+
+        '<h4>Metadata Selection</h4>'+
+        '<p>Select a metadata attribute by name from the drop down list and click the "Get Started" button to begin labeling documents.</p>'+
+        '<h4>Add New Metadata</h4>'+
+        '<p>You must be logged in to add a metadata item. Type in the name and select the datatype of the item. Then click "Add Metadata" to send the request to the server. You\'ll be notified once the item has been added.</p>';
     },
     
 });
@@ -324,7 +353,8 @@ var MetadataMapView = DefaultView.extend({
      */
     render: function() {
         this.$el.empty();
-        
+        this.settingsModel.set({ metadataName: "" });
+        return;
         if(!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
             this.$el.html("<p>You should select a <a href=\"#\">dataset and analysis</a> before proceeding.</p>");
             return;
@@ -1677,30 +1707,43 @@ var MetadataMapViewManager = DefaultView.extend({
 //~ "<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
     
     initialize: function() {
+        this.initEmptyViews();
+        this.listenTo(this.settingsModel, "change:metadataName", this.update);
+    },
+    
+    initEmptyViews: function() {
         this.metadataSelectionView = new MetadataSelectionView();
-        //~ this.metadataMapView = new MetadataMapView(_.extend({}, this.getAllModels()));
-        //~ this.documentInfoView = new DocumentInfoView(_.extend({}, this.getAllModels()));
+        this.metadataMapView = new MetadataMapView();
     },
     
     cleanup: function() {
         this.metadataSelectionView.dispose();
-        //~ this.metadataMapView.dispose();
-        //~ this.documentInfoView.dispose();
+        this.metadataMapView.dispose();
     },
     
     render: function() {
         this.$el.html("<div></div>");
-        this.metadataSelectionView = new MetadataSelectionView(_.extend({ el: this.$el.find("div") }, this.getAllModels()));
-        this.metadataSelectionView.render();
-        //~ this.$el.html(this.mainTemplate);
-        //~ this.metadataMapView.setElement(this.$el.find("#metadata-map-view-container"));
-        //~ this.metadataMapView.render();
-        //~ this.documentInfoView.setElement(this.$el.find("#document-info-view-container"));
-        //~ this.documentInfoView.render();
+        if(this.settingsModel.get("metadataName") === "") {
+            this.metadataSelectionView = new MetadataSelectionView(_.extend({ el: this.$el.find("div") }, this.getAllModels()));
+            this.metadataSelectionView.render();
+        } else {
+            this.metadataMapView = new MetadataMapView(_.extend({ el: this.$el.find("div") }, this.getAllModels()));
+            this.metadataMapView.render();
+        }
+    },
+    
+    update: function() {
+        this.cleanup();
+        this.initEmptyViews();
+        this.render();
     },
     
     renderHelpAsHtml: function() {
-        return this.metadataSelectionView.renderHelpAsHtml();
+        if(this.settingsModel.get("metadataName") === "") {
+            return this.metadataSelectionView.renderHelpAsHtml();
+        } else {
+            return this.metadataMapView.renderHelpAsHtml();
+        }
     },
 });
 

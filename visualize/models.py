@@ -2,6 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 import os
 import io
+from itertools import chain
 from dateutil import tz
 from DateTime import DateTime
 from django.db import models
@@ -262,9 +263,11 @@ class Dataset(models.Model):
     
     def get_document_metadata_types(self):
         query = self.documents.values_list('metadata_values__metadata_type__name', 'metadata_values__metadata_type__datatype').distinct()
+        query2 = self.empty_document_metadata_types.values_list('metadata_type__name', 'metadata_type__datatype').distinct()
         result = {}
-        for name, datatype in query:
+        for name, datatype in chain(query, query2):
             result[name] = datatype
+        print(result)
         return result
     
     def get_document_metadata_ordinals(self):
