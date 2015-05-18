@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db import connections
 from visualize.models import *
 from visualize.models import MAX_ELEMENTS_FOR_IN_OPERATOR
-from import_tool.metadata.utilities import create_metadata_types, create_metadata
+from import_tool.metadata.utilities import create_metadata_types, create_metadata, all_document_metadata_checker
 from import_tool.tools import VerboseTimer
 
 MAX_DOCUMENTS_TO_COMMIT = 20000 # affects memory usage
@@ -57,9 +57,9 @@ def create_documents(database_id, dataset_db, dataset,
     verbose -- if True print out progress to the console; do nothing otherwise
     """
     document_dir = join(dataset_db.dataset_dir, RELATIVE_DOCUMENT_DIRECTORY)
-    document_metadata_types = dataset.document_metadata_types
+    document_metadata_types, _, __, ___ = all_document_metadata_checker(dataset, die_on_error=True)
     create_metadata_types(database_id, dataset_db, document_metadata_types,
-                          meta_types_db)
+                          meta_types_db, metadata_ordinals=dataset.document_metadata_ordinals)
     # Helper function
     def bulk_create_documents(documents, metadata):
         if len(documents) == 0: return

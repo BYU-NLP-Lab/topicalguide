@@ -10,15 +10,41 @@ class AbstractDataset(object):
     REMEMBER: Use the @property decorator if properties need to be 
     generated.
     
+    DATA TYPES: See the MetadataType class for a complete listing of supported
+                datatypes.
+    
     The properties required to interface with the import system are:
     name -- the name to uniquely identify this dataset
+    
     metadata -- dict with dataset metadata, description and
                 readable_name are special entries that will be displayed
                 to the user
-    metadata_types -- a dict mapping the metadata keys to their
-                      datatypes (e.g. 'int', 'float', 'text', 'datetime').
-    document_metadata_types -- a dict mapping document metadata keys to
-                               their datatypes
+                
+    metadata_types -- a dict mappting the metadata key to the required type of 
+                      the value; these will be checked and an error thrown 
+                      if they don't match what is given the import system; 
+                      if empty the types will automatically be determined
+                      
+    document_metadata_types -- a dict listing the required types for certain 
+                               metadata attributes
+                               
+    document_required_metadata -- a set (or dict) specifying metadata
+                                  keys that must be present in every
+                                  document
+    document_metadata_ordinals -- a dict mapping the metadata key to a list
+                                  of lists of strings; note that there can
+                                  be multiple strings that map to a single 
+                                  number (e.g. "January" and "Jan" map to 0)
+    
+    NOTE: The import system will automatically try to determine the metadata
+          types of the metadata, because of this there are two passes through
+          the document objects. This is done to ensure the integrity of the
+          document metadata type. If the metadata types varied from document
+          to document on the same metadata key, then the views become more
+          complicated (introducing a number of edge cases).
+    
+    RECOMMENDATION: If your documents are being pulled from the web, cache them
+                    somewhere to make the import process faster.
     
     The required functions to interface with the import system are:
     __iter__

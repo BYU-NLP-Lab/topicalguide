@@ -1,0 +1,33 @@
+{
+
+    "dataset_metadata": {
+        "readable_name": "State of the Union",
+        "description": "This dataset consists of State of the Union messages delivered by the U.S. President to Congress as mandated by the Constitution for the years 1790-2010.",
+        "compiled by": "Josh Hansen",
+        "source": "WikiSource"
+    },
+    
+    "dataset_metadata_types": {
+        "readable_name": "text",
+        "description": "text",
+        "compiled by": "text",
+        "source": "text"
+    },
+    
+    "document_metadata_types": {
+        "address_number": "int",
+        "title": "text",
+        "author_name": "text",
+        "month": "ordinal",
+        "president_name": "text",
+        "year": "int",
+        "day": "int"
+    },
+    
+    "document_metadata_ordinals": {
+        "month": [["January", "Jan"], ["February", "Feb"], ["March", "Mar"], ["April", "Apr"], ["May"], ["June"], ["July"], ["August", "Aug"], ["September", "Sept"], ["October", "Oct"], ["November", "Nov"], ["December", "Dec"]]
+    },
+    
+    "document_required_metadata": ["address_number", "title", "author_name", "month", "president_name", "year", "day"]
+
+}

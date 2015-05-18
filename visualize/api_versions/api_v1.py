@@ -90,7 +90,7 @@ OPTIONS_FILTERS = {
     'documents': filter_csv_to_list,
     'words': filter_csv_to_list,
     
-    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types']),
+    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals']),
     'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes']),
     'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens', 'word_token_documents_and_locations']),
     'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations']),
@@ -196,6 +196,7 @@ def query_datasets(options):
         'document_count': lambda dataset: int(dataset.metric_values.filter(metric__name='Document Count')[0].value),
         'analysis_count': lambda dataset: dataset.analyses.count(),
         'document_metadata_types': lambda dataset: dataset.get_document_metadata_types(),
+        'document_metadata_ordinals': lambda dataset: dataset.get_document_metadata_ordinals(),
     }
     
     # Get the list of attributes the user wants.
@@ -209,6 +210,7 @@ def query_datasets(options):
     
     # Gather the requested information.
     for dataset_db in datasets_queryset:
+        print('here')
         attributes = {}
         for attr in dataset_attr:
             if attr in DATASET_ATTR:
