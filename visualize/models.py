@@ -268,6 +268,7 @@ class Dataset(models.Model):
         for name, datatype in chain(query, query2):
             result[name] = datatype
         print(result)
+<<<<<<< HEAD
         return result
     
     def get_document_metadata_ordinals(self):
@@ -285,6 +286,8 @@ class Dataset(models.Model):
                     array.append([ord_name])
                 else:
                     array[index].append(ord_name)
+=======
+>>>>>>> 48965675b6db1b73b33d62d591bbf14202774a9c
         return result
     
     @property
