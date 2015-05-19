@@ -19,7 +19,7 @@ var Router = Backbone.Router.extend({
         this.listenTo(this.viewModel, "change:currentView", this.changeCurrentView);
         this.listenTo(this.viewModel, "change:currentViewInstance", this.changeCurrentViewInstance);
         this.listenTo(this.selectionModel, "change", this.changeSelection);
-        this.settingsModel = this.tgView.currentView.settingsModel;
+        this.settingsModel = this.viewModel.get("currentViewInstance").settingsModel;
         if(tg.js.isDefined(this.settingsModel)) { // The view may not exist yet.
             this.listenTo(this.settingsModel, "change", this.changeSettings);
         }
@@ -34,11 +34,11 @@ var Router = Backbone.Router.extend({
         var settings = "";
         var selection = {};
         
-        if(this.settingsModel !== null && this.settingsModel !== undefined) {
+        if(tg.js.isDefined(this.settingsModel)) {
             settings = JSON.stringify(this.tgView.currentView.settingsModel.attributes);
         }
         
-        if(this.selectionModel !== null && this.selectionModel !== undefined) {
+        if(tg.js.isDefined(this.selectionModel)) {
             selection = this.selectionModel.getAllSelections();
         }
         
@@ -46,6 +46,7 @@ var Router = Backbone.Router.extend({
             { settings: settings },
             selection
         );
+        
         return this.viewModel.getCurrentPath()+"?"+hashToUrl(hash);
     },
     
@@ -60,7 +61,6 @@ var Router = Backbone.Router.extend({
     },
     
     /**
-<<<<<<< HEAD
      * Called after the view instance is created.
      * Unbinds from the current view's settings events and re-binds to the new views events.
      */

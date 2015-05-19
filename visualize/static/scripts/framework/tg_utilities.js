@@ -482,7 +482,11 @@ function extractDocuments(data, model) {
  * [model] - The selection model, defaults to the global selection model if not provided.
  */
 function extractTopics(data, model) {
-    return data.datasets[model.get("dataset")].analyses[model.get("analysis")].topics;
+    var result = {};
+    try {
+        result = data.datasets[model.get("dataset")].analyses[model.get("analysis")].topics;
+    } catch(err) {}
+    return result;
 }
 
 /*

@@ -120,31 +120,33 @@ var NavigationView = DefaultView.extend({
     },
     
     template: $("#tg-nav-template").html(),
+    
     settingsTemplate: 
-        "<ul class=\"nav navbar-nav navbar-right\">"+
-        "    <li><a id=\"tg-nav-topic-name-schemes\" class=\"pointer\">"+icons.pencil+"</a></li>"+
-        "    <li><a id=\"tg-nav-favs\" class=\"pointer\">"+icons.filledStar+"</a></li>"+
-        "    <li><a id=\"tg-nav-help\" class=\"pointer\">"+icons.help+"</a></li>"+
-        "    <li class=\"dropdown\" class=\"pointer\">"+
-        "        <a class=\"dropdown-toggle\" data-toggle=\"dropdown\">"+icons.settings+"</a>"+
-        "        <ul id=\"tg-nav-settings\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
-        "    </li>"+
-        "</ul>",
+'<ul class="nav navbar-nav navbar-right">'+
+'    <li><a id="tg-nav-topic-name-schemes" class="pointer">'+icons.pencil+'</a></li>'+
+'    <li><a id="tg-nav-favs" class="pointer">'+icons.filledStar+'</a></li>'+
+'    <li><a id="tg-nav-help" class="pointer">'+icons.help+'</a></li>'+
+'    <li class="dropdown" class="pointer">'+
+'        <a class="dropdown-toggle" data-toggle="dropdown">'+icons.settings+'</a>'+
+'        <ul id="tg-nav-settings" class="dropdown-menu" role="menu"></ul>'+
+'    </li>'+
+'</ul>',
+    
     modalTemplate: 
-"<div class=\"modal-dialog\">"+
-"    <div class=\"modal-content\">"+
-"        <div class=\"modal-header\">"+
-"            <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>"+
-"            <h3 class=\"modal-title\">Modal title</h3>"+
-"        </div>"+
-"        <div class=\"modal-body\">"+
-"            Modal Body"+
-"        </div>"+
-"        <div class=\"modal-footer\">"+
-"            <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button>"+
-"        </div>"+
-"    </div>"+
-"</div>",
+'<div class="modal-dialog">'+
+'    <div class="modal-content">'+
+'        <div class="modal-header">'+
+'            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>'+
+'            <h3 class="modal-title">Modal title</h3>'+
+'        </div>'+
+'        <div class="modal-body">'+
+'            Modal Body'+
+'        </div>'+
+'        <div class="modal-footer">'+
+'            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>'+
+'        </div>'+
+'    </div>'+
+'</div>',
     
     /**
      * Renders the navigation bar according to what views are available in the
@@ -596,6 +598,7 @@ var TopicalGuideView = DefaultView.extend({
         
         // Bind to the viewModel to create and destroy views as needed.
         this.listenTo(this.viewModel, "change:currentView", this.changeCurrentView);
+        this.listenTo(this.viewModel, "change:currentViewInstance", this.updateCurrentViewSettings);
         this.listenTo(this.viewModel, "change:availableViews", this.changeAvailableViews);
         
         // Create site-wide tooltip functionality.
@@ -728,13 +731,12 @@ var TopicalGuideView = DefaultView.extend({
             viewClass = DefaultView;
         }
         
-        
         // Create the new view.
         this.currentView = new viewClass(init);
+        this.viewModel.set({ "currentViewInstance": this.currentView });
         
         try {
             this.currentView.render();
-            this.viewModel.set({ "currentViewInstance": this.currentView });
         } catch(err) {
             console.log("The following error occurred while trying to render the view: " + err);
             console.log(err.stack);
@@ -742,6 +744,19 @@ var TopicalGuideView = DefaultView.extend({
         
         // Change page title.
         $("head").find("title").html("Topical Guide &mdash; "+this.currentView.readableName);
+    },
+    
+    /**
+     * Update the settings when the instance changes.
+     */
+    updateCurrentViewSettings: function() {
+        try {
+            var settings = this.viewModel.get("currentViewSettings");
+            var currentView = this.viewModel.get("currentViewInstance");
+            currentView.settingsModel.set(settings);
+        } catch(err) {
+            console.log(err);
+        }
     },
     
     changeAvailableViews: function() {

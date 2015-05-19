@@ -707,7 +707,7 @@ var UserModel = Backbone.Model.extend({
     
     submitQueryByHash: function(sendData, dataReadyCallback, errorCallback) {
         
-        console.log(sendData);
+        //~ console.log(sendData);
         
         for(var key in sendData) {
             sendData[key.toString()] = this.stringify(sendData[key]);
@@ -718,7 +718,7 @@ var UserModel = Backbone.Model.extend({
             sendData["password"] = "temp";
         }
         
-        console.log(sendData);
+        //~ console.log(sendData);
         
         // This is to help prevent cross-site request forgery.
         sendData["csrfmiddlewaretoken"] = tg.js.getCookie("csrftoken"); // DO NOT REMOVE!
@@ -761,6 +761,7 @@ var ViewModel = Backbone.Model.extend({
         var defaults = {
             "atRoot": false,
             "rootView": "",
+            "currentViewSettings": {},
             "currentViewInstance": {},
             "currentView": "", 
             "availableViews": "", 
@@ -854,11 +855,12 @@ var ViewModel = Backbone.Model.extend({
     /**
      * Change the view to the one specified. No-op if the name doesn't exist.
      * path - url path to view as string
+     * settings - the current settings pulled from the url
      */
-    changeView: function(path) {
+    changeView: function(path, settings) {
         if(DEBUG_VIEWMODEL) console.log("ViewModel.changeView path=\""+path+"\" settings=\""+hashToUrl(settings)+"\"");
         
-        var pathParts = path.split("/")
+        var pathParts = path.split("/");
         var currentView = pathParts[pathParts.length - 1];
         
         var toSet = {};
@@ -867,6 +869,7 @@ var ViewModel = Backbone.Model.extend({
         } else {
             toSet["currentView"] = currentView;
         }
+        toSet["currentViewSettings"] = settings;
         this.set(toSet);
     },
     
