@@ -57,6 +57,7 @@ var PlotView = DefaultView.extend({
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
             "document_limit": 1000,
+            "dataset_attr": "document_metadata_meanings",
         };
     },
     
@@ -151,6 +152,15 @@ var PlotView = DefaultView.extend({
         var selections = this.selectionModel.attributes;
         var analysis = data.datasets[selections["dataset"]].analyses[selections["analysis"]];
         
+        var meanings = data.datasets[selections["dataset"]].document_metadata_meanings;
+        var timesAttributes = [];
+        for(var meaningKey in meanings) {
+            var meaning = meanings[meaningKey];
+            if(meaning === "time") {
+                timesAttributes.push(meaningKey);
+            }
+        }
+        
         var groupNames = {};
         var valueNames = {};
         var valueTypes = {};
@@ -202,6 +212,7 @@ var PlotView = DefaultView.extend({
             groupNames: groupNames,
             valueNames: valueNames,
             valueTypes: valueTypes,
+            times: timesAttributes,
         };
     },
     
@@ -289,17 +300,29 @@ var PlotView = DefaultView.extend({
             that.settingsModel.set({ colorSelection: { group: group, value: value } });
         });
 
-
-        var yvalue = this.selectionModel.get("topic");
+        var yvalue = "0";
         var ygroup = "topics";
+        if(this.selectionModel.nonEmpty(["topic"])) {
+            yvalue = this.selectionModel.get("topic");
+            yAxis.property("value", yvalue);
+        }
         
-        var xvalue = ;
-        var xgroup = ;
-                
+        //~ console.log("Y: " + yvalue + " " + ygroup);
+        
+        var xvalue = value;
+        var xgroup = group;
+        if(this.model.get("times").size !== 0) {
+            xvalue = this.model.get("times")[0];
+            xgroup = "metadata";
+            xAxis.property("value", xvalue);
+        }
+
+        //~ console.log("X: " + xvalue + " " + xgroup);
+
         // Set initial groups and values for selections.
         var defaultSettings = {
-            xSelection: { group: group, value: value },
-            ySelection: { group: group, value: value },
+            xSelection: { group: xgroup, value: xvalue },
+            ySelection: { group: ygroup, value: yvalue },
             radiusSelection: { group: "other", value: "uniform" },
             colorSelection: { group: group, value: value },
             removing: false,
