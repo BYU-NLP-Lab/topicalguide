@@ -20,7 +20,7 @@
 # If you have inquiries regarding any further use of the Topical Guide, please
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
-
+from __future__ import division, print_function, unicode_literals
 import sys
 import time
 import json
@@ -28,6 +28,7 @@ import itertools
 from git import Repo
 from visualize.models import *
 from visualize.utils import reservoir_sample
+from visualize.api_utilities import get_list_filter, filter_csv_to_list, get_filter_int, filter_nothing, filter_request
 
 MAX_DOCUMENTS_PER_REQUEST = 500
 MAX_DOCUMENTS_PER_SQL_QUERY = 500
@@ -80,7 +81,7 @@ def filter_nothing(arg):
 # Specify how to filter the incoming request by "key: filter_function" pairs.
 # The filter_function must throw an error on invalid values or return sanitized values.
 OPTIONS_FILTERS = {
-    'server': get_list_filter(['version', 'api_version', 'max_documents_per_request', 'license_url', 'terms'], allow_star=True),
+    'server': get_list_filter(['version', 'api_version', 'max_documents_per_request', 'license_url', 'terms', 'metadata_types', 'metadata_meanings'], allow_star=True),
     
     'version': filter_nothing,
 
@@ -90,7 +91,7 @@ OPTIONS_FILTERS = {
     'documents': filter_csv_to_list,
     'words': filter_csv_to_list,
     
-    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals']),
+    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals', 'document_metadata_meanings']),
     'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes']),
     'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens', 'word_token_documents_and_locations']),
     'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations']),
@@ -127,16 +128,6 @@ ANY ACTIVITIES USING THE WEBSITE OR OUR SERVICE INCLUDING BUT NOT LIMITED TO ILL
 WE RESERVE THE RIGHT TO MAKE CHANGES TO THESE TERMS FROM TIME TO TIME WITHOUT NOTIFICATION. IF YOU USE THE SERVICE AFTER THE TERMS HAVE CHANGED, WE WILL TREAT YOUR USE AS ACCEPTANCE OF THE UPDATED TERMS.
 """
 
-# Filter the incoming request to make sure that bogus values are removed and errors are thrown.
-def filter_request(request_keys, filters):
-    result = {}
-    for key in request_keys:
-        if key in filters:
-            result[key] = filters[key](request_keys[key])
-        else:
-            raise Exception("No such value as "+key+".")
-    return result
-
 def query_api(unfiltered_options):
     options = filter_request(unfiltered_options, OPTIONS_FILTERS)
     result = {}
@@ -167,6 +158,8 @@ def query_server(options):
         'max_documents_per_request': lambda x: MAX_DOCUMENTS_PER_REQUEST,
         'license_url': lambda x: 'http://www.gnu.org/licenses/agpl.html',
         'terms': lambda x: TERMS,
+        'metadata_types': lambda x: dict(MetadataType.DATATYPE_CHOICES), 
+        'metadata_meanings': lambda x: dict(MetadataType.MEANING_CHOICES),
     }
     
     server_attr = options.setdefault('server', [])
@@ -197,6 +190,7 @@ def query_datasets(options):
         'analysis_count': lambda dataset: dataset.analyses.count(),
         'document_metadata_types': lambda dataset: dataset.get_document_metadata_types(),
         'document_metadata_ordinals': lambda dataset: dataset.get_document_metadata_ordinals(),
+        'document_metadata_meanings': lambda dataset: dataset.get_document_metadata_meanings(),
     }
     
     # Get the list of attributes the user wants.

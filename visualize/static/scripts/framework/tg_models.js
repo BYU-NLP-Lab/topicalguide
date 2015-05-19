@@ -655,16 +655,69 @@ var DataModel = Backbone.Model.extend({
     },
 });
 
+
+/**
+ * In order to prevent cross-site request forgery you must make sure that no
+ * data is sent outside this domain.
+ * See the following for more information:
+ * https://docs.djangoproject.com/en/1.7/ref/contrib/csrf/
+ */
+var DEBUG_USER_MODEL = true; // TODO change this to be false
 var UserModel = Backbone.Model.extend({
     
-    initialize: function() {
-        this.set({ loggedIn: false });
+    initialize: function(args) {
+        this.set({
+            loggedIn: false,
+        });
+    },
+    
+    /**
+     * s -- an object
+     * if s is array => return comma separated list of elements
+     * if s is string => do nothing
+     * if s is number => return string of number
+     * if s is object => return json string
+     */
+    stringify: function(obj) {
+        var result = null;
+        if(tg.js.isString(obj)) {
+            result = obj;
+        } else if(obj instanceof Number) {
+            result = obj.toString();
+        } else if(obj instanceof Array) {
+            obj = obj.slice(0); // Clone the array.
+            obj.sort();
+            for(var i = 0; i < obj.length; i++) {
+                obj[0] = obj[0].toString();
+            }
+            result = obj.join(",");
+        } else {
+            result = JSON.stringify(obj);
+        }
+        return result;
     },
     
     submitQueryByHash: function(sendData, dataReadyCallback, errorCallback) {
+        
+        console.log(sendData);
+        
+        for(var key in sendData) {
+            sendData[key.toString()] = this.stringify(sendData[key]);
+        }
+        
+        if(DEBUG_USER_MODEL) {
+            sendData["username"] = "temp";
+            sendData["password"] = "temp";
+        }
+        
+        console.log(sendData);
+        
+        // This is to help prevent cross-site request forgery.
+        sendData["csrfmiddlewaretoken"] = tg.js.getCookie("csrftoken"); // DO NOT REMOVE!
+        
         $.ajax({
                 type: "POST",
-                url: "http://"+window.location.host+"/user-api",
+                url: (DEBUG_USER_MODEL?"http":"https")+"://"+window.location.host+"/user_api",
                 data: sendData,
                 dataType: "json",
                 

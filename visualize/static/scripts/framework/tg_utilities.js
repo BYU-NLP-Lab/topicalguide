@@ -49,6 +49,39 @@ var tg = new function() {
                 }
             }
         },
+        
+        /**
+         * Convert from the short string representation to a human readable one.
+         */
+        readableTypes: {
+            "int": "Integer",
+            "float": "Float",
+            "datetime": "Date/Time",
+            "bool": "Boolean",
+            "text": "Text",
+            "ordinal": "Ordinal",
+        },
+        
+        /**
+         * Injectible icon html.
+         */
+        icons: {
+            emptyStar: "<span class=\"glyphicon glyphicon-star-empty gold\"></span>",
+            filledStar: "<span class=\"glyphicon glyphicon-star gold\"></span>",
+            
+            pencil: "<span class=\"glyphicon glyphicon-pencil purple\"></span>",
+            help: "<span class=\"glyphicon glyphicon-question-sign blue\"></span>",
+            settings: "<span class=\"caret\" style=\"text-size: 1.5em\"></span>",
+            share: "<span class=\"glyphicon glyphicon-plus\"></span>",
+            
+            document: "<span class=\"glyphicon glyphicon-book brown document\"></span>",
+            previous: "<span class=\"glyphicon glyphicon-chevron-left green previous\"></span>",
+            next: "<span class=\"glyphicon glyphicon-chevron-right green next\"></span>",
+            beginning: "<span class=\"glyphicon glyphicon-step-backward green beginning\"></span>",
+            end: "<span class=\"glyphicon glyphicon-step-forward green end\"></span>",
+            
+            loading: "<p class=\"text-center\"><img src=\"/static/images/large-spinner.gif\"/></p><p class=\"text-center\">Loading...</p>",
+        },
     };
     
     this.rand = {
@@ -110,6 +143,41 @@ var tg = new function() {
         isDefined: function(obj) {
             return (obj !== null && obj !== undefined);
         },
+        
+        /**
+         * Return the value of the cookie with the supplied name; null if not present.
+         * This code is from the Django project:
+         * https://docs.djangoproject.com/en/1.7/ref/contrib/csrf/
+         */
+        getCookie: function(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie != '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        },
+        
+        /**
+         * Return true if session storage is enabled.
+         */
+        hasSessionStorage: function() {
+            try {
+                sessionStorage["storage-test"] = "test";
+                delete sessionStorage["storage-test"];
+                return true;
+            } catch(e) {
+                return false;
+            }
+        },
+        
     };
     
     this.str = {
@@ -119,6 +187,7 @@ var tg = new function() {
         toTitleCase: function(str) {
             return str.replace(/\w\S*/g, function(substr){ return substr.charAt(0).toUpperCase() + substr.slice(1); });
         },
+        
     };
     
     this.color = {
@@ -138,6 +207,59 @@ var tg = new function() {
             var ordToNum = d3.scale.ordinal().domain(listOfValues).range(ordinalRange);
             var numToColor = d3.scale.linear().domain(colorDomain).range(colorPalette);
             return function ordinalColorScale(val) { return numToColor(ordToNum(val)); };
+        },
+    };
+    
+    this.url = {
+        /**
+         * Turns arrays and other objects to URI friendly strings.
+         */
+        uriStringify: function(item) {
+            var result = null;
+            if(item instanceof String) {
+                result = encodeURIComponent(item);
+            } else if(item instanceof Array) {
+                item = item.slice(0); // Clone the array.
+                item.sort();
+                for(var i = 0; i<item.length; i++) {
+                    item[0] = tg.url.stringify(item[0]);
+                }
+                result = item.join(",");
+            } else {
+                result = encodeURIComponent(item.toString());
+            }
+            return result;
+        },
+        
+        /**
+         * Parse url arguments to a hash.
+         */
+        urlToHash: function(args) {
+            var hash = {};
+            var items = args.split('&');
+            if(items[0] !== "") {
+                for(var i = 0; i<items.length; i++) {
+                    var keyAndValue = items[i].split('=');
+                    if(keyAndValue[1]===undefined) keyAndValue.push("");
+                    hash[decodeURIComponent(keyAndValue[0])] = decodeURIComponent(keyAndValue[1]);
+                }
+            }
+            return hash;
+        },
+
+        /**
+         * Convert a hash to url arguments, url will be normalized.
+         * hash - Any valid hash with strings, arrays, and numbers as the values.
+         */
+        hashToUrl: function(hash) {
+            var keys = [];
+            _.forOwn(hash, function(value, key) { keys.push(key); });
+            keys.sort();
+            var items = [];
+            _.forEach(keys, function(key) {
+                items.push(encodeURIComponent(key) + '=' + tg.url.uriStringify(hash[key]));
+            });
+            return items.join('&');
         },
     };
 };
@@ -164,23 +286,6 @@ var icons = {
     pencil: "<span class=\"glyphicon glyphicon-pencil purple\"></span>",
 };
 
-
-/**
- * Add a new view class. This is a convenience function to aid forwards
- * compatibility.
- * nesting -- a list specifying how to nest the view
- *      eg: [] will put the view on the menu bar
- *          ["menu", "submenu"] will put the view under menu>submenu>your_view
- * cls -- the view class, which must be a Backbone View
- */
-function addViewClass(nesting, cls) {
-    $(function startApplication() {
-        try{
-            globalTopicalGuideView.viewModel.addViewClass(nesting, cls);
-        } catch(e) {
-        }
-    });
-}
 
 /**
  * Types recognized by the import system.
