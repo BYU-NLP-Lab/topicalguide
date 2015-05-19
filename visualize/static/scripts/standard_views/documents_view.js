@@ -142,7 +142,7 @@ var AllDocumentsSubView = DefaultView.extend({
     },
     
     getLastPage: function() {
-        return Math.floor(this.documentCount/this.settingsModel.get("docsPerPage") + 1);
+        return Math.ceil(this.documentCount/this.settingsModel.get("docsPerPage"));
     },
     
     /**
@@ -276,13 +276,13 @@ var DocumentInfoView = DefaultView.extend({
     shortName: "one_doc_info",
     
     htmlTemplate:
-"<h3>Document: <span id=\"single-doc-name\"></span></h3>"+
-"<div class=\"row\">"+
-"    <div id=\"single-doc-left-content\" class=\"col-xs-9\">"+
-"    </div>"+
-"    <div id=\"single-doc-right-content\" class=\"col-xs-3\">"+
-"    </div>"+
-"</div>",
+'<h3>Document: <span class="single-doc-name"></span><span class="single-doc-fav"></span></h3>'+
+'<div class="row">'+
+'    <div id="single-doc-left-content" class="col-xs-9">'+
+'    </div>'+
+'    <div id="single-doc-right-content" class="col-xs-3">'+
+'    </div>'+
+'</div>',
 
     pieChartTemplate:
 "<div id=\"single-doc-pie-chart\" class=\"row\">"+
@@ -397,7 +397,7 @@ var DocumentInfoView = DefaultView.extend({
     },
     
     /**
-     * When the topics range chanes, then the selected topics must be updated.
+     * When the topics range changes, then the selected topics must be updated.
      */
     changeSelectedTopicsRange: function() {
         var topics = this.getTopicsInSliderRange();
@@ -426,6 +426,8 @@ var DocumentInfoView = DefaultView.extend({
     },
     
     render: function() {
+        var that = this;
+        
         if(this.selectionModel.get("document") === "") {
             this.$el.html("<p>A document needs to be selected in order to use this view.</p>");
             return;
@@ -433,7 +435,15 @@ var DocumentInfoView = DefaultView.extend({
         
         this.$el.html(this.htmlTemplate);
         
-        d3.selectAll("#single-doc-name").text(this.selectionModel.get("document"));
+        // Set the document name and the favs icon.
+        var docName = this.selectionModel.get("document");
+        var docNameEl = this.$el.find(".single-doc-name");
+        var docNameFavEl = this.$el.find(".single-doc-fav");
+        docNameEl.text(docName+" ");
+        docNameFavEl.attr("data-tg-document-name", docName);
+        docNameFavEl.addClass("tg-fav");
+        tg.site.initFav(docNameFavEl.get(0), this.favsModel);
+                
         this.renderTabbedContent();
         this.renderPieChartContent();
     },
@@ -521,20 +531,20 @@ var DocumentInfoView = DefaultView.extend({
             // Render the slider and set slider events.
             this.$el.find("#single-doc-pie-chart-topic-selector").slider({
                 range: true,
-                min: 0,
+                min: 1,
                 max: this.sortedTopicTokenCounts.length,
                 step: 1,
-                values: [low, high],
+                values: [1, high],
                 slide: function(event, ui) {
                     this.settingsModel.set({
-                        minTopicIndex: ui.values[0],
-                        maxTopicIndex: ui.values[1],
+                        minTopicIndex: ui.values[0]-1,
+                        maxTopicIndex: ui.values[1]-1,
                     });
                 }.bind(this),
                 change: function(event, ui) {
                     this.settingsModel.set({
-                        minTopicIndex: ui.values[0],
-                        maxTopicIndex: ui.values[1],
+                        minTopicIndex: ui.values[0]-1,
+                        maxTopicIndex: ui.values[1]-1,
                     });
                 }.bind(this),
             });
@@ -603,7 +613,7 @@ var DocumentInfoView = DefaultView.extend({
             .attr("d", arc)
             .classed({
                 "single-doc-topic": true,
-                //~ "single-doc-topic-pie-slice": true,
+                "single-doc-topic-toggle": true,
                 "tg-tooltip": true,
                 "pointer": true,
             })
@@ -647,7 +657,7 @@ var DocumentInfoView = DefaultView.extend({
             .style("background-color", function(d, i) {
                 return that.topicColorScale(d.topicNumber);
             })
-            .classed("single-doc-topic", true)
+            .classed("single-doc-topic single-doc-topic-toggle", true)
             .attr("data-tg-topic-number", function(d, i) { return d.topicNumber; });
         legendEntries.append("span") // Add a space between color swatch and text.
             .html("&nbsp;");
@@ -658,7 +668,7 @@ var DocumentInfoView = DefaultView.extend({
             .attr("id", function(d, i) { // Label the span for hover effects.
                 return "single-doc-legend-topic-"+d.topicNumber;
             })
-            .classed({ "single-doc-topic tg-topic-name-auto-update": true })
+            .classed({ "single-doc-topic single-doc-topic-toggle tg-topic-name-auto-update": true })
             .attr("data-tg-topic-number", function(d, i) {
                 return d.topicNumber;
             });
@@ -837,8 +847,9 @@ var DocumentInfoView = DefaultView.extend({
     highlightText: function(topics, tokens) {
         var container = d3.select(this.el).select("#highlighted-text").html("");
         
+        // Just render the plain text if there's nothing to highlight.
         if(topics === undefined || tokens === undefined || (_.size(topics) === 0 && tokens.length === 0)) {
-            var html = this.model.attributes.text.split("\n");
+            var html = this.model.get("text").split("\n");
             html = _.reduce(html, function(result, item) { 
                 if(item === "") {
                     return result;
@@ -988,7 +999,7 @@ var DocumentInfoView = DefaultView.extend({
     events: {
         "mouseover .single-doc-topic": "mouseoverHighlightTopics",
         "mouseout .single-doc-topic": "mouseoutHighlightTopics",
-        "click .single-doc-topic": "clickTopic",
+        "click .single-doc-topic-toggle": "clickTopic",
         "change .single-doc-topic-legend-checkbox": "changeCheckBox",
     },
     
@@ -1030,7 +1041,7 @@ var DocumentInfoView = DefaultView.extend({
             .style("outline-style", "solid")
             .style("outline-color", function(d, i) {
                 var num = d3.select(this).attr("data-tg-topic-number");
-                return d3.rgb(that.topicColorScale(num)); //.darker(1);
+                return d3.rgb(that.topicColorScale(num));
             });
     },
     
@@ -1160,12 +1171,13 @@ var DocumentView = DefaultView.extend({
     
     render: function() {
         if(this.selectionModel.nonEmpty(["dataset", "analysis"])) {
-            this.$el.html("<div id=\"info\"></div>");
+            this.$el.html('<div class="document-subclass-container"></div>');
             this.cleanupViews();
+            var el = this.$el.find(".document-subclass-container");
             if(this.selectionModel.nonEmpty(["document"])) {
-                this.subView = new SingleDocumentSubView(_.extend({ el: "#info"}, this.getAllModels()));
+                this.subView = new SingleDocumentSubView(_.extend({ el: el }, this.getAllModels()));
             } else {
-                this.subView = new AllDocumentsSubView(_.extend({ el: "#info"}, this.getAllModels()));
+                this.subView = new AllDocumentsSubView(_.extend({ el: el }, this.getAllModels()));
             }
             this.subView.render();
         } else {

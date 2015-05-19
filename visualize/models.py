@@ -64,7 +64,6 @@ class MetadataType(models.Model):
     name = models.CharField(max_length=128)
     datatype = models.CharField(max_length=64, choices=DATATYPE_CHOICES, default=TEXT)
     meaning = models.CharField(max_length=32, choices=MEANING_CHOICES, default=UNKNOWN)
-    ordinal = models.ForeignKey('Ordinal', null=True)
     
     class Meta(object):
         unique_together = ('dataset', 'name', 'datatype')
@@ -268,7 +267,6 @@ class Dataset(models.Model):
         for name, datatype in chain(query, query2):
             result[name] = datatype
         print(result)
-<<<<<<< HEAD
         return result
     
     def get_document_metadata_ordinals(self):
@@ -286,8 +284,6 @@ class Dataset(models.Model):
                     array.append([ord_name])
                 else:
                     array[index].append(ord_name)
-=======
->>>>>>> 48965675b6db1b73b33d62d591bbf14202774a9c
         return result
     
     @property
