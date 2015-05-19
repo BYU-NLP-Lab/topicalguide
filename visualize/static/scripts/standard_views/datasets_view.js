@@ -5,15 +5,18 @@ var DatasetView = DefaultView.extend({
     readableName: "Datasets",
     shortName: "datasets",
     
-    compiledTemplate: _.template(
-        "<% if(hasDatasets) { %>"+
-        "    <h3>Getting Started</h3>"+
-        "    <p>Welcome to the Topical Guide! If you need help click on the help icon on the navigation bar.</p>"+
-        "    <div id=\"accordion\" class=\"panel-group\"></div>"+
-        "<% } else { %>"+
-        "    <div class=\"panel\"><p>No datasets yet. Import one using <code>python topicalguide.py -h</code>.</p></div>"+
-        "<% } %>"
-    ),
+    helpTemplate:
+'<p class="text-center">Select a dataset by clicking on one of the bars below. Details of the dataset are shown when selected.'+
+'Select an analysis by clicking on one. An analysis will turn blue when selected.</p>',
+    
+    datasetsTemplate:
+'<h3 class="text-center">Datasets</h3>'+
+'<p class="text-center">Select a dataset by clicking on one of the bars below. Details of the dataset are shown when selected.'+
+'Select an analysis by clicking on one. An analysis will turn blue when selected.</p>'+
+'<div class="datasets-accordion panel-group"></div>',
+    
+    noDatasetsTemplate:
+'<div class=\"panel\"><p>No datasets yet. Import one using <code>python tg.py -h</code>.</p></div>',
     
     initialize: function() {
         this.initialized = 
@@ -22,12 +25,24 @@ var DatasetView = DefaultView.extend({
     },
     
     render: function() {
-        this.selectionModel.selectFirst(false);
         this.$el.html("");
         var datasets = this.dataModel.getDatasetsAndAnalyses();
-        var that = this;
         
-        function getMetadataValue(key, object, defaultValue) {
+        if(_.size(datasets) !== 0) {
+            this.renderDatasets();
+        } else {
+            this.renderNoDatasets();
+        }
+    },
+    
+    renderDatasets: function() {
+        var that = this;
+        var datasets = this.dataModel.getDatasetsAndAnalyses();
+        
+        this.selectionModel.selectFirst(false);
+        
+        // Returns the defaultValue if the key isn't present.
+        function getMetadataValue(object, key, defaultValue) {
             if(!(key in object)) {
                 return defaultValue;
             } else {
@@ -36,8 +51,8 @@ var DatasetView = DefaultView.extend({
         }
         
         // Create basic outline
-        this.$el.html(this.compiledTemplate({ "hasDatasets": (_.size(datasets) !== 0) }));
-        var accordion = d3.select("#accordion");
+        this.$el.html(this.datasetsTemplate);
+        var accordion = d3.select(this.el).select(".datasets-accordion");
         
         // Create panels for each dataset.
         var panels = accordion.selectAll("div")
@@ -52,24 +67,15 @@ var DatasetView = DefaultView.extend({
             .attr("data-tg-dataset-name", function(d, i) {
                 return d.key;
             })
-            .classed("tg-select pointer", true)
-            .classed("panel-heading text-center", true)
+            .classed("panel-heading text-center tg-select pointer", true)
             .attr("data-toggle", "collapse")
-            .attr("data-parent", "#accordion")
+            .attr("data-parent", ".datasets-accordion")
             .attr("href", function(d, i) { return "#collapse-"+d.key; })
             .append("h3")
             .classed("panel-title", true)
             .append("b");
         bold.append("a") // Add dataset name.
-            //~ .attr("data-tg-dataset-name", function(d, i) {
-                //~ return d.key;
-            //~ })
-            //~ .classed("tg-select pointer", true)
             .classed("nounderline black-text-blue-hover", true)
-            //~ .attr("data-toggle", "collapse")
-            //~ .attr("data-parent", "#accordion")
-            //~ .attr("href", function(d, i) { return "#collapse-"+d.key; })
-            //~ .style("color", "black")
             .text(function(d, i) {
                 return that.dataModel.getReadableDatasetName(d.key);
             });
@@ -117,7 +123,7 @@ var DatasetView = DefaultView.extend({
                         return d.key;
                     })
                     .classed("pointer tg-select", true)
-                    .classed("datasets-analysis-active-element", true) // Used to reselect the selection.
+                    .classed("datasets-analysis-active-element", true) // Used to reselect the selection and identify the popover.
                     .classed("active", function(d, i) {
                         return d.key === that.selectionModel.get("analysis");
                     });
@@ -135,10 +141,6 @@ var DatasetView = DefaultView.extend({
                 a.append("span")
                     .text(" ");
                 a.append("span")
-                    //~ .attr("data-tg-analysis-name", function(d, i) {
-                        //~ return d.key;
-                    //~ })
-                    //~ .classed("pointer tg-select", true)
                     .text(function(d, i) {
                         return that.dataModel.getReadableAnalysisName(datasetName, d.key);
                     })
@@ -161,7 +163,8 @@ var DatasetView = DefaultView.extend({
         body.append("h4")
             .text("Description");
         body.append("p")
-            .text(function(d, i) { return getMetadataValue("description", d.value.metadata, "No description available."); });
+            .text(function(d, i) { return getMetadataValue(d.value.metadata, "description", "No description available."); });
+        
         // Create metadata table.
         var metadata = body.append("div");
         metadata.each(function(d, i) {
@@ -177,6 +180,7 @@ var DatasetView = DefaultView.extend({
                 createTableFromHash(el, datasetMetadata, ["Metadata", "Value"], "metadata");
             }
         });
+        
         // Create metrics table.
         var metrics = body.append("div");
         metrics.each(function(d, i) {
@@ -187,12 +191,44 @@ var DatasetView = DefaultView.extend({
                 createTableFromHash(el, d.value.metrics, ["Metric", "Value"], "metrics");
             }
         });
+        
+        // Create popover functionality for the analyses' metadata and metrics.
+        this.$el.popover({
+            container: this.$el.get(),
+            content: function() {
+                // Construct the contents of the popover.
+                var emptyElement = document.createElement("div");
+                var el = d3.select(emptyElement);
+                var datasetName = that.selectionModel.get("dataset");
+                var analysisName = $(this).attr("data-tg-analysis-name");
+                var metadata = that.dataModel.getAnalysisMetadata(datasetName, analysisName);
+                var metrics = that.dataModel.getAnalysisMetrics(datasetName, analysisName);
+                createTableFromHash(el, metadata, ["Metadata", "Value"], "metadata");
+                createTableFromHash(el, metrics, ["Metric", "Value"], "metrics");
+                return el.html();
+            },
+            html: true,
+            placement: "auto right",
+            selector: ".datasets-analysis-active-element",
+            template: '<div class="popover" role="tooltip" style="max-width: 100%; max-height: 100%;"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>',
+            title: "Metadata and Metrics",
+            trigger: "hover",
+        });
+    },
+    
+    renderNoDatasets: function() {
+        this.$el.html(this.noDatasetsTemplate);
     },
     
     events: {
         "click .datasets-explore": "clickExplore",
     },
     
+    /**
+     * Redirect to the "topics" view.
+     * The redirect is delayed to allow the analysis to be set by the 
+     * topical guide view.
+     */
     clickExplore: function(e) {
         // This is a way to allow the event to propagate before switching views.
         setTimeout(function() {
@@ -200,9 +236,11 @@ var DatasetView = DefaultView.extend({
         }.bind(this), 100);
     },
     
+    /**
+     * Expand the dataset accordion on dataset change.
+     */
     updateDataset: function() {
         if(this.panels !== undefined) {
-            console.log("change dataset");
             var datasetName = this.selectionModel.get("dataset");
             $(".collapse.in").collapse('hide');
             this.panels.selectAll(".collapse")
@@ -214,8 +252,10 @@ var DatasetView = DefaultView.extend({
         }
     },
     
+    /**
+     * Highlight the analysis text box on analysis change.
+     */
     updateAnalysis: function(msg) {
-        console.log(msg)
         var datasetName = this.selectionModel.get("dataset");
         var analysisName = this.selectionModel.get("analysis");
         if(datasetName !== "") {
@@ -233,9 +273,7 @@ var DatasetView = DefaultView.extend({
     },
     
     renderHelpAsHtml: function() {
-        return "<p>To get started click on a dataset name. "+
-        "As the panel shows up select an analysis by clicking on it. "+
-        "Once clicked you'll be redirected to the Topics page where you can begin exploring. Enjoy!</p>";
+        return this.helpTemplate;
     },
 });
 

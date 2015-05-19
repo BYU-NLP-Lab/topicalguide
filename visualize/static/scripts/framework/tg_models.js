@@ -493,6 +493,14 @@ var DataModel = Backbone.Model.extend({
         return result;
     },
     
+    getAnalysisMetadata: function(datasetName, analysisName) {
+        return this.datasetsAndAnalyses[datasetName].analyses[analysisName].metadata;
+    },
+    
+    getAnalysisMetrics: function(datasetName, analysisName) {
+        return this.datasetsAndAnalyses[datasetName].analyses[analysisName].metrics;
+    },
+    
     /**
      * Synchronous method to get analysis name schemes.
      * Return list of analysis name schemes available; empty if none.
