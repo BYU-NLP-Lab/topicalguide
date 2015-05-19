@@ -38,6 +38,9 @@ class MetricValue(models.Model):
 
 class MetadataType(models.Model):
     
+    """\
+    These are the supported types that the system knows how to handle.
+    """
     INTEGER = 'int'
     FLOAT = 'float'
     TEXT = 'text'
@@ -53,6 +56,15 @@ class MetadataType(models.Model):
         (ORDINAL, 'Ordinal'),
     )
     
+    """\
+    Meanings are a way to label certain information so that certain metadatums
+    can be used in a specific way.
+    The meanings are used as follows:
+    
+    time -- allows the metric system to correctly select the right field for
+            computing the temperature metric
+    unknown -- the default
+    """
     TIME = 'time'
     UNKNOWN = 'unknown'
     MEANING_CHOICES = (
@@ -266,7 +278,13 @@ class Dataset(models.Model):
         result = {}
         for name, datatype in chain(query, query2):
             result[name] = datatype
-        print(result)
+        return result
+    
+    def get_document_metadata_meanings(self):
+        query = self.documents.values_list('metadata_values__metadata_type__name', 'metadata_values__metadata_type__meaning').distinct()
+        result = {}
+        for name, meaning in query:
+            result[name] = meaning
         return result
     
     def get_document_metadata_ordinals(self):

@@ -81,7 +81,7 @@ def filter_nothing(arg):
 # Specify how to filter the incoming request by "key: filter_function" pairs.
 # The filter_function must throw an error on invalid values or return sanitized values.
 OPTIONS_FILTERS = {
-    'server': get_list_filter(['version', 'api_version', 'max_documents_per_request', 'license_url', 'terms'], allow_star=True),
+    'server': get_list_filter(['version', 'api_version', 'max_documents_per_request', 'license_url', 'terms', 'metadata_types', 'metadata_meanings'], allow_star=True),
     
     'version': filter_nothing,
 
@@ -91,7 +91,7 @@ OPTIONS_FILTERS = {
     'documents': filter_csv_to_list,
     'words': filter_csv_to_list,
     
-    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals']),
+    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals', 'document_metadata_meanings']),
     'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes']),
     'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens', 'word_token_documents_and_locations']),
     'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations']),
@@ -158,6 +158,8 @@ def query_server(options):
         'max_documents_per_request': lambda x: MAX_DOCUMENTS_PER_REQUEST,
         'license_url': lambda x: 'http://www.gnu.org/licenses/agpl.html',
         'terms': lambda x: TERMS,
+        'metadata_types': lambda x: dict(MetadataType.DATATYPE_CHOICES), 
+        'metadata_meanings': lambda x: dict(MetadataType.MEANING_CHOICES),
     }
     
     server_attr = options.setdefault('server', [])
@@ -188,6 +190,7 @@ def query_datasets(options):
         'analysis_count': lambda dataset: dataset.analyses.count(),
         'document_metadata_types': lambda dataset: dataset.get_document_metadata_types(),
         'document_metadata_ordinals': lambda dataset: dataset.get_document_metadata_ordinals(),
+        'document_metadata_meanings': lambda dataset: dataset.get_document_metadata_meanings(),
     }
     
     # Get the list of attributes the user wants.
