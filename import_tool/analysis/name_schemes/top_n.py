@@ -11,7 +11,7 @@ class TopNTopicNamer(AbstractTopicNamer):
     
     @property
     def name_scheme(self):
-        return "Top " + str(self.n)
+        return "Top" + str(self.n)
     
     def name_topics(self, database_id, analysis_db):
         analysis_db.topics.prefetch_related('tokens')

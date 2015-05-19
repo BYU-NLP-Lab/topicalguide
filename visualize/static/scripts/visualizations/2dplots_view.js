@@ -288,7 +288,14 @@ var PlotView = DefaultView.extend({
             var value = color.property("value");
             that.settingsModel.set({ colorSelection: { group: group, value: value } });
         });
+
+
+        var yvalue = this.selectionModel.get("topic");
+        var ygroup = "topics";
         
+        var xvalue = ;
+        var xgroup = ;
+                
         // Set initial groups and values for selections.
         var defaultSettings = {
             xSelection: { group: group, value: value },

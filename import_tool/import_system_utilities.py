@@ -44,7 +44,7 @@ BASIC_ANALYSIS_METRICS = [
     'analysis:excluded_word_count', 'analysis:entropy',
     
     'topic:token_count', 'topic:type_count', 'topic:document_entropy', 
-    'topic:word_entropy', 'topic:termperature',
+    'topic:word_entropy', 'topic:temperature',
     
     'topic-pairwise:document_correlation', 'topic-pairwise:word_correlation'
 ]
