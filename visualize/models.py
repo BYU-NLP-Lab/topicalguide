@@ -522,10 +522,14 @@ class Topic(models.Model):
         topic_words = topic_words.order_by('-count')
         return {value['word_type__word']: value['count'] for value in topic_words}
     
-    def top_n_words(self, words='*', top_n=10):
+    def top_n_words(self, words='*', top_n=10, metadata_value=None):
         topic_words = self.tokens.values('word_type__word').annotate(count=Count('word_type__word'))
         if words != '*':
             topic_words = topic_words.filter(word_type__word__in=words)
+        if metadata_value:
+            topic_words = topic_words.filter(document__metadata_values__metadata_type__name=metadata_value[0], \
+                document__metadata_values__text_value=metadata_value[1])
+            
         topic_words = topic_words.order_by('-count')
         return {value['word_type__word']: {'token_count': value['count']} for value in topic_words[:top_n]}
     

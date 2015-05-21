@@ -28,7 +28,7 @@ import itertools
 from git import Repo
 from visualize.models import *
 from visualize.utils import reservoir_sample
-from visualize.api_utilities import get_list_filter, filter_csv_to_list, get_filter_int, filter_nothing, filter_request
+from visualize.api_utilities import get_list_filter, filter_csv_to_list, get_filter_int, filter_nothing, filter_request, get_filter_csv_to_tuple
 
 MAX_DOCUMENTS_PER_REQUEST = 500
 MAX_DOCUMENTS_PER_SQL_QUERY = 500
@@ -85,17 +85,21 @@ OPTIONS_FILTERS = {
     
     'version': filter_nothing,
 
+    # how to filter
     'datasets': filter_csv_to_list,
     'analyses': filter_csv_to_list,
     'topics': filter_csv_to_list,
     'documents': filter_csv_to_list,
     'words': filter_csv_to_list,
+    'metadata_value': get_filter_csv_to_tuple(2),
     
+    # what data to gather
     'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals', 'document_metadata_meanings']),
     'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes']),
     'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens', 'word_token_documents_and_locations']),
     'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations']),
-    
+
+    # extra parameters
     'topic_pairwise': filter_csv_to_list,
     'top_n_documents': get_filter_int(low=0),
     'top_n_words': get_filter_int(low=1),
@@ -299,7 +303,10 @@ def query_topics(options, dataset_db, analysis_db):
             if 'pairwise' in topic_attr:
                 attributes['pairwise'] = topic_db.get_pairwise_metrics(options)
             if 'top_n_words' in topic_attr and 'words' in options and 'top_n_words' in options:
-                attributes['words'] = topic_db.top_n_words(options['words'], top_n=options['top_n_words'])
+                if 'metadata_value' in options:
+                    attributes['words'] = topic_db.top_n_words(options['words'], top_n=options['top_n_words'], metadata_value=options['metadata_value'])
+                else:
+                    attributes['words'] = topic_db.top_n_words(options['words'], top_n=options['top_n_words'])
             if 'top_n_documents' in options:
                 attributes['top_n_documents'] = topic_db.top_n_documents(top_n=options['top_n_documents'])
             if 'words' in options and options['words'] != '*' and 'word_tokens' in topic_attr:
