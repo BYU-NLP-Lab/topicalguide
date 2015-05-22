@@ -155,6 +155,12 @@ addViewClass(["Menu 1", "Sub Menu 2", "Sub Menu 3"], ExampleView);
  * You are responsible for initializing the element.
  * To help you out there is a function called tg.site.initFav (see the 
  * documentation in tg_utilities.js.
+ * 
+ * Topic Name Schemes:
+ * Set the class "tg-topic-name-auto-update" and set the 
+ * "data-tg-topic-number" data attribute.
+ * When a topic name scheme changes it is useful to have the topic names change
+ * as well. This will do it automatically.
  */
  
 /**

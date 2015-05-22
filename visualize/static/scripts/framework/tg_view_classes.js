@@ -448,40 +448,44 @@ var NavigationView = DefaultView.extend({
 var BreadcrumbsView = DefaultView.extend({
 
     baseTemplate:
-"<div class=\"well\" style=\"text-align: justify; margin: 0px 0px 20px 0px; padding: 0px 10px 0px 10px;\">"+
-"<div style=\"vertical-align: middle; display: table; width: 100%;\">"+
-"<span class=\"tg-nav-breadcrumb-span\"><span>Dataset:&nbsp;</span><span class=\"tg-nav-breadcrumb-dataset blue\"></span></span>"+
-"<span class=\"tg-nav-breadcrumb-span\">Document:&nbsp;<span class=\"tg-nav-breadcrumb-document blue\"></span></span>"+
-"<span class=\"tg-nav-breadcrumb-span\">Analysis:&nbsp;<span class=\"tg-nav-breadcrumb-analysis blue\"></span></span>"+
-"<span class=\"tg-nav-breadcrumb-span\">Topic:&nbsp;<span class=\"tg-nav-breadcrumb-topic blue\"></span></span>"+
-"<span class=\"tg-nav-breadcrumb-span\">Topic Name Scheme:&nbsp;<span class=\"tg-nav-breadcrumb-topic-name-scheme blue\"></span></span>"+
-"</div>"+
-"</div>",
+'<div class="well" style="text-align: justify; margin: 0px 0px 20px 0px; padding: 0px 10px 0px 10px;">'+
+'<div style="vertical-align: middle; display: table; width: 100%;">'+
+'<span class="tg-nav-breadcrumb-span"><span>Dataset:&nbsp;</span><span class="tg-nav-breadcrumb-dataset blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Document:&nbsp;<span class="tg-nav-breadcrumb-document blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Analysis:&nbsp;<span class="tg-nav-breadcrumb-analysis blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Topic:&nbsp;<span class="tg-nav-breadcrumb-topic blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Topic Name Scheme:&nbsp;<span class="tg-nav-breadcrumb-topic-name-scheme blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Metadata:&nbsp;<span class="tg-nav-breadcrumb-metadata blue"></span></span>'+
+'</div>'+
+'</div>',
     
-    initialize: function() {
+    initialize: function initialize() {
         this.listenTo(this.selectionModel, "change:dataset", this.updateDataset);
         this.listenTo(this.selectionModel, "change:analysis", this.updateAnalysis);
         this.listenTo(this.selectionModel, "change:topic", this.updateTopic);
         this.listenTo(this.selectionModel, "change:document", this.updateDocument);
         this.listenTo(this.selectionModel, "change:topicNameScheme", this.updateTopicNameScheme);
         this.listenTo(this.selectionModel, "change:topicNameScheme", this.updateTopic);
+        this.listenTo(this.selectionModel, "change:metadataName", this.updateMetadata);
+        this.listenTo(this.selectionModel, "change:metadataValue", this.updateMetadata);
     },
     
-    cleanup: function() {
+    cleanup: function cleanup() {
     },
     
-    render: function() {
+    render: function render() {
         this.$el.html(this.baseTemplate);
         this.updateDataset();
         this.updateAnalysis();
         this.updateTopic();
         this.updateDocument();
         this.updateTopicNameScheme();
+        this.updateMetadata();
         d3.select(this.el).selectAll(".tg-nav-breadcrumb-span")
             .style({ "font-size": "0.7em", "display": "table-cell", "text-align": "center", "vertical-align": "middle" });
     },
     
-    updateDataset: function() {
+    updateDataset: function updateDataset() {
         var selector = ".tg-nav-breadcrumb-dataset";
         var name = this.selectionModel.get("dataset");
         if(name === "") {
@@ -492,7 +496,7 @@ var BreadcrumbsView = DefaultView.extend({
         this.$el.find(selector).text(name);
     },
     
-    updateAnalysis: function() {
+    updateAnalysis: function updateAnalysis() {
         var selector = ".tg-nav-breadcrumb-analysis";
         var name = this.selectionModel.get("analysis");
         if(name === "") {
@@ -503,7 +507,7 @@ var BreadcrumbsView = DefaultView.extend({
         this.$el.find(selector).text(name);
     },
     
-    updateTopic: function() {
+    updateTopic: function updateTopic() {
         var selector = ".tg-nav-breadcrumb-topic";
         var name = this.selectionModel.get("topic");
         if(name === "") {
@@ -514,7 +518,7 @@ var BreadcrumbsView = DefaultView.extend({
         this.$el.find(selector).text(name);
     },
     
-    updateDocument: function() {
+    updateDocument: function updateDocument() {
         var selector = ".tg-nav-breadcrumb-document";
         var name = this.selectionModel.get("document");
         if(name === "") {
@@ -523,13 +527,24 @@ var BreadcrumbsView = DefaultView.extend({
         this.$el.find(selector).text(name);
     },
     
-    updateTopicNameScheme: function() {
+    updateTopicNameScheme: function updateTopicNameScheme() {
         var selector = ".tg-nav-breadcrumb-topic-name-scheme";
         var name = this.selectionModel.get("topicNameScheme");
         if(name === "") {
             name = "No name scheme selected.";
         }
         this.$el.find(selector).text(name);
+    },
+    
+    updateMetadata: function updateMetadata() {
+        var selector = ".tg-nav-breadcrumb-metadata";
+        var name = this.selectionModel.get("metadataName");
+        var value = this.selectionModel.get("metadataValue");
+        var text = name + "," + value;
+        if(name === "" && value === "") {
+            text = "No metadata selected.";
+        }
+        this.$el.find(selector).text(text);
     },
     
 });

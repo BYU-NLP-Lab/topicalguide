@@ -23,6 +23,8 @@ var SelectionModel = Backbone.Model.extend({
         "topic": String, 
         "document": String, 
         "topicNameScheme": String,
+        "metadataName": String, // Document metadata.
+        "metadataValue": String, // Document metadata.
     },
     
     initialize: function() {
