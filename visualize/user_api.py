@@ -13,8 +13,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from visualize.api_utilities import get_list_filter, filter_csv_to_list, get_filter_int, filter_to_json, filter_nothing, filter_request
-
-
+from topicalguide.settings import DEBUG
 
 # Specify how to filter the incoming request by "key: filter_function" pairs.
 # The filter_function must throw an error on invalid values or return sanitized values.
@@ -119,7 +118,7 @@ def dataset_add(options):
                 metadata_type = options['metadata_type']
                 name = metadata_type['name']
                 datatype = metadata_type['datatype']
-                metadata_type_db, created = MetadataType.objects.get_or_create(name=name, datatype=datatype)
+                metadata_type_db, created = MetadataType.objects.get_or_create(dataset=dataset_db, name=name, datatype=datatype)
                 doc_mdt_db, created2 = DatasetEmptyDocumentMetadataType.objects.get_or_create(dataset=dataset_db, metadata_type=metadata_type_db)
                 added['document_metadata_type'] = {
                     "success": True,

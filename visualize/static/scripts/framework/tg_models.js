@@ -83,9 +83,11 @@ var SelectionModel = Backbone.Model.extend({
         
         if(signalTrigger) {
             if("dataset" in toSet) {
-                resetHelper(toSet, ["analysis", "topic", "document", "topicNameScheme"]);
+                resetHelper(toSet, ["analysis", "topic", "document", "topicNameScheme", "metadataName", "metadataValue"]);
             } else if("analysis" in toSet) {
-                 resetHelper(toSet, ["topic", "topicNameScheme"]);
+                resetHelper(toSet, ["topic", "topicNameScheme"]);
+            } else if("metadataName" in toSet) {
+                resetHelper(toSet, ["metadataValue"]);
             }
             if(DEBUG_SELECTION_MODEL) console.log("SelectionModel.set middle: " + hashToUrl(this.attributes));
             Backbone.Model.prototype.set.call(this, toSet, options);

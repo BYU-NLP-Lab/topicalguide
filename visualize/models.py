@@ -74,8 +74,8 @@ class MetadataType(models.Model):
     
     dataset = models.ForeignKey('Dataset', related_name='metadata_types')
     name = models.CharField(max_length=128)
-    datatype = models.CharField(max_length=64, choices=DATATYPE_CHOICES, default=TEXT)
-    meaning = models.CharField(max_length=32, choices=MEANING_CHOICES, default=UNKNOWN)
+    datatype = models.CharField(max_length=32, choices=DATATYPE_CHOICES, default=TEXT)
+    meaning = models.CharField(max_length=32, choices=MEANING_CHOICES, default=UNKNOWN, null=False)
     
     class Meta(object):
         unique_together = ('dataset', 'name', 'datatype')
@@ -282,8 +282,9 @@ class Dataset(models.Model):
     
     def get_document_metadata_meanings(self):
         query = self.documents.values_list('metadata_values__metadata_type__name', 'metadata_values__metadata_type__meaning').distinct()
+        query2 = self.empty_document_metadata_types.values_list('metadata_type__name', 'metadata_type__meaning').distinct()
         result = {}
-        for name, meaning in query:
+        for name, meaning in chain(query, query2):
             result[name] = meaning
         return result
     

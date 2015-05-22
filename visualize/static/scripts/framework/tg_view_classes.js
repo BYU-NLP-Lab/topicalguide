@@ -455,7 +455,7 @@ var BreadcrumbsView = DefaultView.extend({
 '<span class="tg-nav-breadcrumb-span">Analysis:&nbsp;<span class="tg-nav-breadcrumb-analysis blue"></span></span>'+
 '<span class="tg-nav-breadcrumb-span">Topic:&nbsp;<span class="tg-nav-breadcrumb-topic blue"></span></span>'+
 '<span class="tg-nav-breadcrumb-span">Topic Name Scheme:&nbsp;<span class="tg-nav-breadcrumb-topic-name-scheme blue"></span></span>'+
-'<span class="tg-nav-breadcrumb-span">Metadata:&nbsp;<span class="tg-nav-breadcrumb-metadata blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Document Metadata:&nbsp;<span class="tg-nav-breadcrumb-metadata blue"></span></span>'+
 '</div>'+
 '</div>',
     
@@ -540,9 +540,13 @@ var BreadcrumbsView = DefaultView.extend({
         var selector = ".tg-nav-breadcrumb-metadata";
         var name = this.selectionModel.get("metadataName");
         var value = this.selectionModel.get("metadataValue");
-        var text = name + "," + value;
-        if(name === "" && value === "") {
-            text = "No metadata selected.";
+        var text = "No metadata selected.";
+        if(name !== "") {
+            if(value === "") {
+                text = name;
+            } else {
+                text = name + ": " + value;
+            }
         }
         this.$el.find(selector).text(text);
     },
@@ -770,7 +774,7 @@ var TopicalGuideView = DefaultView.extend({
             var currentView = this.viewModel.get("currentViewInstance");
             currentView.settingsModel.set(settings);
         } catch(err) {
-            console.log(err);
+            console.log(err.stack);
         }
     },
     

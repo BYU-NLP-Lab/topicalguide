@@ -9,28 +9,28 @@ var AllTopicSubView = DefaultView.extend({
     shortName: "all_topics",
     
     baseTemplate:
-"<div id=\"form-container\" class=\"row container-fluid\"></div>"+
-"<div id=\"table-container\" class=\"row container-fluid\"></div>",
+'<div id="form-container" class="row container-fluid"></div>'+
+'<div id="table-container" class="row container-fluid"></div>',
     
     formTemplate:
-"<form role=\"form\">"+
-"    <div class=\"form-group col-xs-6\">"+
-"        <label for=\"words-input\">Filter Topics by Words</label>"+
-"        <input id=\"words-input\" class=\"form-control\" type=\"text\" placeholder=\"Enter words...\"></input>"+
-"    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
-"        <label for=\"top-words-input\">Top Words</label>"+
-"        <input id=\"top-words-input\" class=\"form-control\" type=\"number\" placeholder=\"Enter a #.\"></input>"+
-"    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
-"        <label for=\"display-words-input\">Display Words</label>"+
-"        <input id=\"display-words-input\" class=\"form-control\" type=\"number\" placeholder=\"Enter a #.\"></input>"+
-"    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
-"        <label for=\"submit-button\"></label>"+
-"        <input id=\"submit-button\" class=\"btn btn-default\" type=\"submit\"></input>"+
-"    </div>"+
-"</form>",
+'<form role="form">'+
+'    <div class="form-group col-xs-6">'+
+'        <label for="words-input">Filter Topics by Words</label>'+
+'        <input id="words-input" class="form-control" type="text" placeholder="Enter words..."></input>'+
+'    </div>'+
+'    <div class="form-group col-xs-2">'+
+'        <label for="top-words-input">Top Words</label>'+
+'        <input id="top-words-input" class="form-control" type="number" placeholder="Enter a #."></input>'+
+'    </div>'+
+'    <div class="form-group col-xs-2">'+
+'        <label for="display-words-input">Display Words</label>'+
+'        <input id="display-words-input" class="form-control" type="number" placeholder="Enter a #."></input>'+
+'    </div>'+
+'    <div class="form-group col-xs-2">'+
+'        <label for="submit-button"></label>'+
+'        <input id="submit-button" class="btn btn-default" type="submit"></input>'+
+'    </div>'+
+'</form>',
     
     initialize: function() {
         var settings = _.extend({ "words": "*", "topicTopNWords": 10, "topicDisplayNWords": 10, "sortBy": 1, "sortAscending": true }, this.settingsModel.attributes)
