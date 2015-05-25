@@ -145,10 +145,10 @@ def query_server(options):
     """Gather information about the server."""
     
     def get_version(x):
-        tags = Repo(__file__).tags
-        if tags:
+        try:
+            tags = Repo(__file__).tags
             return unicode(tags[-1])
-        else:
+        except:
             return 'No version available.'
     
     def get_terms(x):
