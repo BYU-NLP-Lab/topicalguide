@@ -1,3 +1,5 @@
+"use strict";
+
 
 var PlotView = DefaultView.extend({
     
@@ -33,6 +35,7 @@ var PlotView = DefaultView.extend({
 "</div>",
 
     readableName: "2D Plots",
+    shortName: "2dplots",
     
     initialize: function() {
         this.selectionModel.on("change:analysis", this.render, this);
@@ -54,6 +57,7 @@ var PlotView = DefaultView.extend({
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
             "document_limit": 1000,
+            "dataset_attr": "document_metadata_meanings",
         };
     },
     
@@ -148,6 +152,15 @@ var PlotView = DefaultView.extend({
         var selections = this.selectionModel.attributes;
         var analysis = data.datasets[selections["dataset"]].analyses[selections["analysis"]];
         
+        var meanings = data.datasets[selections["dataset"]].document_metadata_meanings;
+        var timesAttributes = [];
+        for(var meaningKey in meanings) {
+            var meaning = meanings[meaningKey];
+            if(meaning === "time") {
+                timesAttributes.push(meaningKey);
+            }
+        }
+        
         var groupNames = {};
         var valueNames = {};
         var valueTypes = {};
@@ -155,28 +168,28 @@ var PlotView = DefaultView.extend({
         // Put data into the correct format.
         var documents = analysis.documents;
         // Make sure that topic relations are in percentage forms.
-        for(docKey in documents) {
+        for(var docKey in documents) {
             var doc = documents[docKey];
             var totalTokens = 0;
             var topics = doc.topics;
-            for(key in topics) {
+            for(var key in topics) {
                 totalTokens += topics[key];
             }
-            for(key in topics) {
+            for(var key in topics) {
                 topics[key] = topics[key]/totalTokens;
             }
             // Add uniform property.
             doc.other = {};
             doc.other.uniform = 0;
             
-            for(key in doc) {
+            for(var key in doc) {
                 groupNames[key] = toTitleCase(key.replace(/_/g, " "));
                 if(!(key in valueNames)) {
                     valueNames[key] = {};
                     valueTypes[key] = {};
                 }
                 var group = doc[key];
-                for(valKey in group){
+                for(var valKey in group){
                     if(!(valKey in valueNames[key])) {
                         valueNames[key][valKey] = toTitleCase(valKey.replace(/_/g, " "));
                         valueTypes[key][valKey] = this.getType(group[valKey]);
@@ -187,10 +200,9 @@ var PlotView = DefaultView.extend({
         
         // Make sure the topic's readable name is set.
         var allTopics = analysis.topics;
-        console.log(valueNames);
         if("topics" in valueNames) {
             var valueTopics = valueNames.topics;
-            for(topKey in valueTopics) {
+            for(var topKey in valueTopics) {
                 valueTopics[topKey] = toTitleCase(allTopics[topKey].names.Top3);
             }
         }
@@ -200,6 +212,7 @@ var PlotView = DefaultView.extend({
             groupNames: groupNames,
             valueNames: valueNames,
             valueTypes: valueTypes,
+            times: timesAttributes,
         };
     },
     
@@ -286,11 +299,30 @@ var PlotView = DefaultView.extend({
             var value = color.property("value");
             that.settingsModel.set({ colorSelection: { group: group, value: value } });
         });
+
+        var yvalue = "0";
+        var ygroup = "topics";
+        if(this.selectionModel.nonEmpty(["topic"])) {
+            yvalue = this.selectionModel.get("topic");
+            yAxis.property("value", yvalue);
+        }
         
+        //~ console.log("Y: " + yvalue + " " + ygroup);
+        
+        var xvalue = value;
+        var xgroup = group;
+        if(this.model.get("times").size !== 0) {
+            xvalue = this.model.get("times")[0];
+            xgroup = "metadata";
+            xAxis.property("value", xvalue);
+        }
+
+        //~ console.log("X: " + xvalue + " " + xgroup);
+
         // Set initial groups and values for selections.
         var defaultSettings = {
-            xSelection: { group: group, value: value },
-            ySelection: { group: group, value: value },
+            xSelection: { group: xgroup, value: xvalue },
+            ySelection: { group: ygroup, value: yvalue },
             radiusSelection: { group: "other", value: "uniform" },
             colorSelection: { group: group, value: value },
             removing: false,
@@ -394,7 +426,11 @@ var PlotView = DefaultView.extend({
             .attr("cx", 0)
             .attr("cy", 0)
             .style("cursor", "pointer")
-            .on("click", onDocumentClick);
+            .on("click", onDocumentClick)
+            .classed("tg-tooltip", true)
+            .attr("data-tg-document-name", function(d, i) {
+                return d.key;
+            });
         // Render the node count.
         this.nodeCount = svg.append("g")
             .attr("transform", "translate("+dim.width/2+",0)")
@@ -437,7 +473,7 @@ var PlotView = DefaultView.extend({
     getNoData: function(group, value) {
         var data = this.model.attributes.data;
         var noData = {};
-        for(key in data) {
+        for(var key in data) {
             var val = data[key][group][value];
             if(val === undefined || val === null) {
                 noData[key] = true;
@@ -502,7 +538,7 @@ var PlotView = DefaultView.extend({
         var count = 0;
         var text = {}; // Used if the type is determined to be text.
         var type = false;
-        for(key in data) {
+        for(var key in data) {
             if(key in excluded) continue;
             var val = data[key][group][value];
             
@@ -530,7 +566,7 @@ var PlotView = DefaultView.extend({
         
         if(type === "text") {
             var domain = [];
-            for(k in text) domain.push(k);
+            for(var k in text) domain.push(k);
             domain.sort();
             text = domain;
         }
@@ -752,14 +788,15 @@ var PlotView = DefaultView.extend({
 var PlotViewManager = DefaultView.extend({
     
     readableName: "2D Plots",
+    shortName: "2dplots",
     
     mainTemplate: 
 "<div id=\"plot-view-container\" class=\"container-fluid\"></div>"+
 "<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
     
     initialize: function() {
-        this.plotView = new PlotView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
-        this.documentInfoView = new DocumentInfoView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
+        this.plotView = new PlotView(_.extend({}, this.getAllModels()));
+        this.documentInfoView = new DocumentInfoView(_.extend({}, this.getAllModels()));
     },
     
     cleanup: function() {
@@ -780,4 +817,4 @@ var PlotViewManager = DefaultView.extend({
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], PlotViewManager);
+addViewClass(["Visualizations"], PlotViewManager);

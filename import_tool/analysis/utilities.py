@@ -32,7 +32,7 @@ def create_analysis(database_id, dataset_db, analysis, meta_types_db):
         
         if created:
             metadata_types = analysis.metadata_types
-            create_metadata_types(database_id, metadata_types, meta_types_db)
+            create_metadata_types(database_id, dataset_db, metadata_types, meta_types_db)
             create_metadata(database_id, [analysis_db], 
                             AnalysisMetadataValue, 'analysis',
                             metadata_types, 

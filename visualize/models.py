@@ -2,6 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 import os
 import io
+from itertools import chain
 from dateutil import tz
 from DateTime import DateTime
 from django.db import models
@@ -20,7 +21,7 @@ MAX_ELEMENTS_FOR_IN_OPERATOR = 500 # Database dependent.
 ##############################################################################
 
 class Metric(models.Model):
-    name = models.CharField(max_length=128)# TODO , unique=True)
+    name = models.CharField(max_length=128, unique=True)
     
     def __unicode__(self):
         return unicode(self.name)
@@ -36,25 +37,119 @@ class MetricValue(models.Model):
         return unicode(self.value)
 
 class MetadataType(models.Model):
+    
+    """\
+    These are the supported types that the system knows how to handle.
+    """
+    INTEGER = 'int'
+    FLOAT = 'float'
+    TEXT = 'text'
+    BOOLEAN = 'bool'
+    DATETIME = 'datetime'
+    ORDINAL = 'ordinal'
+    DATATYPE_CHOICES = (
+        (INTEGER, 'Integer'),
+        (FLOAT, 'Float'),
+        (TEXT, 'Text'),
+        (BOOLEAN, 'Boolean'),
+        (DATETIME, 'Date/Time'),
+        (ORDINAL, 'Ordinal'),
+    )
+    
+    """\
+    Meanings are a way to label certain information so that certain metadatums
+    can be used in a specific way.
+    The meanings are used as follows:
+    
+    time -- allows the metric system to correctly select the right field for
+            computing the temperature metric
+    unknown -- the default
+    """
+    TIME = 'time'
+    UNKNOWN = 'unknown'
+    MEANING_CHOICES = (
+        (TIME, 'Time'),
+        (UNKNOWN, 'Unknown'),
+    )
+    
+    dataset = models.ForeignKey('Dataset', related_name='metadata_types')
     name = models.CharField(max_length=128)
-    datatype = models.CharField(max_length=64)
-    ordinal = models.ForeignKey('Ordinal', null=True)
+    datatype = models.CharField(max_length=32, choices=DATATYPE_CHOICES, default=TEXT)
+    meaning = models.CharField(max_length=32, choices=MEANING_CHOICES, default=UNKNOWN, null=False)
     
     class Meta(object):
-        unique_together = ('name', 'datatype')
+        unique_together = ('dataset', 'name', 'datatype')
     
     def __unicode__(self):
-        is_ordinal = ordinal is not None
+        is_ordinal = self.ordinal is not None
         return 'Name: %s\nDatatype: %s\nOrdinal: %s'%(unicode(self.name), unicode(self.datatype), unicode(is_ordinal))
+    
+    @staticmethod
+    def get_allowed_types():
+        return dict(MetadataType.DATATYPE_CHOICES)
+    
+    @staticmethod
+    def determine_type(value):
+        """\
+        value -- a string
+        Return the type of the value as a string.
+        Return one of 'int', 'float', 'bool', 'text' (note that 'ordinal' must be
+        user specified and cannot be determined simply by looking at it).
+        Example: If value = '34' then the type returned MetadataType.INTEGER ('int').
+        """
+        try:
+            int(value)
+            return MetadataType.INTEGER
+        except:
+            pass
+        try:
+            float(value)
+            return MetadataType.FLOAT
+        except:
+            pass
+        lower_value = value.lower()
+        if lower_value == 'true' or lower_value == 'false' or lower_value == 't' or lower_value == 'f':
+            return MetadataType.BOOLEAN
+        try:
+            DateTime(value)
+            return MetadataType.DATETIME
+        except:
+            pass
+        return MetadataType.TEXT
+    
+    @staticmethod
+    def is_supertype(super_type, sub_type):
+        """\
+        super_type -- a string representing the type
+        sub_type -- a string representing the type
+        Return true if super_type is considered a broader class; false otherwise.
+        Heirarchy:
+                      text
+                       |
+                  -----------------------------
+                  /      \           \        \    
+             float        datetime    bool     ordinal
+               /
+            int
+        """
+        if super_type == MetadataType.TEXT or super_type == sub_type:
+            return True
+        if super_type == MetadataType.FLOAT and sub_type == MetadataType.INTEGER:
+            return True
+        return False
+        
 
 class Ordinal(models.Model):
-    def __unicode__(self):
-        return unicode(self.id)
-
-class OrdinalValues(models.Model):
-    sequence = models.ForeignKey('Ordinal', related_name='values') # An id for the entire sequence
-    index = models.PositiveIntegerField()
-    value = models.CharField(max_length=64)
+    """\
+    Ordinals cannot have any holes in the values. It should start at zero \
+    and any other values in the sequence must follow in order.
+    Note that there can be multiple names for each value. This is done \
+    because "Jan.", "Jan", "jan", "january", and "January" all map to the same \
+    value in the sequence.
+    """
+    sequence = models.ForeignKey('MetadataType', related_name='ordinals') # An id for the entire sequence
+    value = models.PositiveIntegerField()
+    name = models.CharField(max_length=64)
     
     def __unicode__(self):
         return unicode(self.index) + ':' + value
@@ -73,16 +168,17 @@ class MetadataValue(models.Model):
     def __unicode__(self):
         return unicode(self.value())
 
-    def set(self, value, value_type='text'):
-        if value_type == 'float':
+    def set(self, value):
+        value_type = self.metadata_type.datatype
+        if value_type == MetadataType.FLOAT:
             self.float_value = float(value)
-        elif value_type == 'text' or value_type == 'ordinal':
+        elif value_type == MetadataType.TEXT or value_type == MetadataType.ORDINAL:
             self.text_value = unicode(value)
-        elif value_type == 'int':
+        elif value_type == MetadataType.INTEGER:
             self.int_value = int(value)
-        elif value_type == 'bool':
+        elif value_type == MetadataType.BOOLEAN:
             self.bool_value = bool(value)
-        elif value_type == 'datetime':
+        elif value_type == MetadataType.DATETIME:
             self.datetime_value = DateTime(value).asdatetime()
         else:
             raise Exception("Values of type '{0}' aren't supported by MetadataValue".format(value_type))
@@ -106,22 +202,7 @@ class MetadataValue(models.Model):
         return result
 
     def type(self):
-        type = None
-        if self.float_value:
-            type = 'float'
-        if self.text_value:
-            if type: raise Exception("MetadataValues cannot be of more than one type.")
-            type = 'text'
-        if self.int_value:
-            if type: raise Exception("MetadataValues cannot be of more than one type.")
-            type = 'int'
-        if self.bool_value:
-            if type: raise Exception("MetadataValues cannot be of more than one type.")
-            type = 'bool'
-        if self.datetime_value:
-            if type: raise Exception("MetadataValues cannot be of more than one type.")
-            type = 'datetime'
-        return type
+        return self.metadata_type.datatype
 
 ##############################################################################
 # Tables for gathering statistics.
@@ -149,9 +230,8 @@ class IPAddresses(models.Model):
 ##############################################################################
 
 class View(models.Model):
-    url_hash = models.CharField(max_length=128) # TODO get actual length and type of hash
+    url_hash = models.CharField(max_length=128) # TODO get actual length and type of hash (text hash or long integer???)
     url = models.URLField(max_length=10000)
-    # TODO add timestamp so they can expire? add code to allow refreshing expiration
     favorite_users = \
         models.ManyToManyField('auth.User', related_name='favorite_views')
     
@@ -194,9 +274,35 @@ class Dataset(models.Model):
     
     def get_document_metadata_types(self):
         query = self.documents.values_list('metadata_values__metadata_type__name', 'metadata_values__metadata_type__datatype').distinct()
+        query2 = self.empty_document_metadata_types.values_list('metadata_type__name', 'metadata_type__datatype').distinct()
         result = {}
-        for name, datatype in query:
+        for name, datatype in chain(query, query2):
             result[name] = datatype
+        return result
+    
+    def get_document_metadata_meanings(self):
+        query = self.documents.values_list('metadata_values__metadata_type__name', 'metadata_values__metadata_type__meaning').distinct()
+        query2 = self.empty_document_metadata_types.values_list('metadata_type__name', 'metadata_type__meaning').distinct()
+        result = {}
+        for name, meaning in chain(query, query2):
+            result[name] = meaning
+        return result
+    
+    def get_document_metadata_ordinals(self):
+        query = self.documents.values_list('metadata_values__metadata_type__name', 
+                                           'metadata_values__metadata_type__datatype', 
+                                           'metadata_values__metadata_type__ordinals__value',
+                                           'metadata_values__metadata_type__ordinals__name')\
+                                           .distinct()\
+                                           .order_by('metadata_values__metadata_type__ordinals__value')
+        result = {}
+        for meta_name, datatype, index, ord_name in query:
+            if datatype == MetadataType.ORDINAL:
+                array = result.setdefault(meta_name, [])
+                if index >= len(array):
+                    array.append([ord_name])
+                else:
+                    array[index].append(ord_name)
         return result
     
     @property
@@ -229,6 +335,10 @@ class Dataset(models.Model):
 
 class DatasetMetadataValue(MetadataValue):
     dataset = models.ForeignKey('Dataset', related_name='metadata_values')
+
+class DatasetEmptyDocumentMetadataType(models.Model):
+    dataset = models.ForeignKey('Dataset', related_name='empty_document_metadata_types')
+    metadata_type = models.ForeignKey('MetadataType')
 
 class DatasetMetricValue(MetricValue):
     dataset = models.ForeignKey('Dataset', related_name='metric_values')
@@ -413,10 +523,14 @@ class Topic(models.Model):
         topic_words = topic_words.order_by('-count')
         return {value['word_type__word']: value['count'] for value in topic_words}
     
-    def top_n_words(self, words='*', top_n=10):
+    def top_n_words(self, words='*', top_n=10, metadata_value=None):
         topic_words = self.tokens.values('word_type__word').annotate(count=Count('word_type__word'))
         if words != '*':
             topic_words = topic_words.filter(word_type__word__in=words)
+        if metadata_value:
+            topic_words = topic_words.filter(document__metadata_values__metadata_type__name=metadata_value[0], \
+                document__metadata_values__text_value=metadata_value[1])
+            
         topic_words = topic_words.order_by('-count')
         return {value['word_type__word']: {'token_count': value['count']} for value in topic_words[:top_n]}
     

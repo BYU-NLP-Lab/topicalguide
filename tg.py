@@ -3,6 +3,7 @@ from __future__ import division, print_function, unicode_literals
 
 import os
 import re
+import imp
 from os.path import isfile, isdir, isabs, join
 import argparse
 import time
@@ -99,6 +100,21 @@ def exec_import_dataset(args):
             public=args.public, public_documents=args.public_documents, 
             verbose=args.verbose)
 
+def exec_document_metadata_generator(args):
+    module = imp.load_source('metadata_generator', args.python_file)
+    
+    database_info = None
+    if args.database_config:
+        database_info = get_database_configurations(args.database_config)
+    
+    # Make sure the tables exist in the database and get a database identifier.
+    database_id = import_system_utilities.run_syncdb(database_info)
+    # Make sure that the default database exists
+    if database_id != 'default': # Check so syncdb isn't run twice in a row for no reason.
+        import_system_utilities.run_syncdb(None)
+    
+    import_system_utilities.run_document_metadata_generator(database_id, args.dataset_identifier, module.metadata_generator)
+    
 
 def get_analysis(args, directories):
     """Read the args and return a dataset."""
@@ -293,6 +309,23 @@ def main():
                                help='Nothing is imported into the database, a list of gathered facts about the dataset is run.')
     import_parser.set_defaults(which='import')
     
+    # metadata_generator command
+    document_metadata_generator_parser = subparsers.add_parser('document_metadata_generator', help='Generates dataset specific metadata.')
+    add_database_flag(document_metadata_generator_parser)
+    document_metadata_generator_parser.add_argument('-v', '--verbose', action='store_true', default=False,
+                                                    help='Display information and warnings to user.')
+    document_metadata_generator_parser.add_argument('dataset_identifier', type=str, help="""\
+                                                                                         The dataset identifier as printed at the \
+                                                                                         end of the import command or as shown in \
+                                                                                         the command "list".
+                                                                                         """)
+    document_metadata_generator_parser.add_argument('python_file', type=str, help="""\
+                                                                                  The python file must contain a function called metadata_generator.
+                                                                                  The argument is an iterator over Django document objects. \
+                                                                                  Returns an iterator of ().
+                                                                                  """)
+    document_metadata_generator_parser.set_defaults(which='document_metadata_generator')
+    
     # analysis command
     analysis_parser = subparsers.add_parser('analyze', help='Allows you to choose and run an analysis on an imported dataset. Note that the basic metrics will always be run.')
     analysis_parser.add_argument('dataset_identifier', type=str, help="""\
@@ -397,6 +430,7 @@ def main():
     start_time = time.time()
     execute = {
         'import': exec_import_dataset,
+        'document_metadata_generator': exec_document_metadata_generator,
         'analyze': exec_run_analysis,
         'list': exec_list,
         'measure': exec_run_metrics,

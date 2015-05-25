@@ -3,6 +3,7 @@ import os
 import re
 from DateTime import DateTime
 from HTMLParser import HTMLParser
+from visualize.models import MetadataType
 
 
 def seperate_metadata_and_content(s):
@@ -108,7 +109,29 @@ def get_type(value):
         pass
     return 'text'
 
-def collect_types(metadata_types, metadata):
+def verify_types(metadata_types, metadata, metadata_ordinal_sets={}):
+    """Makes sure that the types in the metadata match the types in the
+    given metadata_types. If there are extra keys or missing keys in metadata 
+    they are ignored.
+    metadata_ordinal_sets -- only used if metadata_types contains 'ordinal'; 
+                             used to check for a valid value
+    Return a list of the offending keys; empty list otherwise.
+    """
+    result = []
+    for name, t in metadata_types.iteritems():
+        if name in metadata:
+            value = metadata[name]
+            if t == MetadataType.ORDINAL:
+                if value not in metadata_ordinal_sets[name]:
+                    result.append(name)
+            else:
+                determined_type = MetadataType.determine_type(value)
+                if t != determined_type:
+                    if not MetadataType.is_supertype(t, determined_type):
+                        result.append(name)
+    return result
+
+def collect_types(metadata_types, metadata, doc_meta_ordinal_sets={}):
     """
     Takes a dictionary metadata_types that keeps track of the types so far.
     For each key, value pair in metadata if the key is not present in \
@@ -116,20 +139,25 @@ def collect_types(metadata_types, metadata):
     Note that if there are conflicting types then the type in metadata_types is \
     degraded to 'text'.
     """
-    for meta_key in metadata:
-        t = get_type(metadata[meta_key])
+    for meta_key, meta_value in metadata.iteritems():
+        t = MetadataType.determine_type(meta_value)
         if not meta_key in metadata_types:
+            if meta_key in doc_meta_ordinal_sets:
+                if meta_value in doc_meta_ordinal_sets[meta_key]:
+                    t = MetadataType.ORDINAL
             metadata_types[meta_key] = t
         else:
-            if not metadata_types[meta_key] == t and metadata_types[meta_key] != 'text':
-                if t == 'float' and metadata_types[meta_key] == 'int':
-                    metadata_types[meta_key] = 'float'
-                elif t == 'int' and metadata_types[meta_key] == 'float':
-                    pass
-                elif t == 'text' and metadata_types[meta_key] == 'date':
-                    metadata_types[meta_key] = 'date'
+            current_type = metadata_types[meta_key]
+            if not current_type == t and current_type != MetadataType.TEXT:
+                if meta_key in doc_meta_ordinal_sets and meta_value in doc_meta_ordinal_sets[meta_key]:
+                    t = MetadataType.ORDINAL
+                elif t == MetadataType.FLOAT and current_type == MetadataType.INTEGER:
+                    t = MetadataType.FLOAT
+                elif t == MetadataType.INTEGER and current_type == MetadataType.FLOAT:
+                    t = current_type
                 else:
-                    metadata_types[meta_key] = 'text'
+                    t = MetadataType.TEXT
+                metadata_types[meta_key] = t
 
 def create_subdocuments(name, content, major_delimiter='\n', min_chars=1000):
     """

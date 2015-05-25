@@ -1,3 +1,4 @@
+"use strict";
 
 var TopicsOverTimeView = DefaultView.extend({
 
@@ -25,6 +26,7 @@ var TopicsOverTimeView = DefaultView.extend({
         "</div>",
 
     readableName: "Topics Over Time",
+    shortName: "topics_over_time",
 
     initialize: function() {
         this.selectionModel.on("change:analysis", this.render, this);
@@ -128,8 +130,8 @@ var TopicsOverTimeView = DefaultView.extend({
         // Get selects to be populated
         var topicSelect = this.topicSelect = controls.select("#topics-control");
         var raw_topics = this.model.attributes.raw_topics;
-        for (key in raw_topics) {
-            topic = raw_topics[key];
+        for (var key in raw_topics) {
+            var topic = raw_topics[key];
             topicSelect
                 .append("option")
                 .attr("value", key)
@@ -140,7 +142,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var metadataSelect = this.metadataSelect = controls.select("#metadata-control");
         var metadata = this.model.get("metadata_types");
         var defaultMetadata = null;
-        for (index in metadata) {
+        for (var index in metadata) {
             var type = metadata[index];
             if (defaultMetadata === null) defaultMetadata = type;
             metadataSelect
@@ -423,8 +425,8 @@ var TopicsOverTimeView = DefaultView.extend({
 
     getColorScale: function(a, b, count) {
         var interval = 1.0 / (count - 1);
-        interpolator = d3.interpolateHsl(a, b);
-        scale = function(val) {
+        var interpolator = d3.interpolateHsl(a, b);
+        var scale = function(val) {
             if (val * interval > 1.0) return interpolator(1.0);
             return interpolator(val * interval);
         };
@@ -1100,7 +1102,7 @@ var TopicsOverTimeView = DefaultView.extend({
         var metaTopic = topic[this.settingsModel.get("metadataSelection")]
         var indices = metaTopic.metaIndices.filter(function(item) { return item.index === 0; }); // Filter indices to only draw one point per year
         indices.topicId = topicId;
-        data = metaTopic.data;
+        var data = metaTopic.data;
 
         path
             .datum(indices)
@@ -1175,7 +1177,7 @@ var TopicsOverTimeView = DefaultView.extend({
             metadataInfo = this.getMetadataInfo(documents);
 
             for (var topic in analysisData.topics) {
-                processedTopic = this.processTopicData(topic, documents, metadataInfo);
+                var processedTopic = this.processTopicData(topic, documents, metadataInfo);
                 var topicData = topics[topic] = processedTopic.data
                 topics[topic].name = toTitleCase(analysisData.topics[topic].names.Top3);
             }
@@ -1480,5 +1482,5 @@ var TopicsOverTimeView = DefaultView.extend({
 
 });
 
-globalViewModel.addViewClass(["Visualizations"], TopicsOverTimeView);
+addViewClass(["Visualizations"], TopicsOverTimeView);
 

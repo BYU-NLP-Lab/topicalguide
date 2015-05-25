@@ -1,7 +1,8 @@
-
+"use strict";
 
 var ChordView = DefaultView.extend({
     readableName: "Chord Diagram",
+    shortName: "chord",
     
     mainTemplate:
 "<div id=\"chord-diagram-container\" class=\"row\"></div>"+
@@ -68,27 +69,27 @@ var ChordView = DefaultView.extend({
                 .range(["#2166AC", "snow", "#AF182B"]); // Dark blue to dark red.
             
             // Extract and store data in this.model.
-            var topics = extractTopics(data);
+            var topics = extractTopics(data, this.selectionModel);
             var topicCount = _.size(topics);
-            metricOptions = [];
-            for(key in topics[0].pairwise) {
+            var metricOptions = [];
+            for(var key in topics[0].pairwise) {
                 metricOptions.push(key);
             }
             metricOptions.sort();
             var names = {};
-            for(i=0; i<topicCount; i++) { // Extract names.
+            for(var i = 0; i < topicCount; i++) { // Extract names.
                 names[i] = topics[i].names.Top3;
             }
             var metric = metricOptions[0];
             var matrices = {};
             var extremes = {};
-            for(i=0; i<metricOptions.length; i++) { // Store pairwise info as matrix and find extremes.
+            for(var i = 0; i < metricOptions.length; i++) { // Store pairwise info as matrix and find extremes.
                 var m = metricOptions[i];
                 extremes[m] = {};
                 var max = 0;
                 var min = 1;
                 var matrix = matrices[m] = [];
-                for(j=0; j<topicCount; j++) {
+                for(var j = 0; j < topicCount; j++) {
                     matrix.push(_.map(topics[j].pairwise[m], function(value, index, array) {
                         if(value > max && index !== j) max = value;
                         if(value < min && value !== 0) min = value;
@@ -151,7 +152,7 @@ var ChordView = DefaultView.extend({
         var palette = controls.select("#palette");
         var colors = [];
         var numColorSwatches = 40;
-        for(i=0; i<(numColorSwatches-1); i++) {
+        for(var i = 0; i < (numColorSwatches-1); i++) {
             colors.push(i/(numColorSwatches-1));
         }
         colors.push(1);
@@ -193,12 +194,12 @@ var ChordView = DefaultView.extend({
         var total = 0;
         var count = 0;
         var emptyGroups = {};
-        for(i=0; i<inMatrix.length; i++) {
+        for(var i = 0; i < inMatrix.length; i++) {
             var inRow = inMatrix[i];
             outMatrix.push([]);
             var outRow = outMatrix[i];
             var empty = true;
-            for(j=0; j<inRow.length; j++) {
+            for(var j = 0; j < inRow.length; j++) {
                 if(inRow[j] < min || inRow[j] > max) {
                     outRow.push(0);
                 } else {
@@ -387,7 +388,7 @@ var ChordView = DefaultView.extend({
     
     renderTopicInfo: function() {
         if(this.topicInfo === undefined) {
-            this.topicInfo = new SingleTopicView({ el: $("#topic-info-container") });
+            this.topicInfo = new SingleTopicView(_.extend({ el: $("#topic-info-container") }, this.getAllModels()));
             this.topicInfo.render();
         }
     },
@@ -403,4 +404,4 @@ var ChordView = DefaultView.extend({
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], ChordView);
+addViewClass(["Visualizations"], ChordView);

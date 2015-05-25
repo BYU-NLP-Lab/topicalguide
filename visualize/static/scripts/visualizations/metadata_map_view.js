@@ -1,5 +1,3 @@
-
-
 /**
  * update methods read the model (respond to model updates) and update the display accordingly
  * change/click methods respond to user interaction and change the models triggering the appropriate events
@@ -8,8 +6,12 @@
 var MetadataMapView = DefaultView.extend({
     
     readableName: "Metadata Map",
+    shortName: "metadata_map",
 
     initialize: function() {
+        var defaults = {
+            
+        };
         this.selectionModel.on("change:analysis", this.render, this);
         this.model = new Backbone.Model(); // Used to store document data.
         this.model.set({
@@ -69,17 +71,6 @@ var MetadataMapView = DefaultView.extend({
 "<div id=\"metadata-map-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
     
     controlsTemplate:
-"<h4><b>Metadata Selection</b></h4>"+
-"<hr />"+
-"<div>"+
-"    <label for=\"metadata-name-control\">Name:</label>"+
-"    <select id=\"metadata-name-control\" type=\"selection\" class=\"form-control\" name=\"Name\"></select>"+
-"</div>"+
-"<div>"+
-"    <label for=\"metadata-type-control\">Type:</label><br />"+
-"    <span id=\"metadata-type-control\"></span>"+
-"</div>"+
-"<hr />"+
 "<h4><b>Selected Document</b></h4>"+
 "<hr />"+
 "<div>"+
@@ -109,16 +100,18 @@ var MetadataMapView = DefaultView.extend({
      */
     render: function() {
         this.$el.empty();
-        
+        this.settingsModel.set({ metadataName: "" });
+        return;
         if(!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
             this.$el.html("<p>You should select a <a href=\"#\">dataset and analysis</a> before proceeding.</p>");
             return;
         } else {
-            this.$el.html(this.mainTemplate);
-            this.renderControls();
-            this.renderMap();
+            this.renderMetadataOptions();
         }
     },
+    
+    
+    
     
     /**
      * Return html of help message to user.
@@ -1444,42 +1437,4 @@ var MetadataMapView = DefaultView.extend({
     
 });
 
-
-var PlotViewManager = DefaultView.extend({
-    
-    readableName: "Metadata Map",
-    
-    mainTemplate: 
-"<div id=\"metadata-map-view-container\" class=\"container-fluid\">"+
-//~ "<div class=\"col-xs-9\" style=\"display: inline; float: left;\">"+
-    //~ "<div id=\"metadata-map-view\" class=\"container-fluid\"></div>"+
-    //~ "<div id=\"document-info-view-container\" class=\"container-fluid\"></div>"+
-//~ "</div>"+
-//~ "<div id=\"metadata-map-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>"+
-"</div>",
-//~ "<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
-    
-    initialize: function() {
-        this.metadataMapView = new MetadataMapView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
-        this.documentInfoView = new DocumentInfoView({ selectionModel: this.selectionModel, settingsModel: this.settingsModel });
-    },
-    
-    cleanup: function() {
-        this.metadataMapView.dispose();
-        this.documentInfoView.dispose();
-    },
-    
-    render: function() {
-        this.$el.html(this.mainTemplate);
-        this.metadataMapView.setElement(this.$el.find("#metadata-map-view-container"));
-        this.metadataMapView.render();
-        this.documentInfoView.setElement(this.$el.find("#document-info-view-container"));
-        this.documentInfoView.render();
-    },
-    
-    renderHelpAsHtml: function() {
-        return this.metadataMapView.renderHelpAsHtml();
-    },
-});
-
-globalViewModel.addViewClass(["Visualizations"], PlotViewManager);
+addViewClass(["Interactive"], MetadataMapView);

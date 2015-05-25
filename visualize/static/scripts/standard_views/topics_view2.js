@@ -1,35 +1,39 @@
+"use strict";
 
 /*
  * Displays all topics in a table format that can be sorted.
  */
-var AllTopicSubView = DefaultView.extend({
+var AllTopicSubView2 = DefaultView.extend({
+    
+    readableName: "All Topics 2",
+    shortName: "all_topics2",
     
     baseTemplate:
-"<div id=\"form-container\" class=\"row container-fluid\"></div>"+
-"<div id=\"table-container\" class=\"row container-fluid\"></div>",
+'<div id="form-container" class="row container-fluid"></div>'+
+'<div id="table-container" class="row container-fluid"></div>',
     
     formTemplate:
-"<form role=\"form\">"+
-"    <div class=\"form-group col-xs-6\">"+
-"        <label for=\"words-input\">Filter Topics by Words</label>"+
-"        <input id=\"words-input\" class=\"form-control\" type=\"text\" placeholder=\"Enter words...\"></input>"+
-"    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
-"        <label for=\"top-words-input\">Top Words</label>"+
-"        <input id=\"top-words-input\" class=\"form-control\" type=\"number\" placeholder=\"Enter a #.\"></input>"+
-"    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
-"        <label for=\"display-words-input\">Display Words</label>"+
-"        <input id=\"display-words-input\" class=\"form-control\" type=\"number\" placeholder=\"Enter a #.\"></input>"+
-"    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
-"        <label for=\"submit-button\"></label>"+
-"        <input id=\"submit-button\" class=\"btn btn-default\" type=\"submit\"></input>"+
-"    </div>"+
-"</form>",
+'<form role="form">'+
+'    <div class="form-group col-xs-4">'+
+'        <label for="words-input">Filter Topics by Words</label>'+
+'        <input id="words-input" class="form-control" type="text" placeholder="Enter words..."></input>'+
+'    </div>'+
+'    <div class="form-group col-xs-4">'+
+'        <label for="words-input">Filter Topics by Metadata Attribute</label>'+
+'        <select id="metadata-attribute-input" class="form-control" type="selection" placeholder="Enter metadata attribute..."></select>'+
+'    </div>'+
+'    <div class="form-group col-xs-2">'+
+'        <label for="top-words-input">Top Words</label>'+
+'        <input id="top-words-input" class="form-control" type="number" placeholder="Enter a #."></input>'+
+'    </div>'+
+'    <div class="form-group col-xs-2">'+
+'        <label for="submit-button"></label>'+
+'        <input id="submit-button" class="btn btn-default" type="submit"></input>'+
+'    </div>'+
+'</form>',
     
     initialize: function() {
-        var settings = _.extend({ "words": "*", "topicTopNWords": 10, "topicDisplayNWords": 10, "sortBy": 1, "sortAscending": true }, this.settingsModel.attributes)
+        var settings = _.extend({ "words": "*", "topicTopNWords": 10, "sortBy": 1, "sortAscending": true }, this.settingsModel.attributes)
         this.settingsModel.set(settings);
         this.listenTo(this.settingsModel, "multichange", this.renderTopicsTable);
     },
@@ -43,22 +47,41 @@ var AllTopicSubView = DefaultView.extend({
     },
     
     renderForm: function() {
-        var that = this;
-        var settings = this.settingsModel.attributes;
-        var words = settings["words"].split(/[\s,]+/).join(" ");
-        var topNWords = settings["topicTopNWords"];
-        var displayNWords = settings["topicDisplayNWords"];
+        var container = d3.select("#form-container").html(this.loadingTemplate);
+        var selection = this.selectionModel.attributes;
+        // Make a request
+        this.dataModel.submitQueryByHash({
+            "datasets": selection["dataset"],
+            "dataset_attr": ["document_metadata_types"],
+        }, function(data) {
+            container.html("");
         
-        // Create the form
-        var el = d3.select(this.el).select("#form-container");
-        el.html(this.formTemplate);
-        el.select("#words-input").property("value", words);
-        el.select("#top-words-input").property("value", topNWords);
-        el.select("#display-words-input").property("value", displayNWords);
-        el.select("form").on("submit", function() {
-            d3.event.preventDefault();
-            that.formSubmit();
-        });
+            var that = this;
+            var settings = this.settingsModel.attributes;
+            var words = settings["words"].split(/[\s,]+/).join(" ");
+            var topNWords = settings["topicTopNWords"];
+            var attribute = settings["selectedAttribute"];
+            
+            var types = data.datasets[this.selectionModel.get("dataset")].document_metadata_types;
+            var attributes = _.map(types, function(type, attr) { return attr; });
+            //~ console.log(attributes);
+
+            // Create the form
+            var el = d3.select(this.el).select("#form-container");
+            el.html(this.formTemplate);
+            el.select("#words-input").property("value", words);
+            el.select("#top-words-input").property("value", topNWords);
+
+            var select = el.select("#metadata-attribute-input");
+            select.selectAll("option").data(attributes).enter().append("option")
+                .text(function (attr) { return tg.str.toTitleCase(attr.replace(/_/g, " ")); })
+                .property("value", function (attr) { return attr; });
+            select.property("value", attribute);
+            el.select("form").on("submit", function() {
+                d3.event.preventDefault();
+                that.formSubmit();
+            });
+        }.bind(this), this.renderError.bind(this));
     },
     
     formSubmit: function() {
@@ -69,15 +92,15 @@ var AllTopicSubView = DefaultView.extend({
         words = _.uniq(words, true);
         words = words.join(",");
         var topNWords = parseInt(d3.select("#top-words-input").property("value"));
-        var displayNWords = parseInt(d3.select("#display-words-input").property("value"));
         this.settingsModel.set({ words: words });
         if($.isNumeric(topNWords) && topNWords > 0) {
             this.settingsModel.set({ topicTopNWords: topNWords });
         }
-        if($.isNumeric(displayNWords) && topNWords > 0) {
-            this.settingsModel.set({ topicDisplayNWords: displayNWords });
-        }
-        this.settingsModel.trigger("multichange");
+        var attr = $("#metadata-attribute-input").find(":selected").attr("value");
+        this.settingsModel.set({ selectedAttribute: attr });
+        //~ console.log("Selected attribute name: " + attr);
+        
+         this.settingsModel.trigger("multichange");
     },
     
     renderTopicsTable: function() {
@@ -93,6 +116,8 @@ var AllTopicSubView = DefaultView.extend({
             "top_n_words": settings["topicTopNWords"],
             "topic_attr": ["metrics", "names", "top_n_words"],
             "analysis_attr": "metrics",
+//            "metadata_value": settings["selectedAttribute"] + "," + "January", // TODO: remove hard-coded value
+            //~ settings["selectedValue"],
         }, function(data) {
             container.html("");
             
@@ -101,22 +126,31 @@ var AllTopicSubView = DefaultView.extend({
                 .attr("id", "topics-table")
                 .classed("table table-hover table-condensed", true);
             // Table header.
-            var header = ["", "#", "% of Corpus", "Name", "Top Words", "% of Topic"];
+            var header = ["", "#", "% of Corpus", "Name", "Top Words", "% of Topic", "Temperature"];
             // Format data.
             var totalTokens = data.datasets[this.selectionModel.get("dataset")].analyses[this.selectionModel.get("analysis")].metrics["Token Count"];
-            var displayNWords = settings['topicDisplayNWords'];
-            var topics = extractTopics(data);
+            var topNWords = settings['topicTopNWords'];
+            var topics = extractTopics(data, this.selectionModel);
             topics = d3.entries(topics).map(function(d) {
                 var wordObjects = d.value["words"];
                 var wordTypes = [];
-                for(key in wordObjects) wordTypes.push(key);
+                for(var key in wordObjects) wordTypes.push(key);
                 wordTypes.sort(function(a, b) { return wordObjects[b]["token_count"]-wordObjects[a]["token_count"]; });
-                var words = wordTypes.slice(0, displayNWords).join(" ");
+                var words = wordTypes.slice(0, topNWords).join(" ");
                 var wordsTokenCount = _.reduce(wordTypes, function(sum, word) { return sum + wordObjects[word]["token_count"]; }, 0);
                 var topicTokenCount = parseFloat(d.value.metrics["Token Count"]);
-                return [parseFloat(d.key), parseFloat(d.key), (topicTokenCount*100)/totalTokens, d.value.names["Top3"], words, (wordsTokenCount*100)/topicTokenCount];
+                var topicTemperature = parseFloat(d.value.metrics["Temperature"].toPrecision(4));
+                return [
+                    parseFloat(d.key),
+                    parseFloat(d.key),
+                    (topicTokenCount*100)/totalTokens,
+                    d.value.names["Top3"],
+                    words,
+                    (wordsTokenCount*100)/topicTokenCount,
+                    topicTemperature
+                ];
             });
-            topics = topics.filter(function(item) { return item[3] != ""; });
+            topics = topics.filter(function(item) { return item[4] !== ""; });
             var wordPercentage = _.reduce(topics, function(total, innerArray) {
                 return total + ((innerArray[2] * innerArray[5])/10000);
             }, 0);
@@ -138,6 +172,7 @@ var AllTopicSubView = DefaultView.extend({
                     "4": onClick,
                 },
                 bars: [2,5],
+                temperatures: [6],
                 percentages: [2,5],
                 favicon: [0, "topics", this],
                 sortBy: this.settingsModel.get("sortBy"),
@@ -172,7 +207,7 @@ var AllTopicSubView = DefaultView.extend({
     },
 });
 
-var SingleTopicView = DefaultView.extend({
+var SingleTopicView2 = DefaultView.extend({
     
     mainTemplate: 
 "<div id=\"single-topic-title\" class=\"row\"></div>"+
@@ -217,17 +252,20 @@ var SingleTopicView = DefaultView.extend({
         };
         
         var tabOnClick = function(tab) {
-            this.settingsModel.set({ selected: tab });
+            console.log("clicked "+tab);
+            console.log(this.settingsModel);
+            this.settingsModel.set({ selectedTab: tab });
         }.bind(this);
         
         createTabbedContent(d3.select(this.el).select("#single-topic-info"), {
             tabs: tabs,
-            selected: this.settingsModel.get("selected"),
+            selected: this.settingsModel.get("selectedTab"),
             tabOnClick: tabOnClick,
         });
     },
 
     renderTopicTitle: function() {
+        console.log(this.selectionModel);
         if(!this.selectionModel.nonEmpty(["topic"])) {
             this.$el.html("<p>Select a topic to display its information.</p>");
             return;
@@ -248,7 +286,7 @@ var SingleTopicView = DefaultView.extend({
             container.html("");
             var topic = extractTopics(data, this.selectionModel)[selections["topic"]];
             var words = [];
-            for(key in topic["words"]) words.push({ key: key, value: topic["words"][key]});
+            for(var key in topic["words"]) words.push({ key: key, value: topic["words"][key]});
             words.sort(function(a, b) { return b.value.token_count - a.value.token_count; });
             words = _.map(words, function(entry) { return entry.key; });
             
@@ -271,7 +309,7 @@ var SingleTopicView = DefaultView.extend({
         }, function(data) {
             content.html("");
             var topicNumber = this.selectionModel.get("topic");
-            var topic = extractTopics(data)[topicNumber];
+            var topic = extractTopics(data, this.selectionModel)[topicNumber];
             var topDocs = topic["top_n_documents"];
             var tokenCount = parseFloat(topic.metrics["Token Count"]);
             var documents = d3.entries(topDocs).map(function(entry) {
@@ -309,7 +347,7 @@ var SingleTopicView = DefaultView.extend({
         }, function(data) {
             content.html(this.wordStatTemplate);
             var topicNumber = this.selectionModel.get("topic");
-            var topic = extractTopics(data)[topicNumber];
+            var topic = extractTopics(data, this.selectionModel)[topicNumber];
             this.renderPieChartContent(content.select("#word-stat-pie"), topic);
             //console.log(topic);
             var topWords = topic["words"];
@@ -346,7 +384,7 @@ var SingleTopicView = DefaultView.extend({
         this.selectedWordTypes = {};
 
         this.sortedTokenCounts = [];
-        for(wordType in topWordTypes) {
+        for(var wordType in topWordTypes) {
             this.sortedTokenCounts.push({
                 wordType: wordType,
                 tokenCount: topWordTypes[wordType].token_count,
@@ -442,7 +480,7 @@ var SingleTopicView = DefaultView.extend({
             result[wordTypeObject] = true;
             return result;
         }, {});
-        for(wordType in this.selectedWordTypes) {
+        for(var wordType in this.selectedWordTypes) {
             if(wordType in wordTypes) {
                 this.selectedWordTypes[wordType] = true;
             } else {
@@ -467,7 +505,7 @@ var SingleTopicView = DefaultView.extend({
         var data = this.getWordTypesInSliderRange();
         //console.log(data);
         var dataWordTypeNames = [];
-        for(i in data) {
+        for(var i in data) {
             dataWordTypeNames.push(data[i].wordType.toString());
         }
         var colorScale = colorPalettes.getDiscreteColorScale(dataWordTypeNames, colorPalettes.pastels);
@@ -588,9 +626,9 @@ var SingleTopicView = DefaultView.extend({
                 "topic_attr": "names",
             },function(allTopicsData) {
                 content.html("");
-                var allTopics = extractTopics(allTopicsData);
+                var allTopics = extractTopics(allTopicsData, this.selectionModel);
                 var currentTopic = that.selectionModel.get("topic");
-                var topic = extractTopics(data)[currentTopic];
+                var topic = extractTopics(data, this.selectionModel)[currentTopic];
                 var header = ["", "#", "Topic Name"];
                 var updateHeader = true;
                 var percentageColumns = [];
@@ -602,7 +640,7 @@ var SingleTopicView = DefaultView.extend({
                         var result = [entry.key, entry.key, entry.value.names.Top3];
                         var index = parseFloat(entry.key);
                         var pairwise = topic["pairwise"];
-                        for(key in pairwise) {
+                        for(var key in pairwise) {
                             result.push(pairwise[key][index]*100);
                             if(updateHeader) {
                                 header.push(key);
@@ -644,10 +682,10 @@ var SingleTopicView = DefaultView.extend({
                 "topic_attr": ["metrics","metadata"],
         }, function(data) {
             content.html("<div id=\"single-topic-metadata\" class=\"row container-fluid\"></div><div id=\"single-topic-metrics\" class=\"row container-fluid\"></div>");
-            var topic = extractTopics(data)[selections["topic"]];
+            var topic = extractTopics(data, this.selectionModel)[selections["topic"]];
             createTableFromHash(content.select("#single-topic-metadata"), topic.metadata, ["Key", "Value"], "metadata");
             createTableFromHash(content.select("#single-topic-metrics"), topic.metrics, ["Metric", "Value"]), "metrics";
-        }, this.renderError.bind(this));
+        }.bind(this), this.renderError.bind(this));
     },
     
     renderWords: function(tab, content) {
@@ -798,7 +836,7 @@ var SingleTopicView = DefaultView.extend({
     },
 });
 
-var SingleTopicSubView = DefaultView.extend({
+var SingleTopicSubView2 = DefaultView.extend({
     
     mainTemplate: "<div id=\"all-topic-container\" class=\"col-xs-3\"></div>"+
                   "<div id=\"topic-info\" class=\"col-xs-9\"></div>",
@@ -830,7 +868,7 @@ var SingleTopicSubView = DefaultView.extend({
         if(this.info !== undefined) {
             this.info.cleanup();
         }
-        this.info = new SingleTopicView({ el: $("#topic-info"), settingsModel: this.settingsModel });
+        this.info = new SingleTopicView2(_.extend({ el: $("#topic-info") }, this.getAllModels()));
         this.info.render();
     },
     
@@ -859,19 +897,19 @@ var SingleTopicSubView = DefaultView.extend({
             container.html(this.dropdownTemplate);
             
             var sortList = [];
-            var topics = extractTopics(data);
+            var topics = extractTopics(data, this.selectionModel);
             topics = d3.entries(topics).map(function(d) {
                 
                 var items = {};
-                for(key in d.value.names) {
+                for(var key in d.value.names) {
                     items[key] = d.value.names[key];
                 }
-                for(key in d.value.metrics) {
+                for(var key in d.value.metrics) {
                     items[key] = d.value.metrics[key];
                 }
                 items["Number"] = d.key;
                 if(d.key === "0") {
-                    for(key in items) sortList.push(key);
+                    for(var key in items) sortList.push(key);
                 }
                 return [d.key, d.value.names.Top3, items];
             });
@@ -935,9 +973,10 @@ var SingleTopicSubView = DefaultView.extend({
     },
 });
 
-var TopicView = DefaultView.extend({
+var TopicView2 = DefaultView.extend({
     
-    readableName: "Topics",
+    readableName: "Topics2",
+    shortName: "topics2",
     
     initialize: function() {
         this.listenTo(this.selectionModel, "change:topic", this.render);
@@ -949,9 +988,9 @@ var TopicView = DefaultView.extend({
             this.$el.html("<div id=\"topics-over-time\"></div><div id=\"info\"></div>");
             this.disposeOfViews();
             if(this.selectionModel.nonEmpty(["topic"])) {
-                this.subView = new SingleTopicSubView({ el: "#info", settingsModel: this.settingsModel });
+                this.subView = new SingleTopicSubView2(_.extend({ el: "#info" }, this.getAllModels()));
             } else {
-                this.subView = new AllTopicSubView({ el: "#info", settingsModel: this.settingsModel });
+                this.subView = new AllTopicSubView2(_.extend({ el: "#info" }, this.getAllModels()));
             }
             this.subView.render();
         } else {
@@ -979,4 +1018,4 @@ var TopicView = DefaultView.extend({
 });
 
 // Add the Topic View to the top level menu
-globalViewModel.addViewClass([], TopicView);
+addViewClass([], TopicView2);

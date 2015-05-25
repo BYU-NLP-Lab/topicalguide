@@ -1,11 +1,296 @@
-/*
+"use strict";
+
+/**
  * The following are an assortment of useful utilities.
  */
+var tg = new function() {
+    
+    /**
+     * Basic site functions for convenience.
+     */
+    this.site = {
+        /**
+         * Initializes the span for you so that the global TG View can
+         * keep it updated on clicking.
+         * domElement -- must be a "span"
+         * The dom element must have one of the following data attributes set:
+         *      tg-data-dataset-name
+         *      tg-data-analysis-name
+         *      tg-data-topic-number
+         *      tg-data-document-name
+         *      tg-data-topic-name-scheme
+         * favsModel -- must be the favoritesModel to pull from
+         */
+        initFav: function(domElement, favsModel) {
+            var el = d3.select(domElement);
+            var type = null;
+            var clsName = null;
+            if(tg.dom.hasAttr(domElement, "data-tg-dataset-name")) {
+                type = "datasets";
+                clsName = "data-tg-dataset-name";
+            } else if(tg.dom.hasAttr(domElement, "data-tg-analyis-name")) {
+                type = "analyses";
+                clsName = "data-tg-analyis-name";
+            } else if(tg.dom.hasAttr(domElement, "data-tg-topic-number")) {
+                type = "topics";
+                clsName = "data-tg-topic-number";
+            } else if(tg.dom.hasAttr(domElement, "data-tg-document-name")) {
+                type = "documents";
+                clsName = "data-tg-document-name";
+            } else if(tg.dom.hasAttr(domElement, "data-tg-topic-name-scheme")) {
+                type = "topicNameSchemes";
+                clsName = "tg-data-topic-name-scheme";
+            }
+            if(clsName !== null) {
+                if(favsModel.has(type, el.attr(clsName).toString())) {
+                    el.classed({ "glyphicon": true, "glyphicon-star": true, "glyphicon-star-empty": false, "gold": true, "pointer": true });
+                } else {
+                    el.classed({ "glyphicon": true, "glyphicon-star": false, "glyphicon-star-empty": true, "gold": true, "pointer": true });
+                }
+            }
+        },
+        
+        /**
+         * Convert from the short string representation to a human readable one.
+         */
+        readableTypes: {
+            "int": "Integer",
+            "float": "Float",
+            "datetime": "Date/Time",
+            "bool": "Boolean",
+            "text": "Text",
+            "ordinal": "Ordinal",
+        },
+        
+        /**
+         * Injectible icon html.
+         */
+        icons: {
+            emptyStar: "<span class=\"glyphicon glyphicon-star-empty gold\"></span>",
+            filledStar: "<span class=\"glyphicon glyphicon-star gold\"></span>",
+            
+            pencil: "<span class=\"glyphicon glyphicon-pencil purple\"></span>",
+            help: "<span class=\"glyphicon glyphicon-question-sign blue\"></span>",
+            settings: "<span class=\"caret\" style=\"text-size: 1.5em\"></span>",
+            share: "<span class=\"glyphicon glyphicon-plus\"></span>",
+            
+            document: "<span class=\"glyphicon glyphicon-book brown document\"></span>",
+            previous: "<span class=\"glyphicon glyphicon-chevron-left green previous\"></span>",
+            next: "<span class=\"glyphicon glyphicon-chevron-right green next\"></span>",
+            beginning: "<span class=\"glyphicon glyphicon-step-backward green beginning\"></span>",
+            end: "<span class=\"glyphicon glyphicon-step-forward green end\"></span>",
+            
+            loading: "<p class=\"text-center\"><img src=\"/static/images/large-spinner.gif\"/></p><p class=\"text-center\">Loading...</p>",
+        },
+    };
+    
+    this.rand = {
+        /**
+         * Return an integer in [min, max).
+         */
+        getRandomIntegerInRange: function(min, max) {
+            return Math.floor(Math.random()*(max - min)) + min;
+        },
+    };
+    
+    /**
+     * Basic DOM convenience functions.
+     */
+    this.dom = {
+        /**
+         * domElement -- DOM element
+         * attrName -- string of the attribute name
+         * Return true if the attribute exists; false otherwise.
+         */
+        hasAttr: function(domElement, attrName) {
+            var a = $(domElement).attr(attrName);
+            return typeof a !== typeof undefined && a !== false;
+        },
+    };
+    
+    /**
+     * Small library to makeup for inconsistencies in JavaScript and across 
+     * browsers.
+     * Basic functions for type checking or otherwise.
+     */
+    this.js = {
+        /**
+         * i -- a number
+         * Return true if it is an integer; false otherwise.
+         */
+        isInteger: function(i) {
+            return !isNaN(i) && 
+                   parseInt(Number(i)) == i && 
+                   !isNaN(parseInt(i, 10));
+        },
+        
+        /**
+         * s -- an object
+         * Return true if it is a string; false otherwise.
+         */
+        isString: function(str) {
+            if(typeof str === "string" || str instanceof String) {
+                return true;
+            } else {
+                return false;
+            }
+        },
+        
+        /**
+         * obj -- any javascript object
+         * Return true if obj isn't undefined or null; false otherwise;
+         */
+        isDefined: function(obj) {
+            return (obj !== null && obj !== undefined);
+        },
+        
+        /**
+         * Return the value of the cookie with the supplied name; null if not present.
+         * This code is from the Django project:
+         * https://docs.djangoproject.com/en/1.7/ref/contrib/csrf/
+         */
+        getCookie: function(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie != '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        },
+        
+        /**
+         * Return true if session storage is enabled.
+         */
+        hasSessionStorage: function() {
+            try {
+                sessionStorage["storage-test"] = "test";
+                delete sessionStorage["storage-test"];
+                return true;
+            } catch(e) {
+                return false;
+            }
+        },
+        
+    };
+    
+    this.str = {
+        /**
+         * Returns a new string with the start of each word capitalized.
+         */
+        toTitleCase: function(str) {
+            return str.replace(/\w\S*/g, function(substr){ return substr.charAt(0).toUpperCase() + substr.slice(1); });
+        },
+        
+    };
+    
+    this.color = {
+        pastels: ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", 
+                  "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", 
+                  "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", 
+                  "#17becf", "#9edae5"],
+        blueToRed: ["blue", "#F0EAD6", "red"],
+        black: ["black"],
+        /**
+         * Return a function that takes and index in the range of listOfValues 
+         * and maps to a color.
+         */
+        getDiscreteColorScale: function(listOfValues, colorPalette) {
+            var colorDomain = d3.scale.ordinal().domain(colorPalette).rangePoints([0, 1], 0).range();
+            var ordinalRange = d3.scale.ordinal().domain(listOfValues).rangePoints([0, 1], 0).range();
+            var ordToNum = d3.scale.ordinal().domain(listOfValues).range(ordinalRange);
+            var numToColor = d3.scale.linear().domain(colorDomain).range(colorPalette);
+            return function ordinalColorScale(val) { return numToColor(ordToNum(val)); };
+        },
+    };
+    
+    this.url = {
+        /**
+         * Turns arrays and other objects to URI friendly strings.
+         */
+        uriStringify: function(item) {
+            var result = null;
+            if(item instanceof String) {
+                result = encodeURIComponent(item);
+            } else if(item instanceof Array) {
+                item = item.slice(0); // Clone the array.
+                item.sort();
+                for(var i = 0; i<item.length; i++) {
+                    item[0] = tg.url.stringify(item[0]);
+                }
+                result = item.join(",");
+            } else {
+                result = encodeURIComponent(item.toString());
+            }
+            return result;
+        },
+        
+        /**
+         * Parse url arguments to a hash.
+         */
+        urlToHash: function(args) {
+            var hash = {};
+            var items = args.split('&');
+            if(items[0] !== "") {
+                for(var i = 0; i<items.length; i++) {
+                    var keyAndValue = items[i].split('=');
+                    if(keyAndValue[1]===undefined) keyAndValue.push("");
+                    hash[decodeURIComponent(keyAndValue[0])] = decodeURIComponent(keyAndValue[1]);
+                }
+            }
+            return hash;
+        },
+
+        /**
+         * Convert a hash to url arguments, url will be normalized.
+         * hash - Any valid hash with strings, arrays, and numbers as the values.
+         */
+        hashToUrl: function(hash) {
+            var keys = [];
+            _.forOwn(hash, function(value, key) { keys.push(key); });
+            keys.sort();
+            var items = [];
+            _.forEach(keys, function(key) {
+                items.push(encodeURIComponent(key) + '=' + tg.url.uriStringify(hash[key]));
+            });
+            return items.join('&');
+        },
+    };
+};
+
+/**
+ * Easy to inject icons used throughout the site.
+ */
+var icons = {
+    emptyStar: "<span class=\"glyphicon glyphicon-star-empty gold\"></span>",
+    filledStar: "<span class=\"glyphicon glyphicon-star gold\"></span>",
+    
+    help: "<span class=\"glyphicon glyphicon-question-sign blue\"></span>",
+    settings: "<span class=\"caret\" style=\"text-size: 1.5em\"></span>",
+    share: "<span class=\"glyphicon glyphicon-plus\"></span>",
+    
+    document: "<span class=\"glyphicon glyphicon-book brown document\"></span>",
+    previous: "<span class=\"glyphicon glyphicon-chevron-left green previous\"></span>",
+    next: "<span class=\"glyphicon glyphicon-chevron-right green next\"></span>",
+    beginning: "<span class=\"glyphicon glyphicon-step-backward green beginning\"></span>",
+    end: "<span class=\"glyphicon glyphicon-step-forward green end\"></span>",
+    
+    loading: "<p class=\"text-center\"><img src=\"/static/images/large-spinner.gif\"/></p><p class=\"text-center\">Loading...</p>",
+    
+    pencil: "<span class=\"glyphicon glyphicon-pencil purple\"></span>",
+};
+
 
 /**
  * Types recognized by the import system.
  */
-var globalTypes = {
+var readableTypes = {
     "int": "Integer",
     "float": "Float",
     "datetime": "Date/Time",
@@ -94,7 +379,7 @@ function urlToHash(args) {
     var hash = {};
     var items = args.split('&');
     if(items[0] !== "") {
-        for(i=0; i<items.length; i++) {
+        for(var i = 0; i<items.length; i++) {
             var keyAndValue = items[i].split('=');
             if(keyAndValue[1]===undefined) keyAndValue.push("");
             hash[decodeURIComponent(keyAndValue[0])] = decodeURIComponent(keyAndValue[1]);
@@ -114,7 +399,7 @@ function hashToUrl(hash) {
         } else if(item instanceof Array) {
             item = item.slice(0); // Clone the array.
             item.sort();
-            for(i=0; i<item.length; i++) {
+            for(var i = 0; i<item.length; i++) {
                 item[0] = normalize(item[0]);
             }
             return item.join(",");
@@ -150,7 +435,7 @@ function hasLocalStorage() {
  */
 function deletePrefixFromHash(prefix, hash) {
     var len = prefix.length;
-    for(key in hash) {
+    for(var key in hash) {
         if(key.slice(0, len) === prefix) {
             delete hash[key];
         }
@@ -172,7 +457,7 @@ function hasSessionStorage() {
 
 // Helper function to pull out information such as readable_name, description, and anything else
 function extractMetadata(hash, metadata, defaults) {
-    for(key in defaults) {
+    for(var key in defaults) {
         if(key in metadata) {
             hash[key] = metadata[key];
             delete metadata[key];
@@ -188,11 +473,7 @@ function extractMetadata(hash, metadata, defaults) {
  * [model] - The selection model, defaults to the global selection model if not provided.
  */
 function extractDocuments(data, model) {
-    if(model === undefined) {
-        return data.datasets[globalSelectionModel.get("dataset")].analyses[globalSelectionModel.get("analysis")].documents;
-    } else {
-        return data.datasets[model.get("dataset")].analyses[model.get("analysis")].documents;
-    }
+    return data.datasets[model.get("dataset")].analyses[model.get("analysis")].documents;
 }
 
 /*
@@ -201,11 +482,11 @@ function extractDocuments(data, model) {
  * [model] - The selection model, defaults to the global selection model if not provided.
  */
 function extractTopics(data, model) {
-    if(model === undefined) {
-        return data.datasets[globalSelectionModel.get("dataset")].analyses[globalSelectionModel.get("analysis")].topics;
-    } else {
-        return data.datasets[model.get("dataset")].analyses[model.get("analysis")].topics;
-    }
+    var result = {};
+    try {
+        result = data.datasets[model.get("dataset")].analyses[model.get("analysis")].topics;
+    } catch(err) {}
+    return result;
 }
 
 /*
@@ -236,25 +517,39 @@ function createSortableTable(table, options) {
         onClick: {},
         bars: [],
         percentages: [],
+        temperatures: [],
         favicon: false,
         sortBy: 0,
         sortAscending: true,
     };
     options = _.extend(defaults, options);
-    // Find all of the maxes.
-    var maxes = {};
-    for(i=0; i<options.bars.length; i++) {
+    // Find all of the maxes for columns containing bars
+    var barmaxes = {};
+    for(var i = 0; i<options.bars.length; i++) {
         var index = options.bars[i];
-        maxes[index] = options.data.reduce(function(p, c, i, a) { 
+        barmaxes[index] = options.data.reduce(function(p, c, i, a) { 
             return (p > c[index])?p:c[index]; 
         }, 0);
     }
+    // Find all of the maxes and mins for columns containing temperatures
+    var tempmaxes = {};
+    var tempmins = {};
+    for(var i = 0; i<options.temperatures.length; i++) {
+        var index = options.temperatures[i];
+        tempmaxes[index] = options.data.reduce(function(p, c, i, a) { 
+            return (p > c[index])?p:c[index];
+        }, 0);
+        tempmins[index] = options.data.reduce(function(p, c, i, a) {
+            return (p < c[index])?p:c[index];
+        }, 0);
+    }
+
     // Turn percentages to array.
     var percent = {};
-    for(i=0; i<options.percentages.length; i++) {
+    for(var i = 0; i<options.percentages.length; i++) {
         percent[options.percentages[i].toString()] = null;
     }
-    
+   
     // Sort functions where i is the column to sort by.
     var makeSortAscending = function(i) {
         var sortAscending = function(a, b) {
@@ -320,7 +615,7 @@ function createSortableTable(table, options) {
             .enter()
             .append("td");
         // Fill in table values
-        td.filter(function(d, i) { return (i in maxes)?false:true; })
+        td.filter(function(d, i) { return ((i in barmaxes) || (i in tempmaxes))?false:true; })
             .append("a")
             .style("color", "black")
             .classed("nounderline", true)
@@ -337,37 +632,10 @@ function createSortableTable(table, options) {
                     .on("click", function() { return options.onClick[i](rowData, index); });
             }
         });
-            
-        // Create the percentage bars.
-        for(key in maxes) {
-            var maxIndex = parseFloat(key);
-            var max = maxes[key];
-            var column = td.filter(function(d, i) { return (i === maxIndex)?true:false; });
-            var svg = column.append("svg")
-                .attr("width", 60)
-                .attr("height", "1em");
-            // Create bar.
-            svg.append("rect")
-                .attr("height", "100%")
-                .attr("width", "100%")
-                .attr("fill", "blue");
-            // Fill in part of bar with whitesmoke.
-            svg.append("rect")
-                .attr("height", "100%")
-                .attr("width", function(d) {
-                    if(max === 0) return 60;
-                    else return (1-(d/max)) * 60;
-                })
-                .attr("fill", "whitesmoke");
-            // Append text.
-            column.append("span")
-                .text(function(d) {
-                    if(maxIndex.toString() in percent) return " "+d.toFixed(2)+"%";
-                    else return " "+d;
-                })
-                .attr("fill", "black")
-                .attr("padding-left", "5px");
-        }
+        
+        createPercentageGauge(td, barmaxes, percent);
+        
+        createTemperatureGauge(td, tempmaxes, tempmins);
     });
     
     // Set initial sort.
@@ -377,6 +645,90 @@ function createSortableTable(table, options) {
         tableRows.sort(makeSortDescending(lastColumn));
     }
     ascending = !ascending;
+};
+
+function createPercentageGauge(td, barmaxes, percent) {
+    // Create the percentage bars.
+    for(var key in barmaxes) {
+        var maxIndex = parseFloat(key);
+        var max = barmaxes[key];
+        var column = td.filter(function(d, i) { return (i === maxIndex)?true:false; });
+        var svg = column.append("svg")
+            .attr("width", 60)
+            .attr("height", "1em");
+        // Create bar.
+        svg.append("rect")
+            .attr("height", "100%")
+            .attr("width", "100%")
+            .attr("fill", "blue");
+        // Fill in part of bar with whitesmoke.
+        svg.append("rect")
+            .attr("height", "100%")
+            .attr("width", function(d) {
+                if(max === 0) return 60;
+                else return (1-(d/max)) * 60;
+            })
+            .attr("fill", "whitesmoke");
+        // Append text.
+        column.append("span")
+            .text(function(d) {
+                if(maxIndex.toString() in percent) return " "+d.toFixed(2)+"%";
+                else return " "+d;
+            })
+            .attr("fill", "black")
+            .attr("padding-left", "5px");
+    }
+};
+
+
+function createTemperatureGauge(td, tempmaxes, tempmins) {
+    // Create the thermometer bars.
+    for(var key in tempmaxes) {
+        var index = parseFloat(key);
+        var max = tempmaxes[key];
+        var min = tempmins[key];
+        var range = max - min;
+        var zero = (Math.abs(min) / range) * 60;
+        if (range !== 0.0) {
+            var column = td.filter(function(d, i) { return (i === index)?true:false; });
+            var svg = column.append("svg")
+                .attr("width", 60)
+                .attr("height", "1em")
+                .style("background-color", "whitesmoke");
+            // Create bar.
+            svg.append("rect")
+                .each(function(d) {
+                    var rect = d3.select(this);
+                    var width = Math.abs(d)/range * 60;
+                    rect.attr("height", "100%")
+                        .attr("width", width)
+                        .attr("fill", (d > 0.0 ? "red" : "blue"))
+                        .attr("transform", "translate("+ (d>0.0 ? zero : zero-width) +","+0+")");
+                });
+            // Fill in part of bar with whitesmoke.
+            //~ group.append("rect")
+                //~ .attr("height", "100%")
+                //~ .attr("width", function(d) {
+                    //~ if(max === 0) return 60;
+                    //~ else return (1-(d/max)) * 60;
+                //~ })
+                //~ .attr("fill", "whitesmoke");
+            // Append text.
+            svg.append("line")
+                .attr("x1", zero)
+                .attr("y1", 0)
+                .attr("x2", zero)
+                .attr("y2", "1em")
+                .attr("stroke", "black")
+                .attr("strokewidth", "1.5px");
+        }
+        column.append("span")
+            .text(function(d) {
+                return " "+d;
+            })
+            .attr("fill", "black")
+            .attr("padding-left", "5px");
+    }
 };
 
 /*
@@ -394,6 +746,7 @@ function createSortableTable(table, options) {
 function createTabbedContent(container, options) {
     var defaults = {
         tabs: {},
+        rendered: {},
         selected: null,
         tabOnClick: function() {},
     };
@@ -403,7 +756,7 @@ function createTabbedContent(container, options) {
                    "<div class=\"tab-content\"></div>");
     // Make sure a tab is selected to begin with.
     if(!(options.selected in options.tabs)) {
-        for(key in options.tabs) {
+        for(var key in options.tabs) {
             options.selected = key;
             break;
         }
@@ -421,12 +774,17 @@ function createTabbedContent(container, options) {
     // Set up the content
     var content = container.select("div.tab-content");
     var contentPanes = content.selectAll("div.tab-pane");
-    contentPanes.data(d3.entries(options.tabs))
+    var renderedAreas = contentPanes.data(d3.entries(options.tabs))
         .enter()
         .append("div")
         .classed("tab-pane", true)
         .classed("active", active)
-        .each(function(d, i) { options.tabs[d.key](d.key, d3.select(this)); });
+        .each(function(d, i) { 
+            if(active(d, i)) { // Only render the content of the tab when clicked.
+                options.tabs[d.key](d.key, d3.select(this));
+                options.rendered[d.key] = true;
+            }
+        });
     
     // Set up tabbed navigation
     var nav = container.select("ul.nav-tabs");
@@ -443,6 +801,13 @@ function createTabbedContent(container, options) {
                 options.selected = d.key;
                 nav.selectAll("li").classed("active", active);
                 content.selectAll("div.tab-pane").classed("active", active);
+                if(!(d.key in options.rendered)) {
+                    renderedAreas.filter(active)
+                        .each(function(d, i) {
+                            options.tabs[d.key](d.key, d3.select(this));
+                        });
+                    options.rendered[d.key] = true;
+                }
                 options.tabOnClick(d.key);
             }
         });

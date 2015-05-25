@@ -1,7 +1,8 @@
-
+"use strict";
 
 var ForceView = DefaultView.extend({
     readableName: "Force Diagram",
+    shortName: "force",
     
     visualizationTemplate:
 "<div id=\"force-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>"+
@@ -426,5 +427,5 @@ var ForceView = DefaultView.extend({
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], ForceView);
+addViewClass(["Visualizations"], ForceView);
 

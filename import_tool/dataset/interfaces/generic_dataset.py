@@ -1,9 +1,13 @@
 from __future__ import division, print_function, unicode_literals
 import os
 import io
+import json
 from import_tool import basic_tools
 from abstract_dataset import AbstractDataset, AbstractDocument
-    
+from os.path import isfile
+from sys import stderr
+from visualize.models import MetadataType
+
 
 class GenericDataset(AbstractDataset):
     """
@@ -23,22 +27,35 @@ class GenericDataset(AbstractDataset):
         # create commonly used directory and file paths
         self._dataset_directory = dataset_directory
         self._abs_dataset_directory = os.path.abspath(dataset_directory)
-        self._metadata_file = os.path.join(self._abs_dataset_directory,
-                                           'dataset_metadata.txt')
-        self._documents_directory = os.path.join(self._abs_dataset_directory, 
-                                                 'documents')
+        self._documents_directory = os.path.join(self._abs_dataset_directory, 'documents')
+        self._settings_file = os.path.join(self._abs_dataset_directory, 'dataset_settings.json')
         self.is_recursive = is_recursive
         self._filters = []
         
         self.metadata = {}
-        # load the dataset metadata
-        with io.open(self._metadata_file, 'r', encoding='utf-8', errors='ignore') as meta_file:
-            content = meta_file.read()
-            metadata, __ = basic_tools.seperate_metadata_and_content(content)
-            self.metadata = basic_tools.metadata_to_dict(metadata)
         self.metadata_types = {}
-        basic_tools.collect_types(self.metadata_types, self.metadata)
+        self.document_metadata_types = {}
+        self.document_metadata_ordinals = {}
+        self.document_required_metadata = {}
         
+        # load the dataset metadata
+        if isfile(self._settings_file):
+            with io.open(self._settings_file, 'r', encoding='utf-8', errors='ignore') as settings_file:
+                raw_text = settings_file.read()
+                settings = json.loads(raw_text)
+                for key, value in settings.iteritems():
+                    if key == 'dataset_metadata':
+                        self.metadata = value
+                    if key == 'dataset_metadata_types':
+                        self.metadata_types = value
+                    if key == 'document_metadata_types':
+                        self.document_metadata_types = value
+                    if key == 'document_metadata_ordinals':
+                        self.document_metadata_ordinals = value
+                    if key == 'document_required_metadata':
+                        self.document_required_metadata = value
+        
+        # create the readable_name metadata attribute for use in the UI
         if not 'readable_name' in self.metadata:
             identifier = self._dataset_directory.replace('_', ' ').replace('/', ' ').title()
         else:
@@ -49,15 +66,15 @@ class GenericDataset(AbstractDataset):
         self._list_of_documents = basic_tools.get_all_files_from_directory(self._documents_directory, self.is_recursive)
         self._list_of_documents.sort()
         
-        # find any bad documents and find document metadata
-        self.document_metadata_types = {}
+        # find any bad documents and find document metadata types by discovery
         bad_doc_indices = []
         for doc_index, doc in enumerate(self):
             try:
-                basic_tools.collect_types(self.document_metadata_types, doc.metadata)
+                doc_metadata = doc.metadata
             except Exception as e:
-                print("Bad document: ", self._list_of_documents[doc_index])
+                print("Bad document: ", self._list_of_documents[doc_index], file=stderr)
                 bad_doc_indices.append(doc_index)
+        
         while len(bad_doc_indices) != 0:
             remove_index = bad_doc_indices.pop()
             del self._list_of_documents[remove_index]
@@ -70,7 +87,8 @@ class GenericDataset(AbstractDataset):
         """Set the dataset identifier used in the database and elsewhere.
         Note that all spaces and slashes will be replaced with underscores 
         and the name will be set to lowercase.
-        The use of symbols other than '_' and '-' is discouraged.
+        The use of symbols other than '_' and '-' and alpha characters is 
+        discouraged.
         """
         self._name = identifier.replace(' ', '_').replace('/', '_').lower()
     
@@ -97,7 +115,7 @@ class GenericDataset(AbstractDataset):
                 document.set_filters(self._filters)
                 return document
             except Exception as e:
-                print('Error: Could not import %s because of %s' % (file_path, e))
+                print('Error: Could not import %s because of %s' % (file_path, e), file=stderr)
         raise StopIteration
 
 class GenericDocument(AbstractDocument):

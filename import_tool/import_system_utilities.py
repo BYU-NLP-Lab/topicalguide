@@ -26,7 +26,7 @@ from analysis.utilities import get_all_word_types, create_analysis, \
      create_stopwords, create_excluded_words, create_topic_names
 from analysis.name_schemes.top_n import TopNTopicNamer
 from analysis.name_schemes.tf_itf import TfitfTopicNamer
-from metadata.utilities import get_all_metadata_types
+from metadata.utilities import get_all_metadata_types, all_document_metadata_checker
 from visualize.models import *
 
 DATABASE_OPTIMIZE_DEBUG = False # settings.DEBUG
@@ -39,9 +39,13 @@ BASIC_DATASET_METRICS = [
 ]
 BASIC_ANALYSIS_METRICS = [
     'document-analysis:token_count', 'document-analysis:type_count', 'document-analysis:topic_entropy',
+    
     'analysis:token_count', 'analysis:type_count', 'analysis:stopword_count',
     'analysis:excluded_word_count', 'analysis:entropy',
-    'topic:token_count', 'topic:type_count', 'topic:document_entropy', 'topic:word_entropy',
+    
+    'topic:token_count', 'topic:type_count', 'topic:document_entropy', 
+    'topic:word_entropy', 'topic:temperature',
+    
     'topic-pairwise:document_correlation', 'topic-pairwise:word_correlation'
 ]
 DEFAULT_TOPIC_NAMERS = [
@@ -85,7 +89,7 @@ def run_syncdb(database_info):
     if database_info: # create an entry in DATABASES if database_info is present
         dataset_identifier = '12345'
         while dataset_identifier in settings.DATABASES:
-            dataset_identifier = str(random.randint(1, 2000000))
+            dataset_identifier = unicode(random.randint(1, 2000000))
         settings.DATABASES[dataset_identifier] = database_info
     call_command('migrate', database=dataset_identifier)
     return dataset_identifier
@@ -94,73 +98,78 @@ def check_dataset(dataset):
     """Check the dataset for blank documents and print what metadata you have.
     This is useful for debugging and making sure that your dataset can be read.
     Also, this will inform you of the types of your metadata and any errors there.
+    dataset -- an AbstractDataset
+    Return nothing.
     """
-    blank_documents = []
-    blank_metadata = []
-    dataset_metadata_types = {}
-    doc_metadata_types = {}
+    # get metadata stats
+    dataset_metadata_types = dataset.metadata_types
+    actual_dataset_metadata_types = {}
+    dataset_metadata = dataset.metadata
+    dataset_offending_metadata = basic_tools.verify_types(dataset_metadata_types, dataset_metadata)
+    basic_tools.collect_types(actual_dataset_metadata_types, dataset_metadata)
+    actual_doc_metadata_types, doc_no_metadata, doc_metadata_type_violations, doc_required_metadata_violations = all_document_metadata_checker(dataset, die_on_error=False)
+    document_metadata_types = dataset.document_metadata_types
     
-    basic_tools.collect_types(dataset_metadata_types, dataset.metadata)
-    
+    # get doc stats
+    doc_blank = []
+    doc_not_unicode = []
     for doc in dataset:
+        doc_uri = doc.source
         content = doc.content
-        meta = doc.metadata
-        assert type(content) == unicode
-        if content == '' or content == None: # collect blank documents
-            blank_documents.append(doc.source)
-        if meta == {} or meta == None: # collect blank metadata
-            blank_metadata.append(doc.source)
-        else: # collect metadata types
-            basic_tools.collect_types(doc_metadata_types, meta)
+        if type(content) != unicode:
+            doc_not_unicode.append(doc_uri)
+            continue
+        content = content.strip()
+        if content == '': # collect blank documents
+            doc_blank.append(doc_uri)
     
-    
-    
-    
-    if blank_metadata:
-        print('List of files with no metadata: ')
-        for doc_path in blank_metadata:
-            print(doc_path)
+    # helper function to print reports
+    def print_list(msg, l, csv=True):
+        print(msg)
+        if csv:
+            print(','.join(l))
+        else:
+            for e in l: print(e)
         print()
     
-    if blank_documents:
-        print('List of files with no content: ')
-        for doc_path in blank_documents:
-            print(doc_path)
+    def print_dict(msg, d, value_is_list=True):
+        print(msg)
+        if value_is_list:
+            for k, v in d.iteritems(): print('%s: %s'%(k, ','.join(v)))
+        else:
+            for k, v in d.iteritems(): print('%s: %s'%(k, v))
         print()
+        
     
-    dataset_metadata_types = {}
-    basic_tools.collect_types(dataset_metadata_types, dataset.metadata)
-    
-    print('Dataset readable name: ')
-    print('"' + dataset.name + '"')
+    # report stats to the user
+    print('Dataset identifier: %s'%(dataset.name,))
     print()
     
+    # relating to dataset metadata
     if dataset_metadata_types:
-        print('Listing of dataset metadata and their associated types: ')
-        for key, value in dataset_metadata_types.items():
-            print(key + ': ' + value)
-    else:
-        print('No dataset metadata.')
-    print()
-    for key, value in dataset.metadata_types.iteritems():
-        if key not in dataset_metadata_types:
-            print("Metadata type in dataset metadata_types not specified: " + unicode(key))
-        else:
-            if dataset_metadata_types[key] != value:
-                print("Metadata type for dataset metadata_types doesn't match that found: %s: %s"%(unicode(key), unicode(value)))
+        print_dict('Specified dataset metadata types:', dataset_metadata_types, value_is_list=False)
+    if actual_dataset_metadata_types:
+        print_dict('Actual dataset metadata types:', actual_dataset_metadata_types, value_is_list=False)
+    if dataset_offending_metadata:
+        print_list('Dataset metadata not matching required types:', dataset_offending_metadata)
     
-    if doc_metadata_types:
-        print('Listing of document metadata and their associated types: ')
-        for key, value in doc_metadata_types.items():
-            print(key + ': ' + value)
-    else:
-        print('No document metdata')
-    for key, value in dataset.document_metadata_types.iteritems():
-        if key not in doc_metadata_types:
-            print("Metadata type in document metadata_types not specified: " + unicode(key))
-        else:
-            if doc_metadata_types[key] != value:
-                print("Metadata type for document metadata_types doesn't match that found: %s: %s"%(unicode(key), unicode(value)))
+    # relating to document metadata
+    if doc_no_metadata:
+        print_list('List of documents with no metadata: ', doc_no_metadata, csv=False)
+    if doc_metadata_type_violations:
+        print_dict('List of documents and their metadata type violations:', doc_metadata_type_violations)
+    if doc_required_metadata_violations:
+        print_dict('List of documents missing required metadata:', doc_required_metadata_violations)
+    if document_metadata_types:
+        print_dict('Specified document metadata types:', document_metadata_types, value_is_list=False)
+    if actual_doc_metadata_types:
+        print_dict('Actual document metadata types:', actual_doc_metadata_types, value_is_list=False)
+    
+    # relating to document content
+    if doc_blank:
+        print_list('List of documents with no content: ', doc_blank, csv=False)
+    if doc_not_unicode:
+        print_list('List of documents returning non-unicode content:', doc_not_unicode, csv=False)
     
     print()
 
@@ -188,7 +197,7 @@ def import_dataset(database_id, dataset, directories, **kwargs):
         con = connections[database_id]
         query_count = len(con.queries)
     
-    meta_types_db = get_all_metadata_types(database_id)
+    meta_types_db = {}
     
     if verbose: print('Creating dataset entry.')
     dataset_db = create_dataset(database_id, dataset, dataset_dir, meta_types_db, **kwargs)
@@ -213,6 +222,12 @@ def import_dataset(database_id, dataset, directories, **kwargs):
     if verbose: print('Done importing '+dataset.name+'.')
     
     return dataset.name
+
+# TODO take the output of the function and store the document metadata values
+# in the database
+def run_document_metadata_generator(database_id, dataset_name, function):
+    dataset_db = Dataset.objects.using(database_id).get(name=dataset_name)
+    metadata_values = function(dataset_db, dataset_db.documents.all())
 
 def check_analysis(database_id, dataset_name, analysis, directories, 
                  topic_namers=None, verbose=False):
@@ -325,7 +340,7 @@ def run_analysis(database_id, dataset_name, analysis, directories,
     dataset_db = Dataset.objects.using(database_id).get(name=dataset_name)
     # word types should be relatively sparse, so we load all of them into memory
     word_types_db = get_all_word_types(database_id)
-    meta_types_db = get_all_metadata_types(database_id)
+    meta_types_db = get_all_metadata_types(database_id, dataset_db)
     
     if verbose: print('Creating analysis entry.')
     analysis_db = create_analysis(database_id, dataset_db, analysis, meta_types_db)

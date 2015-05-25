@@ -1,6 +1,9 @@
+"use strict";
+
 var HomeView = DefaultView.extend({
     
     readableName: "Home Page",
+    shortName: "home",
     
     homePageHtml: 
 "<div id=\"home-page-intro\" class=\"col-xs-6\"></div>"+
@@ -21,23 +24,23 @@ var HomeView = DefaultView.extend({
     //++++++++++++++++++++++++++++++++++++++++++++++++++    RENDER    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
     
     render: function() {
-        welcomeHtml = "<h3>Welcome to " + this.topicalGuideText + "!</h3>";
-        introHtml = 
+        var welcomeHtml = "<h3>Welcome to " + this.topicalGuideText + "!</h3>";
+        var introHtml = 
             "<p>" + 
             this.topicalGuideText + " is a web tool developed to help you explore your corpora using topic modeling. " +
             "Click on the \"Datasets\" tab to get started, then select a dataset (this is your corpus, or collection of text documents) and an analysis (the result of running a topic model on your corpus). " +
             "Once you do that start exploring!" + 
             "</p>";
-        introVideoEmbedHtml = "<iframe width=\"420\" height=\"315\" src=\"https://www.youtube.com/embed/qfdFbtJJGx0\" frameborder=\"0\" allowfullscreen></iframe>";
+        var introVideoEmbedHtml = "<iframe width=\"420\" height=\"315\" src=\"https://www.youtube.com/embed/qfdFbtJJGx0\" frameborder=\"0\" allowfullscreen></iframe>";
         
-        needHelpHtml = "<h3>Need More Help?</h3>" + 
+        var needHelpHtml = "<h3>Need More Help?</h3>" + 
             "<p>" + 
             "Some visualizations need additional explanation to use them to their full extent. " +
             "Click on the help (" + icons.help + ") icon on the menu bar for video tutorials and more. " +
             "The help content will change depending on what page you're looking at. " +
             "</p>";
         
-        getStartedButtonHtml = "<button id=\"get-started\" type=\"button\" class=\"btn btn-success btn-lg\">Get Started!</button>";
+        var getStartedButtonHtml = "<button id=\"get-started\" type=\"button\" class=\"btn btn-success btn-lg\">Get Started!</button>";
         
         
         var el = d3.select(this.el);
@@ -56,13 +59,15 @@ var HomeView = DefaultView.extend({
         this.selectionModel.selectRandom();
         // Redirect user accordingly.
         if(this.selectionModel.get("dataset") !== "" && this.selectionModel.get("dataset") !== "") {
-            window.location.href = "#visualizations/metadata_map";
+            this.viewModel.set({ currentView: "metadata_map" });
         } else {
-            window.location.href = "#datasets";
+            this.viewModel.set({ currentView: "datasets" });
         }
     },
     
 });
 
-// Add the Datasets View as the root view
-globalViewModel.setRootViewClass(HomeView);
+// Add the Home View as the root view
+$(function startApplication() {
+    globalTopicalGuideView.viewModel.setRootViewClass(HomeView);
+});

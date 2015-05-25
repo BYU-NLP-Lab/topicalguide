@@ -1,3 +1,4 @@
+"use strict";
 
 /**
  * Responsible for rendering the lists of documents for the user to select a
@@ -5,6 +6,7 @@
  */
 var AllDocumentsSubView = DefaultView.extend({
     readableName: "All Documents",
+    shortName: "all_docs",
     
     initialize: function() {
         var defaults = {
@@ -140,7 +142,7 @@ var AllDocumentsSubView = DefaultView.extend({
     },
     
     getLastPage: function() {
-        return Math.floor(this.documentCount/this.settingsModel.get("docsPerPage") + 1);
+        return Math.ceil(this.documentCount/this.settingsModel.get("docsPerPage"));
     },
     
     /**
@@ -232,7 +234,7 @@ var AllDocumentsSubView = DefaultView.extend({
                 "document_continue": this.getDocumentContinue(),
                 "document_limit": this.settingsModel.get("docsPerPage"),
         }, function(data) {
-            var documents = extractDocuments(data);
+            var documents = extractDocuments(data, this.selectionModel);
             var documentCount = data.datasets[selection["dataset"]].document_count;
             var documentContinue = this.settingsModel.attributes["documentContinue"];
             var displayNDocuments = this.settingsModel.attributes["displayNDocuments"];
@@ -271,15 +273,16 @@ var AllDocumentsSubView = DefaultView.extend({
  */
 var DocumentInfoView = DefaultView.extend({
     readableName: "Single Document Information",
+    shortName: "one_doc_info",
     
     htmlTemplate:
-"<h3>Document: <span id=\"single-doc-name\"></span></h3>"+
-"<div class=\"row\">"+
-"    <div id=\"single-doc-left-content\" class=\"col-xs-9\">"+
-"    </div>"+
-"    <div id=\"single-doc-right-content\" class=\"col-xs-3\">"+
-"    </div>"+
-"</div>",
+'<h3>Document: <span class="single-doc-name"></span><span class="single-doc-fav"></span></h3>'+
+'<div class="row">'+
+'    <div id="single-doc-left-content" class="col-xs-9">'+
+'    </div>'+
+'    <div id="single-doc-right-content" class="col-xs-3">'+
+'    </div>'+
+'</div>',
 
     pieChartTemplate:
 "<div id=\"single-doc-pie-chart\" class=\"row\">"+
@@ -323,11 +326,6 @@ var DocumentInfoView = DefaultView.extend({
         this.listenTo(this.settingsModel, "change:maxTopicIndex", this.updateSliderInfo);
         this.listenTo(this.settingsModel, "change:minTopicIndex", this.updatePieChartAndLegend);
         this.listenTo(this.settingsModel, "change:maxTopicIndex", this.updatePieChartAndLegend);
-        $("body").tooltip({
-            container: "body",
-            selector: ".tg-topic-tooltip",
-            title: "hi",
-        });
         
         // Track which topics are selected.
         this.selectedTopics = {};
@@ -340,7 +338,7 @@ var DocumentInfoView = DefaultView.extend({
                 return result;
             }
         }, []);
-        for(t in topics) {
+        for(var t in topics) {
             this.selectedTopics[t] = false; // Nothing is visible until the pie chart's data is loaded.
         }
     },
@@ -391,7 +389,7 @@ var DocumentInfoView = DefaultView.extend({
      */
     updateSelectedTopicsSettings: function() {
         var s = [];
-        for(t in this.selectedTopics) {
+        for(var t in this.selectedTopics) {
             s.push(t);
         }
         s.sort();
@@ -399,12 +397,12 @@ var DocumentInfoView = DefaultView.extend({
     },
     
     /**
-     * When the topics range chanes, then the selected topics must be updated.
+     * When the topics range changes, then the selected topics must be updated.
      */
     changeSelectedTopicsRange: function() {
         var topics = this.getTopicsInSliderRange();
         topics = _.reduce(topics, function(r, t) { r[t.topicNumber.toString()] = true; return r; }, {});
-        for(t in this.selectedTopics) {
+        for(var t in this.selectedTopics) {
             if(t in topics) {
                 this.selectedTopics[t] = true;
             } else {
@@ -428,6 +426,8 @@ var DocumentInfoView = DefaultView.extend({
     },
     
     render: function() {
+        var that = this;
+        
         if(this.selectionModel.get("document") === "") {
             this.$el.html("<p>A document needs to be selected in order to use this view.</p>");
             return;
@@ -435,7 +435,15 @@ var DocumentInfoView = DefaultView.extend({
         
         this.$el.html(this.htmlTemplate);
         
-        d3.selectAll("#single-doc-name").text(this.selectionModel.get("document"));
+        // Set the document name and the favs icon.
+        var docName = this.selectionModel.get("document");
+        var docNameEl = this.$el.find(".single-doc-name");
+        var docNameFavEl = this.$el.find(".single-doc-fav");
+        docNameEl.text(docName+" ");
+        docNameFavEl.attr("data-tg-document-name", docName);
+        docNameFavEl.addClass("tg-fav");
+        tg.site.initFav(docNameFavEl.get(0), this.favsModel);
+                
         this.renderTabbedContent();
         this.renderPieChartContent();
     },
@@ -465,7 +473,7 @@ var DocumentInfoView = DefaultView.extend({
             // Extract the needed data.
             var topicTokenCounts = documents[doc].topics;
             this.sortedTopicTokenCounts = [];
-            for(topicNum in topicTokenCounts) {
+            for(var topicNum in topicTokenCounts) {
                 this.sortedTopicTokenCounts.push({
                     topicNumber: topicNum,
                     tokenCount: topicTokenCounts[topicNum],
@@ -523,20 +531,20 @@ var DocumentInfoView = DefaultView.extend({
             // Render the slider and set slider events.
             this.$el.find("#single-doc-pie-chart-topic-selector").slider({
                 range: true,
-                min: 0,
+                min: 1,
                 max: this.sortedTopicTokenCounts.length,
                 step: 1,
-                values: [low, high],
+                values: [1, high],
                 slide: function(event, ui) {
                     this.settingsModel.set({
-                        minTopicIndex: ui.values[0],
-                        maxTopicIndex: ui.values[1],
+                        minTopicIndex: ui.values[0]-1,
+                        maxTopicIndex: ui.values[1]-1,
                     });
                 }.bind(this),
                 change: function(event, ui) {
                     this.settingsModel.set({
-                        minTopicIndex: ui.values[0],
-                        maxTopicIndex: ui.values[1],
+                        minTopicIndex: ui.values[0]-1,
+                        maxTopicIndex: ui.values[1]-1,
                     });
                 }.bind(this),
             });
@@ -568,7 +576,7 @@ var DocumentInfoView = DefaultView.extend({
     updatePieChartAndLegend: function() {
         var data = this.getTopicsInSliderRange();
         var dataTopicNames = [];
-        for(i in data) {
+        for(var i in data) {
             dataTopicNames.push(data[i].topicNumber.toString());
         }
         var colorScale = colorPalettes.getDiscreteColorScale(dataTopicNames, colorPalettes.pastels);
@@ -605,15 +613,15 @@ var DocumentInfoView = DefaultView.extend({
             .attr("d", arc)
             .classed({
                 "single-doc-topic": true,
-                //~ "single-doc-topic-pie-slice": true,
-                "tg-topic-tooltip": true,
+                "single-doc-topic-toggle": true,
+                "tg-tooltip": true,
                 "pointer": true,
             })
-            .attr("data-original-title", function(d, i) { // Tool tip text.
-                return that.dataModel.getTopicName(d.data.topicNumber);
+            .attr("data-tg-topic-number", function(d, i) { // Store the topic number on the element for tooltips.
+                return d.data.topicNumber;
             })
             .attr("data-placement", "left")
-            .attr("data-topic-number", function(d, i) { // Store the topic number on the element.
+            .attr("data-tg-topic-number", function(d, i) { // Store the topic number on the element.
                 return d.data.topicNumber;
             });
         
@@ -630,7 +638,7 @@ var DocumentInfoView = DefaultView.extend({
         legendEntries.append("label").append("input") // Add checkboxes.
             .classed({ "single-doc-topic-legend-checkbox": true })
             .attr("type", "checkbox")
-            .attr("data-topic-number", function(d, i) {
+            .attr("data-tg-topic-number", function(d, i) {
                 return d.topicNumber;
             })
             .attr("id", function(d, i) { // Label the checkbox for updates.
@@ -649,8 +657,8 @@ var DocumentInfoView = DefaultView.extend({
             .style("background-color", function(d, i) {
                 return that.topicColorScale(d.topicNumber);
             })
-            .classed("single-doc-topic", true)
-            .attr("data-topic-number", function(d, i) { return d.topicNumber; });
+            .classed("single-doc-topic single-doc-topic-toggle", true)
+            .attr("data-tg-topic-number", function(d, i) { return d.topicNumber; });
         legendEntries.append("span") // Add a space between color swatch and text.
             .html("&nbsp;");
         legendEntries.append("span")
@@ -660,8 +668,8 @@ var DocumentInfoView = DefaultView.extend({
             .attr("id", function(d, i) { // Label the span for hover effects.
                 return "single-doc-legend-topic-"+d.topicNumber;
             })
-            .classed({ "single-doc-topic": true })
-            .attr("data-topic-number", function(d, i) {
+            .classed({ "single-doc-topic single-doc-topic-toggle tg-topic-name-auto-update": true })
+            .attr("data-tg-topic-number", function(d, i) {
                 return d.topicNumber;
             });
         
@@ -681,7 +689,7 @@ var DocumentInfoView = DefaultView.extend({
     },
     
     renderTabbedContent: function() {
-        tabs = {
+        var tabs = {
             "Plain Text": this.renderText.bind(this),
             "Metadata and Metrics": this.renderMetadataAndMetrics.bind(this),
         };
@@ -769,7 +777,6 @@ var DocumentInfoView = DefaultView.extend({
     
     requestTopicHighlightData: function() {
         var topics = this.settingsModel.get("topics");
-        console.log(topics);
         if(topics.length === 0) {
             this.highlightText();
             return;
@@ -787,7 +794,7 @@ var DocumentInfoView = DefaultView.extend({
             var topics = extractTopics(data, this.selectionModel);
             var justTopics = {};
             var tokens = [];
-            for(topic in topics) {
+            for(var topic in topics) {
                 var docTokens = topics[topic].word_token_documents_and_locations;
                 if(doc in docTokens) {
                     var docTokens = docTokens[doc];
@@ -820,7 +827,7 @@ var DocumentInfoView = DefaultView.extend({
             var topicsAndLocations = extractDocuments(data, this.selectionModel)[selection.document].word_token_topics_and_locations;
             var topics = {};
             var tokens = [];
-            for(word in topicsAndLocations) {
+            for(var word in topicsAndLocations) {
                 var tempTokens = topicsAndLocations[word];
                 for(var i = 0; i < tempTokens.length; i++) {
                     topics[tempTokens[i][0]] = true;
@@ -840,8 +847,9 @@ var DocumentInfoView = DefaultView.extend({
     highlightText: function(topics, tokens) {
         var container = d3.select(this.el).select("#highlighted-text").html("");
         
+        // Just render the plain text if there's nothing to highlight.
         if(topics === undefined || tokens === undefined || (_.size(topics) === 0 && tokens.length === 0)) {
-            var html = this.model.attributes.text.split("\n");
+            var html = this.model.get("text").split("\n");
             html = _.reduce(html, function(result, item) { 
                 if(item === "") {
                     return result;
@@ -934,7 +942,8 @@ var DocumentInfoView = DefaultView.extend({
             .classed("highlighted-word", isFragmentToDisplay)
             .classed("single-doc-topic", isFragmentToDisplay)
             .classed("pointer", isFragmentToDisplay)
-            .attr("data-topic-number", function(d, i) {
+            .classed("tg-tooltip", isFragmentToDisplay)
+            .attr("data-tg-topic-number", function(d, i) {
                 if(isFragmentToDisplay(d, i)) {
                     return textFragmentToTopic[i.toString()];
                 } else {
@@ -990,7 +999,7 @@ var DocumentInfoView = DefaultView.extend({
     events: {
         "mouseover .single-doc-topic": "mouseoverHighlightTopics",
         "mouseout .single-doc-topic": "mouseoutHighlightTopics",
-        "click .single-doc-topic": "clickTopic",
+        "click .single-doc-topic-toggle": "clickTopic",
         "change .single-doc-topic-legend-checkbox": "changeCheckBox",
     },
     
@@ -999,12 +1008,12 @@ var DocumentInfoView = DefaultView.extend({
      * Return the topic number.
      */
     getTopicNumberFromEvent: function(e) {
-        return d3.select(e.target).attr("data-topic-number");
+        return d3.select(e.target).attr("data-tg-topic-number");
     },
     
     /**
      * Highlight the topic when the user hovers over a topic based element.
-     * Relies on the data-topic-number attribute of the event element to work properly.
+     * Relies on the data-tg-topic-number attribute of the event element to work properly.
      */
     mouseoverHighlightTopics: function(e) {
         var that = this;
@@ -1026,19 +1035,19 @@ var DocumentInfoView = DefaultView.extend({
         // Increase size of word highlights.
         d3.select("#highlighted-text").selectAll(".highlighted-word")
             .filter(function(d, i) {
-                var num = d3.select(this).attr("data-topic-number");
+                var num = d3.select(this).attr("data-tg-topic-number");
                 return num.toString() === topicNumber.toString();
             })
             .style("outline-style", "solid")
             .style("outline-color", function(d, i) {
-                var num = d3.select(this).attr("data-topic-number");
-                return d3.rgb(that.topicColorScale(num)).darker(2);
+                var num = d3.select(this).attr("data-tg-topic-number");
+                return d3.rgb(that.topicColorScale(num));
             });
     },
     
     /**
      * Unhighlights the topic when the user stops hovering over a topic based element.
-     * Relies on the data-topic-number attribute of the event element to work properly.
+     * Relies on the data-tg-topic-number attribute of the event element to work properly.
      */
     mouseoutHighlightTopics: function(e) {
         var that = this;
@@ -1060,7 +1069,7 @@ var DocumentInfoView = DefaultView.extend({
         // Increase size of word highlights.
         d3.select("#highlighted-text").selectAll(".highlighted-word")
             .filter(function(d, i) {
-                var num = d3.select(this).attr("data-topic-number");
+                var num = d3.select(this).attr("data-tg-topic-number");
                 return num.toString() === topicNumber.toString();
             })
             .style("outline-style", null)
@@ -1091,8 +1100,6 @@ var DocumentInfoView = DefaultView.extend({
                 return d.topicNumber.toString() === topicNumber.toString();
             })
             .each(function(d) {
-                console.log(d.topicNumber);
-                console.log(that.isTopicSelected(d.topicNumber));
                 d3.select(this).property("checked", that.isTopicSelected(d.topicNumber));
             });
     },
@@ -1116,7 +1123,7 @@ var SingleDocumentSubView = DefaultView.extend({
         this.$el.html(this.mainTemplate);
         this.renderTopMatter();
         if(this.docInfoView === undefined) {
-            this.docInfoView = new DocumentInfoView({ el: $("#document-info-container"), settingsModel: this.settingsModel, selectionModel: this.selectionModel });
+            this.docInfoView = new DocumentInfoView(_.extend({ el: $("#document-info-container")}, this.getAllModels()));
         }
         this.docInfoView.render();
     },
@@ -1143,6 +1150,7 @@ var SingleDocumentSubView = DefaultView.extend({
 var DocumentView = DefaultView.extend({
     
     readableName: "Documents",
+    shortName: "documents",
     
     initialize: function() {
         var defaults = { selectedTab: "Text" };
@@ -1163,12 +1171,13 @@ var DocumentView = DefaultView.extend({
     
     render: function() {
         if(this.selectionModel.nonEmpty(["dataset", "analysis"])) {
-            this.$el.html("<div id=\"info\"></div>");
+            this.$el.html('<div class="document-subclass-container"></div>');
             this.cleanupViews();
+            var el = this.$el.find(".document-subclass-container");
             if(this.selectionModel.nonEmpty(["document"])) {
-                this.subView = new SingleDocumentSubView({ el: "#info", selectionModel: this.selectionModel, settingsModel: this.settingsModel });
+                this.subView = new SingleDocumentSubView(_.extend({ el: el }, this.getAllModels()));
             } else {
-                this.subView = new AllDocumentsSubView({ el: "#info", selectionModel: this.selectionModel, settingsModel: this.settingsModel });
+                this.subView = new AllDocumentsSubView(_.extend({ el: el }, this.getAllModels()));
             }
             this.subView.render();
         } else {
@@ -1185,4 +1194,4 @@ var DocumentView = DefaultView.extend({
 });
 
 // Add the Document View to the top level menu
-globalViewModel.addViewClass([], DocumentView);
+addViewClass([], DocumentView);
