@@ -60,7 +60,6 @@ var DatasetView = DefaultView.extend({
             .enter()
             .append("div")
             .classed("panel panel-default", true);
-        this.panels = panels;
         
         // Create the panel title.
         var bold = panels.append("div")
@@ -177,7 +176,7 @@ var DatasetView = DefaultView.extend({
             if(_.size(d.value.metadata) === 0) {
                 el.html("<p>No metadata available for this dataset.</p>");
             } else {
-                createTableFromHash(el, datasetMetadata, ["Metadata", "Value"], "metadata");
+                tg.gen.createTableFromHash(this, datasetMetadata, ["Metadata", "Value"], "No metadata available.");
             }
         });
         
@@ -188,17 +187,16 @@ var DatasetView = DefaultView.extend({
             if(_.size(d.value.metrics) === 0) {
                 el.html("<p>No metrics available for this dataset.</p>");
             } else {
-                createTableFromHash(el, d.value.metrics, ["Metric", "Value"], "metrics");
+                tg.gen.createTableFromHash(this, d.value.metrics, ["Metric", "Value"], "No metrics available.");
             }
         });
         
         // Create popover functionality for the analyses' metadata and metrics.
         this.$el.popover({
-            container: this.$el.get(),
+            container: this.$el.get(0),
             content: function() {
                 // Construct the contents of the popover.
                 var emptyElement = document.createElement("div");
-                var el = d3.select(emptyElement);
                 var datasetName = that.selectionModel.get("dataset");
                 var analysisName = $(this).attr("data-tg-analysis-name");
                 var metadata = that.dataModel.getAnalysisMetadata(datasetName, analysisName);
@@ -207,9 +205,9 @@ var DatasetView = DefaultView.extend({
                     return result;
                 }, {});
                 var metrics = that.dataModel.getAnalysisMetrics(datasetName, analysisName);
-                createTableFromHash(el, metadata, ["Metadata", "Value"], "metadata");
-                createTableFromHash(el, metrics, ["Metric", "Value"], "metrics");
-                return el.html();
+                tg.gen.createTableFromHash(emptyElement, metadata, ["Metadata", "Value"], "No metadata available.");
+                tg.gen.createTableFromHash(emptyElement, metrics, ["Metric", "Value"], "No metrics available.");
+                return $(emptyElement).html();
             },
             html: true,
             placement: "auto right",
@@ -244,16 +242,14 @@ var DatasetView = DefaultView.extend({
      * Expand the dataset accordion on dataset change.
      */
     updateDataset: function() {
-        if(this.panels !== undefined) {
-            var datasetName = this.selectionModel.get("dataset");
-            $(".collapse.in").collapse('hide');
-            this.panels.selectAll(".collapse")
-                .each(function(d, i) {
-                    if(d.key === datasetName) {
-                        $(this).collapse('show');
-                    }
-                });
-        }
+        var datasetName = this.selectionModel.get("dataset");
+        this.$el.find(".collapse.in").collapse('hide');
+        d3.select(this.el).selectAll(".collapse")
+            .each(function(d, i) {
+                if(d.key === datasetName) {
+                    $(this).collapse('show');
+                }
+            });
     },
     
     /**
@@ -263,16 +259,14 @@ var DatasetView = DefaultView.extend({
         var datasetName = this.selectionModel.get("dataset");
         var analysisName = this.selectionModel.get("analysis");
         if(datasetName !== "") {
-            if(this.panels !== undefined) {
-                var panel = this.panels.filter(function(d, i) {
-                    return d.key === datasetName;
+            var panel = d3.select(this.el).selectAll(".panel").filter(function(d, i) {
+                return d.key === datasetName;
+            });
+            
+            panel.selectAll(".datasets-analysis-active-element")
+                .classed("active", function(d, i) {
+                    return d.key === analysisName;
                 });
-                
-                panel.selectAll(".datasets-analysis-active-element")
-                    .classed("active", function(d, i) {
-                        return d.key === analysisName;
-                    });
-            }
         }
     },
     

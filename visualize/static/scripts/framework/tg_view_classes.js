@@ -60,45 +60,47 @@ _.extend(DefaultView.prototype, Backbone.View.prototype, {
     /**
      * Any needed model event binding should be done in here.
      */
-    initialize: function(options) {},
+    initialize: function initialize(options) {},
     
     /**
      * Render visualization in the given element (i.e. this.el and this.$el).
      * To use d3 try d3.select(this.el).
      */
-    render: function() {
+    render: function render() {
         this.$el.html("<p>Welcome to the Default Page. You're seeing this message either because this view is not implemented, this view doesn't exist, or an error occurred while trying to render the view.</p>");
     },
     
     /**
      * Call dispose on any sub-views and perform any other necessary cleanup operations.
      */
-    cleanup: function() {},
+    cleanup: function cleanup() {},
     
     /**
      * Removes all events for you and removes the $el from the DOM.
      */
-    dispose: function() {
+    dispose: function dispose() {
         this.cleanup();
         if(this.dataModel) this.dataModel.off(null, null, this);
+        if(this.userModel) this.userModel.off(null, null, this);
         if(this.selectionModel) this.selectionModel.off(null, null, this);
         if(this.favsModel) this.favsModel.off(null, null, this);
         if(this.settingsModel) this.settingsModel.off(null, null, this);
+        if(this.viewModel) this.viewModel.off(null, null, this);
         this.remove();
     },
     
     /**
      * Return the HTML of the help message desired.
      */
-    renderHelpAsHtml: function() {
+    renderHelpAsHtml: function renderHelpAsHtml() {
         return "<p>The creators of this view didn't create a help page for you.</p>";
     },
     
     /**
-     * Convenient function to render an error message in the $el element.
+     * Convenient function to render an error message to the user.
      */
-    renderError: function(msg) {
-        this.$el.html("<p>Oops, there was a server error: "+msg+"</p>");
+    renderError: function renderError(msg) {
+        alert(msg);
     },
 });
 DefaultView.extend = Backbone.View.extend;
@@ -645,6 +647,7 @@ var TopicalGuideView = DefaultView.extend({
                 }
                 throw new Exception("No data was set for the tooltip to properly display.");
             },
+            trigger: "hover",
         });
         
         // Start the router.
@@ -721,20 +724,6 @@ var TopicalGuideView = DefaultView.extend({
     },
     
     changeCurrentView: function() {
-        // Destroy current view.
-        this.currentView.dispose();
-        $("#tg-current-view-container").remove();
-        // Create new div element.
-        $("#tg-views-container").append("<div id=\"tg-current-view-container\"></div>");
-        
-        // Create new settings for the new view.
-        var settingsModel = new SettingsModel();
-        var init = {
-            el: $("#tg-current-view-container"),
-            settingsModel: settingsModel,
-        };
-        _.extend(init, this.models);
-        
         // Find the current class to display.
         var viewClass = null;
         if(this.viewModel.get("currentView") === "") {
@@ -749,6 +738,24 @@ var TopicalGuideView = DefaultView.extend({
         if(viewClass === undefined || viewClass === null) {
             viewClass = DefaultView;
         }
+        
+        if(viewClass.prototype.shortName === this.currentView.shortName) {
+            return;
+        }
+        
+        // Destroy current view.
+        this.currentView.dispose();
+        $("#tg-current-view-container").remove();
+        // Create new div element.
+        $("#tg-views-container").append("<div id=\"tg-current-view-container\"></div>");
+        
+        // Create new settings for the new view.
+        var settingsModel = new SettingsModel();
+        var init = {
+            el: $("#tg-current-view-container"),
+            settingsModel: settingsModel,
+        };
+        _.extend(init, this.models);
         
         // Create the new view.
         this.currentView = new viewClass(init);

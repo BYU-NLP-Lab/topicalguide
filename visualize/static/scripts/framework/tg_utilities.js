@@ -21,7 +21,7 @@ var tg = new function() {
          *      tg-data-topic-name-scheme
          * favsModel -- must be the favoritesModel to pull from
          */
-        initFav: function(domElement, favsModel) {
+        initFav: function initFav(domElement, favsModel) {
             var el = d3.select(domElement);
             var type = null;
             var clsName = null;
@@ -52,6 +52,7 @@ var tg = new function() {
         
         /**
          * Convert from the short string representation to a human readable one.
+         * @deprecated Use metadata_types from dataModel.getServerInfo()
          */
         readableTypes: {
             "int": "Integer",
@@ -84,11 +85,14 @@ var tg = new function() {
         },
     };
     
+    /**
+     * Convenience functions to create random numbers.
+     */
     this.rand = {
         /**
          * Return an integer in [min, max).
          */
-        getRandomIntegerInRange: function(min, max) {
+        getRandomIntegerInRange: function getRandomIntegerInRange(min, max) {
             return Math.floor(Math.random()*(max - min)) + min;
         },
     };
@@ -102,7 +106,7 @@ var tg = new function() {
          * attrName -- string of the attribute name
          * Return true if the attribute exists; false otherwise.
          */
-        hasAttr: function(domElement, attrName) {
+        hasAttr: function hasAttr(domElement, attrName) {
             var a = $(domElement).attr(attrName);
             return typeof a !== typeof undefined && a !== false;
         },
@@ -118,7 +122,7 @@ var tg = new function() {
          * i -- a number
          * Return true if it is an integer; false otherwise.
          */
-        isInteger: function(i) {
+        isInteger: function isInteger(i) {
             return !isNaN(i) && 
                    parseInt(Number(i)) == i && 
                    !isNaN(parseInt(i, 10));
@@ -128,7 +132,7 @@ var tg = new function() {
          * s -- an object
          * Return true if it is a string; false otherwise.
          */
-        isString: function(str) {
+        isString: function isString(str) {
             if(typeof str === "string" || str instanceof String) {
                 return true;
             } else {
@@ -140,7 +144,7 @@ var tg = new function() {
          * obj -- any javascript object
          * Return true if obj isn't undefined or null; false otherwise;
          */
-        isDefined: function(obj) {
+        isDefined: function isDefined(obj) {
             return (obj !== null && obj !== undefined);
         },
         
@@ -149,7 +153,7 @@ var tg = new function() {
          * This code is from the Django project:
          * https://docs.djangoproject.com/en/1.7/ref/contrib/csrf/
          */
-        getCookie: function(name) {
+        getCookie: function getCookie(name) {
             var cookieValue = null;
             if (document.cookie && document.cookie != '') {
                 var cookies = document.cookie.split(';');
@@ -168,7 +172,7 @@ var tg = new function() {
         /**
          * Return true if session storage is enabled.
          */
-        hasSessionStorage: function() {
+        hasSessionStorage: function hasSessionStorage() {
             try {
                 sessionStorage["storage-test"] = "test";
                 delete sessionStorage["storage-test"];
@@ -180,16 +184,23 @@ var tg = new function() {
         
     };
     
+    /**
+     * Basic text manipulation functions.
+     */
     this.str = {
         /**
          * Returns a new string with the start of each word capitalized.
          */
-        toTitleCase: function(str) {
+        toTitleCase: function toTitleCase(str) {
             return str.replace(/\w\S*/g, function(substr){ return substr.charAt(0).toUpperCase() + substr.slice(1); });
         },
         
     };
     
+    /**
+     * Basic color palettes and convenience functions used to create d3 color
+     * scales.
+     */
     this.color = {
         pastels: ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", 
                   "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", 
@@ -201,20 +212,37 @@ var tg = new function() {
          * Return a function that takes and index in the range of listOfValues 
          * and maps to a color.
          */
-        getDiscreteColorScale: function(listOfValues, colorPalette) {
+        getDiscreteColorScale: function getDiscreteColorScale(listOfValues, colorPalette) {
             var colorDomain = d3.scale.ordinal().domain(colorPalette).rangePoints([0, 1], 0).range();
             var ordinalRange = d3.scale.ordinal().domain(listOfValues).rangePoints([0, 1], 0).range();
             var ordToNum = d3.scale.ordinal().domain(listOfValues).range(ordinalRange);
             var numToColor = d3.scale.linear().domain(colorDomain).range(colorPalette);
             return function ordinalColorScale(val) { return numToColor(ordToNum(val)); };
         },
+        
+        /**
+         * Converts hexidecimal string of RGB to an rgba string.
+         * hex -- RGB hexidecimal string
+         * alpha -- desired alpha value between 0 and 1 inclusive
+         * Return "rgba(R,G,B,alpha)".
+         */
+        hexToRGBA: function hexToRGBA(hex, alpha) {
+            var r = parseInt(hex.slice(1,3), 16);
+            var g = parseInt(hex.slice(3,5), 16);
+            var b = parseInt(hex.slice(5,7), 16);
+            var a = 0.3;
+            return "rgba("+r+","+g+","+b+","+a+")";
+        },
     };
     
+    /**
+     * Convenience functions for manipulating the URL.
+     */
     this.url = {
         /**
          * Turns arrays and other objects to URI friendly strings.
          */
-        uriStringify: function(item) {
+        uriStringify: function uriStringify(item) {
             var result = null;
             if(item instanceof String) {
                 result = encodeURIComponent(item);
@@ -234,7 +262,7 @@ var tg = new function() {
         /**
          * Parse url arguments to a hash.
          */
-        urlToHash: function(args) {
+        urlToHash: function urlToHash(args) {
             var hash = {};
             var items = args.split('&');
             if(items[0] !== "") {
@@ -249,9 +277,9 @@ var tg = new function() {
 
         /**
          * Convert a hash to url arguments, url will be normalized.
-         * hash - Any valid hash with strings, arrays, and numbers as the values.
+         * hash -- Any valid hash with strings, arrays, and numbers as the values.
          */
-        hashToUrl: function(hash) {
+        hashToUrl: function hashToUrl(hash) {
             var keys = [];
             _.forOwn(hash, function(value, key) { keys.push(key); });
             keys.sort();
@@ -260,6 +288,287 @@ var tg = new function() {
                 items.push(encodeURIComponent(key) + '=' + tg.url.uriStringify(hash[key]));
             });
             return items.join('&');
+        },
+    };
+    
+    /**
+     * Convenience functions for generating content.
+     */
+    this.gen = {
+        /**
+         * Create a table with two columns from a hash/dictionary/object.
+         * domElContainer - The dom element to append the table/message to.
+         * hash -- The hash to use to populate the table.
+         * header -- An array of length 2 with the first item the name for the key and second for the value.
+         * message -- The message if the hash is empty (e.g. "No metrics available.").
+         */
+        createTableFromHash: function createTableFromHash(domElContainer, hash, header, message) {
+            var container = d3.select(domElContainer);
+            if(_.size(hash) === 0) {
+                container.append("p")
+                    .text(message);
+            } else {
+                var table = container.append("table")
+                    .classed("table table-hover table-condensed", true);
+                table.append("thead")
+                    .append("tr")
+                    .selectAll("th")
+                    .data(header)
+                    .enter()
+                    .append("th")
+                    .text(function(d) { return d; });
+                var entries = d3.entries(hash).map(function(entry) {
+                    if(entry.value == null) {
+                        return [entry.key, "null"];
+                    } else {
+                        return [entry.key, entry.value.toString()];
+                    }
+                });
+                table.append("tbody")
+                    .selectAll("tr")
+                    .data(entries)
+                    .enter()
+                    .append("tr")
+                    .selectAll("td")
+                    .data(function(d) { return d; })
+                    .enter()
+                    .append("td")
+                    .text(function(d) { return d; });
+            }
+        },
+        
+        /**
+         * Create a sortable table.
+         * 
+         * el -- a dom element to append the table to
+         * options -- an object with the following options set:
+         * 
+         * header -- the titles at the top of the columns
+         * sortable -- an array (of the same length as the header) containing 
+         *     boolean values indicating which columns are sortable
+         * sortBy -- the index of the column to sort by
+         * sortAscending - true for ascending, false for descending
+         * onSortFunction - Function called when a column is sorted.
+         *     e.g. function(column, ascending) where column is an index into 
+         *     the header array and ascending is a boolean.
+         * data -- an array of arrays, all atomic elements must be numbers or 
+         *     strings, the length of the inner arrays must match the header
+         * dataFunctions -- functions to be passed the data of the table element
+         *     as the first argument and the dom element of the table cell
+         *     as the "this" context
+         * tableRowFunction -- function to be passed the data of an entire row
+         *     with the "this" context as the table row dom element
+         * 
+         * Return nothing.
+         */
+        createSortableTable: function createSortableTable(el, options) {
+            var defaults = {
+                header: [],
+                sortable: [],
+                sortBy: 0,
+                sortAscending: true,
+                onSortFunction: false,
+                data: [],
+                dataFunctions: [],
+                tableRowFunction: false,
+                tableClasses: "table table-hover table-condensed",
+                shrinkTable: false,
+            };
+            options = _.extend(defaults, options);
+            
+            // Sort functions where i is the column to sort by.
+            var makeSortAscending = function(i) {
+                var sortAscending = function(a, b) {
+                    if($.isNumeric(a[i]) && $.isNumeric(b[i])) return parseFloat(a[i]) - parseFloat(b[i]);
+                    else return a[i].localeCompare(b[i]);
+                };
+                return sortAscending;
+            }
+            var makeSortDescending = function(i) {
+                var sortAscending = makeSortAscending(i);
+                var sortDescending = function(a, b) { return sortAscending(b, a); };
+                return sortDescending;
+            }
+            
+            // Variables for sorting.
+            var ascending = options.sortAscending;
+            var sortBy = options.sortBy;
+            
+            // Create table.
+            var table = d3.select(el).append("table")
+                .classed(options.tableClasses, true);
+            
+            if(options.shrinkTable) {
+                table.style("width", "auto");
+                table.style("margin", "0px auto");
+            }
+            
+            // Create column headers with sort icons.
+            var headerRow = table.append("thead")
+                .append("tr").selectAll("th")
+                .data(options.header)
+                .enter()
+                .append("th")
+                .append("a")
+                .style("cursor", function(d, i) {
+                    if(options.sortable[i]) {
+                        return "pointer";
+                    } else {
+                        return null;
+                    }
+                })
+                .on("click", function(d, i) {
+                    if(!options.sortable[i]) {
+                        return;
+                    }
+                    
+                    // On click sort the table.
+                    if(sortBy !== i) ascending = true;
+                    sortBy = i;
+                    if(ascending) {
+                        ascending = false;
+                        tableRows.sort(makeSortAscending(i));
+                    } else {
+                        ascending = true;
+                        tableRows.sort(makeSortDescending(i)); 
+                    }
+                    if(options.onSortFunction) {
+                        options.onSortFunction(i, !ascending);
+                    }
+                })
+                .classed({ "nounderline": true })
+                .style("white-space", "nowrap")
+                .text(function(title) { return title+" "; }) // Title.
+                .append("span") // Sort icon.
+                .classed("glyphicon", function(d, i) {
+                    return options.sortable[i];
+                })
+                .classed("glyphicon-sort", function(d, i) {
+                    return options.sortable[i];
+                });
+            
+            // Create tr entries.
+            var tableRows = table.append("tbody")
+                .selectAll("tr")
+                .data(options.data)
+                .enter()
+                .append("tr");
+            // Create td entries
+            tableRows.each(function(rowData, index) {
+                var tableRowFunc = options.tableRowFunction;
+                if(tableRowFunc) {
+                    tableRowFunc.call(this,rowData, index);
+                }
+                
+                var row = d3.select(this);
+                var td = row.selectAll("td")
+                    .data(rowData)
+                    .enter()
+                    .append("td");
+                
+                var cellFunctions = options.dataFunctions;
+                
+                // Fill in table values
+                td.each(function(d, i) {
+                    if(_.size(cellFunctions) >= i && cellFunctions[i]) {
+                        cellFunctions[i].call(this, d, i);
+                    } else {
+                        d3.select(this).text(d);
+                    }
+                });
+            });
+            
+            // Set initial sort.
+            if(ascending) {
+                tableRows.sort(makeSortAscending(sortBy));
+            } else {
+                tableRows.sort(makeSortDescending(sortBy));
+            }
+            ascending = !ascending;
+        },
+        
+        /**
+         * Create tabbed content. The functions are only called once when the tab
+         * is originally selected. Thereafter the html is just stored.
+         * domElementContainer -- a dom element to opperate in
+         * options --  hash with the following options:
+         * 
+         * tabs -- A hash mapping the tab name to a function. The function will be called
+         *        when the corresponding tab is clicked.  The function must be of the form
+         *        function(key, container) where key is the key in tabs and container is
+         *        a d3 element to render content in.
+         * selected -- The tab to be active first.
+         * tabOnClick -- A function called when a tab is clicked, the function is passed the label of the tab.
+         */
+        createTabbedContent: function createTabbedContent(domElementContainer, options) {
+            var defaults = {
+                tabs: {},
+                rendered: {},
+                selected: null,
+                tabOnClick: function() {},
+            };
+            options = _.extend(defaults, options);
+            
+            var container = d3.select(domElementContainer);
+            container.html("<ul role=\"tablist\" class=\"nav nav-tabs\"></ul>"+
+                           "<div class=\"tab-content\"></div>");
+            // Make sure a tab is selected to begin with.
+            if(!(options.selected in options.tabs)) {
+                for(var key in options.tabs) {
+                    options.selected = key;
+                    break;
+                }
+            }
+            
+            // Active function, return true if the tab is the one selected.
+            var active = function(d, i) { 
+                if(d.key === options.selected) {
+                    return true;
+                } else {
+                    return false;
+                }
+            };
+            
+            // Set up the content
+            var content = container.select("div.tab-content");
+            var contentPanes = content.selectAll("div.tab-pane");
+            var renderedAreas = contentPanes.data(d3.entries(options.tabs))
+                .enter()
+                .append("div")
+                .classed("tab-pane", true)
+                .classed("active", active)
+                .each(function(d, i) { 
+                    if(active(d, i)) { // Only render the content of the tab when clicked.
+                        options.tabs[d.key](d.key, d3.select(this));
+                        options.rendered[d.key] = true;
+                    }
+                });
+            
+            // Set up tabbed navigation
+            var nav = container.select("ul.nav-tabs");
+            var li = nav.selectAll("li");
+            li.data(d3.entries(options.tabs))
+                .enter()
+                .append("li")
+                .classed("active", active)
+                .append("a")
+                .style("cursor", "pointer")
+                .text(function(d) { return d.key; })
+                .on("click", function(d, i) {
+                    if(d.key !== options.selected) {
+                        options.selected = d.key;
+                        nav.selectAll("li").classed("active", active);
+                        content.selectAll("div.tab-pane").classed("active", active);
+                        if(!(d.key in options.rendered)) {
+                            renderedAreas.filter(active)
+                                .each(function(d, i) {
+                                    options.tabs[d.key](d.key, d3.select(this));
+                                });
+                            options.rendered[d.key] = true;
+                        }
+                        options.tabOnClick(d.key);
+                    }
+                });
         },
     };
 };

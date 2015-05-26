@@ -1437,4 +1437,4 @@ var MetadataMapView = DefaultView.extend({
     
 });
 
-addViewClass(["Interactive"], MetadataMapView);
+addViewClass(["Visualizations"], MetadataMapView);

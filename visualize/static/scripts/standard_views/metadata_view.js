@@ -340,4 +340,4 @@ var MetadataView = DefaultView.extend({
     
 });
 
-addViewClass([], MetadataView);
+addViewClass(["Document"], MetadataView);

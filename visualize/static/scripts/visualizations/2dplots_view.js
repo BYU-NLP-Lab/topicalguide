@@ -796,7 +796,7 @@ var PlotViewManager = DefaultView.extend({
     
     initialize: function() {
         this.plotView = new PlotView(_.extend({}, this.getAllModels()));
-        this.documentInfoView = new DocumentInfoView(_.extend({}, this.getAllModels()));
+        this.documentInfoView = new SingleDocumentView(_.extend({}, this.getAllModels()));
     },
     
     cleanup: function() {
