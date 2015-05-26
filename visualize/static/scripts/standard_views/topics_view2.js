@@ -14,19 +14,23 @@ var AllTopicSubView2 = DefaultView.extend({
     
     formTemplate:
 '<form role="form">'+
-'    <div class="form-group col-xs-4">'+
-'        <label for="words-input">Filter Topics by Words</label>'+
+'    <div class="form-group col-xs-3">'+
+'        <label for="words-input">Filter by Words</label>'+
 '        <input id="words-input" class="form-control" type="text" placeholder="Enter words..."></input>'+
 '    </div>'+
-'    <div class="form-group col-xs-4">'+
-'        <label for="words-input">Filter Topics by Metadata Attribute</label>'+
+'    <div class="form-group col-xs-3">'+
+'        <label for="metadata-attribute-input">Filter by Metadata Attribute</label>'+
 '        <select id="metadata-attribute-input" class="form-control" type="selection" placeholder="Enter metadata attribute..."></select>'+
+'    </div>'+
+'    <div class="form-group col-xs-3">'+
+'        <label for="metadata-value-input">Filter by Metadata Value</label>'+
+'        <input id="metadata-value-input" class="form-control" type="text" placeholder="Enter metadata value..."></input>'+
 '    </div>'+
 '    <div class="form-group col-xs-2">'+
 '        <label for="top-words-input">Top Words</label>'+
 '        <input id="top-words-input" class="form-control" type="number" placeholder="Enter a #."></input>'+
 '    </div>'+
-'    <div class="form-group col-xs-2">'+
+'    <div class="form-group col-xs-1">'+
 '        <label for="submit-button"></label>'+
 '        <input id="submit-button" class="btn btn-default" type="submit"></input>'+
 '    </div>'+
@@ -60,7 +64,9 @@ var AllTopicSubView2 = DefaultView.extend({
             var settings = this.settingsModel.attributes;
             var words = settings["words"].split(/[\s,]+/).join(" ");
             var topNWords = settings["topicTopNWords"];
-            var attribute = settings["selectedAttribute"];
+            
+            var attribute = this.selectionModel.get("metadataName");
+            var value = this.selectionModel.get("metadataValue");
             
             var types = data.datasets[this.selectionModel.get("dataset")].document_metadata_types;
             var attributes = _.map(types, function(type, attr) { return attr; });
@@ -81,7 +87,19 @@ var AllTopicSubView2 = DefaultView.extend({
                 d3.event.preventDefault();
                 that.formSubmit();
             });
+            
+            el.select("#metadata-value-input").property("value", value);
+            
         }.bind(this), this.renderError.bind(this));
+    },
+    
+    events: {
+        "change #metadata-attribute-input": "changeMetadataAttribute",
+    },
+    
+    changeMetadataAttribute: function(e) {
+        console.log("Metadata attribute changed.");
+        this.selectionModel.set({ metadataName: $(e.currentTarget).find(":selected").val() });
     },
     
     formSubmit: function() {
@@ -96,19 +114,18 @@ var AllTopicSubView2 = DefaultView.extend({
         if($.isNumeric(topNWords) && topNWords > 0) {
             this.settingsModel.set({ topicTopNWords: topNWords });
         }
-        var attr = $("#metadata-attribute-input").find(":selected").attr("value");
-        this.settingsModel.set({ selectedAttribute: attr });
-        //~ console.log("Selected attribute name: " + attr);
+        this.selectionModel.set({ metadataName: $("#metadata-attribute-input option:selected").val() });
+        this.selectionModel.set({ metadataValue: $("#metadata-value-input").val() });
+        console.log("Selected value: " + $("#metadata-value-input").val() );
         
-         this.settingsModel.trigger("multichange");
+        this.settingsModel.trigger("multichange");
     },
     
     renderTopicsTable: function() {
         var container = d3.select("#table-container").html(this.loadingTemplate);
         var selection = this.selectionModel.attributes;
         var settings = this.settingsModel.attributes;
-        // Make a request
-        this.dataModel.submitQueryByHash({
+        var queryHash = {
             "datasets": selection["dataset"],
             "analyses": selection["analysis"],
             "topics": "*",
@@ -116,9 +133,12 @@ var AllTopicSubView2 = DefaultView.extend({
             "top_n_words": settings["topicTopNWords"],
             "topic_attr": ["metrics", "names", "top_n_words"],
             "analysis_attr": "metrics",
-//            "metadata_value": settings["selectedAttribute"] + "," + "January", // TODO: remove hard-coded value
-            //~ settings["selectedValue"],
-        }, function(data) {
+        }
+        if (selection["metadataName"] !== "" && selection["metadataValue"] !== "") {
+            queryHash["metadata_value"] = selection["metadataName"] + "," + selection["metadataValue"];
+        }
+        // Make a request
+        this.dataModel.submitQueryByHash(queryHash, function(data) {
             container.html("");
             
             // Create HTML table element.
