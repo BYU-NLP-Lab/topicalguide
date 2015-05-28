@@ -645,7 +645,7 @@ var SingleDocumentView = DefaultView.extend({
             .attr("id", function(d, i) { // Label the span for hover effects.
                 return "single-doc-legend-topic-"+d.topicNumber;
             })
-            .classed({ "single-doc-topic single-doc-topic-toggle tg-topic-name-auto-update": true })
+            .classed("single-doc-legend-topic single-doc-topic single-doc-topic-toggle tg-topic-name-auto-update", true)
             .attr("data-tg-topic-number", function(d, i) {
                 return d.topicNumber;
             });
@@ -696,7 +696,10 @@ var SingleDocumentView = DefaultView.extend({
         var that = this;
         var topicNumber = this.getTopicNumberFromEvent(e);
         // Highlight legend topic text.
-        d3.select(this.el).select(".single-doc-legend-topic-"+topicNumber)
+        d3.select(this.el).selectAll(".single-doc-legend-topic")
+            .filter(function(d) {
+                return $(this).attr("data-tg-topic-number") === topicNumber;
+            })
             .style("background-color", "lightblue");
         // Animate pie slice.
         this.pieGroup.selectAll("path")
@@ -709,8 +712,8 @@ var SingleDocumentView = DefaultView.extend({
             })
             .each(this.mouseoverArcTween);
         
-        // Increase size of word highlights.
-        d3.select(this.el).select(".highlighted-text").selectAll(".highlighted-word")
+        // Outline highlighted words.
+        d3.select(this.el).select(".single-doc-text-container").selectAll(".highlighted-word")
             .filter(function(d, i) {
                 var num = d3.select(this).attr("data-tg-topic-number");
                 return num.toString() === topicNumber.toString();
@@ -730,7 +733,10 @@ var SingleDocumentView = DefaultView.extend({
         var that = this;
         var topicNumber = this.getTopicNumberFromEvent(e);
         // Unhighlight legend topic text.
-        d3.select(this.el).select(".single-doc-legend-topic-"+topicNumber)
+        d3.select(this.el).selectAll(".single-doc-legend-topic")
+            .filter(function(d) {
+                return $(this).attr("data-tg-topic-number") === topicNumber;
+            })
             .style("background-color", null);
         // Animate pie slice.
         this.pieGroup.selectAll("path")
@@ -743,8 +749,8 @@ var SingleDocumentView = DefaultView.extend({
             })
             .each(this.mouseoutArcTween);
         
-        // Increase size of word highlights.
-        d3.select(this.el).select(".highlighted-text").selectAll(".highlighted-word")
+        // Remove outline.
+        d3.select(this.el).select(".single-doc-text-container").selectAll(".highlighted-word")
             .filter(function(d, i) {
                 var num = d3.select(this).attr("data-tg-topic-number");
                 return num.toString() === topicNumber.toString();

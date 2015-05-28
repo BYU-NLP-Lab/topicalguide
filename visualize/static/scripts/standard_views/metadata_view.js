@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Display the metadata options for the user to select from.
  * Also, allows the user to create a new metadata attribute.
@@ -9,9 +11,9 @@ var MetadataView = DefaultView.extend({
     
     selectMetadataTemplate:
 '<div class="container-fluid row">'+
-'   <div class="col-xs-2">'+
+'   <div class="col-xs-1">'+
 '   </div>'+
-'   <div class="col-xs-4">'+
+'   <div class="col-xs-5">'+
 '       <div class="choose-metadata"></div>'+
 '   </div>'+
 '   <div class="col-xs-4">'+
@@ -36,9 +38,8 @@ var MetadataView = DefaultView.extend({
 '    <label>Meaning:</label><br />'+
 '    <span class="metadata-meaning-control"></span>'+
 '</div>'+
-'<div class="metadata-value-control-container">'+
-'    <label>Set Value:</label><br />'+
-'    <input class="metadata-value-control form-control" type="text" />'+
+'<label>Value:</label><br />'+
+'<div class="metadata-value-view-container">'+
 '</div>'+
 '<div>'+
 '   <button class="metadata-clear-selection-button btn btn-danger form-control">Clear Metadata Selection</button>'+
@@ -81,6 +82,7 @@ var MetadataView = DefaultView.extend({
     },
     
     cleanup: function cleanup() {
+        this.valueView.dispose();
     },
     
     /**
@@ -175,6 +177,10 @@ var MetadataView = DefaultView.extend({
                 .text(function(d) {
                     return tg.str.toTitleCase(d.replace(/_/g, " "));
                 });
+            
+            // Turnover handling of value events to the valueView.
+            this.valueView = new MetadataValueView(_.extend({ el: this.$el.find(".metadata-value-view-container").get(0) }, this.getAllModels()));
+            this.valueView.render();
             
             // Auto select for the user if no metadata option has been chosen.
             if(this.selectionModel.get("metadataName") === "") {

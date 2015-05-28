@@ -34,7 +34,7 @@ var DefaultView = function(options) {
     
     _.assign(this, defaults);
     
-    this.getAllModels = function() {
+    this.getAllModels = function getAllModels() {
         return {
             userModel: this.userModel,
             dataModel: this.dataModel,
@@ -470,6 +470,7 @@ var BreadcrumbsView = DefaultView.extend({
         this.listenTo(this.selectionModel, "change:topicNameScheme", this.updateTopic);
         this.listenTo(this.selectionModel, "change:metadataName", this.updateMetadata);
         this.listenTo(this.selectionModel, "change:metadataValue", this.updateMetadata);
+        this.listenTo(this.selectionModel, "change:metadataRange", this.updateMetadata);
     },
     
     cleanup: function cleanup() {
@@ -542,12 +543,19 @@ var BreadcrumbsView = DefaultView.extend({
         var selector = ".tg-nav-breadcrumb-metadata";
         var name = this.selectionModel.get("metadataName");
         var value = this.selectionModel.get("metadataValue");
+        var range = this.selectionModel.get("metadataRange");
         var text = "No metadata selected.";
         if(name !== "") {
-            if(value === "") {
+            if(value === "" && range === "") {
                 text = name;
             } else {
-                text = name + ": " + value;
+                if(value !== "") {
+                    text = name + ": " + value;
+                }
+                if(range !== "") {
+                    var nums = range.split(",");
+                    text = name + ": " + nums[0] + " to " + nums[1];
+                }
             }
         }
         this.$el.find(selector).text(text);

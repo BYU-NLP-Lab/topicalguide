@@ -118,6 +118,20 @@ var tg = new function() {
      * Basic functions for type checking or otherwise.
      */
     this.js = {
+        
+        /**
+         * n -- a number as a string
+         * Return true if it is a number; false otherwise.
+         */
+        isNumber: function isNumber(n) {
+            try {
+                var num = Number(n);
+                return !isNaN(num);
+            } catch(err) {
+                return false;
+            }
+        },
+        
         /**
          * i -- a number
          * Return true if it is an integer; false otherwise.

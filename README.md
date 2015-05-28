@@ -76,6 +76,12 @@ Start up the development web server with the following command:
 
 and then open a web browser and navigate to http://localhost:8000/.
 
+## View Database Relationships
+
+To visualize the database relationships run:
+
+    python manage.py graph_models -a -g -o tg_models.png
+
 ## POSTGRESQL
 
 It can be tons faster to use postgres. Because it took me a bit of hunting to

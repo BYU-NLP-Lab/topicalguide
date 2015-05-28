@@ -25,6 +25,7 @@ var SelectionModel = Backbone.Model.extend({
         "topicNameScheme": String,
         "metadataName": String, // Document metadata.
         "metadataValue": String, // Document metadata.
+        "metadataRange": String, // Document metadata.
     },
     
     initialize: function() {
@@ -50,6 +51,31 @@ var SelectionModel = Backbone.Model.extend({
             result[key] = this.get(key);
         }
         return result;
+    },
+    
+    /**
+     * Ensures that the range is cleared.
+     */
+    setMetadataValue: function setMetadataValue(value) {
+        this.set({
+            metadataValue: value.toString(),
+            metadataRange: "",
+        });
+    },
+    
+    /**
+     * Ensures that the value is cleared and the from and to arguments form a
+     * valid range.
+     */
+    setMetadataRange: function setMetadataRange(from, to) {
+        if(tg.js.isNumber(from) && tg.js.isNumber(to)) {
+            if(Number(from) <= Number(to)) {
+                this.set({
+                    metadataValue: "",
+                    metadataRange: from.toString() + "," + to.toString(),
+                });
+            }
+        }
     },
     
     /**
