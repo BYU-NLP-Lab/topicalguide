@@ -3,10 +3,10 @@
 /**
  * Manages the input of metadata values and ranges.
  */
-var MetadataValueView = DefaultView.extend({
+var MetadataValueWidget = DefaultView.extend({
     
-    readableName: "Metadata Value",
-    shortName: "metadata_value",
+    readableName: "Metadata Value Widget",
+    shortName: "metadata_value_widget",
     
     rangeTemplate:
 '<div class="metadata-range-control-container input-group">'+

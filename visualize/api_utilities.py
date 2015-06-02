@@ -47,6 +47,22 @@ def get_filter_csv_to_tuple(required_length):
         return result
     return filter_csv_to_tuple
 
+def get_filter_csv_to_numeric_tuple(required_length):
+    def filter_csv_to_numeric_tuple(s):
+        if s == '':
+            result = []
+        elif s.find('%') >= 0: # Handle any unencoded unicode.
+            result = s.encode('utf8').replace('%u', '\\u').decode('unicode_escape').split(',')
+        else:
+            result = s.split(',')
+        if '' in result:
+            result.remove('')
+        if len(result) != required_length:
+            raise Exception('Must have argument of length two.')
+        
+        return [float (num) for num in result]
+    return filter_csv_to_numeric_tuple
+
 # Get function to turn a string into an int within the bounds given.
 def get_filter_int(low=-2147483648, high=2147483647):
     def filter_int(s):

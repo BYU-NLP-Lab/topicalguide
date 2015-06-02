@@ -18,13 +18,14 @@ var AllTopicSubView2 = DefaultView.extend({
 '        <label for="words-input">Filter by Words</label>'+
 '        <input id="words-input" class="form-control" type="text" placeholder="Enter words..."></input>'+
 '    </div>'+
-'    <div class="form-group col-xs-3">'+
+'    <div class="form-group col-xs-2">'+
 '        <label for="metadata-attribute-input">Filter by Metadata Attribute</label>'+
 '        <select id="metadata-attribute-input" class="form-control" type="selection" placeholder="Enter metadata attribute..."></select>'+
 '    </div>'+
-'    <div class="form-group col-xs-3">'+
-'        <label for="metadata-value-input">Filter by Metadata Value</label>'+
-'        <input id="metadata-value-input" class="form-control" type="text" placeholder="Enter metadata value..."></input>'+
+'    <div class="form-group col-xs-4">'+
+'        <label>Filter by Metadata Value</label>'+
+'        <div class="all-topics-metadata-value-form"></div>'+
+//~ '        <input id="metadata-value-input" class="form-control" type="text" placeholder="Enter metadata value..."></input>'+
 '    </div>'+
 '    <div class="form-group col-xs-2">'+
 '        <label for="top-words-input">Top Words</label>'+
@@ -42,7 +43,9 @@ var AllTopicSubView2 = DefaultView.extend({
         this.listenTo(this.settingsModel, "multichange", this.renderTopicsTable);
     },
     
-    cleanup: function(topics) {},
+    cleanup: function(topics) {
+        this.metadataValueWidget.dispose();
+    },
     
     render: function() {
         this.$el.html(this.baseTemplate);
@@ -77,7 +80,10 @@ var AllTopicSubView2 = DefaultView.extend({
             el.html(this.formTemplate);
             el.select("#words-input").property("value", words);
             el.select("#top-words-input").property("value", topNWords);
-
+            
+            this.metadataValueWidget = new MetadataValueWidget(_.extend({ el: this.$el.find(".all-topics-metadata-value-form").get(0) }, this.getAllModels()));
+            this.metadataValueWidget.render();
+            
             var select = el.select("#metadata-attribute-input");
             select.selectAll("option").data(attributes).enter().append("option")
                 .text(function (attr) { return tg.str.toTitleCase(attr.replace(/_/g, " ")); })
@@ -87,8 +93,6 @@ var AllTopicSubView2 = DefaultView.extend({
                 d3.event.preventDefault();
                 that.formSubmit();
             });
-            
-            el.select("#metadata-value-input").property("value", value);
             
         }.bind(this), this.renderError.bind(this));
     },
@@ -115,7 +119,6 @@ var AllTopicSubView2 = DefaultView.extend({
             this.settingsModel.set({ topicTopNWords: topNWords });
         }
         this.selectionModel.set({ metadataName: $("#metadata-attribute-input option:selected").val() });
-        this.selectionModel.set({ metadataValue: $("#metadata-value-input").val() });
         console.log("Selected value: " + $("#metadata-value-input").val() );
         
         this.settingsModel.trigger("multichange");
@@ -134,9 +137,17 @@ var AllTopicSubView2 = DefaultView.extend({
             "topic_attr": ["metrics", "names", "top_n_words"],
             "analysis_attr": "metrics",
         }
-        if (selection["metadataName"] !== "" && selection["metadataValue"] !== "") {
-            queryHash["metadata_value"] = selection["metadataName"] + "," + selection["metadataValue"];
+        if (selection["metadataName"] !== "") {
+            if (selection["metadataValue"] !== "") {
+                queryHash["metadata_name"] = selection["metadataName"];
+                queryHash["metadata_value"] = selection["metadataValue"];
+            }
+            if (selection["metadataRange"] !== "") {
+                queryHash["metadata_name"] = selection["metadataName"];
+                queryHash["metadata_range"] = selection["metadataRange"];
+            }
         }
+        
         // Make a request
         this.dataModel.submitQueryByHash(queryHash, function(data) {
             container.html("");

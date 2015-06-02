@@ -179,7 +179,7 @@ var MetadataView = DefaultView.extend({
                 });
             
             // Turnover handling of value events to the valueView.
-            this.valueView = new MetadataValueView(_.extend({ el: this.$el.find(".metadata-value-view-container").get(0) }, this.getAllModels()));
+            this.valueView = new MetadataValueWidget(_.extend({ el: this.$el.find(".metadata-value-view-container").get(0) }, this.getAllModels()));
             this.valueView.render();
             
             // Auto select for the user if no metadata option has been chosen.

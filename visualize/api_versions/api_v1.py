@@ -28,7 +28,9 @@ import itertools
 from git import Repo
 from visualize.models import *
 from visualize.utils import reservoir_sample
-from visualize.api_utilities import get_list_filter, filter_csv_to_list, get_filter_int, filter_nothing, filter_request, get_filter_csv_to_tuple
+from visualize.api_utilities import get_list_filter, filter_csv_to_list, \
+    get_filter_int, filter_nothing, filter_request, get_filter_csv_to_tuple, \
+    get_filter_csv_to_numeric_tuple
 
 MAX_DOCUMENTS_PER_REQUEST = 500
 MAX_DOCUMENTS_PER_SQL_QUERY = 500
@@ -91,7 +93,9 @@ OPTIONS_FILTERS = {
     'topics': filter_csv_to_list,
     'documents': filter_csv_to_list,
     'words': filter_csv_to_list,
-    'metadata_value': get_filter_csv_to_tuple(2),
+    'metadata_name': filter_nothing,
+    'metadata_value': filter_nothing,
+    'metadata_range': get_filter_csv_to_numeric_tuple(2),
     
     # what data to gather
     'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals', 'document_metadata_meanings']),
@@ -110,12 +114,6 @@ OPTIONS_FILTERS = {
     'document_n_words': get_filter_int(low=1),
     
     'token_indices': filter_csv_to_list,
-}
-
-# Error codes to inform the user.
-ERROR_CODES = {
-    1: "Query key not allowed.",
-    2: "Query value not allowed.",
 }
 
 TERMS = """\
@@ -208,7 +206,6 @@ def query_datasets(options):
     
     # Gather the requested information.
     for dataset_db in datasets_queryset:
-        print('here')
         attributes = {}
         for attr in dataset_attr:
             if attr in DATASET_ATTR:
@@ -303,8 +300,23 @@ def query_topics(options, dataset_db, analysis_db):
             if 'pairwise' in topic_attr:
                 attributes['pairwise'] = topic_db.get_pairwise_metrics(options)
             if 'top_n_words' in topic_attr and 'words' in options and 'top_n_words' in options:
-                if 'metadata_value' in options:
-                    attributes['words'] = topic_db.top_n_words(options['words'], top_n=options['top_n_words'], metadata_value=options['metadata_value'])
+                if 'metadata_name' in options:
+                    
+                    metadata_name = options['metadata_name']
+                    metadata_type_query = DocumentMetadataValue.objects.values_list('metadata_type__datatype').filter(document__dataset=dataset_db, metadata_type__name=metadata_name).distinct()
+                    metadata_type = metadata_type_query[0][0]
+                    if 'metadata_value' in options:
+                        attributes['words'] = topic_db.top_n_words(options['words'], \
+                            top_n=options['top_n_words'], \
+                            metadata_name=metadata_name, \
+                            metadata_type=metadata_type, \
+                            metadata_value=options['metadata_value'] )
+                    elif 'metadata_range' in options:
+                        attributes['words'] = topic_db.top_n_words(options['words'], \
+                            top_n=options['top_n_words'], \
+                            metadata_name=metadata_name, \
+                            metadata_type=metadata_type, \
+                            metadata_range=options['metadata_range'] )
                 else:
                     attributes['words'] = topic_db.top_n_words(options['words'], top_n=options['top_n_words'])
             if 'top_n_documents' in options:
@@ -388,8 +400,6 @@ def query_documents(options, dataset_db, analysis_db):
                 i = start
                 chunk_size = MAX_DOCUMENTS_PER_SQL_QUERY
                 chain = []
-                print(start)
-                print(limit)
                 end_index = start + limit
                 while i < end_index:
                     range_end = chunk_size + i

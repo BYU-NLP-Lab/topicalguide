@@ -523,14 +523,33 @@ class Topic(models.Model):
         topic_words = topic_words.order_by('-count')
         return {value['word_type__word']: value['count'] for value in topic_words}
     
-    def top_n_words(self, words='*', top_n=10, metadata_value=None):
+    def top_n_words(self, words='*', top_n=10, metadata_name=None, metadata_type=None, metadata_value=None, metadata_range=None):
         topic_words = self.tokens.values('word_type__word').annotate(count=Count('word_type__word'))
+        # Word filter
         if words != '*':
             topic_words = topic_words.filter(word_type__word__in=words)
-        if metadata_value:
-            topic_words = topic_words.filter(document__metadata_values__metadata_type__name=metadata_value[0], \
-                document__metadata_values__text_value=metadata_value[1])
-            
+        # Metadata filter
+        if metadata_name and metadata_type:
+            topic_words = topic_words.filter(document__metadata_values__metadata_type__name=metadata_name, \
+                document__metadata_values__metadata_type__datatype=metadata_type)
+            if metadata_value:
+                if metadata_type == MetadataType.TEXT or metadata_type == MetadataType.ORDINAL:
+                    topic_words = topic_words.filter(document__metadata_values__text_value=metadata_value)
+                elif metadata_type == MetadataType.INTEGER:
+                    topic_words = topic_words.filter(document__metadata_values__int_value=int(metadata_value))
+                elif metadata_type == MetadataType.FLOAT:
+                    topic_words = topic_words.filter(document__metadata_values__float_value=float(metadata_value))
+                elif metadata_type == MetadataType.BOOLEAN:
+                    topic_words = topic_words.filter(document__metadata_values__bool_value=bool(metadata_value))
+            if metadata_range:
+                if metadata_type == MetadataType.INTEGER:
+                    topic_words = topic_words.filter(document__metadata_values__int_value__range=(metadata_range[0], metadata_range[1]))
+                elif metadata_type == MetadataType.FLOAT:
+                    topic_words = topic_words.filter(document__metadata_values__float_value__range=(metadata_range[0], metadata_range[1]))
+                elif metadata_type == MetadataType.ORDINAL:
+                    ordinals = Ordinal.objects.values_list('name').filter(sequence__name=metadata_name, sequence__datatype=metadata_type, value__range=(metadata_range[0], metadata_range[1]))
+                    ord_list = [row[0] for row in ordinals]
+                    topic_words = topic_words.filter(document__metadata_values__text_value__in=ord_list)
         topic_words = topic_words.order_by('-count')
         return {value['word_type__word']: {'token_count': value['count']} for value in topic_words[:top_n]}
     

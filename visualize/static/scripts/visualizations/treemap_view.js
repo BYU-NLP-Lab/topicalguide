@@ -40,4 +40,4 @@ var TreemapView = DefaultView.extend({
     
 });
 
-addViewClass([], TreemapView);
+addViewClass(["Visualizations"], TreemapView);
