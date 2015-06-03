@@ -122,6 +122,9 @@ var ExampleView = DefaultView.extend({
      * If you have any sub-views call .dispose() on them to clean them up.
      * Note that there is a function "dispose" that will try to clean things up 
      * for you, but only if you used the listenTo method.
+     * Also, note that the .dispose() method will call cleanup for you.
+     * Also, note that the .dispose() method will remove the view's element
+     * from the DOM tree.
      */
     cleanup: function() {
     },

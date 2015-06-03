@@ -36,6 +36,8 @@ var Router = Backbone.Router.extend({
         
         if(tg.js.isDefined(this.settingsModel)) {
             settings = JSON.stringify(this.tgView.currentView.settingsModel.attributes);
+        } else {
+            settings = JSON.stringify(this.viewModel.get("currentViewSettings"));
         }
         
         if(tg.js.isDefined(this.selectionModel)) {

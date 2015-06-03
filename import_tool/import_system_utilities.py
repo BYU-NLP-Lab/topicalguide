@@ -49,7 +49,7 @@ BASIC_ANALYSIS_METRICS = [
     'topic-pairwise:document_correlation', 'topic-pairwise:word_correlation'
 ]
 DEFAULT_TOPIC_NAMERS = [
-    TopNTopicNamer(3), TfitfTopicNamer(3)
+    TopNTopicNamer(2), TopNTopicNamer(3), TopNTopicNamer(4), TfitfTopicNamer(3)
 ]
 
 def make_working_dir():

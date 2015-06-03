@@ -546,7 +546,7 @@ var DataModel = Backbone.Model.extend({
     /**
      * topicNumber -- the number of the topic
      * Return the name of a topic according to the currently selected dataset, 
-     * analysis, and topic name scheme; the "Top3" name if the selected namer 
+     * analysis, and topic name scheme; the "Top 3" name if the selected namer 
      * isn't available; the topicNumber as a string otherwise.
      */
     getTopicNameRaw: function(topicNumber) {
@@ -554,7 +554,7 @@ var DataModel = Backbone.Model.extend({
         var nameScheme = this.selectionModel.get("topicNameScheme");
         // Select a default name scheme if none is selected.
         if(nameScheme === "" || nameScheme === undefined || nameScheme === null) {
-            nameScheme = "Top3";
+            nameScheme = "Top 3";
         }
         
         var result = topicNumberString;

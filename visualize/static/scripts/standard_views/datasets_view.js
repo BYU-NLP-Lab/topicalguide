@@ -6,12 +6,12 @@ var DatasetView = DefaultView.extend({
     shortName: "datasets",
     
     helpTemplate:
-'<p class="text-center">Select a dataset by clicking on one of the bars below. Details of the dataset are shown when selected.'+
+'<p class="text-center">Select a dataset by clicking on one of the bars below. Details of the dataset are shown when selected. '+
 'Select an analysis by clicking on one. An analysis will turn blue when selected.</p>',
     
     datasetsTemplate:
 '<h3 class="text-center">Datasets</h3>'+
-'<p class="text-center">Select a dataset by clicking on one of the bars below. Details of the dataset are shown when selected.'+
+'<p class="text-center">Select a dataset by clicking on one of the bars below. Details of the dataset are shown when selected. '+
 'Select an analysis by clicking on one. An analysis will turn blue when selected.</p>'+
 '<div class="datasets-accordion panel-group"></div>',
     
@@ -234,7 +234,7 @@ var DatasetView = DefaultView.extend({
     clickExplore: function(e) {
         // This is a way to allow the event to propagate before switching views.
         setTimeout(function() {
-            this.viewModel.set({ "currentView": "topics" });
+            this.viewModel.set({ "currentView": "all_topics" });
         }.bind(this), 100);
     },
     

@@ -759,11 +759,8 @@ var TopicalGuideView = DefaultView.extend({
         
         // Create new settings for the new view.
         var settingsModel = new SettingsModel();
-        var init = {
-            el: $("#tg-current-view-container"),
-            settingsModel: settingsModel,
-        };
-        _.extend(init, this.models);
+        settingsModel.set(this.viewModel.get("currentViewSettings"));
+        var init = _.extend({ el: $("#tg-current-view-container") }, this.models, { settingsModel: settingsModel });
         
         // Create the new view.
         this.currentView = new viewClass(init);

@@ -584,6 +584,68 @@ var tg = new function() {
                     }
                 });
         },
+        
+        /**
+         * value -- the value to turn into a percentage
+         * max -- the max value
+         * Return html for a percentage bar.
+         */
+        createPercentageBar: function createPercentageBar(value, max) {
+            var el = d3.select(document.createElement("div"));
+            var svg = el.append("svg")
+                .attr("width", 60)
+                .attr("height", "1em");
+            // Create bar.
+            svg.append("rect")
+                .attr("height", "100%")
+                .attr("width", "100%")
+                .attr("fill", "blue");
+            // Fill in part of bar with whitesmoke.
+            svg.append("rect")
+                .attr("height", "100%")
+                .attr("width", function() {
+                    if(max === 0) {
+                        return 60;
+                    } else {
+                        return (1 - (value/max)) * 60;
+                    }
+                })
+                .attr("fill", "whitesmoke");
+            
+            return el.html();
+        },
+        
+        /**
+         * value -- the raw value
+         * min -- the minimum value (often negative)
+         * max -- the max value
+         * Return html for a temperature bar.
+         */
+        createTemperatureBar: function createTemperatureBar(value, min, max) {
+            var el = d3.select(document.createElement("div"));
+            var range = max - min;
+            var zero = (Math.abs(min) / range) * 60;
+            var width = Math.abs(value)/range * 60;
+            var svg = el.append("svg")
+                .attr("width", 60)
+                .attr("height", "1em")
+                .style("background-color", "whitesmoke");
+            // Create bar.
+            svg.append("rect")
+                .attr("height", "100%")
+                .attr("width", width)
+                .attr("fill", (value > 0.0 ? "red" : "blue"))
+                .attr("transform", "translate("+ (value>0.0 ? zero : zero-width) +","+0+")");
+            // Seperating line.
+            svg.append("line")
+                .attr("x1", zero)
+                .attr("y1", 0)
+                .attr("x2", zero)
+                .attr("y2", "1em")
+                .attr("stroke", "black")
+                .attr("strokewidth", "1.5px");
+            return el.html();
+        },
     };
 };
 
