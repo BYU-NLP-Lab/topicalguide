@@ -8,6 +8,38 @@ var MetadataMapView = DefaultView.extend({
     readableName: "Metadata Map",
     shortName: "metadata_map",
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++    TEMPLATES    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
+    
+    mainTemplate: 
+'<div id="metadata-map-view-container" class="col-xs-9" style="display: inline; float: left;">'+
+'	<div id="metadata-map-view" class="container-fluid"></div>'+
+'	<div id="document-info-view-container" class="container-fluid"></div>'+
+'</div>'+
+'<div id="metadata-map-controls" class="col-xs-3 text-center" style="display: inline; float: left;"></div>',
+    
+    controlsTemplate:
+'<h4><b>Selected Document</b></h4>'+
+'<hr />'+
+'<div>'+
+'    <label for="selected-document">Document:</label><br />'+
+'    <span id="selected-document"></span>'+
+'</div>'+
+'<div>'+
+'    <label for="document-value-control">Value:</label>'+
+'    <input id="document-value-control" type="text" class="form-control" name="Value" placeholder="Enter value"></select>'+
+'</div>'+
+'<hr />'+
+'<h4><b>Server Requests</b></h4>'+
+'<hr />'+
+'<div>'+
+'    <button id="save-changes" class="btn btn-default">Save Changes</button>'+
+'    <br/><br/>'+
+'    <button id="get-documents" class="btn btn-default">Get Documents</button>'+
+'</div>',
+    
+    helpHtml:
+'<div id="metadata-map-help"><p>Documentation coming soon.</p></div>',
+
     initialize: function() {
         var defaults = {
             
@@ -61,37 +93,7 @@ var MetadataMapView = DefaultView.extend({
     cleanup: function() {
     },
     
-    //++++++++++++++++++++++++++++++++++++++++++++++++++    TEMPLATES    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
     
-    mainTemplate: 
-"<div id=\"metadata-map-view2\" class=\"col-xs-9\" style=\"display: inline; float: left;\">"+
-"<div id=\"metadata-map-view\" class=\"container-fluid\"></div>"+
-"<div id=\"document-info-view-container\" class=\"container-fluid\"></div>"+
-"</div>"+
-"<div id=\"metadata-map-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
-    
-    controlsTemplate:
-"<h4><b>Selected Document</b></h4>"+
-"<hr />"+
-"<div>"+
-"    <label for=\"selected-document\">Document:</label><br />"+
-"    <span id=\"selected-document\"></span>"+
-"</div>"+
-"<div>"+
-"    <label for=\"document-value-control\">Value:</label>"+
-"    <input id=\"document-value-control\" type=\"text\" class=\"form-control\" name=\"Value\" placeholder=\"Enter value\"></select>"+
-"</div>"+
-"<hr />"+
-"<h4><b>Server Requests</b></h4>"+
-"<hr />"+
-"<div>"+
-"    <button id=\"save-changes\" class=\"btn btn-default\">Save Changes</button>"+
-"    <br/><br/>"+
-"    <button id=\"get-documents\" class=\"btn btn-default\">Get Documents</button>"+
-"</div>",
-    
-    helpHtml:
-"<div id=\"metadata-map-help\"><p>Documentation coming soon.</p></div>",
     
     //++++++++++++++++++++++++++++++++++++++++++++++++++    RENDER    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
     
@@ -100,13 +102,13 @@ var MetadataMapView = DefaultView.extend({
      */
     render: function() {
         this.$el.empty();
-        this.settingsModel.set({ metadataName: "" });
-        return;
-        if(!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
-            this.$el.html("<p>You should select a <a href=\"#\">dataset and analysis</a> before proceeding.</p>");
-            return;
+        if(this.selectionModel.nonEmpty(["dataset", "analysis", "metadataName"])) {
+            this.$el.html(this.mainTemplate);
+            this.renderControls();
+            this.renderMap();
+			this.loadData();
         } else {
-            this.renderMetadataOptions();
+			// TODO redirect to metadata view
         }
     },
     
@@ -257,7 +259,6 @@ var MetadataMapView = DefaultView.extend({
     
     //++++++++++++++++++++++++++++++++++++++++++++++++++    DATA    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
     
-    // TODO unused, initial query item
     getQueryHash: function() {
         var selections = this.selectionModel.attributes;
         return {
@@ -266,7 +267,6 @@ var MetadataMapView = DefaultView.extend({
         };
     },
     
-    // TODO this is a dummy function used to create ficticious data for the use of developement
     /**
      * Retrieve the metadata types available from the server.
      * Store the metadata in this.model.
