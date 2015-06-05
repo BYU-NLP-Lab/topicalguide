@@ -95,7 +95,7 @@ var ExampleView = DefaultView.extend({
      * as the event bindings will automatically be cleaned up when your view 
      * is disposed.
      */
-    initialize: function() {
+    initialize: function initialize() {
     },
     
     /**
@@ -104,7 +104,7 @@ var ExampleView = DefaultView.extend({
      * this.el is a DOM element
      * this.$el is a query element
      */
-    render: function() {
+    render: function render() {
         this.$el.html("<p>This is just an example view.</p>");
     },
     
@@ -112,7 +112,7 @@ var ExampleView = DefaultView.extend({
      * This is used to get help information for the user.
      * Click the help icon to see.
      */
-    renderHelpAsHtml: function() {
+    renderHelpAsHtml: function renderHelpAsHtml() {
         return "<p>This is just an example view.</p>";
     },
     
@@ -126,7 +126,7 @@ var ExampleView = DefaultView.extend({
      * Also, note that the .dispose() method will remove the view's element
      * from the DOM tree.
      */
-    cleanup: function() {
+    cleanup: function cleanup() {
     },
 });
 

@@ -32,6 +32,9 @@ def filter_csv_to_list(s):
     return list(result)
 
 
+def filter_csv_to_list_keep_order(s):
+	return s.split(',')
+
 def get_filter_csv_to_tuple(required_length):
     def filter_csv_to_tuple(s):
         if s == '':

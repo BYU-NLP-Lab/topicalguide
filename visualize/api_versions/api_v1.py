@@ -30,7 +30,7 @@ from visualize.models import *
 from visualize.utils import reservoir_sample
 from visualize.api_utilities import get_list_filter, filter_csv_to_list, \
     get_filter_int, filter_nothing, filter_request, get_filter_csv_to_tuple, \
-    get_filter_csv_to_numeric_tuple
+    get_filter_csv_to_numeric_tuple, filter_csv_to_list_keep_order
 
 MAX_DOCUMENTS_PER_REQUEST = 500
 MAX_DOCUMENTS_PER_SQL_QUERY = 500
@@ -114,6 +114,9 @@ OPTIONS_FILTERS = {
     'document_n_words': get_filter_int(low=1),
     
     'token_indices': filter_csv_to_list,
+    
+    # TODO move this to an encrypted connection
+    'constraints': filter_csv_to_list_keep_order,
 }
 
 TERMS = """\
@@ -143,10 +146,10 @@ def query_server(options):
     """Gather information about the server."""
     
     def get_version(x):
-        tags = Repo(__file__).tags
-        if tags:
+        try:
+            tags = Repo('.').tags
             return unicode(tags[-1])
-        else:
+        except:
             return 'No version available.'
     
     def get_terms(x):
@@ -213,12 +216,32 @@ def query_datasets(options):
         
         if 'analyses' in options:
             attributes['analyses'] = query_analyses(options, dataset_db)
+            attributes['analyses_modifications'] = modify_analyses(options, dataset_db)
         
         attributes['last_updated'] = unicode(dataset_db.last_updated)
         
         datasets[dataset_db.name] = attributes
         
     return datasets
+
+# TODO move this to an encrypted connection
+def modify_analyses(options, dataset_db):
+	from import_tool.import_system_utilities import get_common_working_directories, run_analysis
+	from import_tool.analysis.interfaces.mallet_analysis import MalletLdaAnalysis
+	from os.path import join
+	result = {}
+	
+	if 'constraints' in options:
+		new_analysis_name = options['analyses'][0]+'2'
+		print(options['constraints'])
+		# TODO make synchronous call to mallet
+		directories = get_common_working_directories(dataset_db.name)
+		mallet_analysis = MalletLdaAnalysis(join(directories['topical_guide'], 'tools/mallet/mallet'), directories['dataset'], directories['base'])
+		mallet_analysis.name = new_analysis_name
+		run_analysis('default', dataset_db.name, mallet_analysis, directories, verbose=True)
+		result['new_analysis_name'] = new_analysis_name
+	
+	return result
 
 def query_analyses(options, dataset_db):
     analyses = {}

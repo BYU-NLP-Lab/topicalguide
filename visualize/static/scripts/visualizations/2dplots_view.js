@@ -52,7 +52,6 @@ var PlotView = DefaultView.extend({
             "datasets": selections.dataset,
             "analyses": selections.analysis,
             "topics": "*",
-            "topic_attr": "names",
             "documents": "*",
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
@@ -191,7 +190,7 @@ var PlotView = DefaultView.extend({
                 var group = doc[key];
                 for(var valKey in group){
                     if(!(valKey in valueNames[key])) {
-                        valueNames[key][valKey] = toTitleCase(valKey.replace(/_/g, " "));
+                        valueNames[key][valKey] = tg.str.toTitleCase(valKey.replace(/_/g, " "));
                         valueTypes[key][valKey] = this.getType(group[valKey]);
                     }
                 }
@@ -199,21 +198,22 @@ var PlotView = DefaultView.extend({
         }
         
         // Make sure the topic's readable name is set.
-        var allTopics = analysis.topics;
         if("topics" in valueNames) {
             var valueTopics = valueNames.topics;
-            for(var topKey in valueTopics) {
-                valueTopics[topKey] = toTitleCase(allTopics[topKey].names.Top3);
+            for(var t in valueTopics) {
+                valueTopics[t] = this.dataModel.getTopicName(t);
             }
         }
         
-        return {
+        var result = {
             data: documents,
             groupNames: groupNames,
             valueNames: valueNames,
             valueTypes: valueTypes,
             times: timesAttributes,
         };
+        
+        return result;
     },
     
     renderControls: function() {
@@ -249,9 +249,13 @@ var PlotView = DefaultView.extend({
                 })
                 .attr("label", function(d) { return d.value; });
             var options = optgroups.selectAll("option")
-                .data(function(d) { 
-                    var names = valueNames[d.key];
+                .data(function(d) {
+					var groupName = d.key;
+                    var names = valueNames[groupName];
                     names = d3.entries(names).sort(function(a, b) { return a.value.localeCompare(b.value); });
+                    for(var index in names) {
+						names[index].group = groupName;
+					}
                     return names;
                 })
                 .enter()
@@ -260,6 +264,20 @@ var PlotView = DefaultView.extend({
                     if(!value) value = d.key;
                     return d.key;
                 })
+                .attr("data-tg-topic-number", function bindDataToOption(topicKeyValue) {
+					if(topicKeyValue.group === 'topics') {
+						return topicKeyValue.key;
+					} else {
+						return null;
+					}
+				})
+                .classed("tg-topic-name-auto-update", function addClassForAutoTopicNameUpdate(topicKeyValue) {
+					if(topicKeyValue.group === 'topics') {
+						return true;
+					} else {
+						return false;
+					}
+				})
                 .text(function(d) { return d.value; });
             if(select === radius) {
                 select.property("value", "uniform"); // Set to uniform option.

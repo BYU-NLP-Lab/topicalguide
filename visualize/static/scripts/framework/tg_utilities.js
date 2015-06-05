@@ -67,6 +67,8 @@ var tg = new function() {
          * Injectible icon html.
          */
         icons: {
+			plus: '<span class="glyphicon glyphicon-plus green"></span>',
+			
             emptyStar: "<span class=\"glyphicon glyphicon-star-empty gold\"></span>",
             filledStar: "<span class=\"glyphicon glyphicon-star gold\"></span>",
             

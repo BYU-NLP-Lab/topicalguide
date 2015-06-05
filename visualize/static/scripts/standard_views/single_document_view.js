@@ -94,6 +94,7 @@ var SingleDocumentView = DefaultView.extend({
         }
         
         this.$el.html(this.baseTemplate);
+        this.clearTopicData();
         
         // Set the document name and the favs icon.
         var docName = this.selectionModel.get("document");
@@ -356,6 +357,10 @@ var SingleDocumentView = DefaultView.extend({
         }
         this.updateSelectedTopicsSettings();
     },
+    
+    clearTopicData: function clearTopicData() {
+		this.model.set({ topicTokens: {} });
+	},
     
     /**
      * Return true if the topic is selected; false otherwise.
