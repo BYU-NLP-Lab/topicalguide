@@ -150,6 +150,10 @@ class MalletItmAnalysis(AbstractAnalysis):
         self.tree_itm_library_path = join(self.base_dir, 'tools', 'mallet_itm', 'lib', '*')
         print(self.tree_itm_library_path)
         self.java_class_path = join(self.base_dir, 'tools', 'mallet_itm', 'class')
+        
+        self.mallet_imported_data_file = join(self._working_dir, 'imported_data.mallet')
+        self.mallet_output_gz_file = join(self._working_dir, self.name + '.outputstate.gz')
+        self.mallet_output_doctopics_file = join(self._working_dir, self.name + '.doctopics')
     
     @property
     def token_regex(self):
@@ -171,11 +175,9 @@ class MalletItmAnalysis(AbstractAnalysis):
         self._excluded_words = words_dict
     
     def tokenize(self, text):
-        print(text)
         seq = []
         for match in self._compiled_regex.finditer(text):
             wordtype = match.group().lower()
-            print(wordtype)
             if wordtype not in self.stopwords:
                 seq.append((wordtype, match.start()))
         return seq
@@ -265,7 +267,7 @@ class MalletItmAnalysis(AbstractAnalysis):
                             subcount += 1
                             subdoc_to_doc_map[subdoc_name] = doc_index
                             tokens = self.tokenize(subdoc_content)
-                            print(tokens)
+                            #~ print(tokens)
                             
                             if self.find_bigrams:
                                 tokens = bigram_finder.combine(tokens, subdoc_content)
@@ -296,7 +298,7 @@ class MalletItmAnalysis(AbstractAnalysis):
                                 token_numbers.append(unicode(tok_num))
                                 token_start_indices.append([tok, tok_start])
                             text = u' '.join(token_numbers)
-                            print(text)
+                            #~ print(text)
                             w.write(u'{0} all {1}\n'.format(subdoc_name, text))
                             w2.write(unicode(json.dumps(token_start_indices)))
                             token_start_index_offset += len(subdoc_content)
@@ -320,6 +322,7 @@ class MalletItmAnalysis(AbstractAnalysis):
                 w.write(unicode(json.dumps(number_to_wordtype)))
             with io.open(self.wordtype_file, 'w', encoding='utf-8') as w:
                 w.write(unicode(json.dumps(wordtypes)))
+            self.wordtype_to_number = wordtype_to_number
         except: # cleanup
             self._cleanup(self.mallet_input_file)
             self._cleanup(self.subdoc_to_doc_map_file)
@@ -334,15 +337,20 @@ class MalletItmAnalysis(AbstractAnalysis):
     
     def set_constraints(self, merge_links, split_links):
         # TODO: This overwrites any older constraints
-        
         # Possible issue: this could have a vocab mismatch depending
         # on import pipeline, needs to be tested
-
+        
         with io.open(self.raw_constraint_file, 'w', encoding='utf-8') as o:
+            print('constraints')
+            print(merge_links)
+            print(self.wordtype_to_number)
             for ii in merge_links:
-                o.write("MERGE_\t%s" % "\t".join(ii))
-            for jj in split_links:
-                o.write("SPLIT_\t%s" % "\t".join(ii))
+                print(ii)
+                wordtype_indices = [unicode(self.wordtype_to_number[wt]) for wt in ii]
+                o.write("MERGE_\t%s" % "\t".join(wordtype_indices))
+                print(wordtype_indices)
+            #~ for jj in split_links:
+                #~ o.write("SPLIT_\t%s" % "\t".join(ii))
 
         # Generate the protocol buffer with the real version
         cmd = ['java', '-cp', self.get_java_class_path(), self.tree_class, '--vocab',
@@ -355,9 +363,9 @@ class MalletItmAnalysis(AbstractAnalysis):
         except:
             self._cleanup(self.processed_constraint_file)
             raise
-        
-    def run_analysis(self, documents):
-        """Run ITM."""
+    
+    def prepare_analysis(self, documents):
+        """Preprocess documents. Import into mallet format. Compile the vocab."""
         if documents.count() == 0:
             raise Exception('No documents to perform analysis on.')
         
@@ -365,10 +373,6 @@ class MalletItmAnalysis(AbstractAnalysis):
         
         with io.open(self.stopwords_file, 'w', encoding='utf-8') as f:
             f.write('\n'.join(self.stopwords.keys()))
-
-        self.mallet_imported_data_file = join(self._working_dir, 'imported_data.mallet')
-        self.mallet_output_gz_file = join(self._working_dir, self.name + '.outputstate.gz')
-        self.mallet_output_doctopics_file = join(self._working_dir, self.name + '.doctopics')
         
         if not os.path.exists(self.mallet_imported_data_file):
             cmd = [self.mallet_path, 'import-file', 
@@ -384,15 +388,17 @@ class MalletItmAnalysis(AbstractAnalysis):
             except: # cleanup
                 self._cleanup(self.mallet_imported_data_file)
                 raise
-
+        
         if not os.path.exists(self.itm_vocab_file):
-            cmd = ['java', '-cp', self.get_java_class_path(), self.vocab_class, '--input', self.mallet_imported_data_file, '--vocab', self.itm_vocab_file, '--word-length', '0', '--freq-thresh', '0', '--tfidf-thresh', '0']
+            cmd = ['java', '-cp', self.get_java_class_path(), self.vocab_class, '--input', self.mallet_imported_data_file, '--vocab', self.itm_vocab_file, '--word-length', '0', '--freq-thresh', '0']
             print(' '.join(cmd))
             try:
                 subprocess.check_call(cmd)
             except:
                 self._cleanup(self.itm_vocab_file)
-        
+    
+    def run_analysis(self):
+        """Run ITM."""
         # train topics
         if not (os.path.exists(self.mallet_output_gz_file) and \
                 os.path.exists(self.mallet_output_doctopics_file)):
@@ -401,10 +407,7 @@ class MalletItmAnalysis(AbstractAnalysis):
                    self.tree_hyperparameters_file, '--vocab', self.itm_vocab_file,
                    '--num-topics', '%s' % str(self.num_topics),'--num-iterations',
                     '%s' % str(self.num_iterations), '--output-dir',
-                     self.mallet_output_gz_file]
-            if os.path.exists(self.processed_constraint_file):
-                cmd.append('--tree')
-                cmd.append(self.processed_constraint_file)
+                     self.mallet_output_gz_file, '--tree', self.processed_constraint_file]
             print(" ".join(cmd))
 #            cmd = [self.mallet_path, 'train-topics', 
 #                   '--input', self.mallet_imported_data_file,
@@ -514,9 +517,9 @@ def main():
     itm = MalletItmAnalysis(mallet_location, "./working/datasets/temp",
                             ".", vocab_location, tree_location,
                             itm_location)
-    itm.run_analysis(corpus)
+    itm.prepare_analysis(corpus)
     itm.set_constraints([["dog", "bark"]], [["dog", "elm"]])
-    itm.run_analysis(corpus)
+    itm.run_analysis()
 
 if __name__ == "__main__":
     main()
