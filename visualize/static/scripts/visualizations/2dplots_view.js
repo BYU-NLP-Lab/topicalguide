@@ -40,10 +40,12 @@ var PlotView = DefaultView.extend({
     initialize: function() {
         this.selectionModel.on("change:analysis", this.render, this);
         this.model = new Backbone.Model(); // Used to store document data.
+        $(window).on('resize', this.resizeWindowEvent.bind(this));
     },
     
     cleanup: function() {
         this.selectionModel.off(null, null, this);
+        $(window).off('resize', this.resizeWindowEvent.bind(this));
     },
     
     getQueryHash: function() {
@@ -133,6 +135,17 @@ var PlotView = DefaultView.extend({
             this.model.on("change", this.transition, this);
         }.bind(this), this.renderError.bind(this));
     },
+    
+    resizeWindowEvent: function() {
+		var plotContainer = this.$el.find('#plot-view');
+		var svg = plotContainer.find('svg');
+		var width = plotContainer.get(0).clientWidth;
+		var height = window.innerHeight*0.8;
+		var min = Math.min(width, height);
+		console.log(width);
+		svg.attr("width", width);
+		svg.attr("height", height);
+	},
     
     /*
      * Put data in the form of several hashes. All groups must exist in the hashes but not all 
@@ -407,9 +420,12 @@ var PlotView = DefaultView.extend({
         // Render the scatter plot.
         var view = d3.select(this.el).select("#plot-view").html("");
         
+        var plotContainer = this.$el.find('#plot-view');
+		var width = plotContainer.get(0).clientWidth;
+		var height = Math.min(window.innerHeight*0.8, width);
         var svg = this.svg = view.append("svg")
-            .attr("width", "100%")
-            .attr("height", "90%")
+            .attr("width", width)
+            .attr("height", height)
             .attr("viewBox", "0, 0, "+dim.width+", "+dim.height)
             .attr("preserveAspectRatio", "xMidYMin meet")
             .append("g");

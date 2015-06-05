@@ -413,6 +413,7 @@ var SingleTopicView = DefaultView.extend({
                 "topics": selections["topic"],
                 "topic_attr": ["metrics","names","pairwise"],
         }, function(data) {
+			
             this.dataModel.submitQueryByHash({
                 "datasets": selections["dataset"],
                 "analyses": selections["analysis"],
@@ -431,7 +432,7 @@ var SingleTopicView = DefaultView.extend({
                         return entry.key != currentTopic;
                     })
                     .map(function(entry) {
-                        var result = [entry.key, entry.key, entry.value.names.Top3];
+                        var result = [entry.key, entry.key, that.dataModel.getTopicNameRaw(entry.key)];
                         var index = parseFloat(entry.key);
                         var pairwise = topic["pairwise"];
                         for(var key in pairwise) {
