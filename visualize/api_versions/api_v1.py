@@ -101,7 +101,7 @@ OPTIONS_FILTERS = {
     'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals', 'document_metadata_meanings']),
     'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes']),
     'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens', 'word_token_documents_and_locations']),
-    'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations']),
+    'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations', 'intro_snippet']),
 
     # extra parameters
     'topic_pairwise': filter_csv_to_list,
@@ -389,6 +389,7 @@ def query_documents(options, dataset_db, analysis_db):
         'metrics': lambda doc: {mv.metric.name: mv.value for mv in itertools.chain(doc.metric_values.all(), doc.document_analysis_metric_values.all()) 
                                 if type(mv) is not DocumentAnalysisMetricValue or mv.analysis_id==analysis_db.id},
         'text': lambda doc: doc.get_content() if dataset_db.public_documents else "Document text unavailable.",
+        'intro_snippet': lambda doc: doc.get_intro_snippet() if dataset_db.public_documents else "Document snippet unavailable.",
     }
     
     document_attr = options.setdefault('document_attr', [])

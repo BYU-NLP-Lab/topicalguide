@@ -326,7 +326,7 @@ var AllDocumentsView = DefaultView.extend({
                 "documents": "*",
                 "document_continue": this.getDocumentContinue(),
                 "document_limit": this.settingsModel.get("docsPerPage"),
-                "document_attr": ["metadata", "metrics"],
+                "document_attr": ["metadata", "metrics", "intro_snippet"],
         }, function dataCallback(data) {
             var that = this;
             
@@ -338,14 +338,16 @@ var AllDocumentsView = DefaultView.extend({
             container.html('<span class="text-center"></span>');
             container = container.find("span");
             
-            var header = ["", "Document", ""];
-            var sortable = [false, true];
+            var header = ["", "Document", "Preview", ""];
+            var sortable = [false, true, true, false];
             var sortBy = 1;
             var sortAscending = this.settingsModel.get("ascending");
             var onSortFunction = function onSortFunction(index, ascending) {
                 this.settingsModel.set({ ascending: !this.settingsModel.get("ascending") });
             }.bind(this);
-            var tableData = _.map(documents, function createTableData(value, key) { return [key, key, key]; });
+            var tableData = _.map(documents, function createTableData(value, key) {
+				return [key, key, documents[key]["intro_snippet"], key];
+			});
             var dataFunctions = [
                 function col1(d, i) {
                     var el = d3.select(this)
@@ -356,11 +358,15 @@ var AllDocumentsView = DefaultView.extend({
                 },
                 function col2(d, i) {
                     d3.select(this)
-                        .attr("data-tg-document-name", d)
-                        .classed("tg-select pointer", true)
                         .text(d);
                 },
-                function col3(d, i) {
+                function col3(snippet, i) {
+					d3.select(this)
+						.append('div')
+						.style({ "float": "left" , "text-align": "left", "max-width": "200px" })
+						.text(snippet);
+				},
+                function col4(d, i) {
                     d3.select(this)
                         .append("button")
                         .classed("btn btn-success", true)
@@ -373,6 +379,7 @@ var AllDocumentsView = DefaultView.extend({
             var tableRowFunction = function tableRowFunction(rowData, index) {
                 d3.select(this)
                     .attr("data-tg-document-name", rowData[1])
+					.classed("tg-select pointer", true)
                     .classed("all-docs-update-document-highlight all-docs-document-popover", true)
                     .classed("success", function isRowHighlighted(d, i) {
                         if(d3.select(this).attr("data-tg-document-name") === that.selectionModel.get("document")) {

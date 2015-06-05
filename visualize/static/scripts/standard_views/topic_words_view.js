@@ -41,6 +41,7 @@ var TopicWordsView = DefaultView.extend({
         var settings = _.extend({ "words": "*", "topicTopNWords": 10, "sortBy": 1, "sortAscending": true }, this.settingsModel.attributes)
         this.settingsModel.set(settings);
         this.listenTo(this.settingsModel, "multichange", this.renderTopicsTable);
+        this.listenTo(this.selectionModel, "change:topicNameScheme", this.renderTopicsTable);
     },
     
     cleanup: function(topics) {
@@ -150,6 +151,8 @@ var TopicWordsView = DefaultView.extend({
         
         // Make a request
         this.dataModel.submitQueryByHash(queryHash, function(data) {
+			var that = this;
+			
             container.html("");
             
             // Create HTML table element.
@@ -175,7 +178,7 @@ var TopicWordsView = DefaultView.extend({
                     parseFloat(d.key),
                     parseFloat(d.key),
                     (topicTokenCount*100)/totalTokens,
-                    d.value.names["Top3"],
+                    that.dataModel.getTopicNameRaw(d.key),
                     words,
                     (wordsTokenCount*100)/topicTokenCount,
                     topicTemperature

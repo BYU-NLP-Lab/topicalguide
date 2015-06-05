@@ -6,8 +6,20 @@ var SingleTopicView = DefaultView.extend({
     readableName: "Single Topic",
     shortName: "single_topic",
     
+    redirectTemplate:
+'<div class="text-center">'+
+'   <button class="single-topic-redirect btn btn-default">'+
+'       <span class="glyphicon glyphicon-chevron-left pewter"></span> All Topics'+
+'   </button>'+
+'   <span> You need to select a topic to see any specific information. </span>'+
+'</div>',
+    
     mainTemplate: 
-'<div id="single-topic-title" class="row"></div>'+
+'<div id="single-topic-title" class="row">'+
+'	<h3>Topic Number: <span class="single-topic-number"></span></h3>'+
+'	<h3>Topic Name: <span class="single-topic-name"></span></h3>'+
+'	<h3>Top 10 Words: <span class="single-topic-top-ten-words"></span></h3>'+
+'</div>'+
 '<div id="single-topic-info" class="row"></div>',
     
     wordStatTemplate: 
@@ -25,6 +37,13 @@ var SingleTopicView = DefaultView.extend({
 '<div id="single-topic-pie-chart-legend" class="row">'+
 '</div>',
 
+	events: {
+		'click .single-topic-redirect': 'clickRedirect',
+	},
+	
+	clickRedirect: function clickRedirect() {
+		this.viewModel.set({ currentView: 'all_topics' });
+	},
     
     initialize: function() {
         this.listenTo(this.selectionModel, "change:topic", this.render);
@@ -38,9 +57,17 @@ var SingleTopicView = DefaultView.extend({
     },
     
     render: function() {
-        this.$el.html(this.mainTemplate);
-        this.renderTopicTitle();
-        var tabs = {
+		if(this.selectionModel.nonEmpty(["dataset", "analysis", "topic"])) {
+			this.$el.html(this.mainTemplate);
+			this.renderTopicTitle();
+			this.renderTabs();
+		} else {
+			this.$el.html(this.redirectTemplate);
+		}
+    },
+    
+    renderTabs: function renderTabs() {
+		var tabs = {
             "Similar Topics": this.renderSimilarTopics.bind(this) ,
             "Top Documents": this.renderTopDocuments.bind(this) ,
             "Metadata and Metrics": this.renderMetadataAndMetrics.bind(this),
@@ -52,19 +79,14 @@ var SingleTopicView = DefaultView.extend({
             this.settingsModel.set({ selectedTab: tab });
         }.bind(this);
         
-        createTabbedContent(d3.select(this.el).select("#single-topic-info"), {
+        tg.gen.createTabbedContent(this.$el.find("#single-topic-info").get(0), {
             tabs: tabs,
             selected: this.settingsModel.get("selectedTab"),
             tabOnClick: tabOnClick,
         });
-    },
+	},
 
     renderTopicTitle: function() {
-        if(!this.selectionModel.nonEmpty(["topic"])) {
-            this.$el.html("<p>Select a topic to display its information.</p>");
-            return;
-        }
-        
         var selections = this.selectionModel.attributes;
         var container = d3.select(this.el).select("#single-topic-title");
         container.html(this.loadingTemplate);
@@ -94,37 +116,96 @@ var SingleTopicView = DefaultView.extend({
     renderTopDocuments: function(tab, content) {
         content.html(this.loadingTemplate);
         var selections = this.selectionModel.attributes;
-        this.dataModel.submitQueryByHash({
-            "datasets": selections["dataset"],
-            "analyses": selections["analysis"],
-            "topics": selections["topic"],
+        var datasetName = this.selectionModel.get("dataset");
+        var analysisName = this.selectionModel.get("analysis");
+        var topicNumber = this.selectionModel.get("topic");
+        var queryHash = {
+			"datasets": datasetName,
+            "analyses": analysisName,
+            "topics": topicNumber,
             "topic_attr": "metrics",
             "top_n_documents": 10,
-        }, function(data) {
+		};
+        this.dataModel.submitQueryByHash(queryHash, function topDocumentsCallback(data) {
             content.html("");
             var topicNumber = this.selectionModel.get("topic");
             var topic = extractTopics(data, this.selectionModel)[topicNumber];
             var topDocs = topic["top_n_documents"];
-            var tokenCount = parseFloat(topic.metrics["Token Count"]);
-            var documents = d3.entries(topDocs).map(function(entry) {
-                return [entry.key, entry.key, entry.value.token_count, (entry.value.token_count/tokenCount)*100];
-            });
-            var table = content.append("table")
-                .classed("table table-hover table-condensed", true);
-            var onClick = function(d, i) {
-                this.selectionModel.set({ "document": d[0] });
-                window.location.href = "#documents";
-            }.bind(this);
-            createSortableTable(table, {
-                header: ["", "Document", "Token Count", "% of Topic"], 
-                data: documents, 
-                onClick: { "1": onClick }, 
-                bars: [3], 
-                percentages: [3],
-                favicon: [0, "documents", this],
-                sortBy: 3,
-                sortAscending: false,
-            });
+            var tokenCountTotal = parseFloat(topic.metrics["Token Count"]);
+            
+            var documentsList = _.reduce(topDocs, function extractDocumentNames(result, value, key) {
+				result.push(key);
+				return result;
+			}, []);
+            
+            var docSnippetsRequest = {
+				"datasets": datasetName,
+				"analyses": analysisName,
+				"documents": documentsList,
+				"document_attr": ["intro_snippet"],
+			};
+            this.dataModel.submitQueryByHash(docSnippetsRequest, function finishTopDocumentsCallback(data2) {
+				var that = this;
+				var documentSnippets = data2.datasets[datasetName].analyses[analysisName].documents;
+				
+				var header = ["", "Document", "Preview", "Token Count", "% of Topic"];
+				var sortable = [false, true, true, true, true];
+				var sortBy = 4;
+				var sortAscending = this.settingsModel.get("ascending");
+				var tableData = _.map(topDocs, function createTableData(value, key) {
+					return [key, key, documentSnippets[key]["intro_snippet"], value.token_count, value.token_count/tokenCountTotal];
+				});
+				var tokenCountMax = _.max(tableData, function findTokenCountMax(value) {
+					return value[4];
+				})[4];
+				console.log(tokenCountMax);
+				var dataFunctions = [
+					function col0(d, i) {
+						var el = d3.select(this)
+							.append("span")
+							.attr("data-tg-document-name", d)
+							.classed("tg-fav", true);
+						tg.site.initFav(el[0][0], that.favsModel);
+					},
+					false,
+					function col2(snippet, i) {
+						d3.select(this)
+							.append('div')
+							.style({ "float": "left" , "text-align": "left", "max-width": "400px" })
+							.text(snippet);
+					},
+					false,
+					function col4(d, i) {
+						console.log(d);
+						console.log(tokenCountMax);
+						d3.select(this)
+							.html(tg.gen.createPercentageBar(d, tokenCountMax) + " " + d.toFixed(4) + "%");
+					},
+				];
+				var tableRowFunction = function tableRowFunction(rowData, index) {
+					d3.select(this)
+						.attr("data-tg-document-name", rowData[1])
+						.classed("tg-select pointer", true)
+						.classed("all-docs-update-document-highlight all-docs-document-popover", true)
+						.classed("success", function isRowHighlighted(d, i) {
+							if(d3.select(this).attr("data-tg-document-name") === that.selectionModel.get("document")) {
+								return true;
+							} else {
+								return false;
+							}
+						});
+				};
+				
+				tg.gen.createSortableTable(content[0][0], {
+					header: header, 
+					sortable: sortable,
+					sortBy: sortBy,
+					sortAscending: sortAscending,
+					data: tableData,
+					dataFunctions: dataFunctions,
+					tableRowFunction: tableRowFunction,
+				});
+			}.bind(this), this.renderError.bind(this));
         }.bind(this), this.renderError.bind(this));
     },
     

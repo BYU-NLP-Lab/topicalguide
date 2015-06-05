@@ -374,6 +374,11 @@ class Document(models.Model):
         except:
             content = 'Error occurred while trying to access content.'
         return content
+	
+    def get_intro_snippet(self):
+		snippet = self.get_content()[0: 200]
+		index = snippet.rfind(' ')
+		return snippet[0:index]+' ...'
     
     def get_key_word_in_context(self, token_indices, pre=80, post=80):
         word_tokens = self.tokens.filter(token_index__in=token_indices).order_by("start_index")
