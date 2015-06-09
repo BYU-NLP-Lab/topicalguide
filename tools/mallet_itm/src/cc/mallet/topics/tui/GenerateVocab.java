@@ -50,7 +50,7 @@ public class GenerateVocab {
 		}
 		
 		
-		VocabGenerator.genVocab_all(instances, vocabFile.value, tfidfRank.value, tfidfThresh.value, 
+		VocabGenerator.genVocab(instances, vocabFile.value, tfidfRank.value, tfidfThresh.value, 
 			freqThresh.value, wordLength.value);			
 		
 	}
