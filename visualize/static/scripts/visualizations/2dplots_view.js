@@ -58,7 +58,7 @@ var PlotView = DefaultView.extend({
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
             "document_limit": 1000,
-            "dataset_attr": "document_metadata_meanings",
+            "dataset_attr": ["document_metadata_types", "document_metadata_meanings"],
         };
     },
     
@@ -164,6 +164,7 @@ var PlotView = DefaultView.extend({
         var selections = this.selectionModel.attributes;
         var analysis = data.datasets[selections["dataset"]].analyses[selections["analysis"]];
         
+        var metadataTypes = data.datasets[selections["dataset"]].document_metadata_types;
         var meanings = data.datasets[selections["dataset"]].document_metadata_meanings;
         var timesAttributes = [];
         for(var meaningKey in meanings) {
@@ -224,6 +225,7 @@ var PlotView = DefaultView.extend({
             valueNames: valueNames,
             valueTypes: valueTypes,
             times: timesAttributes,
+            metadataTypes: metadataTypes,
         };
         
         return result;
@@ -330,12 +332,15 @@ var PlotView = DefaultView.extend({
             var value = color.property("value");
             that.settingsModel.set({ colorSelection: { group: group, value: value } });
         });
-
-        var yvalue = "0";
-        var ygroup = "topics";
+        
+        var yvalue = value;
+        var ygroup = group;
         if(this.selectionModel.nonEmpty(["topic"])) {
             yvalue = this.selectionModel.get("topic");
             yAxis.property("value", yvalue);
+        } else {
+            yvalue = "0";
+            ygroup = "topics";
         }
         
         //~ console.log("Y: " + yvalue + " " + ygroup);
@@ -347,6 +352,21 @@ var PlotView = DefaultView.extend({
             xgroup = "metadata";
             xAxis.property("value", xvalue);
         }
+        
+        var rvalue = "uniform";
+        var rgroup = "other";
+        if(rvalue === "uniform" && rgroup === "other") {
+            console.log(valueNames);
+            if('metrics' in valueNames && 'Token Count' in valueNames['metrics']) {
+                rvalue = 'Token Count';
+                rgroup = 'metrics';
+                radius.property('value', rvalue);
+                console.log('here');
+            }
+        }
+        
+        var cvalue = value;
+        var cgroup = group;
 
         //~ console.log("X: " + xvalue + " " + xgroup);
 
@@ -354,7 +374,7 @@ var PlotView = DefaultView.extend({
         var defaultSettings = {
             xSelection: { group: xgroup, value: xvalue },
             ySelection: { group: ygroup, value: yvalue },
-            radiusSelection: { group: "other", value: "uniform" },
+            radiusSelection: { group: group, value: value },
             colorSelection: { group: group, value: value },
             removing: false,
         };
@@ -442,12 +462,12 @@ var PlotView = DefaultView.extend({
         this.xAxisGroup = svg.append("g")
             .attr("id", "x-axis")
             .attr("transform", "translate(0,"+dim.height+")")
-            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.25px", "shape-rendering": "crispedges" });
+            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.5px", "shape-rendering": "crispedges" });
         this.xAxisText = this.xAxisGroup.append("text");
         this.yAxisGroup = svg.append("g")
             .attr("id", "y-axis")
             .attr("transform", "translate(0,0)")
-            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.25px", "shape-rendering": "crispedges" });
+            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.5px", "shape-rendering": "crispedges" });
         this.yAxisText = this.yAxisGroup.append("text");
         // Render scatter plot container.
         this.plot = svg.append("g")
