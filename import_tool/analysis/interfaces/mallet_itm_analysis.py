@@ -35,8 +35,7 @@ class MalletItmAnalysis(AbstractAnalysis):
     running the analysis to avoid naming conflicts or inconsistencies.
     """
     
-    def __init__(self, mallet_path, dataset_dir, base_dir, vocab_class, tree_class,
-                 itm_class):
+    def __init__(self, mallet_itm_path, dataset_dir, base_dir):
         """
         mallet_path -- the path to the mallet executable
         dataset_dir -- the directory the analysis can use to make its
@@ -45,19 +44,16 @@ class MalletItmAnalysis(AbstractAnalysis):
                        method is called; the analysis directory is 
                        used to store intermediate results
         """
-        self.mallet_path = abspath(mallet_path)
+        self.mallet_itm_path = abspath(mallet_itm_path)
         self.dataset_dir = abspath(dataset_dir)
         self.base_dir = abspath(base_dir)
         self.create_subdocuments_method = None
-        self.vocab_class = vocab_class
-        self.itm_class = itm_class
-        self.tree_class = tree_class
         # Since words are mapped to numbers this doesn't need to be modified.
         mallet_token_regex=r"[\S]+"
         
         self.mallet_token_regex = mallet_token_regex
         self.python_token_regex_pattern = re.compile(r'[a-zA-z0-9_]', re.UNICODE)
-        self.tree_hyperparameters_file = join(self.base_dir, 'tools', 'mallet_itm', 'input', 'tree_hyperparams')
+        self.tree_hyperparameters_file = join(self.base_dir, 'tools', 'mallet_itm', 'tree_hyperparams')
         
         self.metadata = {}
         self.stopwords = {}
@@ -353,7 +349,7 @@ class MalletItmAnalysis(AbstractAnalysis):
                 #~ o.write("SPLIT_\t%s" % "\t".join(ii))
 
         # Generate the protocol buffer with the real version
-        cmd = ['java', '-cp', self.get_java_class_path(), self.tree_class, '--vocab',
+        cmd = [self.mallet_itm_path, 'generate-tree', '--vocab',
                self.itm_vocab_file, '--constraint',
                self.raw_constraint_file, '--tree',
                self.processed_constraint_file]
@@ -375,7 +371,7 @@ class MalletItmAnalysis(AbstractAnalysis):
             f.write('\n'.join(self.stopwords.keys()))
         
         if not os.path.exists(self.mallet_imported_data_file):
-            cmd = [self.mallet_path, 'import-file', 
+            cmd = [self.mallet_itm_path, 'import-file', 
                    '--input', self.mallet_input_file, 
                    '--output', self.mallet_imported_data_file, 
                    '--token-regex', self.mallet_token_regex, 
@@ -390,7 +386,7 @@ class MalletItmAnalysis(AbstractAnalysis):
                 raise
         
         if not os.path.exists(self.itm_vocab_file):
-            cmd = ['java', '-cp', self.get_java_class_path(), self.vocab_class, '--input', self.mallet_imported_data_file, '--vocab', self.itm_vocab_file, '--word-length', '0', '--freq-thresh', '0']
+            cmd = [self.mallet_itm_path , 'generate-vocab', '--input', self.mallet_imported_data_file, '--vocab', self.itm_vocab_file, '--word-length', '0', '--freq-thresh', '0']
             print(' '.join(cmd))
             try:
                 subprocess.check_call(cmd)
@@ -402,19 +398,13 @@ class MalletItmAnalysis(AbstractAnalysis):
         # train topics
         if not (os.path.exists(self.mallet_output_gz_file) and \
                 os.path.exists(self.mallet_output_doctopics_file)):
-            cmd = ['java', '-cp', self.get_java_class_path(), self.itm_class, '--input',
+            cmd = [self.mallet_itm_path, 'train-tree-topics', '--input',
                    self.mallet_imported_data_file, '--tree-hyperparameters',
                    self.tree_hyperparameters_file, '--vocab', self.itm_vocab_file,
                    '--num-topics', '%s' % str(self.num_topics),'--num-iterations',
                     '%s' % str(self.num_iterations), '--output-dir',
                      self.mallet_output_gz_file, '--tree', self.processed_constraint_file]
             print(" ".join(cmd))
-#            cmd = [self.mallet_path, 'train-topics', 
-#                   '--input', self.mallet_imported_data_file,
-#                   '--optimize-interval', str(self.optimize_interval),
-#                   
-#                   
-#                   ]
             try:
                 subprocess.check_call(cmd)
             except: # cleanup
@@ -509,14 +499,14 @@ def main():
     ]
     corpus = StubCorpus(corpus)
 
-    mallet_location = "tools/mallet_itm/tree-TM/bin/mallet"
+    mallet_location = "tools/mallet/mallet"
+    mallet_itm_location = "tools/mallet_itm/mallet"
     vocab_location = "cc.mallet.topics.tui.GenerateVocab"
     tree_location = "cc.mallet.topics.tui.GenerateTree"
     itm_location = "cc.mallet.topics.tui.Vectors2TreeTopics"
 
-    itm = MalletItmAnalysis(mallet_location, "./working/datasets/temp",
-                            ".", vocab_location, tree_location,
-                            itm_location)
+    itm = MalletItmAnalysis(mallet_itm_location, "./working/datasets/temp",
+                            ".")
     itm.prepare_analysis(corpus)
     itm.set_constraints([["dog", "bark"]], [["dog", "elm"]])
     itm.run_analysis()
