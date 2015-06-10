@@ -147,7 +147,7 @@ var AllTopicsView = DefaultView.extend({
                 // Set select topic functionality and row highlight functionality.
                 d3.select(this)
                     .attr("data-tg-topic-number", rowData[1])
-                    .classed("tg-select pointer", true)
+                    .classed("tg-select tg-explore pointer", true)
                     .classed("all-topics-update-document-highlight", true)
                     .classed("success", function isRowHighlighted(d, i) {
                         if(d3.select(this).attr("data-tg-topic-number") === that.selectionModel.get("topic")) {

@@ -689,47 +689,7 @@ var TopicalGuideView = DefaultView.extend({
         this.navView.dispose();
     },
     
-    events: {
-        "click .tg-fav": "clickFavorite", // Create site wide favorites functionality.
-        "click .tg-select": "clickSelect", // Create site wide selection functionality.
-    },
     
-    clickFavorite: function(e) {
-        var el = e.currentTarget;
-        var type = null;
-        var clsName = null;
-        var favsModel = this.favsModel;
-        if(tg.dom.hasAttr(el, "data-tg-dataset-name")) {
-            type = "datasets";
-            clsName = "data-tg-dataset-name";
-        } else if(tg.dom.hasAttr(el, "data-tg-analyis-name")) {
-            type = "analyses";
-            clsName = "data-tg-analyis-name";
-        } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
-            type = "topics";
-            clsName = "data-tg-topic-number";
-        } else if(tg.dom.hasAttr(el, "data-tg-document-name")) {
-            type = "documents";
-            clsName = "data-tg-document-name";
-        } else if(tg.dom.hasAttr(el, "data-tg-topic-name-scheme")) {
-            type = "topicNames";
-            clsName = "data-tg-topic-name-scheme";
-        }
-        if(clsName !== null) {
-            el = d3.select(el);
-            var value = el.attr(clsName).toString();
-            var favs = {};
-            favs[type] = value;
-            if(favsModel.has(type, value)) {
-                favsModel.remove(favs);
-                el.classed({ "glyphicon-star": false, "glyphicon-star-empty": true });
-            } else {
-                favsModel.add(favs);
-                el.classed({ "glyphicon-star": true, "glyphicon-star-empty": false });
-            }
-        }
-        e.stopPropagation();
-    },
     
     changeCurrentView: function() {
         // Find the current class to display.
@@ -810,24 +770,6 @@ var TopicalGuideView = DefaultView.extend({
         this.topicNamesView.render();
     },
     
-    clickSelect: function(e) {
-        var el = e.currentTarget;
-        var selection = {};
-        if(tg.dom.hasAttr(el, "data-tg-dataset-name")) {
-            selection["dataset"] = $(el).attr("data-tg-dataset-name");
-        } else if(tg.dom.hasAttr(el, "data-tg-analysis-name")) {
-            selection["analysis"] = $(el).attr("data-tg-analysis-name");
-        } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
-            selection["topic"] = $(el).attr("data-tg-topic-number");
-        } else if(tg.dom.hasAttr(el, "data-tg-document-name")) {
-            selection["document"] = $(el).attr("data-tg-document-name");
-        } else if(tg.dom.hasAttr(el, "data-tg-topic-name-scheme")) {
-            selection["topicNameScheme"] = $(el).attr("data-tg-topic-name-scheme");
-        }
-        this.selectionModel.set(selection);
-        e.stopPropagation();
-    },
-    
     changeTopicNameScheme: function() {
         var that = this;
         d3.selectAll(".tg-topic-name-auto-update")
@@ -838,6 +780,79 @@ var TopicalGuideView = DefaultView.extend({
                     el.text(that.dataModel.getReadableTopicName(topicNumber));
                 }
             });
+    },
+    
+    events: {
+        'click .tg-fav': 'clickFavorite', // Create site wide favorites functionality.
+        'click .tg-select': 'clickSelect', // Create site wide selection functionality.
+        'dblclick .tg-explore': 'doubleClickExplore', // Create site wide selection functionality.
+    },
+    
+    clickFavorite: function(e) {
+        var el = e.currentTarget;
+        var type = null;
+        var clsName = null;
+        var favsModel = this.favsModel;
+        if(tg.dom.hasAttr(el, 'data-tg-dataset-name')) {
+            type = 'datasets';
+            clsName = 'data-tg-dataset-name';
+        } else if(tg.dom.hasAttr(el, 'data-tg-analyis-name')) {
+            type = 'analyses';
+            clsName = 'data-tg-analyis-name';
+        } else if(tg.dom.hasAttr(el, 'data-tg-topic-number')) {
+            type = 'topics';
+            clsName = 'data-tg-topic-number';
+        } else if(tg.dom.hasAttr(el, 'data-tg-document-name')) {
+            type = 'documents';
+            clsName = 'data-tg-document-name';
+        } else if(tg.dom.hasAttr(el, 'data-tg-topic-name-scheme')) {
+            type = 'topicNames';
+            clsName = 'data-tg-topic-name-scheme';
+        }
+        if(clsName !== null) {
+            el = d3.select(el);
+            var value = el.attr(clsName).toString();
+            var favs = {};
+            favs[type] = value;
+            if(favsModel.has(type, value)) {
+                favsModel.remove(favs);
+                el.classed({ 'glyphicon-star': false, 'glyphicon-star-empty': true });
+            } else {
+                favsModel.add(favs);
+                el.classed({ 'glyphicon-star': true, 'glyphicon-star-empty': false });
+            }
+        }
+        e.stopPropagation();
+    },
+    
+    clickSelect: function(e) {
+        var el = e.currentTarget;
+        var selection = {};
+        if(tg.dom.hasAttr(el, 'data-tg-dataset-name')) {
+            selection['dataset'] = $(el).attr('data-tg-dataset-name');
+        } else if(tg.dom.hasAttr(el, 'data-tg-analysis-name')) {
+            selection['analysis'] = $(el).attr('data-tg-analysis-name');
+        } else if(tg.dom.hasAttr(el, 'data-tg-topic-number')) {
+            selection['topic'] = $(el).attr('data-tg-topic-number');
+        } else if(tg.dom.hasAttr(el, 'data-tg-document-name')) {
+            selection['document'] = $(el).attr('data-tg-document-name');
+        } else if(tg.dom.hasAttr(el, 'data-tg-topic-name-scheme')) {
+            selection['topicNameScheme'] = $(el).attr('data-tg-topic-name-scheme');
+        }
+        this.selectionModel.set(selection);
+        e.stopPropagation();
+    },
+    
+    doubleClickExplore: function(e) {
+        var el = e.currentTarget;
+        var newView = {
+        };
+        if(tg.dom.hasAttr(el, 'data-tg-topic-number')) {
+            newView['currentView'] = 'single_topic';
+        } else if(tg.dom.hasAttr(el, 'data-tg-document-name')) {
+            newView['currentView'] = 'single_document';
+        }
+        this.viewModel.set(newView);
     },
     
 });
