@@ -239,12 +239,12 @@ var TopicsOverTimeView = DefaultView.extend({
         this.xAxisGroup = svg.append("g")
             .attr("id", "x-axis")
             .attr("transform", "translate(0,"+dim.height+")")
-            .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" });
+            .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges", "stroke-width": "1.5px" });
         this.xAxisText = this.xAxisGroup.append("text");
         this.yAxisGroup = svg.append("g")
             .attr("id", "y-axis")
             .attr("transform", "translate(0,0)")
-            .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges" });
+            .style({ "fill": "none", "stroke": "black", "shape-rendering": "crispedges", "stroke-width": "1.5px" });
         this.yAxisText = this.yAxisGroup.append("text");
         // Render scatter plot container.
         this.plot = svg.append("g")
@@ -787,6 +787,10 @@ var TopicsOverTimeView = DefaultView.extend({
             .style("opacity", 0)
             .style("stroke", "white")
             .style("stroke-opacity", 0.3)
+            .attr("data-tg-document-name", function(d) {
+                return data[d.meta][d.index].doc_id;
+            })
+            .classed("tg-select", true)
             .on("mouseover", function(d) {
                 that.tip.show(d);
                 d3.select(this).style("fill", "red");
