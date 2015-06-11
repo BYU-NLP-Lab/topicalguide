@@ -500,6 +500,13 @@ class Analysis(models.Model):
         for row in query:
             result.append(row[0])
         return result
+    
+    def get_word_constraints(self):
+        result = {
+            'split': [['word1', 'word2'], ['word1', 'word2']],
+            'merge': [['word3', 'word4']],
+        }
+        return result
 
 class AnalysisMetadataValue(MetadataValue):
     analysis = models.ForeignKey('Analysis', related_name='metadata_values')

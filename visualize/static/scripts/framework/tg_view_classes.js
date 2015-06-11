@@ -63,17 +63,17 @@ _.extend(DefaultView.prototype, Backbone.View.prototype, {
     initialize: function initialize(options) {},
     
     /**
+     * Call dispose on any sub-views and perform any other necessary cleanup operations.
+     */
+    cleanup: function cleanup() {},
+    
+    /**
      * Render visualization in the given element (i.e. this.el and this.$el).
      * To use d3 try d3.select(this.el).
      */
     render: function render() {
         this.$el.html("<p>Welcome to the Default Page. You're seeing this message either because this view is not implemented, this view doesn't exist, or an error occurred while trying to render the view.</p>");
     },
-    
-    /**
-     * Call dispose on any sub-views and perform any other necessary cleanup operations.
-     */
-    cleanup: function cleanup() {},
     
     /**
      * Removes all events for you and removes the $el from the DOM.
@@ -590,6 +590,12 @@ var BreadcrumbsView = DefaultView.extend({
  * "data-tg-topic-number" data attribute.
  * When a topic name scheme changes it is useful to have the topic names change
  * as well. This will do it automatically.
+ * 
+ * Navigation:
+ * Allows the user to double click on the element and get redirected to the
+ * single topic or single document view.
+ * Set the class "tg-explore" and set either "data-tg-topic-number" or
+ * "data-tg-document-name".
  */
 var TopicalGuideView = DefaultView.extend({
     

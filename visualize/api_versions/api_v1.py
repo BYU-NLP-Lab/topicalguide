@@ -99,7 +99,7 @@ OPTIONS_FILTERS = {
     
     # what data to gather
     'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals', 'document_metadata_meanings']),
-    'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes']),
+    'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes', 'word_constraints']),
     'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens', 'word_token_documents_and_locations']),
     'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations', 'intro_snippet']),
 
@@ -256,7 +256,8 @@ def query_analyses(options, dataset_db):
         'metadata': lambda analysis_db: {md.metadata_type.name: md.value() for md in analysis_db.metadata_values.all()},
         'metrics': lambda analysis_db: {mv.metric.name: mv.value for mv in analysis_db.metric_values.all()},
         'topic_count': lambda analysis_db: analysis_db.topics.count(),
-        'topic_name_schemes': lambda analysis_db: analysis_db.get_topic_name_schemes()
+        'topic_name_schemes': lambda analysis_db: analysis_db.get_topic_name_schemes(),
+        'word_constraints': lambda analysis_db: analysis_db.get_word_constraints(),
     }
     
     analysis_attr = options.setdefault('analysis_attr', [])

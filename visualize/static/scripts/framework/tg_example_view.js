@@ -136,7 +136,6 @@ var ExampleView = DefaultView.extend({
  */
 addViewClass(["Menu 1", "Sub Menu 2", "Sub Menu 3"], ExampleView);
 
-
 /**
  * Site wide functionality available to you.
  * 
@@ -164,6 +163,12 @@ addViewClass(["Menu 1", "Sub Menu 2", "Sub Menu 3"], ExampleView);
  * "data-tg-topic-number" data attribute.
  * When a topic name scheme changes it is useful to have the topic names change
  * as well. This will do it automatically.
+ * 
+ * Navigation:
+ * Allows the user to double click on the element and get redirected to the
+ * single topic or single document view.
+ * Set the class "tg-explore" and set either "data-tg-topic-number" or
+ * "data-tg-document-name".
  */
  
 /**

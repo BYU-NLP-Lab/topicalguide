@@ -588,6 +588,37 @@ var tg = new function() {
         },
         
         /**
+         * Create an extensible form list.
+         * 
+         * Return nothing.
+         */
+        createExtensibleForm: function createExtensibleForm(domEl, formElementGenerator) {
+            function appendRowWithButton(el) {
+                var row = el.append('div')
+                    .classed('row tg-gen-extensible-form-row', true);
+                row.append('div')
+                    .classed('col-xs-11', true)
+                    .html(formElementGenerator());
+                row.append('div')
+                    .classed('tg-gen-extensible-form-button-column col-xs-1', true)
+                    .append('button')
+                    .classed('btn btn-success', true)
+                    .on('click', function() {
+                        el.selectAll('.tg-gen-extensible-form-button-column')
+                            .each(function() {
+                                d3.select(this).html('');
+                            });
+                        appendRowWithButton(el);
+                    })
+                    .append('span')
+                    .classed('glyphicon, glyphicon-plus', true);
+            };
+            
+            var d3El = d3.select(domEl);
+            appendRowWithButton(d3El);
+        },
+        
+        /**
          * value -- the value to turn into a percentage
          * max -- the max value
          * Return html for a percentage bar.

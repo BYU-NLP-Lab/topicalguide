@@ -850,28 +850,153 @@ var SingleTopicSubView = DefaultView.extend({
 });
 
 var SingleTopicViewSidebar = DefaultView.extend({
-    readableName: "Document Information",
+
+/******************************************************************************
+ *                             STATIC VARIABLES
+ ******************************************************************************/
+
+    readableName: "Single Topic Sidebar",
     shortName: "single_topic_sidebar",
     
     baseTemplate:
-'<div class="single-topic-sidebar-select-container"></div>'+
+'<div class="single-topic-sidebar-select-container">'+
+'   <select class="single-topic-sidebar-sortby-select" type="selection">'+
+'   </select>'+
+'   <div class="btn-group" data-toggle="buttons">'+
+'       <label class="single-topic-sidebar-sortby-ascending btn btn-success active">'+
+'           <input type="radio">'+
+'           <span class="glyphicon glyphicon-sort-by-attributes"></span>'+
+'       </label>'+
+'       <label class="single-topic-sidebar-sortby-descending btn btn-success">'+
+'           <input type="radio">'+
+'           <span class="glyphicon glyphicon-sort-by-attributes-alt"></span>'+
+'       </label>'+
+'   </div>'+
+'</div>'+
 '<div class="single-topic-sidebar-topics-list">'+
 '</div>',
-    
+
+/******************************************************************************
+ *                             INHERITED METHODS
+ ******************************************************************************/
+
     initialize: function initialize() {
-    },
-    
-    render: function render() {
-        this.$el.html(this.baseTemplate);
-        
+        var defaultSettings = {
+            sidebarSortByValue: 'name',
+            sidebarSortAscending: true,
+        };
+        this.settingsModel.set(_.extend(defaultSettings, this.settingsModel.attributes));
+        this.model = new Backbone.Model();
     },
     
     cleanup: function cleanup() {
     },
     
+    render: function render() {
+        this.$el.html(this.loadingTemplate);
+        var datasetName = this.selectionModel.get('dataset');
+        var analysisName = this.selectionModel.get('analysis');
+        var request = this.getRequest(datasetName, analysisName);
+        this.dataModel.submitQueryByHash(
+            request,
+            function singleTopicSidebarCallback(data) {
+                this.$el.html(this.baseTemplate);
+                var selectData = this.extractData(data, datasetName, analysisName);
+                console.log(selectData);
+                this.model.set({ selectData: selectData });
+                this.renderSelect(this.$el.find('.single-topic-sidebar-sortby-select').get(0), selectData);
+                this.renderList(this.$el.find('.single-topic-sidebar-topics-list').get(0), selectData);
+            }.bind(this),
+            this.renderError.bind(this)
+        );
+    },
+    
     renderHelpAsHtml: function renderHelpAsHtml() {
         return '';
     },
+    
+/******************************************************************************
+ *                       PURE FUNCTIONS (no this context used)
+ ******************************************************************************/
+    
+    /**
+     * el -- dom element of select
+     * Render select in element.
+     */
+    renderSelect: function renderSelect(el, selectData) {
+        var groups = selectData;
+        //~ tg.gen.populateSelect(el, groups);
+    },
+    
+    /**
+     * Requires that the select is rendered.
+     * el -- dom element of container
+     * Render list in element.
+     */
+    renderList: function renderList(el, selectData) {
+        var d3El = d3.select(el);
+        d3El.empty();
+        var table = d3El.append('table')
+            .classed('table table-hover table-condensed', true);
+        //~ var table = 
+        //~ var ascending = 
+    },
+    
+    getRequest: function getRequest(datasetName, analysisName) {
+        return {
+            datasets: datasetName,
+            analyses: analysisName,
+            topics: '*',
+            topic_attr: ['metrics'],
+        };
+    },
+    
+    /**
+     * data -- data as returned from the server
+     * datasetName -- name of the dataset
+     * analysisName -- name of the analysis
+     * Return data in the format needed.
+     */
+    extractData: function extractData(data, datasetName, analysisName) {
+        return data.datasets[datasetName].analyses[analysisName].topics;
+    },
+
+/******************************************************************************
+ *                         DOM EVENT HANDLERS
+ ******************************************************************************/
+
+    events: {
+        'change .single-topic-sidebar-sortby-select': 'changeSortBySelect',
+        'click .single-topic-sidebar-sortby-ascending': 'clickSortDirection',
+        'click .single-topic-sidebar-sortby-descending': 'clickSortDirection',
+    },
+    
+    changeSortBySelect: function changeSortBySelect(e) {
+        var value = this.$el.find('.single-topic-sidebar-sortby-select').val();
+        this.settingsModel.set({ sidebarSortByValue: value });
+    },
+    
+    clickSortDirection: function clickSortDirection(e) {
+        var radio = d3.select(this.el).select('.active');
+        var ascending = this.settingsModel.get('sidebarSortAscending');
+        if(radio.classed('single-topic-sidebar-sortby-ascending')) {
+            ascending = true;
+        } else if(radio.classed('single-topic-sidebar-sortby-descending')) {
+            ascending = false;
+        }
+        this.settingsModel.set({ sidebarSortAscending: ascending });
+    },
+
+/******************************************************************************
+ *                         SETTINGS MODEL EVENT HANDLERS
+ ******************************************************************************/
+
+    changeSortByValue: function changeSortByValue() {
+    },
+    
+    sidebarSortAscending: function sidebarSortAscending() {
+    },
+    
 });
 
 /**
@@ -880,7 +1005,7 @@ var SingleTopicViewSidebar = DefaultView.extend({
  * rightView -- the single topic
  */
 var SingleTopicViewManager = DefaultView.extend({
-    readableName: "Document Information",
+    readableName: "Single Topic",
     shortName: "single_topic",
     
     baseTemplate:
@@ -899,9 +1024,9 @@ var SingleTopicViewManager = DefaultView.extend({
     render: function render() {
         this.cleanup();
         this.$el.html(this.baseTemplate);
-        this.leftView = new SingleTopicViewSidebar();
+        this.leftView = new SingleTopicViewSidebar(_.extend({ el: this.$el.find('.single-topic-manager-left-container') }, this.getAllModels()));
         this.leftView.render();
-        this.rightView = new SingleTopicView();
+        this.rightView = new SingleTopicView(_.extend({ el: this.$el.find('.single-topic-manager-right-container') }, this.getAllModels()));
         this.rightView.render();
     },
     
