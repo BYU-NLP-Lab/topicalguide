@@ -28,6 +28,9 @@
         "month": [["January", "Jan"], ["February", "Feb"], ["March", "Mar"], ["April", "Apr"], ["May"], ["June"], ["July"], ["August", "Aug"], ["September", "Sept"], ["October", "Oct"], ["November", "Nov"], ["December", "Dec"]]
     },
     
-    "document_required_metadata": ["address_number", "title", "author_name", "month", "president_name", "year", "day"]
+    "document_required_metadata": ["address_number", "title", "author_name", "month", "president_name", "year", "day"],
+
+    "merge_words": [["russia", "soviet"]],
+    "split_words": [["gold", "banks", "silver"]]
 
 }

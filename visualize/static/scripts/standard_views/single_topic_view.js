@@ -849,5 +849,71 @@ var SingleTopicSubView = DefaultView.extend({
     },
 });
 
+var SingleTopicViewSidebar = DefaultView.extend({
+    readableName: "Document Information",
+    shortName: "single_topic_sidebar",
+    
+    baseTemplate:
+'<div class="single-topic-sidebar-select-container"></div>'+
+'<div class="single-topic-sidebar-topics-list">'+
+'</div>',
+    
+    initialize: function initialize() {
+    },
+    
+    render: function render() {
+        this.$el.html(this.baseTemplate);
+        
+    },
+    
+    cleanup: function cleanup() {
+    },
+    
+    renderHelpAsHtml: function renderHelpAsHtml() {
+        return '';
+    },
+});
+
+/**
+ * Simple manager to combine two views.
+ * leftView -- the side bar
+ * rightView -- the single topic
+ */
+var SingleTopicViewManager = DefaultView.extend({
+    readableName: "Document Information",
+    shortName: "single_topic",
+    
+    baseTemplate:
+'<div class="row">'+
+'    <div class="single-topic-manager-left-container col-xs-3">'+
+'    </div>'+
+'    <div class="single-topic-manager-right-container col-xs-9">'+
+'    </div>'+
+'</div>',
+    
+    initialize: function initialize() {
+        this.leftView = new DefaultView();
+        this.rightView = new DefaultView();
+    },
+    
+    render: function render() {
+        this.cleanup();
+        this.$el.html(this.baseTemplate);
+        this.leftView = new SingleTopicViewSidebar();
+        this.leftView.render();
+        this.rightView = new SingleTopicView();
+        this.rightView.render();
+    },
+    
+    cleanup: function cleanup() {
+        this.leftView.dispose();
+        this.rightView.dispose();
+    },
+    
+    renderHelpAsHtml: function renderHelpAsHtml() {
+        return this.rightView.renderHelpAsHtml();
+    },
+});
+
 // Add the Topic View to the top level menu
-addViewClass(["Topic"], SingleTopicView);
+addViewClass(["Topic"], SingleTopicViewManager);

@@ -85,7 +85,7 @@ class MalletItmAnalysis(AbstractAnalysis):
     def name(self, name):
         """Set identifier and corresponding working directory, must be a string with valid directory characters."""
         self._name = name
-        self.working_directory = abspath(join(self.dataset_dir, 'analyses/' + self.name))
+        self.working_directory = abspath(join(self.dataset_dir, 'analyses', self.name))
     
     @property
     def readable_name(self):
@@ -144,12 +144,11 @@ class MalletItmAnalysis(AbstractAnalysis):
         self.raw_constraint_file = join(self._working_dir, 'init.cons')
         self.processed_constraint_file = join(self._working_dir, 'init.wn')
         self.tree_itm_library_path = join(self.base_dir, 'tools', 'mallet_itm', 'lib', '*')
-        print(self.tree_itm_library_path)
         self.java_class_path = join(self.base_dir, 'tools', 'mallet_itm', 'class')
         
+        self.mallet_output_file_prefix = join(self._working_dir, 'outputstate')
+        self.mallet_output_file = self.mallet_output_file_prefix + '.topic-tokens'
         self.mallet_imported_data_file = join(self._working_dir, 'imported_data.mallet')
-        self.mallet_output_gz_file = join(self._working_dir, self.name + '.outputstate.gz')
-        self.mallet_output_doctopics_file = join(self._working_dir, self.name + '.doctopics')
     
     @property
     def token_regex(self):
@@ -183,6 +182,8 @@ class MalletItmAnalysis(AbstractAnalysis):
         with io.open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             for token, __ in self.tokenize(f.read()):
                 self.stopwords[token] = True
+    
+    
     
     def set_create_subdocuments_method(self, method):
         """Set how the subdocuments should be created."""
@@ -331,22 +332,37 @@ class MalletItmAnalysis(AbstractAnalysis):
     def get_java_class_path(self):
         return self.java_class_path + ':'+self.tree_itm_library_path
     
+    
+    def ensure_variables_loaded(self):
+        """Make sure that the variables needed after prepare analysis is run are
+        loaded. This is needed when the import process has been interupted.
+        """
+        try:
+            self.wordtype_to_number
+        except:
+            with io.open(self.wordtype_to_number_file, 'r', encoding='utf-8') as f:
+                self.wordtype_to_number = json.loads(f.read())
+    
     def set_constraints(self, merge_links, split_links):
         # TODO: This overwrites any older constraints
         # Possible issue: this could have a vocab mismatch depending
         # on import pipeline, needs to be tested
         
+        self.ensure_variables_loaded()
+        
         with io.open(self.raw_constraint_file, 'w', encoding='utf-8') as o:
             print('constraints')
             print(merge_links)
+            print(split_links)
             print(self.wordtype_to_number)
             for ii in merge_links:
                 print(ii)
                 wordtype_indices = [unicode(self.wordtype_to_number[wt]) for wt in ii]
                 o.write("MERGE_\t%s" % "\t".join(wordtype_indices))
                 print(wordtype_indices)
-            #~ for jj in split_links:
-                #~ o.write("SPLIT_\t%s" % "\t".join(ii))
+            for jj in split_links:
+                wordtype_indices = [unicode(self.wordtype_to_number[wt]) for wt in jj]
+                o.write("SPLIT_\t%s" % "\t".join(wordtype_indices))
 
         # Generate the protocol buffer with the real version
         cmd = [self.mallet_itm_path, 'generate-tree', '--vocab',
@@ -393,23 +409,27 @@ class MalletItmAnalysis(AbstractAnalysis):
             except:
                 self._cleanup(self.itm_vocab_file)
     
-    def run_analysis(self):
+    def run_analysis(self, documents):
         """Run ITM."""
+        
+        print(self.working_directory)
+        
+        self.prepare_analysis(documents)
+        self.set_constraints([], [])
+        
         # train topics
-        if not (os.path.exists(self.mallet_output_gz_file) and \
-                os.path.exists(self.mallet_output_doctopics_file)):
+        if not os.path.exists(self.mallet_output_file):
             cmd = [self.mallet_itm_path, 'train-tree-topics', '--input',
                    self.mallet_imported_data_file, '--tree-hyperparameters',
                    self.tree_hyperparameters_file, '--vocab', self.itm_vocab_file,
                    '--num-topics', '%s' % str(self.num_topics),'--num-iterations',
                     '%s' % str(self.num_iterations), '--output-dir',
-                     self.mallet_output_gz_file, '--tree', self.processed_constraint_file]
+                     self.mallet_output_file_prefix, '--tree', self.processed_constraint_file]
             print(" ".join(cmd))
             try:
                 subprocess.check_call(cmd)
             except: # cleanup
-                self._cleanup(self.mallet_output_gz_file)
-                self._cleanup(self.mallet_output_doctopics_file)
+                self._cleanup(self.mallet_output_file)
                 raise
     
     def get_vocab_iterator(self):
@@ -431,18 +451,6 @@ class MalletItmAnalysis(AbstractAnalysis):
         document.  Furthermore, the topic_number must be a cardinal 
         integer.
         """
-        self.mallet_output_file = join(self._working_dir, self.name + '.outputstate')
-        
-        # decompress mallet output
-        if not os.path.exists(self.mallet_output_file):
-            cmd = 'gunzip -c %s > %s' % (self.mallet_output_gz_file, self.mallet_output_file)
-            try:
-                subprocess.check_call(cmd, shell=True)
-            except: # cleanup
-                if os.path.exists(self.mallet_output_file):
-                    os.remove(self.mallet_output_file)
-                raise
-        
         # get subdocument to document map
         self.subdoc_to_doc_map = {}
         with io.open(self.subdoc_to_doc_map_file, 'r', encoding='utf-8') as f:

@@ -121,8 +121,13 @@ def get_analysis(args, directories):
     if args.analysis_tool not in analyses:
         raise Exception('Invalid topic modeling tool.')
     else:
-        analysis = analyses[args.analysis_tool](join(directories['topical_guide'], 'tools/mallet/mallet'), directories['dataset'], directories['base'])
+        analysis_tool_location = 'tools/mallet/mallet'
+        if args.analysis_tool == 'MalletITM':
+            print('hurray for itm')
+            analysis_tool_location = 'tools/mallet_itm/mallet'
+        analysis = analyses[args.analysis_tool](join(directories['topical_guide'], analysis_tool_location), directories['dataset'], directories['base'])
     
+    analysis.num_topics = args.number_of_topics
     if args.identifier:
         analysis.name = args.identifier
     # must come before getting stopwords
@@ -132,7 +137,6 @@ def get_analysis(args, directories):
             analysis.add_stopwords_file(stopwords_file)
     if args.subdocuments:
         analysis.set_create_subdocuments_method(basic_tools.create_subdocuments)
-    analysis.num_topics = args.number_of_topics
     analysis.remove_singletons = args.remove_singletons
     analysis.find_bigrams = args.bigrams
     analysis.stem_words = args.stem_words
