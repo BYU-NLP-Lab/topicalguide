@@ -272,6 +272,10 @@ class Dataset(models.Model):
     def __unicode__(self):
         return self.name
     
+    @property
+    def directory(self):
+        return self.dataset_dir
+    
     def get_document_metadata_types(self):
         query = self.documents.values_list('metadata_values__metadata_type__name', 'metadata_values__metadata_type__datatype').distinct()
         query2 = self.empty_document_metadata_types.values_list('metadata_type__name', 'metadata_type__datatype').distinct()

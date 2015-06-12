@@ -38,7 +38,8 @@ BASIC_DATASET_METRICS = [
     'dataset:document_count',
 ]
 BASIC_ANALYSIS_METRICS = [
-    'document-analysis:token_count', 'document-analysis:type_count', 'document-analysis:topic_entropy',
+    'document-analysis:token_count', 'document-analysis:type_count', 
+    'document-analysis:topic_entropy',
     
     'analysis:token_count', 'analysis:type_count', 'analysis:stopword_count',
     'analysis:excluded_word_count', 'analysis:entropy',
@@ -46,10 +47,13 @@ BASIC_ANALYSIS_METRICS = [
     'topic:token_count', 'topic:type_count', 'topic:document_entropy', 
     'topic:word_entropy', 'topic:temperature',
     
-    'topic-pairwise:document_correlation', 'topic-pairwise:word_correlation'
+    'topic-pairwise:document_correlation', 'topic-pairwise:word_correlation', 
 ]
 DEFAULT_TOPIC_NAMERS = [
-    TopNTopicNamer(2), TopNTopicNamer(3), TopNTopicNamer(4), TfitfTopicNamer(3)
+    TopNTopicNamer(2), 
+    TopNTopicNamer(3), 
+    TopNTopicNamer(4), 
+    TfitfTopicNamer(3), 
 ]
 
 def make_working_dir():
@@ -385,6 +389,20 @@ def run_analysis(database_id, dataset_name, analysis, directories,
     run_metrics(database_id, dataset_db.name, analysis_db.name, BASIC_ANALYSIS_METRICS)
     
     return analysis.name
+
+def copy_analysis_directory(dataset_directory, old_analysis_name, new_analysis_name):
+    from shutil import copytree
+    old_dir = os.path.join(dataset_directory, 'analyses', old_analysis_name)
+    new_dir = os.path.join(dataset_directory, 'analyses', new_analysis_name)
+    if os.path.exists(old_dir) and not os.path.exists(new_dir):
+        copytree(old_dir, new_dir)
+
+def resume_analysis(database_id, dataset_name, analysis, directories, 
+                 topic_namers=None, verbose=False):
+    print('resuming '+analysis.name)
+
+def import_analysis_to_database(database_id, dataset_name, analysis):
+    print('importing '+analysis.name)
 
 # Warning! This code hasn't been updated.
 # The purpose was to allow datasets to be imported into different

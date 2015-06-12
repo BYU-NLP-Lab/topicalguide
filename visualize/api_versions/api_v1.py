@@ -30,7 +30,7 @@ from visualize.models import *
 from visualize.utils import reservoir_sample
 from visualize.api_utilities import get_list_filter, filter_csv_to_list, \
     get_filter_int, filter_nothing, filter_request, get_filter_csv_to_tuple, \
-    get_filter_csv_to_numeric_tuple, filter_csv_to_list_keep_order
+    get_filter_csv_to_numeric_tuple, filter_csv_to_list_keep_order, filter_to_json
 
 MAX_DOCUMENTS_PER_REQUEST = 500
 MAX_DOCUMENTS_PER_SQL_QUERY = 500
@@ -116,7 +116,7 @@ OPTIONS_FILTERS = {
     'token_indices': filter_csv_to_list,
     
     # TODO move this to an encrypted connection
-    'constraints': filter_csv_to_list_keep_order,
+    'word_constraints': filter_to_json,
 }
 
 TERMS = """\
@@ -216,7 +216,6 @@ def query_datasets(options):
         
         if 'analyses' in options:
             attributes['analyses'] = query_analyses(options, dataset_db)
-            attributes['analyses_modifications'] = modify_analyses(options, dataset_db)
         
         attributes['last_updated'] = unicode(dataset_db.last_updated)
         
@@ -225,20 +224,30 @@ def query_datasets(options):
     return datasets
 
 # TODO move this to an encrypted connection
-def modify_analyses(options, dataset_db):
-	from import_tool.import_system_utilities import get_common_working_directories, run_analysis
+def modify_analysis(options, dataset_db, analysis_db):
+	from import_tool.import_system_utilities import get_common_working_directories, resume_analysis, copy_analysis_directory
 	from import_tool.analysis.interfaces.mallet_analysis import MalletLdaAnalysis
 	from os.path import join
 	result = {}
 	
-	if 'constraints' in options:
-		new_analysis_name = options['analyses'][0]+'2'
-		print(options['constraints'])
-		# TODO make synchronous call to mallet
+	if 'word_constraints' in options:
+        counter = 2
+		new_analysis_name = analysis_db.name + str(counter)
+        while Analysis.objects.exists(name=new_analysis_name):
+            counter += 1
+            new_analysis_name = analysis_db.name + str(counter)
+        word_constraints = options['word_constraints']
+		print(word_constraints)
+        
+        # copy the working directory
+        copy_analysis_directory(dataset_db.directory, analysis_db.name, new_analysis_name)
+        
+		# TODO make synchronous call to mallet itm
 		directories = get_common_working_directories(dataset_db.name)
-		mallet_analysis = MalletLdaAnalysis(join(directories['topical_guide'], 'tools/mallet/mallet'), directories['dataset'], directories['base'])
-		mallet_analysis.name = new_analysis_name
-		run_analysis('default', dataset_db.name, mallet_analysis, directories, verbose=True)
+		mallet_itm_analysis = MalletItmAnalysis(join(directories['topical_guide'], 'tools/mallet_itm/mallet'), directories['dataset'], directories['base'])
+        mallet_itm_analysis.name = new_analysis_name
+        mallet_itm_analysis.set_constraints(word_constraints['merge'], word_constraints['split'])
+		resume_analysis('default', dataset_db.name, mallet_itm_analysis, directories, verbose=True)
 		result['new_analysis_name'] = new_analysis_name
 	
 	return result
@@ -286,6 +295,9 @@ def query_analyses(options, dataset_db):
         attributes['last_updated'] = unicode(analysis_db.last_updated)
         
         analyses[analysis_db.name] = attributes
+        
+        if 'word_constraints' in options:
+            modify_analysis(options, dataset_db, analysis_db)
     
     return analyses
     

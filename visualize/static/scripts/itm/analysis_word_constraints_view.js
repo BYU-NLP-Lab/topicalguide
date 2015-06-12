@@ -40,7 +40,7 @@ var AnalysisWordConstraints = DefaultView.extend({
 '   </div>'+
 '   <div class="col-xs-6">'+
 '       <h3 class="text-center">Existing Split Constraints</h3>'+
-'       <div class="existing-word-constraints-split-container row">'+
+'       <div class="existing-word-constraints-split-container row text-center">'+
 '       </div>'+
 '   </div>'+
 '</div>',
@@ -188,7 +188,6 @@ var AnalysisWordConstraints = DefaultView.extend({
     renderExistingMergeConstraints: function renderExistingMergeConstraints(el, data) {
         var $el = $(el);
         if(data.length === 0) {
-            $el.addClass('text-center');
             $el.html('<span>No existing merge constraints applied to this analysis.</span>');
         } else {
             this.renderListOfListsOfWords(el, data);
@@ -198,7 +197,6 @@ var AnalysisWordConstraints = DefaultView.extend({
     renderExistingSplitConstraints: function renderExistingSplitConstraints(el, data) {
         var $el = $(el);
         if(data.length === 0) {
-            $el.addClass('text-center');
             $el.html('<span>No existing split constraints applied to this analysis.</span>');
         } else {
             this.renderListOfListsOfWords(el, data);
@@ -211,7 +209,9 @@ var AnalysisWordConstraints = DefaultView.extend({
      * Return nothing.
      */
     renderListOfListsOfWords: function renderListOfListsOfWords(el, lolow) {
-        d3.select(el)
+        console.log(el);
+        var d3El = d3.select(el).html('');
+        d3El.selectAll('div')
             .data(lolow)
             .enter()
             .append('div')
