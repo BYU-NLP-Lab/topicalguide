@@ -470,8 +470,34 @@ var DataModel = Backbone.Model.extend({
         
         // Make sure that dataset and analyses data is available.
         var defaultData = JSON.parse($("#global-dataset-and-analyses-info").html());
-        this.datasetsAndAnalyses = defaultData['datasets'];
-        this.serverInfo = defaultData['server'];
+        this.extractData(defaultData);
+        
+    },
+    
+    extractData: function extractData(data) {
+        this.datasetsAndAnalyses = data['datasets'];
+        this.serverInfo = data['server'];
+    },
+    
+    getBasicDataQuery: function getBasicDataQuery() {
+        return {
+            'datasets': '*',
+            'analyses': '*',
+            'dataset_attr': ['metadata', 'metrics'],
+            'analysis_attr': ['metadata', 'metrics', 'topic_name_schemes'],
+            'server': '*',
+        };
+    },
+    
+    refresh: function refresh() {
+        this.submitQueryByHash(
+            this.getBasicDataQuery(),
+            function onSuccess(data) {
+                this.extractData(data);
+            }.bind(this),
+            function onError(msg) {
+            }.bind(this)
+        );
     },
     
     /**

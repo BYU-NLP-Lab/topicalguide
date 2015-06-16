@@ -30,7 +30,4 @@
     
     "document_required_metadata": ["address_number", "title", "author_name", "month", "president_name", "year", "day"],
 
-    "merge_words": [["russia", "soviet"]],
-    "split_words": [["gold", "banks", "silver"]]
-
 }

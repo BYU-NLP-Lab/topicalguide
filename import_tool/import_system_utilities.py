@@ -341,6 +341,31 @@ def run_analysis(database_id, dataset_name, analysis, directories,
     document_iterator.prefetch_related('dataset', 'metadata')
     analysis.run_analysis(document_iterator)
     
+    import_analysis_to_database(database_id, dataset_name, analysis, directories, verbose=verbose)
+    name_topics(database_id, dataset_name, analysis.name, topic_namers=topic_namers, verbose=verbose)
+    run_metrics(database_id, dataset_name, analysis.name, BASIC_ANALYSIS_METRICS, verbose=verbose)
+    
+    return analysis.name
+
+def copy_analysis_directory(dataset_directory, old_analysis_name, new_analysis_name):
+    from shutil import copytree
+    old_dir = os.path.join(dataset_directory, 'analyses', old_analysis_name)
+    new_dir = os.path.join(dataset_directory, 'analyses', new_analysis_name)
+    if os.path.exists(old_dir) and not os.path.exists(new_dir):
+        copytree(old_dir, new_dir)
+
+def resume_analysis(database_id, dataset_name, analysis, directories, 
+                 topic_namers=None, verbose=False):
+    if verbose: print('Resuming:', analysis.name)
+    analysis.resume(verbose=verbose)
+    import_analysis_to_database(database_id, dataset_name, analysis, directories, verbose=verbose)
+    import_itm_analysis_to_database(database_id, dataset_name, analysis, directories, verbose=verbose)
+    name_topics(database_id, dataset_name, analysis.name, topic_namers=topic_namers, verbose=verbose)
+    run_metrics(database_id, dataset_name, analysis.name, BASIC_ANALYSIS_METRICS, verbose=verbose)
+
+def import_analysis_to_database(database_id, dataset_name, analysis, directories,
+                                verbose=False):
+    if verbose: print('Importing:', analysis.name)
     dataset_db = Dataset.objects.using(database_id).get(name=dataset_name)
     # word types should be relatively sparse, so we load all of them into memory
     word_types_db = get_all_word_types(database_id)
@@ -366,13 +391,26 @@ def run_analysis(database_id, dataset_name, analysis, directories,
     if not analysis_db.excluded_words.exists():
         if verbose: print('Creating excluded word entries.')
         create_excluded_words(database_id, analysis_db, word_types_db, analysis.excluded_words)
+
+def import_itm_analysis_to_database(database_id, dataset_name, analysis, directories, verbose=False):
+    """This can only be run after the import_analysis_to_database is run."""
+    if verbose: print('Importing ITM attributes:', analysis.name)
+    # TODO import the word constraints
+    analysis_db = Analysis.objects.using(database_id).get(dataset__name=dataset_name, name=analysis.name)
+    word_constraints = json.dumps(analysis.get_word_constraints())
+    WordConstraints.objects.using(database_id).create(analysis=analysis_db, constraints=word_constraints)
     
+
+def name_topics(database_id, dataset_name, analysis_name, topic_namers=None, verbose=False):
+    """Name topics.
+    topic_namers -- the topic naming classes; if None then use defaults
+    """
     if verbose: print('Naming topics.')
-    
     if DATABASE_OPTIMIZE_DEBUG:
         con = connections[database_id]
         query_count = len(con.queries)
     
+    analysis_db = Analysis.objects.using(database_id).get(dataset__name=dataset_name, name=analysis_name)
     if topic_namers == None:
         topic_namers = DEFAULT_TOPIC_NAMERS
     create_topic_names(database_id, analysis_db, topic_namers, verbose=verbose)
@@ -384,25 +422,6 @@ def run_analysis(database_id, dataset_name, analysis, directories,
             for query in con.queries[query_count:]:
                 print(query['time'])
                 print(query['sql'])
-    
-    if verbose: print('Running metrics.')
-    run_metrics(database_id, dataset_db.name, analysis_db.name, BASIC_ANALYSIS_METRICS)
-    
-    return analysis.name
-
-def copy_analysis_directory(dataset_directory, old_analysis_name, new_analysis_name):
-    from shutil import copytree
-    old_dir = os.path.join(dataset_directory, 'analyses', old_analysis_name)
-    new_dir = os.path.join(dataset_directory, 'analyses', new_analysis_name)
-    if os.path.exists(old_dir) and not os.path.exists(new_dir):
-        copytree(old_dir, new_dir)
-
-def resume_analysis(database_id, dataset_name, analysis, directories, 
-                 topic_namers=None, verbose=False):
-    print('resuming '+analysis.name)
-
-def import_analysis_to_database(database_id, dataset_name, analysis):
-    print('importing '+analysis.name)
 
 # Warning! This code hasn't been updated.
 # The purpose was to allow datasets to be imported into different
@@ -441,7 +460,7 @@ def get_all_metric_names():
     from metric import all_metrics
     return all_metrics.keys()
 
-def run_metrics(database_id, dataset_name, analysis_name, metrics):
+def run_metrics(database_id, dataset_name, analysis_name, metrics, verbose=False):
     """Run the metrics specified in the given list.
     database_id -- the dict key specifying the database in django
     dataset_name -- the name that uniquely identifies the dataset in question
@@ -450,6 +469,7 @@ def run_metrics(database_id, dataset_name, analysis_name, metrics):
                      metrics
     metrics -- a list of metric names to be run
     """
+    if verbose: print('Running metrics.')
     from metric import all_metrics, all_tables, all_metrics_exists
     from metric.utilities import get_metric_names, run_metric
     

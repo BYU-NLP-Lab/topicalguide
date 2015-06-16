@@ -225,32 +225,74 @@ def query_datasets(options):
 
 # TODO move this to an encrypted connection
 def modify_analysis(options, dataset_db, analysis_db):
-	from import_tool.import_system_utilities import get_common_working_directories, resume_analysis, copy_analysis_directory
-	from import_tool.analysis.interfaces.mallet_analysis import MalletLdaAnalysis
-	from os.path import join
-	result = {}
-	
-	if 'word_constraints' in options:
-        counter = 2
-		new_analysis_name = analysis_db.name + str(counter)
-        while Analysis.objects.exists(name=new_analysis_name):
-            counter += 1
-            new_analysis_name = analysis_db.name + str(counter)
+    from import_tool.import_system_utilities import get_common_working_directories, resume_analysis, copy_analysis_directory
+    from import_tool.analysis.interfaces.mallet_itm_analysis import MalletItmAnalysis
+    from os.path import join
+    result = {}
+    
+    if 'word_constraints' in options:
+        def copy_list_of_lists(lol):
+            r = []
+            for l in lol:
+                temp = []
+                for w in l:
+                    temp.append(w)
+                r.append(temp)
+            return r
+        
         word_constraints = options['word_constraints']
-		print(word_constraints)
+        original_merge_constraints = word_constraints['merge']
+        original_split_constraints = word_constraints['split']
+        merge_constraints = copy_list_of_lists(original_merge_constraints)
+        split_constraints = copy_list_of_lists(original_split_constraints)
+        counter = 2
+        new_analysis_name = analysis_db.name + unicode(counter)
+        while Analysis.objects.filter(name=new_analysis_name).exists():
+            counter += 1
+            new_analysis_name = analysis_db.name + unicode(counter)
+        
+        word_types = set()
+        for word_type_list in itertools.chain(merge_constraints, split_constraints):
+            for word_type in word_type_list:
+                word_types.add(word_type)
+        word_types = list(word_types)
+        word_to_word_abstraction_map = {}
+        word_abstraction_query = WordToken.objects.using('default').values_list('word_type__word', 'word_type_abstraction__word')\
+            .filter(analysis=analysis_db, word_type__word__in=word_types).distinct()
+        for row in word_abstraction_query:
+            word_to_word_abstraction_map[row[0]] = row[1]
+        
+        def replace_words_with_abstraction(lol, wtwam):
+            """lol -- list of lists
+            wtwam -- word to word abstraction map
+            """
+            r = []
+            for l in lol:
+                temp = []
+                for w in l:
+                    if w in wtwam:
+                        temp.append(wtwam[w])
+                r.append(temp)
+            return r
+        
+        merge_constraints = replace_words_with_abstraction(merge_constraints, word_to_word_abstraction_map)
+        split_constraints = replace_words_with_abstraction(split_constraints, word_to_word_abstraction_map)
         
         # copy the working directory
         copy_analysis_directory(dataset_db.directory, analysis_db.name, new_analysis_name)
-        
-		# TODO make synchronous call to mallet itm
-		directories = get_common_working_directories(dataset_db.name)
-		mallet_itm_analysis = MalletItmAnalysis(join(directories['topical_guide'], 'tools/mallet_itm/mallet'), directories['dataset'], directories['base'])
+        # Set everything up.
+        directories = get_common_working_directories(dataset_db.name)
+        mallet_itm_analysis = MalletItmAnalysis(join(directories['topical_guide'], 'tools/mallet_itm/mallet'), directories['dataset'], directories['base'])
+        mallet_itm_analysis.merge_words = original_merge_constraints
+        mallet_itm_analysis.split_words = original_split_constraints
+        mallet_itm_analysis.num_iterations = analysis_db.metadata_values.get(metadata_type__name='num_iterations').value() + 10
+        mallet_itm_analysis.num_topics = analysis_db.topics.count()
         mallet_itm_analysis.name = new_analysis_name
-        mallet_itm_analysis.set_constraints(word_constraints['merge'], word_constraints['split'])
-		resume_analysis('default', dataset_db.name, mallet_itm_analysis, directories, verbose=True)
-		result['new_analysis_name'] = new_analysis_name
-	
-	return result
+        mallet_itm_analysis.set_word_constraints(merge_constraints, split_constraints)
+        resume_analysis('default', dataset_db.name, mallet_itm_analysis, directories, verbose=True)
+        result['new_analysis_name'] = new_analysis_name
+    
+    return result
 
 def query_analyses(options, dataset_db):
     analyses = {}
@@ -297,7 +339,7 @@ def query_analyses(options, dataset_db):
         analyses[analysis_db.name] = attributes
         
         if 'word_constraints' in options:
-            modify_analysis(options, dataset_db, analysis_db)
+            attributes['modifications'] = modify_analysis(options, dataset_db, analysis_db)
     
     return analyses
     

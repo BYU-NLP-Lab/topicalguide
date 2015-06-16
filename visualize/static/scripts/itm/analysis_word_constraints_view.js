@@ -9,6 +9,14 @@ var AnalysisWordConstraints = DefaultView.extend({
     readableName: "Analysis Word Constraints",
     shortName: "analysis_word_constraints",
     
+    redirectTemplate:
+'<div class="text-center">'+
+'   <button class="word-constraints-redirect btn btn-default">'+
+'       <span class="glyphicon glyphicon-chevron-left pewter"></span> Datasets'+
+'   </button>'+
+'   <span> You need to select a dataset and analysis before using this view. </span>'+
+'</div>',
+    
     instructionsTemplate:
 '<span>'+
 'Enter comma separated lists of words into each text box.'+
@@ -27,11 +35,6 @@ var AnalysisWordConstraints = DefaultView.extend({
 '       </div>'+
 '   </div>'+
 '</div>'+
-'<div class="row text-center">'+
-'   <button class="word-constraints-submit btn btn-primary">'+
-'       <span>Submit Constraints</span>'+
-'   </button>'+
-'</div>'+
 '<div class="row">'+
 '   <div class="col-xs-6">'+
 '       <h3 class="text-center">Existing Merge Constraints</h3>'+
@@ -43,6 +46,11 @@ var AnalysisWordConstraints = DefaultView.extend({
 '       <div class="existing-word-constraints-split-container row text-center">'+
 '       </div>'+
 '   </div>'+
+'</div>'+
+'<div class="row text-center">'+
+'   <button class="word-constraints-submit btn btn-primary">'+
+'       <span>Submit Constraints</span>'+
+'   </button>'+
 '</div>',
     
     
@@ -51,15 +59,20 @@ var AnalysisWordConstraints = DefaultView.extend({
  ******************************************************************************/
     
     initialize: function initialize() {
+        this.listenTo(this.selectionModel, 'change:analysis', this.render);
     },
     
     cleanup: function cleanup() {
     },
     
     render: function render() {
-        this.$el.html(this.baseTemplate);
-        this.renderConstraintInputs();
-        this.renderPreviousConstraints();
+        if(this.selectionModel.nonEmpty(['dataset', 'analysis'])) {
+            this.$el.html(this.baseTemplate);
+            this.renderConstraintInputs();
+            this.renderPreviousConstraints();
+        } else {
+            this.$el.html(this.redirectTemplate);
+        }
     },
     
     renderHelpAsHtml: function renderHelpAsHtml() {
@@ -112,12 +125,31 @@ var AnalysisWordConstraints = DefaultView.extend({
         return result;
     },
     
+    /**
+     * selector -- specifies how to find the buttons to extract words from
+     * Return [['word1', 'word2', ...] ...]
+     */
+    getListsOfListsOfWordsFromButtons: function getListsOfListsOfWordsFromButtons(selector, dataAttribute) {
+        var that = this;
+        var result = [];
+        d3.select(this.el).selectAll(selector)
+            .each(function() {
+                var words = that.csvToList(d3.select(this).attr(dataAttribute));
+                result.push(words);
+            });
+        return result;
+    },
+    
     getMergeConstraints: function getMergeConstraints() {
-        return this.getListsOfListsOfWords('.merge-constraint-input');
+        var result = this.getListsOfListsOfWords('.merge-constraint-input');
+        var result2 = this.getListsOfListsOfWordsFromButtons('.existing-merge-constraint.list-of-words-selected', 'data-list-of-words');
+        return result.concat(result2);
     },
     
     getSplitConstraints: function getSplitConstraints() {
-        return this.getListsOfListsOfWords('.split-constraint-input');
+        var result = this.getListsOfListsOfWords('.split-constraint-input');
+        var result2 = this.getListsOfListsOfWordsFromButtons('.existing-split-constraint.list-of-words-selected', 'data-list-of-words');
+        return result.concat(result2);
     },
     
 /******************************************************************************
@@ -190,7 +222,7 @@ var AnalysisWordConstraints = DefaultView.extend({
         if(data.length === 0) {
             $el.html('<span>No existing merge constraints applied to this analysis.</span>');
         } else {
-            this.renderListOfListsOfWords(el, data);
+            this.renderListOfListsOfWords(el, data, 'existing-merge-constraint');
         }
     },
     
@@ -199,27 +231,63 @@ var AnalysisWordConstraints = DefaultView.extend({
         if(data.length === 0) {
             $el.html('<span>No existing split constraints applied to this analysis.</span>');
         } else {
-            this.renderListOfListsOfWords(el, data);
+            this.renderListOfListsOfWords(el, data, 'existing-split-constraint');
         }
     },
     
     /**
+     * Tag each element with the listClassTag. Each element
+     * has the data-list-of-words set to the list of words associated with the 
+     * element. Also, the 'list-of-words-selected' class is set if the list
+     * of words is selected by the user. By default everything is selected to
+     * start with.
      * el -- dom el to operate within
      * lolow -- list of lists of words
+     * listClassTag -- the class tag to label each element with
      * Return nothing.
      */
-    renderListOfListsOfWords: function renderListOfListsOfWords(el, lolow) {
-        console.log(el);
+    renderListOfListsOfWords: function renderListOfListsOfWords(el, lolow, listClassTag) {
         var d3El = d3.select(el).html('');
-        d3El.selectAll('div')
+        console.log(lolow);
+        var rows = d3El.selectAll('div')
             .data(lolow)
             .enter()
             .append('div')
-            .classed('row', true)
+            .classed('row', true);
+        rows//.append('div')
             .append('span')
             .text(function(d) {
-                return d.join(', ');
+                return d.join(', ') + '  ';
             });
+        rows//.append('div')
+            .append('button')
+            .classed('btn btn-danger', true)
+            .style({ padding: '0px 6px' })
+            .classed('list-of-words-selected', true)
+            .classed(listClassTag, true)
+            .attr('data-list-of-words', function(d) {
+                return d.join(',');
+            })
+            .on('click', function(d, i) {
+                var elem = d3.select(this);
+                var icon = elem.select('span');
+                var row = rows.filter(function(d2, i2) { return i2 == i; }).select('span');
+                if(icon.classed('glyphicon-minus')) {
+                    icon.classed('glyphicon-minus', false);
+                    icon.classed('glyphicon-plus', true);
+                    elem.classed('btn-danger list-of-words-selected', false);
+                    elem.classed('btn-success', true);
+                    row.style({ color: 'red' });
+                } else {
+                    icon.classed('glyphicon-plus', false);
+                    icon.classed('glyphicon-minus', true);
+                    elem.classed('btn-success', false);
+                    elem.classed('btn-danger list-of-words-selected', true);
+                    row.style({ color: 'black' });
+                }
+            })
+            .append('span')
+            .classed('glyphicon glyphicon-minus', true);
     },
     
 /******************************************************************************
@@ -227,33 +295,47 @@ var AnalysisWordConstraints = DefaultView.extend({
  ******************************************************************************/
 
 	events: {
+        'click .word-constraints-redirect': 'clickRedirect',
 		'click .word-constraints-submit': 'clickSubmitConstraints',
 	},
+    
+    clickRedirect: function clickRedirect(e) {
+        this.viewModel.set({ currentView: 'datasets' });
+    },
 	
 	clickSubmitConstraints: function clickSubmitConstraints(e) {
 		var datasetName = this.selectionModel.get('dataset');
 		var analysisName = this.selectionModel.get('analysis');
-        console.log('add');
         var merge = this.getMergeConstraints();
         var split = this.getSplitConstraints();
-        console.log(merge);
-        console.log(split);
-		//~ var constraints = $(this.el).find('.word-cooc-words').val();
-		//~ 
-		//~ var queryHash = {
-			//~ datasets: datasetName,
-			//~ analyses: analysisName,
-			//~ constraints: constraints,
-		//~ };
-		//~ 
-		//~ this.dataModel.submitQueryByHash(
-			//~ queryHash,
-			//~ function callback(data) {
-				//~ alert("hurray, done");
-				//~ console.log(data);
-			//~ }.bind(this),
-			//~ this.renderError.bind(this)
-		//~ );
+        var wordConstraints = {
+            'merge': merge,
+            'split': split,
+        };
+        console.log(wordConstraints);
+        
+		var queryHash = {
+			datasets: datasetName,
+			analyses: analysisName,
+			word_constraints: JSON.stringify(wordConstraints),
+		};
+		
+        this.$el.html(this.loadingTemplate);
+		this.dataModel.submitQueryByHash(
+			queryHash,
+			function callback(data) {
+				alert("hurray, done");
+				console.log(data);
+                var newAnalysisName = data.datasets[datasetName].analyses[analysisName]['modifications']['new_analysis_name'];
+                console.log(newAnalysisName);
+                this.dataModel.refresh();
+                this.selectionModel.set({ analysis: newAnalysisName });
+			}.bind(this),
+            function onError(msg) {
+                this.renderError(msg);
+                this.render();
+            }.bind(this)
+		);
 	},
 
 });

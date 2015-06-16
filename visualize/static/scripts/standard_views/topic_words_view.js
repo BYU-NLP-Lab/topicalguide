@@ -173,16 +173,21 @@ var TopicWordsView = DefaultView.extend({
 			
             container.html("");
             
+            // Extract data.
+            var totalTokens = data.datasets[datasetName].analyses[analysisName].metrics["Token Count"];
+            var topNWords = this.settingsModel.get('topicTopNWords');
+            var topics = extractTopics(data, this.selectionModel);
+            
             // Create HTML table element.
             var table = container.append("table")
                 .attr("id", "topics-table")
                 .classed("table table-hover table-condensed", true);
             // Table header.
-            var header = ["", "#", "% of Corpus", "Name", "Top Words", "% of Topic", "Temperature"];
+            var header = ["", "#", "% of Corpus", "Name", "Top Words", "% of Topic"];
+            if('Temperature' in topics['0'].metrics) {
+                header.push('Temperature');
+            }
             // Format data.
-            var totalTokens = data.datasets[datasetName].analyses[analysisName].metrics["Token Count"];
-            var topNWords = this.settingsModel.get('topicTopNWords');
-            var topics = extractTopics(data, this.selectionModel);
             topics = d3.entries(topics).map(function(d) {
                 var wordObjects = d.value["words"];
                 var wordTypes = [];
@@ -191,16 +196,20 @@ var TopicWordsView = DefaultView.extend({
                 var words = wordTypes.slice(0, topNWords).join(" ");
                 var wordsTokenCount = _.reduce(wordTypes, function(sum, word) { return sum + wordObjects[word]["token_count"]; }, 0);
                 var topicTokenCount = parseFloat(d.value.metrics["Token Count"]);
-                var topicTemperature = parseFloat(d.value.metrics["Temperature"].toPrecision(4));
-                return [
+                var result = [
                     parseFloat(d.key),
                     parseFloat(d.key),
                     (topicTokenCount*100)/totalTokens,
                     that.dataModel.getTopicNameRaw(d.key),
                     words,
-                    (wordsTokenCount*100)/topicTokenCount,
-                    topicTemperature
+                    (wordsTokenCount*100)/topicTokenCount
                 ];
+                if('Temperature' in d.value.metrics) {
+                    var topicTemperature = parseFloat(d.value.metrics["Temperature"].toPrecision(4));
+                    result.push(topicTemperature);
+                }
+                
+                return result;
             });
             topics = topics.filter(function(item) { return item[4] !== ""; });
             var wordPercentage = _.reduce(topics, function(total, innerArray) {

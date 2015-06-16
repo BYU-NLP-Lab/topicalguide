@@ -2,6 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 import os
 import io
+import json
 from itertools import chain
 from dateutil import tz
 from DateTime import DateTime
@@ -507,9 +508,16 @@ class Analysis(models.Model):
     
     def get_word_constraints(self):
         result = {
-            'split': [['word1', 'word2'], ['word1', 'word2']],
-            'merge': [['word3', 'word4']],
+            'merge': [],
+            'split': [],
         }
+        for wc in self.word_constraints.all():
+            print(wc.constraints)
+            constraints = wc.get_constraints()
+            print(constraints)
+            result['merge'].extend(constraints['merge'])
+            result['split'].extend(constraints['split'])
+        print(result)
         return result
 
 class AnalysisMetadataValue(MetadataValue):
@@ -517,6 +525,13 @@ class AnalysisMetadataValue(MetadataValue):
 
 class AnalysisMetricValue(MetricValue):
     analysis = models.ForeignKey('Analysis', related_name='metric_values')
+
+class WordConstraints(models.Model):
+    analysis = models.ForeignKey('Analysis', related_name='word_constraints')
+    constraints = models.TextField()
+    
+    def get_constraints(self):
+        return json.loads(self.constraints)
 
 class Topic(models.Model):
     analysis = models.ForeignKey('Analysis', related_name='topics')

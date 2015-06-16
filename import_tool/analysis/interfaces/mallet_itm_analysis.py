@@ -8,7 +8,7 @@ import subprocess
 from os.path import join, abspath
 from import_tool import basic_tools
 from import_tool.import_system_utilities import TOKEN_REGEX
-from abstract_analysis import AbstractAnalysis
+from abstract_itm_analysis import AbstractITMAnalysis
 
 class StubCorpus:
     def __init__(self, documents):
@@ -28,7 +28,7 @@ class StubDocument:
     def get_content(self):
         return self._content
 
-class MalletItmAnalysis(AbstractAnalysis):
+class MalletItmAnalysis(AbstractITMAnalysis):
     """
     The AbstractAnalysis allows the TopicalGuide import system to run 
     different analyses.  All settings should be set before preparing or 
@@ -332,7 +332,6 @@ class MalletItmAnalysis(AbstractAnalysis):
     def get_java_class_path(self):
         return self.java_class_path + ':'+self.tree_itm_library_path
     
-    
     def ensure_variables_loaded(self):
         """Make sure that the variables needed after prepare analysis is run are
         loaded. This is needed when the import process has been interupted.
@@ -343,26 +342,48 @@ class MalletItmAnalysis(AbstractAnalysis):
             with io.open(self.wordtype_to_number_file, 'r', encoding='utf-8') as f:
                 self.wordtype_to_number = json.loads(f.read())
     
-    def set_constraints(self, merge_links, split_links):
+    def resume(self, verbose=False):
+        """Resume the analysis. Requires that the analysis was run before."""
+        cmd = [self.mallet_itm_path, 'train-tree-topics', '--input',
+               self.mallet_imported_data_file, '--tree-hyperparameters',
+               self.tree_hyperparameters_file, '--vocab', self.itm_vocab_file,
+               '--num-topics', '%s' % str(self.num_topics),'--num-iterations',
+                '%s' % str(self.num_iterations), '--output-dir',
+                 self.mallet_output_file_prefix, '--tree', self.processed_constraint_file, 
+                 '--resume', 'true', '--resume-dir', self.mallet_output_file_prefix]
+        print(" ".join(cmd))
+        try:
+            subprocess.check_call(cmd)
+        except: # cleanup
+            raise
+    
+    def get_word_constraints(self):
+        return {
+            'merge': self.merge_words,
+            'split': self.split_words,
+        }
+    
+    def set_word_constraints(self, merge_links, split_links):
         # TODO: This overwrites any older constraints
         # Possible issue: this could have a vocab mismatch depending
         # on import pipeline, needs to be tested
+        # note that the words must actually be the stemmed versions of the words
         
         self.ensure_variables_loaded()
         
         with io.open(self.raw_constraint_file, 'w', encoding='utf-8') as o:
-            print('constraints')
-            print(merge_links)
-            print(split_links)
-            print(self.wordtype_to_number)
+            #~ print('constraints')
+            #~ print(merge_links)
+            #~ print(split_links)
+            #~ print(self.wordtype_to_number)
             for ii in merge_links:
-                print(ii)
-                wordtype_indices = [unicode(self.wordtype_to_number[wt]) for wt in ii]
-                o.write("MERGE_\t%s" % "\t".join(wordtype_indices))
-                print(wordtype_indices)
+                if len(ii) >= 2:
+                    wordtype_indices = [unicode(self.wordtype_to_number[wt]) for wt in ii]
+                    o.write("MERGE_\t%s\n" % "\t".join(wordtype_indices))
             for jj in split_links:
-                wordtype_indices = [unicode(self.wordtype_to_number[wt]) for wt in jj]
-                o.write("SPLIT_\t%s" % "\t".join(wordtype_indices))
+                if len(jj) >= 2:
+                    wordtype_indices = [unicode(self.wordtype_to_number[wt]) for wt in jj]
+                    o.write("SPLIT_\t%s" % "\t".join(wordtype_indices))
 
         # Generate the protocol buffer with the real version
         cmd = [self.mallet_itm_path, 'generate-tree', '--vocab',
@@ -415,7 +436,7 @@ class MalletItmAnalysis(AbstractAnalysis):
         print(self.working_directory)
         
         self.prepare_analysis(documents)
-        self.set_constraints([], [])
+        self.set_word_constraints([], [])
         
         # train topics
         if not os.path.exists(self.mallet_output_file):
@@ -516,7 +537,7 @@ def main():
     itm = MalletItmAnalysis(mallet_itm_location, "./working/datasets/temp",
                             ".")
     itm.prepare_analysis(corpus)
-    itm.set_constraints([["dog", "bark"]], [["dog", "elm"]])
+    itm.set_word_constraints([["dog", "bark"]], [["dog", "elm"]])
     itm.run_analysis()
 
 if __name__ == "__main__":
