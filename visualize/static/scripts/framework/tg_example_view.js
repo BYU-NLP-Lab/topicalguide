@@ -173,7 +173,5 @@ addViewClass(["Menu 1", "Sub Menu 2", "Sub Menu 3"], ExampleView);
  
 /**
  * Other Hints:
- * 1. Use the global variable tg.icons (found in view_templates.js) where-ever possible.
- *    If an icon needs to be changed across the site it can be done painlessly.
- *    Of especial use is icons.loading which you can display while waiting on the server.
+ * 1. Use the global library tg which contains a collection of sub-modules for your convenience.
  */

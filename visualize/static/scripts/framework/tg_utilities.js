@@ -122,6 +122,18 @@ var tg = new function() {
     this.js = {
         
         /**
+         * Compare two values of the same type.
+         * Currently supports String and Number.
+         */
+        compareTo: function compareTo(a, b) {
+            if(tg.js.isString(a) && tg.js.isString(b)) {
+                return a.localeCompare(b);
+            } else if(tg.js.isNumber(a) && tg.js.isNumber(b)) {
+                return b - a;
+            }
+        },
+        
+        /**
          * n -- a number as a string
          * Return true if it is a number; false otherwise.
          */
@@ -209,6 +221,13 @@ var tg = new function() {
          */
         toTitleCase: function toTitleCase(str) {
             return str.replace(/\w\S*/g, function(substr){ return substr.charAt(0).toUpperCase() + substr.slice(1); });
+        },
+        
+        /**
+         * Returns a new string to lowercase with all white space replaced with underscores.
+         */
+        toSlugFormat: function toSlugFormat(str) {
+            return str.toLowerCase().replace(/\s+/g, '_');
         },
         
     };

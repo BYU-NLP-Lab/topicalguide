@@ -2,7 +2,11 @@
 
 
 var SingleTopicView = DefaultView.extend({
-    
+
+/******************************************************************************
+ *                             STATIC VARIABLES
+ ******************************************************************************/
+
     readableName: "Single Topic",
     shortName: "single_topic",
     
@@ -16,9 +20,8 @@ var SingleTopicView = DefaultView.extend({
     
     mainTemplate: 
 '<div id="single-topic-title" class="row">'+
-'	<h3>Topic Number: <span class="single-topic-number"></span></h3>'+
-'	<h3>Topic Name: <span class="single-topic-name"></span></h3>'+
-'	<h3>Top 10 Words: <span class="single-topic-top-ten-words"></span></h3>'+
+'	<h3><b>Topic Name: </b><span class="single-topic-name tg-topic-name-auto-update"></span></h3>'+
+'	<h3><b>Top 10 Words: </b></h3><h4><span class="single-topic-top-ten-words"></span></h4>'+
 '</div>'+
 '<div id="single-topic-info" class="row"></div>',
     
@@ -45,6 +48,10 @@ var SingleTopicView = DefaultView.extend({
 		this.viewModel.set({ currentView: 'all_topics' });
 	},
     
+/******************************************************************************
+ *                             INHERITED METHODS
+ ******************************************************************************/
+    
     initialize: function() {
         this.listenTo(this.selectionModel, "change:topic", this.render);
         this.listenTo(this.settingsModel, "change:minWordTypeIndex", this.changeSelectedWordTypesRange);
@@ -53,7 +60,6 @@ var SingleTopicView = DefaultView.extend({
         this.listenTo(this.settingsModel, "change:maxWordTypeIndex", this.updateSliderInfo);
         this.listenTo(this.settingsModel, "change:minWordTypeIndex", this.updatePieChartAndLegend);
         this.listenTo(this.settingsModel, "change:maxWordTypeIndex", this.updatePieChartAndLegend);
-        
     },
     
     render: function() {
@@ -64,6 +70,44 @@ var SingleTopicView = DefaultView.extend({
 		} else {
 			this.$el.html(this.redirectTemplate);
 		}
+    },
+    
+    renderHelpAsHtml: function() {
+        return "";
+    },
+    
+/******************************************************************************
+ *                             HELPER METHODS
+ ******************************************************************************/
+    
+    renderTopicTitle: function() {
+        var datasetName = this.selectionModel.get('dataset');
+        var analysisName = this.selectionModel.get('analysis');
+        var topicNumber = this.selectionModel.get('topic');
+        
+        var container = d3.select(this.el).select("#single-topic-title");
+        var topicNameContainer = container.select('.single-topic-name');
+        topicNameContainer.attr('data-tg-topic-number', topicNumber)
+            .text(this.dataModel.getTopicName(topicNumber));
+        var topTenContainer = container.select('.single-topic-top-ten-words');
+        topTenContainer.text('Loading...');
+        
+        // Make a request
+        this.dataModel.submitQueryByHash({
+            "datasets": datasetName,
+            "analyses": analysisName,
+            "topics": topicNumber,
+            "topic_attr": "top_n_words",
+            "words": "*",
+            "top_n_words": "10",
+        }, function(data) {
+            var topic = data.datasets[datasetName].analyses[analysisName].topics[topicNumber];
+            var words = [];
+            for(var key in topic["words"]) words.push({ key: key, value: topic["words"][key]});
+            words.sort(function(a, b) { return b.value.token_count - a.value.token_count; });
+            words = _.map(words, function(entry) { return entry.key; });
+            topTenContainer.text(words.join(", "));
+        }.bind(this), this.renderError.bind(this));
     },
     
     renderTabs: function renderTabs() {
@@ -85,33 +129,6 @@ var SingleTopicView = DefaultView.extend({
             tabOnClick: tabOnClick,
         });
 	},
-
-    renderTopicTitle: function() {
-        var selections = this.selectionModel.attributes;
-        var container = d3.select(this.el).select("#single-topic-title");
-        container.html(this.loadingTemplate);
-        // Make a request
-        this.dataModel.submitQueryByHash({
-            "datasets": selections["dataset"],
-            "analyses": selections["analysis"],
-            "topics": selections["topic"],
-            "topic_attr": "top_n_words",
-            "words": "*",
-            "top_n_words": "10",
-        }, function(data) {
-            container.html("");
-            var topic = extractTopics(data, this.selectionModel)[selections["topic"]];
-            var words = [];
-            for(var key in topic["words"]) words.push({ key: key, value: topic["words"][key]});
-            words.sort(function(a, b) { return b.value.token_count - a.value.token_count; });
-            words = _.map(words, function(entry) { return entry.key; });
-            
-            container.append("h2")
-                .text("Topic Number: "+selections["topic"]);
-            container.append("h3")
-                .text(words.join(" "));
-        }.bind(this), this.renderError.bind(this));
-    },
     
     renderTopDocuments: function(tab, content) {
         content.html(this.loadingTemplate);
@@ -176,8 +193,8 @@ var SingleTopicView = DefaultView.extend({
 					},
 					false,
 					function col4(d, i) {
-						console.log(d);
-						console.log(tokenCountMax);
+						//~ console.log(d);
+						//~ console.log(tokenCountMax);
 						d3.select(this)
 							.html(tg.gen.createPercentageBar(d, tokenCountMax) + " " + d.toFixed(4) + "%");
 					},
@@ -706,148 +723,8 @@ var SingleTopicView = DefaultView.extend({
                 .text(textInfo[2]);
         }.bind(this), this.renderError.bind(this));
     },
-    
-    renderHelpAsHtml: function() {
-        return "";
-    },
 });
 
-var SingleTopicSubView = DefaultView.extend({
-    
-    mainTemplate: "<div id=\"all-topic-container\" class=\"col-xs-3\"></div>"+
-                  "<div id=\"topic-info\" class=\"col-xs-9\"></div>",
-    
-    dropdownTemplate: "<div class=\"btn-group\">"+
-                          "<button type=\"button\" class=\"btn btn-primary\">Sort By</button>"+
-                          "<button type=\"button\" class=\"btn btn-primary dropdown-toggle\" data-toggle=\"dropdown\">"+
-                            "<span class=\"caret\"></span>"+
-                            "<span class=\"sr-only\">Toggle Dropdown</span>"+
-                          "</button>"+
-                          "<ul id=\"sort-by\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
-                      "</div>",
-    
-    initialize: function() {},
-    
-    cleanup: function() {
-        if(this.info !== undefined) {
-            this.info.dispose();
-        }
-    },
-    
-    render: function() {
-        this.$el.html(this.mainTemplate);
-        this.renderAllTopicsSideBar();
-        this.renderTopicInfo();
-    },
-    
-    renderTopicInfo: function() {
-        if(this.info !== undefined) {
-            this.info.cleanup();
-        }
-        this.info = new SingleTopicView(_.extend({ el: $("#topic-info") }, this.getAllModels()));
-        this.info.render();
-    },
-    
-    renderAllTopicsSideBar: function() {
-        var selections = this.selectionModel.attributes;
-        var container = d3.select("#all-topic-container");
-        container.append("button")
-            .classed("btn btn-default", true)
-            .attr("type", "button")
-            .html("<span class=\"glyphicon glyphicon-chevron-left pewter\"></span> Back to All Topics")
-            .on("click", function() {
-                this.selectionModel.set({ "topic": "" });
-            }.bind(this));
-        container.append("hr");
-        container = container.append("div");
-        container.html(this.loadingTemplate);
-        
-        // Make a request
-        this.dataModel.submitQueryByHash({
-            "datasets": selections["dataset"],
-            "analyses": selections["analysis"],
-            "topics": '*',
-            "topic_attr": ["metrics","names"],
-            "analysis_attr": "metrics",
-        }, function(data) { // Render the content
-            container.html(this.dropdownTemplate);
-            
-            var sortList = [];
-            var topics = extractTopics(data, this.selectionModel);
-            topics = d3.entries(topics).map(function(d) {
-                
-                var items = {};
-                for(var key in d.value.names) {
-                    items[key] = d.value.names[key];
-                }
-                for(var key in d.value.metrics) {
-                    items[key] = d.value.metrics[key];
-                }
-                items["Number"] = d.key;
-                if(d.key === "0") {
-                    for(var key in items) sortList.push(key);
-                }
-                return [d.key, d.value.names.Top3, items];
-            });
-            var tableHeader = ['Topics'];
-            var ascending = true;
-            var sortBy = 'Number';
-            
-            
-            var list = d3.select("#all-topic-container").append("ul")
-                .classed("list-unstyled", true);
-            var items = list.selectAll(".all-topic-sidebar-items")
-                .data(topics)
-                .enter()
-                .append("li")
-                .classed(".all-topic-sidebar-items", true)
-                .classed("list-group-item", true)
-                .text(function(d) {
-                    return d[0] + ": " +d[1];
-                })
-                .on("click", function(d) {
-                    this.selectionModel.set({ "topic": d[0] });
-                }.bind(this));
-            
-            var sort = d3.select("#sort-by").selectAll("li")
-                .data(sortList)
-                .enter()
-                .append("li")
-                .append("a")
-                .text(function(d) { return d; })
-                .on("click", function(d) {
-                    var ascendingSort = function(a, b) {
-                        if($.isNumeric(a[2][d]) && $.isNumeric(b[2][d])) return parseFloat(a[2][d]) - parseFloat(b[2][d]);
-                        else return a[2][d].localeCompare(b[2][d]);
-                    };
-                    var descendingSort = function(a, b) {
-                        return ascendingSort(b,a);
-                    };
-                    
-                    if(d !== sortBy) ascending = true;
-                    sortBy = d;
-                    if(ascending) {
-                        d3.selectAll(".all-topic-sidebar-items").sort(ascendingSort);
-                        ascending = false;
-                    } else {
-                        d3.selectAll(".all-topic-sidebar-items").items.sort(descendingSort);
-                        ascending = true;
-                    }
-                });
-        }.bind(this), this.renderError.bind(this));
-    },
-    
-    renderHelpAsHtml: function() {
-        var subViewHtml = "";
-        if(this.info !== undefined) {
-            subViewHtml = this.info.renderHelpAsHtml();
-        }
-        return "<h4>All Topics</h4>"+
-               "<p>Use the 'Sort By' dropdown menu to choose how to sort the topics on the sidebar.  "+
-               "The topics will be sorted in ascending order, to reverse the order select the sort by option again.</p>"+
-               subViewHtml;
-    },
-});
 
 var SingleTopicViewSidebar = DefaultView.extend({
 
@@ -860,9 +737,9 @@ var SingleTopicViewSidebar = DefaultView.extend({
     
     baseTemplate:
 '<div class="single-topic-sidebar-select-container">'+
-'   <select class="single-topic-sidebar-sortby-select" type="selection">'+
+'   <select class="single-topic-sidebar-sortby-select form-control" type="selection">'+
 '   </select>'+
-'   <div class="btn-group" data-toggle="buttons">'+
+'   <div class="single-topic-sidebar-btns btn-group" data-toggle="buttons">'+
 '       <label class="single-topic-sidebar-sortby-ascending btn btn-success active">'+
 '           <input type="radio">'+
 '           <span class="glyphicon glyphicon-sort-by-attributes"></span>'+
@@ -887,32 +764,90 @@ var SingleTopicViewSidebar = DefaultView.extend({
         };
         this.settingsModel.set(_.extend(defaultSettings, this.settingsModel.attributes));
         this.model = new Backbone.Model();
+        this.listenTo(this.settingsModel, 'change', this.renderList);
+        this.listenTo(this.selectionModel, 'change:analysis', this.render);
+        this.listenTo(this.selectionModel, 'change:topicNameScheme', this.render);
+        this.listenTo(this.selectionModel, 'change:topic', this.highlightTopicRow);
     },
     
     cleanup: function cleanup() {
     },
     
     render: function render() {
-        this.$el.html(this.loadingTemplate);
-        var datasetName = this.selectionModel.get('dataset');
-        var analysisName = this.selectionModel.get('analysis');
-        var request = this.getRequest(datasetName, analysisName);
-        this.dataModel.submitQueryByHash(
-            request,
-            function singleTopicSidebarCallback(data) {
-                this.$el.html(this.baseTemplate);
-                var selectData = this.extractData(data, datasetName, analysisName);
-                console.log(selectData);
-                this.model.set({ selectData: selectData });
-                this.renderSelect(this.$el.find('.single-topic-sidebar-sortby-select').get(0), selectData);
-                this.renderList(this.$el.find('.single-topic-sidebar-topics-list').get(0), selectData);
-            }.bind(this),
-            this.renderError.bind(this)
-        );
+        if(this.selectionModel.nonEmpty(['dataset', 'analysis'])) {
+            this.$el.html(this.loadingTemplate);
+            var datasetName = this.selectionModel.get('dataset');
+            var analysisName = this.selectionModel.get('analysis');
+            var request = this.getRequest(datasetName, analysisName);
+            this.dataModel.submitQueryByHash(
+                request,
+                function singleTopicSidebarCallback(data) {
+                    this.$el.html(this.baseTemplate);
+                    var extractedData = this.extractData(data, datasetName, analysisName);
+                    var sortData = this.formatData(extractedData, this.dataModel);
+                    var selectData = this.formatSelectData(sortData);
+                    this.model.set({ sortData: sortData, selectData: selectData });
+                    this.renderSelect();
+                    this.renderAscendingOption();
+                    this.renderList();
+                    this.highlightTopicRow();
+                }.bind(this),
+                this.renderError.bind(this)
+            );
+        }
     },
     
     renderHelpAsHtml: function renderHelpAsHtml() {
         return '';
+    },
+
+/******************************************************************************
+ *                             HELPER METHODS
+ ******************************************************************************/
+
+    renderSelect: function renderSelect() {
+        this.generateSelect(
+            this.$el.find('.single-topic-sidebar-sortby-select').get(0), 
+            {
+                data: this.model.get('selectData'), 
+                groupValueExtractionFunction: this.groupValueExtractionFunction,
+                selectedKey: this.settingsModel.get('sidebarSortByValue'),
+            }
+        );
+    },
+    
+    renderAscendingOption: function renderAscendingOption() {
+        var ascending = this.settingsModel.get('sidebarSortAscending');
+        d3.select(this.el).select('.single-topic-sidebar-sortby-ascending')
+            .classed('active', ascending);
+        d3.select(this.el).select('.single-topic-sidebar-sortby-descending')
+            .classed('active', !ascending);
+    },
+    
+    renderList: function renderList() {
+        this.generateSortedList(
+            this.$el.find('.single-topic-sidebar-topics-list').get(0), 
+            {
+                data: this.model.get('sortData'),
+                sortByKey: this.settingsModel.get('sidebarSortByValue'),
+                nameKey: 'name',
+                ascending: this.settingsModel.get('sidebarSortAscending'),
+                rowFunction: function rowFunction(d) {
+                                 d3.select(this)
+                                    .attr('data-tg-topic-number', d.key)
+                                    .classed('pointer tg-select', true);
+                             },
+            }
+        );
+    },
+    
+    highlightTopicRow: function highlightTopicRow() {
+        var topicNum = this.selectionModel.get('topic');
+        d3.select(this.el).select('.single-topic-sidebar-topics-list')
+            .selectAll('.tg-select')
+            .classed('success', function(d) {
+                return d3.select(this).attr('data-tg-topic-number') === topicNum;
+            });
     },
     
 /******************************************************************************
@@ -920,26 +855,125 @@ var SingleTopicViewSidebar = DefaultView.extend({
  ******************************************************************************/
     
     /**
-     * el -- dom element of select
+     * el -- dom element of select to populate with options
+     * selectData -- a dictionary where the keys are the select option values
+     * groupValueExtractionFunction -- a function that returns [groupName, valueName] of the selectData key
+     *      if groupName is falsy then the value is placed above the option groups
      * Render select in element.
      */
-    renderSelect: function renderSelect(el, selectData) {
-        var groups = selectData;
-        //~ tg.gen.populateSelect(el, groups);
+    generateSelect: function generateSelect(el, options) {
+        var defaults = {
+            data: {}, 
+            groupValueExtractionFunction: function (a) { return a; },
+            selectedKey: null,
+        };
+        options = _.extend({}, defaults, options);
+        
+        var normalized = _.reduce(options.data, function(result, value, key) {
+            var groupValue = options.groupValueExtractionFunction(key);
+            var groupName = groupValue[0];
+            var valueName = groupValue[1];
+            if(!groupName) {
+                result[0].push({ key: valueName, value: key });
+            } else {
+                var groups = result[1];
+                if(!(groupName in groups)) {
+                    groups[groupName] = [];
+                }
+                groups[groupName].push({ key: valueName, value: key });
+            }
+            return result;
+        }, [[], {}]);
+        
+        var singles = normalized[0]; // list of objects { key: readableName, value: value }
+        var groups = d3.entries(normalized[1]); // object where keys are groups and values are lists of objects as specified above
+        
+        var createOptions = function createOptions(d3El, data, selectedKey) {
+            d3El.selectAll('option')
+                .data(data)
+                .enter()
+                .append('option')
+                .attr('selected', function(d) {
+                    if(d.value === selectedKey) {
+                        return 'selected';
+                    }
+                })
+                .attr('value', function(d) { return d.value; })
+                .text(function(d) { return d.key; });
+        };
+        
+        var d3El = d3.select(el);
+        d3El.html('');
+        createOptions(d3El, singles, options.selectedKey);
+        d3El.selectAll('optgroup')
+            .data(groups)
+            .enter()
+            .append('optgroup')
+            .attr('label', function(d) { return d.key; })
+            .each(function(d) {
+                createOptions(d3.select(this), d.value, options.selectedKey);
+            });
+    },
+    
+    groupValueExtractionFunction: function groupValueExtractionFunction(key) {
+        var groupValue = key.split(':');
+        var groupName = '';
+        var valueName = '';
+        if(groupValue.length < 2) {
+            valueName = groupValue[0];
+        } else {
+            groupName = groupValue[0];
+            valueName = groupValue.slice(1).join(':');
+        }
+        groupName = tg.str.toTitleCase(groupName.replace(/_/g, ' '));
+        valueName = tg.str.toTitleCase(valueName.replace(/_/g, ' '));
+        return [groupName, valueName];
     },
     
     /**
      * Requires that the select is rendered.
      * el -- dom element of container
+     * data -- the data object
+     * sortByKey -- key into the data's value object to use for sorting
+     * nameKey -- the key into the data's value object to locate the name to display
+     * ascending -- true to sort ascending; false otherwise
+     * rowFunction -- passed the row element as the this context; useful for
+     *                binding events and classes
      * Render list in element.
      */
-    renderList: function renderList(el, selectData) {
+    generateSortedList: function renderList(el, options) {
+        var defaults = {
+            data: {},
+            sortByKey: null,
+            nameKey: null,
+            ascending: true,
+            rowFunction: function () {},
+        };
+        options = _.extend(defaults, options);
+        
         var d3El = d3.select(el);
-        d3El.empty();
+        d3El.html('');
         var table = d3El.append('table')
             .classed('table table-hover table-condensed', true);
-        //~ var table = 
-        //~ var ascending = 
+        var tableBody = table.append('tbody');
+        var data = d3.entries(options.data).sort(function(a, b) {
+                var aval = a.value[options.sortByKey];
+                var bval = b.value[options.sortByKey];
+                if(options.ascending) {
+                    return tg.js.compareTo(aval, bval);
+                } else {
+                    return tg.js.compareTo(bval, aval);
+                }
+            });
+        var rows = tableBody.selectAll('tr')
+            .data(data)
+            .enter()
+            .append('tr')
+            .each(options.rowFunction);
+        rows.append('td')
+            .text(function(d) {
+                return d.value[options.nameKey];
+            });
     },
     
     getRequest: function getRequest(datasetName, analysisName) {
@@ -955,10 +989,46 @@ var SingleTopicViewSidebar = DefaultView.extend({
      * data -- data as returned from the server
      * datasetName -- name of the dataset
      * analysisName -- name of the analysis
-     * Return data in the format needed.
+     * Return the data needed.
      */
     extractData: function extractData(data, datasetName, analysisName) {
         return data.datasets[datasetName].analyses[analysisName].topics;
+    },
+    
+    /**
+     * data -- as returned by extractData
+     * dataModel -- an instance of DataModel or something else that can convert
+     *              topic numbers to a readable name
+     * Return data in an easy to use for sorting way.
+     */
+    formatData: function formatData(data, dataModel) {
+        var result = {};
+        
+        for(var topicNum in data) {
+            var topicData = {};
+            topicData['number'] = topicNum;
+            topicData['name'] = dataModel.getTopicName(topicNum);
+            var metrics = data[topicNum]['metrics'];
+            for(var metricName in metrics) {
+                var slugMetricName = tg.str.toSlugFormat(metricName);
+                topicData['metric:'+slugMetricName] = metrics[metricName];
+            }
+            result[topicNum] = topicData;
+        }
+        
+        return result;
+    },
+    
+    /**
+     * data -- as returned by formatData
+     * Return data for rendering the select.
+     */
+    formatSelectData: function formatSelectData(data) {
+        for(var t in data) {
+            var topicData = data[t];
+            return topicData;
+        }
+        return {};
     },
 
 /******************************************************************************
@@ -967,37 +1037,25 @@ var SingleTopicViewSidebar = DefaultView.extend({
 
     events: {
         'change .single-topic-sidebar-sortby-select': 'changeSortBySelect',
-        'click .single-topic-sidebar-sortby-ascending': 'clickSortDirection',
-        'click .single-topic-sidebar-sortby-descending': 'clickSortDirection',
+        'click .single-topic-sidebar-sortby-ascending': 'clickSortAscending',
+        'click .single-topic-sidebar-sortby-descending': 'clickSortDescending',
     },
     
     changeSortBySelect: function changeSortBySelect(e) {
         var value = this.$el.find('.single-topic-sidebar-sortby-select').val();
+        console.log(value);
         this.settingsModel.set({ sidebarSortByValue: value });
     },
     
-    clickSortDirection: function clickSortDirection(e) {
-        var radio = d3.select(this.el).select('.active');
-        var ascending = this.settingsModel.get('sidebarSortAscending');
-        if(radio.classed('single-topic-sidebar-sortby-ascending')) {
-            ascending = true;
-        } else if(radio.classed('single-topic-sidebar-sortby-descending')) {
-            ascending = false;
-        }
-        this.settingsModel.set({ sidebarSortAscending: ascending });
-    },
-
-/******************************************************************************
- *                         SETTINGS MODEL EVENT HANDLERS
- ******************************************************************************/
-
-    changeSortByValue: function changeSortByValue() {
+    clickSortAscending: function clickSortAscending(e) {
+        this.settingsModel.set({ sidebarSortAscending: true });
     },
     
-    sidebarSortAscending: function sidebarSortAscending() {
+    clickSortDescending: function clickSortDescending(e) {
+        this.settingsModel.set({ sidebarSortAscending: false });
     },
-    
 });
+
 
 /**
  * Simple manager to combine two views.
