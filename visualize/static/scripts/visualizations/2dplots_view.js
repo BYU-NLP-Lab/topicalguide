@@ -136,7 +136,7 @@ var PlotView = DefaultView.extend({
         }.bind(this), this.renderError.bind(this));
     },
     
-    resizeWindowEvent: function() {
+    resizeWindowEvent: function resizeWindowEvent() {
 		var plotContainer = this.$el.find('#plot-view');
 		var svg = plotContainer.find('svg');
 		var width = plotContainer.get(0).clientWidth;
@@ -144,7 +144,7 @@ var PlotView = DefaultView.extend({
 		var min = Math.min(width, height);
 		console.log(width);
 		svg.attr("width", width);
-		svg.attr("height", height);
+		svg.attr("height", width);
 	},
     
     /*
@@ -311,6 +311,56 @@ var PlotView = DefaultView.extend({
             color.property("value", this.settingsModel.get("colorSelection").value);
         }
         
+        
+        
+        var yvalue = value;
+        var ygroup = group;
+        if(this.selectionModel.nonEmpty(["topic"])) {
+            yvalue = this.selectionModel.get("topic");
+            yAxis.property("value", yvalue);
+        } else {
+            yvalue = "0";
+            ygroup = "topics";
+        }
+        
+        console.log("Y: " + yvalue + " " + ygroup);
+        
+        var xvalue = value;
+        var xgroup = group;
+        if(this.model.get("times").length !== 0) {
+            console.log(this.model);
+            xvalue = this.model.get("times")[0];
+            xgroup = "metadata";
+            xAxis.property("value", xvalue);
+        }
+        
+        console.log("X: " + xvalue + " " + xgroup);
+        
+        var rvalue = "uniform";
+        var rgroup = "other";
+        if(rvalue === "uniform" && rgroup === "other") {
+            console.log(valueNames);
+            if('metrics' in valueNames && 'Token Count' in valueNames['metrics']) {
+                rvalue = 'Token Count';
+                rgroup = 'metrics';
+                radius.property('value', rvalue);
+                console.log('here');
+            }
+        }
+        
+        var cvalue = value;
+        var cgroup = group;
+        
+        // Set initial groups and values for selections.
+        var defaultSettings = {
+            xSelection: { group: xgroup, value: xvalue },
+            ySelection: { group: ygroup, value: yvalue },
+            radiusSelection: { group: rgroup, value: rvalue },
+            colorSelection: { group: cgroup, value: cvalue },
+            removing: false,
+        };
+        this.settingsModel.set(_.extend({}, defaultSettings, this.settingsModel.attributes));
+        
         // Set control listeners.
         xAxis.on("change", function xAxisChange() {
             var group = $(this).find(":selected").parent().attr("value");
@@ -332,53 +382,6 @@ var PlotView = DefaultView.extend({
             var value = color.property("value");
             that.settingsModel.set({ colorSelection: { group: group, value: value } });
         });
-        
-        var yvalue = value;
-        var ygroup = group;
-        if(this.selectionModel.nonEmpty(["topic"])) {
-            yvalue = this.selectionModel.get("topic");
-            yAxis.property("value", yvalue);
-        } else {
-            yvalue = "0";
-            ygroup = "topics";
-        }
-        
-        //~ console.log("Y: " + yvalue + " " + ygroup);
-        
-        var xvalue = value;
-        var xgroup = group;
-        if(this.model.get("times").size !== 0) {
-            xvalue = this.model.get("times")[0];
-            xgroup = "metadata";
-            xAxis.property("value", xvalue);
-        }
-        
-        var rvalue = "uniform";
-        var rgroup = "other";
-        if(rvalue === "uniform" && rgroup === "other") {
-            console.log(valueNames);
-            if('metrics' in valueNames && 'Token Count' in valueNames['metrics']) {
-                rvalue = 'Token Count';
-                rgroup = 'metrics';
-                radius.property('value', rvalue);
-                console.log('here');
-            }
-        }
-        
-        var cvalue = value;
-        var cgroup = group;
-
-        //~ console.log("X: " + xvalue + " " + xgroup);
-
-        // Set initial groups and values for selections.
-        var defaultSettings = {
-            xSelection: { group: xgroup, value: xvalue },
-            ySelection: { group: ygroup, value: yvalue },
-            radiusSelection: { group: group, value: value },
-            colorSelection: { group: group, value: value },
-            removing: false,
-        };
-        this.settingsModel.set(_.extend({}, defaultSettings, this.settingsModel.attributes));
         
         // Give the remove documents buttons functionality.
         d3.select(this.el).select("#plot-remove-documents")

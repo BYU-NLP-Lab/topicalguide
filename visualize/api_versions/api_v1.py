@@ -49,7 +49,7 @@ def get_list_filter(allowed_values, allow_star=False):
                 raise Exception('The value "%s" is not recognized.'%(r,))
         return list(result)
     return list_filter
-        
+
 # Turn string s into a list (delimited by commas) with no repeating values.
 # Treat '*' as an exception since '*' means everything.
 def filter_csv_to_list(s):
@@ -98,10 +98,10 @@ OPTIONS_FILTERS = {
     'metadata_range': get_filter_csv_to_numeric_tuple(2),
     
     # what data to gather
-    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals', 'document_metadata_meanings']),
+    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals',                                 'document_metadata_meanings']),
     'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes', 'word_constraints']),
-    'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens', 'word_token_documents_and_locations']),
-    'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations', 'intro_snippet']),
+    'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens',                               'word_token_documents_and_locations']),
+    'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations',                                  'intro_snippet', 'metadata_predictions']),
 
     # extra parameters
     'topic_pairwise': filter_csv_to_list,

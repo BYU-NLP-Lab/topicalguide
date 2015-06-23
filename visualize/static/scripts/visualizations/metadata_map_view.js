@@ -4,11 +4,21 @@
  * render methods that create the visualization based on whatever settings and data are available
  */
 var MetadataMapView = DefaultView.extend({
-    
+
+/******************************************************************************
+ *                             STATIC VARIABLES
+ ******************************************************************************/
+
     readableName: "Metadata Map",
     shortName: "metadata_map",
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++    TEMPLATES    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
+    
+    redirectTemplate:
+'<div class="text-center">'+
+'   <button class="metadata-map-redirect btn btn-default">'+
+'       <span class="glyphicon glyphicon-chevron-left pewter"></span> Metadata'+
+'   </button>'+
+'   <span> You need to select a metadata item before using this view. </span>'+
+'</div>',
     
     mainTemplate: 
 '<div id="metadata-map-view-container" class="col-xs-9" style="display: inline; float: left;">'+
@@ -40,6 +50,10 @@ var MetadataMapView = DefaultView.extend({
     helpHtml:
 '<div id="metadata-map-help"><p>Documentation coming soon.</p></div>',
 
+/******************************************************************************
+ *                           INHERITED METHODS
+ ******************************************************************************/
+
     initialize: function() {
         var defaults = {
             
@@ -54,10 +68,8 @@ var MetadataMapView = DefaultView.extend({
             
             
             // Dimensions of svg viewBox.
-            dimensions: {
-                width: 800,
-                height: 800,
-            },
+            width: 800,
+            height: 800,
             
             // Dimensions of the circles.
             documentHeight: 20,
@@ -88,14 +100,12 @@ var MetadataMapView = DefaultView.extend({
         this.model.on("change:metadataTypes", this.updateMetadataOptions, this);
         this.model.on("change:documents", this.renderDocuments, this);
         this.model.on("change", this.updateMap, this);
+        $(window).on('resize', this.resizeWindowEvent.bind(this));
     },
     
     cleanup: function() {
+        $(window).off('resize', this.resizeWindowEvent.bind(this));
     },
-    
-    
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++    RENDER    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
     
     /**
      * Entry point to start visualization.
@@ -107,13 +117,11 @@ var MetadataMapView = DefaultView.extend({
             this.renderControls();
             this.renderMap();
 			this.loadData();
+            this.resizeWindowEvent();
         } else {
-			// TODO redirect to metadata view
+			this.$el.html(this.redirectTemplate);
         }
     },
-    
-    
-    
     
     /**
      * Return html of help message to user.
@@ -121,7 +129,11 @@ var MetadataMapView = DefaultView.extend({
     renderHelpAsHtml: function() {
         return this.helpHtml;
     },
-    
+
+/******************************************************************************
+ *                           HELPER METHODS
+ ******************************************************************************/
+
     /**
      * Populate the controls panel.
      */
@@ -139,7 +151,8 @@ var MetadataMapView = DefaultView.extend({
     renderMap: function() {
         console.log("Rendering the map.");
         // Dimensions.
-        var dim = this.model.attributes.dimensions;
+        var width = this.model.get('width');
+        var height = this.model.get('height');
         var textHeight = this.model.attributes.textHeight;
         var duration = this.model.attributes.duration;
         var windowWidth = window.innerWidth*.9*0.75;
@@ -156,7 +169,7 @@ var MetadataMapView = DefaultView.extend({
         // Create scales and axes.
         var xScale = this.xScale = d3.scale.linear()
             .domain([0, 1])
-            .range([0, dim.width]);
+            .range([0, width]);
         var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
         
         // Render the scatter plot.
@@ -165,7 +178,7 @@ var MetadataMapView = DefaultView.extend({
         var svg = this.svg = view.append("svg")
             .attr("width", "100%")
             .attr("height", windowHeight)
-            .attr("viewBox", "0, 0, "+dim.width+", "+dim.height/2)
+            .attr("viewBox", "0, 0, "+width+", "+height/2)
             .attr("preserveAspectRatio", "xMidYMin meet")
             .append("g");
             
@@ -175,9 +188,11 @@ var MetadataMapView = DefaultView.extend({
         // Render xAxis.
         this.xAxisGroup = this.bufferedPane.append("g")
             .attr("id", "x-axis")
-            .attr("transform", "translate(0,"+dim.height+")")
+            .attr("transform", "translate(0,"+height+")")
             .style({ "fill": "none", "stroke": "black", "stroke-width": "1.5px", "shape-rendering": "crispedges" });
         this.xAxisText = this.xAxisGroup.append("text");
+        //~ this.xAxisGroup.selectAll('g text').style({ 'fill': 'black', 'stroke': 'none' });
+        //~ this.xAxisGroup.selectAll('text').style({ 'fill': 'black', 'stroke': 'none' });
         // Render document queue container.
         // The queue container will also chart labeled documents.
         this.docQueue = this.bufferedPane.append("g")
@@ -257,13 +272,15 @@ var MetadataMapView = DefaultView.extend({
         this.updateDocuments();
     },
     
-    //++++++++++++++++++++++++++++++++++++++++++++++++++    DATA    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
-    
-    getQueryHash: function() {
-        var selections = this.selectionModel.attributes;
+    getRequestHash: function getRequestHash(datasetName, analysisName, metadataName) {
         return {
-            "datasets": selections.dataset,
-            "analyses": selections.analysis,
+            datasets: datasetName,
+            analyses: analysisName,
+            documents: '*',
+            document_limit: 1000,
+            document_continue: 0,
+            document_attr: ['metadata_predictions', 'top_n_topics'],
+            metadata_name: metadataName,
         };
     },
     
@@ -272,203 +289,42 @@ var MetadataMapView = DefaultView.extend({
      * Store the metadata in this.model.
      */
     loadData: function() {
-        var data = {
-            "documents": {
-                "George_W._Bush_5.txt": {
-                    "labeled": {
-                        "year": 2015,
-                    },
-                    "unlabeled": {
-                        "time_of_day": [0, 0.7, 1],
-                    },
-                    "topics": {
-                        "0": 1000, 
-                        "1": 143, 
-                        "2": 5, 
-                        "3": 30, 
-                        "4": 62, 
-                        "5": 85, 
-                    }
-                }, 
-                "Lyndon_Baines_Johnson_1.txt": {
-                    "labeled": {
-                    },
-                    "unlabeled": {
-                        "time_of_day": [0, 0.2, 0.4],
-                        "year": [2000, 2002, 2003],
-                    },
-                    "topics": {
-                        "0": 52, 
-                        "1": 500, 
-                        "2": 5, 
-                        "3": 30, 
-                        "4": 100, 
-                        "5": 85, 
-                    }
-                }, 
-                "George_Washington_6.txt": {
-                    "labeled": {
-                    },
-                    "unlabeled": {
-                        "time_of_day": [0, 0.5, 0.9],
-                        "year": [1980, 2002, 2015],
-                    },
-                    "topics": {
-                        "0": 52, 
-                        "1": 300, 
-                        "2": 5, 
-                        "3": 30, 
-                        "4": 62, 
-                        "5": 300, 
-                    }
-                }, 
-                "Jimmy_Carter_4.txt": {
-                    "labeled": {
-                    },
-                    "unlabeled": {
-                        "time_of_day": [0, 0.5, 1],
-                        "year": [2005, 2006, 2010],
-                    },
-                    "topics": {
-                        "0": 52, 
-                        "1": 143, 
-                        "2": 1000, 
-                        "3": 30, 
-                        "4": 62, 
-                        "5": 85, 
-                    }
-                }, 
-                "John_Adams_1.txt": {
-                    "labeled": {
-                    },
-                    "unlabeled": {
-                        "time_of_day": [0, 0.5, 1],
-                        "year": [2000, 2000, 2001],
-                    },
-                    "topics": {
-                        "0": 52, 
-                        "1": 143, 
-                        "2": 5, 
-                        "3": 800, 
-                        "4": 62, 
-                        "5": 85, 
-                    }
-                }, 
-                "Andrew_Johnson_3.txt": {
-                    "labeled": {
-                    },
-                    "unlabeled": {
-                        "time_of_day": [0, 0.5, 1],
-                        "year": [1996, 1999, 2001],
-                    },
-                    "topics": {
-                        "0": 52, 
-                        "1": 143, 
-                        "2": 5, 
-                        "3": 30, 
-                        "4": 600, 
-                        "5": 85, 
-                    }
-                }, 
-                "Theodore_Roosevelt_3.txt": {
-                    "labeled": {
-                        "year": 2000,
-                    },
-                    "unlabeled": {
-                        "time_of_day": [0.6, 0.8, 0.9],
-                    },
-                    "topics": {
-                        "0": 52, 
-                        "1": 143, 
-                        "2": 5, 
-                        "3": 500, 
-                        "4": 500, 
-                        "5": 85, 
-                    }
-                }, 
-                "Grover_Cleveland_8.txt": {
-                    "labeled": {
-                        "time_of_day": 0.33456,
-                    },
-                    "unlabeled": {
-                        "year": [1994, 1996, 1997],
-                    },
-                    "topics": {
-                        "0": 100, 
-                        "1": 143, 
-                        "5": 100, 
-                    }
-                }, 
-                "George_W._Bush_6.txt": {
-                    "labeled": {
-                    },
-                    "unlabeled": {
-                        "time_of_day": [0, 0.7, 0.8],
-                        "year": [2000, 2006, 2010],
-                    },
-                    "topics": {
-                        "0": 52, 
-                        "1": 143, 
-                        "2": 5, 
-                        "3": 30, 
-                        "4": 62, 
-                        "5": 350, 
-                    }
-                }, 
-                "Abraham_Lincoln_3.txt": {
-                    "labeled": {
-                    },
-                    "unlabeled": {
-                        "time_of_day": [0, 0.1, 0.2],
-                        "year": [2001, 2002, 2003],
-                    },
-                    "topics": {
-                        "0": 52, 
-                        "1": 143, 
-                        "2": 222, 
-                        "3": 30, 
-                    }
-                }, 
-                "Grover_Cleveland_1.txt": {
-                    "labeled": {
-                        "time_of_day": 0.21156,
-                    },
-                    "unlabeled": {
-                        "year": [1997, 1997, 1997],
-                    },
-                    "topics": {
-                        "0": 143, 
-                        "18": 200, 
-                    }
-                }, 
-            },
-            "metadataTypes": {
-                "year": "int",
-                "time_of_day": "float",
-            },
-        };
-        var docs = [];
-        var docNames = {};
-        for(key in data.documents) {
-            var metadata = data.documents[key];
-            metadata["userLabeled"] = {};
-            var element = {
-                "doc": key,
-                "metadata": metadata,
-            };
-            docs.push(element);
-            docNames[key] = metadata;
-        }
-        data.documents = docs;
-        data.documentNames = docNames;
-        var name = "";
-        var type = "";
-        for(n in data.metadataTypes) {
-            name = n;
-            type = data.metadataTypes[n];
-        }
-        this.model.set(data);
-        this.settingsModel.set({ name: name, type: type });
+        var datasetName = this.selectionModel.get('dataset');
+        var analysisName = this.selectionModel.get('analysis');
+        var metadataName = this.selectionModel.get('metadataName');
+        var request = this.getRequestHash(datasetName, analysisName, metadataName);
+        
+        this.dataModel.submitQueryByHash(
+            request,
+            function callback(data) {
+                
+            }.bind(this),
+            function errorCallback(msg) {
+                this.renderError(msg);
+            }.bind(this)
+        );
+        //~ var docs = [];
+        //~ var docNames = {};
+        //~ for(key in data.documents) {
+            //~ var metadata = data.documents[key];
+            //~ metadata["userLabeled"] = {};
+            //~ var element = {
+                //~ "doc": key,
+                //~ "metadata": metadata,
+            //~ };
+            //~ docs.push(element);
+            //~ docNames[key] = metadata;
+        //~ }
+        //~ data.documents = docs;
+        //~ data.documentNames = docNames;
+        //~ var name = "";
+        //~ var type = "";
+        //~ for(n in data.metadataTypes) {
+            //~ name = n;
+            //~ type = data.metadataTypes[n];
+        //~ }
+        //~ this.model.set(data);
+        //~ this.settingsModel.set({ name: name, type: type });
     },
     
     //++++++++++++++++++++++++++++++++++++++++++++++++++    UPDATE VISUALIZATION    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
@@ -490,8 +346,8 @@ var MetadataMapView = DefaultView.extend({
         var numberOfUnlabeled = this.getNumberOfUnlabeledDocuments();
         
         // Gather data.
-        var width = this.model.get("dimensions").width;
-        var height = this.model.get("dimensions").height;
+        var width = this.model.get('width');
+        var height = this.model.get('height');
         var queueHeight = 600;
         
         var documentHeight = this.model.get("documentHeight");
@@ -648,7 +504,8 @@ var MetadataMapView = DefaultView.extend({
         if(selectedType === "") {
             type.text("N/A");
         } else {
-            type.text(globalTypes[selectedType]);
+            console.log(selectedType);
+            type.text(tg.site.readableTypes[selectedType]);
         }
     },
     
@@ -959,6 +816,12 @@ var MetadataMapView = DefaultView.extend({
         "mouseover .document": "mouseoverDocument",
         "mouseout .document": "mouseoutDocument",
         "mousedown .document": "mousedownDocument",
+        
+        'click .metadata-map-redirect': 'clickRedirect',
+    },
+    
+    clickRedirect: function clickRedirect(e) {
+        this.viewModel.set({ currentView: 'metadata' });
     },
     
     /**
@@ -1119,6 +982,16 @@ var MetadataMapView = DefaultView.extend({
     mousedownDocument: function(e) {
         this.removePieCharts();
     },
+    
+    resizeWindowEvent: function resizeWindowEvent() {
+		var plotContainer = this.$el.find('#metadata-map-view');
+		var width = plotContainer.get(0).clientWidth;
+		var height = window.innerHeight*0.8;
+		var min = Math.min(width, height);
+        var svg = plotContainer.find('svg');
+        svg.attr('width', width);
+        svg.attr('height', width);
+	},
     
     
     //++++++++++++++++++++++++++++++++++++++++++++++++++    GETTERS/SETTERS/HELPERS    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
