@@ -102,8 +102,14 @@ var TopicWordsView = DefaultView.extend({
     },
     
     events: {
+        'change #metadata-attribute-input': 'changeMetadataName',
         'click .all-topic-words-form-submit': 'clickSubmit',
         'click .all-topic-words-clear-words': 'clickClearWords',
+    },
+    
+    changeMetadataName: function changeMetadataName(e) {
+        var metadataName = this.$el.find('#metadata-attribute-input').val();
+        this.selectionModel.set({ metadataName: metadataName });
     },
     
     clickSubmit: function clickSubmit(e) {
@@ -121,7 +127,6 @@ var TopicWordsView = DefaultView.extend({
     
     formSubmit: function() {
         var words = d3.select("#words-input").property("value").split(/[,]/);
-        console.log(words);
         words = _.map(words, function(word) { return word.trim().toLowerCase(); });
         words = _.filter(words, function(word) { return word !== ""; });
         words.sort();

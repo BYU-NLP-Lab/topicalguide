@@ -839,6 +839,7 @@ var SingleTopicViewSidebar = DefaultView.extend({
                              },
             }
         );
+        this.highlightTopicRow();
     },
     
     highlightTopicRow: function highlightTopicRow() {
