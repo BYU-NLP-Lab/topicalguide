@@ -33,7 +33,7 @@ from topicalguide import settings
 from api_versions import api_v1
 
 DEBUG = settings.DEBUG
-ALLOW_CACHING = not DEBUG and False # Change to false while debugging the api
+ALLOW_CACHING = DEBUG # not DEBUG # Change to false while debugging the api
 
 API_VERSIONS = {
     'v1': api_v1,

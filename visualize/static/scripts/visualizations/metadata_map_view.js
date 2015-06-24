@@ -64,7 +64,8 @@ var MetadataMapView = DefaultView.extend({
             // The document data.
             documents: [], // Array of objects { doc: "docname", metadata: { labeled: {}, unlabeled: {}, userLabeled: {} } }
             documentNames: {}, // Object acting as a set of document names
-            metadataTypes: {}, // Object mapping metadata names to metadata types
+            metadataName: '',
+            metadataType: '',
             
             
             // Dimensions of svg viewBox.
@@ -93,13 +94,13 @@ var MetadataMapView = DefaultView.extend({
             name: "",
             type: "",
         });
-        this.settingsModel.on("change", this.updateMetadataSelection, this);
-        this.settingsModel.on("change", this.updateDocumentSelection, this);
-        this.settingsModel.on("change", this.updateMap, this);
-        this.selectionModel.on("change:document", this.updateDocumentSelection, this);
-        this.model.on("change:metadataTypes", this.updateMetadataOptions, this);
-        this.model.on("change:documents", this.renderDocuments, this);
-        this.model.on("change", this.updateMap, this);
+        this.listenTo(this.settingsModel, 'change', this.updateMetadataSelection);
+        this.listenTo(this.settingsModel, 'change', this.updateDocumentSelection);
+        this.listenTo(this.settingsModel, 'change', this.updateMap);
+        this.listenTo(this.selectionModel, 'change:document', this.updateDocumentSelection, this);
+        this.listenTo(this.model, 'change:metadataTypes', this.updateMetadataOptions);
+        this.listenTo(this.model, 'change:documents', this.renderDocuments);
+        this.listenTo(this.model, 'change', this.updateMap);
         $(window).on('resize', this.resizeWindowEvent.bind(this));
     },
     
@@ -140,7 +141,6 @@ var MetadataMapView = DefaultView.extend({
     renderControls: function() {
         var controls = d3.select(this.el).select("#metadata-map-controls");
         controls.html(this.controlsTemplate);
-        this.updateMetadataOptions();
         this.updateMetadataSelection();
         this.updateDocumentSelection();
     },
@@ -191,6 +191,7 @@ var MetadataMapView = DefaultView.extend({
             .attr("transform", "translate(0,"+height+")")
             .style({ "fill": "none", "stroke": "black", "stroke-width": "1.5px", "shape-rendering": "crispedges" });
         this.xAxisText = this.xAxisGroup.append("text");
+        console.log(this.xAxisGroup);
         //~ this.xAxisGroup.selectAll('g text').style({ 'fill': 'black', 'stroke': 'none' });
         //~ this.xAxisGroup.selectAll('text').style({ 'fill': 'black', 'stroke': 'none' });
         // Render document queue container.
@@ -222,8 +223,6 @@ var MetadataMapView = DefaultView.extend({
         this.updateMap();
     },
     
-    /**
-     */
     renderDocuments: function() {
         var documents = this.model.get("documents");
         
@@ -275,6 +274,7 @@ var MetadataMapView = DefaultView.extend({
     getRequestHash: function getRequestHash(datasetName, analysisName, metadataName) {
         return {
             datasets: datasetName,
+            dataset_attr: ['document_metadata_types'],
             analyses: analysisName,
             documents: '*',
             document_limit: 1000,
@@ -288,7 +288,7 @@ var MetadataMapView = DefaultView.extend({
      * Retrieve the metadata types available from the server.
      * Store the metadata in this.model.
      */
-    loadData: function() {
+    loadData: function loadData() {
         var datasetName = this.selectionModel.get('dataset');
         var analysisName = this.selectionModel.get('analysis');
         var metadataName = this.selectionModel.get('metadataName');
@@ -297,34 +297,36 @@ var MetadataMapView = DefaultView.extend({
         this.dataModel.submitQueryByHash(
             request,
             function callback(data) {
-                
+                var documents = data.datasets[datasetName].analyses[analysisName].documents;
+                var formattedDocData = this.formatDocumentData(documents, metadataName);
+                var metadataType = data.datasets[datasetName].document_metadata_types[metadataName];
+                this.model.set({ documents: formattedDocData.documents, documentNames: formattedDocData.documentNames });
+                this.model.set({ metadataName: metadataName, metadataType: metadataType });
             }.bind(this),
             function errorCallback(msg) {
                 this.renderError(msg);
             }.bind(this)
         );
-        //~ var docs = [];
-        //~ var docNames = {};
-        //~ for(key in data.documents) {
-            //~ var metadata = data.documents[key];
-            //~ metadata["userLabeled"] = {};
-            //~ var element = {
-                //~ "doc": key,
-                //~ "metadata": metadata,
-            //~ };
-            //~ docs.push(element);
-            //~ docNames[key] = metadata;
-        //~ }
-        //~ data.documents = docs;
-        //~ data.documentNames = docNames;
-        //~ var name = "";
-        //~ var type = "";
-        //~ for(n in data.metadataTypes) {
-            //~ name = n;
-            //~ type = data.metadataTypes[n];
-        //~ }
-        //~ this.model.set(data);
-        //~ this.settingsModel.set({ name: name, type: type });
+    },
+    
+    formatDocumentData: function formatDocumentData(documents, metadataName) {
+        var formatted = _.reduce(documents, function reducer(result, value, key) {
+            var temp = {};
+            temp['labeled'] = {};
+            var unlabeled = {};
+            unlabeled[metadataName] = value.metadata_predictions[metadataName];
+            temp['unlabeled'] = unlabeled;
+            temp['userLabeled'] = {};
+            temp['topics'] = value.topics;
+            var docElement = {
+                doc: key,
+                metadata: temp,
+            };
+            result['documents'].push(docElement);
+            result['documentNames'][key] = temp;
+            return result;
+        }, { documents: [], documentNames: {} });
+        return formatted;
     },
     
     //++++++++++++++++++++++++++++++++++++++++++++++++++    UPDATE VISUALIZATION    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
@@ -334,9 +336,8 @@ var MetadataMapView = DefaultView.extend({
      */
     updateMap: function() {
         // Basic data needed to determine axis information.
-        var type = this.settingsModel.get("type");
-        var name = this.settingsModel.get("name");
-        
+        var name = this.model.get('metadataName');
+        var type = this.model.get('metadataType');
         if(name === "" || type === "") {
             return;
         }
@@ -368,7 +369,6 @@ var MetadataMapView = DefaultView.extend({
         var unlabeledY = labeledBoxHeight;
         var labeledBoxX = -labeledBoxThickness - buffer - labeledBoxBuffer;
         var labeledBoxY = labeledY - labeledBoxThickness - labeledBoxBuffer - buffer;
-        console.log("Start: "+labeledBoxHeight);
         
         var leftBuffer = buffer + textBufferLeft + labeledBoxThickness
         var xAxisLength = width - leftBuffer - buffer - 2*labeledBoxThickness;
@@ -504,7 +504,6 @@ var MetadataMapView = DefaultView.extend({
         if(selectedType === "") {
             type.text("N/A");
         } else {
-            console.log(selectedType);
             type.text(tg.site.readableTypes[selectedType]);
         }
     },
@@ -541,15 +540,16 @@ var MetadataMapView = DefaultView.extend({
      * Update the documents according to any changes in the documents to be charted.
      */
     updateDocuments: function() {
-        if(this.settingsModel.get("name") === "" || this.settingsModel.get("type") === "") {
+        var name = this.model.get("metadataName"); // Metadata name
+        var type = this.model.get("metadataType"); // Metadata type
+        if(name === '' || type === '') {
             return;
         }
         
         var that = this;
         
         var xScale = this.xScale;
-        var name = this.settingsModel.get("name"); // Metadata name
-        var type = this.settingsModel.get("type"); // Metadata type
+        
         var documentHeight = this.model.get("documentHeight");
         var radius = documentHeight/2;
         var buffer = radius;
@@ -559,7 +559,35 @@ var MetadataMapView = DefaultView.extend({
         var documentQueueOrder = this.model.get("unlabeledDocumentOrder");
         
         function getUnlabeledDocumentY(docName) {
-            return unlabeledY + documentQueueOrder[docName]*documentHeight+documentHeight/2;
+            if(docName in documentQueueOrder) {
+                return unlabeledY + documentQueueOrder[docName]*documentHeight+documentHeight/2;
+            } else {
+                return 0;
+            }
+        }
+        
+        function getDocumentFill(docObj) {
+            if(that.isLabeled(docObj, name, false)) {
+                if(that.isUserLabeled(docObj, name)) {
+                    return "red";
+                } else {
+                    return "blue"
+                }
+            } else {
+                if(that.isUserLabeled(docObj, name)) {
+                    return "green";
+                } else {
+                    return "black";
+                }
+            }
+        }
+        
+        function showDocument(docObj) {
+            if((docObj.doc in documentQueueOrder) || that.isUserLabeled(docObj, name)) {
+                return true;
+            } else {
+                return false;
+            }
         }
         
         // Move circles
@@ -580,19 +608,10 @@ var MetadataMapView = DefaultView.extend({
                 return y;
             })
             .attr("fill", function(d, i) {
-                if(that.isLabeled(d, name, false)) {
-                    if(that.isUserLabeled(d, name)) {
-                        return "red";
-                    } else {
-                        return "blue"
-                    }
-                } else {
-                    if(that.isUserLabeled(d, name)) {
-                        return "green";
-                    } else {
-                        return "black";
-                    }
-                }
+                return getDocumentFill(d);
+            })
+            .style('display', function(d, i) {
+                return showDocument(d)? null: 'none';
             });
         
         var inLabeledArea = function(d3Circle) {
@@ -721,6 +740,9 @@ var MetadataMapView = DefaultView.extend({
                     return getUnlabeledDocumentY(datum.doc);
                 }
             })
+            .style('display', function(d, i) {
+                return showDocument(d)? null: 'none';
+            })
             .attr("style", "stroke: rgb(0,0,0); stroke-width:2");
         
         // Move left whisker lines
@@ -754,6 +776,9 @@ var MetadataMapView = DefaultView.extend({
                 } else {
                     return getUnlabeledDocumentY(datum.doc) - Math.ceil(documentHeight/4);
                 }
+            })
+            .style('display', function(d, i) {
+                return showDocument(d)? null: 'none';
             })
             .attr("style", "stroke: rgb(0,0,0); stroke-width:2");
             
@@ -789,6 +814,9 @@ var MetadataMapView = DefaultView.extend({
                     return getUnlabeledDocumentY(datum.doc) - Math.ceil(documentHeight/4);
                 }
             })
+            .style('display', function(d, i) {
+                return showDocument(d)? null: 'none';
+            })
             .attr("style", "stroke: rgb(0,0,0); stroke-width:2");
     },
     
@@ -804,7 +832,9 @@ var MetadataMapView = DefaultView.extend({
             .attr("cy", y2);
     },
     
-    //++++++++++++++++++++++++++++++++++++++++++++++++++    EVENTS    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
+/******************************************************************************
+ *                           EVENT HANDLERS
+ ******************************************************************************/
     
     events: {
         "change #metadata-name-control": "changeMetadataType",
@@ -916,7 +946,7 @@ var MetadataMapView = DefaultView.extend({
         var y = parseFloat(circle.attr("cy"));
         
         var topics = this.getDocumentMetadata(this.getDocumentNameFromEvent(e)).topics;
-        console.log(topics);
+        //~ console.log(topics);
         var pieGroup = this.docQueue.append("g")
             .classed("document-pie-chart", true)
             .attr("transform", "translate("+x+","+y+")")

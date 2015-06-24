@@ -24,8 +24,10 @@ from __future__ import division, print_function, unicode_literals
 import sys
 import time
 import json
+import random
 import itertools
 from git import Repo
+from django.db.models import Q
 from visualize.models import *
 from visualize.utils import reservoir_sample
 from visualize.api_utilities import get_list_filter, filter_csv_to_list, \
@@ -439,6 +441,14 @@ def query_documents(options, dataset_db, analysis_db):
     else:
         documents_queryset = dataset_db.documents.filter(filename__in=options['documents'])
     
+    if 'metadata_name' in options:
+        metadata_name = options['metadata_name']
+        has_metadata_value = Q(metadata_values__metadata_type__name__in=[metadata_name])
+        if 'document_attr' in options and 'metadata_predictions' in options['document_attr']:
+            documents_queryset = documents_queryset.filter(~has_metadata_value)
+        else:
+            documents_queryset = documents_queryset.filter(has_metadata_value)
+    
     DOCUMENT_ATTR = {
         'metadata': lambda doc: {md.metadata_type.name: md.value() for md in doc.metadata_values.all()},
         'metrics': lambda doc: {mv.metric.name: mv.value for mv in itertools.chain(doc.metric_values.all(), doc.document_analysis_metric_values.all()) 
@@ -524,6 +534,8 @@ def query_documents(options, dataset_db, analysis_db):
             top_n_topics[doc_id][topic_id] = count
     
     
+    random.seed(0)
+    random_state = random.getstate()
     for document_db in documents_queryset:
         attributes = {}
         
@@ -550,8 +562,36 @@ def query_documents(options, dataset_db, analysis_db):
                 attributes['word_token_topics_and_locations'] = document_db.get_word_token_topics_and_locations(analysis_db, options['words'])
             else:
                 attributes['word_token_topics_and_locations'] = {}
+        if 'metadata_predictions' in document_attr:
+            metadata_types = dataset_db.get_document_metadata_types()
+            predictions = {}
+            if metadata_types[metadata_name] == 'int':
+                low, mid, high, random_state = random_prediction_maker_int(document_db, random_state, 0, 2000)
+                predictions[metadata_name] = [low, mid, high]
+            if metadata_types[metadata_name] == 'float':
+                low, mid, high, random_state = random_prediction_maker_float(document_db, random_state, 0.0, 1.0)
+                predictions[metadata_name] = [low, mid, high]
+            attributes['metadata_predictions'] = predictions
         
         documents[document_db.filename] = attributes
-                
     return documents
+
+def random_prediction_maker_int(document_db, random_state, range_low, range_high):
+    random.setstate(random_state)
+    rands = []
+    for i in range(0, 3):
+        rands.append(random.randint(range_low, range_high))
+    rands.sort()
+    return (rands[0], rands[1], rands[2], random.getstate())
+
+def random_prediction_maker_float(document_db, random_state, range_low, range_high):
+    random.setstate(random_state)
+    diff = range_high - range_low
+    rands = []
+    for i in range(0, 3):
+        r = random.random()
+        rands.append(r*diff + range_low)
+    rands.sort()
+    return (rands[0], rands[1], rands[2], random.getstate())
+    
 
