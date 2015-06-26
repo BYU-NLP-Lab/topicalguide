@@ -698,6 +698,93 @@ var tg = new function() {
                 .attr("strokewidth", "1.5px");
             return el.html();
         },
+        
+        /**
+         * Creates lines in the given element.
+         * g -- an svg group DOM element
+         * 
+         * options:
+         * interpolate -- string; one of linear, basis, cardinal, monotone
+         * data -- a list of data in the following format:
+         *      [
+         *          { name: 'some name', points: [[x1, y1], [x2, y2], ...] },
+         *          ...
+         *      ]
+         *      where name uniquely identifies the line
+         * height -- the height in pixels the group is to use
+         * width -- the width in pixels the group is to use
+         * xScale -- a d3 scale, doesn't need the range to be set
+         * yScale -- a d3 scale, doesn't need the range to be set
+         * colorScale -- a function that takes the line's name and returns a color
+         * generalLineStyle -- basic css properties for the line
+         * lineFunction -- a function to add things to the lines, format is:
+         *                 function (lineData, index) { 
+         *                     the this context is the line's path element
+         *                 }
+         * transitionDuration -- in milliseconds
+         * 
+         * Return nothing.
+         */
+        createLineGraph: function createLineGraph(g, options) {
+            var defaults = {
+                interpolate: 'linear', 
+                data: [],
+                height: 600,
+                width: 600,
+                xScale: d3.scale.linear().domain([0, 1]),
+                yScale: d3.scale.linear().domain([0, 1]),
+                colorScale: function theColorBlack() { return '#000'; }, 
+                generalLineStyle: { 'stroke': '#000', 'fill': 'none', 'shape-rendering': 'optimizeSpeed', 'stroke-width': '1.5px' },
+                lineFunction: function() {},
+                transitionDuration: 0,
+            };
+            
+            options = _.extend({}, defaults, options);
+            
+            // Set the range.
+            options.xScale.range([0, options.height]);
+            options.yScale.range([options.height, 0]);
+            var line = d3.svg.line()
+                .interpolate(options.interpolate)
+                .x(function(d) { return options.xScale(d[0]); })
+                .y(function(d) { return options.yScale(d[1]); });
+            
+            // Create the chart.
+            var box = d3.select(g);
+            var lines = box.selectAll('path').data(options.data);
+            // Remove any extra line paths.
+            lines.exit()
+                .transition().duration(options.transitionDuration)
+                    .attr('d', function(lineData, index) {
+                        var pts = _.map(lineData.points, function(value, index) {
+                            return [value[0], options.yScale.domain()[0]]
+                        });
+                        return line(pts);
+                    })
+                    .style('opacity', 0)
+                    .remove();
+            // Immediately create extra line paths if there are new ones.
+            lines.enter().append('path')
+                .attr('d', function(lineData, index) {
+                    var pts = _.map(lineData.points, function(value, index) {
+                        return [value[0], options.yScale.domain()[0]]
+                    });
+                    return line(pts);
+                })
+                .style('opacity', 0)
+                .style(options.generalLineStyle);
+            // Transition all line paths to match the data.
+            lines.transition().duration(options.transitionDuration)
+                .attr('d', function(lineData, index) {
+                    return line(lineData.points);
+                })
+                .style(options.generalLineStyle)
+                .style('stroke', function(lineData, index) {
+                    return options.colorScale(lineData.name);
+                })
+                .style('opacity', 1)
+                .each(options.lineFunction);
+        },
     };
 };
 

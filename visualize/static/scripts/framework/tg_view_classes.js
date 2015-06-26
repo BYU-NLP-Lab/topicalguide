@@ -245,7 +245,7 @@ var NavigationView = DefaultView.extend({
         var insertionPoint = bar;
         for(var i in path) {
             var readableName = path[i];
-            var menuName = encodeURIComponent(readableName);
+            var menuName = encodeURIComponent(readableName.replace(/\s/g, '_'));
             var menuId = "tg-nav-bar-menu-item-"+menuName;
             if(insertionPoint.select("#"+menuId).empty()) { // Add menu.
                 var dropdownMenuType = "dropdown-submenu";

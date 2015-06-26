@@ -135,7 +135,7 @@ var TopicsOverTimeView = DefaultView.extend({
             topicSelect
                 .append("option")
                 .attr("value", key)
-                .text(toTitleCase(topic.names.Top3));
+                .text(this.dataModel.getTopicName(key));
         }
 
         // Get Metadata options
@@ -1183,7 +1183,7 @@ var TopicsOverTimeView = DefaultView.extend({
             for (var topic in analysisData.topics) {
                 var processedTopic = this.processTopicData(topic, documents, metadataInfo);
                 var topicData = topics[topic] = processedTopic.data
-                topics[topic].name = toTitleCase(analysisData.topics[topic].names.Top3);
+                topics[topic].name = this.dataModel.getTopicName(topic);
             }
 
         } else {
