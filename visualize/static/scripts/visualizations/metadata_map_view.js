@@ -22,39 +22,45 @@ var MetadataMapView = DefaultView.extend({
     
     mainTemplate: 
 '<div id="metadata-map-view-container" class="col-xs-9" style="display: inline; float: left;">'+
-'	<div id="metadata-map-view" class="container-fluid"></div>'+
+'	<div id="metadata-map-view" class="container-fluid">'+
+'       <svg width="720" height="720" viewBox="0, 0, 800, 800" preserveAspectRatio="xMidYMin meet">'+
+'           <g id="metadata-map-distribution"></g>'+
+'           <g id="metadata-map-labeled"></g>'+
+'           <g id="metadata-map-xaxis"></g>'+
+'           <g id="metadata-map-documents"></g>'+
+'       </svg>'+
+'   </div>'+
 '	<div id="document-info-view-container" class="container-fluid"></div>'+
 '</div>'+
-'<div id="metadata-map-controls" class="col-xs-3 text-center" style="display: inline; float: left;"></div>',
-    
-    controlsTemplate:
-'<h4><b>Selected Document</b></h4>'+
-'<hr />'+
-'<div>'+
-'    <label for="selected-document">Document:</label><br />'+
-'    <span id="selected-document"></span>'+
-'</div>'+
-'<div>'+
-'    <label for="document-value-control">Value:</label>'+
-'    <input id="document-value-control" type="text" class="form-control" name="Value" placeholder="Enter value"></select>'+
-'</div>'+
-'<hr />'+
-'<h4><b>Server Requests</b></h4>'+
-'<hr />'+
-'<div>'+
-'    <button id="save-changes" class="btn btn-default">Save Changes</button>'+
-'    <br/><br/>'+
-'    <button id="get-documents" class="btn btn-default">Get Documents</button>'+
+'<div id="metadata-map-controls" class="col-xs-3 text-center" style="display: inline; float: left;">'+
+'   <h4><b>Selected Document</b></h4>'+
+'   <hr />'+
+'   <div>'+
+'       <label for="selected-document">Document:</label><br />'+
+'       <span id="selected-document"></span>'+
+'   </div>'+
+'   <div>'+
+'       <label for="document-value-control">Value:</label>'+
+'       <input id="document-value-control" type="text" class="form-control" name="Value" placeholder="Enter value"></select>'+
+'   </div>'+
+'   <hr />'+
+'   <h4><b>Server Requests</b></h4>'+
+'   <hr />'+
+'   <div>'+
+'       <button id="save-changes" class="btn btn-default">Save Changes</button>'+
+'       <br/><br/>'+
+'       <button id="get-documents" class="btn btn-default">Get Documents</button>'+
+'   </div>'+
 '</div>',
     
     helpHtml:
-'<div id="metadata-map-help"><p>Documentation coming soon.</p></div>',
+'<div><p>Documentation coming soon.</p></div>',
 
 /******************************************************************************
  *                           INHERITED METHODS
  ******************************************************************************/
 
-    initialize: function() {
+    initialize: function initialize() {
         var defaults = {
             
         };
@@ -67,6 +73,9 @@ var MetadataMapView = DefaultView.extend({
             metadataName: '',
             metadataType: '',
             
+            // Dimensions of svg element
+            svgWidth: 800,
+            svgHeight: 800,
             
             // Dimensions of svg viewBox.
             width: 800,
@@ -75,7 +84,7 @@ var MetadataMapView = DefaultView.extend({
             // Dimensions of the circles.
             documentHeight: 20,
             documentWidth: 20,
-            pieChartRadius: 60,
+            //~ pieChartRadius: 60, // Not used.
             
             // Duration of the transitions.
             duration: 400, // 4/10 of a second
@@ -89,36 +98,64 @@ var MetadataMapView = DefaultView.extend({
             unlabeledDocumentCount: 0, // The number of unlabeled docs to show in the queue
             unlabeledDocumentOrder: {}, // Object specifying the document order.
             xAxisLength: 1,
+            
+            currentDocumentValue: 0,
         });
-        this.settingsModel.set({
-            name: "",
-            type: "",
-        });
-        this.listenTo(this.settingsModel, 'change', this.updateMetadataSelection);
-        this.listenTo(this.settingsModel, 'change', this.updateDocumentSelection);
-        this.listenTo(this.settingsModel, 'change', this.updateMap);
-        this.listenTo(this.selectionModel, 'change:document', this.updateDocumentSelection, this);
+        
+        // Event bindings.
+        this.listenTo(this.selectionModel, 'change:document', this.changeDocumentSelection);
+        this.listenTo(this.selectionModel, 'change:analysis', this.render);
+        this.listenTo(this.selectionModel, 'change:metadataName', this.render);
+        
+        this.listenTo(this.model, 'change:documents', this.renderGroupHierarchy);
         this.listenTo(this.model, 'change:metadataTypes', this.updateMetadataOptions);
-        this.listenTo(this.model, 'change:documents', this.renderDocuments);
-        this.listenTo(this.model, 'change', this.updateMap);
+        this.listenTo(this.model, 'change:svgWidth', this.changeSVGWidth);
+        this.listenTo(this.model, 'change:svgHeight', this.changeSVGHeight);
+        //~ this.listenTo(this.model, 'change', this.updateMap);
+        
         $(window).on('resize', this.resizeWindowEvent.bind(this));
     },
     
-    cleanup: function() {
+    cleanup: function cleanup() {
         $(window).off('resize', this.resizeWindowEvent.bind(this));
     },
     
     /**
      * Entry point to start visualization.
      */
-    render: function() {
+    render: function render() {
         this.$el.empty();
-        if(this.selectionModel.nonEmpty(["dataset", "analysis", "metadataName"])) {
-            this.$el.html(this.mainTemplate);
-            this.renderControls();
-            this.renderMap();
-			this.loadData();
-            this.resizeWindowEvent();
+        if(this.selectionModel.nonEmpty(['dataset', 'analysis', 'metadataName'])) {
+            this.$el.html(this.loadingTemplate);
+            
+            var datasetName = this.selectionModel.get('dataset');
+            var analysisName = this.selectionModel.get('analysis');
+            var metadataName = this.selectionModel.get('metadataName');
+            var request = this.getRequestHash(datasetName, analysisName, metadataName);
+            
+            this.dataModel.submitQueryByHash(
+                request,
+                function callback(data) {
+                    this.$el.html(this.mainTemplate);
+                    
+                    // Make sure the dimensions of the svg element are correct.
+                    this.resizeWindowEvent(null);
+                    this.changeDocumentSelection();
+                    
+                    var documents = data.datasets[datasetName].analyses[analysisName].documents;
+                    var formattedDocData = this.formatDocumentData(documents, metadataName);
+                    var metadataType = data.datasets[datasetName].document_metadata_types[metadataName];
+                    this.model.set({ metadataName: metadataName, metadataType: metadataType });
+                    this.model.set({ documents: formattedDocData.documents, documentNames: formattedDocData.documentNames });
+                }.bind(this),
+                function errorCallback(msg) {
+                    this.renderError(msg);
+                }.bind(this)
+            );
+            
+            //~ this.renderMap();
+			//~ this.loadData();
+            //~ this.resizeWindowEvent();
         } else {
 			this.$el.html(this.redirectTemplate);
         }
@@ -127,7 +164,7 @@ var MetadataMapView = DefaultView.extend({
     /**
      * Return html of help message to user.
      */
-    renderHelpAsHtml: function() {
+    renderHelpAsHtml: function renderHelpAsHtml() {
         return this.helpHtml;
     },
 
@@ -135,15 +172,180 @@ var MetadataMapView = DefaultView.extend({
  *                           HELPER METHODS
  ******************************************************************************/
 
-    /**
-     * Populate the controls panel.
-     */
-    renderControls: function() {
-        var controls = d3.select(this.el).select("#metadata-map-controls");
-        controls.html(this.controlsTemplate);
-        this.updateMetadataSelection();
-        this.updateDocumentSelection();
+    renderGroupHierarchy: function renderGroupHierarchy() {
+        var distribution = this.$el.find('#metadata-map-distribution');
+        var labeled = this.$el.find('#metadata-map-labeled');
+        var xaxis = this.$el.find('#metadata-map-xaxis');
+        var documents = this.$el.find('#metadata-map-documents');
+        tg.gen.createLineGraph(labeled.get(0), {});
+        this.createLabeledArea(labeled.get(0), {});
+        this.createXAxis(xaxis.get(0), {});
+        this.createDocuments(documents.get(0), {});
     },
+
+/******************************************************************************
+ *                             PURE FUNCTIONS
+ ******************************************************************************/
+
+    getRequestHash: function getRequestHash(datasetName, analysisName, metadataName) {
+        return {
+            datasets: datasetName,
+            dataset_attr: ['document_metadata_types'],
+            analyses: analysisName,
+            documents: '*',
+            document_limit: 1000,
+            document_continue: 0,
+            document_attr: ['metadata_predictions', 'top_n_topics'],
+            metadata_name: metadataName,
+        };
+    },
+    
+    formatDocumentData: function formatDocumentData(documents, metadataName) {
+        var formatted = _.reduce(documents, function reducer(result, value, key) {
+            var temp = {};
+            temp['labeled'] = {};
+            var unlabeled = {};
+            unlabeled[metadataName] = value.metadata_predictions[metadataName];
+            temp['unlabeled'] = unlabeled;
+            temp['userLabeled'] = {};
+            temp['topics'] = value.topics;
+            var docElement = {
+                doc: key,
+                metadata: temp,
+            };
+            result['documents'].push(docElement);
+            result['documentNames'][key] = temp;
+            return result;
+        }, { documents: [], documentNames: {} });
+        return formatted;
+    },
+    
+    createLabeledArea: function createLabeledArea(g, options) {
+        var defaults = {
+            width: 800,
+            docWidth: 20,
+            docHeight: 20,
+            boxThickness: 1.5,
+            extraBuffering: 1.5,
+            duration: 600,
+        };
+        
+        var o = _.extend({}, defaults, options);
+        
+        
+        var xbase = o.docWidth/2 + o.extraBuffering;
+        var ybase = o.docHeight/2 + o.extraBuffering;
+        var data = [
+            { // Outer rect.
+                x: -(xbase + o.boxThickness),
+                y: -(ybase + o.boxThickness),
+                dx: xbase*2 + o.boxThickness*2 + o.width,
+                dy: ybase*2 + o.boxThickness*2,
+                rx: xbase,
+                ry: ybase,
+                fill: 'black',
+            },
+            { // Inner rect.
+                x: -(xbase),
+                y: -(ybase),
+                dx: xbase*2 + o.width,
+                dy: ybase*2,
+                rx: xbase - o.extraBuffering,
+                ry: ybase - o.extraBuffering,
+                fill: 'white',
+            },
+        ];
+        
+        var rects = d3.select(g).selectAll('rect')
+            .data(data)
+            .enter()
+            .append('rect')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', 0)
+            .attr('height', 0)
+            .attr('rx', 0)
+            .attr('ry', 0)
+            .style('fill', 'white');
+        
+        rects.transition().duration(o.duration)
+            .attr('x', function(d) { return d.x; })
+            .attr('y', function(d) { return d.y; })
+            .attr('width', function(d) { return d.dx; })
+            .attr('height', function(d) { return d.dy; })
+            .attr('rx', function(d) { return d.rx; })
+            .attr('ry', function(d) { return d.ry; })
+            .style('fill', function(d) { return d.fill; });
+        
+    },
+    
+    /**
+     * Note that the label may transition after the axis.
+     */
+    createXAxis: function createXAxis(g, options) {
+        var defaults = {
+            width: 800,
+            xScale: d3.scale.linear().domain([0, 1]),
+            duration: 400,
+            label: 'X Axis',
+            doneTransitioningCallback: function() {},
+        };
+        
+        var o = _.extend({}, defaults, options);
+        o.xScale.range([0, o.width]);
+        
+        var xAxis = d3.svg.axis().scale(o.xScale).orient('bottom');
+        
+        // Create/select if needed.
+        var xAxisGroup = d3.select(g)
+            .style({ 'fill': 'none', 'stroke': 'black', 'stroke-width': '1.3px', 'shape-rendering': 'crispedges' });
+        var xAxisLabel = xAxisGroup.selectAll('.xaxis-label')
+            .data([o])
+            .enter()
+            .append('text')
+            .classed('xaxis-label', true)
+            .style({ 'fill': 'black', 'stroke': 'black', 'stroke-width': '0.5px' })
+            .text(o.label);
+        
+        // Transition.
+        xAxisGroup.transition()
+            .duration(o.duration)
+            .call(xAxis)
+            .call(endAll, transitionAxisLabelCallback)
+            .selectAll('g')
+            .selectAll('text')
+            .style({ 'text-anchor': 'end', 'fill': 'black', 'stroke': 'black', 'stroke-width': '0.5px' })
+            .attr('dx', '-.8em')
+            .attr('dy', '.15em')
+            .attr('transform', 'rotate(-65)');
+        
+        function endAll(transition, callback) {
+            var counter = 0;
+            transition
+                .each(function() { ++counter; })
+                .each('end', function() { if (!--counter) callback.apply(this, arguments); }); 
+        }
+        
+        var that = this;
+        
+        function transitionAxisLabelCallback() {
+            var xAxisHeight = xAxisGroup.selectAll('.tick')[0][0].getBBox().height;
+            transitionAxisLabel(xAxisHeight);
+        }
+        
+        function transitionAxisLabel(height) {
+            xAxisLabel.transition()
+                .duration(o.duration/2)
+                .call(endAll, o.doneTransitioningCallback)
+                .attr('x', o.width/2)
+                .attr('y', height)
+                .style({ 'text-anchor': 'middle', 'dominant-baseline': 'hanging' });
+        }
+    },
+    
+    
+    
+    
     
     /**
      * Create the svg component, axis component, and any other needed components.
@@ -166,34 +368,10 @@ var MetadataMapView = DefaultView.extend({
         
         windowHeight = windowHeight/2;
         
-        // Create scales and axes.
-        var xScale = this.xScale = d3.scale.linear()
-            .domain([0, 1])
-            .range([0, width]);
-        var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
-        
         // Render the scatter plot.
-        var view = d3.select(this.el).select("#metadata-map-view").html("");
-        
-        var svg = this.svg = view.append("svg")
-            .attr("width", "100%")
-            .attr("height", windowHeight)
-            .attr("viewBox", "0, 0, "+width+", "+height/2)
-            .attr("preserveAspectRatio", "xMidYMin meet")
-            .append("g");
-            
         this.bufferedPane = svg.append("g")
             .attr("id", "metadata-map-buffered-pane");
         
-        // Render xAxis.
-        this.xAxisGroup = this.bufferedPane.append("g")
-            .attr("id", "x-axis")
-            .attr("transform", "translate(0,"+height+")")
-            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.5px", "shape-rendering": "crispedges" });
-        this.xAxisText = this.xAxisGroup.append("text");
-        console.log(this.xAxisGroup);
-        //~ this.xAxisGroup.selectAll('g text').style({ 'fill': 'black', 'stroke': 'none' });
-        //~ this.xAxisGroup.selectAll('text').style({ 'fill': 'black', 'stroke': 'none' });
         // Render document queue container.
         // The queue container will also chart labeled documents.
         this.docQueue = this.bufferedPane.append("g")
@@ -269,64 +447,6 @@ var MetadataMapView = DefaultView.extend({
             });
         
         this.updateDocuments();
-    },
-    
-    getRequestHash: function getRequestHash(datasetName, analysisName, metadataName) {
-        return {
-            datasets: datasetName,
-            dataset_attr: ['document_metadata_types'],
-            analyses: analysisName,
-            documents: '*',
-            document_limit: 1000,
-            document_continue: 0,
-            document_attr: ['metadata_predictions', 'top_n_topics'],
-            metadata_name: metadataName,
-        };
-    },
-    
-    /**
-     * Retrieve the metadata types available from the server.
-     * Store the metadata in this.model.
-     */
-    loadData: function loadData() {
-        var datasetName = this.selectionModel.get('dataset');
-        var analysisName = this.selectionModel.get('analysis');
-        var metadataName = this.selectionModel.get('metadataName');
-        var request = this.getRequestHash(datasetName, analysisName, metadataName);
-        
-        this.dataModel.submitQueryByHash(
-            request,
-            function callback(data) {
-                var documents = data.datasets[datasetName].analyses[analysisName].documents;
-                var formattedDocData = this.formatDocumentData(documents, metadataName);
-                var metadataType = data.datasets[datasetName].document_metadata_types[metadataName];
-                this.model.set({ documents: formattedDocData.documents, documentNames: formattedDocData.documentNames });
-                this.model.set({ metadataName: metadataName, metadataType: metadataType });
-            }.bind(this),
-            function errorCallback(msg) {
-                this.renderError(msg);
-            }.bind(this)
-        );
-    },
-    
-    formatDocumentData: function formatDocumentData(documents, metadataName) {
-        var formatted = _.reduce(documents, function reducer(result, value, key) {
-            var temp = {};
-            temp['labeled'] = {};
-            var unlabeled = {};
-            unlabeled[metadataName] = value.metadata_predictions[metadataName];
-            temp['unlabeled'] = unlabeled;
-            temp['userLabeled'] = {};
-            temp['topics'] = value.topics;
-            var docElement = {
-                doc: key,
-                metadata: temp,
-            };
-            result['documents'].push(docElement);
-            result['documentNames'][key] = temp;
-            return result;
-        }, { documents: [], documentNames: {} });
-        return formatted;
     },
     
     //++++++++++++++++++++++++++++++++++++++++++++++++++    UPDATE VISUALIZATION    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
@@ -833,21 +953,23 @@ var MetadataMapView = DefaultView.extend({
     },
     
 /******************************************************************************
- *                           EVENT HANDLERS
+ *                           EVENT HANDLERS (DOM/Window)
  ******************************************************************************/
     
     events: {
-        "change #metadata-name-control": "changeMetadataType",
-        "change #document-value-control": "changeDocumentValue",
-        "click .document": "clickDocument",
-        "dblclick .document": "doubleClickDocument",
-        "click #save-changes": "clickSaveChanges",
-        "click #get-documents": "clickGetDocuments",
-        "mouseover .document": "mouseoverDocument",
-        "mouseout .document": "mouseoutDocument",
-        "mousedown .document": "mousedownDocument",
-        
         'click .metadata-map-redirect': 'clickRedirect',
+        
+        'change #document-value-control': 'changeDocumentValue',
+        
+        'click #save-changes': 'clickSaveChanges',
+        
+        'click .document': 'clickDocument',
+        'dblclick .document': 'doubleClickDocument',
+        
+        // Unused pie charts.
+        //~ 'mouseover .document': 'mouseoverDocument',
+        //~ 'mouseout .document': 'mouseoutDocument',
+        //~ 'mousedown .document': 'mousedownDocument',
     },
     
     clickRedirect: function clickRedirect(e) {
@@ -855,20 +977,16 @@ var MetadataMapView = DefaultView.extend({
     },
     
     /**
-     * Update the settings model.
+     * Save any updates to document metadata from the user to the server.
      */
-    changeMetadataType: function(e) {
-        var metadataType = e["target"]["value"];
-        this.settingsModel.set({
-            "name": metadataType,
-            "type": this.model.get("metadataTypes")[metadataType],
-        });
+    clickSaveChanges: function(e) {
+        alert("Saving not yet enabled.");
     },
     
     /**
      * Check the user input for valid input type. Update the settings model.
      */
-    changeDocumentValue: function(e) {
+    changeDocumentValue: function changeDocumentValue(e) {
         var docName = d3.select(this.el).select("#selected-document").text();
         var document = this.getDocumentByName(docName);
         if(document) {
@@ -883,8 +1001,6 @@ var MetadataMapView = DefaultView.extend({
             this.updateMap();
         }
     },
-    
-    
     
     /**
      * Update the document selection.
@@ -914,20 +1030,6 @@ var MetadataMapView = DefaultView.extend({
             this.updateDocumentSelection();
             this.updateMap();
         }
-    },
-    
-    /**
-     * Save any updates to document metadata from the user to the server.
-     */
-    clickSaveChanges: function(e) {
-        alert("Saving not yet enabled.");
-    },
-    
-    /**
-     * Get documents from the server.
-     */
-    clickGetDocuments: function(e) {
-        this.loadData();
     },
     
     /**
@@ -1013,15 +1115,35 @@ var MetadataMapView = DefaultView.extend({
         this.removePieCharts();
     },
     
-    resizeWindowEvent: function resizeWindowEvent() {
+    resizeWindowEvent: function resizeWindowEvent(e) {
 		var plotContainer = this.$el.find('#metadata-map-view');
 		var width = plotContainer.get(0).clientWidth;
 		var height = window.innerHeight*0.8;
 		var min = Math.min(width, height);
-        var svg = plotContainer.find('svg');
-        svg.attr('width', width);
-        svg.attr('height', width);
+        this.model.set({ svgWidth: min, svgHeight: min });
 	},
+
+/******************************************************************************
+ *                           EVENT HANDLERS (Model)
+ ******************************************************************************/
+    
+    changeSVGWidth: function updateSVGWidth() {
+        var svg = this.$el.find('#metadata-map-view').find('svg');
+        svg.attr('width', this.model.get('svgWidth'));
+    },
+    
+    changeSVGHeight: function updateSVGHeight() {
+        var svg = this.$el.find('#metadata-map-view').find('svg');
+        svg.attr('height', this.model.get('svgHeight'));
+    },
+    
+    changeDocumentSelection: function changeDocumentSelection() {
+        var docName = this.selectionModel.get("document");
+        if(docName === '') {
+            docName = 'No document selected.';
+        }
+        this.$el.find('#selected-document').text(docName);
+    },
     
     
     //++++++++++++++++++++++++++++++++++++++++++++++++++    GETTERS/SETTERS/HELPERS    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
