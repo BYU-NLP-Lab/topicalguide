@@ -742,7 +742,7 @@ var tg = new function() {
             options = _.extend({}, defaults, options);
             
             // Set the range.
-            options.xScale.range([0, options.height]);
+            options.xScale.range([0, options.width]);
             options.yScale.range([options.height, 0]);
             var line = d3.svg.line()
                 .interpolate(options.interpolate)

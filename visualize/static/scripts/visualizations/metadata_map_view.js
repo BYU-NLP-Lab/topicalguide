@@ -48,8 +48,8 @@ var MetadataMapView = DefaultView.extend({
 '   <hr />'+
 '   <div>'+
 '       <button id="save-changes" class="btn btn-default">Save Changes</button>'+
-'       <br/><br/>'+
-'       <button id="get-documents" class="btn btn-default">Get Documents</button>'+
+//~ '       <br/><br/>'+
+//~ '       <button id="get-documents" class="btn btn-default">Get Documents</button>'+
 '   </div>'+
 '</div>',
     
@@ -69,7 +69,7 @@ var MetadataMapView = DefaultView.extend({
         this.model.set({
             // The document data.
             documents: [], // Array of objects { doc: "docname", metadata: { labeled: {}, unlabeled: {}, userLabeled: {} } }
-            documentNames: {}, // Object acting as a set of document names
+            documentNames: {}, // Map document names to their information
             metadataName: '',
             metadataType: '',
             
@@ -152,10 +152,6 @@ var MetadataMapView = DefaultView.extend({
                     this.renderError(msg);
                 }.bind(this)
             );
-            
-            //~ this.renderMap();
-			//~ this.loadData();
-            //~ this.resizeWindowEvent();
         } else {
 			this.$el.html(this.redirectTemplate);
         }
@@ -172,20 +168,196 @@ var MetadataMapView = DefaultView.extend({
  *                           HELPER METHODS
  ******************************************************************************/
 
+    /**
+     * Gathers all of the data to render each component of the metadata map.
+     */
     renderGroupHierarchy: function renderGroupHierarchy() {
+        var that = this;
+        
         var distribution = this.$el.find('#metadata-map-distribution');
         var labeled = this.$el.find('#metadata-map-labeled');
         var xaxis = this.$el.find('#metadata-map-xaxis');
         var documents = this.$el.find('#metadata-map-documents');
-        tg.gen.createLineGraph(labeled.get(0), {});
-        this.createLabeledArea(labeled.get(0), {});
-        this.createXAxis(xaxis.get(0), {});
-        this.createDocuments(documents.get(0), {});
+        
+        var width = this.model.get('width');
+        var height = this.model.get('height');
+        var metadataName = this.model.get('metadataName');
+        var metadataType = this.model.get('metadataType');
+        
+        var boxThickness = 1.5;
+        var extraBuffering = 1.5;
+        var docWidth = 20;
+        var docHeight = 20;
+        var sideBuffer = boxThickness + extraBuffering + docWidth/2;
+        var xAxisWidth = width - 2*sideBuffer;
+        var transitionDuration = 600;
+        var xScale = this.createAxisScale(metadataName, metadataType, xAxisWidth);
+        console.log(xScale.domain());
+        
+        var xAxisLabel = this.model.get('metadataName');
+        
+        var componentBuffer = 5;
+        var distH = 200;
+        var labeledH = boxThickness + extraBuffering + docHeight;
+        var distY = 0;
+        var labeledY = distH + componentBuffer + labeledH/2;
+        var xAxisY = labeledY + componentBuffer + labeledH/2;
+        
+        var distData = that.getTopicDistributionData();
+        console.log(distData);
+        var distDataNameKeys = _.reduce(distData, function (r, v, k) { r.push(k); return r; }, []);
+        var distColorScale = tg.color.getDiscreteColorScale(distDataNameKeys, tg.color.pastels);
+        var distYScale = d3.scale.linear().domain([distData.min, distData.max]);
+        
+        distribution.attr('transform', 'translate('+sideBuffer+','+distY+')');
+        labeled.attr('transform', 'translate('+sideBuffer+','+labeledY+')');
+        xaxis.attr('transform', 'translate('+sideBuffer+','+xAxisY+')');
+        
+        tg.gen.createLineGraph(distribution.get(0), {
+            interpolate: 'linear', 
+            height: distH,
+            width: xAxisWidth,
+            xScale: xScale,
+            yScale: distYScale,
+            data: distData.lines,
+            colorScale: distColorScale,
+            lineFunction: function(d, i) {
+                d3.select(this)
+                    .attr('data-tg-topic-number', d.name)
+                    .classed('tg-tooltip', true);
+            },
+            transitionDuration: transitionDuration,
+        });
+        this.createLabeledArea(labeled.get(0), {
+            width: xAxisWidth,
+            docWidth: docWidth,
+            docHeight: docHeight,
+            boxThickness: boxThickness,
+            extraBuffering: extraBuffering,
+            duration: transitionDuration,
+        });
+        this.createXAxis(xaxis.get(0), {
+            width: xAxisWidth,
+            xScale: xScale,
+            duration: transitionDuration - 200,
+            label: xAxisLabel,
+            doneTransitioningCallback: function() {
+                console.log('Done transitioning xaxis.');
+                var xAxisH = that.getXAxisHeight(xaxis.get(0));
+                var docQueueY = xAxisY + xAxisH + componentBuffer;
+                documents.attr('transform', 'translate('+sideBuffer+','+docQueueY+')');
+                that.createDocuments(documents.get(0), {
+                    
+                });
+            },
+        });
+        
+    },
+    
+    getTopicDistributionData: function getTopicDistributionData() {
+        var that = this;
+        var selectedTopic = '0';
+        var metadataName = this.model.get('metadataName');
+        var rawData = this.model.get('documentNames');
+        var result = [
+            { name: selectedTopic, points: [] },
+        ];
+        for(var docName in rawData) {
+            var docData = rawData[docName]
+            var topics = docData.topics;
+            for(var index in result) {
+                var obj = result[index];
+                // TODO change this back to using labeled data only
+                if(topics[obj.name] !== undefined && metadataName in docData.unlabeled) {
+                    obj.points.push([docData.unlabeled[metadataName][1], topics[obj.name]]);
+                }
+            }
+        }
+        _.forEach(result, function(val) {
+            this.sortPoints(val.points);
+        }, this);
+        
+        var pts = result[0].points;
+        var sum = _.reduce(pts, function(r, v) { r += v[1]; return r; }, 0);
+        pts = _.map(pts, function(v) { return [v[0], v[1]/sum]; });
+        result[0].points = that.kernelDensityEstimation(pts, [pts[0][0],pts[pts.length-1][0],100], that.getH(pts), that.epanechnikovKernel);
+        var max = _.reduce(result, function(tempR, line) {
+            var tempMax = _.reduce(line.points, function(r, val) { return r > val[1]? r: val[1]; }, 0);
+            return tempR > tempMax? tempR: tempMax;
+        }, 0);
+        
+        return {
+            lines: result,
+            min: 0,
+            max: max,
+        };
     },
 
 /******************************************************************************
  *                             PURE FUNCTIONS
  ******************************************************************************/
+    
+    /**
+     * Modifies the points array in place.
+     */
+    sortPoints: function sortPoints(points) {
+        points.sort(function(a, b) { return a[0] - b[0]; });
+    },
+    
+    /**
+     * Choosing the right bandwidth is the hardest part of kernel density estimation.
+     * See "Practical estimation of the bandwidth"
+     * at https://en.wikipedia.org/wiki/Kernel_density_estimation
+     */
+    getH: function getH(pts) {
+        var n = pts.length;
+        var mean = _.reduce(pts, function(r, p) { return r + p[0]; }, 0)/n;
+        var o = Math.sqrt(_.reduce(pts, function(r, p) { 
+            var val = p[0] - mean;
+            return r + val*val;
+        }, 0)/n);
+        return 1.06*o*Math.pow(n, -1/5);
+    },
+    
+    /**
+     * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+     */
+    epanechnikovKernel: function epanechnikovKernel(u) {
+        return Math.abs(u) <= 1? 0.75*(1 - u*u): 0;
+    },
+    
+    /**
+     * See https://en.wikipedia.org/wiki/Kernel_density_estimation
+     * 
+     * points -- your list of [x, y] pairs
+     * lhs -- [low, high, stepCount]; specifies how many points to generate
+     *          low -- the low end of the range
+     *          high -- the high end of the range
+     *          stepCount -- the number of points you want to generate
+     * h -- h > 0; smoothing parameter (bandwidth)
+     * K -- the kernel function K(x)
+     * Return new list of points.
+     */
+    kernelDensityEstimation: function kernelDensityEstimation(points, lhs, h, K) {
+        var n = points.length;
+        var inv_nh = 1/(n*h);
+        function f_h(x) {
+            return inv_nh*_.reduce(points, function(result, xy) {
+                result += K((x-xy[0])/h);
+                //~ console.log(result);
+                return result;
+            }, 0);
+        }
+        var newPoints = [];
+        var newX = lhs[0];
+        var step = (lhs[1]-lhs[0])/(lhs[2]-1);
+        while(newX < lhs[1]) {
+            newY = f_h(newX);
+            newPoints.push([newX, newY]);
+            newX += step;
+        }
+        return newPoints;
+    },
 
     getRequestHash: function getRequestHash(datasetName, analysisName, metadataName) {
         return {
@@ -296,6 +468,8 @@ var MetadataMapView = DefaultView.extend({
         
         var xAxis = d3.svg.axis().scale(o.xScale).orient('bottom');
         
+        
+        
         // Create/select if needed.
         var xAxisGroup = d3.select(g)
             .style({ 'fill': 'none', 'stroke': 'black', 'stroke-width': '1.3px', 'shape-rendering': 'crispedges' });
@@ -343,9 +517,59 @@ var MetadataMapView = DefaultView.extend({
         }
     },
     
+    getXAxisHeight: function getXAxisHeight(g) {
+        //~ var tickHeight = d3.select(g).selectAll('.domain')[0][0].getBBox().height;
+        //~ var tickTextHeight = d3.select(g).selectAll('.tick').selectAll('text')[0][0].getBBox().height;
+        //~ var labelHeight = d3.select(g).selectAll('.xaxis-label')[0][0].getBBox().height;
+        //~ return tickHeight + tickTextHeight + labelHeight;
+        return g.getBBox().height;
+    },
     
-    
-    
+    createDocuments: function createDocuments(g, options) {
+        var defaults = {
+            labeledY: -100,
+            width: 600,
+            xScale: d3.scale.linear().domain([0, 1]),
+            data: [], // documents, both labeled and unlabeled
+            show: function(d, i) { return true; },
+            isLabeled: function(d, i) { return true; },
+        };
+        
+        var group = d3.select(g);
+        
+        var groupsData = ['red-line-group', 'documents-only-group'];
+        var documents = group.selectAll('g')
+            .data(groupsData)
+            .enter()
+            .append('g')
+            .classed(function(d) { return d; }, true)
+            .each(function(d) {
+                if(d === groupsData[0]) { // Make sure the red line stuff is setup the first time.
+                    var grp = d3.select(this);
+                    grp.attr("id", "red-line-group")
+                        .style({ "display": "none" })
+                    grp.append('line')
+                        .attr("id", "red-line")
+                        .style({ "fill": "none", "stroke": "red", "stroke-width": "1.5px", "shape-rendering": "crispedges" })
+                        .attr("x1", 0)
+                        .attr("y1", 0)
+                        .attr("x2", 0)
+                        .attr("y2", 0);
+                    grp.append("circle")
+                        .attr("id", "red-dot")
+                        .attr("r", 2)
+                        .attr("cx", 0)
+                        .attr("cy", 0)
+                        .style({ "fill": "red" });
+                }
+            });
+        
+        var redLineGroup = group.select('.'+groupsData[0]);
+        var documentsGroup = group.select('.'+groupsData[1]);
+        
+        
+        
+    },
     
     /**
      * Create the svg component, axis component, and any other needed components.
