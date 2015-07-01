@@ -1,4 +1,4 @@
-// TODO 'use strict';
+'use strict';
 
 /**
  * update methods read the model (respond to model updates) and update the display accordingly
@@ -43,7 +43,7 @@ var MetadataMapView = DefaultView.extend({
 '   </div>'+
 '   <div>'+
 '       <label for="document-value-control">Value:</label>'+
-'       <input id="document-value-control" type="text" class="form-control" name="Value" placeholder="Enter value"></select>'+
+'       <input id="document-value-control" type="text" class="form-control" name="Value" placeholder="Enter value"></input>'+
 '   </div>'+
 '   <hr />'+
 '   <h4><b>Server Requests</b></h4>'+
@@ -74,6 +74,9 @@ var MetadataMapView = DefaultView.extend({
             documentNames: {}, // Map document names to their information
             metadataName: '',
             metadataType: '',
+            
+            // For all topics
+            topicColorScale: tg.color.getDiscreteColorScale(['0', '1', '2'], tg.color.pastels),
             
             // Dimensions of svg element
             svgWidth: 800,
@@ -146,10 +149,10 @@ var MetadataMapView = DefaultView.extend({
                     this.changeDocumentSelection();
                     
                     var documents = data.datasets[datasetName].analyses[analysisName].documents;
-                    var formattedDocData = this.formatDocumentData(documents, metadataName);
+                    var formattedData = this.formatData(documents, metadataName);
                     var metadataType = data.datasets[datasetName].document_metadata_types[metadataName];
                     this.model.set({ metadataName: metadataName, metadataType: metadataType });
-                    this.model.set({ documents: formattedDocData.documents, documentNames: formattedDocData.documentNames });
+                    this.model.set({ documents: formattedData.documents, documentNames: formattedData.documentNames, topicColorScale: formattedData.topicColorScale });
                 }.bind(this),
                 function errorCallback(msg) {
                     this.renderError(msg);
@@ -187,6 +190,8 @@ var MetadataMapView = DefaultView.extend({
         var metadataName = this.model.get('metadataName');
         var metadataType = this.model.get('metadataType');
         var documentData = this.model.get('documents');
+        var topicColorScale = this.model.get('topicColorScale');
+        var selectedDocument = this.selectionModel.get('document');
         
         var boxThickness = 1.5;
         var extraBuffering = 1.5;
@@ -207,8 +212,6 @@ var MetadataMapView = DefaultView.extend({
         var xAxisY = labeledY + componentBuffer + labeledH/2;
         
         var distData = that.getTopicDistributionData(xScale.domain());
-        var distDataNameKeys = _.reduce(distData, function (r, v, k) { r.push(k); return r; }, []);
-        var distColorScale = tg.color.getDiscreteColorScale(distDataNameKeys, tg.color.pastels);
         var distYScale = d3.scale.linear().domain([distData.min, distData.max]);
         
         distribution.attr('transform', 'translate('+sideBuffer+','+distY+')');
@@ -222,7 +225,7 @@ var MetadataMapView = DefaultView.extend({
             xScale: xScale,
             yScale: distYScale,
             data: distData.lines,
-            colorScale: distColorScale,
+            colorScale: topicColorScale,
             lineFunction: function(d, i) {
                 d3.select(this)
                     .attr('data-tg-topic-number', d.name)
@@ -252,18 +255,21 @@ var MetadataMapView = DefaultView.extend({
                     width: xAxisWidth,
                     docWidth: docWidth,
                     docHeight: docHeight,
+                    selectedDocument: selectedDocument,
                     maxQueueLength: 20,
                     xScale: xScale,
                     metadataName: metadataName,
                     metadataType: metadataType,
                     data: documentData,
                     updatedDocumentValue: function(d, i) {
-                        // TODO figure out how to update the topic distribution in real time
                         that.redrawDistribution()
                         that.updateDocumentSelection();
                     },
                     doneDragging: function() {
                         that.renderGroupHierarchy();
+                    },
+                    selectedDocumentFunction: function(d, i) {
+                        that.selectionModel.set({ document: d.name });
                     },
                 });
             },
@@ -275,9 +281,13 @@ var MetadataMapView = DefaultView.extend({
      */
     redrawDistribution: function redrawDistribution() {
         var distribution = this.$el.find('#metadata-map-distribution');
+        
         var that = this;
+        
         var metadataName = this.model.get('metadataName');
         var metadataType = this.model.get('metadataType');
+        var topicColorScale = this.model.get('topicColorScale');
+        
         var xScale = this.createAxisScale(metadataName, metadataType, xAxisWidth);
         var distH = 200;
         var width = this.model.get('width');
@@ -287,9 +297,8 @@ var MetadataMapView = DefaultView.extend({
         var sideBuffer = boxThickness + extraBuffering + docWidth/2;
         var xAxisWidth = width - 2*sideBuffer;
         var distData = that.getTopicDistributionData(xScale.domain());
-        var distDataNameKeys = _.reduce(distData, function (r, v, k) { r.push(k); return r; }, []);
-        var distColorScale = tg.color.getDiscreteColorScale(distDataNameKeys, tg.color.pastels);
         var distYScale = d3.scale.linear().domain([distData.min, distData.max]);
+        
         tg.gen.createLineGraph(distribution.get(0), {
             interpolate: 'linear', 
             height: distH,
@@ -297,7 +306,7 @@ var MetadataMapView = DefaultView.extend({
             xScale: xScale,
             yScale: distYScale,
             data: distData.lines,
-            colorScale: distColorScale,
+            colorScale: topicColorScale,
             lineFunction: function(d, i) {
                 d3.select(this)
                     .attr('data-tg-topic-number', d.name)
@@ -308,7 +317,6 @@ var MetadataMapView = DefaultView.extend({
     },
     
     getTopicDistributionData: function getTopicDistributionData(xDomain) {
-        console.log(xDomain);
         var that = this;
         var selectedTopic = this.selectionModel.get('topic');
         var metadataName = this.model.get('metadataName');
@@ -319,7 +327,7 @@ var MetadataMapView = DefaultView.extend({
             return { lines: { name: '', points: zeros }, min: 0, max: 1 };
         }
         var result = [
-            { name: selectedTopic, points: [] }, // TODO use selected topic
+            { name: selectedTopic, points: [] },
             //~ { name: '1', points: [] },
             //~ { name: '2', points: [] },
             //~ { name: '3', points: [] },
@@ -345,13 +353,11 @@ var MetadataMapView = DefaultView.extend({
         _.forEach(result, function(val) {
             this.sortPoints(val.points);
             var pts = val.points;
-            console.log(pts);
             var tokenTotal = _.reduce(pts, function(r, v) { r += v[1]; return r; }, 0); // Count tokens (y values).
             pts = _.map(pts, function(v) { return [v[0], v[1]/tokenTotal]; }); // Normalize y values.
             if(pts.length === 0) {
                 val.points = [];
             } else {
-                console.log(tg.lines.getH(pts));
                 //~ val.points = tg.lines.kernelDensityEstimation(pts, [pts[0][0], pts[pts.length-1][0], 100], tg.lines.getH(pts), tg.lines.triweightKernel);
                 val.points = tg.lines.kernelDensityEstimation(pts, [xDomain[0], xDomain[1], 100], tg.lines.getH(pts), tg.lines.epanechnikovKernel);
             }
@@ -393,7 +399,7 @@ var MetadataMapView = DefaultView.extend({
         };
     },
     
-    formatDocumentData: function formatDocumentData(documents, metadataName) {
+    formatData: function formatData(documents, metadataName) {
         var formatted = _.reduce(documents, function reducer(result, value, key) {
             var temp = {};
             temp['labeled'] = {};
@@ -411,7 +417,15 @@ var MetadataMapView = DefaultView.extend({
             result['documentNames'][key] = temp;
             return result;
         }, { documents: [], documentNames: {} });
-        //~ formatted.documents = [formatted.documents[0]];
+        // Extract all topic numbers present and create a color scale for them.
+        var topicNumbers = _.reduce(formatted.documents, function(result, docObj, index) {
+            var topicKeys = docObj.metadata.topics;
+            result = _.assign({}, result, topicKeys);
+            return result;
+        }, {});
+        var allTopics = Object.keys(topicNumbers);
+        allTopics.sort();
+        formatted.topicColorScale = tg.color.getDiscreteColorScale(allTopics, tg.color.pastels);
         return formatted;
     },
     
@@ -567,12 +581,14 @@ var MetadataMapView = DefaultView.extend({
             xScale: d3.scale.linear().domain([0, 1]),
             // documents, both labeled and unlabeled
             metadataName: '',
+            metadataType: 'int',
+            selectedDocument: 'some name',
             data: [
                 {
                     name: 'some name', 
                     metadata: {
                         labeled: { 
-                            //~ '': 0.50,
+                            //~ '': 0.50, // metadataName => value
                         },
                         unlabeled: {
                             '': [0.2, 0.4, 0.55],
@@ -581,13 +597,22 @@ var MetadataMapView = DefaultView.extend({
                             //~ '': 0.6,
                         },
                     }, 
-                    queuePos: 0,
+                    queuePos: 0, // Assigned by this method.
                 }
             ], 
             updatedDocumentValue: function(d, i) {
             },
             doneDragging: function() {},
+            selectedDocumentFunction: function(d, i) {},
             duration: 600,
+        };
+        
+        var displayNum = function(n) {
+            if(o.metadataType === 'int') {
+                return Math.round(n).toString();
+            } else {
+                return n.toPrecision(2);
+            }
         };
         
         var o = _.extend({}, defaults, options);
@@ -601,6 +626,7 @@ var MetadataMapView = DefaultView.extend({
             return o.metadataName in d.metadata.userLabeled;
         };
         
+        // Looser check than isLabeled as userLabeled is acceptable.
         var isLabeled2 = function isLabeled2(d, i) {
             return isLabeled(d, i) || isUserLabeled(d, i);
         };
@@ -635,6 +661,42 @@ var MetadataMapView = DefaultView.extend({
             }
         };
         
+        var getDocumentOpacity = function getDocumentOpacity(d, i) {
+            if(isLabeled2(d, i)) {
+                return 1;
+            } else if(d.queuePos < o.maxQueueLength) { // Scale to be between 0.2 and 0.8
+                return 0.6 * (1/(o.maxQueueLength - d.queuePos)) + 0.2;
+            } else {
+                return 0;
+            }
+        };
+        
+        var documentOutlineColor = function documentOutlineColor(d, i) {
+            if(d.name !== o.selectedDocument) {
+                return null;
+            } else {
+                return 'red';
+            }
+        };
+        
+        var documentOutlineWidth = function documentOutlineColor(d, i) {
+            if(d.name !== o.selectedDocument) {
+                return 0;
+            } else {
+                return '1.5px';
+            }
+        };
+        
+        // Assign each document a queue position.
+        var docsToAssignPosition = _.filter(o.data, function(d, i) { return !isLabeled2(d, i); });
+        var sortedDocuments = _.sortBy(docsToAssignPosition, function(d, i) {
+            var range = d.metadata.unlabeled[o.metadataName];
+            return range[0] - range[2];
+        });
+        _.forEach(sortedDocuments, function(d, i) {
+            d.queuePos = i;
+        });
+        
         var group = d3.select(g);
         
         var groupsData = ['red-line-group', 'documents-only-group'];
@@ -645,21 +707,26 @@ var MetadataMapView = DefaultView.extend({
             .each(function(d) {
                 if(d === groupsData[0]) { // Make sure the red line stuff is setup the first time.
                     var grp = d3.select(this);
-                    grp.attr("id", "red-line-group")
-                        .style({ "display": "none" })
+                    grp.attr('id', 'red-line-group')
+                        .style({ 'display': 'none' })
                     grp.append('line')
-                        .attr("id", "red-line")
-                        .style({ "fill": "none", "stroke": "red", "stroke-width": "1.5px", "shape-rendering": "crispedges" })
-                        .attr("x1", 0)
-                        .attr("y1", 0)
-                        .attr("x2", 0)
-                        .attr("y2", 0);
-                    grp.append("circle")
-                        .attr("id", "red-dot")
-                        .attr("r", 2)
-                        .attr("cx", 0)
-                        .attr("cy", 0)
-                        .style({ "fill": "red" });
+                        .attr('id', 'red-line')
+                        .style({ 'fill': 'none', 'stroke': 'red', 'stroke-width': '1.5px', 'shape-rendering': 'crispedges' })
+                        .attr('x1', 0)
+                        .attr('y1', 0)
+                        .attr('x2', 0)
+                        .attr('y2', 0);
+                    grp.append('circle')
+                        .attr('id', 'red-dot')
+                        .attr('r', 2)
+                        .attr('cx', 0)
+                        .attr('cy', 0)
+                        .style({ 'fill': 'red' });
+                    grp.append('text')
+                        .attr('x', 0)
+                        .attr('y', 0)
+                        .style({ 'text-anchor': 'after-edge', 'stroke-width': '0px', 'stroke': 'red', 'fill': 'red' })
+                        .text('');
                 }
                 d3.select(this)
                     .classed(d, true);
@@ -680,6 +747,7 @@ var MetadataMapView = DefaultView.extend({
             .style('display', 'none')
             .each(function(d) {
                 var grp = d3.select(this);
+                grp.attr('data-tg-document-name', d.name);
                 grp.append('circle')
                     .classed('doc-circle', true)
                     .attr('r', o.docWidth/2)
@@ -730,12 +798,20 @@ var MetadataMapView = DefaultView.extend({
                 return 'translate('+x+','+y+')';
             })
             .style('fill', getDocumentColor)
-            .style('stroke', getDocumentColor);
+            .style('stroke', getDocumentColor)
+            .style('opacity', getDocumentOpacity);
         var docCircles = singleDocGroups.selectAll('.doc-circle');
         docCircles.transition().duration(o.duration)
             .attr('r', o.docWidth/2);
         
-        var updateRedLineGroup = function updateRedLineGroup(x, yUnlabeled) {
+        var changeSelectedCircle = function changeSelectedCircle(allDocCircles) {
+            allDocCircles.style('stroke-width', documentOutlineWidth)
+                .style('stroke', documentOutlineColor);
+        };
+        
+        changeSelectedCircle(docCircles);
+        
+        var updateRedLineGroup = function updateRedLineGroup(x, yUnlabeled, text) {
             redLineGroup.select('line')
                 .attr("x1", x)
                 .attr("y1", yUnlabeled)
@@ -744,6 +820,11 @@ var MetadataMapView = DefaultView.extend({
             redLineGroup.select('circle')
                 .attr("cx", x)
                 .attr("cy", o.labeledY);
+            redLineGroup.select('text')
+                .attr('y', o.labeledY)
+                .attr('x', x + 4)
+                .text(text);
+            
         };
         
         var translateToXY = function(s) {
@@ -771,19 +852,19 @@ var MetadataMapView = DefaultView.extend({
                 dragging = true;
                 
                 // Treat as a click event and set the document appropriately
-                var documentName = d3.select(this).attr("data-document-name");
-                if(documentName) {
-                    that.selectionModel.set({ document: documentName });
-                }
+                o.selectedDocumentFunction(d, i);
+                o.selectedDocument = d.name;
+                changeSelectedCircle(docCircles);
                 
                 collapseWhiskers(grp);
                 
-                // Initialize the red line
-                redLineGroup.style({ "display": null });
-                updateRedLineGroup(x, y);
-                
                 var newValue = o.xScale.invert(x);
                 d.metadata.userLabeled[o.metadataName] = newValue;
+                
+                // Initialize the red line
+                redLineGroup.style({ "display": null });
+                updateRedLineGroup(x, y, displayNum(newValue));
+                
                 o.updatedDocumentValue(d);
             })
             .on('drag', function(d, i) {
@@ -810,12 +891,11 @@ var MetadataMapView = DefaultView.extend({
                 
                 // Update the red line
                 redLineGroup.style({ 'display': null });
-                updateRedLineGroup(x, y);
+                updateRedLineGroup(x, y, displayNum(newValue));
                 o.updatedDocumentValue(d);
             })
             .on('dragend', function(d, i) {
                 d3.event.sourceEvent.stopPropagation();
-                
                 
                 // Snap circle to a location
                 if(dragging) {
@@ -826,7 +906,6 @@ var MetadataMapView = DefaultView.extend({
                         //~ newValue = Math.round(newValue);
                     //~ }
                     d.metadata.userLabeled[o.metadataName] = newValue;
-                    // TODO update the map
                 }
                 dragging = false;
                 
@@ -1153,6 +1232,7 @@ var MetadataMapView = DefaultView.extend({
             docName = 'No document selected.';
         }
         this.$el.find('#selected-document').text(docName);
+        this.changeDocumentValue();
     },
     
     
