@@ -1,3 +1,5 @@
+// TODO 'use strict';
+
 /**
  * update methods read the model (respond to model updates) and update the display accordingly
  * change/click methods respond to user interaction and change the models triggering the appropriate events
@@ -183,6 +185,8 @@ var MetadataMapView = DefaultView.extend({
         var height = this.model.get('height');
         var metadataName = this.model.get('metadataName');
         var metadataType = this.model.get('metadataType');
+        var documentData = this.model.get('documents');
+        console.log(documentData);
         
         var boxThickness = 1.5;
         var extraBuffering = 1.5;
@@ -247,20 +251,40 @@ var MetadataMapView = DefaultView.extend({
                 var docQueueY = xAxisY + xAxisH + componentBuffer;
                 documents.attr('transform', 'translate('+sideBuffer+','+docQueueY+')');
                 that.createDocuments(documents.get(0), {
-                    
+                    labeledY: labeledY - docQueueY,
+                    width: xAxisWidth,
+                    docWidth: docWidth,
+                    docHeight: docHeight,
+                    maxQueueLength: 20,
+                    xScale: xScale,
+                    metadataName: metadataName,
+                    metadataType: metadataType,
+                    data: documentData,
+                    doneDragging: function() {
+                        that.renderGroupHierarchy();
+                    },
                 });
             },
         });
-        
     },
     
     getTopicDistributionData: function getTopicDistributionData() {
         var that = this;
-        var selectedTopic = '0';
+        var selectedTopic = this.selectionModel.get('topic');
         var metadataName = this.model.get('metadataName');
         var rawData = this.model.get('documentNames');
+        if(selectedTopic === '') {
+            return { lines: [], min: 0, max: 1 };
+        }
         var result = [
-            { name: selectedTopic, points: [] },
+            { name: '0', points: [] }, // TODO use selected topic
+            //~ { name: '1', points: [] },
+            //~ { name: '2', points: [] },
+            //~ { name: '3', points: [] },
+            //~ { name: '4', points: [] },
+            //~ { name: '5', points: [] },
+            //~ { name: '6', points: [] },
+            //~ { name: '7', points: [] },
         ];
         for(var docName in rawData) {
             var docData = rawData[docName]
@@ -268,19 +292,19 @@ var MetadataMapView = DefaultView.extend({
             for(var index in result) {
                 var obj = result[index];
                 // TODO change this back to using labeled data only
-                if(topics[obj.name] !== undefined && metadataName in docData.unlabeled) {
-                    obj.points.push([docData.unlabeled[metadataName][1], topics[obj.name]]);
+                if(topics[obj.name] !== undefined && metadataName in docData.labeled) {
+                    obj.points.push([docData.labeled[metadataName][1], topics[obj.name]]);
                 }
             }
         }
         _.forEach(result, function(val) {
             this.sortPoints(val.points);
+            var pts = val.points;
+            var tokenTotal = _.reduce(pts, function(r, v) { r += v[1]; return r; }, 0); // Count tokens (y values).
+            pts = _.map(pts, function(v) { return [v[0], v[1]/tokenTotal]; }); // Normalize y values.
+            val.points = tg.lines.kernelDensityEstimation(pts, [pts[0][0],pts[pts.length-1][0],100], tg.lines.getH(pts), tg.lines.epanechnikovKernel);
         }, this);
         
-        var pts = result[0].points;
-        var sum = _.reduce(pts, function(r, v) { r += v[1]; return r; }, 0);
-        pts = _.map(pts, function(v) { return [v[0], v[1]/sum]; });
-        result[0].points = that.kernelDensityEstimation(pts, [pts[0][0],pts[pts.length-1][0],100], that.getH(pts), that.epanechnikovKernel);
         var max = _.reduce(result, function(tempR, line) {
             var tempMax = _.reduce(line.points, function(r, val) { return r > val[1]? r: val[1]; }, 0);
             return tempR > tempMax? tempR: tempMax;
@@ -304,61 +328,6 @@ var MetadataMapView = DefaultView.extend({
         points.sort(function(a, b) { return a[0] - b[0]; });
     },
     
-    /**
-     * Choosing the right bandwidth is the hardest part of kernel density estimation.
-     * See "Practical estimation of the bandwidth"
-     * at https://en.wikipedia.org/wiki/Kernel_density_estimation
-     */
-    getH: function getH(pts) {
-        var n = pts.length;
-        var mean = _.reduce(pts, function(r, p) { return r + p[0]; }, 0)/n;
-        var o = Math.sqrt(_.reduce(pts, function(r, p) { 
-            var val = p[0] - mean;
-            return r + val*val;
-        }, 0)/n);
-        return 1.06*o*Math.pow(n, -1/5);
-    },
-    
-    /**
-     * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
-     */
-    epanechnikovKernel: function epanechnikovKernel(u) {
-        return Math.abs(u) <= 1? 0.75*(1 - u*u): 0;
-    },
-    
-    /**
-     * See https://en.wikipedia.org/wiki/Kernel_density_estimation
-     * 
-     * points -- your list of [x, y] pairs
-     * lhs -- [low, high, stepCount]; specifies how many points to generate
-     *          low -- the low end of the range
-     *          high -- the high end of the range
-     *          stepCount -- the number of points you want to generate
-     * h -- h > 0; smoothing parameter (bandwidth)
-     * K -- the kernel function K(x)
-     * Return new list of points.
-     */
-    kernelDensityEstimation: function kernelDensityEstimation(points, lhs, h, K) {
-        var n = points.length;
-        var inv_nh = 1/(n*h);
-        function f_h(x) {
-            return inv_nh*_.reduce(points, function(result, xy) {
-                result += K((x-xy[0])/h);
-                //~ console.log(result);
-                return result;
-            }, 0);
-        }
-        var newPoints = [];
-        var newX = lhs[0];
-        var step = (lhs[1]-lhs[0])/(lhs[2]-1);
-        while(newX < lhs[1]) {
-            newY = f_h(newX);
-            newPoints.push([newX, newY]);
-            newX += step;
-        }
-        return newPoints;
-    },
-
     getRequestHash: function getRequestHash(datasetName, analysisName, metadataName) {
         return {
             datasets: datasetName,
@@ -382,8 +351,9 @@ var MetadataMapView = DefaultView.extend({
             temp['userLabeled'] = {};
             temp['topics'] = value.topics;
             var docElement = {
-                doc: key,
+                name: key,
                 metadata: temp,
+                queuePos: 0,
             };
             result['documents'].push(docElement);
             result['documentNames'][key] = temp;
@@ -529,10 +499,72 @@ var MetadataMapView = DefaultView.extend({
         var defaults = {
             labeledY: -100,
             width: 600,
+            docWidth: 10,
+            docHeight: 10,
+            maxQueueLength: 20,
             xScale: d3.scale.linear().domain([0, 1]),
-            data: [], // documents, both labeled and unlabeled
-            show: function(d, i) { return true; },
-            isLabeled: function(d, i) { return true; },
+            // documents, both labeled and unlabeled
+            metadataName: '',
+            data: [
+                {
+                    name: 'some name', 
+                    metadata: {
+                        labeled: { 
+                            //~ '': 0.50,
+                        },
+                        unlabeled: {
+                            '': [0.2, 0.4, 0.55],
+                        },
+                        userLabeled: {
+                            //~ '': 0.6,
+                        },
+                    }, 
+                    queuePos: 0,
+                }
+            ], 
+            show: function(d, i, metadataName, maxQueueLength) {
+                if(metadataName in d.metadata.labeled) {
+                    return true;
+                } else if(d.queuePos < maxQueueLength) {
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+            isLabeled: function(d, i, metadataName, maxQueueLength) {
+                return metadataName in d.metadata.labeled;
+            },
+            updatedDocumentValue: function(d, i) {
+            },
+            doneDragging: function() {},
+            duration: 600,
+        };
+        
+        var o = _.extend({}, defaults, options);
+        o.xScale = o.xScale.range([0, o.width]);
+        
+        var isLabeled = function isLabeled(d, i) {
+            return o.metadataName in d.metadata.labeled;
+        };
+        
+        var getValue = function getValue(d, i) {
+            if(isLabeled(d, i)) {
+                return d.metadata.labeled[o.metadataName];
+            } else {
+                return d.metadata.unlabeled[o.metadataName][1];
+            }
+        };
+        
+        var show = function show(d, i) {
+            return o.show(d, i, o.metadataName, o.maxQueueLength);
+        };
+        
+        var getDocumentColor = function getDocumentFill(d, i) {
+            if(isLabeled(d, i)) {
+                return 'blue';
+            } else {
+                return 'black';
+            }
         };
         
         var group = d3.select(g);
@@ -542,7 +574,6 @@ var MetadataMapView = DefaultView.extend({
             .data(groupsData)
             .enter()
             .append('g')
-            .classed(function(d) { return d; }, true)
             .each(function(d) {
                 if(d === groupsData[0]) { // Make sure the red line stuff is setup the first time.
                     var grp = d3.select(this);
@@ -562,13 +593,269 @@ var MetadataMapView = DefaultView.extend({
                         .attr("cy", 0)
                         .style({ "fill": "red" });
                 }
+                d3.select(this)
+                    .classed(d, true);
             });
         
         var redLineGroup = group.select('.'+groupsData[0]);
         var documentsGroup = group.select('.'+groupsData[1]);
         
+        // Create whisker lines
+        var singleDocGroups = documentsGroup.selectAll('.metadata-map-document')  
+            .data(o.data);
+        // Remove anything that doesn't belong
+        singleDocGroups.exit().remove();
+        // Initialize entering documents
+        singleDocGroups.enter()
+            .append('g')
+            .classed('metadata-map-document', true)
+            .style('display', 'none')
+            .each(function(d) {
+                var grp = d3.select(this);
+                grp.append('circle')
+                    .classed('doc-circle', true)
+                    .attr('r', o.docWidth/2)
+                    .attr('cx', 0)
+                    .attr('cy', 0)
+                    .attr('data-tg-document-name', function(d) { return d.name; })
+                    .classed('tg-tooltip tg-select pointer', true);
+                grp.append('line')
+                    .classed('whisker-line', true)
+                    .attr("x1", 0)
+                    .attr("y1", 0)
+                    .attr("x2", 0)
+                    .attr("y2", 0)
+                    .style({ 'stroke': 'black', 'stroke-width': '2px' });
+                grp.append('line')
+                    .classed('left-whisker-line', true)
+                    .attr("x1", 0)
+                    .attr("y1", 0)
+                    .attr("x2", 0)
+                    .attr("y2", 0)
+                    .style({ 'stroke': 'black', 'stroke-width': '2px' });
+                grp.append('line')
+                    .classed('right-whisker-line', true)
+                    .attr("x1", 0)
+                    .attr("y1", 0)
+                    .attr("x2", 0)
+                    .attr("y2", 0)
+                    .style({ 'stroke': 'black', 'stroke-width': '2px' });
+            });
         
+        // Transition documents to be where they should
+        singleDocGroups.transition().duration(o.duration)
+            .style('display', function(d, i) { 
+                if(o.show(d, i, o.metadataName, o.maxQueueLength)) {
+                    return null;
+                } else {
+                    return 'none';
+                }
+            })
+            .attr('transform', function(d, i) {
+                var x = o.xScale(getValue(d, i));
+                var y = 0;
+                if(isLabeled(d, i)) {
+                    y = o.labeledY;
+                    console.log(y);
+                } else {
+                    console.log(d);
+                    console.log(d.queuePos);
+                    console.log(o.docHeight);
+                    y = o.docHeight/2 + d.queuePos*o.docHeight;
+                }
+                return 'translate('+x+','+y+')';
+            })
+            .style('fill', getDocumentColor);
+        var docCircles = singleDocGroups.selectAll('.doc-circle');
+        docCircles.transition().duration(o.duration)
+            .attr('r', o.docWidth/2);
         
+        var updateRedLineGroup = function updateRedLineGroup(x, yUnlabeled) {
+            redLineGroup.select('line')
+                .attr("x1", x)
+                .attr("y1", yUnlabeled)
+                .attr("x2", x)
+                .attr("y2", o.labeledY);
+            redLineGroup.select('circle')
+                .attr("cx", x)
+                .attr("cy", o.labeledY);
+        };
+        
+        var translateToXY = function(s) {
+            return _.map(s.match(/[-]?[\d\.]+/g), function(v) { return parseFloat(v); });
+        };
+        
+        var dragging = false;
+        var circleDrag = d3.behavior.drag()
+            .on('dragstart',  function(d, i) {
+                d3.event.sourceEvent.stopPropagation();
+                var grp = d3.select(this);
+                var xy = translateToXY(grp.attr('transform'));
+                console.log(xy);
+                var x = xy[0];
+                var y = xy[1];
+                
+                dragging = true;
+                
+                // Treat as a click event and set the document appropriately
+                var documentName = d3.select(this).attr("data-document-name");
+                if(documentName) {
+                    that.selectionModel.set({ document: documentName });
+                }
+                // Initialize the red line
+                redLineGroup.style({ "display": null });
+                updateRedLineGroup(x, y);
+                o.updatedDocumentValue(d);
+            })
+            .on('drag', function(d, i) {
+                d3.event.sourceEvent.stopPropagation();
+                // Move circle
+                console.log(this);
+                var grp = d3.select(this);
+                var xy = translateToXY(grp.attr('transform'));
+                console.log(xy);
+                var x = xy[0];
+                var y = xy[1];
+                var dx = d3.event.dx;
+                var dy = d3.event.dy;
+                x = Math.max(x + dx, 0);
+                y = Math.max(y + dy, o.labeledY);
+                x = Math.min(x, o.width);
+                y = Math.min(y, o.docHeight*o.maxQueueLength);
+                grp.attr('transform', 'translate('+x+','+y+')');
+                
+                // Set value and update 'Selected Document' content
+                var newValue = o.xScale.invert(x);
+                //~ if(type === 'int') {
+                    //~ newValue = Math.round(newValue);
+                //~ }
+                d.metadata.userLabeled[o.metadataName] = newValue;
+                
+                // Update the red line
+                redLineGroup.style({ 'display': null });
+                updateRedLineGroup(x, y);
+                o.updatedDocumentValue(d);
+            })
+            .on('dragend', function(d, i) {
+                d3.event.sourceEvent.stopPropagation();
+                
+                
+                // Snap circle to a location
+                if(dragging) {
+                    var grp = d3.select(this);
+                    var x = translateToXY(grp.attr('transform'))[0];
+                    var newValue = o.xScale.invert(x);
+                    //~ if(type === 'int') {
+                        //~ newValue = Math.round(newValue);
+                    //~ }
+                    d.metadata.userLabeled[o.metadataName] = newValue;
+                    // TODO update the map
+                }
+                dragging = false;
+                
+                // Hide the red line group
+                redLineGroup.style({ 'display': 'none' });
+                
+                // Cause any necessary updates with regards to "Selected Document" area
+                o.updatedDocumentValue(d);
+                o.doneDragging();
+            })
+            .origin(function(d) { return d; });
+        singleDocGroups.call(circleDrag);
+        
+        var name = o.metadataName;
+        // Move whisker lines
+        singleDocGroups.selectAll('.whisker-line')
+            .transition().duration(400)
+            .attr("x1", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return o.xScale(datum.metadata.unlabeled[name][0]) - o.xScale(datum.metadata.unlabeled[name][1]);
+                }
+            })
+            .attr("x2", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return o.xScale(datum.metadata.unlabeled[name][2]) - o.xScale(datum.metadata.unlabeled[name][1]);
+                }
+            })
+            .style('display', function(d, i) {
+                return show(d, i)? null: 'none';
+            });
+        
+        // Move left whisker lines
+        singleDocGroups.selectAll('.left-whisker-line')
+            .transition()
+            .duration(400)
+            .attr("x1", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return o.xScale(datum.metadata.unlabeled[name][0]) - o.xScale(datum.metadata.unlabeled[name][1]);
+                }
+            })
+            .attr("y1", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return Math.ceil(o.docHeight/4);
+                }
+            })
+            .attr("x2", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return o.xScale(datum.metadata.unlabeled[name][0]) - o.xScale(datum.metadata.unlabeled[name][1]);
+                }
+            })
+            .attr("y2", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return -Math.ceil(o.docHeight/4);
+                }
+            })
+            .style('display', function(d, i) {
+                return show(d, i)? null: 'none';
+            });
+            
+        // Move right whisker lines
+        singleDocGroups.selectAll('.right-whisker-line')
+            .transition()
+            .duration(400)
+            .attr("x1", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return o.xScale(datum.metadata.unlabeled[name][2]) - o.xScale(datum.metadata.unlabeled[name][1]);
+                }
+            })
+            .attr("y1", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return Math.ceil(o.docHeight/4);
+                }
+            })
+            .attr("x2", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return o.xScale(datum.metadata.unlabeled[name][2]) - o.xScale(datum.metadata.unlabeled[name][1]);
+                }
+            })
+            .attr("y2", function(datum, i) {
+                if(isLabeled(datum, i)) {
+                    return 0;
+                } else {
+                    return -Math.ceil(o.docHeight/4);
+                }
+            })
+            .style('display', function(d, i) {
+                return show(d, i)? null: 'none';
+            });
     },
     
     /**

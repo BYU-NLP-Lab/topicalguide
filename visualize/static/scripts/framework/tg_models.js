@@ -726,7 +726,7 @@ var DataModel = Backbone.Model.extend({
  * See the following for more information:
  * https://docs.djangoproject.com/en/1.7/ref/contrib/csrf/
  */
-var DEBUG_USER_MODEL = true; // TODO change this to be false
+var DEBUG_USER_MODEL = false; // TODO change this to be false
 var UserModel = Backbone.Model.extend({
     
     initialize: function(args) {
@@ -769,7 +769,7 @@ var UserModel = Backbone.Model.extend({
             sendData[key.toString()] = this.stringify(sendData[key]);
         }
         
-        if(DEBUG_USER_MODEL) {
+        if(DEBUG_USER_MODEL) { // Used while debugging so you don't have to log in every time.
             sendData["username"] = "temp";
             sendData["password"] = "temp";
         }

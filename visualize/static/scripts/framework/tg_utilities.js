@@ -786,6 +786,143 @@ var tg = new function() {
                 .each(options.lineFunction);
         },
     };
+    
+    this.lines = {
+        /**
+         * Choosing the right bandwidth is the hardest part of kernel density estimation.
+         * See "Practical estimation of the bandwidth"
+         * at https://en.wikipedia.org/wiki/Kernel_density_estimation
+         */
+        getH: function getH(pts) {
+            var n = pts.length;
+            var mean = _.reduce(pts, function(r, p) { return r + p[0]; }, 0)/n;
+            var stdDev = Math.sqrt(_.reduce(pts, function(r, p) { 
+                var val = p[0] - mean;
+                return r + val*val;
+            }, 0)/n);
+            return 1.06*stdDev*Math.pow(n, -1/5);
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        epanechnikovKernel: function epanechnikovKernel(u) {
+            return Math.abs(u) <= 1? 0.75*(1 - u*u): 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        quarticBiweightKernel: function quarticBiweight(u) {
+            var oneMinusUSquared = 1-u*u
+            return Math.abs(u) <= 1? (15/16)*oneMinusUSquared*oneMinusUSquared: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        uniformKernel: function uniformKernel(u) {
+            return Math.abs(u) <= 1? 0.5: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        triangularKernel: function triangularKernel(u) {
+            return Math.abs(u) <= 1? 1 - Math.abs(u): 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        triweightKernel: function triweightKernel(u) {
+            var tmp = 1 - u*u;
+            var tmpCubed = tmp*tmp*tmp;
+            return Math.abs(u) <= 1? (35/32)*tmpCubed: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        tricubeKernel: function tricubeKernel(u) {
+            var absU = Math.abs(u);
+            var tmp = 1 - absU*absU*absU;
+            var tmpCubed = tmp*tmp*tmp;
+            return absU <= 1? (70/81)*tmpCubed: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        gaussianKernel: function gaussianKernel(u) {
+            var u2 = u*u;
+            var term1 = 1/Math.sqrt(2*Math.PI);
+            var term2 = Math.exp(-0.5*u2);
+            return term1*term2;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        cosineKernel: function cosineKernel(u) {
+            var t1 = Math.PI/4;
+            var t2 = Math.cos((Math.PI/2)*u);
+            return Math.abs(u) <= 1? t1*t2: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        logisticKernel: function logisticKernel(u) {
+            var eup = Math.exp(u);
+            var eun = Math.exp(-u);
+            return 1/(eup + 2 + eun);
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        silvermanKernel: function silvermanKernel(u) {
+            var absU = Math.abs(u);
+            var t1 = 0.5;
+            var t2 = Math.exp(-(absU/Math.SQRT2));
+            var t3 = Math.sin((absU/Math.SQRT2)+(Math.PI/4));
+            return t1*t2*t3;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_density_estimation
+         * 
+         * points -- your list of [x, y] pairs
+         * lhs -- [low, high, stepCount]; specifies how many points to generate
+         *          low -- the low end of the range
+         *          high -- the high end of the range
+         *          stepCount -- the number of points you want to generate
+         * h -- h > 0; smoothing parameter (bandwidth)
+         * K -- the kernel function K(x)
+         * Return new list of points.
+         */
+        kernelDensityEstimation: function kernelDensityEstimation(points, lhs, h, K) {
+            var n = points.length;
+            var inv_nh = 1/(n*h);
+            function f_h(x) {
+                return inv_nh*_.reduce(points, function(result, xy) {
+                    result += xy[1]*K((x-xy[0])/h);
+                    //~ console.log(result);
+                    return result;
+                }, 0);
+            }
+            var newPoints = [];
+            var newX = lhs[0];
+            var step = (lhs[1]-lhs[0])/(lhs[2]-1);
+            while(newX < lhs[1]) {
+                var newY = f_h(newX);
+                newPoints.push([newX, newY]);
+                newX += step;
+            }
+            return newPoints;
+        },
+    };
 };
 
 /**
