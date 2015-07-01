@@ -794,6 +794,9 @@ var tg = new function() {
          * at https://en.wikipedia.org/wiki/Kernel_density_estimation
          */
         getH: function getH(pts) {
+            if(pts.length < 2) {
+                return 0.333;
+            }
             var n = pts.length;
             var mean = _.reduce(pts, function(r, p) { return r + p[0]; }, 0)/n;
             var stdDev = Math.sqrt(_.reduce(pts, function(r, p) { 

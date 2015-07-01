@@ -108,6 +108,7 @@ var MetadataMapView = DefaultView.extend({
         this.listenTo(this.selectionModel, 'change:document', this.changeDocumentSelection);
         this.listenTo(this.selectionModel, 'change:analysis', this.render);
         this.listenTo(this.selectionModel, 'change:metadataName', this.render);
+        this.listenTo(this.selectionModel, 'change:topic', this.renderGroupHierarchy);
         
         this.listenTo(this.model, 'change:documents', this.renderGroupHierarchy);
         this.listenTo(this.model, 'change:metadataTypes', this.updateMetadataOptions);
@@ -186,7 +187,6 @@ var MetadataMapView = DefaultView.extend({
         var metadataName = this.model.get('metadataName');
         var metadataType = this.model.get('metadataType');
         var documentData = this.model.get('documents');
-        console.log(documentData);
         
         var boxThickness = 1.5;
         var extraBuffering = 1.5;
@@ -196,7 +196,6 @@ var MetadataMapView = DefaultView.extend({
         var xAxisWidth = width - 2*sideBuffer;
         var transitionDuration = 600;
         var xScale = this.createAxisScale(metadataName, metadataType, xAxisWidth);
-        console.log(xScale.domain());
         
         var xAxisLabel = this.model.get('metadataName');
         
@@ -207,8 +206,7 @@ var MetadataMapView = DefaultView.extend({
         var labeledY = distH + componentBuffer + labeledH/2;
         var xAxisY = labeledY + componentBuffer + labeledH/2;
         
-        var distData = that.getTopicDistributionData();
-        console.log(distData);
+        var distData = that.getTopicDistributionData(xScale.domain());
         var distDataNameKeys = _.reduce(distData, function (r, v, k) { r.push(k); return r; }, []);
         var distColorScale = tg.color.getDiscreteColorScale(distDataNameKeys, tg.color.pastels);
         var distYScale = d3.scale.linear().domain([distData.min, distData.max]);
@@ -243,10 +241,9 @@ var MetadataMapView = DefaultView.extend({
         this.createXAxis(xaxis.get(0), {
             width: xAxisWidth,
             xScale: xScale,
-            duration: transitionDuration - 200,
+            duration: transitionDuration/4,
             label: xAxisLabel,
             doneTransitioningCallback: function() {
-                console.log('Done transitioning xaxis.');
                 var xAxisH = that.getXAxisHeight(xaxis.get(0));
                 var docQueueY = xAxisY + xAxisH + componentBuffer;
                 documents.attr('transform', 'translate('+sideBuffer+','+docQueueY+')');
@@ -260,6 +257,11 @@ var MetadataMapView = DefaultView.extend({
                     metadataName: metadataName,
                     metadataType: metadataType,
                     data: documentData,
+                    updatedDocumentValue: function(d, i) {
+                        // TODO figure out how to update the topic distribution in real time
+                        that.redrawDistribution()
+                        that.updateDocumentSelection();
+                    },
                     doneDragging: function() {
                         that.renderGroupHierarchy();
                     },
@@ -268,16 +270,56 @@ var MetadataMapView = DefaultView.extend({
         });
     },
     
-    getTopicDistributionData: function getTopicDistributionData() {
+    /**
+     * Quickly redraws the distribution.
+     */
+    redrawDistribution: function redrawDistribution() {
+        var distribution = this.$el.find('#metadata-map-distribution');
+        var that = this;
+        var metadataName = this.model.get('metadataName');
+        var metadataType = this.model.get('metadataType');
+        var xScale = this.createAxisScale(metadataName, metadataType, xAxisWidth);
+        var distH = 200;
+        var width = this.model.get('width');
+        var boxThickness = 1.5;
+        var extraBuffering = 1.5;
+        var docWidth = 20;
+        var sideBuffer = boxThickness + extraBuffering + docWidth/2;
+        var xAxisWidth = width - 2*sideBuffer;
+        var distData = that.getTopicDistributionData(xScale.domain());
+        var distDataNameKeys = _.reduce(distData, function (r, v, k) { r.push(k); return r; }, []);
+        var distColorScale = tg.color.getDiscreteColorScale(distDataNameKeys, tg.color.pastels);
+        var distYScale = d3.scale.linear().domain([distData.min, distData.max]);
+        tg.gen.createLineGraph(distribution.get(0), {
+            interpolate: 'linear', 
+            height: distH,
+            width: xAxisWidth,
+            xScale: xScale,
+            yScale: distYScale,
+            data: distData.lines,
+            colorScale: distColorScale,
+            lineFunction: function(d, i) {
+                d3.select(this)
+                    .attr('data-tg-topic-number', d.name)
+                    .classed('tg-tooltip', true);
+            },
+            transitionDuration: 50,
+        });
+    },
+    
+    getTopicDistributionData: function getTopicDistributionData(xDomain) {
+        console.log(xDomain);
         var that = this;
         var selectedTopic = this.selectionModel.get('topic');
         var metadataName = this.model.get('metadataName');
         var rawData = this.model.get('documentNames');
         if(selectedTopic === '') {
-            return { lines: [], min: 0, max: 1 };
+            var zeros = [];
+            for(var i = 0; i < 100; i++) { zeros.push(0); }
+            return { lines: { name: '', points: zeros }, min: 0, max: 1 };
         }
         var result = [
-            { name: '0', points: [] }, // TODO use selected topic
+            { name: selectedTopic, points: [] }, // TODO use selected topic
             //~ { name: '1', points: [] },
             //~ { name: '2', points: [] },
             //~ { name: '3', points: [] },
@@ -291,18 +333,28 @@ var MetadataMapView = DefaultView.extend({
             var topics = docData.topics;
             for(var index in result) {
                 var obj = result[index];
-                // TODO change this back to using labeled data only
-                if(topics[obj.name] !== undefined && metadataName in docData.labeled) {
-                    obj.points.push([docData.labeled[metadataName][1], topics[obj.name]]);
+                if(topics[obj.name] !== undefined) {
+                    if(metadataName in docData.userLabeled) {
+                        obj.points.push([docData.userLabeled[metadataName], topics[obj.name]]);
+                    } else if(metadataName in docData.labeled) {
+                        obj.points.push([docData.labeled[metadataName], topics[obj.name]]);
+                    }
                 }
             }
         }
         _.forEach(result, function(val) {
             this.sortPoints(val.points);
             var pts = val.points;
+            console.log(pts);
             var tokenTotal = _.reduce(pts, function(r, v) { r += v[1]; return r; }, 0); // Count tokens (y values).
             pts = _.map(pts, function(v) { return [v[0], v[1]/tokenTotal]; }); // Normalize y values.
-            val.points = tg.lines.kernelDensityEstimation(pts, [pts[0][0],pts[pts.length-1][0],100], tg.lines.getH(pts), tg.lines.epanechnikovKernel);
+            if(pts.length === 0) {
+                val.points = [];
+            } else {
+                console.log(tg.lines.getH(pts));
+                //~ val.points = tg.lines.kernelDensityEstimation(pts, [pts[0][0], pts[pts.length-1][0], 100], tg.lines.getH(pts), tg.lines.triweightKernel);
+                val.points = tg.lines.kernelDensityEstimation(pts, [xDomain[0], xDomain[1], 100], tg.lines.getH(pts), tg.lines.epanechnikovKernel);
+            }
         }, this);
         
         var max = _.reduce(result, function(tempR, line) {
@@ -359,6 +411,7 @@ var MetadataMapView = DefaultView.extend({
             result['documentNames'][key] = temp;
             return result;
         }, { documents: [], documentNames: {} });
+        //~ formatted.documents = [formatted.documents[0]];
         return formatted;
     },
     
@@ -444,8 +497,8 @@ var MetadataMapView = DefaultView.extend({
         var xAxisGroup = d3.select(g)
             .style({ 'fill': 'none', 'stroke': 'black', 'stroke-width': '1.3px', 'shape-rendering': 'crispedges' });
         var xAxisLabel = xAxisGroup.selectAll('.xaxis-label')
-            .data([o])
-            .enter()
+            .data([o]);
+        xAxisLabel.enter()
             .append('text')
             .classed('xaxis-label', true)
             .style({ 'fill': 'black', 'stroke': 'black', 'stroke-width': '0.5px' })
@@ -473,14 +526,23 @@ var MetadataMapView = DefaultView.extend({
         var that = this;
         
         function transitionAxisLabelCallback() {
-            var xAxisHeight = xAxisGroup.selectAll('.tick')[0][0].getBBox().height;
+            var xAxisHeight = 100;
+            try {
+                xAxisHeight = xAxisGroup.selectAll('.tick')[0][0].getBBox().height;
+            } catch(ex) {
+                
+            }
             transitionAxisLabel(xAxisHeight);
         }
+        
+        var fullyDoneTransitioning = function fullyDoneTransitioning() {
+            o.doneTransitioningCallback();
+        };
         
         function transitionAxisLabel(height) {
             xAxisLabel.transition()
                 .duration(o.duration/2)
-                .call(endAll, o.doneTransitioningCallback)
+                .call(endAll, fullyDoneTransitioning)
                 .attr('x', o.width/2)
                 .attr('y', height)
                 .style({ 'text-anchor': 'middle', 'dominant-baseline': 'hanging' });
@@ -522,18 +584,6 @@ var MetadataMapView = DefaultView.extend({
                     queuePos: 0,
                 }
             ], 
-            show: function(d, i, metadataName, maxQueueLength) {
-                if(metadataName in d.metadata.labeled) {
-                    return true;
-                } else if(d.queuePos < maxQueueLength) {
-                    return true;
-                } else {
-                    return false;
-                }
-            },
-            isLabeled: function(d, i, metadataName, maxQueueLength) {
-                return metadataName in d.metadata.labeled;
-            },
             updatedDocumentValue: function(d, i) {
             },
             doneDragging: function() {},
@@ -547,20 +597,38 @@ var MetadataMapView = DefaultView.extend({
             return o.metadataName in d.metadata.labeled;
         };
         
+        var isUserLabeled = function isUserLabeled(d, i) {
+            return o.metadataName in d.metadata.userLabeled;
+        };
+        
+        var isLabeled2 = function isLabeled2(d, i) {
+            return isLabeled(d, i) || isUserLabeled(d, i);
+        };
+        
         var getValue = function getValue(d, i) {
             if(isLabeled(d, i)) {
                 return d.metadata.labeled[o.metadataName];
             } else {
-                return d.metadata.unlabeled[o.metadataName][1];
+                if(isUserLabeled(d, i)) {
+                    return d.metadata.userLabeled[o.metadataName];
+                } else {
+                    return d.metadata.unlabeled[o.metadataName][1];
+                }
             }
         };
         
         var show = function show(d, i) {
-            return o.show(d, i, o.metadataName, o.maxQueueLength);
+            if(isLabeled(d, i) || isUserLabeled(d, i)) {
+                return true;
+            } else if(d.queuePos < o.maxQueueLength) {
+                return true;
+            } else {
+                return false;
+            }
         };
         
-        var getDocumentColor = function getDocumentFill(d, i) {
-            if(isLabeled(d, i)) {
+        var getDocumentColor = function getDocumentColor(d, i) {
+            if(isLabeled(d, i) || isUserLabeled(d, i)) {
                 return 'blue';
             } else {
                 return 'black';
@@ -620,32 +688,32 @@ var MetadataMapView = DefaultView.extend({
                     .attr('data-tg-document-name', function(d) { return d.name; })
                     .classed('tg-tooltip tg-select pointer', true);
                 grp.append('line')
-                    .classed('whisker-line', true)
+                    .classed('whisker-line whisker', true)
                     .attr("x1", 0)
                     .attr("y1", 0)
                     .attr("x2", 0)
                     .attr("y2", 0)
-                    .style({ 'stroke': 'black', 'stroke-width': '2px' });
+                    .style({ 'stroke-width': '1.5px' });
                 grp.append('line')
-                    .classed('left-whisker-line', true)
+                    .classed('left-whisker-line whisker', true)
                     .attr("x1", 0)
                     .attr("y1", 0)
                     .attr("x2", 0)
                     .attr("y2", 0)
-                    .style({ 'stroke': 'black', 'stroke-width': '2px' });
+                    .style({ 'stroke-width': '1.5px' });
                 grp.append('line')
-                    .classed('right-whisker-line', true)
+                    .classed('right-whisker-line whisker', true)
                     .attr("x1", 0)
                     .attr("y1", 0)
                     .attr("x2", 0)
                     .attr("y2", 0)
-                    .style({ 'stroke': 'black', 'stroke-width': '2px' });
+                    .style({ 'stroke-width': '1.5px' });
             });
         
         // Transition documents to be where they should
         singleDocGroups.transition().duration(o.duration)
             .style('display', function(d, i) { 
-                if(o.show(d, i, o.metadataName, o.maxQueueLength)) {
+                if(show(d, i)) {
                     return null;
                 } else {
                     return 'none';
@@ -654,18 +722,15 @@ var MetadataMapView = DefaultView.extend({
             .attr('transform', function(d, i) {
                 var x = o.xScale(getValue(d, i));
                 var y = 0;
-                if(isLabeled(d, i)) {
+                if(isLabeled2(d, i)) {
                     y = o.labeledY;
-                    console.log(y);
                 } else {
-                    console.log(d);
-                    console.log(d.queuePos);
-                    console.log(o.docHeight);
                     y = o.docHeight/2 + d.queuePos*o.docHeight;
                 }
                 return 'translate('+x+','+y+')';
             })
-            .style('fill', getDocumentColor);
+            .style('fill', getDocumentColor)
+            .style('stroke', getDocumentColor);
         var docCircles = singleDocGroups.selectAll('.doc-circle');
         docCircles.transition().duration(o.duration)
             .attr('r', o.docWidth/2);
@@ -685,13 +750,21 @@ var MetadataMapView = DefaultView.extend({
             return _.map(s.match(/[-]?[\d\.]+/g), function(v) { return parseFloat(v); });
         };
         
+        var collapseWhiskers = function collapseWhiskers(grp) {
+            grp.selectAll('.whisker')
+                .transition().duration(o.duration)
+                .attr('x1', 0)
+                .attr('y1', 0)
+                .attr('x2', 0)
+                .attr('y2', 0);
+        };
+        
         var dragging = false;
         var circleDrag = d3.behavior.drag()
             .on('dragstart',  function(d, i) {
                 d3.event.sourceEvent.stopPropagation();
                 var grp = d3.select(this);
                 var xy = translateToXY(grp.attr('transform'));
-                console.log(xy);
                 var x = xy[0];
                 var y = xy[1];
                 
@@ -702,18 +775,22 @@ var MetadataMapView = DefaultView.extend({
                 if(documentName) {
                     that.selectionModel.set({ document: documentName });
                 }
+                
+                collapseWhiskers(grp);
+                
                 // Initialize the red line
                 redLineGroup.style({ "display": null });
                 updateRedLineGroup(x, y);
+                
+                var newValue = o.xScale.invert(x);
+                d.metadata.userLabeled[o.metadataName] = newValue;
                 o.updatedDocumentValue(d);
             })
             .on('drag', function(d, i) {
                 d3.event.sourceEvent.stopPropagation();
                 // Move circle
-                console.log(this);
                 var grp = d3.select(this);
                 var xy = translateToXY(grp.attr('transform'));
-                console.log(xy);
                 var x = xy[0];
                 var y = xy[1];
                 var dx = d3.event.dx;
@@ -768,14 +845,14 @@ var MetadataMapView = DefaultView.extend({
         singleDocGroups.selectAll('.whisker-line')
             .transition().duration(400)
             .attr("x1", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return o.xScale(datum.metadata.unlabeled[name][0]) - o.xScale(datum.metadata.unlabeled[name][1]);
                 }
             })
             .attr("x2", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return o.xScale(datum.metadata.unlabeled[name][2]) - o.xScale(datum.metadata.unlabeled[name][1]);
@@ -790,28 +867,28 @@ var MetadataMapView = DefaultView.extend({
             .transition()
             .duration(400)
             .attr("x1", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return o.xScale(datum.metadata.unlabeled[name][0]) - o.xScale(datum.metadata.unlabeled[name][1]);
                 }
             })
             .attr("y1", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return Math.ceil(o.docHeight/4);
                 }
             })
             .attr("x2", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return o.xScale(datum.metadata.unlabeled[name][0]) - o.xScale(datum.metadata.unlabeled[name][1]);
                 }
             })
             .attr("y2", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return -Math.ceil(o.docHeight/4);
@@ -826,28 +903,28 @@ var MetadataMapView = DefaultView.extend({
             .transition()
             .duration(400)
             .attr("x1", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return o.xScale(datum.metadata.unlabeled[name][2]) - o.xScale(datum.metadata.unlabeled[name][1]);
                 }
             })
             .attr("y1", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return Math.ceil(o.docHeight/4);
                 }
             })
             .attr("x2", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return o.xScale(datum.metadata.unlabeled[name][2]) - o.xScale(datum.metadata.unlabeled[name][1]);
                 }
             })
             .attr("y2", function(datum, i) {
-                if(isLabeled(datum, i)) {
+                if(isLabeled2(datum, i)) {
                     return 0;
                 } else {
                     return -Math.ceil(o.docHeight/4);
@@ -856,287 +933,6 @@ var MetadataMapView = DefaultView.extend({
             .style('display', function(d, i) {
                 return show(d, i)? null: 'none';
             });
-    },
-    
-    /**
-     * Create the svg component, axis component, and any other needed components.
-     */
-    renderMap: function() {
-        console.log("Rendering the map.");
-        // Dimensions.
-        var width = this.model.get('width');
-        var height = this.model.get('height');
-        var textHeight = this.model.attributes.textHeight;
-        var duration = this.model.attributes.duration;
-        var windowWidth = window.innerWidth*.9*0.75;
-        var windowHeight = window.innerHeight*.9;
-        var windowHeight = document.getElementById("metadata-map-controls").offsetHeight;
-        if(windowHeight > windowWidth) {
-            windowHeight = windowWidth;
-        }
-        
-        this.svgMaxHeight = windowHeight;
-        
-        windowHeight = windowHeight/2;
-        
-        // Render the scatter plot.
-        this.bufferedPane = svg.append("g")
-            .attr("id", "metadata-map-buffered-pane");
-        
-        // Render document queue container.
-        // The queue container will also chart labeled documents.
-        this.docQueue = this.bufferedPane.append("g")
-            .attr("id", "metadata-map-queue");
-        this.labeledOuterRect = this.docQueue.append("rect");
-        this.labeledInnerRect = this.docQueue.append("rect");
-        
-        // Add group for red line during user drag operation.
-        this.redLineGroup = this.docQueue.append("g")
-            .attr("id", "red-line-group")
-            .style({ "display": "none" });
-        this.redLineGroup.append("line")
-            .attr("id", "red-line")
-            .style({ "fill": "none", "stroke": "red", "stroke-width": "1.5px", "shape-rendering": "crispedges" })
-            .attr("x1", 0)
-            .attr("y1", 0)
-            .attr("x2", 0)
-            .attr("y2", 0);
-        this.redLineGroup.append("circle")
-            .attr("id", "red-dot")
-            .attr("r", 2)
-            .attr("cx", 0)
-            .attr("cy", 0)
-            .style({ "fill": "red" });
-        
-        // Sync with any settings.
-        this.updateMap();
-    },
-    
-    renderDocuments: function() {
-        var documents = this.model.get("documents");
-        
-        // Create whisker lines
-        this.docQueue.selectAll(".whisker-lines").remove();
-        this.whiskerLines = this.docQueue.selectAll(".whisker-lines")
-            .data(documents);
-        this.whiskerLines.exit().remove();
-        this.whiskerLines.enter()
-            .append("line")
-            .classed("whisker-lines", true);
-        
-        // Create left whisker lines
-        this.docQueue.selectAll(".left-whisker-lines").remove();
-        this.leftWhiskerLines = this.docQueue.selectAll(".left-whisker-lines")
-            .data(documents);
-        this.leftWhiskerLines.exit().remove();
-        // Add needed.
-        this.leftWhiskerLines.enter()
-            .append("line")
-            .classed("left-whisker-lines", true);
-        
-        // Create left whisker lines
-        this.docQueue.selectAll(".right-whisker-lines").remove();
-        this.rightWhiskerLines = this.docQueue.selectAll(".right-whisker-lines")
-            .data(documents);
-        this.rightWhiskerLines.exit().remove();
-        // Add needed.
-        this.rightWhiskerLines.enter()
-            .append("line")
-            .classed("right-whisker-lines", true);
-        
-        // Create circle elements
-        this.docQueue.selectAll(".document").remove();
-        this.circles = this.docQueue.selectAll(".document")
-            .data(documents);
-        this.circles.enter()
-            .append("circle")
-            .classed("document", true)
-            .attr("fill", "none")
-            .style("cursor", "pointer")
-            .attr("data-document-name", function(datum) {
-                return datum.doc;
-            });
-        
-        this.updateDocuments();
-    },
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++    UPDATE VISUALIZATION    ++++++++++++++++++++++++++++++++++++++++++++++++++\\
-    
-    /**
-     * Move the plot and axis into place.
-     */
-    updateMap: function() {
-        // Basic data needed to determine axis information.
-        var name = this.model.get('metadataName');
-        var type = this.model.get('metadataType');
-        if(name === "" || type === "") {
-            return;
-        }
-        
-        // Split documents so we can see how many unlabeled documents we'll have room for.
-        var documents = this.model.get("documents");
-        var numberOfUnlabeled = this.getNumberOfUnlabeledDocuments();
-        
-        // Gather data.
-        var width = this.model.get('width');
-        var height = this.model.get('height');
-        var queueHeight = 600;
-        
-        var documentHeight = this.model.get("documentHeight");
-        var documentWidth = this.model.get("documentWidth");
-        var buffer = Math.max(documentHeight, documentWidth)/2; // buffer around visual components
-        var textBufferLeft = 10;
-        
-        var numberOfUnlabeledDocs = Math.min(Math.floor(queueHeight/documentHeight), numberOfUnlabeled);
-        
-        var labeledBoxThickness = 2; // 2 px
-        var labeledBoxBuffer = 2; // 2 px
-        var labeledBoxHeight = 2*labeledBoxThickness + 2*labeledBoxBuffer + documentHeight;
-        var labeledInnerBoxHeight = labeledBoxHeight - 2*labeledBoxThickness;
-        //~ var unlabeledHeight = numberOfUnlabeledDocs*documentHeight;
-        //~ var labeledY = unlabeledHeight + labeledBoxHeight/2 + buffer;
-        var labeledY = labeledBoxHeight/2 + buffer;
-        var unlabeledHeight = labeledY*2;
-        var unlabeledY = labeledBoxHeight;
-        var labeledBoxX = -labeledBoxThickness - buffer - labeledBoxBuffer;
-        var labeledBoxY = labeledY - labeledBoxThickness - labeledBoxBuffer - buffer;
-        
-        var leftBuffer = buffer + textBufferLeft + labeledBoxThickness
-        var xAxisLength = width - leftBuffer - buffer - 2*labeledBoxThickness;
-        
-        var xScale = this.xScale = this.createAxisScale(name, type, xAxisLength);
-        var xFormat = this.createAxisFormat(type);
-        var xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(xFormat);
-        var transitionDuration = this.model.get("duration");
-        var fastTransitionDuration = transitionDuration/4;
-        queueHeight = unlabeledHeight + labeledBoxHeight + buffer;
-        
-        // Set the outer buffers.
-        this.bufferedPane.attr("transform", "translate(" + leftBuffer + "," + buffer + ")");
-        
-        // Move the labeled area box.
-        this.labeledOuterRect
-            .transition()
-            .duration(transitionDuration)
-            .attr("x", labeledBoxX)
-            .attr("y", labeledBoxY)
-            .attr("width", xAxisLength + 2*labeledBoxThickness + 2*labeledBoxBuffer + documentWidth)
-            .attr("height", labeledBoxHeight)
-            .attr("rx", buffer)
-            .attr("ry", buffer)
-            .attr("fill", "black");
-        this.labeledInnerRect
-            .transition()
-            .duration(transitionDuration)
-            .attr("x", labeledBoxX + labeledBoxThickness)
-            .attr("y", labeledBoxY + labeledBoxThickness)
-            .attr("width", xAxisLength + 2*labeledBoxBuffer + documentWidth)
-            .attr("height", labeledInnerBoxHeight)
-            .attr("rx", buffer)
-            .attr("ry", buffer)
-            .attr("fill", "white");
-        
-        // Move the map.
-        this.docQueue.transition()
-            .duration(transitionDuration)
-            .attr("transform", "translate(0,0)"); // May need to move it later.
-        
-        // Move the axis.
-        var heightOfOtherComponents = labeledBoxHeight + buffer;
-        var xAxisY = heightOfOtherComponents + buffer;
-        this.xAxisGroup.transition()
-            .duration(transitionDuration)
-            .attr("transform", "translate(0,"+xAxisY+")");
-        
-        // Transform the axis.
-        this.xAxisGroup.transition()
-            .duration(fastTransitionDuration)
-            .attr("transform", "translate(0,"+xAxisY+")")
-            .call(xAxis)
-            .call(endAll, transitionAxisLabelCallback)
-            .selectAll("g")
-            .selectAll("text")
-            .style("text-anchor", "end")
-            .attr("dx", "-.8em")
-            .attr("dy", ".15em")
-            .attr("transform", "rotate(-65)");
-        
-        this.xAxisText.text(toTitleCase(name.replace(/_/g, " ")));
-        
-        function endAll(transition, callback) {
-            var counter = 0;
-            transition
-                .each(function() { ++counter; })
-                .each("end", function() { if (!--counter) callback.apply(this, arguments); }); 
-        }
-        
-        var that = this;
-        
-        function transitionAxisLabelCallback() {
-            var xAxisHeight = that.xAxisGroup.selectAll(".tick")[0][0].getBBox().height;
-            transitionAxisLabel(xAxisHeight);
-        }
-        
-        function transitionAxisLabel(height) {
-            that.xAxisText.transition()
-                .duration(fastTransitionDuration)
-                .call(endAll, transitionDocumentsCallback)
-                .attr("x", xAxisLength/2)
-                .attr("y", height)
-                .style({ "text-anchor": "middle", "dominant-baseline": "hanging" });
-            console.log("Done axis");
-        }
-        
-        function transitionDocumentsCallback() {
-            console.log("Done label");
-            var xAxisHeight = that.xAxisGroup.selectAll("#x-axis")[0].parentNode.getBBox().height;
-            unlabeledY = labeledBoxHeight + buffer + xAxisHeight + buffer;
-            
-            that.model.set({
-                xScale: xScale,
-                labeledYCoord: labeledY, // y coordinate offset for the labeled area
-                unlabeledYCoord: unlabeledY,
-                unlabeledDocumentCount: numberOfUnlabeledDocs, // The number of unlabeled docs to show in the queue
-                unlabeledDocumentOrder: that.createUnlabeledDocumentOrder(name, type, numberOfUnlabeledDocs), // Object specifying the document order.
-                xAxisLength: xAxisLength,
-            }, { silent: true});// prevent triggering this function again
-            
-            that.updateDocuments();
-        }
-    },
-    
-    /**
-     * Create the list of metadata items allowed.
-     */
-    updateMetadataOptions: function() {
-        var nameSelect = d3.select(this.el).select("#metadata-name-control");
-        var options = nameSelect.selectAll("option")
-            .data(Object.keys(this.model.get("metadataTypes")));
-        options.exit().remove();
-        options.enter()
-            .append("option")
-            .attr("value", function(d) {
-                return d;
-            })
-            .text(function(d) { return toTitleCase(d.replace(/_/g, " ")); });
-        this.updateMetadataSelection();
-    },
-    
-    /**
-     * Update the controls display.
-     */
-    updateMetadataSelection: function() {
-        var controls = d3.select(this.el).select("#metadata-map-controls");
-        var name = controls.select("#metadata-name-control");
-        var type = controls.select("#metadata-type-control");
-        var selectedName = this.settingsModel.get("name");
-        var selectedType = this.settingsModel.get("type");
-        name.property("value", selectedName);
-        if(selectedType === "") {
-            type.text("N/A");
-        } else {
-            type.text(tg.site.readableTypes[selectedType]);
-        }
     },
     
     /**
@@ -1165,302 +961,6 @@ var MetadataMapView = DefaultView.extend({
         d3.select(this.el).select("#document-value-control")
             .property("value", value.toString())
             .property("placeholder", placeholder);
-    },
-    
-    /**
-     * Update the documents according to any changes in the documents to be charted.
-     */
-    updateDocuments: function() {
-        var name = this.model.get("metadataName"); // Metadata name
-        var type = this.model.get("metadataType"); // Metadata type
-        if(name === '' || type === '') {
-            return;
-        }
-        
-        var that = this;
-        
-        var xScale = this.xScale;
-        
-        var documentHeight = this.model.get("documentHeight");
-        var radius = documentHeight/2;
-        var buffer = radius;
-        var numberOfUnlabeledsToShow = this.model.get("unlabeledDocumentCount");
-        var labeledY = this.model.get("labeledYCoord");
-        var unlabeledY = this.model.get("unlabeledYCoord");
-        var documentQueueOrder = this.model.get("unlabeledDocumentOrder");
-        
-        function getUnlabeledDocumentY(docName) {
-            if(docName in documentQueueOrder) {
-                return unlabeledY + documentQueueOrder[docName]*documentHeight+documentHeight/2;
-            } else {
-                return 0;
-            }
-        }
-        
-        function getDocumentFill(docObj) {
-            if(that.isLabeled(docObj, name, false)) {
-                if(that.isUserLabeled(docObj, name)) {
-                    return "red";
-                } else {
-                    return "blue"
-                }
-            } else {
-                if(that.isUserLabeled(docObj, name)) {
-                    return "green";
-                } else {
-                    return "black";
-                }
-            }
-        }
-        
-        function showDocument(docObj) {
-            if((docObj.doc in documentQueueOrder) || that.isUserLabeled(docObj, name)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        
-        // Move circles
-        this.circles.transition()
-            .duration(400)
-            .attr("r", radius)
-            .attr("cx", function(datum) {
-                var value = that.getValue(datum, name);
-                return xScale(value);
-            })
-            .attr("cy", function(datum, i) {
-                var y = 0;
-                if(name in datum.metadata.userLabeled || name in datum.metadata.labeled) {
-                    y = labeledY;
-                } else {
-                    y = getUnlabeledDocumentY(datum.doc);
-                }
-                return y;
-            })
-            .attr("fill", function(d, i) {
-                return getDocumentFill(d);
-            })
-            .style('display', function(d, i) {
-                return showDocument(d)? null: 'none';
-            });
-        
-        var inLabeledArea = function(d3Circle) {
-            var y = parseFloat(d3Circle.attr("cy"));
-            if(y < labeledY + buffer && y > labeledY - buffer) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        
-        // Add circle drag behavior // TODO this could probably be assigned once
-        var circleDrag = d3.behavior.drag()
-            .on("dragstart", function(d, i) {
-                d3.event.sourceEvent.stopPropagation();
-                
-                // Remove pie chart
-                that.removePieCharts();
-                
-                // Get circle location
-                var circle = d3.select(this);
-                var x = circle.attr("cx");
-                var y = circle.attr("cy");
-                
-                // Reset dragging indicator
-                that.draggingDocument = false;
-                
-                // Treat as a click event and set the document appropriately
-                var documentName = d3.select(this).attr("data-document-name");
-                if(documentName) {
-                    that.selectionModel.set({ document: documentName });
-                }
-            })
-            .on("drag", function(d, i) {
-                // Indicate that a circle is being dragged
-                that.draggingDocument = true;
-                
-                // Remove pie chart // TODO not needed?
-                if(!that.draggingDocument) {
-                    
-                    //~ that.startedInLabeledArea = inLabeledArea(circle); 
-                }
-                
-                // Move circle
-                var circle = d3.select(this);
-                var dx = d3.event.dx;
-                var dy = d3.event.dy;
-                var x = Math.max(parseFloat(circle.attr("cx")) + dx, 0);
-                var y = Math.max(parseFloat(circle.attr("cy")) + dy, 0);
-                var x = Math.min(x, that.model.get("xAxisLength"));
-                var y = Math.min(y, unlabeledY+documentHeight*numberOfUnlabeledsToShow);
-                circle.attr("cx", x)
-                    .attr("cy", y);
-                
-                // Set value and update "Selected Document" content
-                var newValue = xScale.invert(x);
-                if(type === "int") {
-                    newValue = Math.round(newValue);
-                }
-                d.metadata.userLabeled[name] = newValue;
-                
-                // Initialize the red line
-                that.redLineGroup.style({ "display": null });
-                that.updateRedLineGroup(x, y, x, labeledY);
-                that.updateDocumentSelection();
-            })
-            .on("dragend", function(d, i) {
-                d3.event.sourceEvent.stopPropagation();
-                
-                
-                // Snap circle to a location
-                if(that.draggingDocument) {
-                    var circle = d3.select(this);
-                    var x = parseFloat(circle.attr("cx"));
-                    var y = labeledY;
-                    var newValue = xScale.invert(x);
-                    if(type === "int") {
-                        newValue = Math.round(newValue);
-                    }
-                    d.metadata.userLabeled[name] = newValue;
-                    that.updateMap();
-                }
-                
-                
-                // Hide the red line group
-                that.redLineGroup.style({ "display": "none" });
-                
-                // Cause any necessary updates with regards to "Selected Document" area
-                that.updateDocumentSelection();
-                
-                // Indicate that dragging has finished
-                that.draggingDocument = false;
-            })
-            .origin(function(d) { return d; });
-        this.circles.call(circleDrag);
-        
-        // Move whisker lines
-        this.whiskerLines
-            .transition()
-            .duration(400)
-            .attr("x1", function(datum) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return xScale(datum.metadata.unlabeled[name][0]);
-                }
-            })
-            .attr("y1", function(datum, i) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return getUnlabeledDocumentY(datum.doc);
-                }
-            })
-            .attr("x2", function(datum) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return xScale(datum.metadata.unlabeled[name][2]);
-                }
-            })
-            .attr("y2", function(datum, i) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return getUnlabeledDocumentY(datum.doc);
-                }
-            })
-            .style('display', function(d, i) {
-                return showDocument(d)? null: 'none';
-            })
-            .attr("style", "stroke: rgb(0,0,0); stroke-width:2");
-        
-        // Move left whisker lines
-        this.leftWhiskerLines
-            .transition()
-            .duration(400)
-            .attr("x1", function(datum) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return xScale(datum.metadata.unlabeled[name][0]);
-                }
-            })
-            .attr("y1", function(datum, i) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return getUnlabeledDocumentY(datum.doc) + Math.ceil(documentHeight/4);
-                }
-            })
-            .attr("x2", function(datum) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return xScale(datum.metadata.unlabeled[name][0]);
-                }
-            })
-            .attr("y2", function(datum, i) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return getUnlabeledDocumentY(datum.doc) - Math.ceil(documentHeight/4);
-                }
-            })
-            .style('display', function(d, i) {
-                return showDocument(d)? null: 'none';
-            })
-            .attr("style", "stroke: rgb(0,0,0); stroke-width:2");
-            
-        // Move right whisker lines
-        this.rightWhiskerLines
-            .transition()
-            .duration(400)
-            .attr("x1", function(datum) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return xScale(datum.metadata.unlabeled[name][2]);
-                }
-            })
-            .attr("y1", function(datum, i) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return getUnlabeledDocumentY(datum.doc) + Math.ceil(documentHeight/4);
-                }
-            })
-            .attr("x2", function(datum) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return xScale(datum.metadata.unlabeled[name][2]);
-                }
-            })
-            .attr("y2", function(datum, i) {
-                if(that.isLabeled(datum, name, true)) {
-                    return 0;
-                } else {
-                    return getUnlabeledDocumentY(datum.doc) - Math.ceil(documentHeight/4);
-                }
-            })
-            .style('display', function(d, i) {
-                return showDocument(d)? null: 'none';
-            })
-            .attr("style", "stroke: rgb(0,0,0); stroke-width:2");
-    },
-    
-    // Update the coordinates of the group members
-    updateRedLineGroup: function(x1, y1, x2, y2) {
-        var redLine = this.redLineGroup.select("#red-line");
-        var redCircle = this.redLineGroup.select("#red-dot");
-        redLine.attr("x1", x1)
-            .attr("y1", y1)
-            .attr("x2", x2)
-            .attr("y2", y2);
-        redCircle.attr("cx", x2)
-            .attr("cy", y2);
     },
     
 /******************************************************************************
@@ -1559,7 +1059,6 @@ var MetadataMapView = DefaultView.extend({
         var y = parseFloat(circle.attr("cy"));
         
         var topics = this.getDocumentMetadata(this.getDocumentNameFromEvent(e)).topics;
-        //~ console.log(topics);
         var pieGroup = this.docQueue.append("g")
             .classed("document-pie-chart", true)
             .attr("transform", "translate("+x+","+y+")")
