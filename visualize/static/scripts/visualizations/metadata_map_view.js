@@ -176,6 +176,11 @@ var MetadataMapView = DefaultView.extend({
 
     /**
      * Gathers all of the data to render each component of the metadata map.
+     * Can be called at any time to transition everything to its place based on the
+     * data.
+     * WARNING: The only time this shouldn't be called is when the user is 
+     * dragging a document as there will be a conflict between the user's events
+     * and the transition events.
      */
     renderGroupHierarchy: function renderGroupHierarchy() {
         var that = this;
@@ -868,6 +873,7 @@ var MetadataMapView = DefaultView.extend({
                 collapseWhiskers(grp);
                 
                 var newValue = o.xScale.invert(x);
+                d.metadata.userLabeled[o.metadataName] = newValue;
                 
                 // Initialize the red line
                 redLineGroup.style({ "display": null });
@@ -1072,8 +1078,7 @@ var MetadataMapView = DefaultView.extend({
         
         'click #save-changes': 'clickSaveChanges',
         
-        'click .document': 'clickDocument',
-        'dblclick .document': 'doubleClickDocument',
+        'dblclick .doc-circle': 'doubleClickDocument',
         
         // Unused pie charts.
         //~ 'mouseover .document': 'mouseoverDocument',
@@ -1092,7 +1097,12 @@ var MetadataMapView = DefaultView.extend({
         alert("Saving not yet enabled.");
     },
     
-    changeDocumentValueAllowRerender: true, // Used to suppress the changeDocumentValue function from rerendering
+    /**
+     * Used to suppress the changeDocumentValue function from rerendering.
+     * The only time we want rerendering is if the user directly changed the 
+     * value.
+     */
+    changeDocumentValueAllowRerender: true,
     /**
      * Check the user input for valid input type. Update the settings model.
      */
@@ -1117,18 +1127,18 @@ var MetadataMapView = DefaultView.extend({
      */
     doubleClickDocument: function(e) {
         var docName = this.getDocumentNameFromEvent(e);
-        var document = this.model.get("documentNames")[docName];
-        var name = this.settingsModel.get("name");
+        var docMetadata = this.model.get("documentNames")[docName];
+        var metadataName = this.model.get('metadataName');
         
         // Remove user set label
-        if (this.isUserLabeled(docName, name)) {
-            this.removeUserLabel(docName, name);
+        if (metadataName in docMetadata.userLabeled) {
+            delete docMetadata.userLabeled[metadataName];
             this.updateDocumentSelection();
-            this.updateMap();
-        } else if(this.isUnlabeled(docName, name)) {
-            document.userLabeled[name] = this.getADocumentLabel(docName, name);
+            this.renderGroupHierarchy();
+        } else if(!(metadataName in docMetadata.labeled)) {
+            docMetadata.userLabeled[metadataName] = docMetadata.unlabeled[metadataName][1];
             this.updateDocumentSelection();
-            this.updateMap();
+            this.renderGroupHierarchy();
         }
     },
     
@@ -1528,7 +1538,7 @@ var MetadataMapView = DefaultView.extend({
      * Return the document name of the event object.
      */
     getDocumentNameFromEvent: function(e) {
-        return e.currentTarget.attributes["data-document-name"].value;
+        return e.currentTarget.attributes["data-tg-document-name"].value;
     },
     
     /**
