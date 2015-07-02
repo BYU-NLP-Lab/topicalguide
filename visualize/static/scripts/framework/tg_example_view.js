@@ -95,7 +95,7 @@ var ExampleView = DefaultView.extend({
      * as the event bindings will automatically be cleaned up when your view 
      * is disposed.
      */
-    initialize: function() {
+    initialize: function initialize() {
     },
     
     /**
@@ -104,7 +104,7 @@ var ExampleView = DefaultView.extend({
      * this.el is a DOM element
      * this.$el is a query element
      */
-    render: function() {
+    render: function render() {
         this.$el.html("<p>This is just an example view.</p>");
     },
     
@@ -112,7 +112,7 @@ var ExampleView = DefaultView.extend({
      * This is used to get help information for the user.
      * Click the help icon to see.
      */
-    renderHelpAsHtml: function() {
+    renderHelpAsHtml: function renderHelpAsHtml() {
         return "<p>This is just an example view.</p>";
     },
     
@@ -122,8 +122,11 @@ var ExampleView = DefaultView.extend({
      * If you have any sub-views call .dispose() on them to clean them up.
      * Note that there is a function "dispose" that will try to clean things up 
      * for you, but only if you used the listenTo method.
+     * Also, note that the .dispose() method will call cleanup for you.
+     * Also, note that the .dispose() method will remove the view's element
+     * from the DOM tree.
      */
-    cleanup: function() {
+    cleanup: function cleanup() {
     },
 });
 
@@ -132,7 +135,6 @@ var ExampleView = DefaultView.extend({
  * Leave it empty to put the view on the menu bar.
  */
 addViewClass(["Menu 1", "Sub Menu 2", "Sub Menu 3"], ExampleView);
-
 
 /**
  * Site wide functionality available to you.
@@ -161,11 +163,15 @@ addViewClass(["Menu 1", "Sub Menu 2", "Sub Menu 3"], ExampleView);
  * "data-tg-topic-number" data attribute.
  * When a topic name scheme changes it is useful to have the topic names change
  * as well. This will do it automatically.
+ * 
+ * Navigation:
+ * Allows the user to double click on the element and get redirected to the
+ * single topic or single document view.
+ * Set the class "tg-explore" and set either "data-tg-topic-number" or
+ * "data-tg-document-name".
  */
  
 /**
  * Other Hints:
- * 1. Use the global variable tg.icons (found in view_templates.js) where-ever possible.
- *    If an icon needs to be changed across the site it can be done painlessly.
- *    Of especial use is icons.loading which you can display while waiting on the server.
+ * 1. Use the global library tg which contains a collection of sub-modules for your convenience.
  */

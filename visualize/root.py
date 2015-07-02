@@ -44,7 +44,7 @@ def root(request, *args, **kwargs):
     context['FONTS'] = STATIC + '/fonts'
     context['license'] = "http://www.gnu.org/licenses/agpl.html"
     context['wiki_url'] = "https://github.com/BYU-NLP-Lab/topicalguide/wiki"
-    context['nlp_lab_url'] = "https://facwiki.cs.byu.edu/nlp/index.php/Main_Page"
+    context['nlp_lab_url'] = "http://nlp.cs.byu.edu/"
     context['cs_dept_url'] = "https://cs.byu.edu"
     context['nlp_lab_logo_url'] = context['IMAGES'] + "/byunlp-135px.png"
     context['nlp_lab_small_logo_url'] = context['IMAGES'] + "/byunlp-35px.png"

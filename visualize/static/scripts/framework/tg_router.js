@@ -36,6 +36,8 @@ var Router = Backbone.Router.extend({
         
         if(tg.js.isDefined(this.settingsModel)) {
             settings = JSON.stringify(this.tgView.currentView.settingsModel.attributes);
+        } else {
+            settings = JSON.stringify(this.viewModel.get("currentViewSettings"));
         }
         
         if(tg.js.isDefined(this.selectionModel)) {
@@ -115,9 +117,11 @@ var Router = Backbone.Router.extend({
         
         // Extract the selection and settings.
         var selection = urlToHash(queryString);
-        var settings = "";
+        var settings = {};
         if("settings" in selection) {
-            settings = JSON.parse(selection.settings);
+            if(selection["settings"] !== "") { // Don't try to parse invalid JSON.
+                settings = JSON.parse(selection.settings);
+            }
             delete selection.settings;
         }
         

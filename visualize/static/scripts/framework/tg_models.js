@@ -25,6 +25,7 @@ var SelectionModel = Backbone.Model.extend({
         "topicNameScheme": String,
         "metadataName": String, // Document metadata.
         "metadataValue": String, // Document metadata.
+        "metadataRange": String, // Document metadata.
     },
     
     initialize: function() {
@@ -50,6 +51,31 @@ var SelectionModel = Backbone.Model.extend({
             result[key] = this.get(key);
         }
         return result;
+    },
+    
+    /**
+     * Ensures that the range is cleared.
+     */
+    setMetadataValue: function setMetadataValue(value) {
+        this.set({
+            metadataValue: value.toString(),
+            metadataRange: "",
+        });
+    },
+    
+    /**
+     * Ensures that the value is cleared and the from and to arguments form a
+     * valid range.
+     */
+    setMetadataRange: function setMetadataRange(from, to) {
+        if(tg.js.isNumber(from) && tg.js.isNumber(to)) {
+            if(Number(from) <= Number(to)) {
+                this.set({
+                    metadataValue: "",
+                    metadataRange: from.toString() + "," + to.toString(),
+                });
+            }
+        }
     },
     
     /**
@@ -87,7 +113,7 @@ var SelectionModel = Backbone.Model.extend({
             } else if("analysis" in toSet) {
                 resetHelper(toSet, ["topic", "topicNameScheme"]);
             } else if("metadataName" in toSet) {
-                resetHelper(toSet, ["metadataValue"]);
+                resetHelper(toSet, ["metadataValue", "metadataRange"]);
             }
             if(DEBUG_SELECTION_MODEL) console.log("SelectionModel.set middle: " + hashToUrl(this.attributes));
             Backbone.Model.prototype.set.call(this, toSet, options);
@@ -444,8 +470,34 @@ var DataModel = Backbone.Model.extend({
         
         // Make sure that dataset and analyses data is available.
         var defaultData = JSON.parse($("#global-dataset-and-analyses-info").html());
-        this.datasetsAndAnalyses = defaultData['datasets'];
-        this.serverInfo = defaultData['server'];
+        this.extractData(defaultData);
+        
+    },
+    
+    extractData: function extractData(data) {
+        this.datasetsAndAnalyses = data['datasets'];
+        this.serverInfo = data['server'];
+    },
+    
+    getBasicDataQuery: function getBasicDataQuery() {
+        return {
+            'datasets': '*',
+            'analyses': '*',
+            'dataset_attr': ['metadata', 'metrics'],
+            'analysis_attr': ['metadata', 'metrics', 'topic_name_schemes'],
+            'server': '*',
+        };
+    },
+    
+    refresh: function refresh() {
+        this.submitQueryByHash(
+            this.getBasicDataQuery(),
+            function onSuccess(data) {
+                this.extractData(data);
+            }.bind(this),
+            function onError(msg) {
+            }.bind(this)
+        );
     },
     
     /**
@@ -520,7 +572,7 @@ var DataModel = Backbone.Model.extend({
     /**
      * topicNumber -- the number of the topic
      * Return the name of a topic according to the currently selected dataset, 
-     * analysis, and topic name scheme; the "Top3" name if the selected namer 
+     * analysis, and topic name scheme; the "Top 3" name if the selected namer 
      * isn't available; the topicNumber as a string otherwise.
      */
     getTopicNameRaw: function(topicNumber) {
@@ -528,7 +580,7 @@ var DataModel = Backbone.Model.extend({
         var nameScheme = this.selectionModel.get("topicNameScheme");
         // Select a default name scheme if none is selected.
         if(nameScheme === "" || nameScheme === undefined || nameScheme === null) {
-            nameScheme = "Top3";
+            nameScheme = "Top 3";
         }
         
         var result = topicNumberString;
@@ -674,7 +726,7 @@ var DataModel = Backbone.Model.extend({
  * See the following for more information:
  * https://docs.djangoproject.com/en/1.7/ref/contrib/csrf/
  */
-var DEBUG_USER_MODEL = true; // TODO change this to be false
+var DEBUG_USER_MODEL = false; // TODO change this to be false
 var UserModel = Backbone.Model.extend({
     
     initialize: function(args) {
@@ -717,7 +769,7 @@ var UserModel = Backbone.Model.extend({
             sendData[key.toString()] = this.stringify(sendData[key]);
         }
         
-        if(DEBUG_USER_MODEL) {
+        if(DEBUG_USER_MODEL) { // Used while debugging so you don't have to log in every time.
             sendData["username"] = "temp";
             sendData["password"] = "temp";
         }

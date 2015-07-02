@@ -38,12 +38,14 @@ var PlotView = DefaultView.extend({
     shortName: "2dplots",
     
     initialize: function() {
-        this.selectionModel.on("change:analysis", this.render, this);
+        this.listenTo(this.selectionModel, "change:analysis", this.render);
         this.model = new Backbone.Model(); // Used to store document data.
+        $(window).on('resize', this.resizeWindowEvent.bind(this));
     },
     
     cleanup: function() {
         this.selectionModel.off(null, null, this);
+        $(window).off('resize', this.resizeWindowEvent.bind(this));
     },
     
     getQueryHash: function() {
@@ -52,12 +54,11 @@ var PlotView = DefaultView.extend({
             "datasets": selections.dataset,
             "analyses": selections.analysis,
             "topics": "*",
-            "topic_attr": "names",
             "documents": "*",
             "document_attr": ["metadata", "metrics", "top_n_topics"],
             "document_continue": 0,
             "document_limit": 1000,
-            "dataset_attr": "document_metadata_meanings",
+            "dataset_attr": ["document_metadata_types", "document_metadata_meanings"],
         };
     },
     
@@ -131,9 +132,19 @@ var PlotView = DefaultView.extend({
             
             this.renderControls();
             this.renderPlot();
-            this.model.on("change", this.transition, this);
+            this.listenTo(this.model, "change", this.transition);
         }.bind(this), this.renderError.bind(this));
     },
+    
+    resizeWindowEvent: function resizeWindowEvent() {
+		var plotContainer = this.$el.find('#plot-view');
+		var svg = plotContainer.find('svg');
+		var width = plotContainer.get(0).clientWidth;
+		var height = window.innerHeight*0.8;
+		var min = Math.min(width, height);
+		svg.attr("width", width);
+		svg.attr("height", width);
+	},
     
     /*
      * Put data in the form of several hashes. All groups must exist in the hashes but not all 
@@ -152,6 +163,7 @@ var PlotView = DefaultView.extend({
         var selections = this.selectionModel.attributes;
         var analysis = data.datasets[selections["dataset"]].analyses[selections["analysis"]];
         
+        var metadataTypes = data.datasets[selections["dataset"]].document_metadata_types;
         var meanings = data.datasets[selections["dataset"]].document_metadata_meanings;
         var timesAttributes = [];
         for(var meaningKey in meanings) {
@@ -191,29 +203,35 @@ var PlotView = DefaultView.extend({
                 var group = doc[key];
                 for(var valKey in group){
                     if(!(valKey in valueNames[key])) {
-                        valueNames[key][valKey] = toTitleCase(valKey.replace(/_/g, " "));
-                        valueTypes[key][valKey] = this.getType(group[valKey]);
+                        valueNames[key][valKey] = tg.str.toTitleCase(valKey.replace(/_/g, " "));
+                        if(key === 'metadata') {
+                            valueTypes[key][valKey] = metadataTypes[valKey];
+                        } else {
+                            valueTypes[key][valKey] = this.getType(group[valKey]);
+                        }
                     }
                 }
             }
         }
         
         // Make sure the topic's readable name is set.
-        var allTopics = analysis.topics;
         if("topics" in valueNames) {
             var valueTopics = valueNames.topics;
-            for(var topKey in valueTopics) {
-                valueTopics[topKey] = toTitleCase(allTopics[topKey].names.Top3);
+            for(var t in valueTopics) {
+                valueTopics[t] = this.dataModel.getTopicName(t);
             }
         }
         
-        return {
+        var result = {
             data: documents,
             groupNames: groupNames,
             valueNames: valueNames,
             valueTypes: valueTypes,
             times: timesAttributes,
+            metadataTypes: metadataTypes,
         };
+        
+        return result;
     },
     
     renderControls: function() {
@@ -249,9 +267,13 @@ var PlotView = DefaultView.extend({
                 })
                 .attr("label", function(d) { return d.value; });
             var options = optgroups.selectAll("option")
-                .data(function(d) { 
-                    var names = valueNames[d.key];
+                .data(function(d) {
+					var groupName = d.key;
+                    var names = valueNames[groupName];
                     names = d3.entries(names).sort(function(a, b) { return a.value.localeCompare(b.value); });
+                    for(var index in names) {
+						names[index].group = groupName;
+					}
                     return names;
                 })
                 .enter()
@@ -260,23 +282,83 @@ var PlotView = DefaultView.extend({
                     if(!value) value = d.key;
                     return d.key;
                 })
+                .attr("data-tg-topic-number", function bindDataToOption(topicKeyValue) {
+					if(topicKeyValue.group === 'topics') {
+						return topicKeyValue.key;
+					} else {
+						return null;
+					}
+				})
+                .classed("tg-topic-name-auto-update", function addClassForAutoTopicNameUpdate(topicKeyValue) {
+					if(topicKeyValue.group === 'topics') {
+						return true;
+					} else {
+						return false;
+					}
+				})
                 .text(function(d) { return d.value; });
             if(select === radius) {
                 select.property("value", "uniform"); // Set to uniform option.
             }
         }
-        if(this.settingsModel.has("xSelection")) {
-            xAxis.property("value", this.settingsModel.get("xSelection").value);
+        
+        
+        
+        
+        var yvalue = value;
+        var ygroup = group;
+        if(this.selectionModel.nonEmpty(["topic"])) {
+            yvalue = this.selectionModel.get("topic");
+            yAxis.property("value", yvalue);
+        } else {
+            yvalue = "0";
+            ygroup = "topics";
         }
-        if(this.settingsModel.has("ySelection")) {
-            yAxis.property("value", this.settingsModel.get("ySelection").value);
+        
+        //~ console.log("Y: " + yvalue + " " + ygroup);
+        
+        var xvalue = value;
+        var xgroup = group;
+        if(this.model.get("times").length !== 0) {
+            xvalue = this.model.get("times")[0];
+            xgroup = "metadata";
+            xAxis.property("value", xvalue);
         }
-        if(this.settingsModel.has("radiusSelection")) {
-            radius.property("value", this.settingsModel.get("radiusSelection").value);
+        
+        //~ console.log("X: " + xvalue + " " + xgroup);
+        
+        var rvalue = "uniform";
+        var rgroup = "other";
+        if('metrics' in valueNames && 'Token Count' in valueNames['metrics']) {
+            rvalue = 'Token Count';
+            rgroup = 'metrics';
+            radius.property('value', rvalue);
         }
-        if(this.settingsModel.has("colorSelection")) {
-            color.property("value", this.settingsModel.get("colorSelection").value);
+        
+        var cvalue = value;
+        var cgroup = group;
+        var valueTypes = this.model.get('valueTypes');
+        for(var grp in valueTypes) {
+            var valueTypeGroup = valueTypes[grp];
+            for(var val in valueTypeGroup) {
+                //~ console.log(val);
+                var type = valueTypeGroup[val];
+                if(type === 'ordinal') {
+                    cvalue = val;
+                    cgroup = grp;
+                }
+            }
         }
+        
+        // Set initial groups and values for selections.
+        var defaultSettings = {
+            xSelection: { group: xgroup, value: xvalue },
+            ySelection: { group: ygroup, value: yvalue },
+            radiusSelection: { group: rgroup, value: rvalue },
+            colorSelection: { group: cgroup, value: cvalue },
+            removing: false,
+        };
+        this.settingsModel.set(_.extend({}, defaultSettings, this.settingsModel.attributes));
         
         // Set control listeners.
         xAxis.on("change", function xAxisChange() {
@@ -299,35 +381,6 @@ var PlotView = DefaultView.extend({
             var value = color.property("value");
             that.settingsModel.set({ colorSelection: { group: group, value: value } });
         });
-
-        var yvalue = "0";
-        var ygroup = "topics";
-        if(this.selectionModel.nonEmpty(["topic"])) {
-            yvalue = this.selectionModel.get("topic");
-            yAxis.property("value", yvalue);
-        }
-        
-        //~ console.log("Y: " + yvalue + " " + ygroup);
-        
-        var xvalue = value;
-        var xgroup = group;
-        if(this.model.get("times").size !== 0) {
-            xvalue = this.model.get("times")[0];
-            xgroup = "metadata";
-            xAxis.property("value", xvalue);
-        }
-
-        //~ console.log("X: " + xvalue + " " + xgroup);
-
-        // Set initial groups and values for selections.
-        var defaultSettings = {
-            xSelection: { group: xgroup, value: xvalue },
-            ySelection: { group: ygroup, value: yvalue },
-            radiusSelection: { group: "other", value: "uniform" },
-            colorSelection: { group: group, value: value },
-            removing: false,
-        };
-        this.settingsModel.set(_.extend({}, defaultSettings, this.settingsModel.attributes));
         
         // Give the remove documents buttons functionality.
         d3.select(this.el).select("#plot-remove-documents")
@@ -363,6 +416,20 @@ var PlotView = DefaultView.extend({
                 d3.select(this)
                     .attr("href", "");
             });
+        
+        // If the settings are already set
+        if(this.settingsModel.has("xSelection")) {
+            xAxis.property("value", this.settingsModel.get("xSelection").value);
+        }
+        if(this.settingsModel.has("ySelection")) {
+            yAxis.property("value", this.settingsModel.get("ySelection").value);
+        }
+        if(this.settingsModel.has("radiusSelection")) {
+            radius.property("value", this.settingsModel.get("radiusSelection").value);
+        }
+        if(this.settingsModel.has("colorSelection")) {
+            color.property("value", this.settingsModel.get("colorSelection").value);
+        }
     },
     
     renderPlot: function() {
@@ -389,9 +456,12 @@ var PlotView = DefaultView.extend({
         // Render the scatter plot.
         var view = d3.select(this.el).select("#plot-view").html("");
         
+        var plotContainer = this.$el.find('#plot-view');
+		var width = plotContainer.get(0).clientWidth;
+		var height = Math.min(window.innerHeight*0.8, width);
         var svg = this.svg = view.append("svg")
-            .attr("width", "100%")
-            .attr("height", "90%")
+            .attr("width", width)
+            .attr("height", height)
             .attr("viewBox", "0, 0, "+dim.width+", "+dim.height)
             .attr("preserveAspectRatio", "xMidYMin meet")
             .append("g");
@@ -408,13 +478,20 @@ var PlotView = DefaultView.extend({
         this.xAxisGroup = svg.append("g")
             .attr("id", "x-axis")
             .attr("transform", "translate(0,"+dim.height+")")
-            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.25px", "shape-rendering": "crispedges" });
-        this.xAxisText = this.xAxisGroup.append("text");
+            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.5px", "shape-rendering": "crispedges" });
+        this.xAxisGroup.selectAll('text')
+            .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
+        this.xAxisText = this.xAxisGroup.append("text")
+            .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
+        
         this.yAxisGroup = svg.append("g")
             .attr("id", "y-axis")
             .attr("transform", "translate(0,0)")
-            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.25px", "shape-rendering": "crispedges" });
-        this.yAxisText = this.yAxisGroup.append("text");
+            .style({ "fill": "none", "stroke": "black", "stroke-width": "1.5px", "shape-rendering": "crispedges" });
+        this.yAxisGroup.selectAll('text')
+            .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
+        this.yAxisText = this.yAxisGroup.append("text")
+            .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
         // Render scatter plot container.
         this.plot = svg.append("g")
             .attr("id", "scatter-plot");
@@ -450,10 +527,10 @@ var PlotView = DefaultView.extend({
         };
         
         // Create listeners.
-        this.settingsModel.on("change:xSelection", this.calculateXAxis, this);
-        this.settingsModel.on("change:ySelection", this.calculateYAxis, this);
-        this.settingsModel.on("change:radiusSelection", this.calculateRadiusAxis, this);
-        this.settingsModel.on("change:colorSelection", this.calculateColorAxis, this);
+        this.listenTo(this.settingsModel, "change:xSelection", this.calculateXAxis);
+        this.listenTo(this.settingsModel, "change:ySelection", this.calculateYAxis);
+        this.listenTo(this.settingsModel, "change:radiusSelection", this.calculateRadiusAxis);
+        this.listenTo(this.settingsModel, "change:colorSelection", this.calculateColorAxis);
         
         this.calculateAll();
     },
@@ -676,7 +753,9 @@ var PlotView = DefaultView.extend({
         this.yAxisGroup.transition()
             .duration(transitionDuration)
             .attr("transform", "translate("+yAxisX+","+yAxisY+")")
-            .call(yAxis);
+            .call(yAxis)
+            .selectAll("g").selectAll("text")
+                .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
         this.yAxisText.transition()
             .duration(transitionDuration)
             .attr("transform", "rotate(-90)")
@@ -698,7 +777,8 @@ var PlotView = DefaultView.extend({
                 .style("text-anchor", "end")
                 .attr("dx", "-.8em")
                 .attr("dy", ".15em")
-                .attr("transform", "rotate(-65)");
+                .attr("transform", "rotate(-65)")
+                .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
         this.xAxisText.transition()
             .duration(transitionDuration)
             .attr("x", xAxisLength/2)
@@ -796,7 +876,7 @@ var PlotViewManager = DefaultView.extend({
     
     initialize: function() {
         this.plotView = new PlotView(_.extend({}, this.getAllModels()));
-        this.documentInfoView = new DocumentInfoView(_.extend({}, this.getAllModels()));
+        this.documentInfoView = new SingleDocumentView(_.extend({}, this.getAllModels()));
     },
     
     cleanup: function() {

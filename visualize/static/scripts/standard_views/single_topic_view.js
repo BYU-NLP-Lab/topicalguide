@@ -1,233 +1,56 @@
 "use strict";
 
-/*
- * Displays all topics in a table format that can be sorted.
- */
-var AllTopicSubView2 = DefaultView.extend({
-    
-    readableName: "All Topics 2",
-    shortName: "all_topics2",
-    
-    baseTemplate:
-'<div id="form-container" class="row container-fluid"></div>'+
-'<div id="table-container" class="row container-fluid"></div>',
-    
-    formTemplate:
-'<form role="form">'+
-'    <div class="form-group col-xs-4">'+
-'        <label for="words-input">Filter Topics by Words</label>'+
-'        <input id="words-input" class="form-control" type="text" placeholder="Enter words..."></input>'+
-'    </div>'+
-'    <div class="form-group col-xs-4">'+
-'        <label for="words-input">Filter Topics by Metadata Attribute</label>'+
-'        <select id="metadata-attribute-input" class="form-control" type="selection" placeholder="Enter metadata attribute..."></select>'+
-'    </div>'+
-'    <div class="form-group col-xs-2">'+
-'        <label for="top-words-input">Top Words</label>'+
-'        <input id="top-words-input" class="form-control" type="number" placeholder="Enter a #."></input>'+
-'    </div>'+
-'    <div class="form-group col-xs-2">'+
-'        <label for="submit-button"></label>'+
-'        <input id="submit-button" class="btn btn-default" type="submit"></input>'+
-'    </div>'+
-'</form>',
-    
-    initialize: function() {
-        var settings = _.extend({ "words": "*", "topicTopNWords": 10, "sortBy": 1, "sortAscending": true }, this.settingsModel.attributes)
-        this.settingsModel.set(settings);
-        this.listenTo(this.settingsModel, "multichange", this.renderTopicsTable);
-    },
-    
-    cleanup: function(topics) {},
-    
-    render: function() {
-        this.$el.html(this.baseTemplate);
-        this.renderForm();
-        this.renderTopicsTable();
-    },
-    
-    renderForm: function() {
-        var container = d3.select("#form-container").html(this.loadingTemplate);
-        var selection = this.selectionModel.attributes;
-        // Make a request
-        this.dataModel.submitQueryByHash({
-            "datasets": selection["dataset"],
-            "dataset_attr": ["document_metadata_types"],
-        }, function(data) {
-            container.html("");
-        
-            var that = this;
-            var settings = this.settingsModel.attributes;
-            var words = settings["words"].split(/[\s,]+/).join(" ");
-            var topNWords = settings["topicTopNWords"];
-            var attribute = settings["selectedAttribute"];
-            
-            var types = data.datasets[this.selectionModel.get("dataset")].document_metadata_types;
-            var attributes = _.map(types, function(type, attr) { return attr; });
-            //~ console.log(attributes);
 
-            // Create the form
-            var el = d3.select(this.el).select("#form-container");
-            el.html(this.formTemplate);
-            el.select("#words-input").property("value", words);
-            el.select("#top-words-input").property("value", topNWords);
+var SingleTopicView = DefaultView.extend({
 
-            var select = el.select("#metadata-attribute-input");
-            select.selectAll("option").data(attributes).enter().append("option")
-                .text(function (attr) { return tg.str.toTitleCase(attr.replace(/_/g, " ")); })
-                .property("value", function (attr) { return attr; });
-            select.property("value", attribute);
-            el.select("form").on("submit", function() {
-                d3.event.preventDefault();
-                that.formSubmit();
-            });
-        }.bind(this), this.renderError.bind(this));
-    },
-    
-    formSubmit: function() {
-        var words = d3.select("#words-input").property("value").split(/[\s,]+/);
-        words = _.map(words, function(word) { return word.trim().toLowerCase(); });
-        words = _.filter(words, function(word) { return word !== ""; });
-        words.sort();
-        words = _.uniq(words, true);
-        words = words.join(",");
-        var topNWords = parseInt(d3.select("#top-words-input").property("value"));
-        this.settingsModel.set({ words: words });
-        if($.isNumeric(topNWords) && topNWords > 0) {
-            this.settingsModel.set({ topicTopNWords: topNWords });
-        }
-        var attr = $("#metadata-attribute-input").find(":selected").attr("value");
-        this.settingsModel.set({ selectedAttribute: attr });
-        //~ console.log("Selected attribute name: " + attr);
-        
-         this.settingsModel.trigger("multichange");
-    },
-    
-    renderTopicsTable: function() {
-        var container = d3.select("#table-container").html(this.loadingTemplate);
-        var selection = this.selectionModel.attributes;
-        var settings = this.settingsModel.attributes;
-        // Make a request
-        this.dataModel.submitQueryByHash({
-            "datasets": selection["dataset"],
-            "analyses": selection["analysis"],
-            "topics": "*",
-            "words": settings["words"],
-            "top_n_words": settings["topicTopNWords"],
-            "topic_attr": ["metrics", "names", "top_n_words"],
-            "analysis_attr": "metrics",
-//            "metadata_value": settings["selectedAttribute"] + "," + "January", // TODO: remove hard-coded value
-            //~ settings["selectedValue"],
-        }, function(data) {
-            container.html("");
-            
-            // Create HTML table element.
-            var table = container.append("table")
-                .attr("id", "topics-table")
-                .classed("table table-hover table-condensed", true);
-            // Table header.
-            var header = ["", "#", "% of Corpus", "Name", "Top Words", "% of Topic", "Temperature"];
-            // Format data.
-            var totalTokens = data.datasets[this.selectionModel.get("dataset")].analyses[this.selectionModel.get("analysis")].metrics["Token Count"];
-            var topNWords = settings['topicTopNWords'];
-            var topics = extractTopics(data, this.selectionModel);
-            topics = d3.entries(topics).map(function(d) {
-                var wordObjects = d.value["words"];
-                var wordTypes = [];
-                for(var key in wordObjects) wordTypes.push(key);
-                wordTypes.sort(function(a, b) { return wordObjects[b]["token_count"]-wordObjects[a]["token_count"]; });
-                var words = wordTypes.slice(0, topNWords).join(" ");
-                var wordsTokenCount = _.reduce(wordTypes, function(sum, word) { return sum + wordObjects[word]["token_count"]; }, 0);
-                var topicTokenCount = parseFloat(d.value.metrics["Token Count"]);
-                var topicTemperature = parseFloat(d.value.metrics["Temperature"].toPrecision(4));
-                return [
-                    parseFloat(d.key),
-                    parseFloat(d.key),
-                    (topicTokenCount*100)/totalTokens,
-                    d.value.names["Top3"],
-                    words,
-                    (wordsTokenCount*100)/topicTokenCount,
-                    topicTemperature
-                ];
-            });
-            topics = topics.filter(function(item) { return item[4] !== ""; });
-            var wordPercentage = _.reduce(topics, function(total, innerArray) {
-                return total + ((innerArray[2] * innerArray[5])/10000);
-            }, 0);
-            // Function performed on row click.
-            var onClick = function(d, i) {
-                this.selectionModel.set({ "topic": d[0] }); 
-            }.bind(this);
-            // Function to record current column and how it is sorted.
-            var onSort = function(column, ascending) {
-                this.settingsModel.set({ sortBy: column, sortAscending: ascending });
-            }.bind(this);
-            // Make the table.
-            var toCleanup = createSortableTable(table, {
-                header: header,
-                data: topics,
-                onClick: {  
-                    "1": onClick,
-                    "3": onClick,
-                    "4": onClick,
-                },
-                bars: [2,5],
-                temperatures: [6],
-                percentages: [2,5],
-                favicon: [0, "topics", this],
-                sortBy: this.settingsModel.get("sortBy"),
-                sortAscending: this.settingsModel.get("sortAscending"),
-                onSort: onSort
-            });
-            // Add the word as percentage of corpus total at the bottom.
-            var wordPercentageContainer = container.append("div");
-            wordPercentageContainer.append("span")
-                .append("b")
-                .text("All filtered topic words as % of corpus: " + (wordPercentage*100).toFixed(2) + "%");
-        }.bind(this), this.renderError.bind(this));
-    },
-    
-    renderHelpAsHtml: function() {
-        return "<h4>FilterTopics by Words</h4>"+
-        "<p>To filter the topics enter words separated by commas or spaces, use the asterisk (*) to indicate all words.</p>"+
-        "<h4>Top Words</h4>"+
-        "<p>This field is to limit the results returned by the server. The results are used to determine the % of the topic they make up.</p>"+
-        "<h4>Display Words</h4>"+
-        "<p>This will determine the maximum number of words displayed on the screen.</p>"+
-        "<h4>Submit</h4>"+
-        "<p>Click submit to view the changes made.</p>"+
-        "<h4>The Topics Table</h4>"+
-        "<p><ul>"+
-        "<li>The '% of Corpus' column is the amount of the corpus the topic makes up by word count. "+
-        "Due to stopwords (i.e. the, a, this, etc.) the percentages may not add up to 100.</li>"+
-        "<li>The '% of Topic' column is the amount of the words the topic is composed of.</li>"+
-        "<li>Click on the column headings to sort the data by that column; click again to reverse the sort.</li>"+
-        "<li>Click on a row to select a topic and toggle to a different view.</li>"+
-        "</ul></p>";
-    },
-});
+/******************************************************************************
+ *                             STATIC VARIABLES
+ ******************************************************************************/
 
-var SingleTopicView2 = DefaultView.extend({
+    readableName: "Single Topic",
+    shortName: "single_topic",
+    
+    redirectTemplate:
+'<div class="text-center">'+
+'   <button class="single-topic-redirect btn btn-default">'+
+'       <span class="glyphicon glyphicon-chevron-left pewter"></span> All Topics'+
+'   </button>'+
+'   <span> You need to select a topic to see any specific information. </span>'+
+'</div>',
     
     mainTemplate: 
-"<div id=\"single-topic-title\" class=\"row\"></div>"+
-"<div id=\"single-topic-info\" class=\"row\"></div>",
+'<div id="single-topic-title" class="row">'+
+'	<h3><b>Topic Name: </b><span class="single-topic-name tg-topic-name-auto-update"></span></h3>'+
+'	<h3><b>Top 10 Words: </b></h3><h4><span class="single-topic-top-ten-words"></span></h4>'+
+'</div>'+
+'<div id="single-topic-info" class="row"></div>',
     
     wordStatTemplate: 
-"<div id=\"word-stat-table\" class=\"col-xs-8\"></div>"+
-"<div id=\"word-stat-pie\" class=\"col-xs-4\"></div>",
+'<div id="word-stat-table" class="col-xs-8"></div>'+
+'<div id="word-stat-pie" class="col-xs-4"></div>',
 
     pieChartTemplate:
-"<div id=\"single-topic-pie-chart\" class=\"row\">"+
-"</div>"+
-"<h4 class=\"text-center\">Word Types</h4>"+
-"<p class=\"text-center\">(sorted by token count)</p>"+
-"<div id=\"single-topic-pie-chart-word-type-selector\" class=\"row\">"+
-"</div>"+
-"<p class=\"text-center\"><span>Showing <span id=\"single-topic-showing-n-word-types\">__</span> of <span id=\"single-topic-total-word-types\">__</span></span></p>"+
-"<div id=\"single-topic-pie-chart-legend\" class=\"row\">"+
-"</div>",
+'<div id="single-topic-pie-chart" class="row">'+
+'</div>'+
+'<h4 class="text-center">Word Types</h4>'+
+'<p class="text-center">(sorted by token count)</p>'+
+'<div id="single-topic-pie-chart-word-type-selector" class="row">'+
+'</div>'+
+'<p class="text-center"><span>Showing <span id="single-topic-showing-n-word-types">__</span> of <span id="single-topic-total-word-types">__</span></span></p>'+
+'<div id="single-topic-pie-chart-legend" class="row">'+
+'</div>',
 
+	events: {
+		'click .single-topic-redirect': 'clickRedirect',
+	},
+	
+	clickRedirect: function clickRedirect() {
+		this.viewModel.set({ currentView: 'all_topics' });
+	},
+    
+/******************************************************************************
+ *                             INHERITED METHODS
+ ******************************************************************************/
     
     initialize: function() {
         this.listenTo(this.selectionModel, "change:topic", this.render);
@@ -237,13 +60,58 @@ var SingleTopicView2 = DefaultView.extend({
         this.listenTo(this.settingsModel, "change:maxWordTypeIndex", this.updateSliderInfo);
         this.listenTo(this.settingsModel, "change:minWordTypeIndex", this.updatePieChartAndLegend);
         this.listenTo(this.settingsModel, "change:maxWordTypeIndex", this.updatePieChartAndLegend);
-        
     },
     
     render: function() {
-        this.$el.html(this.mainTemplate);
-        this.renderTopicTitle();
-        var tabs = {
+		if(this.selectionModel.nonEmpty(["dataset", "analysis", "topic"])) {
+			this.$el.html(this.mainTemplate);
+			this.renderTopicTitle();
+			this.renderTabs();
+		} else {
+			this.$el.html(this.redirectTemplate);
+		}
+    },
+    
+    renderHelpAsHtml: function() {
+        return "";
+    },
+    
+/******************************************************************************
+ *                             HELPER METHODS
+ ******************************************************************************/
+    
+    renderTopicTitle: function() {
+        var datasetName = this.selectionModel.get('dataset');
+        var analysisName = this.selectionModel.get('analysis');
+        var topicNumber = this.selectionModel.get('topic');
+        
+        var container = d3.select(this.el).select("#single-topic-title");
+        var topicNameContainer = container.select('.single-topic-name');
+        topicNameContainer.attr('data-tg-topic-number', topicNumber)
+            .text(this.dataModel.getTopicName(topicNumber));
+        var topTenContainer = container.select('.single-topic-top-ten-words');
+        topTenContainer.text('Loading...');
+        
+        // Make a request
+        this.dataModel.submitQueryByHash({
+            "datasets": datasetName,
+            "analyses": analysisName,
+            "topics": topicNumber,
+            "topic_attr": "top_n_words",
+            "words": "*",
+            "top_n_words": "10",
+        }, function(data) {
+            var topic = data.datasets[datasetName].analyses[analysisName].topics[topicNumber];
+            var words = [];
+            for(var key in topic["words"]) words.push({ key: key, value: topic["words"][key]});
+            words.sort(function(a, b) { return b.value.token_count - a.value.token_count; });
+            words = _.map(words, function(entry) { return entry.key; });
+            topTenContainer.text(words.join(", "));
+        }.bind(this), this.renderError.bind(this));
+    },
+    
+    renderTabs: function renderTabs() {
+		var tabs = {
             "Similar Topics": this.renderSimilarTopics.bind(this) ,
             "Top Documents": this.renderTopDocuments.bind(this) ,
             "Metadata and Metrics": this.renderMetadataAndMetrics.bind(this),
@@ -252,85 +120,109 @@ var SingleTopicView2 = DefaultView.extend({
         };
         
         var tabOnClick = function(tab) {
-            console.log("clicked "+tab);
-            console.log(this.settingsModel);
             this.settingsModel.set({ selectedTab: tab });
         }.bind(this);
         
-        createTabbedContent(d3.select(this.el).select("#single-topic-info"), {
+        tg.gen.createTabbedContent(this.$el.find("#single-topic-info").get(0), {
             tabs: tabs,
             selected: this.settingsModel.get("selectedTab"),
             tabOnClick: tabOnClick,
         });
-    },
-
-    renderTopicTitle: function() {
-        console.log(this.selectionModel);
-        if(!this.selectionModel.nonEmpty(["topic"])) {
-            this.$el.html("<p>Select a topic to display its information.</p>");
-            return;
-        }
-        
-        var selections = this.selectionModel.attributes;
-        var container = d3.select(this.el).select("#single-topic-title");
-        container.html(this.loadingTemplate);
-        // Make a request
-        this.dataModel.submitQueryByHash({
-            "datasets": selections["dataset"],
-            "analyses": selections["analysis"],
-            "topics": selections["topic"],
-            "topic_attr": "top_n_words",
-            "words": "*",
-            "top_n_words": "10",
-        }, function(data) {
-            container.html("");
-            var topic = extractTopics(data, this.selectionModel)[selections["topic"]];
-            var words = [];
-            for(var key in topic["words"]) words.push({ key: key, value: topic["words"][key]});
-            words.sort(function(a, b) { return b.value.token_count - a.value.token_count; });
-            words = _.map(words, function(entry) { return entry.key; });
-            
-            container.append("h2")
-                .text("Topic Number: "+selections["topic"]);
-            container.append("h3")
-                .text(words.join(" "));
-        }.bind(this), this.renderError.bind(this));
-    },
+	},
     
     renderTopDocuments: function(tab, content) {
         content.html(this.loadingTemplate);
         var selections = this.selectionModel.attributes;
-        this.dataModel.submitQueryByHash({
-            "datasets": selections["dataset"],
-            "analyses": selections["analysis"],
-            "topics": selections["topic"],
+        var datasetName = this.selectionModel.get("dataset");
+        var analysisName = this.selectionModel.get("analysis");
+        var topicNumber = this.selectionModel.get("topic");
+        var queryHash = {
+			"datasets": datasetName,
+            "analyses": analysisName,
+            "topics": topicNumber,
             "topic_attr": "metrics",
             "top_n_documents": 10,
-        }, function(data) {
+		};
+        this.dataModel.submitQueryByHash(queryHash, function topDocumentsCallback(data) {
             content.html("");
             var topicNumber = this.selectionModel.get("topic");
             var topic = extractTopics(data, this.selectionModel)[topicNumber];
             var topDocs = topic["top_n_documents"];
-            var tokenCount = parseFloat(topic.metrics["Token Count"]);
-            var documents = d3.entries(topDocs).map(function(entry) {
-                return [entry.key, entry.key, entry.value.token_count, (entry.value.token_count/tokenCount)*100];
-            });
-            var table = content.append("table")
-                .classed("table table-hover table-condensed", true);
-            var onClick = function(d, i) {
-                this.selectionModel.set({ "document": d[0] });
-                window.location.href = "#documents";
-            }.bind(this);
-            createSortableTable(table, {
-                header: ["", "Document", "Token Count", "% of Topic"], 
-                data: documents, 
-                onClick: { "1": onClick }, 
-                bars: [3], 
-                percentages: [3],
-                favicon: [0, "documents", this],
-                sortBy: 3,
-                sortAscending: false,
-            });
+            var tokenCountTotal = parseFloat(topic.metrics["Token Count"]);
+            
+            var documentsList = _.reduce(topDocs, function extractDocumentNames(result, value, key) {
+				result.push(key);
+				return result;
+			}, []);
+            
+            var docSnippetsRequest = {
+				"datasets": datasetName,
+				"analyses": analysisName,
+				"documents": documentsList,
+				"document_attr": ["intro_snippet"],
+			};
+            this.dataModel.submitQueryByHash(docSnippetsRequest, function finishTopDocumentsCallback(data2) {
+				var that = this;
+				var documentSnippets = data2.datasets[datasetName].analyses[analysisName].documents;
+				
+				var header = ["", "Document", "Preview", "Token Count", "% of Topic"];
+				var sortable = [false, true, true, true, true];
+				var sortBy = 4;
+				var sortAscending = this.settingsModel.get("ascending");
+				var tableData = _.map(topDocs, function createTableData(value, key) {
+					return [key, key, documentSnippets[key]["intro_snippet"], value.token_count, value.token_count/tokenCountTotal];
+				});
+				var tokenCountMax = _.max(tableData, function findTokenCountMax(value) {
+					return value[4];
+				})[4];
+				console.log(tokenCountMax);
+				var dataFunctions = [
+					function col0(d, i) {
+						var el = d3.select(this)
+							.append("span")
+							.attr("data-tg-document-name", d)
+							.classed("tg-fav", true);
+						tg.site.initFav(el[0][0], that.favsModel);
+					},
+					false,
+					function col2(snippet, i) {
+						d3.select(this)
+							.append('div')
+							.style({ "float": "left" , "text-align": "left", "max-width": "400px" })
+							.text(snippet);
+					},
+					false,
+					function col4(d, i) {
+						//~ console.log(d);
+						//~ console.log(tokenCountMax);
+						d3.select(this)
+							.html(tg.gen.createPercentageBar(d, tokenCountMax) + " " + d.toFixed(4) + "%");
+					},
+				];
+				var tableRowFunction = function tableRowFunction(rowData, index) {
+					d3.select(this)
+						.attr("data-tg-document-name", rowData[1])
+						.classed("tg-select pointer", true)
+						.classed("all-docs-update-document-highlight all-docs-document-popover", true)
+						.classed("success", function isRowHighlighted(d, i) {
+							if(d3.select(this).attr("data-tg-document-name") === that.selectionModel.get("document")) {
+								return true;
+							} else {
+								return false;
+							}
+						});
+				};
+				
+				tg.gen.createSortableTable(content[0][0], {
+					header: header, 
+					sortable: sortable,
+					sortBy: sortBy,
+					sortAscending: sortAscending,
+					data: tableData,
+					dataFunctions: dataFunctions,
+					tableRowFunction: tableRowFunction,
+				});
+			}.bind(this), this.renderError.bind(this));
         }.bind(this), this.renderError.bind(this));
     },
     
@@ -619,6 +511,7 @@ var SingleTopicView2 = DefaultView.extend({
                 "topics": selections["topic"],
                 "topic_attr": ["metrics","names","pairwise"],
         }, function(data) {
+			
             this.dataModel.submitQueryByHash({
                 "datasets": selections["dataset"],
                 "analyses": selections["analysis"],
@@ -637,7 +530,7 @@ var SingleTopicView2 = DefaultView.extend({
                         return entry.key != currentTopic;
                     })
                     .map(function(entry) {
-                        var result = [entry.key, entry.key, entry.value.names.Top3];
+                        var result = [entry.key, entry.key, that.dataModel.getTopicNameRaw(entry.key)];
                         var index = parseFloat(entry.key);
                         var pairwise = topic["pairwise"];
                         for(var key in pairwise) {
@@ -830,192 +723,381 @@ var SingleTopicView2 = DefaultView.extend({
                 .text(textInfo[2]);
         }.bind(this), this.renderError.bind(this));
     },
-    
-    renderHelpAsHtml: function() {
-        return "";
-    },
 });
 
-var SingleTopicSubView2 = DefaultView.extend({
-    
-    mainTemplate: "<div id=\"all-topic-container\" class=\"col-xs-3\"></div>"+
-                  "<div id=\"topic-info\" class=\"col-xs-9\"></div>",
-    
-    dropdownTemplate: "<div class=\"btn-group\">"+
-                          "<button type=\"button\" class=\"btn btn-primary\">Sort By</button>"+
-                          "<button type=\"button\" class=\"btn btn-primary dropdown-toggle\" data-toggle=\"dropdown\">"+
-                            "<span class=\"caret\"></span>"+
-                            "<span class=\"sr-only\">Toggle Dropdown</span>"+
-                          "</button>"+
-                          "<ul id=\"sort-by\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
-                      "</div>",
-    
-    initialize: function() {},
-    
-    cleanup: function() {
-        if(this.info !== undefined) {
-            this.info.dispose();
-        }
-    },
-    
-    render: function() {
-        this.$el.html(this.mainTemplate);
-        this.renderAllTopicsSideBar();
-        this.renderTopicInfo();
-    },
-    
-    renderTopicInfo: function() {
-        if(this.info !== undefined) {
-            this.info.cleanup();
-        }
-        this.info = new SingleTopicView2(_.extend({ el: $("#topic-info") }, this.getAllModels()));
-        this.info.render();
-    },
-    
-    renderAllTopicsSideBar: function() {
-        var selections = this.selectionModel.attributes;
-        var container = d3.select("#all-topic-container");
-        container.append("button")
-            .classed("btn btn-default", true)
-            .attr("type", "button")
-            .html("<span class=\"glyphicon glyphicon-chevron-left pewter\"></span> Back to All Topics")
-            .on("click", function() {
-                this.selectionModel.set({ "topic": "" });
-            }.bind(this));
-        container.append("hr");
-        container = container.append("div");
-        container.html(this.loadingTemplate);
-        
-        // Make a request
-        this.dataModel.submitQueryByHash({
-            "datasets": selections["dataset"],
-            "analyses": selections["analysis"],
-            "topics": '*',
-            "topic_attr": ["metrics","names"],
-            "analysis_attr": "metrics",
-        }, function(data) { // Render the content
-            container.html(this.dropdownTemplate);
-            
-            var sortList = [];
-            var topics = extractTopics(data, this.selectionModel);
-            topics = d3.entries(topics).map(function(d) {
-                
-                var items = {};
-                for(var key in d.value.names) {
-                    items[key] = d.value.names[key];
-                }
-                for(var key in d.value.metrics) {
-                    items[key] = d.value.metrics[key];
-                }
-                items["Number"] = d.key;
-                if(d.key === "0") {
-                    for(var key in items) sortList.push(key);
-                }
-                return [d.key, d.value.names.Top3, items];
-            });
-            var tableHeader = ['Topics'];
-            var ascending = true;
-            var sortBy = 'Number';
-            
-            
-            var list = d3.select("#all-topic-container").append("ul")
-                .classed("list-unstyled", true);
-            var items = list.selectAll(".all-topic-sidebar-items")
-                .data(topics)
-                .enter()
-                .append("li")
-                .classed(".all-topic-sidebar-items", true)
-                .classed("list-group-item", true)
-                .text(function(d) {
-                    return d[0] + ": " +d[1];
-                })
-                .on("click", function(d) {
-                    this.selectionModel.set({ "topic": d[0] });
-                }.bind(this));
-            
-            var sort = d3.select("#sort-by").selectAll("li")
-                .data(sortList)
-                .enter()
-                .append("li")
-                .append("a")
-                .text(function(d) { return d; })
-                .on("click", function(d) {
-                    var ascendingSort = function(a, b) {
-                        if($.isNumeric(a[2][d]) && $.isNumeric(b[2][d])) return parseFloat(a[2][d]) - parseFloat(b[2][d]);
-                        else return a[2][d].localeCompare(b[2][d]);
-                    };
-                    var descendingSort = function(a, b) {
-                        return ascendingSort(b,a);
-                    };
-                    
-                    if(d !== sortBy) ascending = true;
-                    sortBy = d;
-                    if(ascending) {
-                        d3.selectAll(".all-topic-sidebar-items").sort(ascendingSort);
-                        ascending = false;
-                    } else {
-                        d3.selectAll(".all-topic-sidebar-items").items.sort(descendingSort);
-                        ascending = true;
-                    }
-                });
-        }.bind(this), this.renderError.bind(this));
-    },
-    
-    renderHelpAsHtml: function() {
-        var subViewHtml = "";
-        if(this.info !== undefined) {
-            subViewHtml = this.info.renderHelpAsHtml();
-        }
-        return "<h4>All Topics</h4>"+
-               "<p>Use the 'Sort By' dropdown menu to choose how to sort the topics on the sidebar.  "+
-               "The topics will be sorted in ascending order, to reverse the order select the sort by option again.</p>"+
-               subViewHtml;
-    },
-});
 
-var TopicView2 = DefaultView.extend({
+var SingleTopicViewSidebar = DefaultView.extend({
+
+/******************************************************************************
+ *                             STATIC VARIABLES
+ ******************************************************************************/
+
+    readableName: "Single Topic Sidebar",
+    shortName: "single_topic_sidebar",
     
-    readableName: "Topics2",
-    shortName: "topics2",
-    
-    initialize: function() {
-        this.listenTo(this.selectionModel, "change:topic", this.render);
+    baseTemplate:
+'<div class="single-topic-sidebar-select-container">'+
+'   <select class="single-topic-sidebar-sortby-select form-control" type="selection">'+
+'   </select>'+
+'   <div class="single-topic-sidebar-btns btn-group" data-toggle="buttons">'+
+'       <label class="single-topic-sidebar-sortby-ascending btn btn-success active">'+
+'           <input type="radio">'+
+'           <span class="glyphicon glyphicon-sort-by-attributes"></span>'+
+'       </label>'+
+'       <label class="single-topic-sidebar-sortby-descending btn btn-success">'+
+'           <input type="radio">'+
+'           <span class="glyphicon glyphicon-sort-by-attributes-alt"></span>'+
+'       </label>'+
+'   </div>'+
+'</div>'+
+'<div class="single-topic-sidebar-topics-list">'+
+'</div>',
+
+/******************************************************************************
+ *                             INHERITED METHODS
+ ******************************************************************************/
+
+    initialize: function initialize() {
+        var defaultSettings = {
+            sidebarSortByValue: 'name',
+            sidebarSortAscending: true,
+        };
+        this.settingsModel.set(_.extend(defaultSettings, this.settingsModel.attributes));
+        this.model = new Backbone.Model();
+        this.listenTo(this.settingsModel, 'change', this.renderList);
+        this.listenTo(this.selectionModel, 'change:analysis', this.render);
+        this.listenTo(this.selectionModel, 'change:topicNameScheme', this.render);
+        this.listenTo(this.selectionModel, 'change:topic', this.highlightTopicRow);
     },
     
-    render: function() {
-        this.$el.empty();
-        if(this.selectionModel.nonEmpty(["dataset", "analysis"])) {
-            this.$el.html("<div id=\"topics-over-time\"></div><div id=\"info\"></div>");
-            this.disposeOfViews();
-            if(this.selectionModel.nonEmpty(["topic"])) {
-                this.subView = new SingleTopicSubView2(_.extend({ el: "#info" }, this.getAllModels()));
-            } else {
-                this.subView = new AllTopicSubView2(_.extend({ el: "#info" }, this.getAllModels()));
+    cleanup: function cleanup() {
+    },
+    
+    render: function render() {
+        if(this.selectionModel.nonEmpty(['dataset', 'analysis'])) {
+            this.$el.html(this.loadingTemplate);
+            var datasetName = this.selectionModel.get('dataset');
+            var analysisName = this.selectionModel.get('analysis');
+            var request = this.getRequest(datasetName, analysisName);
+            this.dataModel.submitQueryByHash(
+                request,
+                function singleTopicSidebarCallback(data) {
+                    this.$el.html(this.baseTemplate);
+                    var extractedData = this.extractData(data, datasetName, analysisName);
+                    var sortData = this.formatData(extractedData, this.dataModel);
+                    var selectData = this.formatSelectData(sortData);
+                    this.model.set({ sortData: sortData, selectData: selectData });
+                    this.renderSelect();
+                    this.renderAscendingOption();
+                    this.renderList();
+                    this.highlightTopicRow();
+                }.bind(this),
+                this.renderError.bind(this)
+            );
+        }
+    },
+    
+    renderHelpAsHtml: function renderHelpAsHtml() {
+        return '';
+    },
+
+/******************************************************************************
+ *                             HELPER METHODS
+ ******************************************************************************/
+
+    renderSelect: function renderSelect() {
+        this.generateSelect(
+            this.$el.find('.single-topic-sidebar-sortby-select').get(0), 
+            {
+                data: this.model.get('selectData'), 
+                groupValueExtractionFunction: this.groupValueExtractionFunction,
+                selectedKey: this.settingsModel.get('sidebarSortByValue'),
             }
-            this.subView.render();
+        );
+    },
+    
+    renderAscendingOption: function renderAscendingOption() {
+        var ascending = this.settingsModel.get('sidebarSortAscending');
+        d3.select(this.el).select('.single-topic-sidebar-sortby-ascending')
+            .classed('active', ascending);
+        d3.select(this.el).select('.single-topic-sidebar-sortby-descending')
+            .classed('active', !ascending);
+    },
+    
+    renderList: function renderList() {
+        this.generateSortedList(
+            this.$el.find('.single-topic-sidebar-topics-list').get(0), 
+            {
+                data: this.model.get('sortData'),
+                sortByKey: this.settingsModel.get('sidebarSortByValue'),
+                nameKey: 'name',
+                ascending: this.settingsModel.get('sidebarSortAscending'),
+                rowFunction: function rowFunction(d) {
+                                 d3.select(this)
+                                    .attr('data-tg-topic-number', d.key)
+                                    .classed('pointer tg-select', true);
+                             },
+            }
+        );
+        this.highlightTopicRow();
+    },
+    
+    highlightTopicRow: function highlightTopicRow() {
+        var topicNum = this.selectionModel.get('topic');
+        d3.select(this.el).select('.single-topic-sidebar-topics-list')
+            .selectAll('.tg-select')
+            .classed('success', function(d) {
+                return d3.select(this).attr('data-tg-topic-number') === topicNum;
+            });
+    },
+    
+/******************************************************************************
+ *                       PURE FUNCTIONS (no this context used)
+ ******************************************************************************/
+    
+    /**
+     * el -- dom element of select to populate with options
+     * selectData -- a dictionary where the keys are the select option values
+     * groupValueExtractionFunction -- a function that returns [groupName, valueName] of the selectData key
+     *      if groupName is falsy then the value is placed above the option groups
+     * Render select in element.
+     */
+    generateSelect: function generateSelect(el, options) {
+        var defaults = {
+            data: {}, 
+            groupValueExtractionFunction: function (a) { return a; },
+            selectedKey: null,
+        };
+        options = _.extend({}, defaults, options);
+        
+        var normalized = _.reduce(options.data, function(result, value, key) {
+            var groupValue = options.groupValueExtractionFunction(key);
+            var groupName = groupValue[0];
+            var valueName = groupValue[1];
+            if(!groupName) {
+                result[0].push({ key: valueName, value: key });
+            } else {
+                var groups = result[1];
+                if(!(groupName in groups)) {
+                    groups[groupName] = [];
+                }
+                groups[groupName].push({ key: valueName, value: key });
+            }
+            return result;
+        }, [[], {}]);
+        
+        var singles = normalized[0]; // list of objects { key: readableName, value: value }
+        var groups = d3.entries(normalized[1]); // object where keys are groups and values are lists of objects as specified above
+        
+        var createOptions = function createOptions(d3El, data, selectedKey) {
+            d3El.selectAll('option')
+                .data(data)
+                .enter()
+                .append('option')
+                .attr('selected', function(d) {
+                    if(d.value === selectedKey) {
+                        return 'selected';
+                    }
+                })
+                .attr('value', function(d) { return d.value; })
+                .text(function(d) { return d.key; });
+        };
+        
+        var d3El = d3.select(el);
+        d3El.html('');
+        createOptions(d3El, singles, options.selectedKey);
+        d3El.selectAll('optgroup')
+            .data(groups)
+            .enter()
+            .append('optgroup')
+            .attr('label', function(d) { return d.key; })
+            .each(function(d) {
+                createOptions(d3.select(this), d.value, options.selectedKey);
+            });
+    },
+    
+    groupValueExtractionFunction: function groupValueExtractionFunction(key) {
+        var groupValue = key.split(':');
+        var groupName = '';
+        var valueName = '';
+        if(groupValue.length < 2) {
+            valueName = groupValue[0];
         } else {
-            this.$el.html("<p>You should select a <a href=\"#datasets\">dataset and analysis</a> before proceeding.</p>");
+            groupName = groupValue[0];
+            valueName = groupValue.slice(1).join(':');
         }
+        groupName = tg.str.toTitleCase(groupName.replace(/_/g, ' '));
+        valueName = tg.str.toTitleCase(valueName.replace(/_/g, ' '));
+        return [groupName, valueName];
     },
     
-    renderHelpAsHtml: function() {
-        if(this.subView !== undefined) {
-            return this.subView.renderHelpAsHtml();
+    /**
+     * Requires that the select is rendered.
+     * el -- dom element of container
+     * data -- the data object
+     * sortByKey -- key into the data's value object to use for sorting
+     * nameKey -- the key into the data's value object to locate the name to display
+     * ascending -- true to sort ascending; false otherwise
+     * rowFunction -- passed the row element as the this context; useful for
+     *                binding events and classes
+     * Render list in element.
+     */
+    generateSortedList: function renderList(el, options) {
+        var defaults = {
+            data: {},
+            sortByKey: null,
+            nameKey: null,
+            ascending: true,
+            rowFunction: function () {},
+        };
+        options = _.extend(defaults, options);
+        
+        var d3El = d3.select(el);
+        d3El.html('');
+        var table = d3El.append('table')
+            .classed('table table-hover table-condensed', true);
+        var tableBody = table.append('tbody');
+        var data = d3.entries(options.data).sort(function(a, b) {
+                var aval = a.value[options.sortByKey];
+                var bval = b.value[options.sortByKey];
+                if(options.ascending) {
+                    return tg.js.compareTo(aval, bval);
+                } else {
+                    return tg.js.compareTo(bval, aval);
+                }
+            });
+        var rows = tableBody.selectAll('tr')
+            .data(data)
+            .enter()
+            .append('tr')
+            .each(options.rowFunction);
+        rows.append('td')
+            .text(function(d) {
+                return d.value[options.nameKey];
+            });
+    },
+    
+    getRequest: function getRequest(datasetName, analysisName) {
+        return {
+            datasets: datasetName,
+            analyses: analysisName,
+            topics: '*',
+            topic_attr: ['metrics'],
+        };
+    },
+    
+    /**
+     * data -- data as returned from the server
+     * datasetName -- name of the dataset
+     * analysisName -- name of the analysis
+     * Return the data needed.
+     */
+    extractData: function extractData(data, datasetName, analysisName) {
+        return data.datasets[datasetName].analyses[analysisName].topics;
+    },
+    
+    /**
+     * data -- as returned by extractData
+     * dataModel -- an instance of DataModel or something else that can convert
+     *              topic numbers to a readable name
+     * Return data in an easy to use for sorting way.
+     */
+    formatData: function formatData(data, dataModel) {
+        var result = {};
+        
+        for(var topicNum in data) {
+            var topicData = {};
+            topicData['number'] = topicNum;
+            topicData['name'] = dataModel.getTopicName(topicNum);
+            var metrics = data[topicNum]['metrics'];
+            for(var metricName in metrics) {
+                var slugMetricName = tg.str.toSlugFormat(metricName);
+                topicData['metric:'+slugMetricName] = metrics[metricName];
+            }
+            result[topicNum] = topicData;
         }
-        return DefaultView.prototype.renderHelpAsHtml();
+        
+        return result;
     },
     
-    disposeOfViews: function() {
-        if(this.subView !== undefined) {
-            this.subView.dispose();
+    /**
+     * data -- as returned by formatData
+     * Return data for rendering the select.
+     */
+    formatSelectData: function formatSelectData(data) {
+        for(var t in data) {
+            var topicData = data[t];
+            return topicData;
         }
+        return {};
+    },
+
+/******************************************************************************
+ *                         DOM EVENT HANDLERS
+ ******************************************************************************/
+
+    events: {
+        'change .single-topic-sidebar-sortby-select': 'changeSortBySelect',
+        'click .single-topic-sidebar-sortby-ascending': 'clickSortAscending',
+        'click .single-topic-sidebar-sortby-descending': 'clickSortDescending',
     },
     
-    cleanup: function() {
-        this.disposeOfViews();
+    changeSortBySelect: function changeSortBySelect(e) {
+        var value = this.$el.find('.single-topic-sidebar-sortby-select').val();
+        console.log(value);
+        this.settingsModel.set({ sidebarSortByValue: value });
     },
     
+    clickSortAscending: function clickSortAscending(e) {
+        this.settingsModel.set({ sidebarSortAscending: true });
+    },
+    
+    clickSortDescending: function clickSortDescending(e) {
+        this.settingsModel.set({ sidebarSortAscending: false });
+    },
+});
+
+
+/**
+ * Simple manager to combine two views.
+ * leftView -- the side bar
+ * rightView -- the single topic
+ */
+var SingleTopicViewManager = DefaultView.extend({
+    readableName: "Single Topic",
+    shortName: "single_topic",
+    
+    baseTemplate:
+'<div class="row">'+
+'    <div class="single-topic-manager-left-container col-xs-3">'+
+'    </div>'+
+'    <div class="single-topic-manager-right-container col-xs-9">'+
+'    </div>'+
+'</div>',
+    
+    initialize: function initialize() {
+        this.leftView = new DefaultView();
+        this.rightView = new DefaultView();
+    },
+    
+    render: function render() {
+        this.cleanup();
+        this.$el.html(this.baseTemplate);
+        this.leftView = new SingleTopicViewSidebar(_.extend({ el: this.$el.find('.single-topic-manager-left-container') }, this.getAllModels()));
+        this.leftView.render();
+        this.rightView = new SingleTopicView(_.extend({ el: this.$el.find('.single-topic-manager-right-container') }, this.getAllModels()));
+        this.rightView.render();
+    },
+    
+    cleanup: function cleanup() {
+        this.leftView.dispose();
+        this.rightView.dispose();
+    },
+    
+    renderHelpAsHtml: function renderHelpAsHtml() {
+        return this.rightView.renderHelpAsHtml();
+    },
 });
 
 // Add the Topic View to the top level menu
-addViewClass([], TopicView2);
+addViewClass(["Topic"], SingleTopicViewManager);

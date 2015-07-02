@@ -21,7 +21,7 @@ var tg = new function() {
          *      tg-data-topic-name-scheme
          * favsModel -- must be the favoritesModel to pull from
          */
-        initFav: function(domElement, favsModel) {
+        initFav: function initFav(domElement, favsModel) {
             var el = d3.select(domElement);
             var type = null;
             var clsName = null;
@@ -52,6 +52,7 @@ var tg = new function() {
         
         /**
          * Convert from the short string representation to a human readable one.
+         * @deprecated Use metadata_types from dataModel.getServerInfo()
          */
         readableTypes: {
             "int": "Integer",
@@ -66,6 +67,8 @@ var tg = new function() {
          * Injectible icon html.
          */
         icons: {
+			plus: '<span class="glyphicon glyphicon-plus green"></span>',
+			
             emptyStar: "<span class=\"glyphicon glyphicon-star-empty gold\"></span>",
             filledStar: "<span class=\"glyphicon glyphicon-star gold\"></span>",
             
@@ -84,11 +87,14 @@ var tg = new function() {
         },
     };
     
+    /**
+     * Convenience functions to create random numbers.
+     */
     this.rand = {
         /**
          * Return an integer in [min, max).
          */
-        getRandomIntegerInRange: function(min, max) {
+        getRandomIntegerInRange: function getRandomIntegerInRange(min, max) {
             return Math.floor(Math.random()*(max - min)) + min;
         },
     };
@@ -102,7 +108,7 @@ var tg = new function() {
          * attrName -- string of the attribute name
          * Return true if the attribute exists; false otherwise.
          */
-        hasAttr: function(domElement, attrName) {
+        hasAttr: function hasAttr(domElement, attrName) {
             var a = $(domElement).attr(attrName);
             return typeof a !== typeof undefined && a !== false;
         },
@@ -114,11 +120,37 @@ var tg = new function() {
      * Basic functions for type checking or otherwise.
      */
     this.js = {
+        
+        /**
+         * Compare two values of the same type.
+         * Currently supports String and Number.
+         */
+        compareTo: function compareTo(a, b) {
+            if(tg.js.isString(a) && tg.js.isString(b)) {
+                return a.localeCompare(b);
+            } else if(tg.js.isNumber(a) && tg.js.isNumber(b)) {
+                return b - a;
+            }
+        },
+        
+        /**
+         * n -- a number as a string
+         * Return true if it is a number; false otherwise.
+         */
+        isNumber: function isNumber(n) {
+            try {
+                var num = Number(n);
+                return !isNaN(num);
+            } catch(err) {
+                return false;
+            }
+        },
+        
         /**
          * i -- a number
          * Return true if it is an integer; false otherwise.
          */
-        isInteger: function(i) {
+        isInteger: function isInteger(i) {
             return !isNaN(i) && 
                    parseInt(Number(i)) == i && 
                    !isNaN(parseInt(i, 10));
@@ -128,7 +160,7 @@ var tg = new function() {
          * s -- an object
          * Return true if it is a string; false otherwise.
          */
-        isString: function(str) {
+        isString: function isString(str) {
             if(typeof str === "string" || str instanceof String) {
                 return true;
             } else {
@@ -140,7 +172,7 @@ var tg = new function() {
          * obj -- any javascript object
          * Return true if obj isn't undefined or null; false otherwise;
          */
-        isDefined: function(obj) {
+        isDefined: function isDefined(obj) {
             return (obj !== null && obj !== undefined);
         },
         
@@ -149,7 +181,7 @@ var tg = new function() {
          * This code is from the Django project:
          * https://docs.djangoproject.com/en/1.7/ref/contrib/csrf/
          */
-        getCookie: function(name) {
+        getCookie: function getCookie(name) {
             var cookieValue = null;
             if (document.cookie && document.cookie != '') {
                 var cookies = document.cookie.split(';');
@@ -168,7 +200,7 @@ var tg = new function() {
         /**
          * Return true if session storage is enabled.
          */
-        hasSessionStorage: function() {
+        hasSessionStorage: function hasSessionStorage() {
             try {
                 sessionStorage["storage-test"] = "test";
                 delete sessionStorage["storage-test"];
@@ -180,16 +212,30 @@ var tg = new function() {
         
     };
     
+    /**
+     * Basic text manipulation functions.
+     */
     this.str = {
         /**
          * Returns a new string with the start of each word capitalized.
          */
-        toTitleCase: function(str) {
+        toTitleCase: function toTitleCase(str) {
             return str.replace(/\w\S*/g, function(substr){ return substr.charAt(0).toUpperCase() + substr.slice(1); });
+        },
+        
+        /**
+         * Returns a new string to lowercase with all white space replaced with underscores.
+         */
+        toSlugFormat: function toSlugFormat(str) {
+            return str.toLowerCase().replace(/\s+/g, '_');
         },
         
     };
     
+    /**
+     * Basic color palettes and convenience functions used to create d3 color
+     * scales.
+     */
     this.color = {
         pastels: ["#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78", "#2ca02c", "#98df8a", 
                   "#d62728", "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", 
@@ -201,20 +247,37 @@ var tg = new function() {
          * Return a function that takes and index in the range of listOfValues 
          * and maps to a color.
          */
-        getDiscreteColorScale: function(listOfValues, colorPalette) {
+        getDiscreteColorScale: function getDiscreteColorScale(listOfValues, colorPalette) {
             var colorDomain = d3.scale.ordinal().domain(colorPalette).rangePoints([0, 1], 0).range();
             var ordinalRange = d3.scale.ordinal().domain(listOfValues).rangePoints([0, 1], 0).range();
             var ordToNum = d3.scale.ordinal().domain(listOfValues).range(ordinalRange);
             var numToColor = d3.scale.linear().domain(colorDomain).range(colorPalette);
             return function ordinalColorScale(val) { return numToColor(ordToNum(val)); };
         },
+        
+        /**
+         * Converts hexidecimal string of RGB to an rgba string.
+         * hex -- RGB hexidecimal string
+         * alpha -- desired alpha value between 0 and 1 inclusive
+         * Return "rgba(R,G,B,alpha)".
+         */
+        hexToRGBA: function hexToRGBA(hex, alpha) {
+            var r = parseInt(hex.slice(1,3), 16);
+            var g = parseInt(hex.slice(3,5), 16);
+            var b = parseInt(hex.slice(5,7), 16);
+            var a = 0.3;
+            return "rgba("+r+","+g+","+b+","+a+")";
+        },
     };
     
+    /**
+     * Convenience functions for manipulating the URL.
+     */
     this.url = {
         /**
          * Turns arrays and other objects to URI friendly strings.
          */
-        uriStringify: function(item) {
+        uriStringify: function uriStringify(item) {
             var result = null;
             if(item instanceof String) {
                 result = encodeURIComponent(item);
@@ -234,7 +297,7 @@ var tg = new function() {
         /**
          * Parse url arguments to a hash.
          */
-        urlToHash: function(args) {
+        urlToHash: function urlToHash(args) {
             var hash = {};
             var items = args.split('&');
             if(items[0] !== "") {
@@ -249,9 +312,9 @@ var tg = new function() {
 
         /**
          * Convert a hash to url arguments, url will be normalized.
-         * hash - Any valid hash with strings, arrays, and numbers as the values.
+         * hash -- Any valid hash with strings, arrays, and numbers as the values.
          */
-        hashToUrl: function(hash) {
+        hashToUrl: function hashToUrl(hash) {
             var keys = [];
             _.forOwn(hash, function(value, key) { keys.push(key); });
             keys.sort();
@@ -260,6 +323,607 @@ var tg = new function() {
                 items.push(encodeURIComponent(key) + '=' + tg.url.uriStringify(hash[key]));
             });
             return items.join('&');
+        },
+    };
+    
+    /**
+     * Convenience functions for generating content.
+     */
+    this.gen = {
+        /**
+         * Create a table with two columns from a hash/dictionary/object.
+         * domElContainer - The dom element to append the table/message to.
+         * hash -- The hash to use to populate the table.
+         * header -- An array of length 2 with the first item the name for the key and second for the value.
+         * message -- The message if the hash is empty (e.g. "No metrics available.").
+         */
+        createTableFromHash: function createTableFromHash(domElContainer, hash, header, message) {
+            var container = d3.select(domElContainer);
+            if(_.size(hash) === 0) {
+                container.append("p")
+                    .text(message);
+            } else {
+                var table = container.append("table")
+                    .classed("table table-hover table-condensed", true);
+                table.append("thead")
+                    .append("tr")
+                    .selectAll("th")
+                    .data(header)
+                    .enter()
+                    .append("th")
+                    .text(function(d) { return d; });
+                var entries = d3.entries(hash).map(function(entry) {
+                    if(entry.value == null) {
+                        return [entry.key, "null"];
+                    } else {
+                        return [entry.key, entry.value.toString()];
+                    }
+                });
+                table.append("tbody")
+                    .selectAll("tr")
+                    .data(entries)
+                    .enter()
+                    .append("tr")
+                    .selectAll("td")
+                    .data(function(d) { return d; })
+                    .enter()
+                    .append("td")
+                    .text(function(d) { return d; });
+            }
+        },
+        
+        /**
+         * Create a sortable table.
+         * 
+         * el -- a dom element to append the table to
+         * options -- an object with the following options set:
+         * 
+         * header -- the titles at the top of the columns
+         * sortable -- an array (of the same length as the header) containing 
+         *     boolean values indicating which columns are sortable
+         * sortBy -- the index of the column to sort by
+         * sortAscending - true for ascending, false for descending
+         * onSortFunction - Function called when a column is sorted.
+         *     e.g. function(column, ascending) where column is an index into 
+         *     the header array and ascending is a boolean.
+         * data -- an array of arrays, all atomic elements must be numbers or 
+         *     strings, the length of the inner arrays must match the header
+         * dataFunctions -- functions to be passed the data of the table element
+         *     as the first argument and the dom element of the table cell
+         *     as the "this" context
+         * tableRowFunction -- function to be passed the data of an entire row
+         *     with the "this" context as the table row dom element
+         * 
+         * Return nothing.
+         */
+        createSortableTable: function createSortableTable(el, options) {
+            var defaults = {
+                header: [],
+                sortable: [],
+                sortBy: 0,
+                sortAscending: true,
+                onSortFunction: false,
+                data: [],
+                dataFunctions: [],
+                tableRowFunction: false,
+                tableClasses: "table table-hover table-condensed",
+                shrinkTable: false,
+            };
+            options = _.extend(defaults, options);
+            
+            // Sort functions where i is the column to sort by.
+            var makeSortAscending = function(i) {
+                var sortAscending = function(a, b) {
+                    if($.isNumeric(a[i]) && $.isNumeric(b[i])) return parseFloat(a[i]) - parseFloat(b[i]);
+                    else return a[i].localeCompare(b[i]);
+                };
+                return sortAscending;
+            }
+            var makeSortDescending = function(i) {
+                var sortAscending = makeSortAscending(i);
+                var sortDescending = function(a, b) { return sortAscending(b, a); };
+                return sortDescending;
+            }
+            
+            // Variables for sorting.
+            var ascending = options.sortAscending;
+            var sortBy = options.sortBy;
+            
+            // Create table.
+            var table = d3.select(el).append("table")
+                .classed(options.tableClasses, true);
+            
+            if(options.shrinkTable) {
+                table.style("width", "auto");
+                table.style("margin", "0px auto");
+            }
+            
+            // Create column headers with sort icons.
+            var headerRow = table.append("thead")
+                .append("tr").selectAll("th")
+                .data(options.header)
+                .enter()
+                .append("th")
+                .append("a")
+                .style("cursor", function(d, i) {
+                    if(options.sortable[i]) {
+                        return "pointer";
+                    } else {
+                        return null;
+                    }
+                })
+                .on("click", function(d, i) {
+                    if(!options.sortable[i]) {
+                        return;
+                    }
+                    
+                    // On click sort the table.
+                    if(sortBy !== i) ascending = true;
+                    sortBy = i;
+                    if(ascending) {
+                        ascending = false;
+                        tableRows.sort(makeSortAscending(i));
+                    } else {
+                        ascending = true;
+                        tableRows.sort(makeSortDescending(i)); 
+                    }
+                    if(options.onSortFunction) {
+                        options.onSortFunction(i, !ascending);
+                    }
+                })
+                .classed({ "nounderline": true })
+                .style("white-space", "nowrap")
+                .text(function(title) { return title+" "; }) // Title.
+                .append("span") // Sort icon.
+                .classed("glyphicon", function(d, i) {
+                    return options.sortable[i];
+                })
+                .classed("glyphicon-sort", function(d, i) {
+                    return options.sortable[i];
+                });
+            
+            // Create tr entries.
+            var tableRows = table.append("tbody")
+                .selectAll("tr")
+                .data(options.data)
+                .enter()
+                .append("tr");
+            // Create td entries
+            tableRows.each(function(rowData, index) {
+                var tableRowFunc = options.tableRowFunction;
+                if(tableRowFunc) {
+                    tableRowFunc.call(this,rowData, index);
+                }
+                
+                var row = d3.select(this);
+                var td = row.selectAll("td")
+                    .data(rowData)
+                    .enter()
+                    .append("td");
+                
+                var cellFunctions = options.dataFunctions;
+                
+                // Fill in table values
+                td.each(function(d, i) {
+                    if(_.size(cellFunctions) >= i && cellFunctions[i]) {
+                        cellFunctions[i].call(this, d, i);
+                    } else {
+                        d3.select(this).text(d);
+                    }
+                });
+            });
+            
+            // Set initial sort.
+            if(ascending) {
+                tableRows.sort(makeSortAscending(sortBy));
+            } else {
+                tableRows.sort(makeSortDescending(sortBy));
+            }
+            ascending = !ascending;
+        },
+        
+        /**
+         * Create tabbed content. The functions are only called once when the tab
+         * is originally selected. Thereafter the html is just stored.
+         * domElementContainer -- a dom element to opperate in
+         * options --  hash with the following options:
+         * 
+         * tabs -- A hash mapping the tab name to a function. The function will be called
+         *        when the corresponding tab is clicked.  The function must be of the form
+         *        function(key, container) where key is the key in tabs and container is
+         *        a d3 element to render content in.
+         * selected -- The tab to be active first.
+         * tabOnClick -- A function called when a tab is clicked, the function is passed the label of the tab.
+         */
+        createTabbedContent: function createTabbedContent(domElementContainer, options) {
+            var defaults = {
+                tabs: {},
+                rendered: {},
+                selected: null,
+                tabOnClick: function() {},
+            };
+            options = _.extend(defaults, options);
+            
+            var container = d3.select(domElementContainer);
+            container.html("<ul role=\"tablist\" class=\"nav nav-tabs\"></ul>"+
+                           "<div class=\"tab-content\"></div>");
+            // Make sure a tab is selected to begin with.
+            if(!(options.selected in options.tabs)) {
+                for(var key in options.tabs) {
+                    options.selected = key;
+                    break;
+                }
+            }
+            
+            // Active function, return true if the tab is the one selected.
+            var active = function(d, i) { 
+                if(d.key === options.selected) {
+                    return true;
+                } else {
+                    return false;
+                }
+            };
+            
+            // Set up the content
+            var content = container.select("div.tab-content");
+            var contentPanes = content.selectAll("div.tab-pane");
+            var renderedAreas = contentPanes.data(d3.entries(options.tabs))
+                .enter()
+                .append("div")
+                .classed("tab-pane", true)
+                .classed("active", active)
+                .each(function(d, i) { 
+                    if(active(d, i)) { // Only render the content of the tab when clicked.
+                        options.tabs[d.key](d.key, d3.select(this));
+                        options.rendered[d.key] = true;
+                    }
+                });
+            
+            // Set up tabbed navigation
+            var nav = container.select("ul.nav-tabs");
+            var li = nav.selectAll("li");
+            li.data(d3.entries(options.tabs))
+                .enter()
+                .append("li")
+                .classed("active", active)
+                .append("a")
+                .style("cursor", "pointer")
+                .text(function(d) { return d.key; })
+                .on("click", function(d, i) {
+                    if(d.key !== options.selected) {
+                        options.selected = d.key;
+                        nav.selectAll("li").classed("active", active);
+                        content.selectAll("div.tab-pane").classed("active", active);
+                        if(!(d.key in options.rendered)) {
+                            renderedAreas.filter(active)
+                                .each(function(d, i) {
+                                    options.tabs[d.key](d.key, d3.select(this));
+                                });
+                            options.rendered[d.key] = true;
+                        }
+                        options.tabOnClick(d.key);
+                    }
+                });
+        },
+        
+        /**
+         * Create an extensible form list.
+         * 
+         * Return nothing.
+         */
+        createExtensibleForm: function createExtensibleForm(domEl, formElementGenerator) {
+            function appendRowWithButton(el) {
+                var row = el.append('div')
+                    .classed('row tg-gen-extensible-form-row', true);
+                row.append('div')
+                    .classed('col-xs-11', true)
+                    .html(formElementGenerator());
+                row.append('div')
+                    .classed('tg-gen-extensible-form-button-column col-xs-1', true)
+                    .append('button')
+                    .classed('btn btn-success', true)
+                    .on('click', function() {
+                        el.selectAll('.tg-gen-extensible-form-button-column')
+                            .each(function() {
+                                d3.select(this).html('');
+                            });
+                        appendRowWithButton(el);
+                    })
+                    .append('span')
+                    .classed('glyphicon, glyphicon-plus', true);
+            };
+            
+            var d3El = d3.select(domEl);
+            appendRowWithButton(d3El);
+        },
+        
+        /**
+         * value -- the value to turn into a percentage
+         * max -- the max value
+         * Return html for a percentage bar.
+         */
+        createPercentageBar: function createPercentageBar(value, max) {
+            var el = d3.select(document.createElement("div"));
+            var svg = el.append("svg")
+                .attr("width", 60)
+                .attr("height", "1em");
+            // Create bar.
+            svg.append("rect")
+                .attr("height", "100%")
+                .attr("width", "100%")
+                .attr("fill", "blue");
+            // Fill in part of bar with whitesmoke.
+            svg.append("rect")
+                .attr("height", "100%")
+                .attr("width", function() {
+                    if(max === 0) {
+                        return 60;
+                    } else {
+                        return (1 - (value/max)) * 60;
+                    }
+                })
+                .attr("fill", "whitesmoke");
+            
+            return el.html();
+        },
+        
+        /**
+         * value -- the raw value
+         * min -- the minimum value (often negative)
+         * max -- the max value
+         * Return html for a temperature bar.
+         */
+        createTemperatureBar: function createTemperatureBar(value, min, max) {
+            var el = d3.select(document.createElement("div"));
+            var range = max - min;
+            var zero = (Math.abs(min) / range) * 60;
+            var width = Math.abs(value)/range * 60;
+            var svg = el.append("svg")
+                .attr("width", 60)
+                .attr("height", "1em")
+                .style("background-color", "whitesmoke");
+            // Create bar.
+            svg.append("rect")
+                .attr("height", "100%")
+                .attr("width", width)
+                .attr("fill", (value > 0.0 ? "red" : "blue"))
+                .attr("transform", "translate("+ (value>0.0 ? zero : zero-width) +","+0+")");
+            // Seperating line.
+            svg.append("line")
+                .attr("x1", zero)
+                .attr("y1", 0)
+                .attr("x2", zero)
+                .attr("y2", "1em")
+                .attr("stroke", "black")
+                .attr("strokewidth", "1.5px");
+            return el.html();
+        },
+        
+        /**
+         * Creates lines in the given element.
+         * g -- an svg group DOM element
+         * 
+         * options:
+         * interpolate -- string; one of linear, basis, cardinal, monotone
+         * data -- a list of data in the following format:
+         *      [
+         *          { name: 'some name', points: [[x1, y1], [x2, y2], ...] },
+         *          ...
+         *      ]
+         *      where name uniquely identifies the line
+         * height -- the height in pixels the group is to use
+         * width -- the width in pixels the group is to use
+         * xScale -- a d3 scale, doesn't need the range to be set
+         * yScale -- a d3 scale, doesn't need the range to be set
+         * colorScale -- a function that takes the line's name and returns a color
+         * generalLineStyle -- basic css properties for the line
+         * lineFunction -- a function to add things to the lines, format is:
+         *                 function (lineData, index) { 
+         *                     the this context is the line's path element
+         *                 }
+         * transitionDuration -- in milliseconds
+         * 
+         * Return nothing.
+         */
+        createLineGraph: function createLineGraph(g, options) {
+            var defaults = {
+                interpolate: 'linear', 
+                data: [],
+                height: 600,
+                width: 600,
+                xScale: d3.scale.linear().domain([0, 1]),
+                yScale: d3.scale.linear().domain([0, 1]),
+                colorScale: function theColorBlack() { return '#000'; }, 
+                generalLineStyle: { 'stroke': '#000', 'fill': 'none', 'shape-rendering': 'optimizeSpeed', 'stroke-width': '1.5px' },
+                lineFunction: function() {},
+                transitionDuration: 0,
+            };
+            
+            options = _.extend({}, defaults, options);
+            
+            // Set the range.
+            options.xScale.range([0, options.width]);
+            options.yScale.range([options.height, 0]);
+            var line = d3.svg.line()
+                .interpolate(options.interpolate)
+                .x(function(d) { return options.xScale(d[0]); })
+                .y(function(d) { return options.yScale(d[1]); });
+            
+            // Create the chart.
+            var box = d3.select(g);
+            var lines = box.selectAll('path').data(options.data);
+            // Remove any extra line paths.
+            lines.exit()
+                .transition().duration(options.transitionDuration)
+                    .attr('d', function(lineData, index) {
+                        var pts = _.map(lineData.points, function(value, index) {
+                            return [value[0], options.yScale.domain()[0]]
+                        });
+                        return line(pts);
+                    })
+                    .style('opacity', 0)
+                    .remove();
+            // Immediately create extra line paths if there are new ones.
+            lines.enter().append('path')
+                .attr('d', function(lineData, index) {
+                    var pts = _.map(lineData.points, function(value, index) {
+                        return [value[0], options.yScale.domain()[0]]
+                    });
+                    return line(pts);
+                })
+                .style('opacity', 0)
+                .style(options.generalLineStyle);
+            // Transition all line paths to match the data.
+            lines.transition().duration(options.transitionDuration)
+                .attr('d', function(lineData, index) {
+                    return line(lineData.points);
+                })
+                .style(options.generalLineStyle)
+                .style('stroke', function(lineData, index) {
+                    return options.colorScale(lineData.name);
+                })
+                .style('opacity', 1)
+                .each(options.lineFunction);
+        },
+    };
+    
+    this.lines = {
+        /**
+         * Choosing the right bandwidth is the hardest part of kernel density estimation.
+         * See "Practical estimation of the bandwidth"
+         * at https://en.wikipedia.org/wiki/Kernel_density_estimation
+         */
+        getH: function getH(pts) {
+            if(pts.length < 2) {
+                return 0.333;
+            }
+            var n = pts.length;
+            var mean = _.reduce(pts, function(r, p) { return r + p[0]; }, 0)/n;
+            var stdDev = Math.sqrt(_.reduce(pts, function(r, p) { 
+                var val = p[0] - mean;
+                return r + val*val;
+            }, 0)/n);
+            return 1.06*stdDev*Math.pow(n, -1/5);
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        epanechnikovKernel: function epanechnikovKernel(u) {
+            return Math.abs(u) <= 1? 0.75*(1 - u*u): 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        quarticBiweightKernel: function quarticBiweight(u) {
+            var oneMinusUSquared = 1-u*u
+            return Math.abs(u) <= 1? (15/16)*oneMinusUSquared*oneMinusUSquared: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        uniformKernel: function uniformKernel(u) {
+            return Math.abs(u) <= 1? 0.5: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        triangularKernel: function triangularKernel(u) {
+            return Math.abs(u) <= 1? 1 - Math.abs(u): 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        triweightKernel: function triweightKernel(u) {
+            var tmp = 1 - u*u;
+            var tmpCubed = tmp*tmp*tmp;
+            return Math.abs(u) <= 1? (35/32)*tmpCubed: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        tricubeKernel: function tricubeKernel(u) {
+            var absU = Math.abs(u);
+            var tmp = 1 - absU*absU*absU;
+            var tmpCubed = tmp*tmp*tmp;
+            return absU <= 1? (70/81)*tmpCubed: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        gaussianKernel: function gaussianKernel(u) {
+            var u2 = u*u;
+            var term1 = 1/Math.sqrt(2*Math.PI);
+            var term2 = Math.exp(-0.5*u2);
+            return term1*term2;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        cosineKernel: function cosineKernel(u) {
+            var t1 = Math.PI/4;
+            var t2 = Math.cos((Math.PI/2)*u);
+            return Math.abs(u) <= 1? t1*t2: 0;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        logisticKernel: function logisticKernel(u) {
+            var eup = Math.exp(u);
+            var eun = Math.exp(-u);
+            return 1/(eup + 2 + eun);
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use
+         */
+        silvermanKernel: function silvermanKernel(u) {
+            var absU = Math.abs(u);
+            var t1 = 0.5;
+            var t2 = Math.exp(-(absU/Math.SQRT2));
+            var t3 = Math.sin((absU/Math.SQRT2)+(Math.PI/4));
+            return t1*t2*t3;
+        },
+        
+        /**
+         * See https://en.wikipedia.org/wiki/Kernel_density_estimation
+         * 
+         * points -- your list of [x, y] pairs
+         * lhs -- [low, high, stepCount]; specifies how many points to generate
+         *          low -- the low end of the range
+         *          high -- the high end of the range
+         *          stepCount -- the number of points you want to generate
+         * h -- h > 0; smoothing parameter (bandwidth)
+         * K -- the kernel function K(x)
+         * Return new list of points.
+         */
+        kernelDensityEstimation: function kernelDensityEstimation(points, lhs, h, K) {
+            var n = points.length;
+            var inv_nh = 1/(n*h);
+            function f_h(x) {
+                return inv_nh*_.reduce(points, function(result, xy) {
+                    result += xy[1]*K((x-xy[0])/h);
+                    //~ console.log(result);
+                    return result;
+                }, 0);
+            }
+            var newPoints = [];
+            var newX = lhs[0];
+            var step = (lhs[1]-lhs[0])/(lhs[2]-1);
+            while(newX < lhs[1]) {
+                var newY = f_h(newX);
+                newPoints.push([newX, newY]);
+                newX += step;
+            }
+            return newPoints;
         },
     };
 };

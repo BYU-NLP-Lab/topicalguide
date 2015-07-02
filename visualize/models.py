@@ -2,6 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 import os
 import io
+import json
 from itertools import chain
 from dateutil import tz
 from DateTime import DateTime
@@ -272,6 +273,10 @@ class Dataset(models.Model):
     def __unicode__(self):
         return self.name
     
+    @property
+    def directory(self):
+        return self.dataset_dir
+    
     def get_document_metadata_types(self):
         query = self.documents.values_list('metadata_values__metadata_type__name', 'metadata_values__metadata_type__datatype').distinct()
         query2 = self.empty_document_metadata_types.values_list('metadata_type__name', 'metadata_type__datatype').distinct()
@@ -374,6 +379,11 @@ class Document(models.Model):
         except:
             content = 'Error occurred while trying to access content.'
         return content
+	
+    def get_intro_snippet(self):
+		snippet = self.get_content()[0: 200]
+		index = snippet.rfind(' ')
+		return snippet[0:index]+' ...'
     
     def get_key_word_in_context(self, token_indices, pre=80, post=80):
         word_tokens = self.tokens.filter(token_index__in=token_indices).order_by("start_index")
@@ -495,12 +505,33 @@ class Analysis(models.Model):
         for row in query:
             result.append(row[0])
         return result
+    
+    def get_word_constraints(self):
+        result = {
+            'merge': [],
+            'split': [],
+        }
+        for wc in self.word_constraints.all():
+            print(wc.constraints)
+            constraints = wc.get_constraints()
+            print(constraints)
+            result['merge'].extend(constraints['merge'])
+            result['split'].extend(constraints['split'])
+        print(result)
+        return result
 
 class AnalysisMetadataValue(MetadataValue):
     analysis = models.ForeignKey('Analysis', related_name='metadata_values')
 
 class AnalysisMetricValue(MetricValue):
     analysis = models.ForeignKey('Analysis', related_name='metric_values')
+
+class WordConstraints(models.Model):
+    analysis = models.ForeignKey('Analysis', related_name='word_constraints')
+    constraints = models.TextField()
+    
+    def get_constraints(self):
+        return json.loads(self.constraints)
 
 class Topic(models.Model):
     analysis = models.ForeignKey('Analysis', related_name='topics')
@@ -523,14 +554,33 @@ class Topic(models.Model):
         topic_words = topic_words.order_by('-count')
         return {value['word_type__word']: value['count'] for value in topic_words}
     
-    def top_n_words(self, words='*', top_n=10, metadata_value=None):
+    def top_n_words(self, words='*', top_n=10, metadata_name=None, metadata_type=None, metadata_value=None, metadata_range=None):
         topic_words = self.tokens.values('word_type__word').annotate(count=Count('word_type__word'))
+        # Word filter
         if words != '*':
             topic_words = topic_words.filter(word_type__word__in=words)
-        if metadata_value:
-            topic_words = topic_words.filter(document__metadata_values__metadata_type__name=metadata_value[0], \
-                document__metadata_values__text_value=metadata_value[1])
-            
+        # Metadata filter
+        if metadata_name and metadata_type:
+            topic_words = topic_words.filter(document__metadata_values__metadata_type__name=metadata_name, \
+                document__metadata_values__metadata_type__datatype=metadata_type)
+            if metadata_value:
+                if metadata_type == MetadataType.TEXT or metadata_type == MetadataType.ORDINAL:
+                    topic_words = topic_words.filter(document__metadata_values__text_value=metadata_value)
+                elif metadata_type == MetadataType.INTEGER:
+                    topic_words = topic_words.filter(document__metadata_values__int_value=int(metadata_value))
+                elif metadata_type == MetadataType.FLOAT:
+                    topic_words = topic_words.filter(document__metadata_values__float_value=float(metadata_value))
+                elif metadata_type == MetadataType.BOOLEAN:
+                    topic_words = topic_words.filter(document__metadata_values__bool_value=bool(metadata_value))
+            if metadata_range:
+                if metadata_type == MetadataType.INTEGER:
+                    topic_words = topic_words.filter(document__metadata_values__int_value__range=(metadata_range[0], metadata_range[1]))
+                elif metadata_type == MetadataType.FLOAT:
+                    topic_words = topic_words.filter(document__metadata_values__float_value__range=(metadata_range[0], metadata_range[1]))
+                elif metadata_type == MetadataType.ORDINAL:
+                    ordinals = Ordinal.objects.values_list('name').filter(sequence__name=metadata_name, sequence__datatype=metadata_type, value__range=(metadata_range[0], metadata_range[1]))
+                    ord_list = [row[0] for row in ordinals]
+                    topic_words = topic_words.filter(document__metadata_values__text_value__in=ord_list)
         topic_words = topic_words.order_by('-count')
         return {value['word_type__word']: {'token_count': value['count']} for value in topic_words[:top_n]}
     

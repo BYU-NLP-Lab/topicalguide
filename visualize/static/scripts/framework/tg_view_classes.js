@@ -34,7 +34,7 @@ var DefaultView = function(options) {
     
     _.assign(this, defaults);
     
-    this.getAllModels = function() {
+    this.getAllModels = function getAllModels() {
         return {
             userModel: this.userModel,
             dataModel: this.dataModel,
@@ -60,45 +60,47 @@ _.extend(DefaultView.prototype, Backbone.View.prototype, {
     /**
      * Any needed model event binding should be done in here.
      */
-    initialize: function(options) {},
+    initialize: function initialize(options) {},
+    
+    /**
+     * Call dispose on any sub-views and perform any other necessary cleanup operations.
+     */
+    cleanup: function cleanup() {},
     
     /**
      * Render visualization in the given element (i.e. this.el and this.$el).
      * To use d3 try d3.select(this.el).
      */
-    render: function() {
+    render: function render() {
         this.$el.html("<p>Welcome to the Default Page. You're seeing this message either because this view is not implemented, this view doesn't exist, or an error occurred while trying to render the view.</p>");
     },
     
     /**
-     * Call dispose on any sub-views and perform any other necessary cleanup operations.
-     */
-    cleanup: function() {},
-    
-    /**
      * Removes all events for you and removes the $el from the DOM.
      */
-    dispose: function() {
+    dispose: function dispose() {
         this.cleanup();
         if(this.dataModel) this.dataModel.off(null, null, this);
+        if(this.userModel) this.userModel.off(null, null, this);
         if(this.selectionModel) this.selectionModel.off(null, null, this);
         if(this.favsModel) this.favsModel.off(null, null, this);
         if(this.settingsModel) this.settingsModel.off(null, null, this);
+        if(this.viewModel) this.viewModel.off(null, null, this);
         this.remove();
     },
     
     /**
      * Return the HTML of the help message desired.
      */
-    renderHelpAsHtml: function() {
+    renderHelpAsHtml: function renderHelpAsHtml() {
         return "<p>The creators of this view didn't create a help page for you.</p>";
     },
     
     /**
-     * Convenient function to render an error message in the $el element.
+     * Convenient function to render an error message to the user.
      */
-    renderError: function(msg) {
-        this.$el.html("<p>Oops, there was a server error: "+msg+"</p>");
+    renderError: function renderError(msg) {
+        alert(msg);
     },
 });
 DefaultView.extend = Backbone.View.extend;
@@ -243,7 +245,7 @@ var NavigationView = DefaultView.extend({
         var insertionPoint = bar;
         for(var i in path) {
             var readableName = path[i];
-            var menuName = encodeURIComponent(readableName);
+            var menuName = encodeURIComponent(readableName.replace(/\s/g, '_'));
             var menuId = "tg-nav-bar-menu-item-"+menuName;
             if(insertionPoint.select("#"+menuId).empty()) { // Add menu.
                 var dropdownMenuType = "dropdown-submenu";
@@ -468,6 +470,7 @@ var BreadcrumbsView = DefaultView.extend({
         this.listenTo(this.selectionModel, "change:topicNameScheme", this.updateTopic);
         this.listenTo(this.selectionModel, "change:metadataName", this.updateMetadata);
         this.listenTo(this.selectionModel, "change:metadataValue", this.updateMetadata);
+        this.listenTo(this.selectionModel, "change:metadataRange", this.updateMetadata);
     },
     
     cleanup: function cleanup() {
@@ -540,12 +543,19 @@ var BreadcrumbsView = DefaultView.extend({
         var selector = ".tg-nav-breadcrumb-metadata";
         var name = this.selectionModel.get("metadataName");
         var value = this.selectionModel.get("metadataValue");
+        var range = this.selectionModel.get("metadataRange");
         var text = "No metadata selected.";
         if(name !== "") {
-            if(value === "") {
+            if(value === "" && range === "") {
                 text = name;
             } else {
-                text = name + ": " + value;
+                if(value !== "") {
+                    text = name + ": " + value;
+                }
+                if(range !== "") {
+                    var nums = range.split(",");
+                    text = name + ": " + nums[0] + " to " + nums[1];
+                }
             }
         }
         this.$el.find(selector).text(text);
@@ -580,6 +590,12 @@ var BreadcrumbsView = DefaultView.extend({
  * "data-tg-topic-number" data attribute.
  * When a topic name scheme changes it is useful to have the topic names change
  * as well. This will do it automatically.
+ * 
+ * Navigation:
+ * Allows the user to double click on the element and get redirected to the
+ * single topic or single document view.
+ * Set the class "tg-explore" and set either "data-tg-topic-number" or
+ * "data-tg-document-name".
  */
 var TopicalGuideView = DefaultView.extend({
     
@@ -645,6 +661,7 @@ var TopicalGuideView = DefaultView.extend({
                 }
                 throw new Exception("No data was set for the tooltip to properly display.");
             },
+            trigger: "hover",
         });
         
         // Start the router.
@@ -678,63 +695,9 @@ var TopicalGuideView = DefaultView.extend({
         this.navView.dispose();
     },
     
-    events: {
-        "click .tg-fav": "clickFavorite", // Create site wide favorites functionality.
-        "click .tg-select": "clickSelect", // Create site wide selection functionality.
-    },
     
-    clickFavorite: function(e) {
-        var el = e.currentTarget;
-        var type = null;
-        var clsName = null;
-        var favsModel = this.favsModel;
-        if(tg.dom.hasAttr(el, "data-tg-dataset-name")) {
-            type = "datasets";
-            clsName = "data-tg-dataset-name";
-        } else if(tg.dom.hasAttr(el, "data-tg-analyis-name")) {
-            type = "analyses";
-            clsName = "data-tg-analyis-name";
-        } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
-            type = "topics";
-            clsName = "data-tg-topic-number";
-        } else if(tg.dom.hasAttr(el, "data-tg-document-name")) {
-            type = "documents";
-            clsName = "data-tg-document-name";
-        } else if(tg.dom.hasAttr(el, "data-tg-topic-name-scheme")) {
-            type = "topicNames";
-            clsName = "data-tg-topic-name-scheme";
-        }
-        if(clsName !== null) {
-            el = d3.select(el);
-            var value = el.attr(clsName).toString();
-            var favs = {};
-            favs[type] = value;
-            if(favsModel.has(type, value)) {
-                favsModel.remove(favs);
-                el.classed({ "glyphicon-star": false, "glyphicon-star-empty": true });
-            } else {
-                favsModel.add(favs);
-                el.classed({ "glyphicon-star": true, "glyphicon-star-empty": false });
-            }
-        }
-        e.stopPropagation();
-    },
     
     changeCurrentView: function() {
-        // Destroy current view.
-        this.currentView.dispose();
-        $("#tg-current-view-container").remove();
-        // Create new div element.
-        $("#tg-views-container").append("<div id=\"tg-current-view-container\"></div>");
-        
-        // Create new settings for the new view.
-        var settingsModel = new SettingsModel();
-        var init = {
-            el: $("#tg-current-view-container"),
-            settingsModel: settingsModel,
-        };
-        _.extend(init, this.models);
-        
         // Find the current class to display.
         var viewClass = null;
         if(this.viewModel.get("currentView") === "") {
@@ -749,6 +712,21 @@ var TopicalGuideView = DefaultView.extend({
         if(viewClass === undefined || viewClass === null) {
             viewClass = DefaultView;
         }
+        
+        if(viewClass.prototype.shortName === this.currentView.shortName) {
+            return;
+        }
+        
+        // Destroy current view.
+        this.currentView.dispose();
+        $("#tg-current-view-container").remove();
+        // Create new div element.
+        $("#tg-views-container").append("<div id=\"tg-current-view-container\"></div>");
+        
+        // Create new settings for the new view.
+        var settingsModel = new SettingsModel();
+        settingsModel.set(this.viewModel.get("currentViewSettings"));
+        var init = _.extend({ el: $("#tg-current-view-container") }, this.models, { settingsModel: settingsModel });
         
         // Create the new view.
         this.currentView = new viewClass(init);
@@ -798,24 +776,6 @@ var TopicalGuideView = DefaultView.extend({
         this.topicNamesView.render();
     },
     
-    clickSelect: function(e) {
-        var el = e.currentTarget;
-        var selection = {};
-        if(tg.dom.hasAttr(el, "data-tg-dataset-name")) {
-            selection["dataset"] = $(el).attr("data-tg-dataset-name");
-        } else if(tg.dom.hasAttr(el, "data-tg-analysis-name")) {
-            selection["analysis"] = $(el).attr("data-tg-analysis-name");
-        } else if(tg.dom.hasAttr(el, "data-tg-topic-number")) {
-            selection["topic"] = $(el).attr("data-tg-topic-number");
-        } else if(tg.dom.hasAttr(el, "data-tg-document-name")) {
-            selection["document"] = $(el).attr("data-tg-document-name");
-        } else if(tg.dom.hasAttr(el, "data-tg-topic-name-scheme")) {
-            selection["topicNameScheme"] = $(el).attr("data-tg-topic-name-scheme");
-        }
-        this.selectionModel.set(selection);
-        e.stopPropagation();
-    },
-    
     changeTopicNameScheme: function() {
         var that = this;
         d3.selectAll(".tg-topic-name-auto-update")
@@ -826,6 +786,79 @@ var TopicalGuideView = DefaultView.extend({
                     el.text(that.dataModel.getReadableTopicName(topicNumber));
                 }
             });
+    },
+    
+    events: {
+        'click .tg-fav': 'clickFavorite', // Create site wide favorites functionality.
+        'click .tg-select': 'clickSelect', // Create site wide selection functionality.
+        'dblclick .tg-explore': 'doubleClickExplore', // Create site wide selection functionality.
+    },
+    
+    clickFavorite: function(e) {
+        var el = e.currentTarget;
+        var type = null;
+        var clsName = null;
+        var favsModel = this.favsModel;
+        if(tg.dom.hasAttr(el, 'data-tg-dataset-name')) {
+            type = 'datasets';
+            clsName = 'data-tg-dataset-name';
+        } else if(tg.dom.hasAttr(el, 'data-tg-analyis-name')) {
+            type = 'analyses';
+            clsName = 'data-tg-analyis-name';
+        } else if(tg.dom.hasAttr(el, 'data-tg-topic-number')) {
+            type = 'topics';
+            clsName = 'data-tg-topic-number';
+        } else if(tg.dom.hasAttr(el, 'data-tg-document-name')) {
+            type = 'documents';
+            clsName = 'data-tg-document-name';
+        } else if(tg.dom.hasAttr(el, 'data-tg-topic-name-scheme')) {
+            type = 'topicNames';
+            clsName = 'data-tg-topic-name-scheme';
+        }
+        if(clsName !== null) {
+            el = d3.select(el);
+            var value = el.attr(clsName).toString();
+            var favs = {};
+            favs[type] = value;
+            if(favsModel.has(type, value)) {
+                favsModel.remove(favs);
+                el.classed({ 'glyphicon-star': false, 'glyphicon-star-empty': true });
+            } else {
+                favsModel.add(favs);
+                el.classed({ 'glyphicon-star': true, 'glyphicon-star-empty': false });
+            }
+        }
+        e.stopPropagation();
+    },
+    
+    clickSelect: function(e) {
+        var el = e.currentTarget;
+        var selection = {};
+        if(tg.dom.hasAttr(el, 'data-tg-dataset-name')) {
+            selection['dataset'] = $(el).attr('data-tg-dataset-name');
+        } else if(tg.dom.hasAttr(el, 'data-tg-analysis-name')) {
+            selection['analysis'] = $(el).attr('data-tg-analysis-name');
+        } else if(tg.dom.hasAttr(el, 'data-tg-topic-number')) {
+            selection['topic'] = $(el).attr('data-tg-topic-number');
+        } else if(tg.dom.hasAttr(el, 'data-tg-document-name')) {
+            selection['document'] = $(el).attr('data-tg-document-name');
+        } else if(tg.dom.hasAttr(el, 'data-tg-topic-name-scheme')) {
+            selection['topicNameScheme'] = $(el).attr('data-tg-topic-name-scheme');
+        }
+        this.selectionModel.set(selection);
+        e.stopPropagation();
+    },
+    
+    doubleClickExplore: function(e) {
+        var el = e.currentTarget;
+        var newView = {
+        };
+        if(tg.dom.hasAttr(el, 'data-tg-topic-number')) {
+            newView['currentView'] = 'single_topic';
+        } else if(tg.dom.hasAttr(el, 'data-tg-document-name')) {
+            newView['currentView'] = 'single_document';
+        }
+        this.viewModel.set(newView);
     },
     
 });

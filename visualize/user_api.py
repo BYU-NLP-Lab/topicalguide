@@ -24,6 +24,7 @@ OPTIONS_FILTERS = {
     'metadata_type': filter_to_json,
     'dataset_add': get_list_filter(['document_metadata_type']),
     'csrfmiddlewaretoken': filter_nothing,
+    'analysis': filter_nothing,
 }
 
 

@@ -24,11 +24,15 @@ from __future__ import division, print_function, unicode_literals
 import sys
 import time
 import json
+import random
 import itertools
 from git import Repo
+from django.db.models import Q
 from visualize.models import *
 from visualize.utils import reservoir_sample
-from visualize.api_utilities import get_list_filter, filter_csv_to_list, get_filter_int, filter_nothing, filter_request, get_filter_csv_to_tuple
+from visualize.api_utilities import get_list_filter, filter_csv_to_list, \
+    get_filter_int, filter_nothing, filter_request, get_filter_csv_to_tuple, \
+    get_filter_csv_to_numeric_tuple, filter_csv_to_list_keep_order, filter_to_json
 
 MAX_DOCUMENTS_PER_REQUEST = 500
 MAX_DOCUMENTS_PER_SQL_QUERY = 500
@@ -47,7 +51,7 @@ def get_list_filter(allowed_values, allow_star=False):
                 raise Exception('The value "%s" is not recognized.'%(r,))
         return list(result)
     return list_filter
-        
+
 # Turn string s into a list (delimited by commas) with no repeating values.
 # Treat '*' as an exception since '*' means everything.
 def filter_csv_to_list(s):
@@ -91,13 +95,15 @@ OPTIONS_FILTERS = {
     'topics': filter_csv_to_list,
     'documents': filter_csv_to_list,
     'words': filter_csv_to_list,
-    'metadata_value': get_filter_csv_to_tuple(2),
+    'metadata_name': filter_nothing,
+    'metadata_value': filter_nothing,
+    'metadata_range': get_filter_csv_to_numeric_tuple(2),
     
     # what data to gather
-    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals', 'document_metadata_meanings']),
-    'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes']),
-    'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens', 'word_token_documents_and_locations']),
-    'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations']),
+    'dataset_attr': get_list_filter(['metadata', 'metrics', 'document_count', 'analysis_count', 'document_metadata_types', 'document_metadata_ordinals',                                 'document_metadata_meanings']),
+    'analysis_attr': get_list_filter(['metadata', 'metrics', 'topic_count', 'topic_name_schemes', 'word_constraints']),
+    'topic_attr': get_list_filter(['metadata', 'metrics', 'names', 'pairwise', 'top_n_words', 'top_n_documents', 'word_tokens',                               'word_token_documents_and_locations']),
+    'document_attr': get_list_filter(['text', 'metadata', 'metrics', 'top_n_topics', 'top_n_words', 'kwic', 'word_token_topics_and_locations',                                  'intro_snippet', 'metadata_predictions']),
 
     # extra parameters
     'topic_pairwise': filter_csv_to_list,
@@ -110,12 +116,9 @@ OPTIONS_FILTERS = {
     'document_n_words': get_filter_int(low=1),
     
     'token_indices': filter_csv_to_list,
-}
-
-# Error codes to inform the user.
-ERROR_CODES = {
-    1: "Query key not allowed.",
-    2: "Query value not allowed.",
+    
+    # TODO move this to an encrypted connection
+    'word_constraints': filter_to_json,
 }
 
 TERMS = """\
@@ -146,7 +149,7 @@ def query_server(options):
     
     def get_version(x):
         try:
-            tags = Repo(__file__).tags
+            tags = Repo('.').tags
             return unicode(tags[-1])
         except:
             return 'No version available.'
@@ -208,7 +211,6 @@ def query_datasets(options):
     
     # Gather the requested information.
     for dataset_db in datasets_queryset:
-        print('here')
         attributes = {}
         for attr in dataset_attr:
             if attr in DATASET_ATTR:
@@ -223,6 +225,77 @@ def query_datasets(options):
         
     return datasets
 
+# TODO move this to an encrypted connection
+def modify_analysis(options, dataset_db, analysis_db):
+    from import_tool.import_system_utilities import get_common_working_directories, resume_analysis, copy_analysis_directory
+    from import_tool.analysis.interfaces.mallet_itm_analysis import MalletItmAnalysis
+    from os.path import join
+    result = {}
+    
+    if 'word_constraints' in options:
+        def copy_list_of_lists(lol):
+            r = []
+            for l in lol:
+                temp = []
+                for w in l:
+                    temp.append(w)
+                r.append(temp)
+            return r
+        
+        word_constraints = options['word_constraints']
+        original_merge_constraints = word_constraints['merge']
+        original_split_constraints = word_constraints['split']
+        merge_constraints = copy_list_of_lists(original_merge_constraints)
+        split_constraints = copy_list_of_lists(original_split_constraints)
+        counter = 2
+        new_analysis_name = analysis_db.name + unicode(counter)
+        while Analysis.objects.filter(name=new_analysis_name).exists():
+            counter += 1
+            new_analysis_name = analysis_db.name + unicode(counter)
+        
+        word_types = set()
+        for word_type_list in itertools.chain(merge_constraints, split_constraints):
+            for word_type in word_type_list:
+                word_types.add(word_type)
+        word_types = list(word_types)
+        word_to_word_abstraction_map = {}
+        word_abstraction_query = WordToken.objects.using('default').values_list('word_type__word', 'word_type_abstraction__word')\
+            .filter(analysis=analysis_db, word_type__word__in=word_types).distinct()
+        for row in word_abstraction_query:
+            word_to_word_abstraction_map[row[0]] = row[1]
+        
+        def replace_words_with_abstraction(lol, wtwam):
+            """lol -- list of lists
+            wtwam -- word to word abstraction map
+            """
+            r = []
+            for l in lol:
+                temp = []
+                for w in l:
+                    if w in wtwam:
+                        temp.append(wtwam[w])
+                r.append(temp)
+            return r
+        
+        merge_constraints = replace_words_with_abstraction(merge_constraints, word_to_word_abstraction_map)
+        split_constraints = replace_words_with_abstraction(split_constraints, word_to_word_abstraction_map)
+        
+        # copy the working directory
+        copy_analysis_directory(dataset_db.directory, analysis_db.name, new_analysis_name)
+        # Set everything up.
+        directories = get_common_working_directories(dataset_db.name)
+        mallet_itm_analysis = MalletItmAnalysis(join(directories['topical_guide'], 'tools/mallet_itm/mallet'), directories['dataset'], directories['base'])
+        mallet_itm_analysis.merge_words = original_merge_constraints
+        mallet_itm_analysis.split_words = original_split_constraints
+        mallet_itm_analysis.num_iterations = analysis_db.metadata_values.get(metadata_type__name='num_iterations').value() + 10
+        mallet_itm_analysis.num_topics = analysis_db.topics.count()
+        mallet_itm_analysis.name = new_analysis_name
+        mallet_itm_analysis.set_word_constraints(merge_constraints, split_constraints)
+        resume_analysis('default', dataset_db.name, mallet_itm_analysis, directories, verbose=True)
+        result['new_analysis_name'] = new_analysis_name
+    
+    return result
+
 def query_analyses(options, dataset_db):
     analyses = {}
     
@@ -236,7 +309,8 @@ def query_analyses(options, dataset_db):
         'metadata': lambda analysis_db: {md.metadata_type.name: md.value() for md in analysis_db.metadata_values.all()},
         'metrics': lambda analysis_db: {mv.metric.name: mv.value for mv in analysis_db.metric_values.all()},
         'topic_count': lambda analysis_db: analysis_db.topics.count(),
-        'topic_name_schemes': lambda analysis_db: analysis_db.get_topic_name_schemes()
+        'topic_name_schemes': lambda analysis_db: analysis_db.get_topic_name_schemes(),
+        'word_constraints': lambda analysis_db: analysis_db.get_word_constraints(),
     }
     
     analysis_attr = options.setdefault('analysis_attr', [])
@@ -265,6 +339,9 @@ def query_analyses(options, dataset_db):
         attributes['last_updated'] = unicode(analysis_db.last_updated)
         
         analyses[analysis_db.name] = attributes
+        
+        if 'word_constraints' in options:
+            attributes['modifications'] = modify_analysis(options, dataset_db, analysis_db)
     
     return analyses
     
@@ -303,8 +380,23 @@ def query_topics(options, dataset_db, analysis_db):
             if 'pairwise' in topic_attr:
                 attributes['pairwise'] = topic_db.get_pairwise_metrics(options)
             if 'top_n_words' in topic_attr and 'words' in options and 'top_n_words' in options:
-                if 'metadata_value' in options:
-                    attributes['words'] = topic_db.top_n_words(options['words'], top_n=options['top_n_words'], metadata_value=options['metadata_value'])
+                if 'metadata_name' in options:
+                    
+                    metadata_name = options['metadata_name']
+                    metadata_type_query = DocumentMetadataValue.objects.values_list('metadata_type__datatype').filter(document__dataset=dataset_db, metadata_type__name=metadata_name).distinct()
+                    metadata_type = metadata_type_query[0][0]
+                    if 'metadata_value' in options:
+                        attributes['words'] = topic_db.top_n_words(options['words'], \
+                            top_n=options['top_n_words'], \
+                            metadata_name=metadata_name, \
+                            metadata_type=metadata_type, \
+                            metadata_value=options['metadata_value'] )
+                    elif 'metadata_range' in options:
+                        attributes['words'] = topic_db.top_n_words(options['words'], \
+                            top_n=options['top_n_words'], \
+                            metadata_name=metadata_name, \
+                            metadata_type=metadata_type, \
+                            metadata_range=options['metadata_range'] )
                 else:
                     attributes['words'] = topic_db.top_n_words(options['words'], top_n=options['top_n_words'])
             if 'top_n_documents' in options:
@@ -349,11 +441,20 @@ def query_documents(options, dataset_db, analysis_db):
     else:
         documents_queryset = dataset_db.documents.filter(filename__in=options['documents'])
     
+    if 'metadata_name' in options:
+        metadata_name = options['metadata_name']
+        has_metadata_value = Q(metadata_values__metadata_type__name__in=[metadata_name])
+        if 'document_attr' in options and 'metadata_predictions' in options['document_attr']:
+            documents_queryset = documents_queryset.filter(~has_metadata_value)
+        else:
+            documents_queryset = documents_queryset.filter(has_metadata_value)
+    
     DOCUMENT_ATTR = {
         'metadata': lambda doc: {md.metadata_type.name: md.value() for md in doc.metadata_values.all()},
         'metrics': lambda doc: {mv.metric.name: mv.value for mv in itertools.chain(doc.metric_values.all(), doc.document_analysis_metric_values.all()) 
                                 if type(mv) is not DocumentAnalysisMetricValue or mv.analysis_id==analysis_db.id},
         'text': lambda doc: doc.get_content() if dataset_db.public_documents else "Document text unavailable.",
+        'intro_snippet': lambda doc: doc.get_intro_snippet() if dataset_db.public_documents else "Document snippet unavailable.",
     }
     
     document_attr = options.setdefault('document_attr', [])
@@ -388,8 +489,6 @@ def query_documents(options, dataset_db, analysis_db):
                 i = start
                 chunk_size = MAX_DOCUMENTS_PER_SQL_QUERY
                 chain = []
-                print(start)
-                print(limit)
                 end_index = start + limit
                 while i < end_index:
                     range_end = chunk_size + i
@@ -435,6 +534,8 @@ def query_documents(options, dataset_db, analysis_db):
             top_n_topics[doc_id][topic_id] = count
     
     
+    random.seed(0)
+    random_state = random.getstate()
     for document_db in documents_queryset:
         attributes = {}
         
@@ -461,8 +562,36 @@ def query_documents(options, dataset_db, analysis_db):
                 attributes['word_token_topics_and_locations'] = document_db.get_word_token_topics_and_locations(analysis_db, options['words'])
             else:
                 attributes['word_token_topics_and_locations'] = {}
+        if 'metadata_predictions' in document_attr:
+            metadata_types = dataset_db.get_document_metadata_types()
+            predictions = {}
+            if metadata_types[metadata_name] == 'int':
+                low, mid, high, random_state = random_prediction_maker_int(document_db, random_state, 0, 2000)
+                predictions[metadata_name] = [low, mid, high]
+            if metadata_types[metadata_name] == 'float':
+                low, mid, high, random_state = random_prediction_maker_float(document_db, random_state, 0.0, 1.0)
+                predictions[metadata_name] = [low, mid, high]
+            attributes['metadata_predictions'] = predictions
         
         documents[document_db.filename] = attributes
-                
     return documents
+
+def random_prediction_maker_int(document_db, random_state, range_low, range_high):
+    random.setstate(random_state)
+    rands = []
+    for i in range(0, 3):
+        rands.append(random.randint(range_low, range_high))
+    rands.sort()
+    return (rands[0], rands[1], rands[2], random.getstate())
+
+def random_prediction_maker_float(document_db, random_state, range_low, range_high):
+    random.setstate(random_state)
+    diff = range_high - range_low
+    rands = []
+    for i in range(0, 3):
+        r = random.random()
+        rands.append(r*diff + range_low)
+    rands.sort()
+    return (rands[0], rands[1], rands[2], random.getstate())
+    
 
