@@ -146,7 +146,7 @@ var MetadataMapView = DefaultView.extend({
                     
                     // Make sure the dimensions of the svg element are correct.
                     this.resizeWindowEvent(null);
-                    this.changeDocumentSelection();
+                    this.updateDocumentSelection();
                     
                     var documents = data.datasets[datasetName].analyses[analysisName].documents;
                     var formattedData = this.formatData(documents, metadataName);
@@ -176,6 +176,11 @@ var MetadataMapView = DefaultView.extend({
 
     /**
      * Gathers all of the data to render each component of the metadata map.
+     * Can be called at any time to transition everything to its place based on the
+     * data.
+     * WARNING: The only time this shouldn't be called is when the user is 
+     * dragging a document as there will be a conflict between the user's events
+     * and the transition events.
      */
     renderGroupHierarchy: function renderGroupHierarchy() {
         var that = this;
@@ -202,7 +207,7 @@ var MetadataMapView = DefaultView.extend({
         var transitionDuration = 600;
         var xScale = this.createAxisScale(metadataName, metadataType, xAxisWidth);
         
-        var xAxisLabel = this.model.get('metadataName');
+        var xAxisLabel = tg.str.toTitleCase(this.model.get('metadataName').replace(/_/g, ' '));
         
         var componentBuffer = 5;
         var distH = 200;
@@ -262,7 +267,7 @@ var MetadataMapView = DefaultView.extend({
                     metadataType: metadataType,
                     data: documentData,
                     updatedDocumentValue: function(d, i) {
-                        that.redrawDistribution()
+                        that.redrawDistribution();
                         that.updateDocumentSelection();
                     },
                     doneDragging: function() {
@@ -270,6 +275,9 @@ var MetadataMapView = DefaultView.extend({
                     },
                     selectedDocumentFunction: function(d, i) {
                         that.selectionModel.set({ document: d.name });
+                    },
+                    getDocumentColor: function(d, i) { // Requires that topTopic is attached to each document object.
+                        return topicColorScale(d.topTopic);
                     },
                 });
             },
@@ -298,7 +306,7 @@ var MetadataMapView = DefaultView.extend({
         var xAxisWidth = width - 2*sideBuffer;
         var distData = that.getTopicDistributionData(xScale.domain());
         var distYScale = d3.scale.linear().domain([distData.min, distData.max]);
-        
+        console.log(distData.lines);
         tg.gen.createLineGraph(distribution.get(0), {
             interpolate: 'linear', 
             height: distH,
@@ -358,8 +366,10 @@ var MetadataMapView = DefaultView.extend({
             if(pts.length === 0) {
                 val.points = [];
             } else {
-                //~ val.points = tg.lines.kernelDensityEstimation(pts, [pts[0][0], pts[pts.length-1][0], 100], tg.lines.getH(pts), tg.lines.triweightKernel);
-                val.points = tg.lines.kernelDensityEstimation(pts, [xDomain[0], xDomain[1], 100], tg.lines.getH(pts), tg.lines.epanechnikovKernel);
+                //~ val.points = tg.lines.kernelDensityEstimation(pts, [pts[0][0], pts[pts.length-1][0], 100], tg.lines.getH(pts), tg.lines.epanechnikovKernel);
+                console.log(tg.lines.getH(pts)/3);
+                val.points = tg.lines.kernelDensityEstimation(pts, [xDomain[0], xDomain[1], 100], tg.lines.getH(pts)/3, tg.lines.gaussianKernel);
+                console.log(val.points);
             }
         }, this);
         
@@ -408,10 +418,14 @@ var MetadataMapView = DefaultView.extend({
             temp['unlabeled'] = unlabeled;
             temp['userLabeled'] = {};
             temp['topics'] = value.topics;
+            var topTopic = _.max(value.topics, function(v, k) {
+                return v;
+            });
             var docElement = {
                 name: key,
                 metadata: temp,
                 queuePos: 0,
+                topTopic: topTopic,
             };
             result['documents'].push(docElement);
             result['documentNames'][key] = temp;
@@ -604,6 +618,7 @@ var MetadataMapView = DefaultView.extend({
             },
             doneDragging: function() {},
             selectedDocumentFunction: function(d, i) {},
+            getDocumentColor: function(d, i) { return 'black'; },
             duration: 600,
         };
         
@@ -654,11 +669,7 @@ var MetadataMapView = DefaultView.extend({
         };
         
         var getDocumentColor = function getDocumentColor(d, i) {
-            if(isLabeled(d, i) || isUserLabeled(d, i)) {
-                return 'blue';
-            } else {
-                return 'black';
-            }
+            return o.getDocumentColor(d, i);
         };
         
         var getDocumentOpacity = function getDocumentOpacity(d, i) {
@@ -840,18 +851,21 @@ var MetadataMapView = DefaultView.extend({
                 .attr('y2', 0);
         };
         
+        // Dragging functionality
         var dragging = false;
         var circleDrag = d3.behavior.drag()
             .on('dragstart',  function(d, i) {
                 d3.event.sourceEvent.stopPropagation();
+                
+                // Get coordinates of document group.
                 var grp = d3.select(this);
                 var xy = translateToXY(grp.attr('transform'));
                 var x = xy[0];
                 var y = xy[1];
                 
-                dragging = true;
+                dragging = false; // Don't set dragging on start so the user can just click to select
                 
-                // Treat as a click event and set the document appropriately
+                // Make sure that the document is selected.
                 o.selectedDocumentFunction(d, i);
                 o.selectedDocument = d.name;
                 changeSelectedCircle(docCircles);
@@ -868,7 +882,7 @@ var MetadataMapView = DefaultView.extend({
                 o.updatedDocumentValue(d);
             })
             .on('drag', function(d, i) {
-                d3.event.sourceEvent.stopPropagation();
+                //~ d3.event.sourceEvent.stopPropagation();
                 // Move circle
                 var grp = d3.select(this);
                 var xy = translateToXY(grp.attr('transform'));
@@ -881,7 +895,7 @@ var MetadataMapView = DefaultView.extend({
                 x = Math.min(x, o.width);
                 y = Math.min(y, o.docHeight*o.maxQueueLength);
                 grp.attr('transform', 'translate('+x+','+y+')');
-                
+                dragging = true;
                 // Set value and update 'Selected Document' content
                 var newValue = o.xScale.invert(x);
                 //~ if(type === 'int') {
@@ -896,16 +910,27 @@ var MetadataMapView = DefaultView.extend({
             })
             .on('dragend', function(d, i) {
                 d3.event.sourceEvent.stopPropagation();
+                var grp = d3.select(this);
+                var xy = translateToXY(grp.attr('transform'));
+                var x = xy[0];
+                var y = xy[1];
                 
                 // Snap circle to a location
                 if(dragging) {
-                    var grp = d3.select(this);
-                    var x = translateToXY(grp.attr('transform'))[0];
                     var newValue = o.xScale.invert(x);
                     //~ if(type === 'int') {
                         //~ newValue = Math.round(newValue);
                     //~ }
                     d.metadata.userLabeled[o.metadataName] = newValue;
+                    o.updatedDocumentValue(d);
+                } else {
+                    if(Math.abs(y-o.labeledY) < 5) {
+                        
+                    } else {
+                        if(o.metadataName in d.metadata.userLabeled) {
+                            delete d.metadata.userLabeled[o.metadataName];
+                        }
+                    }
                 }
                 dragging = false;
                 
@@ -913,8 +938,7 @@ var MetadataMapView = DefaultView.extend({
                 redLineGroup.style({ 'display': 'none' });
                 
                 // Cause any necessary updates with regards to "Selected Document" area
-                o.updatedDocumentValue(d);
-                o.doneDragging();
+                o.doneDragging(d);
             })
             .origin(function(d) { return d; });
         singleDocGroups.call(circleDrag);
@@ -1018,28 +1042,29 @@ var MetadataMapView = DefaultView.extend({
      * Update the document display and its value.
      */
     updateDocumentSelection: function() {
-        var selectedDocument = this.selectionModel.get("document");
-        var docName = selectedDocument;
-        var value = "";
-        var placeholder = "Enter value";
-        var document = this.getDocumentByName(selectedDocument);
-        if(document) {
-            var metadata = document.metadata;
-            var metadataName = this.settingsModel.get("name");
-            if(metadataName in metadata.userLabeled) {
-                value = metadata.userLabeled[metadataName];
-            } else if(metadataName in metadata.labeled) {
-                value = metadata.labeled[metadataName];
-            } else if(metadataName in metadata.unlabeled){
-                placeholder = "Suggestion: "+metadata.unlabeled[metadataName][1];
+        var docName = this.selectionModel.get('document');
+        var name = docName;
+        var value = '';
+        var placeholder = 'Enter value';
+        var docMetadata = this.model.get('documentNames')[docName];;
+        if(docMetadata) {
+            var metadataName = this.model.get('metadataName');
+            if(metadataName in docMetadata.userLabeled) {
+                value = docMetadata.userLabeled[metadataName];
+            } else if(metadataName in docMetadata.labeled) {
+                value = docMetadata.labeled[metadataName];
+            } else if(metadataName in docMetadata.unlabeled){
+                placeholder = 'Suggestion: '+docMetadata.unlabeled[metadataName][1];
             }
         } else {
-            docName = "Click on a document";
+            name = 'Click on a document';
         }
-        d3.select(this.el).select("#selected-document").text(docName);
-        d3.select(this.el).select("#document-value-control")
-            .property("value", value.toString())
-            .property("placeholder", placeholder);
+        this.changeDocumentValueAllowRerender = false;
+        d3.select(this.el).select('#selected-document').text(name);
+        d3.select(this.el).select('#document-value-control')
+            .property('value', value.toString())
+            .property('placeholder', placeholder);
+        this.changeDocumentValueAllowRerender = true;
     },
     
 /******************************************************************************
@@ -1053,8 +1078,7 @@ var MetadataMapView = DefaultView.extend({
         
         'click #save-changes': 'clickSaveChanges',
         
-        'click .document': 'clickDocument',
-        'dblclick .document': 'doubleClickDocument',
+        'dblclick .doc-circle': 'doubleClickDocument',
         
         // Unused pie charts.
         //~ 'mouseover .document': 'mouseoverDocument',
@@ -1074,31 +1098,27 @@ var MetadataMapView = DefaultView.extend({
     },
     
     /**
+     * Used to suppress the changeDocumentValue function from rerendering.
+     * The only time we want rerendering is if the user directly changed the 
+     * value.
+     */
+    changeDocumentValueAllowRerender: true,
+    /**
      * Check the user input for valid input type. Update the settings model.
      */
     changeDocumentValue: function changeDocumentValue(e) {
         var docName = d3.select(this.el).select("#selected-document").text();
-        var document = this.getDocumentByName(docName);
-        if(document) {
-            var meta = document.metadata;
-            var name = this.settingsModel.get("name");
+        var docMetadata = this.model.get('documentNames')[docName];
+        if(docMetadata) {
+            var metadataName = this.model.get('metadataName');
             var value = parseFloat(d3.select(this.el).select("#document-value-control").property("value"));
             if(!isNaN(value)) {
-                meta.userLabeled[name] = value;
+                docMetadata.userLabeled[metadataName] = value;
             }
             
-            this.updateDocumentSelection();
-            this.updateMap();
-        }
-    },
-    
-    /**
-     * Update the document selection.
-     */
-    clickDocument: function(e) {
-        var docName = this.getDocumentNameFromEvent(e);
-        if(docName in this.model.get("documentNames")) {
-            this.selectionModel.set({ document: docName });
+            if(this.changeDocumentValueAllowRerender) {
+                this.renderGroupHierarchy();
+            }
         }
     },
     
@@ -1107,18 +1127,18 @@ var MetadataMapView = DefaultView.extend({
      */
     doubleClickDocument: function(e) {
         var docName = this.getDocumentNameFromEvent(e);
-        var document = this.model.get("documentNames")[docName];
-        var name = this.settingsModel.get("name");
+        var docMetadata = this.model.get("documentNames")[docName];
+        var metadataName = this.model.get('metadataName');
         
         // Remove user set label
-        if (this.isUserLabeled(docName, name)) {
-            this.removeUserLabel(docName, name);
+        if (metadataName in docMetadata.userLabeled) {
+            delete docMetadata.userLabeled[metadataName];
             this.updateDocumentSelection();
-            this.updateMap();
-        } else if(this.isUnlabeled(docName, name)) {
-            document.userLabeled[name] = this.getADocumentLabel(docName, name);
+            this.renderGroupHierarchy();
+        } else if(!(metadataName in docMetadata.labeled)) {
+            docMetadata.userLabeled[metadataName] = docMetadata.unlabeled[metadataName][1];
             this.updateDocumentSelection();
-            this.updateMap();
+            this.renderGroupHierarchy();
         }
     },
     
@@ -1232,7 +1252,9 @@ var MetadataMapView = DefaultView.extend({
             docName = 'No document selected.';
         }
         this.$el.find('#selected-document').text(docName);
+        this.changeDocumentValueAllowRerender = false;
         this.changeDocumentValue();
+        this.changeDocumentValueAllowRerender = true;
     },
     
     
@@ -1516,7 +1538,7 @@ var MetadataMapView = DefaultView.extend({
      * Return the document name of the event object.
      */
     getDocumentNameFromEvent: function(e) {
-        return e.currentTarget.attributes["data-document-name"].value;
+        return e.currentTarget.attributes["data-tg-document-name"].value;
     },
     
     /**

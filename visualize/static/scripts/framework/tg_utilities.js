@@ -803,6 +803,9 @@ var tg = new function() {
                 var val = p[0] - mean;
                 return r + val*val;
             }, 0)/n);
+            if(stdDev === 0) {
+                return 0.333;
+            }
             return 1.06*stdDev*Math.pow(n, -1/5);
         },
         
@@ -901,8 +904,8 @@ var tg = new function() {
          *          low -- the low end of the range
          *          high -- the high end of the range
          *          stepCount -- the number of points you want to generate
-         * h -- h > 0; smoothing parameter (bandwidth)
-         * K -- the kernel function K(x)
+         * h -- h > 0; smoothing parameter/bandwidth (use the getH function for an approximation)
+         * K -- the kernel function K(x); epanechnikovKernel is a good choice
          * Return new list of points.
          */
         kernelDensityEstimation: function kernelDensityEstimation(points, lhs, h, K) {
@@ -910,7 +913,9 @@ var tg = new function() {
             var inv_nh = 1/(n*h);
             function f_h(x) {
                 return inv_nh*_.reduce(points, function(result, xy) {
-                    result += xy[1]*K((x-xy[0])/h);
+                    var kResult = K((x-xy[0])/h);
+                    if(isNaN(kResult)) console.log('yup');
+                    result += xy[1]*kResult;
                     //~ console.log(result);
                     return result;
                 }, 0);
