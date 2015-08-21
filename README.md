@@ -22,11 +22,7 @@ Then navigate to the `topicalguide` directory and optionally switch over to the 
 
 ### 2. Install Dependencies
 
-First, we need to make sure numpy is installed with:
-
-    sudo pip install numpy
-
-Other dependencies are listed in the `requirements.txt` file and can be easily installed with:
+Dependencies are listed in the `requirements.txt` file and can be easily installed with:
 
     sudo pip install -r requirements.txt
 
@@ -155,7 +151,7 @@ Visualization, held in conjunction with the 24th Annual Conference on Neural
 Information Processing Systems (NIPS 2010). December 11, 2010. Whistler, BC,
 Canada.
 
-## License
+## Licence
 
 This file is part of the [Topical Guide](http://github.com/BYU-NLP-Lab/topicalguide/wiki).
 
