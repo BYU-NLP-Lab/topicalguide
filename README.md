@@ -22,6 +22,26 @@ Then navigate to the `topicalguide` directory.
 
 ### 2. Install Dependencies
 
+Superuser permissions are necessary to install the Topical Guide as shown in the 
+current instructions.
+
+In order to circumvent the need for superuser permissions, you can create a virtual
+environment using `virtualenv`, `virtualenvwrapper`, `pyenv`, or another tool.
+
+To use `virtualenv`, type the following inside the project's root directory:
+
+    virtualenv ENV
+    source ENV/bin/activate
+
+You must activate your virtual environment by typing the second line above any time
+that `(ENV)` does not appear in front of your command line.
+
+Documentation for all of the above mentioned tools can be found here:
+[virtualenv](https://virtualenv.pypa.io/en/latest/)
+[virtualenvwrapper](https://virtualenvwrapper.readthedocs.org/en/latest/)
+[pyenv](https://github.com/yyuu/pyenv#installation)
+
+
 Dependencies are listed in the `requirements.txt` file and can be easily installed with:
 
     pip install -r requirements.txt
@@ -40,18 +60,20 @@ First, copy the template:
 
 Second, go to [this website](http://www.miniwebtool.com/django-secret-key-generator/) to generate your `SECRET_KEY`.
 
-Open `topicalguide/settings.py` in your favorite text editor.  
-Insert your generated `SECRET_KEY` where it says
+Third, open `topicalguide/settings.py` in your favorite text editor.  
+Within this file:
+
+(1) Insert your generated `SECRET_KEY` where it says
 
 	SECRET_KEY=''
 
-Third, set your database settings. You could use sqlite, which is configured for you. 
+(2) Set your database settings. You could use sqlite, which is configured for you. 
 If you want to use Postgres there are instructions below for setting it up on Fedora.
 
-Fourth, set `DEBUG = True` to use the developement server.
+(3) Set `DEBUG = True` to use the developement server.
 If DEBUG is set to False then ALLOWED_HOSTS must be set. See Django's documentation for further details.
 
-Optionally, configure other various django options.
+(4) Optionally, configure other various django options.
 
 ### 4. Import a Dataset
 
