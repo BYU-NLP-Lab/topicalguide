@@ -34,8 +34,11 @@ To use `virtualenv`, type the following inside the project's root directory:
 You must activate your virtual environment by typing the second line above any time that `(ENV)` does not appear in front of your command line.
 
 Documentation for all of the above mentioned tools can be found here:
+
 [virtualenv](https://virtualenv.pypa.io/en/latest/)
+
 [virtualenvwrapper](https://virtualenvwrapper.readthedocs.org/en/latest/)
+
 [pyenv](https://github.com/yyuu/pyenv#installation)
 
 Dependencies are listed in the `requirements.txt` file and can be easily installed with:
