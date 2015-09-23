@@ -75,8 +75,6 @@ If you want to use Postgres there are instructions below for setting it up on Fe
 
 ### 4. Import a Dataset
 
-Warning: If you import the dataset over a file server, it will run extremely slowly.
-
 You can run (from the project's root directory):
     
     ./default_datasets/import_state_of_the_union.sh
