@@ -105,7 +105,7 @@ Then try importing the dataset again.
 
 Then try importing the dataset again.
 
-(3) If the import runs extremely slowly, you may be importing the dataset over a file server. This fix will be different for everyone, but I had to move my repository to /local/<myusername>.
+(3) If the import runs extremely slowly, you may be importing the dataset over a file server. This fix will be different for everyone, but I had to move my repository to /local/myusername.
 
 ### 5. Done!
 
