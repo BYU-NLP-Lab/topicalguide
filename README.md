@@ -90,6 +90,23 @@ For more options on importing see the documentation by running:
 
     python tg.py -h
 
+
+Solutions to possible problems:
+
+(1) If you get an error about missing a module called dateutil, run the following from the `topicalguide` directory:
+
+    pip install python-dateutil
+
+Then try importing the dataset again.
+
+(2) If you get an error about a missing column, you must delete the database and re-import the dataset. Run the following from the `topicalguide` directory:
+
+    rm working/tg.sqlite3
+
+Then try importing the dataset again.
+
+(3) If the import runs extremely slowly, you may be importing the dataset over a file server. This fix will be different for everyone, but I had to move my repository to /local/<myusername>.
+
 ### 5. Done!
 
 Start up the development web server with the following command:
