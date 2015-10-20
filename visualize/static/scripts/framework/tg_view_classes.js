@@ -452,12 +452,12 @@ var BreadcrumbsView = DefaultView.extend({
     baseTemplate:
 '<div class="well" style="text-align: justify; margin: 0px 0px 20px 0px; padding: 0px 10px 0px 10px;">'+
 '<div style="vertical-align: middle; display: table; width: 100%;">'+
-'<span class="tg-nav-breadcrumb-span"><span>Dataset:&nbsp;</span><span class="tg-nav-breadcrumb-dataset green"></span></span>'+
-'<span class="tg-nav-breadcrumb-span">Document:&nbsp;<span class="tg-nav-breadcrumb-document green"></span></span>'+
-'<span class="tg-nav-breadcrumb-span">Analysis:&nbsp;<span class="tg-nav-breadcrumb-analysis green"></span></span>'+
-'<span class="tg-nav-breadcrumb-span">Topic:&nbsp;<span class="tg-nav-breadcrumb-topic green"></span></span>'+
-'<span class="tg-nav-breadcrumb-span">Topic Name Scheme:&nbsp;<span class="tg-nav-breadcrumb-topic-name-scheme green"></span></span>'+
-'<span class="tg-nav-breadcrumb-span">Document Metadata:&nbsp;<span class="tg-nav-breadcrumb-metadata green"></span></span>'+
+'<span class="tg-nav-breadcrumb-span"><span>Dataset:&nbsp;</span><span class="tg-nav-breadcrumb-dataset blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Document:&nbsp;<span class="tg-nav-breadcrumb-document blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Analysis:&nbsp;<span class="tg-nav-breadcrumb-analysis blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Topic:&nbsp;<span class="tg-nav-breadcrumb-topic blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Topic Name Scheme:&nbsp;<span class="tg-nav-breadcrumb-topic-name-scheme blue"></span></span>'+
+'<span class="tg-nav-breadcrumb-span">Document Metadata:&nbsp;<span class="tg-nav-breadcrumb-metadata blue"></span></span>'+
 '</div>'+
 '</div>',
     

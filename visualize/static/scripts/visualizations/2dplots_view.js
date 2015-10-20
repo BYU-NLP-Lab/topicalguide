@@ -369,7 +369,6 @@ var PlotView = DefaultView.extend({
             var group = $(this).find(":selected").parent().attr("value");
             var value = yAxis.property("value");
             that.settingsModel.set({ ySelection: { group: group, value: value } });
-            console.log("Group: " + group + "   Value: " + value);
         });
         radius.on("change", function radiusAxisChange() {
             var group = $(this).find(":selected").parent().attr("value");
@@ -490,7 +489,6 @@ var PlotView = DefaultView.extend({
             .style({ "fill": "none", "stroke": "black", "stroke-width": "1.5px", "shape-rendering": "crispedges" });
         this.yAxisGroup.selectAll('text')
             .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
-	    console.log("Y-AXIS TEXT" + this.yAxisGroup.text);
         this.yAxisText = this.yAxisGroup.append("text")
             .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
         // Render scatter plot container.
