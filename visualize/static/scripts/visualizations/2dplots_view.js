@@ -303,18 +303,17 @@ var PlotView = DefaultView.extend({
         }
         
         
-        
-        
         var yvalue = value;
         var ygroup = group;
         if(this.selectionModel.nonEmpty(["topic"])) {
             yvalue = this.selectionModel.get("topic");
+	    ygroup = "topics";
             yAxis.property("value", yvalue);
         } else {
             yvalue = "0";
             ygroup = "topics";
         }
-        
+ 
         //~ console.log("Y: " + yvalue + " " + ygroup);
         
         var xvalue = value;
@@ -370,6 +369,7 @@ var PlotView = DefaultView.extend({
             var group = $(this).find(":selected").parent().attr("value");
             var value = yAxis.property("value");
             that.settingsModel.set({ ySelection: { group: group, value: value } });
+            console.log("Group: " + group + "   Value: " + value);
         });
         radius.on("change", function radiusAxisChange() {
             var group = $(this).find(":selected").parent().attr("value");
@@ -490,6 +490,7 @@ var PlotView = DefaultView.extend({
             .style({ "fill": "none", "stroke": "black", "stroke-width": "1.5px", "shape-rendering": "crispedges" });
         this.yAxisGroup.selectAll('text')
             .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
+	    console.log("Y-AXIS TEXT" + this.yAxisGroup.text);
         this.yAxisText = this.yAxisGroup.append("text")
             .style({ 'fill': 'black', 'stroke': 'none', 'shape-rendering': 'crispedges' });
         // Render scatter plot container.
@@ -856,10 +857,10 @@ var PlotView = DefaultView.extend({
                "<h4>X and Y Axes</h4>"+
                "<p>Select the data to sort the documents according to the data along the specified axis.</p>"+
                "<h4>Radius</h4>"+
-               "<p>With text data that smaller the radius the earlier in the alphabet the text occurs.</p>"+
+               "<p>With text data, the smaller the radius the earlier in the alphabet the text occurs.</p>"+
                "<h4>Color</h4>"+
-               "<p>With text data the color is chosen from a spectrum of colors. With numeric data the color "+
-               "is between blue, off-white, and red. Off-white is average, blue is below average and red is above average. "+
+               "<p>With text data, the color is chosen from a spectrum of colors. With numeric data, the color "+
+               "is between blue, off-white, and red. Off-white is average, blue is below average, and red is above average. "+
                "Note that documents without the selected data value will be displayed as black.</p>";
     },
     
