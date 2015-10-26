@@ -36,6 +36,37 @@ var CirclePackingView = DefaultView.extend({
 
 	this.dataModel.submitQueryByHash(this.getQueryHash(), function(data) {
 	    console.log(data);
+
+	    var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
+	    var documents = analysis.documents;
+
+	    var newData = (function() {
+		//Create JSON
+		var newdata = {};
+		newdata.name = "topics";
+		newdata.children = [];
+		for (var i = 0; i < 100; i++) {
+		    var topic = {};
+		    topic.name = analysis.topics[i].names["Top 3"];
+		    topic.children = [];
+		    newdata.children.push(topic);
+		}
+		for (var doc = 0; doc < documents.length; doc++) {
+		    for (var j = 0; j < 100; j++) {
+			console.log("document topic amnt: " + documents[doc].topics[j]);
+			if (documents[doc].topics[j] > 20) {
+			    var docObj = {};
+			    docObj.name = documents[doc].key;
+			    docObj.size = documents[doc].topics[j]; 
+			    newdata.children[j].children.push(docObj);
+                        }
+		    }
+                }
+		return newdata;    
+	    })();
+
+	    console.log("NEW DATA:");
+	    console.log(newData);
 	    
 	    var margin = 20,
 		diameter = 960;
@@ -97,10 +128,16 @@ var CirclePackingView = DefaultView.extend({
 		        });
 
 		    transition.selectAll("text")
-			.filter(function(d) { return d.parent === focus || this.style.display === "inline"; })
-			    .style("fill-opacity", function(d) { return d.parent === focus ? 1 : 0; })
-			    .each("start", function(d) { if (d.parent === focus) this.style.display = "inline"; })
-			    .each("end", function(d) { if (d.parent !== focus) this.style.display = "none"; });
+			.filter(function(d) { 
+			    if (d === undefined) { 
+				return false;
+			    } else { 
+				return d.parent === focus || this.style.display === "inline"; 
+			    }
+			})
+			.style("fill-opacity", function(d) { return d.parent === focus ? 1 : 0; })
+			.each("start", function(d) { if (d.parent === focus) this.style.display = "inline"; })
+			.each("end", function(d) { if (d.parent !== focus) this.style.display = "none"; });
 		}
 
 		function zoomTo(v) {
