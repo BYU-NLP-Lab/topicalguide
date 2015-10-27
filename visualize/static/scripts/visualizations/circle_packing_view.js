@@ -40,33 +40,33 @@ var CirclePackingView = DefaultView.extend({
 	    var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
 	    var documents = analysis.documents;
 
+	    console.log("DOCUMENTS");
+	    console.log(documents);
+
 	    var newData = (function() {
 		//Create JSON
 		var newdata = {};
 		newdata.name = "topics";
 		newdata.children = [];
-		for (var i = 0; i < 100; i++) {
+		for (var i = 0; i < 20; i++) {
 		    var topic = {};
 		    topic.name = analysis.topics[i].names["Top 3"];
 		    topic.children = [];
 		    newdata.children.push(topic);
 		}
-		for (var doc = 0; doc < documents.length; doc++) {
-		    for (var j = 0; j < 100; j++) {
-			console.log("document topic amnt: " + documents[doc].topics[j]);
-			if (documents[doc].topics[j] > 20) {
+		for (var key in documents) {
+		    for (var j = 0; j < 20; j++) {
+			if (documents[key] !== undefined
+				&& documents[key].topics[j] > 50) {
 			    var docObj = {};
-			    docObj.name = documents[doc].key;
-			    docObj.size = documents[doc].topics[j]; 
+			    docObj.name = key;
+			    docObj.size = documents[key].topics[j]; 
 			    newdata.children[j].children.push(docObj);
                         }
 		    }
                 }
 		return newdata;    
 	    })();
-
-	    console.log("NEW DATA:");
-	    console.log(newData);
 	    
 	    var margin = 20,
 		diameter = 960;
@@ -87,8 +87,7 @@ var CirclePackingView = DefaultView.extend({
 	      .append("g")
 		.attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
-	    d3.json("/static/scripts/visualizations/flare.json", function(error, root) {
-		if (error) throw error;
+	    var root = JSON.parse(JSON.stringify(newData));
 
 		var focus = root,
 		    nodes = pack.nodes(root),
@@ -138,6 +137,7 @@ var CirclePackingView = DefaultView.extend({
 			.style("fill-opacity", function(d) { return d.parent === focus ? 1 : 0; })
 			.each("start", function(d) { if (d.parent === focus) this.style.display = "inline"; })
 			.each("end", function(d) { if (d.parent !== focus) this.style.display = "none"; });
+	
 		}
 
 		function zoomTo(v) {
@@ -145,7 +145,6 @@ var CirclePackingView = DefaultView.extend({
 		    node.attr("transform", function(d) { return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")"; });
 		    circle.attr("r", function(d) { return d.r * k; });
 		}
-	    });
 
 	    d3.select(self.frameElement).style("height", diameter + "px");
 
