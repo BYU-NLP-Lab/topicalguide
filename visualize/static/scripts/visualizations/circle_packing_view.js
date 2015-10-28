@@ -35,29 +35,24 @@ var CirclePackingView = DefaultView.extend({
 	var that = this;
 
 	this.dataModel.submitQueryByHash(this.getQueryHash(), function(data) {
-	    console.log(data);
 
 	    var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
 	    var documents = analysis.documents;
 
-	    console.log("DOCUMENTS");
-	    console.log(documents);
-
+	    //Create object with all data
 	    var newData = (function() {
-		//Create JSON
 		var newdata = {};
 		newdata.name = "topics";
 		newdata.children = [];
-		for (var i = 0; i < 20; i++) {
+		for (var i = 0; i < 100; i++) {
 		    var topic = {};
 		    topic.name = analysis.topics[i].names["Top 3"];
 		    topic.children = [];
 		    newdata.children.push(topic);
 		}
 		for (var key in documents) {
-		    for (var j = 0; j < 20; j++) {
-			if (documents[key] !== undefined
-				&& documents[key].topics[j] > 50) {
+		    for (var j = 0; j < 100; j++) {
+			if (documents[key] !== undefined && documents[key].topics[j] !== undefined) {
 			    var docObj = {};
 			    docObj.name = key;
 			    docObj.size = documents[key].topics[j]; 
@@ -67,13 +62,49 @@ var CirclePackingView = DefaultView.extend({
                 }
 		return newdata;    
 	    })();
+
+	    //Sort object by top topic
+	    newData.children.sort(function(a, b) {
+		var keyA = 0;
+		var keyB = 0;
+		for (var i = 0; i < a.children.length; i++) {
+		    keyA += a.children[i].size;
+		}
+		for (var j = 0; j < b.children.length; j++) {
+		    keyB += b.children[j].size;
+		}
+		if (keyA > keyB) return -1;
+		if (keyA < keyB) return 1;
+		return 0;
+	    });
+
+	    //Get actual data to display
+	    var displayData = (function() {
+		var displaydata = {};
+		displaydata.name = "topics";
+		displaydata.children = [];
+		var limit = Math.min(newData.children.length, 20);//TODO substitute controller amount
+		for (var i = 0; i < limit; i++) {
+		    displaydata.children.push(newData.children[i]);
+		}
+		for (var j = 0; j < displaydata.children.length; j++) {
+		    //Delete documents with too small of token amounts
+		    for (var k = 0; k < displaydata.children[j].children.length; k++) {
+		        if (displaydata.children[j].children[k].size < 50) { //TODO substitute controller amount
+			    displaydata.children[j].children.splice(k, 1);
+			    k--;
+			}	
+		    }
+		}
+		return displaydata;
+	    })();
 	    
 	    var margin = 20,
 		diameter = 960;
 
 	    var color = d3.scale.linear()
-		.domain([-1, 5])
-		.range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])
+		.domain([0, 2])//original values: -1, 5
+		.range(["hsl(120,61%,80%)", "hsl(120,61%,36%)"])//original values: hsl(152,80%,80%), hsl(228,30%,40%)
 		.interpolate(d3.interpolateHcl);
 
 	    var pack = d3.layout.pack()
@@ -87,7 +118,7 @@ var CirclePackingView = DefaultView.extend({
 	      .append("g")
 		.attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
-	    var root = JSON.parse(JSON.stringify(newData));
+	    var root = JSON.parse(JSON.stringify(displayData));
 
 		var focus = root,
 		    nodes = pack.nodes(root),
