@@ -2,12 +2,12 @@
 
 var CirclePackingView = DefaultView.extend({
 
-    readableName: "Circle Packing",
+    readableName: "Top Topics",
     shortName: "circlepack",
 
     mainTemplate:
-"<div id=\"plot-view-container\" class=\"container-fluid\"></div>" +
-"<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
+"<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>" +
+"<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
 
     initialize: function() {
     },
@@ -30,6 +30,14 @@ var CirclePackingView = DefaultView.extend({
     },
 
     render: function() {
+
+	this.$el.empty();
+
+	if (!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
+	    this.$el.html("<p>You should select a <a href=\"#datasets\">dataset and analysis</a> before proceeding.</p>");
+	    return;
+	}
+
         var selections = this.selectionModel.attributes;
 	console.log(selections);
 	var that = this;
@@ -103,8 +111,8 @@ var CirclePackingView = DefaultView.extend({
 		diameter = 960;
 
 	    var color = d3.scale.linear()
-		.domain([0, 2])//original values: -1, 5
-		.range(["hsl(120,61%,80%)", "hsl(120,61%,36%)"])//original values: hsl(152,80%,80%), hsl(228,30%,40%)
+		.domain([-1, 5])//original values: -1, 5
+		.range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])//original values: hsl(152,80%,80%), hsl(228,30%,40%)
 		.interpolate(d3.interpolateHcl);
 
 	    var pack = d3.layout.pack()
@@ -177,6 +185,17 @@ var CirclePackingView = DefaultView.extend({
 		    circle.attr("r", function(d) { return d.r * k; });
 		}
 
+		function onDocumentClick(d, i) {
+		    if (that.settingsModel.attributes.removing) {
+			that.removedDocuments[d.key] = true;
+			d3.select(this).transition()
+			    .duration(duration)
+			    .attr("r", 0);
+		    } else {
+			that.selectionModel.set({ document: d.key });
+		    }
+		};
+
 	    d3.select(self.frameElement).style("height", diameter + "px");
 
 	})
@@ -186,4 +205,36 @@ var CirclePackingView = DefaultView.extend({
     },
 });
 
-addViewClass(["Visualizations"], CirclePackingView);
+var CirclePackingViewManager = DefaultView.extend({
+
+	readableName: "Top Topics",
+	shortName: "circlepack",
+
+	mainTemplate:
+"<div id=\"plot-view-container\" class=\"container-fluid\"></div>" +
+"<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
+
+	initialize: function() {
+	    this.circlePackingView = new CirclePackingView(_.extend({}, this.getAllModels()));
+	    this.documentInfoView = new SingleDocumentView(_.extend({}, this.getAllModels()));
+	},
+
+	cleanup: function() {	
+	    this.circlePackingView.dispose();
+	    this.documentInfoView.dispose();
+	},
+
+	render: function() {
+	    this.$el.html(this.mainTemplate);
+	    this.circlePackingView.setElement(this.$el.find("#plot-view-container"));
+	    this.documentInfoView.setElement(this.$el.find("#document-info-view-container"));
+	    this.circlePackingView.render();
+	    this.documentInfoView.render();
+	},
+
+	renderHelpAsHtml: function() {
+	    return this.circlePackingView.renderHelpAsHtml();
+	},
+});
+
+addViewClass(["Visualizations"], CirclePackingViewManager);
