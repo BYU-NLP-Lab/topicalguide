@@ -3,6 +3,10 @@
 var CirclePackingView = DefaultView.extend({
 
     newData: {},
+    displayData: {},
+    topicArray: [],
+    numTopics: {},
+    numTokens: {},
 
     readableName: "Top Topics",
     shortName: "circlepack",
@@ -36,6 +40,11 @@ var CirclePackingView = DefaultView.extend({
 
 
     initialize: function() {
+	numTopics = 20;
+	numTokens = 50;
+	for (var i = 1; i < 100; i++) {
+	    topicArray.push(i);
+	}
     },
 
     cleanup: function() {
@@ -60,22 +69,54 @@ var CirclePackingView = DefaultView.extend({
 
 	var controls = d3.select(this.el).select('#plot-controls');
 	controls.html(self.controlsTemplate);
+
+	var topicSelector = controls.select('#top-n-control')
+	    .on('change', function (value) {
+		var selectedIndex = topicSelector.property('selectedIndex');
+		var selection = topicOptions[0][selectedIndex];
+		numTopics = selection.__data__[1];
+		self.alterDisplayData(numTopics, numTokens);
+	    });
+
+	var tokenSelector = controls.select('#document-token-control')
+	    .on('change', function (value) {
+		var selectedIndex = tokenSelector.property('selectedIndex');
+		var selection = tokenOptions[0][selectedIndex];
+		numTokens = selection.__data__[1];
+		self.alterDisplayData(numTopics, numTokens);
+	    });
+
+	var topicOptions = topicSelector
+	    .selectAll('option')
+	    .data(topicArray)
+	    .enter()
+	    .append('option')
+	    .attr('value', d)
+	    .text(d);
+
+	var tokenOptions = tokenSelector
+	    .selectAll('option')
+	    .data(topicArray)
+	    .enter()
+	    .append('option')
+	    .attr('value', d)
+	    .text(d);
     },
 
-    renderChart: function() {
+    alterDisplayData: function(topics, tokens) {
 	var self = this;
-	var displayData = (function() {
+	self.displayData = (function() {
 	    var displaydata = {};
 	    displaydata.name = "topics";
 	    displaydata.children = [];
-	    var limit = Math.min(self.newData.children.length, 20);//TODO substitute controller amount
+	    var limit = Math.min(self.newData.children.length, topics);
 	    for (var i = 0; i < limit; i++) {
 		displaydata.children.push(self.newData.children[i]);
 	    }
 	    for (var j = 0; j < displaydata.children.length; j++) {
 		//Delete documents with too small of token amounts
 		for (var k = 0; k < displaydata.children[j].children.length; k++) {
-		    if (displaydata.children[j].children[k].size < 50) { //TODO substitute controller amount
+		    if (displaydata.children[j].children[k].size < tokens) {
 			displaydata.children[j].children.splice(k, 1);
 			k--;
 		    }
@@ -83,6 +124,14 @@ var CirclePackingView = DefaultView.extend({
 	    }
 	    return displaydata;
 	})();
+	self.renderChart();
+    },
+	
+
+    renderChart: function() {
+	var self = this;
+
+	//d3.select(self.el).select("#plot-view").html("");
 
 	var margin = 20,
 	    diameter = 960;
@@ -103,7 +152,7 @@ var CirclePackingView = DefaultView.extend({
 	    .append("g")
 	    .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
-	var root = JSON.parse(JSON.stringify(displayData));
+	var root = JSON.parse(JSON.stringify(self.displayData));
 
 	var focus = root,
 	    nodes = pack.nodes(root),
@@ -176,25 +225,26 @@ var CirclePackingView = DefaultView.extend({
     },
 
     render: function() {
+	var self = this;
 
 	this.$el.empty();
 	if (!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
 	    this.$el.html("<p>You should select a <a href=\"#datasets\">dataset and analysis</a> before proceeding.</p>");
 	    return;
 	}
+	d3.select(this.el).html(this.loadingTemplate);	
+	//this.$el.html(this.mainTemplate);	
 
         var selections = this.selectionModel.attributes;
-	console.log(selections);
-	var that = this;
-	this.$el.html(that.mainTemplate);
 
 	this.dataModel.submitQueryByHash(this.getQueryHash(), function(data) {
+	    self.$el.html(self.mainTemplate);	    
 
 	    var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
 	    var documents = analysis.documents;
 
-	    //Create object with all data
-	    that.newData = (function() {
+	    //Populate newData with all topic info
+	    self.newData = (function() {
 		var newdata = {};
 		newdata.name = "topics";
 		newdata.children = [];
@@ -218,7 +268,7 @@ var CirclePackingView = DefaultView.extend({
 	    })();
 
 	    //Sort object by top topic
-	    that.newData.children.sort(function(a, b) {
+	    self.newData.children.sort(function(a, b) {
 		var keyA = 0;
 		var keyB = 0;
 		for (var i = 0; i < a.children.length; i++) {
@@ -232,120 +282,9 @@ var CirclePackingView = DefaultView.extend({
 		return 0;
 	    });
 
-	    //Get actual data to display
-	    var displayData = (function() {
-		var displaydata = {};
-		displaydata.name = "topics";
-		displaydata.children = [];
-		var limit = Math.min(that.newData.children.length, 20);//TODO substitute controller amount
-		for (var i = 0; i < limit; i++) {
-		    displaydata.children.push(that.newData.children[i]);
-		}
-		for (var j = 0; j < displaydata.children.length; j++) {
-		    //Delete documents with too small of token amounts
-		    for (var k = 0; k < displaydata.children[j].children.length; k++) {
-		        if (displaydata.children[j].children[k].size < 50) { //TODO substitute controller amount
-			    displaydata.children[j].children.splice(k, 1);
-			    k--;
-			}	
-		    }
-		}
-		return displaydata;
-	    })();
-	    
-	    var margin = 20,
-		diameter = 960;
-
-	    var color = d3.scale.linear()
-		.domain([-1, 5])//original values: -1, 5
-		.range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])//original values: hsl(152,80%,80%), hsl(228,30%,40%)
-		.interpolate(d3.interpolateHcl);
-
-	    var pack = d3.layout.pack()
-		.padding(2)
-		.size([diameter - margin, diameter - margin])
-		.value(function(d) { return d.size; })
-
-	    var svg = d3.select(that.el).append("svg")
-		.attr("width", diameter)
-		.attr("height", diameter)
-	      .append("g")
-		.attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
-
-	    var root = JSON.parse(JSON.stringify(displayData));
-
-		var focus = root,
-		    nodes = pack.nodes(root),
-		    view;
-		
-		var circle = svg.selectAll("circle")
-		    .data(nodes)
-		  .enter().append("circle")
-		    .attr("class", function(d) { return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root"; })
-		    .style("fill", function(d) { return d.children ? color(d.depth) : null; })
-		    .on("click", function(d) { if (focus !== d) zoom(d), d3.event.stopPropagation(); });
-
-		var text = svg.selectAll("text")
-		    .data(nodes)
-		  .enter().append("text")
-		    .attr("class", "label")
-		    .style("fill-opacity", function(d) { return d.parent === root ? 1 : 0; })
-		    .style("display", function(d) { return d.parent === root ? null : "none"; })
-		    .text(function(d) { return d.name; });
-
-		var node = svg.selectAll("circle,text");
-
-		d3.select(that.el)
-		    .style("background", color(-10))
-		    .on("click", function() { zoom(root); });
-
-		zoomTo([root.x, root.y, root.r * 2 + margin]);
-
-		function zoom(d) {
-		    var focus0 = focus; focus = d;
-
-		    var transition = d3.transition()
-			.duration(d3.event.altKey ? 7500 : 750)
-			.tween("zoom", function(d) {
-			    var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
-			    return function(t) { zoomTo(i(t)); };
-		        });
-
-		    transition.selectAll("text")
-			.filter(function(d) { 
-			    if (d === undefined) { 
-				return false;
-			    } else { 
-				return d.parent === focus || this.style.display === "inline"; 
-			    }
-			})
-			.style("fill-opacity", function(d) { return d.parent === focus ? 1 : 0; })
-			.each("start", function(d) { if (d.parent === focus) this.style.display = "inline"; })
-			.each("end", function(d) { if (d.parent !== focus) this.style.display = "none"; });
-	
-		}
-
-		function zoomTo(v) {
-		    var k = diameter / v[2]; view = v;
-		    node.attr("transform", function(d) { return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")"; });
-		    circle.attr("r", function(d) { return d.r * k; });
-		}
-
-		function onDocumentClick(d, i) {
-		    if (that.settingsModel.attributes.removing) {
-			that.removedDocuments[d.key] = true;
-			d3.select(this).transition()
-			    .duration(duration)
-			    .attr("r", 0);
-		    } else {
-			that.selectionModel.set({ document: d.key });
-		    }
-		};
-
-	    d3.select(self.frameElement).style("height", diameter + "px");
-	    that.renderControls();
-	})
-		
+	    self.renderControls();
+	    self.alterDisplayData(numTopics, numTokens);
+	})	
     },
 
     renderHelpAsHtml: function() {
@@ -358,7 +297,7 @@ var CirclePackingViewManager = DefaultView.extend({
 	shortName: "circlepack",
 
 	mainTemplate:
-"<div id=\"plot-view-container\" class=\"container-fluid\"></div>" +
+"<div id=\"plot-view-container\" class=\"container-fluid\" style=\"overflow: hidden;\"></div>" +
 "<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
 
 	initialize: function() {
