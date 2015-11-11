@@ -2,12 +2,38 @@
 
 var CirclePackingView = DefaultView.extend({
 
+    newData: {},
+
     readableName: "Top Topics",
     shortName: "circlepack",
 
     mainTemplate:
 "<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>" +
 "<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
+
+    controlsTemplate:
+"<h3><b>Controls</b></h3>"+
+"<hr />"+
+"<div>"+
+"    <label for=\"top-n-control\">Number of Topics</label>"+
+"    <select id=\"top-n-control\" type=\"selection\" class=\"form-control\" name=\"Number of Topics\"></select>"+
+"</div>"+
+"<div>"+
+"    <label for=\"document-token-control\">Document Token Requirement</label>"+
+"    <select id=\"document-token-control\" type=\"selection\" class=\"form-control\" name=\"Document Token Requirement\"></select>"+
+"</div>"+
+"<hr />"+
+"<div>"+
+"    <label for=\"calculation-control\">Top Topics Calculation Method</label>"+
+"    <div class=\"onoffswitch\">"+
+"	 <input type=\"checkbox\" name=\"onoffswitch\" class=\"onoffswitch-checkbox\" id=\"myonoffswitch\" checked>"+
+"	 <label class=\"onoffswitch-label\" for=\"myonoffswitch\">"+
+"	     <span class=\"onoffswitch-inner\"></span>"+
+"	     <span class=\"onoffswitch-switch\"></span>"+
+"	 </label>"+
+"    </div>"+
+"</div>",
+
 
     initialize: function() {
     },
@@ -29,10 +55,129 @@ var CirclePackingView = DefaultView.extend({
         };
     },
 
+    renderControls: function() {
+	var self = this;
+
+	var controls = d3.select(this.el).select('#plot-controls');
+	controls.html(self.controlsTemplate);
+    },
+
+    renderChart: function() {
+	var self = this;
+	var displayData = (function() {
+	    var displaydata = {};
+	    displaydata.name = "topics";
+	    displaydata.children = [];
+	    var limit = Math.min(self.newData.children.length, 20);//TODO substitute controller amount
+	    for (var i = 0; i < limit; i++) {
+		displaydata.children.push(self.newData.children[i]);
+	    }
+	    for (var j = 0; j < displaydata.children.length; j++) {
+		//Delete documents with too small of token amounts
+		for (var k = 0; k < displaydata.children[j].children.length; k++) {
+		    if (displaydata.children[j].children[k].size < 50) { //TODO substitute controller amount
+			displaydata.children[j].children.splice(k, 1);
+			k--;
+		    }
+		}
+	    }
+	    return displaydata;
+	})();
+
+	var margin = 20,
+	    diameter = 960;
+
+	var color = d3.scale.linear()
+	    .domain([-1, 5])//original values: -1, 5
+	    .range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])//original values: hsl(152,80%,80%), hsl(228,30%,40%)
+	    .interpolate(d3.interpolateHcl);
+
+	var pack = d3.layout.pack()
+	    .padding(2)
+	    .size([diameter - margin, diameter - margin])
+	    .value(function(d) { return d.size; })
+
+	var svg = d3.select(self.el).append("svg")
+	    .attr("width", diameter)
+	    .attr("height", diameter)
+	    .append("g")
+	    .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
+
+	var root = JSON.parse(JSON.stringify(displayData));
+
+	var focus = root,
+	    nodes = pack.nodes(root),
+	    view;
+
+	var circle = svg.selectAll("circle")
+	    .data(nodes)
+	    .enter().append("circle")
+	    .attr("class", function(d) { return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root"; })
+	    .style("fill", function(d) { return d.children ? color(d.depth) : null; })
+	    .on("click", function(d) { if (focus !== d) zoom(d), d3.event.stopPropagation(); });
+
+	var text = svg.selectAll("text")
+	    .data(nodes)
+	    .enter().append("text")
+	    .attr("class", "label")
+	    .style("fill-opacity", function(d) { return d.parent === root ? 1 : 0; })
+	    .style("display", function(d) { return d.parent === root ? null : "none"; })
+	    .text(function(d) { return d.name; });
+
+	var node = svg.selectAll("circle,text");
+
+	d3.select(self.el)
+	    .style("background", color(-10))
+	    .on("click", function() { zoom(root); });
+
+	zoomTo([root.x, root.y, root.r * 2 + margin]);
+
+	function zoom(d) {
+	    var focus0 = focus; focus = d;
+	    
+	    var transition = d3.transition()
+		.duration(d3.event.altKey ? 7500 : 750)
+		.tween("zoom", function(d) {
+		    var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
+		    return function(t) { zoomTo(i(t)); };
+		});
+
+	    transition.selectAll("text")
+		.filter(function(d) {
+		    if (d === undefined) {
+			return false;
+		    } else {
+			return d.parent === focus || this.style.display === "inline";
+		    }
+		})
+		.style("fill-opacity", function(d) { return d.parent === focus ? 1 : 0; })
+		.each("start", function(d) { if (d.parent === focus) this.style.display = "inline"; })
+		.each("end", function(d) { if (d.parent !== focus) this.style.display = "none"; });
+	}
+
+	function zoomTo(v) {
+	    var k = diameter / v[2]; view = v;
+	    node.attr("transform", function(d) { return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")"; });
+	    circle.attr("r", function(d) { return d.r * k; });
+	}
+
+	function onDocumentClick(d, i) {
+	    if (self.settingsModel.attributes.removing) {
+		self.removedDocuments[d.key] = true;
+		d3.select(this).transition()
+		    .duration(duration)
+		    .attr("r", 0);
+	    } else {
+		self.selectionModel.set({ document: d.key });
+	    }
+	};
+
+	d3.select(self.frameElement).style("height", diameter + "px");
+    },
+
     render: function() {
 
 	this.$el.empty();
-
 	if (!this.selectionModel.nonEmpty(["dataset", "analysis"])) {
 	    this.$el.html("<p>You should select a <a href=\"#datasets\">dataset and analysis</a> before proceeding.</p>");
 	    return;
@@ -41,6 +186,7 @@ var CirclePackingView = DefaultView.extend({
         var selections = this.selectionModel.attributes;
 	console.log(selections);
 	var that = this;
+	this.$el.html(that.mainTemplate);
 
 	this.dataModel.submitQueryByHash(this.getQueryHash(), function(data) {
 
@@ -48,7 +194,7 @@ var CirclePackingView = DefaultView.extend({
 	    var documents = analysis.documents;
 
 	    //Create object with all data
-	    var newData = (function() {
+	    that.newData = (function() {
 		var newdata = {};
 		newdata.name = "topics";
 		newdata.children = [];
@@ -72,7 +218,7 @@ var CirclePackingView = DefaultView.extend({
 	    })();
 
 	    //Sort object by top topic
-	    newData.children.sort(function(a, b) {
+	    that.newData.children.sort(function(a, b) {
 		var keyA = 0;
 		var keyB = 0;
 		for (var i = 0; i < a.children.length; i++) {
@@ -91,9 +237,9 @@ var CirclePackingView = DefaultView.extend({
 		var displaydata = {};
 		displaydata.name = "topics";
 		displaydata.children = [];
-		var limit = Math.min(newData.children.length, 20);//TODO substitute controller amount
+		var limit = Math.min(that.newData.children.length, 20);//TODO substitute controller amount
 		for (var i = 0; i < limit; i++) {
-		    displaydata.children.push(newData.children[i]);
+		    displaydata.children.push(that.newData.children[i]);
 		}
 		for (var j = 0; j < displaydata.children.length; j++) {
 		    //Delete documents with too small of token amounts
@@ -197,8 +343,9 @@ var CirclePackingView = DefaultView.extend({
 		};
 
 	    d3.select(self.frameElement).style("height", diameter + "px");
-
+	    that.renderControls();
 	})
+		
     },
 
     renderHelpAsHtml: function() {
