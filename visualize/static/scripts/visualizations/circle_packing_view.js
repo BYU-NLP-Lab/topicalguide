@@ -5,8 +5,8 @@ var CirclePackingView = DefaultView.extend({
     newData: {},
     displayData: {},
     topicArray: [],
-    numTopics: {},
-    numTokens: {},
+    numTopics: 1,
+    numTokens: 1,
 
     readableName: "Top Topics",
     shortName: "circlepack",
@@ -40,10 +40,10 @@ var CirclePackingView = DefaultView.extend({
 
 
     initialize: function() {
-	numTopics = 20;
-	numTokens = 50;
+	this.numTopics = 20;
+	this.numTokens = 50;
 	for (var i = 1; i < 100; i++) {
-	    topicArray.push(i);
+	    this.topicArray.push(i);
 	}
     },
 
@@ -74,33 +74,33 @@ var CirclePackingView = DefaultView.extend({
 	    .on('change', function (value) {
 		var selectedIndex = topicSelector.property('selectedIndex');
 		var selection = topicOptions[0][selectedIndex];
-		numTopics = selection.__data__[1];
-		self.alterDisplayData(numTopics, numTokens);
+		self.numTopics = selection.__data__[1];
+		self.alterDisplayData(self.numTopics, self.numTokens);
 	    });
 
 	var tokenSelector = controls.select('#document-token-control')
 	    .on('change', function (value) {
 		var selectedIndex = tokenSelector.property('selectedIndex');
 		var selection = tokenOptions[0][selectedIndex];
-		numTokens = selection.__data__[1];
-		self.alterDisplayData(numTopics, numTokens);
+		self.numTokens = selection.__data__[1];
+		self.alterDisplayData(self.numTopics, self.numTokens);
 	    });
 
 	var topicOptions = topicSelector
 	    .selectAll('option')
-	    .data(topicArray)
+	    .data(self.topicArray)
 	    .enter()
 	    .append('option')
-	    .attr('value', d)
-	    .text(d);
+	    .attr('value', function(d) { return d; })
+	    .text(function(d) { return d; });
 
 	var tokenOptions = tokenSelector
 	    .selectAll('option')
-	    .data(topicArray)
+	    .data(self.topicArray)
 	    .enter()
 	    .append('option')
-	    .attr('value', d)
-	    .text(d);
+	    .attr('value', function(d) { return d; })
+	    .text(function(d) { return d; });
     },
 
     alterDisplayData: function(topics, tokens) {
@@ -283,7 +283,7 @@ var CirclePackingView = DefaultView.extend({
 	    });
 
 	    self.renderControls();
-	    self.alterDisplayData(numTopics, numTokens);
+	    self.alterDisplayData(self.numTopics, self.numTokens);
 	})	
     },
 
@@ -314,6 +314,7 @@ var CirclePackingViewManager = DefaultView.extend({
 	    this.$el.html(this.mainTemplate);
 	    this.circlePackingView.setElement(this.$el.find("#plot-view-container"));
 	    this.documentInfoView.setElement(this.$el.find("#document-info-view-container"));
+	    this.circlePackingView.initialize();
 	    this.circlePackingView.render();
 	    this.documentInfoView.render();
 	},
