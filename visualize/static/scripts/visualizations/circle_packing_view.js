@@ -42,7 +42,7 @@ var CirclePackingView = DefaultView.extend({
     initialize: function() {
 	this.numTopics = 20;
 	this.numTokens = 50;
-	for (var i = 1; i < 100; i++) {
+	for (var i = 1; i <= 100; i++) {
 	    this.topicArray.push(i);
 	}
     },
@@ -68,21 +68,19 @@ var CirclePackingView = DefaultView.extend({
 	var self = this;
 
 	var controls = d3.select(this.el).select('#plot-controls');
-	controls.html(self.controlsTemplate);
+	controls.html(self.controlsTemplate);	
 
 	var topicSelector = controls.select('#top-n-control')
 	    .on('change', function (value) {
 		var selectedIndex = topicSelector.property('selectedIndex');
-		var selection = topicOptions[0][selectedIndex];
-		self.numTopics = selection.__data__[1];
+		self.numTopics = selectedIndex + 1;
 		self.alterDisplayData(self.numTopics, self.numTokens);
 	    });
 
 	var tokenSelector = controls.select('#document-token-control')
 	    .on('change', function (value) {
 		var selectedIndex = tokenSelector.property('selectedIndex');
-		var selection = tokenOptions[0][selectedIndex];
-		self.numTokens = selection.__data__[1];
+		self.numTokens = selectedIndex + 1;
 		self.alterDisplayData(self.numTopics, self.numTokens);
 	    });
 
@@ -105,6 +103,7 @@ var CirclePackingView = DefaultView.extend({
 
     alterDisplayData: function(topics, tokens) {
 	var self = this;
+	self.displayData = {};
 	self.displayData = (function() {
 	    var displaydata = {};
 	    displaydata.name = "topics";
@@ -131,7 +130,8 @@ var CirclePackingView = DefaultView.extend({
     renderChart: function() {
 	var self = this;
 
-	//d3.select(self.el).select("#plot-view").html("");
+	var el = d3.select(self.el).select("#plot-view");
+	el.select("svg").remove();
 
 	var margin = 20,
 	    diameter = 960;
@@ -146,7 +146,7 @@ var CirclePackingView = DefaultView.extend({
 	    .size([diameter - margin, diameter - margin])
 	    .value(function(d) { return d.size; })
 
-	var svg = d3.select(self.el).append("svg")
+	var svg = el.append("svg") //d3.select(self.el).append("svg")
 	    .attr("width", diameter)
 	    .attr("height", diameter)
 	    .append("g")
@@ -175,7 +175,7 @@ var CirclePackingView = DefaultView.extend({
 
 	var node = svg.selectAll("circle,text");
 
-	d3.select(self.el)
+	el //d3.select(self.el)
 	    .style("background", color(-10))
 	    .on("click", function() { zoom(root); });
 
