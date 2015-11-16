@@ -110,7 +110,7 @@ var CirclePackingView = DefaultView.extend({
 	    displaydata.children = [];
 	    var limit = Math.min(self.newData.children.length, topics);
 	    for (var i = 0; i < limit; i++) {
-		displaydata.children.push(self.newData.children[i]);
+		displaydata.children.push(JSON.parse(JSON.stringify(self.newData.children[i])));
 	    }
 	    for (var j = 0; j < displaydata.children.length; j++) {
 		//Delete documents with too small of token amounts
