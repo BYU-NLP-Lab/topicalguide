@@ -2,11 +2,13 @@
 
 var CirclePackingView = DefaultView.extend({
 
-    newData: {},
+    totalData: {},
+    percentageData: {},
     displayData: {},
     topicArray: [],
     numTopics: 1,
     numTokens: 1,
+    calcTotal: true,
 
     readableName: "Top Topics",
     shortName: "circlepack",
@@ -29,7 +31,7 @@ var CirclePackingView = DefaultView.extend({
 "<hr />"+
 "<div>"+
 "    <label for=\"calculation-control\">Top Topics Calculation Method</label>"+
-"    <div class=\"onoffswitch\">"+
+"    <div id=\"calculation-control\" class=\"onoffswitch\">"+
 "	 <input type=\"checkbox\" name=\"onoffswitch\" class=\"onoffswitch-checkbox\" id=\"myonoffswitch\" checked>"+
 "	 <label class=\"onoffswitch-label\" for=\"myonoffswitch\">"+
 "	     <span class=\"onoffswitch-inner\"></span>"+
@@ -42,6 +44,7 @@ var CirclePackingView = DefaultView.extend({
     initialize: function() {
 	this.numTopics = 20;
 	this.numTokens = 50;
+	this.topicArray = [];
 	for (var i = 1; i <= 100; i++) {
 	    this.topicArray.push(i);
 	}
@@ -70,19 +73,8 @@ var CirclePackingView = DefaultView.extend({
 	var controls = d3.select(this.el).select('#plot-controls');
 	controls.html(self.controlsTemplate);	
 
-	var topicSelector = controls.select('#top-n-control')
-	    .on('change', function (value) {
-		var selectedIndex = topicSelector.property('selectedIndex');
-		self.numTopics = selectedIndex + 1;
-		self.alterDisplayData(self.numTopics, self.numTokens);
-	    });
-
-	var tokenSelector = controls.select('#document-token-control')
-	    .on('change', function (value) {
-		var selectedIndex = tokenSelector.property('selectedIndex');
-		self.numTokens = selectedIndex + 1;
-		self.alterDisplayData(self.numTopics, self.numTokens);
-	    });
+	var topicSelector = controls.select('#top-n-control');
+	var tokenSelector = controls.select('#document-token-control');
 
 	var topicOptions = topicSelector
 	    .selectAll('option')
@@ -99,30 +91,73 @@ var CirclePackingView = DefaultView.extend({
 	    .append('option')
 	    .attr('value', function(d) { return d; })
 	    .text(function(d) { return d; });
+
+	topicOptions[0][self.numTopics-1].selected = true;
+	tokenOptions[0][self.numTokens-1].selected = true;
+
+	topicSelector.on('change', function (value) {
+		var selectedIndex = topicSelector.property('selectedIndex');
+		self.numTopics = selectedIndex + 1;
+		self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal);
+	    });
+
+	tokenSelector.on('change', function (value) {
+		var selectedIndex = tokenSelector.property('selectedIndex');
+		self.numTokens = selectedIndex + 1;
+		self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal);
+	    });
+
+	d3.select(this.el).select('#calculation-control')
+	    .on("click", function onCalculationChange() {
+		self.calcTotal = document.getElementById('myonoffswitch').checked;
+		self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal);
+	    });	
     },
 
-    alterDisplayData: function(topics, tokens) {
+    alterDisplayData: function(topics, tokens, total) {
 	var self = this;
 	self.displayData = {};
-	self.displayData = (function() {
-	    var displaydata = {};
-	    displaydata.name = "topics";
-	    displaydata.children = [];
-	    var limit = Math.min(self.newData.children.length, topics);
-	    for (var i = 0; i < limit; i++) {
-		displaydata.children.push(JSON.parse(JSON.stringify(self.newData.children[i])));
-	    }
-	    for (var j = 0; j < displaydata.children.length; j++) {
-		//Delete documents with too small of token amounts
-		for (var k = 0; k < displaydata.children[j].children.length; k++) {
-		    if (displaydata.children[j].children[k].size < tokens) {
-			displaydata.children[j].children.splice(k, 1);
-			k--;
+	if (total) {
+	    self.displayData = (function() {
+	        var displaydata = {};
+	        displaydata.name = "topics";
+	        displaydata.children = [];
+	        var limit = Math.min(self.totalData.children.length, topics);
+	        for (var i = 0; i < limit; i++) {
+	            displaydata.children.push(JSON.parse(JSON.stringify(self.totalData.children[i])));
+	        }
+	        for (var j = 0; j < displaydata.children.length; j++) {
+		    //Delete documents with too small of token amounts
+		    for (var k = 0; k < displaydata.children[j].children.length; k++) {
+		        if (displaydata.children[j].children[k].size < tokens) {
+			    displaydata.children[j].children.splice(k, 1);
+			    k--;
+		        }
+		    }
+	        }
+	        return displaydata;
+	    })();
+	} else {
+	    self.displayData = (function() {
+		var displaydata = {};
+		displaydata.name = "topics";
+		displaydata.children = [];
+		var limit = Math.min(self.percentageData.children.length, topics);
+		for (var i = 0; i < limit; i++) {
+		    displaydata.children.push(JSON.parse(JSON.stringify(self.percentageData.children[i])));
+		}
+		for (var j = 0; j < displaydata.children.length; j++) {
+		    //Delete documents with too small of token amounts
+		    for (var k = 0; k < displaydata.children[j].children.length; k++) {
+			if (displaydata.children[j].children[k].size < tokens) {
+			    displaydata.children[j].children.splice(k, 1);
+			    k--;
+			}
 		    }
 		}
-	    }
-	    return displaydata;
-	})();
+		return displaydata;
+	    })();
+	}
 	self.renderChart();
     },
 	
@@ -243,8 +278,8 @@ var CirclePackingView = DefaultView.extend({
 	    var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
 	    var documents = analysis.documents;
 
-	    //Populate newData with all topic info
-	    self.newData = (function() {
+	    //Populate totalData with all topic info
+	    self.totalData = (function() {
 		var newdata = {};
 		newdata.name = "topics";
 		newdata.children = [];
@@ -267,8 +302,38 @@ var CirclePackingView = DefaultView.extend({
 		return newdata;    
 	    })();
 
-	    //Sort object by top topic
-	    self.newData.children.sort(function(a, b) {
+	    console.log(documents);
+
+	    //Populate percentageData with all topic info
+	    self.percentageData = (function() {
+		var newdata = {};
+		newdata.name = "topics";
+		newdata.children = [];
+		for (var i = 0; i < 100; i++) {
+		    var topic = {};
+		    topic.name = analysis.topics[i].names["Top 3"];
+		    topic.children = [];
+		    newdata.children.push(topic);
+		}
+		for (var key in documents) {
+		    for (var j = 0; j < 100; j++) {
+			if (documents[key] !== undefined && documents[key].topics[j] !== undefined) {
+			    var docObj = {};
+			    docObj.name = key;
+			    docObj.size = documents[key].topics[j];
+			    newdata.children[j].children.push(docObj);
+			    newdata.children[j].percentage += (docObj.size / documents[key].metrics["Token Count"]);
+			}
+		    }
+		}
+		for (var k = 0; k < 100; k++) {
+		    newdata.children[k].percentage = newdata.children[k].percentage / Object.keys(documents).length;
+		}
+		return newdata;
+	    })();
+
+	    //Sort totalData by top topic
+	    self.totalData.children.sort(function(a, b) {
 		var keyA = 0;
 		var keyB = 0;
 		for (var i = 0; i < a.children.length; i++) {
@@ -282,8 +347,17 @@ var CirclePackingView = DefaultView.extend({
 		return 0;
 	    });
 
+	    //Sort percentageData by top topic (average percentage)
+	    self.percentageData.children.sort(function(a, b) {
+		var keyA = a.percentage;
+		var keyB = b.percentage;
+		if (keyA > keyB) return -1;
+		if (keyA < keyB) return 1;
+		return 0;
+	    });
+
 	    self.renderControls();
-	    self.alterDisplayData(self.numTopics, self.numTokens);
+	    self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal);
 	})	
     },
 
