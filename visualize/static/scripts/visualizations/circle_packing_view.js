@@ -362,6 +362,13 @@ var CirclePackingView = DefaultView.extend({
     },
 
     renderHelpAsHtml: function() {
+	return "<p>Note that the larger circles represent the top topics and the small, white circles represent documents with the top number of tokens associated with that topic.</p>"+
+	"<h4>Number of Topics</h4>"+
+	"<p>Changing this number will change the number of topics displayed. The topics shown will always be the most common topics, based on the choice of calculation.</p>"+
+	"<h4>Document Token Requirement</h4>"+
+	"<p>This number represents how many tokens (words) in a document must be associated with the given topic in order for the document to be included in the topic circle. Increasing this number will decrease the number of documents shown in the topic, and decreasing this number will increase the number of documents shown.</p>"+
+	"<h4>Top Topics Calculation Method</h4>"+
+	"<p>When this is set to \"Total Tokens,\" the top topics will be calculated by how many tokens (words) in the entire dataset are associated with each topic. When it is set to \"Average Percentage,\" the top topics will be calculated by finding the average makeup of that topic per document over all documents.<p>";
     },
 });
 
