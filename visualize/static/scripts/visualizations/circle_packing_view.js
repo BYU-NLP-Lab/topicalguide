@@ -181,7 +181,7 @@ var CirclePackingView = DefaultView.extend({
 	    .size([diameter - margin, diameter - margin])
 	    .value(function(d) { return d.size; })
 
-	var svg = el.append("svg") //d3.select(self.el).append("svg")
+	var svg = el.append("svg")
 	    .attr("width", diameter)
 	    .attr("height", diameter)
 	    .append("g")
@@ -197,8 +197,18 @@ var CirclePackingView = DefaultView.extend({
 	    .data(nodes)
 	    .enter().append("circle")
 	    .attr("class", function(d) { return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root"; })
-	    .style("fill", function(d) { return d.children ? color(d.depth) : null; })
-	    .on("click", function(d) { if (focus !== d) zoom(d), d3.event.stopPropagation(); });
+	    .style("fill", function(d) { return d.children ? color(d.depth) : "WHITE"; })
+	    .on("click", function(d) { 
+		if (!d.children) {
+		    onDocumentClick(d.name, 0);
+		}
+		else {
+		    if (focus !== d) {
+		    	zoom(d), d3.event.stopPropagation();
+		    }
+		}
+	     })
+	    ;
 
 	var text = svg.selectAll("text")
 	    .data(nodes)
@@ -210,7 +220,7 @@ var CirclePackingView = DefaultView.extend({
 
 	var node = svg.selectAll("circle,text");
 
-	el //d3.select(self.el)
+	el
 	    .style("background", color(-10))
 	    .on("click", function() { zoom(root); });
 
@@ -218,7 +228,16 @@ var CirclePackingView = DefaultView.extend({
 
 	function zoom(d) {
 	    var focus0 = focus; focus = d;
-	    
+		
+	    var leaves = document.getElementsByClassName("node--leaf");
+	    console.log(leaves);
+	    for (var i in leaves) {
+		if (leaves[i].style !== undefined) {
+		    if (d.parent === root) { leaves[i].style.pointerEvents = "auto"; }
+		    else { leaves[i].style.pointerEvents = ""; }
+		}
+	    }		
+
 	    var transition = d3.transition()
 		.duration(d3.event.altKey ? 7500 : 750)
 		.tween("zoom", function(d) {
@@ -252,7 +271,7 @@ var CirclePackingView = DefaultView.extend({
 		    .duration(duration)
 		    .attr("r", 0);
 	    } else {
-		self.selectionModel.set({ document: d.key });
+		self.selectionModel.set({ document: d });
 	    }
 	};
 
@@ -301,8 +320,6 @@ var CirclePackingView = DefaultView.extend({
                 }
 		return newdata;    
 	    })();
-
-	    console.log(documents);
 
 	    //Populate percentageData with all topic info
 	    self.percentageData = (function() {
@@ -357,7 +374,7 @@ var CirclePackingView = DefaultView.extend({
 	    });
 
 	    self.renderControls();
-	    self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal);
+	    self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal)
 	})	
     },
 

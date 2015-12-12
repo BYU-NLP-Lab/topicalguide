@@ -12,6 +12,7 @@
 .node--leaf 
 {
     fill: white;
+    pointer-events: none;
 }
 
 .label
@@ -22,8 +23,7 @@
 }
 
 .label,
-.node--root,
-.node--leaf
+.node--root
 {
     pointer-events: none;
 }
