@@ -193,7 +193,7 @@ var CirclePackingView = DefaultView.extend({
 	    nodes = pack.nodes(root),
 	    view;
 
-	var circle = svg.selectAll("circle")
+        var circle = svg.selectAll("circle")
 	    .data(nodes)
 	    .enter().append("circle")
 	    .attr("class", function(d) { return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root"; })
@@ -207,8 +207,7 @@ var CirclePackingView = DefaultView.extend({
 		    	zoom(d), d3.event.stopPropagation();
 		    }
 		}
-	     })
-	    ;
+	     });
 
 	var text = svg.selectAll("text")
 	    .data(nodes)
@@ -230,7 +229,6 @@ var CirclePackingView = DefaultView.extend({
 	    var focus0 = focus; focus = d;
 		
 	    var leaves = document.getElementsByClassName("node--leaf");
-	    console.log(leaves);
 	    for (var i in leaves) {
 		if (leaves[i].style !== undefined) {
 		    if (d.parent === root) { leaves[i].style.pointerEvents = "auto"; }
