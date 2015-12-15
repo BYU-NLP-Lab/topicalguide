@@ -220,12 +220,12 @@ var CirclePackingView = DefaultView.extend({
 	var node = svg.selectAll("circle,text");
 
 	el
-	    .style("background", color(-10))
-	    .on("click", function() { zoom(root); });
+	    .style("background", color(-10));
 
 	zoomTo([root.x, root.y, root.r * 2 + margin]);
 
 	function zoom(d) {
+	    console.log("ZOOMING");
 	    var focus0 = focus; focus = d;
 		
 	    var leaves = document.getElementsByClassName("node--leaf");

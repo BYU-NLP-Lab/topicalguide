@@ -9,6 +9,12 @@
     stroke-width: 1.5px;
 }
 
+.node--root:hover
+{
+    stroke: white;
+    stroke-width: 0px;
+}
+
 .node--leaf 
 {
     fill: white;
@@ -22,8 +28,7 @@
     text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff;
 }
 
-.label,
-.node--root
+.label
 {
     pointer-events: none;
 }
