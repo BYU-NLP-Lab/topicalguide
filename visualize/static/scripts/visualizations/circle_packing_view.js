@@ -304,6 +304,7 @@ var CirclePackingView = DefaultView.extend({
 		    var topic = {};
 		    topic.name = analysis.topics[i].names["Top 3"];
 		    topic.children = [];
+		    topic.total = "";
 		    newdata.children.push(topic);
 		}
 		for (var key in documents) {
@@ -328,6 +329,8 @@ var CirclePackingView = DefaultView.extend({
 		    var topic = {};
 		    topic.name = analysis.topics[i].names["Top 3"];
 		    topic.children = [];
+		    topic.total = "";
+		    topic.percentage = 0;
 		    newdata.children.push(topic);
 		}
 		for (var key in documents) {
@@ -343,6 +346,7 @@ var CirclePackingView = DefaultView.extend({
 		}
 		for (var k = 0; k < 100; k++) {
 		    newdata.children[k].percentage = newdata.children[k].percentage / Object.keys(documents).length;
+		    newdata.children[k].total = (newdata.children[k].percentage).toString() + "%";//add rounding here
 		}
 		return newdata;
 	    })();
@@ -370,6 +374,17 @@ var CirclePackingView = DefaultView.extend({
 		if (keyA < keyB) return 1;
 		return 0;
 	    });
+
+	    //Assign values to topics for display
+	    for (var t = 0; t < self.totalData.children.length; t++) {
+		var tot = 0;
+		for (var d = 0; d < self.totalData.children[t].children.length; d++) {
+		    tot += self.totalData.children[t].children[d].size;
+		}
+		self.totalData.children[t].total = tot.toString();
+	    }
+
+	    console.log(self.totalData.children[0].name);
 
 	    self.renderControls();
 	    self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal)
