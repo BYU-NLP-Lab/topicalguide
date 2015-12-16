@@ -215,7 +215,11 @@ var CirclePackingView = DefaultView.extend({
 	    .attr("class", "label")
 	    .style("fill-opacity", function(d) { return d.parent === root ? 1 : 0; })
 	    .style("display", function(d) { return d.parent === root ? null : "none"; })
-	    .text(function(d) { return d.name; });
+	    .text(function(d) { 
+		var title = "";
+		if (d.position) { title += (d.position.toString() + ": "); }
+		title += d.name;
+		return title; });
 
 	var node = svg.selectAll("circle,text");
 
@@ -225,7 +229,6 @@ var CirclePackingView = DefaultView.extend({
 	zoomTo([root.x, root.y, root.r * 2 + margin]);
 
 	function zoom(d) {
-	    console.log("ZOOMING");
 	    var focus0 = focus; focus = d;
 		
 	    var leaves = document.getElementsByClassName("node--leaf");
@@ -284,8 +287,7 @@ var CirclePackingView = DefaultView.extend({
 	    this.$el.html("<p>You should select a <a href=\"#datasets\">dataset and analysis</a> before proceeding.</p>");
 	    return;
 	}
-	d3.select(this.el).html(this.loadingTemplate);	
-	//this.$el.html(this.mainTemplate);	
+	d3.select(this.el).html(this.loadingTemplate);		
 
         var selections = this.selectionModel.attributes;
 
@@ -382,9 +384,12 @@ var CirclePackingView = DefaultView.extend({
 		    tot += self.totalData.children[t].children[d].size;
 		}
 		self.totalData.children[t].total = tot.toString();
+		self.totalData.children[t].position = t + 1;
 	    }
 
-	    console.log(self.totalData.children[0].name);
+	    for (var p = 0; p < self.percentageData.children.length; p++) {
+		self.percentageData.children[p].position = p + 1;
+	    }
 
 	    self.renderControls();
 	    self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal)
