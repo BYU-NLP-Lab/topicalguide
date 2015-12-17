@@ -304,7 +304,7 @@ var CirclePackingView = DefaultView.extend({
 		newdata.children = [];
 		for (var i = 0; i < 100; i++) {
 		    var topic = {};
-		    topic.name = analysis.topics[i].names["Top 3"];
+		    topic.name = analysis.topics[i].names["Top 2"];
 		    topic.children = [];
 		    topic.total = "";
 		    newdata.children.push(topic);
@@ -329,7 +329,7 @@ var CirclePackingView = DefaultView.extend({
 		newdata.children = [];
 		for (var i = 0; i < 100; i++) {
 		    var topic = {};
-		    topic.name = analysis.topics[i].names["Top 3"];
+		    topic.name = analysis.topics[i].names["Top 2"];
 		    topic.children = [];
 		    topic.total = "";
 		    topic.percentage = 0;
