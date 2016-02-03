@@ -1,0 +1,15 @@
+.background {
+    fill: #eee;
+}
+
+line {
+    stroke: #fff;
+}
+
+text {
+    font: 10px sans-serif;
+}
+
+text.active {
+    fill: red;
+}
