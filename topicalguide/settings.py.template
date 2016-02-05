@@ -28,6 +28,7 @@ DEBUG = False
 
 TEMPLATE_DEBUG = DEBUG
 
+# For A/B testing allow subdomains (if www.example.com put 'example.com' and '.example.com')
 ALLOWED_HOSTS = []
 
 
