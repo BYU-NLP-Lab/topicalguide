@@ -1,15 +1,23 @@
-.background {
+.matrix-background {
     fill: #eee;
 }
 
-line {
+.row line {
     stroke: #fff;
 }
 
-text {
+.row text {
     font: 10px sans-serif;
 }
 
-text.active {
+.column text {
+    font: 10px sans-serif;
+}
+
+.row text.active {
+    fill: red;
+}
+
+.column text.active {
     fill: red;
 }

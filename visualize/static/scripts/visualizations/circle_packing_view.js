@@ -297,6 +297,8 @@ var CirclePackingView = DefaultView.extend({
 	    var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
 	    var documents = analysis.documents;
 
+	    console.log(documents);
+
 	    //Populate totalData with all topic info
 	    self.totalData = (function() {
 		var newdata = {};
