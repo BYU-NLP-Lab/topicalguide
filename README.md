@@ -22,8 +22,6 @@ Then navigate to the `topicalguide` directory and optionally switch over to the 
 
 ### 2. Install Dependencies
 
-Superuser permissions are necessary to install the Topical Guide as shown in the current instructions.
-
 In order to circumvent the need for superuser permissions, you can create a virtual environment using `virtualenv`, `virtualenvwrapper`, `pyenv`, or another tool.
 
 To use `virtualenv`, type the following inside the project's root directory:
