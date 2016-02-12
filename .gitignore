@@ -17,5 +17,3 @@ datasets/
 /topicalguide/settings.py
 /working/
 tg_models.png
-/tools/stemmer/Snowball
-/tools/stemmer/stemmer
