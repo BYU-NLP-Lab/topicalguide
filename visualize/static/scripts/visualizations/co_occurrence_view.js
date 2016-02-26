@@ -8,8 +8,8 @@ var CoOccurrenceView = DefaultView.extend({
     shortName: "co-occur",
 
     mainTemplate:
-"<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>" +
-"<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
+"<div id=\"plot-controls\" class=\"col-xs-3 text-center\"></div>" +
+"<div id=\"plot-view\"></div>",
 
     controlsTemplate:
 "<h3><b>Controls</b></h3>" +
@@ -63,9 +63,9 @@ var CoOccurrenceView = DefaultView.extend({
 	var el = d3.select(self.el).select("#plot-view");
 	el.select("svg").remove();
 
-	var margin = {top: 120, right: 10, bottom: 10, left: 100},
-	    width = 700,
-	    height = 700;
+	var margin = {top: 145, right: 10, bottom: 10, left: 145},
+	    width = 800,
+	    height = 800;
 
 	var x = d3.scale.ordinal().rangeBands([0, width]),
 	    z = d3.scale.linear().domain([0, 4]).clamp(true),
