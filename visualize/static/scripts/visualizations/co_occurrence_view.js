@@ -226,11 +226,47 @@ var CoOccurrenceView = DefaultView.extend({
 		var allWords = [];
 		for (var topic in analysis.topics) {
 		    if (topic !== undefined) {
-			//console.log(topic.names["Top 4"].split(", "));
+			var top4 = analysis.topics[topic].names["Top 4"].split(", ");
+			var there = false;
+			for (var w in top4) {
+			    for (var word in allWords) {
+				if (allWords[word].name.includes(top4[w]) || top4[w].includes(allWords[word].name)) {
+				    allWords[word].value += 1;
+				    there = true;
+				    if (allWords[word].name.length > top4[w].length) {
+					allWords[word].name = top4[w];
+				    }
+				    break;
+				}
+			    }
+			    if (!there) {
+				var newWord = {};
+				newWord.name = top4[w];
+				newWord.value = 1;
+				allWords.push(newWord);
+			    }
+			    there = false;
+			}
 		    }
 		}
+		allWords.sort(function(a, b) {
+		    var keyA = a.value;
+		    var keyB = b.value;
+		    if (keyA > keyB) return -1;
+		    if (keyA < keyB) return 1;
+		    return 0;
+		});
+		console.log(allWords);
 		return allWords;
 	    })();	
+
+	    var numGroups = 0;
+            for (var o = 0; o < clusterWords.length; o++) {
+                if (clusterWords[o].value <= 5) {
+                    numGroups = o - 1;
+		    break;
+                }
+            }
 	    
 	    self.topicData = (function() {
 		var newdata = {};
@@ -240,19 +276,15 @@ var CoOccurrenceView = DefaultView.extend({
 		for (var i = 0; i < _.size(analysis.topics); i++) {
 		    var topic = {};
 		    topic.name = analysis.topics[i].names["Top 2"];
-		    if (analysis.topics[i].names["Top 4"].includes("year")) {
-			topic.group = 1;
-		    } else if (analysis.topics[i].names["Top 4"].includes("country")) {
-		    	topic.group = 2;
-		    } else if (analysis.topics[i].names["Top 4"].includes("government")) {
-			topic.group = 3;
-		    } else if (analysis.topics[i].names["Top 4"].includes("state")) {
-			topic.group = 4;
-		    } else if (analysis.topics[i].names["Top 4"].includes("war")) {
-			topic.group = 5;
-		    } else {
-			topic.group = 0;
+		    var assigned = false;
+		    for (var grp = 0; grp < numGroups; grp ++) {
+			if (analysis.topics[i].names["Top 4"].includes(clusterWords[grp].name)) {
+			    topic.group = grp;
+			    assigned = true;
+			    break;
+			}
 		    }
+		    if (!assigned) topic.group = numGroups; 
 		    newdata.nodes.push(topic);
 		}
 		//Populate links
