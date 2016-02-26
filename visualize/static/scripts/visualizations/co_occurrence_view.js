@@ -208,7 +208,29 @@ var CoOccurrenceView = DefaultView.extend({
 	    self.$el.html(self.mainTemplate);
 	    
 	    var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
+	    console.log(analysis);
 	    var documents = analysis.documents;
+
+	    var averageTokenCount = function(docs) {
+		var total = 0;
+		for (var key in docs) {
+		    if (docs[key] !== undefined) {
+			total += docs[key].metrics["Token Count"];
+		    }
+		}
+		var average = total / _.size(docs);
+		return average;
+	    };
+
+	    var clusterWords = (function() {
+		var allWords = [];
+		for (var topic in analysis.topics) {
+		    if (topic !== undefined) {
+			//console.log(topic.names["Top 4"].split(", "));
+		    }
+		}
+		return allWords;
+	    })();	
 	    
 	    self.topicData = (function() {
 		var newdata = {};
@@ -218,16 +240,30 @@ var CoOccurrenceView = DefaultView.extend({
 		for (var i = 0; i < _.size(analysis.topics); i++) {
 		    var topic = {};
 		    topic.name = analysis.topics[i].names["Top 2"];
-		    topic.group = 0;
+		    if (analysis.topics[i].names["Top 4"].includes("year")) {
+			topic.group = 1;
+		    } else if (analysis.topics[i].names["Top 4"].includes("country")) {
+		    	topic.group = 2;
+		    } else if (analysis.topics[i].names["Top 4"].includes("government")) {
+			topic.group = 3;
+		    } else if (analysis.topics[i].names["Top 4"].includes("state")) {
+			topic.group = 4;
+		    } else if (analysis.topics[i].names["Top 4"].includes("war")) {
+			topic.group = 5;
+		    } else {
+			topic.group = 0;
+		    }
 		    newdata.nodes.push(topic);
 		}
 		//Populate links
+		var cutoff = averageTokenCount(documents) / 25;
+		console.log(cutoff);
 		var recentLink = {};
 		for (var a = 0; a < _.size(analysis.topics); a++) {
 		    for (var b = a+1; b < _.size(analysis.topics); b++) {
 			for (var key in documents) {
-			    if (documents[key] !== undefined && documents[key].topics[a] >= 100 
-				 && documents[key].topics[b] >= 100) {//number 100 is arbitrary
+			    if (documents[key] !== undefined && documents[key].topics[a] >= cutoff 
+				 && documents[key].topics[b] >= cutoff) {
 				if (recentLink !== {} && recentLink.source == b && recentLink.target == a) {
 				    newdata.links[newdata.links.length - 1].value += 1;
 				}
@@ -242,6 +278,17 @@ var CoOccurrenceView = DefaultView.extend({
 			}
 		    }
 		}
+		//Normalize by min value
+		//var min = newdata.links[0].value;
+		//for (var l = 1; l < newdata.links.length; l++) {
+		//    if (newdata.links[l].value < min) {
+		//	min = newdata.links[l].value;
+		//    }
+		//}
+		//for (var m = 0; m < newdata.links.length; m++) {
+		//    newdata.links[m].value = newdata.links[m].value / min;
+		//}
+		console.log(newdata);
 		return newdata; 
 	    })();
 
