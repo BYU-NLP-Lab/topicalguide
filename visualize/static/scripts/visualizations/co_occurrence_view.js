@@ -180,7 +180,7 @@ var CoOccurrenceView = DefaultView.extend({
       }
 
       d3.select(self.el).select("#plot-controls").select("#order-control").on("change", function() {
-        clearTimeout(timeout);
+        //clearTimeout(timeout);
         order(this.value);
       });
 
@@ -201,14 +201,14 @@ var CoOccurrenceView = DefaultView.extend({
           .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
       }
 
-      var timeout = setTimeout(function() {
-        order("group");
-        d3.select(self.el)
-          .select("#plot-controls")
-          .select("#order-control")
-          .property("selectedIndex", 2)
-          .node().focus();
-      }, 5000);
+      //var timeout = setTimeout(function() {
+        //order("group");
+        //d3.select(self.el)
+          //.select("#plot-controls")
+          //.select("#order-control")
+          //.property("selectedIndex", 2)
+          //.node().focus();
+      //}, 5000);
 
   },
 
