@@ -216,6 +216,13 @@ var CoOccurrenceView = DefaultView.extend({
     var self = this;
 
     this.$el.empty();
+    
+    if (!this.selectionModel.nonEmpty([ "dataset", "analysis" ])) {
+      this.$el.html("<p>You should select a <a href=\"#datasets\">dataset and analysis</a> before proceeding.</p>");
+      return;
+    }
+
+    d3.select(this.el).html(this.loadingTemplate);
 
     var selections = this.selectionModel.attributes;
 
