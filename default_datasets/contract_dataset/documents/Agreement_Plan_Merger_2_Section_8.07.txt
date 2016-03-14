@@ -1,0 +1,9 @@
+number: 195
+title: Agreement Plan Merger 2 Section 8.07
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.07          Tax Treatment of Indemnification Payments. All indemnification payments made under this Agreement shall be treated by the parties as an adjustment to the Purchase Price for Tax purposes, unless otherwise required by Law. Any indemnification obligation under this Agreement shall be net of any Tax Benefit realizable by the Indemnitee or its Affiliates. As used herein, “Tax Benefit” shall mean the Tax savings attributable to any deduction, expense, loss, credit or refund to the Indemnitee or its Affiliates, resulting from the Loss giving rise to the indemnification payment to the extent that such Tax Benefit is actually paid to, credited to, or deducted and applied to reduce a Post-Closing Tax liability of Parent or the Surviving Corporation; provided , that such credits or deductions shall be considered to be realized only after taking into account all other available losses and deductions of Parent or the Surviving Corporation , as applicable.

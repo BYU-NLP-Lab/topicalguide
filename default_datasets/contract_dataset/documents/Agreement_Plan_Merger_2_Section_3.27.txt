@@ -1,0 +1,9 @@
+number: 142
+title: Agreement Plan Merger 2 Section 3.27
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.27          Takeover Statutes . The Company Board has taken all necessary action to ensure that (a) neither Parent nor Merger Sub will be an “affiliated shareholder” or prohibited from entering into or consummating a “business combination” with the Company under Section 203 of the DGCL as a result of the execution of this Agreement or the Voting Agreement or the consummation of the Merger or the other transactions contemplated hereby and (b) any “moratorium”, “control share acquisition”, “business combination”, “fair price” or other form of anti-takeover Law, or any anti-takeover provisions in the Company Charter Documents, is not applicable to the Company, Parent, Merger Sub, the Shares, this Agreement, the Voting Agreement, the Merger or the other transactions contemplated hereby.

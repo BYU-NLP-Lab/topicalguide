@@ -1,0 +1,9 @@
+number: 61
+title: Agreement Plan Merger 3 6.4 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+6.4   Further Assurances . Acquiror and Target shall use all reasonable efforts to take, or cause to be taken, all actions necessary to effectuate the Merger and make effective the other transactions contemplated by this Agreement. Without limiting the generality of the foregoing, but subject to Section 6.6 each Party to this Agreement shall: (i) make any filings and give any notices required to be made and given by such Party in connection with the Merger and the other transactions contemplated by this Agreement; (ii) use all reasonable efforts to obtain any consent required to be obtained (pursuant to any applicable legal requirement or contract, or otherwise) by such Party in connection with the Merger or any of the other transactions contemplated by this Agreement; and (iii) use all reasonable efforts to lift any restraint, injunction or other legal bar to the Merger. Each Party shall promptly deliver to the other a copy of each such filing made, each such notice given and each such consent obtained by such Party during the period prior to the Effective Time. Each Party, at the reasonable request of the other Parties, shall execute and deliver such other instruments and do and perform such other acts and things as may be necessary or desirable for effecting completely the consummation of this Agreement and the transactions contemplated hereby.

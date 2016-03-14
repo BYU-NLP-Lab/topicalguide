@@ -1,0 +1,9 @@
+number: 36
+title: Agreement Plan Merger 3 3.26 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+3.26   Disclosure . No representation or warranty by Target in this Agreement and no statement contained in any certificate furnished to Acquiror pursuant to the provisions hereof contains any untrue statement of material fact or omits to state any material fact necessary in order to make the statements made herein or therein not misleading.REPRESENTATIONS AND WARRANTIES OF ACQUIROR, MERGER SUB ONE AND MERGER SUB TWOAcquiror, Merger Sub One and Merger Sub Two represent and warrant to Target the following as of the Agreement Date and the Closing Date, except as specifically disclosed in a document of even date herewith and delivered by Acquiror to Target referring to the representations and warranties in this Agreement (the “ Purchaser Disclosure Schedules ”).  The Purchaser Disclosure Schedules will correspond to the numbered and lettered paragraphs contained in this Article IV, and the disclosure in any such specified schedule of the Purchaser Disclosure Schedules shall qualify any other subsection of this Article IV to the extent to which the relevance of such disclosure is reasonably apparent from the content of the disclosure set forth therein:

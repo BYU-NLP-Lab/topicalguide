@@ -1,0 +1,9 @@
+number: 147
+title: Agreement Plan Merger 2 Section 4.04
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 4.04          No Prior Merger Sub Operations. Merger Sub has not conducted any business prior to the date of this Agreement and has, and prior to the Effective Time will have, no assets, liabilities or obligations of any nature other than those incident to its formation and pursuant to this Agreement and the Merger and the other transactions contemplated by this Agreement.

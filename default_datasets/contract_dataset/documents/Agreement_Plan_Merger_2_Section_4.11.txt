@@ -1,0 +1,9 @@
+number: 154
+title: Agreement Plan Merger 2 Section 4.11
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 4.11          Compliance with Laws. Except as set forth in Section 4.11 of the Disclosure Schedules, there are no Actions pending or, to Parent's or Merger Sub's knowledge, threatened against or by Parent or Merger Sub that challenge or seek to prevent, enjoin or otherwise delay the transactions contemplated by this Agreement. To Parent’s knowledge, no event has occurred or circumstances exist that may give rise or serve as a basis for any such Action.

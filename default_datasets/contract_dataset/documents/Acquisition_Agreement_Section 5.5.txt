@@ -1,0 +1,9 @@
+number: 42
+title: Acquisition Agreement Section 5.5
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 5.5 Further Assurances . In addition to the provisions of this Agreement, from time to time after the Closing Date, the Sellers and the Purchaser shall use reasonable best efforts to execute and deliver such other instruments of conveyance, transfer or assumption, as the case may be, and take such other action as may be reasonably requested toimplement more effectively the conveyance and transfer of the Acquired Assets to the Purchaser and the assumption of the Assumed Liabilities by the Purchaser; provided, that nothing in this Section 5.5 shall (a) require the Sellers or any of their Affiliates to make any expenditure or incur any obligation on their own or on behalf of the Purchaser (unless funds in the full amount thereof are advanced to the Sellers in cash) or (b) prohibit or delay the Sellers or any of their Affiliates from ceasing operations or winding up its affairs following the Closing.

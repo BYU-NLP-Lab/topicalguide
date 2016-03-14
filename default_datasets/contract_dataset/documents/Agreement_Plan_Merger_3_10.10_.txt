@@ -1,0 +1,9 @@
+number: 96
+title: Agreement Plan Merger 3 10.10 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+10.10   Specific Enforcement . The Parties acknowledge and agree that a Party would be irreparably harmed and such Party would not have any adequate remedy at law in the event that any of the provisions of this Agreement were not performed by the other Parties hereto in accordance with their specific terms or were otherwise breached. Accordingly, each Party agrees that the other Parties shall be entitled to seek an injunction or injunctions to prevent breaches of this Agreement and/or the other Transaction  Documents  and  to  enforce  specifically the  terms  and  provisions  of  this Agreement, this being in addition to any other remedy to which a Party is entitled at law or in equity.

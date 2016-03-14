@@ -1,0 +1,9 @@
+number: 10
+title: Agreement Plan Merger 3 2.9 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+2.9   Lost, Stolen or Destroyed Certificates . In the event any certificate evidencing shares of Target Common Stock shall have been lost, stolen or destroyed, Acquiror shall issue in exchange for such lost, stolen or destroyed certificates, upon the making of an affidavit of that fact by the holder thereof, the Merger Consideration as may be required pursuant to this Article II ; provided, however , that Acquiror may, in its discretion and as a condition precedent to the issuance thereof, require the holder of such lost, stolen or destroyed certificate to deliver a customary agreement in form and substance reasonably requested by Acquiror to indemnify against any claim that may be made against Acquiror or the Surviving Corporation with respect to the certificate alleged to have been lost, stolen or destroyed.

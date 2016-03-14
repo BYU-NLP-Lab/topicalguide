@@ -1,0 +1,9 @@
+number: 152
+title: Agreement Plan Merger 2 Section 4.09
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 4.09          Opinion of Financial Advisor . The Board of Directors of Parent has received the opinion of Cowen and Company, LLC, Parent's financial adviser in connection with the Merger, to the effect that, as of the date of the opinion, and based upon and subject to the various assumptions, qualifications, limitations, and other matters set forth therein, the consideration to be paid by Parent in the Merger pursuant to the terms of this Agreement is fair, from a financial point of view, to Parent. A signed copy of such opinion has been delivered to the Company for informational purposes only.

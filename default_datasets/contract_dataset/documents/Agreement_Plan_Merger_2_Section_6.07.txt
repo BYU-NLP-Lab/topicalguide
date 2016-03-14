@@ -1,0 +1,9 @@
+number: 177
+title: Agreement Plan Merger 2 Section 6.07
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 6.07          Post-Closing Actions . Except as otherwise required by applicable Law, Parent shall not without the prior written consent of the Stockholder Representative (which consent shall not be unreasonably withheld, conditioned or delayed) (i) file, or allow to be filed, any amended Tax Return of the Company for a Pre-Closing Tax Period, (ii) apply to any taxing authority for any binding or non-binding opinion, ruling, or other determination with respect to the Company in relation to any act, matter, or transaction that occurred on or before the Closing Date, (iii) waive any carry back for federal, state, local or foreign Tax purposes to any taxable period, or portion thereof, of the Company ending on or before the Closing Date any operating losses, net operating losses, capital losses, Tax credits or similar items attributable to a Pre-Closing Tax Period, (iv) make or change any Tax election with respect to the Company for a Pre-Closing Tax Period that could adversely affect the Stockholders or the Optionholders, or (v) take any action or enter into any transaction that would result in any increased Tax liability of the Company with respect to any Pre-Closing Tax Period.

@@ -1,0 +1,9 @@
+number: 207
+title: Agreement Plan Merger 2 Section 10.08
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 10.08          Successors and Assigns. This Agreement shall be binding upon and shall inure to the benefit of the parties hereto and their respective successors and permitted assigns. Neither party may assign its rights or obligations hereunder without the prior written consent of the other party, which consent shall not be unreasonably withheld or delayed. No assignment shall relieve the assigning party of any of its obligations hereunder.

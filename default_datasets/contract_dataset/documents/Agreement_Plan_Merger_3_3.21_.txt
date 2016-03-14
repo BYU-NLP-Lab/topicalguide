@@ -1,0 +1,9 @@
+number: 31
+title: Agreement Plan Merger 3 3.21 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+3.21   Brokers’ and Finders’ Fee . Except as set forth on Schedule 3.21 of the Target Disclosure Schedule, no brokers, finders, investment bankers or consultants are entitled to brokerage or finders’ fees or agents’ commissions or investment bankers’ fees or any similar charges in connection with the Merger, this Agreement or any transaction contemplated hereby.

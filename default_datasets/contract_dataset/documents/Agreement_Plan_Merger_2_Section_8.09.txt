@@ -1,0 +1,9 @@
+number: 197
+title: Agreement Plan Merger 2 Section 8.09
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.09          Exclusive Remedies. Subject to Section 10.12 , the parties acknowledge and agree that their sole and exclusive remedy with respect to any and all claims (other than claims arising from fraud, criminal activity or willful misconduct on the part of a party hereto in connection with the transactions contemplated by this Agreement) for any breach of any representation, warranty, covenant, agreement or obligation set forth herein or otherwise relating to the subject matter of this Agreement, shall be pursuant to the indemnification provisions set forth in Article VI and this Article VIII . In furtherance of the foregoing, each party hereby waives, to the fullest extent permitted under Law, any and all rights, claims and causes of action for any breach of any representation, warranty, covenant, agreement or obligation set forth herein or otherwise relating to the subject matter of this Agreement it may have against the other parties hereto and their Affiliates and each of their respective Representatives arising under or based upon any Law, except pursuant to the indemnification provisions set forth in Article VI and this Article VIII . Nothing in this Section 8.08 shall limit any Person's right to seek and obtain any equitable relief to which any Person shall be entitled or to seek any remedy on account of any party's fraudulent, criminal or intentional misconduct.

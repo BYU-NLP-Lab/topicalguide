@@ -1,0 +1,9 @@
+number: 204
+title: Agreement Plan Merger 2 Section 10.05
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 10.05          Headings. The headings in this Agreement are for reference only and shall not affect the interpretation of this Agreement.

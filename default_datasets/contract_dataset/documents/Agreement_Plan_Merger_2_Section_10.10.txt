@@ -1,0 +1,9 @@
+number: 209
+title: Agreement Plan Merger 2 Section 10.10
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 10.10          Amendment and Modification; Waiver. This Agreement may only be amended, modified or supplemented by an agreement in writing signed by Parent, Merger Sub and the Company at any time prior to the Effective Time; provided , however , that after the Requisite Company Vote is obtained, there shall be no amendment or waiver that, pursuant to applicable Law, requires further approval of the Stockholders, without the receipt of such further approvals. Any failure of Parent or Merger Sub, on the one hand, or the Company, on the other hand, to comply with any obligation, covenant, agreement or condition herein may be waived by the Company (with respect to any failure by Parent or Merger Sub) or by Parent or Merger Sub (with respect to any failure by the Company), respectively, only by a written instrument signed by the party granting such waiver, but such waiver or failure to insist upon strict compliance with such obligation, covenant, agreement or condition shall not operate as a waiver of, or estoppel with respect to, any subsequent or other failure.

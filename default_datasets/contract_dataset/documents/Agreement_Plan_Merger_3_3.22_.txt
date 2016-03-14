@@ -1,0 +1,9 @@
+number: 32
+title: Agreement Plan Merger 3 3.22 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+3.22   International Trade Matters . Target is, and at all times has been, in material compliance with and is not in material violation of any International Trade Law (as defined below). “ International Trade Law ” shall mean U.S. statutes, laws and regulations applicable to international transactions, including, but not limited to, the Export Administration Act, the Export Administration Regulations, the Foreign Corrupt Practices Act, the Arms Export Control Act, the International Traffic in Arms Regulations, the International Emergency Economic Powers Act, the Trading with the Enemy Act, the U.S. Customs laws and regulations, the Foreign Asset Control Regulations, any Laws related to the import and export of commodities, software, and technology from and into the United States, and the payment of required duties and tariffs in connection with same, and any Laws or orders issued thereunder.

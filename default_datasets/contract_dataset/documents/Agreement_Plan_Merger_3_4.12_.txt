@@ -1,0 +1,9 @@
+number: 46
+title: Agreement Plan Merger 3 4.12 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+4.12   Compliance with Laws . Acquiror has complied in all material respects with all Laws applicable to it, including the rules and regulations of the FDA or any other Governmental Authority, and is not in violation of, and has not received any written notices of violation with respect to such Laws, including any applicable licenses and permits for the export of any of Acquiror’s products and any approvals for the conduct of clinical research. Acquiror has all material Authorizations required to conduct its business as now conducted, and such Authorizations are in full force and effect.

@@ -1,0 +1,9 @@
+number: 30
+title: Acquisition Agreement Section 3.20
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.20 State Takeover Statutes . The Board of Directors of the Parent has approved this Agreement and the Acquisition and, assuming the accuracy of the Purchaser’s representation in Section 4.7 , such approval constitutes approval of the Acquisition for purposes of Section 203 of the General Corporation Law of the State of Delaware and represents the only action necessary to ensure that such section does not and will not apply to the execution and delivery of this Agreement or the consummation of the Acquisition. No other state takeover or similar statute or regulation is applicable to this Agreement or the Acquisition.REPRESENTATIONS AND WARRANTIES OF THE PURCHASERThe Purchaser represents and warrants to the Sellers as follows:

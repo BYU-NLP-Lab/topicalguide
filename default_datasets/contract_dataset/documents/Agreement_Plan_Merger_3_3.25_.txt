@@ -1,0 +1,9 @@
+number: 35
+title: Agreement Plan Merger 3 3.25 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+3.25   Environmental . Except as would not be reasonably likely to result in a Material Adverse Effect of Target: (a) Target is in material compliance with applicable legal requirements with respect to environmental laws, rules, regulations and ordinances; and (b) Target has not transported, stored, used, manufactured, disposed of, released, removed  or  exposed any Person to Hazardous Materials in violation of any legal requirement or manufactured any product containing a Hazardous Material in violation of any legal requirement, nor has Target received notification from any party that it has or is alleged to have any remediation obligation relating to any Hazardous Material. A “ Hazardous Material ” shall mean any substance that has been designated by any Governmental Authority or by any legal requirements to be radioactive, toxic, hazardous or otherwise a danger to health or the environment, including PCBs, asbestos, petroleum, toxic mold, urea-formaldehyde and all substances listed as hazardous substances pursuant to the Comprehensive Environmental Response, Compensation, and Liability Act of 1980, as amended, or defined as a hazardous waste pursuant to the United States Resource Conservation and Recovery Act of 1976, as amended, and the regulations promulgated pursuant to said laws, but excluding office and janitorial supplies.

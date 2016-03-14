@@ -1,0 +1,9 @@
+number: 36
+title: Acquisition Agreement Section 4.6
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 4.6 Financing; Solvency .(a) As of the Effective Date, the Purchaser has, and on the Closing Date, the Purchaser will have, sufficient funds available to deliver the Purchase Price to the Sellers and consummate the transactions contemplated by this Agreement, including the timely satisfaction of the Assumed Liabilities.(b) Immediately after giving effect to the transactions contemplated by this Agreement and the Ancillary Documents (including the payment of the Purchase Price, and the payment of all related fees and expenses), (i) the Purchaser and its Subsidiaries will not have incurred debts beyond their ability to pay such debts as they mature or become due, (ii) the then present fair saleable value of the assets of the Purchaser and its Subsidiaries will exceed the amount that will be required to pay their existing debts (including the probable amount of all contingent liabilities) as such debts become absolute and matured, (iii) the assets of the Purchaser and its Subsidiaries at a fair valuation will exceed their debts (including the probable amount of all contingent liabilities) and (iv) the Purchaser and its Subsidiaries will not have unreasonably small capital to carry on their business as proposed to be conducted following the Closing Date. No transfer of property is being made and no obligation is being incurred in connection with the transactions contemplated hereby, in either case, with the intent to hinder, delay or defraud either present or future creditors of the Purchaser and its Subsidiaries.

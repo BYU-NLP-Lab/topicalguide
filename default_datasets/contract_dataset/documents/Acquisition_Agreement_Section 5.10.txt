@@ -1,0 +1,9 @@
+number: 47
+title: Acquisition Agreement Section 5.10
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 5.10 Bidding Procedures; Superior Offers . The bidding procedures to be employed with respect to this Agreement shall be those reflected in the Bidding Procedures Order. The Purchaser agrees and acknowledges that the Sellers and their representatives and Affiliates are and may continue soliciting inquiries, proposals or offers for the Business, the Acquired Assets and the Interests in connection with alternative transactions pursuant to the terms of the Bidding Procedures Order and agree and acknowledge that the bidding procedures contained in the Bidding Procedures Order may be supplemented by other customary procedures not inconsistent with the terms otherwise set forth therein or the terms of this Agreement; provided, that (a) the Sellers shall reasonably consult with the Purchaser in connection therewith and (b) in no event shall the bidding procedures contained in the Bidding Procedures Order be supplemented in any manner adverse to the Purchaser without the Purchaser’s prior written consent (which consent shall not be unreasonably withheld or delayed).

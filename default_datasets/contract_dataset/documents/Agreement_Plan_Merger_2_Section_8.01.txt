@@ -1,0 +1,9 @@
+number: 189
+title: Agreement Plan Merger 2 Section 8.01
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.01          Survival. Subject to the limitations and other provisions of this Agreement, the representations and warranties contained herein (other than any representations or warranties contained in Section 3.21 which are subject to Article VI ) shall survive the Closing and shall remain in full force and effect until the date that is eighteen (18) months from the Closing Date; provided , that the representations and warranties in (a) the first sentence of Section 3.01 , Section 3.02(a) , Section 3.04 , Section 4.01 and Section 4.03 shall survive indefinitely, (b) Section 3.16 , Section 3.17 and Section 3.18 shall survive for the full period of all applicable statutes of limitations (giving effect to any waiver, mitigation or extension thereof) plus 60 days. All covenants and agreements of the parties contained herein (other than any covenants or agreements contained in Article VI which are subject to Article VI ) shall survive the Closing indefinitely or for the period explicitly specified therein. Notwithstanding the foregoing, any claims asserted in accordance with Section 8.05 prior to the expiration date of the applicable survival period shall not thereafter be barred by the expiration of the relevant representation or warranty and such claims shall survive until finally resolved.

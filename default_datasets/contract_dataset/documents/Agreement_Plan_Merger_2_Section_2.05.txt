@@ -1,0 +1,9 @@
+number: 99
+title: Agreement Plan Merger 2 Section 2.05
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 2.05     Effects of the Merger. The Merger shall have the effects set forth herein and in the applicable provisions of the DGCL. Without limiting the generality of the foregoing, and subject thereto, from and after the Effective Time, all property, rights, privileges, immunities, powers, franchises, licenses and authority of the Company and Merger Sub shall vest in the Surviving Corporation, and all debts, liabilities, obligations, restrictions and duties of each of the Company and Merger Sub shall become the debts, liabilities, obligations, restrictions and duties of the Surviving Corporation.

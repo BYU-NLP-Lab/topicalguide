@@ -1,0 +1,9 @@
+number: 50
+title: Acquisition Agreement Section 5.13
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 5.13 Letters of Credit . At or prior to the Closing, the Purchaser shall, with respect to each letter of credit described on Section 5.13 of the Seller Disclosure Schedule (the “ Existing Letters of Credit ”), either (a) cause replacement letters of credit to be issued to the beneficiaries of such Existing Letter of Credit, obtain the originals of such Existing Letter of Credit from the beneficiary thereof to return to the issuing financial institution (“ Lender ”) and deliver to Lender each such Existing Letter of Credit or (b) provide arrangements satisfactory to the Lender that issued such Existing Letter of Credit in the form of cash collateral, back-up letters of credit or other credit support, in each case in a manner consented to by Lender such that Lender will deliver to the Sellers on the Closing Date an unconditional release of all of the obligations of the Sellers with respect to such Existing Letter of Credit.

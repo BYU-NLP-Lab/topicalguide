@@ -1,0 +1,9 @@
+number: 176
+title: Agreement Plan Merger 2 Section 6.06
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 6.06          Contests. Parent agrees to give written notice to the Stockholder Representative of the receipt of any written notice by the Company, Parent or any of Parent's Affiliates which involves the assertion of any claim, or the commencement of any Action, in respect of which an indemnity may be sought by Parent pursuant to this Article VI (a “ Tax Claim ”); provided , that failure to comply with this provision shall not affect Parent's right to indemnification hereunder. Parent shall control the contest or resolution of any Tax Claim; provided , however , that Parent shall obtain the prior written consent of the Stockholder Representative (which consent shall not be unreasonably withheld or delayed) before entering into any settlement of a Tax Claim or ceasing to defend such Tax Claim; and, provided further , that the Stockholder Representative shall be entitled to participate in the defense of such Tax Claim and to employ counsel of its choice for such purpose, the fees and expenses of which separate counsel shall be borne solely by the Stockholder Representative. Parent shall provide the Stockholder Representative with a timely and reasonably detailed account of each phase of such Tax Claim.

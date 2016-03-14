@@ -1,0 +1,9 @@
+number: 31
+title: Acquisition Agreement Section 4.1
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 4.1 Organization . The Purchaser is a corporation validly existing and in good standing under the laws of the jurisdiction of its organization and has the requisite corporate power and authority to own, lease and operate its properties and to carry on its business as it is now being conducted, except where the failure to be so existing and in good standing or to have such power and authority would not, individually or in the aggregate, materially impair or materially delay the Purchaser’s ability to perform its obligations under this Agreement. The Purchaser is duly qualified or licensed to do business as a foreign entity and is in good standing in each jurisdiction in which the nature of the business conducted by it makes such qualification or licensing necessary, except where the failure to be so duly qualified, licensed and in good standing would not, individually or in the aggregate, materially impair or materially delay the Purchaser’s ability to perform its obligations under this Agreement.

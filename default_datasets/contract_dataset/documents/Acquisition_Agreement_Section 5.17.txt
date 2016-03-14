@@ -1,0 +1,9 @@
+number: 54
+title: Acquisition Agreement Section 5.17
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 5.17 Payments Received . The Sellers and the Purchaser each agree that after the Closing they will hold and will promptly transfer and deliver to the other, from time to time as and when received by them or their respective Subsidiaries, any cash, checks withappropriate endorsements (using their best efforts not to convert such checks into cash) or other property that they may receive on or after the Closing which properly belongs to the other party hereto or its Subsidiaries and will account to the other for all such receipts.

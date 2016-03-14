@@ -1,0 +1,9 @@
+number: 19
+title: Acquisition Agreement Section 3.9
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.9 Brokers . Except for Lazard Frères & Co. LLC, no Person is entitled to any brokerage, financial advisory, finder’s or similar fee or commission in connection with the transactions contemplated by this Agreement based upon arrangements made by or on behalf of the Sellers or the Transferred Sub.

@@ -1,0 +1,9 @@
+number: 108
+title: Agreement Plan Merger 2 Section 2.14
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 2.14     Adjustments. Without limiting the other provisions of this Agreement, if at any time during the period between the date of this Agreement and the Effective Time, any change in the outstanding shares of capital stock of the Company shall occur, including by reason of any reclassification, recapitalization, stock split (including reverse stock split) or combination, exchange or readjustment of shares, or any stock dividend or distribution paid in stock, the Merger Consideration and any other amounts payable pursuant to this Agreement shall be appropriately adjusted to reflect such change.

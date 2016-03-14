@@ -1,0 +1,9 @@
+number: 19
+title: Agreement Plan Merger 3 3.7 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+3.7   Absence of Certain Changes . Except as set forth in Schedule 3.7 of the Target Disclosure Schedule, since September 30, 2014 (the “ Target Balance   Sheet Date ”), Target has conducted its business in the ordinary course consistent with past practice and there has not occurred (a) any change, event or condition (whether or not covered by insurance) that has resulted in, or would reasonably be expected to result in, a Material Adverse Effect on Target; (b) any acquisition, sale or transfer of any material asset of Target other than in the ordinary course of business and consistent with past practice; (c) any change in accounting methods or practices (including any change in depreciation or amortization policies or rates) by Target or any revaluation by Target of any of its assets, except where such change would not have a Material Adverse Effect on Target; (d) any Material Contract entered into by Target, other than in the ordinary course of business, or any material amendment or termination of, or default under, any Material Contract to which Target is a party or by which it is bound; or (e) any negotiation or agreement by Target to do any of the things described in the preceding clauses (a) through (d) (other than negotiations with Acquiror and its Representatives regarding the transactions contemplated by this Agreement). At the Effective Time, there will be no accrued but unpaid dividends on shares of Target Common Stock.

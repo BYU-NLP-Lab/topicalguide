@@ -1,0 +1,9 @@
+number: 44
+title: Agreement Plan Merger 3 4.10 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+4.10   Absence of Certain Changes . Except as disclosed in Acquiror SEC Reports, since the date of the Acquiror Latest Balance Sheet, Acquiror has conducted its business in the ordinary course consistent with past practice and there has not occurred (a) any change, event or condition (whether or not covered by insurance) that has resulted in, or could reasonably be expected to result in, a Material Adverse Effect on Acquiror; (b) any Change of Control with respect to Acquiror or any acquisition, sale or transfer of any material asset of Acquiror other than in the ordinary course of business and consistent with past practice; (c) any change in accounting methods or practices (including any change in depreciation or amortization policies or rates) by Acquiror or any revaluation by Acquiror of any of its assets, except where such change would not have a Material Adverse Effect on Acquiror; (d) any declaration, setting aside, or payment of a dividend or other distribution with respect to the shares of Acquiror or any direct or indirect redemption, purchase or other acquisition by Acquiror of any of its shares of capital stock; (e) any amendment to the articles of incorporation or bylaws of Acquiror; (f) any event that would reasonably be expected to prevent or materially delay the performance of Acquiror’s obligations pursuant to this Agreement; or (g) any negotiation or agreement by Acquiror to do any of the things described in the preceding clauses (a) through (f) (other than negotiations with Target and its representatives regarding the transactions contemplated by this Agreement).

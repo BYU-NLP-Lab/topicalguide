@@ -1,0 +1,9 @@
+number: 9
+title: Acquisition Agreement Section 2.1
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 2.1 Closing . The closing of the transactions contemplated by this Agreement (the “ Closing ”) shall take place at the offices of Skadden, Arps, Slate, Meagher & Flom LLP, 4 Times Square, New York City, New York 10036, at 10:00 a.m. local time as soon as possible (and in any event within two (2) Business Days) after the conditions set forth in Article VI shall have been satisfied or waived (except for such conditions that, by their nature, are to be satisfied at the Closing, but subject to the satisfaction or waiver thereof at the Closing), unless another time, date and place shall be fixed by written agreement among the parties hereto (the date of the Closing being herein referred to as the “ Closing Date ”). For financial, accounting and economic purposes, including risk of loss, and for all other purposes under this Agreement, upon the occurrence of the Closing, the Closing shall be deemed to have occurred at 12:01 a.m. New York City time on the Closing Date.

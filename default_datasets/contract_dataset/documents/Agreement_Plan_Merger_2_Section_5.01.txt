@@ -1,0 +1,9 @@
+number: 157
+title: Agreement Plan Merger 2 Section 5.01
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 5.01          Conduct of Business Prior to the Closing. From the date hereof until the Closing, except as otherwise provided in this Agreement or consented to in writing by Parent, the Company shall (x) conduct the business of the Company in the ordinary course of business consistent with past practice; and (y) maintain and preserve intact the current organization, business and franchise of the Company and preserve the rights, franchises, goodwill and relationships of its employees, customers, lenders, suppliers, regulators and others having business relationships with the Company. Without limiting the foregoing, from the date hereof until the Closing Date, the Company shall:(a)          preserve and maintain all of its Permits;(b)          pay its debts, Taxes and other obligations when due;(c)          maintain the properties and assets owned, operated or used by it in the same condition as they were on the date of this Agreement, subject to reasonable wear and tear;(d)          continue in full force and effect without modification all Insurance Policies, except as required by applicable Law;(e)          defend and protect its properties and assets from infringement or usurpation;(f)          perform all obligations, in all material respects, under all Material Contracts relating to or affecting its properties, assets or business;(g)          maintain its books and records in accordance with past practice;(h)          comply in all material respects with all applicable Laws;(i)          not form any Subsidiaries; and(j)          not take or permit any action that would cause any of the changes, events or conditions described in Section 3.08 , except as listed on Section 3.08 of the Disclosure Schedules, to occur.

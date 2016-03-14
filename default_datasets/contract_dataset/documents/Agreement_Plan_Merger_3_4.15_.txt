@@ -1,0 +1,9 @@
+number: 49
+title: Agreement Plan Merger 3 4.15 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+4.15   Investment Company .  Neither Acquiror, nor Merger Sub One nor Merger Sub Two is as of the Agreement Date, nor at the Effective Time will be, an “investment company,” a company controlled by an “investment company,” or an “affiliated person” of, or “promoter” or “principal underwriter” for, an “investment company,” as such terms are defined in the Investment Company Act of 1940, as amended.

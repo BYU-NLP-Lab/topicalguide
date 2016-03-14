@@ -1,0 +1,9 @@
+number: 151
+title: Agreement Plan Merger 2 Section 4.08
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 4.08          S-4 Registration Statement; Proxy Statement/Prospectus . The information, taken as a whole, with respect to Parent or its Subsidiaries to be included in the Proxy Statement/Prospectus or the S-4 Registration Statement will not, in the case of the Proxy Statement/Prospectus or any amendments thereof or supplements thereto, at the time of the mailing of the Proxy Statement/Prospectus or any amendments or supplements thereto, and at the time of the Parent Special Meeting, or, in the case of the S-4 Registration Statement, at the time it becomes effective or at the effective time of any post-effective amendment, contain any untrue statement of a material fact or omit to state any material fact required to be stated therein or necessary in order to make the statements therein, in light of the circumstances under which they were made, not misleading, except that no representation is made by Parent or Merger Sub with respect to information supplied in writing by the Company or any Affiliate of the Company specifically for inclusion in the Proxy Statement/Prospectus or the S-4 Registration Statement. Each of the Proxy Statement/Prospectus and S-4 Registration Statement (as it relates to Parent) will comply as to form and content in all material respects with the provisions of the Exchange Act and the Securities Act, as applicable.

@@ -1,0 +1,9 @@
+number: 54
+title: Agreement Plan Merger 3 4.20 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+4.20   Disclosure .  No representation or warranty made by Acquiror, Merger Sub One or Merger Sub Two in this Agreement and no statement contained in any certificate furnished to Target pursuant to the provisions hereof contains any untrue statement of material fact or omits to state any material fact necessary in order to make the statements made herein or therein not misleading.CLOSING CONDITIONS

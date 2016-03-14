@@ -1,0 +1,9 @@
+number: 114
+title: Agreement Plan Merger 2 Section 2.20
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 2.20     Director Appointment to the Parent Board . As soon as practical following the Effective Time, Mark Wagner shall be appointed to Parent’s board of directors to serve until his successors has been duly elected or appointed and qualified or until his earlier death, resignation or removal in accordance with the certificate of incorporation and by-laws of Parent.

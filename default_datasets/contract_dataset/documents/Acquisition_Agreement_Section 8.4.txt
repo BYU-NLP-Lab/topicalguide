@@ -1,0 +1,9 @@
+number: 66
+title: Acquisition Agreement Section 8.4
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.4 Public Announcements . Unless otherwise required by applicable Law or by obligations of the Sellers or the Purchaser or their respective Affiliates pursuant to any listing agreement with or rules of any securities exchange or in order to enforce a party’s rights or remedies under this Agreement, the Sellers and the Purchaser shall consult with each other before issuing any other press release or otherwise making any public statement with respect to this Agreement, the transactions contemplated hereby or the activities and operations of the other and shall not issue any such release or make any such statement without the prior written consent of the other (such consent not to be unreasonably withheld, conditioned or delayed).

@@ -1,0 +1,9 @@
+number: 14
+title: Acquisition Agreement Section 3.4
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.4 Consents and Approvals . No consent, approval or authorization of, or declaration, filing or registration with, any Governmental Entity is required to be made or obtained by any Seller or any Non-Debtor Sub in connection with the execution, delivery and performance of this Agreement and the Ancillary Documents to which a Seller is a party and the consummation of the transactions contemplated hereby and thereby, except (a) for consents, approvals or authorizations of, or declarations, filings or registrations with, the Bankruptcy Court, (b) pursuant to the Hart-Scott-Rodino Antitrust Improvements Act of 1976, as amended (the “ HSR Act ”), (c) for filings, notices and reports by the Parent under applicable securities Laws or securities exchange rules, or (d) for consents, approvals, authorizations, declarations, filings or registrations, which, if not made or obtained, would not, individually or in the aggregate, have a Material Adverse Effect.

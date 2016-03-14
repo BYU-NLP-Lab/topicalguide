@@ -1,0 +1,9 @@
+number: 116
+title: Agreement Plan Merger 2 Section 3.01
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.01        Organization and Qualification of the Company. The Company is a corporation duly organized, validly existing and in good standing under the Laws of the state of Delaware and has full corporate power and authority to own, operate or lease the properties and assets now owned, operated or leased by it and to carry on its business as it has been and is currently conducted. Section 3.01 of the Disclosure Schedules sets forth each jurisdiction in which the Company is licensed or qualified to do business, and the Company is duly licensed or qualified to do business and is in good standing in each jurisdiction in which the properties owned or leased by it or the operation of its business as currently conducted makes such licensing or qualification necessary except where such failure would not result in a Material Adverse Event.

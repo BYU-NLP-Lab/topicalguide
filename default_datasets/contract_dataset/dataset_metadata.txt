@@ -1,0 +1,4 @@
+readable_name: Legal Acquisition Contracts 
+description: This dataset consists of legal acquisition contracts. 
+creator: Grant 
+source: NLP Dataset 

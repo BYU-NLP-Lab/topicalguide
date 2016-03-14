@@ -1,0 +1,9 @@
+number: 95
+title: Agreement Plan Merger 2 Section 2.01
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 2.01     The Merger. On the terms and subject to the conditions set forth in this Agreement, and in accordance with the DGCL, at the Effective Time, (a) the Company will merge with and into Merger Sub, and (b) the separate corporate existence of the Company will cease and Merger Sub will continue its corporate existence under the DGCL as the surviving corporation in the Merger (sometimes referred to herein as the “ Surviving Corporation ”).

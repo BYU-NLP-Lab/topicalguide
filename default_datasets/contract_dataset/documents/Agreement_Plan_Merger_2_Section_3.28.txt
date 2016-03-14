@@ -1,0 +1,10 @@
+number: 143
+title: Agreement Plan Merger 2 Section 3.28
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.28          Full Disclosure . No representation or warranty by the Company in this Agreement, no information supplied or to be supplied by the Company specifically for inclusion or incorporation by reference in the S-4 Registration Statement, at the time it becomes effective or at the effective time of any post-effective amendment, or Proxy Statement/Prospectus, at the time of mailing, and no statement contained in the Disclosure Schedules to this Agreement or any certificate or other document furnished or to be furnished to Parent or any of its Representatives pursuant to this Agreement contains any untrue statement of a material fact, or omits to state a material fact required to be stated therein or necessary in order to make the statements contained therein, in light of the circumstances in which they are made, not misleading. Each of the S-4 Registration Statement and Proxy Statement/Prospectus (as it relates to the Company) will comply as to form and content in all material respects with the provisions of the Exchange Act and the Securities Act, as applicable.
+Representations and warranties of parent and merger subExcept as set forth in the correspondingly numbered Section of the Disclosure Schedules, Parent and Merger Sub represent and warrant to the Company that the statements contained in this Article IV are true and correct as of the date hereof.

@@ -1,0 +1,9 @@
+number: 201
+title: Agreement Plan Merger 2 Section 10.02
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 10.02          Expenses. Except as otherwise expressly provided herein, all costs and expenses, including, without limitation, fees and disbursements of counsel, financial advisors and accountants, incurred in connection with this Agreement and the transactions contemplated hereby shall be paid by the party incurring such costs and expenses, whether or not the Closing shall have occurred; provided , however , Parent and the Company shall be equally responsible for (i) all filing and other similar fees payable in connection with any filings or submissions under the HSR Act and (ii) the costs and expenses incurred in connection with the filing, printing and mailing of the S-4 Registration Statement and the Proxy Statement/Prospectus, if required, (including any SEC filing fees).

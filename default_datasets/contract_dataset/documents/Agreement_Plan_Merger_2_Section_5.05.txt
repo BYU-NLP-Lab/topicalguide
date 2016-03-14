@@ -1,0 +1,9 @@
+number: 161
+title: Agreement Plan Merger 2 Section 5.05
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 5.05          Notice of Certain Events.(a)           From the date hereof until the Closing, the Company and Parent agree to notify each other promptly in writing of:(i)          any fact, circumstance, event or action the existence, occurrence or taking of which (A) has had, or could reasonably be expected to have, individually or in the aggregate, a Material Adverse Effect, or (B) has resulted in, or could reasonably be expected to result in, the failure of any of the conditions set forth in Section 7.02 (in the case of the Company) or Section 7.03 (in the case of Parent) to be satisfied;(ii)         any written notice from any Person alleging that the consent of such Person is or may be required in connection with the transactions contemplated by this Agreement; and(iii)        any written notice from any Governmental Authority in connection with the transactions contemplated by this Agreement.(b)          Parent’s or the Company’s receipt of information pursuant to this Section 5.05 shall not operate as a waiver or otherwise affect any representation, warranty or agreement given or made by the Company or Parent, as applicable, in this Agreement and shall not be deemed to amend or supplement the Disclosure Schedules.

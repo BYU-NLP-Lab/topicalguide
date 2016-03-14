@@ -1,0 +1,9 @@
+number: 76
+title: Acquisition Agreement Section 8.14
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.14 Severability; Validity; Parties in Interest . If any provision of this Agreement or the application thereof to any Person or circumstance is held invalid or unenforceable, the remainder of this Agreement, and the application of such provision to other Persons or circumstances, shall not be affected thereby, and to such end, the provisions of this Agreement are agreed to be severable. Nothing in this Agreement, express or implied, is intended to confer upon any Person not a party to this Agreement any rights or remedies of any nature whatsoever under or by reason of this Agreement.

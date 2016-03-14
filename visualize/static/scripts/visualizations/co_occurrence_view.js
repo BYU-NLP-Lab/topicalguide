@@ -3,7 +3,7 @@
 var CoOccurrenceView = DefaultView.extend({
 
   topicData: {},
-  cutoff: 100,
+  cutoff: 0,
 
   readableName: "Co-Occurrence",
   shortName: "co-occur",
@@ -64,12 +64,12 @@ var CoOccurrenceView = DefaultView.extend({
     var el = d3.select(self.el).select("#plot-view");
     el.select("svg").remove();
 
-    var margin = {top: 145, right: 10, bottom: 145, left: 145},
+    var margin = {top: 230, right: 10, bottom: 230, left: 230},
       width = 800,
       height = 800;
 
     var x = d3.scale.ordinal().rangeBands([0, width]),
-      z = d3.scale.linear().domain([0, 4]).clamp(true),
+      z = d3.scale.linear().domain([0, 9]).clamp(true),
       c = d3.scale.category10().domain(d3.range(10));
 
     var svg = el.append("svg")
@@ -317,10 +317,9 @@ var CoOccurrenceView = DefaultView.extend({
         for (var a = 0; a < _.size(analysis.topics); a++) {
           for (var b = a+1; b < _.size(analysis.topics); b++) {
             for (var key in documents) {
-              if (documents[key] !== undefined && documents[key].topics[a] >= self.cutoff 
-                  && documents[key].topics[b] >= self.cutoff) {
+              if (documents[key] !== undefined && documents[key].topics[a] >= self.cutoff && documents[key].topics[b] >= self.cutoff) {
                 if (recentLink !== {} && recentLink.source == b && recentLink.target == a) {
-                  newdata.links[newdata.links.length - 1].value += 1;
+                  newdata.links[newdata.links.length - 1].value = Math.min(documents[key].topics[a], documents[key].topics[b]);
                 }
                 else {
                   recentLink = {};
@@ -336,10 +335,11 @@ var CoOccurrenceView = DefaultView.extend({
         //Normalize by min value
         //var min = newdata.links[0].value;
         //for (var l = 1; l < newdata.links.length; l++) {
-        //  if (newdata.links[l].value < min) {
-        //    min = newdata.links[l].value;
-        //  }
+          //if (newdata.links[l].value < min) {
+            //min = newdata.links[l].value;
+          //}
         //}
+	//console.log("MIN: " + min);
         //for (var m = 0; m < newdata.links.length; m++) {
         //  newdata.links[m].value = newdata.links[m].value / min;
         //}

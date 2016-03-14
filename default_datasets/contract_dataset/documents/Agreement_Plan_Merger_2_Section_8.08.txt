@@ -1,0 +1,9 @@
+number: 196
+title: Agreement Plan Merger 2 Section 8.08
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.08          Effect of Investigation. The representations, warranties and covenants of the Indemnifying Party, and the Indemnified Party's right to indemnification with respect thereto, shall not be affected or deemed waived by reason of any investigation made by or on behalf of the Indemnified Party (including by any of its Representatives) or by reason of the fact that the Indemnified Party or any of its Representatives knew or should have known that any such representation or warranty is, was or might be inaccurate or by reason of the Indemnified Party's waiver of any condition set forth in Section 7.02 or Section 7.03 , as the case may be. 

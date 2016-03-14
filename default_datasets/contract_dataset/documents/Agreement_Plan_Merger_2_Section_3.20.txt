@@ -1,0 +1,9 @@
+number: 135
+title: Agreement Plan Merger 2 Section 3.20
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.20          Books and Records. The minute books and stock record books of the Company, all of which have been made available to Parent, are complete and correct and have been maintained in accordance with sound business practices. The minute books of the Company contain accurate and complete records of all meetings, and actions taken by written consent of, the Stockholders, the Company Board and any committees of the Company Board, and no meeting, or action taken by written consent, of any such Stockholders, Company Board or committee has been held for which minutes have not been prepared and are not contained in such minute books. At the Closing, all of those books and records will be in the possession of the Company.

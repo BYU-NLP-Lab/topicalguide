@@ -1,0 +1,9 @@
+number: 77
+title: Agreement Plan Merger 3 8.7 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+8.7   Tax Effect of Indemnification Withholdings . All amounts retained by Acquiror from the Escrow Fund pursuant to this Agreement shall be treated for all Tax purposes as adjustments to the aggregate Merger Consideration. 

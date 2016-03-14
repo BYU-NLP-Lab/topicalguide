@@ -1,0 +1,9 @@
+number: 73
+title: Agreement Plan Merger 3 8.3 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+8.3   Claims Upon Escrow Fund .(a)   Any claims by Acquiror for indemnification from the Escrow Fund must be submitted to the Stockholder Representative and the Escrow Agent not later than 5:00 p.m. (Eastern time) on the Release Date.  Any such claim shall be in the form of a written certificate executed by an authorized officer of Acquiror (an “ Officer’s   Certificate ”), state that Damages exist with respect to the indemnification obligations of the Target set forth in Section 8.2(b), and specify in reasonable detail the individual items of such Damages included in the amount so stated, the date each such item was paid, or properly accrued or arose, and the nature of the misrepresentation, breach of warranty, covenant or claim to which such item is related.(b)   For purposes of indemnification by Target hereunder, the value of any shares of Acquiror Common Stock constituting the Escrow Fund shall be the average of the closing prices of Acquiror Common Stock during the seven (7) consecutive trading days immediately prior to the date on which the indemnification claim is paid.

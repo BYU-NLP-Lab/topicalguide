@@ -1,0 +1,9 @@
+number: 18
+title: Acquisition Agreement Section 3.8
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.8 Absence of Certain Changes . Except to the extent arising out of or relating to the Chapter 11 Cases, this Agreement or the transactions contemplated hereby, from September 30, 2014: (a) to the Effective Date, no Seller or Non-Debtor Sub has taken any action that, if taken after the Effective Date, would violate Section 5.1 in any material respect; and (b) no Material Adverse Effect has occurred.

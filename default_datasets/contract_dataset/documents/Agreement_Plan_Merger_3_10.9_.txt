@@ -1,0 +1,9 @@
+number: 95
+title: Agreement Plan Merger 3 10.9 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+10.9   Counterparts; Facsimiles . This Agreement may be executed and delivered (including by facsimile transmission) in two or more counterparts, and by the different parties hereto in separate counterparts, each of which when executed and delivered shall be deemed to be an original but all of which taken together shall constitute one and the same agreement.

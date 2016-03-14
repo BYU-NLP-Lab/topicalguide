@@ -1,0 +1,9 @@
+number: 73
+title: Acquisition Agreement Section 8.11
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.11 Amendment . This Agreement may not be amended except by an instrument in writing signed on behalf of all the parties hereto.

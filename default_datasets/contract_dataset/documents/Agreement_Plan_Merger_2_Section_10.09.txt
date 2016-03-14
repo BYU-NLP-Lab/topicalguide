@@ -1,0 +1,9 @@
+number: 208
+title: Agreement Plan Merger 2 Section 10.09
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 10.09          No Third-party Beneficiaries. Except as provided in Section 5.09 , Section 6.03 and Article VIII , this Agreement is for the sole benefit of the parties hereto and their respective successors and permitted assigns and nothing herein, express or implied, is intended to or shall confer upon any other Person or entity any legal or equitable right, benefit or remedy of any nature whatsoever under or by reason of this Agreement.

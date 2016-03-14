@@ -1,0 +1,9 @@
+number: 94
+title: Agreement Plan Merger 3 10.8 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+10.8   Headings; Interpretation . The descriptive headings contained in this Agreement are included for convenience of reference only and shall not affect in any way the meaning or interpretation of this Agreement. The Parties have participated jointly in the negotiation and drafting of this Agreement. In the event an ambiguity or question of intent or interpretation arises, this Agreement shall be construed as if drafted jointly by the Parties, and no presumption or burden of proof shall arise favoring or disfavoring any Party by virtue of the authorship of any provisions of this Agreement.

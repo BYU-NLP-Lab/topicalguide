@@ -1,0 +1,9 @@
+number: 72
+title: Acquisition Agreement Section 8.10
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.10 Expenses . Except as otherwise expressly provided herein, whether or not the transactions contemplated by this Agreement are consummated, all costs and expenses incurred in connection with this Agreement and the transactions contemplated thereby shall be paid by the party hereto incurring such expenses.

@@ -1,0 +1,9 @@
+number: 60
+title: Acquisition Agreement Section 6.3
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 6.3 Conditions Precedent to Obligation of the Purchaser . The obligation of the Purchaser to effect the transactions contemplated by this Agreement shall be subject to the satisfaction or waiver by the Purchaser at or prior to the Closing of the following conditions:(a) the Sellers shall have performed in all material respects the covenants under this Agreement required to be performed by the Sellers at or prior to the Closing; and(b) the representations and warranties of the Sellers contained in this Agreement (other than Section 3.8(b) ) shall be true and correct as of the Closing Date as if made at and as of such date (except to the extent such representations and warranties speak as of another date, in which case such representations and warranties shall be true and correct as of such other date), except where the failure of such representations and warranties to be so true and correct (disregarding any exception or qualification in such representations and warranties (other than Section 3.8(b) ) relating to “material,” “materiality” or “Material Adverse Effect”) would not,individually or in the aggregate, have a Material Adverse Effect; and the representation and warranty of the Sellers contained in Section 3.8(b) shall be true and correct as of the Closing Date as if made at and as of such date.

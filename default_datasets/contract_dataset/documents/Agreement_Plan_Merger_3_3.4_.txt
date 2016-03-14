@@ -1,0 +1,9 @@
+number: 16
+title: Agreement Plan Merger 3 3.4 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+3.4   Required Filings and Consents . The execution and delivery of this Agreement and the other Transaction Documents by Target do not, and the performance by Target of its obligations hereunder and thereunder and the consummation of the Merger will not, require any consent, approval, authorization or permit of, or filing by Target with or notification by Target to, any Governmental Authority, except for the filing of Certificate of Merger as described in Section 2.1 . 

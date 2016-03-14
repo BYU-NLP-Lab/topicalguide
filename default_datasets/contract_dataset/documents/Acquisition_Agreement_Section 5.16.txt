@@ -1,0 +1,9 @@
+number: 53
+title: Acquisition Agreement Section 5.16
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 5.16 Termination of Intercompany Agreements . At or prior to the Closing, the Sellers shall terminate, or shall cause to be terminated, with respect to the Non-Debtor Subs, all Contracts between (a) any Non-Debtor Sub on the one hand, and (b) any Seller on the other hand, relating to the provision of services, cost-sharing, loan arrangements or any other intercompany arrangement.

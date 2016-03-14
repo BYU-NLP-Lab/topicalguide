@@ -1,0 +1,9 @@
+number: 20
+title: Acquisition Agreement Section 3.10
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.10 Litigation . Except as would not, individually or in the aggregate, have a Material Adverse Effect and except for the Chapter 11 Cases:(a) there are no Actions currently pending or, to the Knowledge of the Sellers, currently threatened, against the Sellers, any Non-Debtor Sub or any of their respective properties or assets; and(b) no Seller or Non-Debtor Sub has received written notice of, and to the Knowledge of the Sellers, there are no, Orders of a court of competent jurisdiction outstanding against any Seller or any Non-Debtor Sub or any of their respective properties or assets that restrict the operation of the Business.

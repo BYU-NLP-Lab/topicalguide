@@ -1,0 +1,9 @@
+number: 179
+title: Agreement Plan Merger 2 Section 6.09
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 6.09          Cooperation and Exchange of Information. The Stockholder Representative, the Company and Parent shall provide each other with such cooperation and information as either of them reasonably may request of the others in filing any Tax Return pursuant to this Article VI or in connection with any audit or other proceeding in respect of Taxes of the Company. Such cooperation and information shall include providing copies of relevant Tax Returns or portions thereof, together with accompanying schedules, related work papers and documents relating to rulings or other determinations by tax authorities. Each of the Stockholder Representative, the Company and Parent shall retain all Tax Returns, schedules and work papers, records and other documents in its possession relating to Tax matters of the Company for any taxable period beginning before the Closing Date until the expiration of the statute of limitations of the taxable periods to which such Tax Returns and other documents relate, without regard to extensions except to the extent notified by any of the other parties in writing of such extensions for the respective Tax periods. Prior to transferring, destroying or discarding any Tax Returns, schedules and work papers, records and other documents in its possession relating to Tax matters of the Company for any taxable period beginning before the Closing Date, the Stockholder Representative, the Company or Parent (as the case may be) shall provide the other parties with reasonable written notice and offer the other parties the opportunity to take custody of such materials.

@@ -1,0 +1,9 @@
+number: 146
+title: Agreement Plan Merger 2 Section 4.03
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 4.03          Capitalization; Subsidiaries . As of the date of this Agreement, the authorized capital stock of Parent consists of 45,714,286 Parent Shares and 1,000,000 shares of preferred stock, $0.001 par value (“ Parent Preferred Stock ”). As of the date hereof, (a) 16,216,466 Parent Shares were issued and outstanding, (b) options to purchase 4,833,883 Parent Shares were outstanding, (c) no Parent restricted stock units were outstanding, (d) 188,149 Parent restricted shares were outstanding, (e) warrants to purchase 2,675,120 Parent Shares were outstanding and (f) no shares of Parent Preferred Stock were issued and outstanding. All Parent Shares have been duly authorized and are validly issued, fully paid and non-assessable and not subject to any pre-emptive (or similar) rights or registration rights. Each outstanding share of capital stock of each Subsidiary of Parent that is a corporation is duly authorized, validly issued, fully paid and non-assessable and not subject to any pre-emptive (or similar) rights or registration rights. Section 4.03 of the Disclosure Schedules sets forth a correct and complete list of all of Parent’s Subsidiaries, together with the jurisdiction of organization of each Subsidiary and the percentage of each Subsidiary’s outstanding Equity Interests owned by Parent or another Subsidiary. All of the issued and outstanding Equity Interests of Merger Sub are, and at the Effective Time will be, owned by Parent.

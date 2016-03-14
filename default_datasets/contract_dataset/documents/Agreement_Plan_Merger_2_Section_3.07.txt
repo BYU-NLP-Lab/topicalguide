@@ -1,0 +1,9 @@
+number: 122
+title: Agreement Plan Merger 2 Section 3.07
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.07        Undisclosed Liabilities.(a)      The Company has no liabilities, obligations or commitments of any nature whatsoever, asserted or unasserted, known or unknown, absolute or contingent, accrued or unaccrued, matured or unmatured or otherwise (“ Liabilities ”), except (a) those which are adequately reflected or reserved against in the Balance Sheet as of the Balance Sheet Date, and (b) those which have been incurred in the ordinary course of business consistent with past practice since the Balance Sheet Date and which would not, individually or in the aggregate, exceed $100,000.(b)      The Company is not a party to, nor does it have any commitment to become a party to, any joint venture, off-balance sheet partnership or any similar Contract (including any Contract relating to any transaction or relationship between the Company, on the one hand, and any unconsolidated Affiliate, including any structured finance, special purpose or limited purpose entity or person, on the other hand) or any “off-balance sheet arrangements” (as defined in Item 303(a) of Regulation S-K of the SEC), where the result, purpose or effect of such Contract is to avoid disclosure of any material transaction involving, or material liabilities of, the Company in the Company’s Financial Statements.

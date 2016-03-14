@@ -1,0 +1,9 @@
+number: 141
+title: Agreement Plan Merger 2 Section 3.26
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.26          Certain Payments . To the Knowledge of the Company, neither the Company nor any of its directors, officers, agents or employees (in their capacities as such) has: (a) made any unlawful payment to foreign or domestic government officials or employees or to foreign or domestic political parties or campaigns in violation of the Foreign Corrupt Practices Act of 1977, as amended; (b) made any other unlawful payment, gift or contribution, in each case for the purpose of: (x) obtaining favorable treatment in securing business; (y) paying for favorable treatment for business secured; or (z) obtaining special concessions or for special concessions already obtained; or (c) engaged in any business or effected any transactions with any Person (i) located in a Restricted Nation; (ii) that is owned, controlled by or acting on behalf of an individual, business or organization in a Restricted Nation; (iii) that is a government of a Restricted Nation; (iv) that is owned, controlled by or acting on behalf of a government of a Restricted Nation; or (v) that is a Specially Designated National.

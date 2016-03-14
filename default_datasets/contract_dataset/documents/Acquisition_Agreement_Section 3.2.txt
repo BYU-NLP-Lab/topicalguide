@@ -1,0 +1,9 @@
+number: 12
+title: Acquisition Agreement Section 3.2
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.2 Capitalization of Non-Debtor Subs . The authorized, issued and outstanding equity interests of each Non-Debtor Sub are set forth on Section 3.2 of the Seller Disclosure Schedule. All such equity interests are owned beneficially and of record by either the Parent or the Transferred Sub, as set forth on Section 3.2 of the Seller Disclosure Schedule. There are no existing (a) options, warrants, calls, subscriptions or other rights, agreements or commitments of any character obligating any Seller or any Non-Debtor Sub to issue, transfer or sell any equity interests in any Non-Debtor Sub or securities convertible into, exchangeable or exercisable for any of the foregoing, (b) contractual obligations of any Seller or any Non-Debtor Sub to repurchase, redeem or otherwise acquire any equity interests in any Non-Debtor Sub or (c) voting trusts or similar agreements to which any Seller or any Non-Debtor Sub is a party with respect to the voting of equity interests in any Non-Debtor Sub.

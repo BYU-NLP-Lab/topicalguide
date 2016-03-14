@@ -1,0 +1,9 @@
+number: 88
+title: Agreement Plan Merger 3 10.2 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+10.2   Severability; Parties in Interest . If any provision of this Agreement for any reason shall be held to be illegal, invalid or unenforceable, such illegality shall not affect any other provision of this Agreement, but this Agreement shall be construed as if such illegal, invalid or unenforceable provision had never been included herein. Nothing in this Agreement, express or implied, is intended to confer upon any Person not a Party to this Agreement any rights or remedies of any nature whatsoever under or by reason of this Agreement.

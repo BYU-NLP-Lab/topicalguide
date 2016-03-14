@@ -1,0 +1,9 @@
+number: 96
+title: Agreement Plan Merger 2 Section 2.02
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 2.02     Closing. Subject to the terms and conditions of this Agreement, the closing of the Merger (the “ Closing ”) shall take place at 9 a.m. (Eastern Time), no later than two Business Days after the last of the conditions to Closing set forth in Article VII have been satisfied or waived (other than conditions which, by their nature, are to be satisfied on the Closing Date), at the offices of Haynes and Boone, LLP, 30 Rockefeller Plaza, 26th Floor, New York, New York 10112, or at such other time or on such other date or at such other place as the Company and Parent may mutually agree upon in writing (the day on which the Closing takes place being the “ Closing Date ”).

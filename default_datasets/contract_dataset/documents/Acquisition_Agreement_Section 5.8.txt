@@ -1,0 +1,9 @@
+number: 45
+title: Acquisition Agreement Section 5.8
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 5.8 Bankruptcy Filings . From and after the Effective Date, the Sellers shall use reasonable efforts to provide such prior notice as may be reasonable under the circumstances before filing any papers in the Chapter 11 Cases that relate, in whole or in part, to this Agreement or to the Purchaser. The Sellers’ inadvertent failure to comply with this Section 5.8 shall not constitute a breach under this Agreement.

@@ -1,0 +1,9 @@
+number: 98
+title: Agreement Plan Merger 2 Section 2.04
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 2.04     Effective Time Subject to the provisions of this Agreement, at the Closing, the Company, Parent and Merger Sub shall cause a certificate of merger (the “ Certificate of Merger ”) to be executed, acknowledged and filed with the Secretary of State of the State of Delaware in accordance with the relevant provisions of the DGCL and shall make all other filings or recordings required under the DGCL. The Merger shall become effective at such time as the Certificate of Merger has been duly filed with the Secretary of State of the State of Delaware or at such later date or time as may be agreed by the Company and Parent in writing and specified in the Certificate of Merger in accordance with the DGCL (the effective time of the Merger being hereinafter referred to as the “ Effective Time ”).

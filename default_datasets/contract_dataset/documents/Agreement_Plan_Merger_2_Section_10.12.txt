@@ -1,0 +1,9 @@
+number: 211
+title: Agreement Plan Merger 2 Section 10.12
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 10.12          Specific Performance. The parties agree that irreparable damage would occur if any provision of this Agreement were not performed in accordance with the terms hereof and that the parties shall be entitled to specific performance of the terms hereof, in addition to any other remedy to which they are entitled at law or in equity; provided , however , that the Company shall only be entitled to seek specific performance of the terms of this Agreement from Parent and Merger Sub if (i) all of the conditions set forth in Section 7.01 and Section 7.02 have been fulfilled and (ii) the Financing has been funded or will be funded at the Closing. Under no circumstance shall the Company be permitted or entitled to receive both a grant of specific performance to cause the Merger to be consummated that results in the Closing pursuant to the foregoing sentence and payment of the Reverse Termination Fee from Parent.

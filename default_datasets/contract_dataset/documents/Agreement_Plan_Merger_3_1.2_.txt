@@ -1,0 +1,9 @@
+number: 2
+title: Agreement Plan Merger 3 1.2 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+1.2   Interpretation . Unless the context otherwise requires, the terms defined in Section 1.1 shall have the meanings herein specified for all purposes of this Agreement, applicable to both the singular and plural forms of any of the terms defined herein. All accounting terms defined in Section 1.1, and those accounting terms used in this Agreement not defined in Section 1.1, except as otherwise expressly provided herein, shall have the meanings customarily given thereto in accordance with GAAP. When a reference is made in this Agreement to Sections or Articles, such reference shall be to a Section or Article of this Agreement unless otherwise indicated. Whenever the words “include,” “includes” or “including” are used in this Agreement, they shall be deemed to be followed by the words “without limitation.”

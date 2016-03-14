@@ -1,0 +1,9 @@
+number: 33
+title: Acquisition Agreement Section 4.3
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 4.3 Consents and Approvals . No consent, approval or authorization of, or declaration, filing or registration with, any Governmental Entity is required to be made or obtained by the Purchaser or its Affiliates in connection with the execution, delivery and performance of this Agreement and the Ancillary Documents and the consummation of the transactions contemplated hereby and thereby, except (a) for consents, approvals, authorizations, declarations, filings or registrations which, if not made or obtained, would not, individually or in the aggregate, materially impair or materially delay the Purchaser’s ability to perform its obligations under this Agreement or (b) pursuant to the HSR Act.

@@ -1,0 +1,9 @@
+number: 75
+title: Agreement Plan Merger 3 8.5 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+8.5   Third-Party Claims . In the event Acquiror becomes aware of a third-party claim which Acquiror believes may result in a demand against the Escrow Fund, Acquiror shall promptly notify the Stockholder Representative of such claim, and the Stockholder Representative shall be entitled, at its expense, to control the defense of such claim. The Stockholder Representative shall have the right in its reasonable discretion to settle any such claim.  In the event that the Stockholder Representative has consented to any such settlement, the Stockholder Representative shall have no power or authority to object under Section 8.4 or any other provision of this Article VIII  to the amount of any claim by Acquiror against the Escrow Fund for indemnity with respect to such settlement.

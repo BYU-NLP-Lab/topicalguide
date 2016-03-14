@@ -1,0 +1,9 @@
+number: 181
+title: Agreement Plan Merger 2 Section 6.11
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 6.11          Tax Treatment of Indemnification Payments. Any indemnification payments pursuant to this Article VI shall be treated as an adjustment to the Purchase Price by the parties for Tax purposes, unless otherwise required by Law.

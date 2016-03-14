@@ -1,0 +1,9 @@
+number: 70
+title: Acquisition Agreement Section 8.8
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.8 Entire Agreement; Assignment . This Agreement, the Ancillary Documents and the Confidentiality Agreement constitute the entire agreement and supersede all other prior agreements and understandings, both written and oral, among the parties hereto or any of them, with respect to the subject matter hereof and thereof. Neither this Agreement nor any of the rights, interests or obligations under it may be directly or indirectly assigned, delegated, sublicensed or transferred by any of the parties hereto, in whole or in part, to any other Person by operation of law or otherwise, without the prior written consent of the other parties, and any attempted or purported assignment in violation of this Section 8.8 will be null and void; provided, that, the Purchaser may assign or delegate any or all of its rights and obligations under this Agreement to one or more of its Affiliates; provided , however , that in the event of suchassignment the Purchaser shall continue to be jointly and severally liable with the Affiliate assignee for its duties and obligations under this Agreement. Subject to the preceding sentence, this Agreement will be binding upon, inure to the benefit of, and be enforceable by the parties hereto and their respective successors and permitted assigns.

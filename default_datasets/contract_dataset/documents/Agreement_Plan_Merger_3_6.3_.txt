@@ -1,0 +1,9 @@
+number: 60
+title: Agreement Plan Merger 3 6.3 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+6.3   Public Disclosure . Unless otherwise permitted by this Agreement, Acquiror and Target shall consult with each other before issuing any press release or otherwise making any public statement or making any other public (or non-confidential) disclosure (whether or not in response to an inquiry) regarding the terms of this Agreement and the transactions contemplated hereby, and neither shall issue any such press release or make any such statement or disclosure without the prior approval of the other (which approval shall not be unreasonably withheld), except as may be required by Laws or by obligations pursuant to any listing agreement with any national securities exchange.

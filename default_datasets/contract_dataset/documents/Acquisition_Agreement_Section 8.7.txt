@@ -1,0 +1,9 @@
+number: 69
+title: Acquisition Agreement Section 8.7
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.7 No Strict Construction . The Sellers and the Purchaser participated jointly in the negotiation and drafting of this Agreement, and, in the event an ambiguity or question of intent or interpretation arises, this Agreement shall be construed as jointly drafted by the Sellers and the Purchaser, and no presumption or burden of proof shall arise favoring or disfavoring any party hereto by virtue of the authorship of any provision of this Agreement. Without limitation as to the foregoing, no rule of strict construction construing ambiguities against the draftsperson shall be applied against any person with respect to this Agreement.

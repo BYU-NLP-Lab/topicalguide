@@ -1,0 +1,9 @@
+number: 170
+title: Agreement Plan Merger 2 Section 5.14
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 5.14          Further Assurances. At and after the Effective Time, the officers and directors of the Surviving Corporation shall be authorized to execute and deliver, in the name and behalf of the Company or Merger Sub, any deeds, bills of sale, assignments or assurances and to take and do, in the name and on behalf of the Company or Merger Sub, any other actions and things to vest, perfect or confirm of record or otherwise in the Surviving Corporation any and all right, title and interest in, to and under any of the rights, properties or assets of the Company acquired or to be acquired by the Surviving Corporation as a result of, or in connection with, the Merger.

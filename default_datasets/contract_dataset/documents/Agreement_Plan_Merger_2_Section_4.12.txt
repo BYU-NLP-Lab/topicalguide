@@ -1,0 +1,9 @@
+number: 155
+title: Agreement Plan Merger 2 Section 4.12
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 4.12          Contracts. None of the contracts attached as exhibits to any of the Parent Securities Documents since January 1, 2014 that are still in effect (collectively, “ Filed Contracts ”) contains a provision requiring the consent of any party with respect to the consummation of the transaction contemplated herein. No notice of default arising under any Filed Contract has been delivered to, to Parent’s knowledge, or by Parent. Each Filed Contract is legally valid and binding on Parent and, to the knowledge of Parent, are legally valid and binding obligations of the other party thereto, in accordance with its terms and is in full force and effect, and neither Parent nor, to Parent’s knowledge, the other party thereto is in breach or default thereunder except for such breach or default as would not have a material adverse effect on Parent.

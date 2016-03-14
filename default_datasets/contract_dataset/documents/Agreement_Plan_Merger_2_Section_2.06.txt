@@ -1,0 +1,9 @@
+number: 100
+title: Agreement Plan Merger 2 Section 2.06
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 2.06     Certificate of Incorporation; By-laws. At the Effective Time, (a) the certificate of incorporation of Merger Sub as in effect immediately prior to the Effective Time shall be the certificate of incorporation of the Surviving Corporation until thereafter amended in accordance with the terms thereof or as provided by applicable Law, and (b) the by-laws of Merger Sub as in effect immediately prior to the Effective Time shall be the by-laws of the Surviving Corporation until thereafter amended in accordance with the terms thereof, the certificate of incorporation of the Surviving Corporation or as provided by applicable Law; provided , however, in each case, that the name of the corporation set forth therein shall be changed to the name of the Company.

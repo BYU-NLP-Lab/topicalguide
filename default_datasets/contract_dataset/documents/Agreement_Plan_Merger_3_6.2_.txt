@@ -1,0 +1,9 @@
+number: 59
+title: Agreement Plan Merger 3 6.2 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+6.2   Confidentiality . The parties acknowledge that Acquiror (or one of its Affiliates) and Target have previously executed a nondisclosure agreement dated as of August 15, 2014, as amended (the “ Confidentiality Agreement ”), which Confidentiality Agreement is hereby incorporated herein by reference and shall continue in full force and effect in accordance with its terms, as if such Confidentiality Agreement were entered into directly by each of the parties hereto.

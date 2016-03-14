@@ -1,0 +1,9 @@
+number: 178
+title: Agreement Plan Merger 2 Section 6.08
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 6.08          Tax Refunds . Except to the extent included as an asset in the calculation of Closing Working Capital, the amount or economic benefit of any refunds, credits or offsets of Taxes of the Company for any Pre-Closing Tax Period shall be for the account of the Stockholders and the Optionholders. The amount or economic benefit of any refund, credit or offset of Taxes of the Company for any Straddle Period shall be equitably apportioned between the Stockholders and the Optionholders and Parent in accordance with the principles set forth in Section 6.05 . Parent shall promptly pay or cause to be paid to the Stockholder Representative any such refund and the dollar value of any such credit or benefit. If the Stockholder Representative determines that the Surviving Corporation is entitled to file or make a claim for a refund or credit or an amended Tax Return providing for a refund or credit with respect to a Pre-Closing Tax Period, Parent shall cause the Surviving Corporation to file or make such claim or amended Tax Return, in each case at the Stockholders’ expense; provided , however , that Parent shall not be required to make such claim or amend a Tax Return of the Company if such claim or amendment would reasonably be expected to adversely affect Parent or the Surviving Corporation. Parent shall cooperate with any reasonable request by the Stockholder Representative relating to filing or making such claim or amended Tax Return or prosecuting such claim.

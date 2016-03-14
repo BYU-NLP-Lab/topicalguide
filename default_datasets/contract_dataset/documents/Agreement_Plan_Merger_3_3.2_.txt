@@ -1,0 +1,9 @@
+number: 14
+title: Agreement Plan Merger 3 3.2 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+3.2   Authority Relative to this Agreement . Target has all requisite corporate power and authority to execute and deliver this Agreement and the other Transaction Documents to which it is a party, to perform its obligations hereunder and thereunder and to consummate the Merger. The execution, delivery and performance of this Agreement and the other Transaction Documents by Target and the consummation by Target of the Merger have been duly and validly authorized by all necessary corporate action of Target, and no other corporate action on the part of Target or any of the Target Stockholders is necessary to authorize this Agreement and the other Transaction Documents or to consummate the Merger. This Agreement and the other Transaction Documents have been duly executed and delivered by Target and, assuming the due authorization, execution and delivery by the other Parties hereto, each such agreement constitutes a legal, valid and binding obligation of Target, enforceable against Target in accordance with its terms, subject to the effect of any applicable bankruptcy, moratorium, insolvency, reorganization or other similar law affecting the enforceability of creditors’ rights generally and to the effect of general principles of equity which may limit the availability of remedies (whether in a proceeding at Law or in equity) (the “ Bankruptcy Exception ”). The Board of Directors of Target has (a) approved this Agreement and the Merger; (b) determined that in its opinion the Merger is in the best interests of the Target Stockholders and is on terms that are fair to such Target Stockholders; and (c) recommended that the Target Stockholders approve this Agreement and the Merger.

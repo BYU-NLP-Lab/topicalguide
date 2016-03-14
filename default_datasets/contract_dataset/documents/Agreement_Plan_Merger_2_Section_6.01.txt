@@ -1,0 +1,9 @@
+number: 171
+title: Agreement Plan Merger 2 Section 6.01
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 6.01          Transfer Taxes. All transfer, documentary, sales, use, stamp, registration, value added and other such Taxes and fees (including any penalties and interest) incurred in connection with this Agreement and the Ancillary Documents (including any real property transfer Tax and any other similar Tax) shall be borne and paid by Parent when due. Parent shall timely file any Tax Return or other document with respect to such Taxes or fees (and the Stockholder Representative shall cooperate with respect thereto as necessary).

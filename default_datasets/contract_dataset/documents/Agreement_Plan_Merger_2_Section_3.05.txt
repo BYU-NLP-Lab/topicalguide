@@ -1,0 +1,9 @@
+number: 120
+title: Agreement Plan Merger 2 Section 3.05
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.05        No Subsidiaries. The Company does not own, or have any interest in, any Equity Interests in any other Person.

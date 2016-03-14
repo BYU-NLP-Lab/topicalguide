@@ -1,0 +1,9 @@
+number: 191
+title: Agreement Plan Merger 2 Section 8.03
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 8.03          Indemnification By Parent. Subject to the other terms and conditions of this Article VIII , Parent shall indemnify and defend each of the Stockholders and Optionholders and their Affiliates and their respective Representatives (collectively, the “ Stockholder Indemnitees ”) against, and shall hold each of them harmless from and against, and shall pay and reimburse each of them for, any and all Losses incurred or sustained by, or imposed upon, the Stockholder Indemnitees based upon, arising out of, with respect to or by reason of:(a)          any inaccuracy in or breach of any of the representations or warranties of Parent and Merger Sub contained in this Agreement or in any certificate or instrument delivered by or on behalf of Parent or Merger Sub pursuant to this Agreement, as of the date such representation or warranty was made or as if such representation or warranty was made on and as of the Closing Date (except for representations and warranties that expressly relate to a specified date, the inaccuracy in or breach of which will be determined with reference to such specified date); or(b)          any breach or non-fulfillment of any covenant, agreement or obligation to be performed by Parent or Merger Sub pursuant to this Agreement (other than Article VI , it being understood that the sole remedy for any such breach thereof shall be pursuant to Article VI ).

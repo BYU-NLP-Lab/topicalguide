@@ -1,0 +1,9 @@
+number: 65
+title: Agreement Plan Merger 3 6.8 
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+6.8   Use of Novalere Website .  Acquiror covenants and agrees that immediately upon the Closing and for a period of three (3) months thereafter (the “ Website Usage Period ”), Acquiror shall use the web domain www.novalere.com (the “ Novalere Website ”) solely for the purpose of redirecting traffic from users entering the Novalere Website to the web domain www.innovuspharma.com .  Acquiror further covenants and agrees that it shall not use the Novalere Website for any purpose following the Website Usage Period.

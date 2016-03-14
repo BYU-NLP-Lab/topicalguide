@@ -1,0 +1,9 @@
+number: 17
+title: Acquisition Agreement Section 3.7
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.7 Title to Property; Sufficiency of Assets .(a) Upon the entry and effectiveness of the Sale Order, the Sellers will have the power and right to sell, assign, transfer, convey and deliver, as the case may be, to thePurchaser the Acquired Assets and on the Closing Date will sell, assign, transfer, convey and deliver the Acquired Assets, free and clear of all Encumbrances other than Permitted Encumbrances.(b) After giving effect to Section 1.5(a) and except as would not, individually or in the aggregate, have a Material Adverse Effect, the Acquired Assets comprise all of the properties and assets used in the Business by the Sellers and the Non-Debtor Subs as of the Effective Date other than the Excluded Assets.

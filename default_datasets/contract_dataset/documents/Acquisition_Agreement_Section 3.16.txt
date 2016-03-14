@@ -1,0 +1,9 @@
+number: 26
+title: Acquisition Agreement Section 3.16
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.16 Labor Matters .(a) No Seller or Non-Debtor Sub is a party to, or bound by, any agreement with respect to employees with any labor union or any other employee organization, group or association organized for purposes of collective bargaining. To the Knowledge of the Sellers, there are, and since January 1, 2012 there have been, no labor union organizing activities with respect to any employees of the Sellers or any Non-Debtor Sub. As of the Effective Date, there is no pending or, to the Knowledge of the Sellers, threatened labor strike, slowdown, lockout or work stoppage involving the Sellers, any Non-Debtor Sub or any of their respective employees, which would, individually or in the aggregate, have a Material Adverse Effect.(b) Each Seller and Non-Debtor Sub is and, during the ninety (90)-day period prior to the date of this Agreement, has been in compliance in all material respects with the Worker Adjustment and Retraining Notification Act of 1988, as amended, and any similar state, local or foreign Law relating to plant closings or mass layoffs.

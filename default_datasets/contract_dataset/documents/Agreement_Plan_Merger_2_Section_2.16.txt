@@ -1,0 +1,9 @@
+number: 110
+title: Agreement Plan Merger 2 Section 2.16
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 2.16      Lost Certificates. If any Certificate shall have been lost, stolen or destroyed, upon the making of an affidavit of that fact by the Person claiming such Certificate to be lost, stolen or destroyed and agreeing to indemnify Parent and the Exchange Agent against any claim that may be made against it with respect to such Certificate, the Exchange Agent shall issue, in exchange for such lost, stolen or destroyed Certificate, the Merger Consideration to be paid in respect of the Shares formerly represented by such Certificate as contemplated under this Article II .

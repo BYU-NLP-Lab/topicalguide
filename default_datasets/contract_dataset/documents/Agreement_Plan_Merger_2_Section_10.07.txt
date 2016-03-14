@@ -1,0 +1,9 @@
+number: 206
+title: Agreement Plan Merger 2 Section 10.07
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 10.07          Entire Agreement. This Agreement and the Ancillary Documents constitute the sole and entire agreement of the parties to this Agreement with respect to the subject matter contained herein and therein, and supersede all prior and contemporaneous understandings and agreements, both written and oral, with respect to such subject matter. In the event of any inconsistency between the statements in the body of this Agreement and those in the Ancillary Documents, the Exhibit and Disclosure Schedules (other than an exception expressly set forth as such in the Disclosure Schedules), the statements in the body of this Agreement will control.

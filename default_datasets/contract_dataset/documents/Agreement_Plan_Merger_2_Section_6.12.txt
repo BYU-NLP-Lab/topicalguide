@@ -1,0 +1,9 @@
+number: 182
+title: Agreement Plan Merger 2 Section 6.12
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 6.12          Payments to Parent. Any amounts payable to Parent pursuant to this Article VI shall be satisfied pursuant to and subject to Section 8.06 .

@@ -1,0 +1,9 @@
+number: 139
+title: Agreement Plan Merger 2 Section 3.24
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 3.24          Product and Service Warranties.(a)          The Company does not make any warranty or guaranty as to goods manufactured, sold, leased, licensed or delivered or services provided by it, and there is no pending or, to the Knowledge of the Company, threatened claim alleging any breach of any such warranty or guaranty. All goods manufactured, sold, leased, licensed or delivered, or services provided by the Company have been in conformity with all applicable contractual commitments and all express and implied warranties.(b)          Adequate reserves for any expense to be incurred by the Company as a result of any express or implied warranty or guaranty as to goods sold, leased or licensed, or services provided by, the Company prior to the Effective Time are reflected on the Financial Statements.

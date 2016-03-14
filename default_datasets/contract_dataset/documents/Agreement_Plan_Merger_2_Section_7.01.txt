@@ -1,0 +1,9 @@
+number: 186
+title: Agreement Plan Merger 2 Section 7.01
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 7.01          Conditions to Obligations of All Parties. The obligations of each party to consummate the transactions contemplated by this Agreement shall be subject to the fulfillment, at or prior to the Closing, of each of the following conditions:(a)          This Agreement shall have been duly adopted by the Requisite Company Vote, and the issuance of Parent Shares pursuant to this Agreement shall have been approved by the Requisite Parent Vote.(b)          The filings of Parent and the Company pursuant to the HSR Act, if any, shall have been made and the applicable waiting period and any extensions thereof shall have expired or been terminated.(c)          No Governmental Authority shall have enacted, issued, promulgated, enforced or entered any Governmental Order which is in effect and has the effect of making the transactions contemplated by this Agreement illegal, otherwise restraining or prohibiting consummation of such transactions or causing any of the transactions contemplated hereunder to be rescinded following completion thereof.(d)          The Company shall have received all consents, authorizations, orders and approvals from the Governmental Authorities referred to in Section 3.03 and Parent shall have received all consents, authorizations, orders and approvals from the Governmental Authorities referred to in Section 4.02 , in each case, in form and substance reasonably satisfactory to Parent and the Company, and no such consent, authorization, order and approval shall have been revoked.(e)          The S-4 Registration Statement shall have become effective under the Securities Act and shall not be the subject of any stop order.(f)          Parent Shares to be issued in the Merger shall have been approved for listing on Nasdaq, subject to official notice of issuance.

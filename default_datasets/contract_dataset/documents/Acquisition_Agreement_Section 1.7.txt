@@ -1,0 +1,9 @@
+number: 7
+title: Acquisition Agreement Section 1.7
+author_name: Grant
+month: Febuary
+president_name: Grant
+year: 2016
+day: 25
+
+Section 1.7 Allocation of Purchase Price for Tax Purposes . The Sellers and the Purchaser shall cooperate to prepare, within sixty (60) days following the Closing Date, a statement allocating the sum of the Purchase Price and the Assumed Liabilities (and any liabilities treated as assumed by the Purchaser or its Affiliates for U.S. federal income Tax purposes) among the Acquired Assets in accordance with Section 1060 of the Code and the Treasury regulations promulgated thereunder. If there is any adjustment to the Purchase Price, the Acquired Assets or the Assumed Liabilities, the Sellers and the Purchaser agree to make appropriate adjustments to such statement. The Sellers and the Purchaser shall be bound for tax purposes by such allocation (and if necessary, any revised allocation), and, unless otherwise required by applicable Law, shall file, or cause to be filed, all applicable Tax Returns in a manner that is substantially consistent with such allocation. If such allocation is disputed by any taxing authority, the party hereto receiving notice of such dispute shall promptly notify the other parties hereto concerning the existence of such dispute and the parties hereto shall consult with each other with respect to all issues related to the allocation in connection with such dispute.
