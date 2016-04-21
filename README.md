@@ -22,9 +22,26 @@ Then navigate to the `topicalguide` directory and optionally switch over to the 
 
 ### 2. Install Dependencies
 
+In order to circumvent the need for superuser permissions, you can create a virtual environment using `virtualenv`, `virtualenvwrapper`, `pyenv`, or another tool.
+
+To use `virtualenv`, type the following inside the project's root directory:
+
+    virtualenv ENV
+    source ENV/bin/activate
+
+You must activate your virtual environment by typing the second line above any time that `(ENV)` does not appear in front of your command line.
+
+Documentation for all of the above mentioned tools can be found here:
+
+[virtualenv](https://virtualenv.pypa.io/en/latest/)
+
+[virtualenvwrapper](https://virtualenvwrapper.readthedocs.org/en/latest/)
+
+[pyenv](https://github.com/yyuu/pyenv#installation)
+
 Dependencies are listed in the `requirements.txt` file and can be easily installed with:
 
-    sudo pip install -r requirements.txt
+    pip install -r requirements.txt
 
 If you want to use the word stemmer then run the following:
     
@@ -40,18 +57,19 @@ First, copy the template:
 
 Second, go to [this website](http://www.miniwebtool.com/django-secret-key-generator/) to generate your `SECRET_KEY`.
 
-Open `topicalguide/settings.py` in your favorite text editor.  
-Insert your generated `SECRET_KEY` where it says
+Third, open `topicalguide/settings.py` in your favorite text editor.
+Within this file:
+  
+(1) Insert your generated `SECRET_KEY` where it says
 
 	SECRET_KEY=''
 
-Third, set your database settings. You could use sqlite, which is configured for you. 
+(2) Set your database settings. You could use sqlite, which is configured for you. 
 If you want to use Postgres there are instructions below for setting it up on Fedora.
 
-Fourth, set `DEBUG = True` to use the developement server.
-If DEBUG is set to False then ALLOWED_HOSTS must be set. See Django's documentation for further details.
+(3) Set `DEBUG = True` to use the developement server. If DEBUG is set to False then ALLOWED_HOSTS must be set. See Django's documentation for further details.
 
-Optionally, configure other various django options.
+(4) Optionally, configure other various django options.
 
 ### 4. Import a Dataset
 
@@ -67,6 +85,23 @@ or
 For more options on importing see the documentation by running:
 
     python tg.py -h
+
+
+Solutions to possible problems:
+
+(1) If you get an error about missing a module called dateutil, run the following from the `topicalguide` directory:
+
+    pip install python-dateutil
+
+Then try importing the dataset again.
+
+(2) If you get an error about a missing column, you must delete the database and re-import the dataset. Run the following from the `topicalguide` directory:
+
+    rm working/tg.sqlite3
+
+Then try importing the dataset again.
+
+(3) If the import runs extremely slowly, you may be importing the dataset over a file server. This fix will be different for everyone, but I had to move my repository to /local/myusername.
 
 ### 5. Done!
 
