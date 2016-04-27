@@ -2,12 +2,15 @@
 
 var CoOccurrenceView = DefaultView.extend({
 
+  //Global variables
   topicData: {},
-  cutoff: 0,
+  cutoff: 0, //Used for experimentation with measuring co-occurrence
 
-  readableName: "Co-Occurrence",
+  //View names
+  readableName: "Co-Occurrence", //This will be displayed on the "Visualizations" dropdown menu
   shortName: "co-occur",
 
+  //HTML templates
   mainTemplate:
 "<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>" +
 "<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
@@ -24,12 +27,15 @@ var CoOccurrenceView = DefaultView.extend({
 "  </select>" +
 "</div>",
 
+  //No initialization necessary
   initialize: function() {
   },
 
+  //No cleanup necessary as far as I know
   cleanup: function() {
   },
 
+  //Returns data from analysis; copied from other visualizations
   getQueryHash: function() {
     var selections = this.selectionModel.attributes;
     return {
@@ -44,6 +50,9 @@ var CoOccurrenceView = DefaultView.extend({
     };
   },
 
+  //Renders controls
+  //Controls behavior is included with renderChart() in this visualization because it was coupled with 
+  //borrowed code
   renderControls: function() {
     var self = this;
 
@@ -58,6 +67,7 @@ var CoOccurrenceView = DefaultView.extend({
 
   },
 
+  //Renders the chart and links controls to the chart (code largely borrowed from online example)
   renderChart: function() {
     var self = this;
 
@@ -212,6 +222,7 @@ var CoOccurrenceView = DefaultView.extend({
 
   },
 
+  //Gets initial data and renders controls and chart
   render: function() {
     var self = this;
 
@@ -243,7 +254,8 @@ var CoOccurrenceView = DefaultView.extend({
         var average = total / _.size(docs);
         return average;
       };
-
+      
+      //Attempt to do clustering
       var clusterWords = (function() {
         var allWords = [];
         for (var topic in analysis.topics) {
@@ -352,10 +364,13 @@ var CoOccurrenceView = DefaultView.extend({
     });
   },
 
+  //Returns HTML for instructions
   renderHelpAsHtml: function() {
   }
 });
 
+//Wrapper class; contains CoOccurrenceView and SingleDocumentView, though SingleDocumentView is not
+//changeable in this visualization
 var CoOccurrenceViewManager = DefaultView.extend({
 
   readableName: "Co-Occurrence",

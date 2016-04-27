@@ -2,6 +2,7 @@
 
 var CirclePackingView = DefaultView.extend({
 
+  //Global variables
   totalData: {},
   percentageData: {},
   displayData: {},
@@ -10,9 +11,11 @@ var CirclePackingView = DefaultView.extend({
   numTokens: 1,
   calcTotal: true,
 
-  readableName: "Top Topics",
+  //View names
+  readableName: "Top Topics", //This will be displayed on the "Visualizations" dropdown menu
   shortName: "circlepack",
 
+  //HTML templates
   mainTemplate:
 "<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>" +
 "<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
@@ -40,19 +43,21 @@ var CirclePackingView = DefaultView.extend({
 "  </div>"+
 "</div>",
 
-
+  //Initializes control values
   initialize: function() {
-    this.numTopics = 20;
-    this.numTokens = 50;
-    this.topicArray = [];
+    this.numTopics = 20; //Found this to be a reasonable number for most datasets
+    this.numTokens = 50; //Found this to be a reasonable number for most datasets
+    this.topicArray = []; //Array of integers 1-100 for easier dropdown menu creation
     for (var i = 1; i <= 100; i++) {
-      this.topicArray.push(i);
+      this.topicArray.push(i); 
     }
   },
 
+  //Don't know the purpose of this; just put it here because it is in all other visualizations
   cleanup: function() {
   },
 
+  //Returns data from analysis; copied from other visualizations
   getQueryHash: function() {
     var selections = this.selectionModel.attributes;
     return {
@@ -67,6 +72,7 @@ var CirclePackingView = DefaultView.extend({
     };
   },
 
+  //Sets up and renders controls
   renderControls: function() {
     var self = this;
 
@@ -76,6 +82,7 @@ var CirclePackingView = DefaultView.extend({
     var topicSelector = controls.select('#top-n-control');
     var tokenSelector = controls.select('#document-token-control');
 
+    //Populates "Number of Topics" control dropdown with integers 1-100 via topicArray
     var topicOptions = topicSelector
       .selectAll('option')
       .data(self.topicArray)
@@ -84,6 +91,7 @@ var CirclePackingView = DefaultView.extend({
       .attr('value', function(d) { return d; })
       .text(function(d) { return d; });
 
+    //Populates "Document Token Requirement" control dropdown with integers 1-100 via topicArray
     var tokenOptions = tokenSelector
       .selectAll('option')
       .data(self.topicArray)
@@ -92,9 +100,11 @@ var CirclePackingView = DefaultView.extend({
       .attr('value', function(d) { return d; })
       .text(function(d) { return d; });
 
+    //Sets original control values to numTopics and numTokens
     topicOptions[0][self.numTopics-1].selected = true;
     tokenOptions[0][self.numTokens-1].selected = true;
 
+    //Sets up behavior of controls
     topicSelector.on('change', function (value) {
       var selectedIndex = topicSelector.property('selectedIndex');
       self.numTopics = selectedIndex + 1;
@@ -114,10 +124,11 @@ var CirclePackingView = DefaultView.extend({
       });	
   },
 
+  //Changes what displayData contains based on control values
   alterDisplayData: function(topics, tokens, total) {
     var self = this;
     self.displayData = {};
-    if (total) {
+    if (total) { //Populates displayData with totalData
       self.displayData = (function() {
         var displaydata = {};
         displaydata.name = "topics";
@@ -137,7 +148,7 @@ var CirclePackingView = DefaultView.extend({
         }
         return displaydata;
       })();
-    } else {
+    } else { //Populates displayData with percentageData
       self.displayData = (function() {
         var displaydata = {};
         displaydata.name = "topics";
@@ -161,7 +172,7 @@ var CirclePackingView = DefaultView.extend({
     self.renderChart();
   },
 
-
+  //Renders the chart with displayData (code largely borrowed from d3 example) 
   renderChart: function() {
     var self = this;
 
@@ -278,6 +289,7 @@ var CirclePackingView = DefaultView.extend({
     d3.select(self.frameElement).style("height", diameter + "px");
   },
 
+  //Gets initial data and renders chart and controls 
   render: function() {
     var self = this;
 
@@ -303,7 +315,7 @@ var CirclePackingView = DefaultView.extend({
         var newdata = {};
         newdata.name = "topics";
         newdata.children = [];
-        for (var i = 0; i < 100; i++) {
+        for (var i = 0; i < Object.keys(analysis.topics).length; i++) {
           var topic = {};
           topic.name = analysis.topics[i].names["Top 2"];
           topic.children = [];
@@ -311,7 +323,7 @@ var CirclePackingView = DefaultView.extend({
           newdata.children.push(topic);
         }
         for (var key in documents) {
-          for (var j = 0; j < 100; j++) {
+          for (var j = 0; j < Object.keys(analysis.topics).length; j++) {
             if (documents[key] !== undefined && documents[key].topics[j] !== undefined) {
               var docObj = {};
               docObj.name = key;
@@ -328,7 +340,7 @@ var CirclePackingView = DefaultView.extend({
         var newdata = {};
         newdata.name = "topics";
         newdata.children = [];
-        for (var i = 0; i < 100; i++) {
+        for (var i = 0; i < Object.keys(analysis.topics).length; i++) {
           var topic = {};
           topic.name = analysis.topics[i].names["Top 2"];
           topic.children = [];
@@ -337,7 +349,7 @@ var CirclePackingView = DefaultView.extend({
           newdata.children.push(topic);
         }
         for (var key in documents) {
-          for (var j = 0; j < 100; j++) {
+          for (var j = 0; j < Object.keys(analysis.topics).length; j++) {
             if (documents[key] !== undefined && documents[key].topics[j] !== undefined) {
               var docObj = {};
               docObj.name = key;
@@ -347,7 +359,7 @@ var CirclePackingView = DefaultView.extend({
             }
           }
         }
-        for (var k = 0; k < 100; k++) {
+        for (var k = 0; k < Object.keys(newdata.children).length; k++) {
           newdata.children[k].percentage = newdata.children[k].percentage / Object.keys(documents).length;
           newdata.children[k].total = (newdata.children[k].percentage).toString() + "%";//add rounding here
         }
@@ -397,6 +409,7 @@ var CirclePackingView = DefaultView.extend({
     })	
   },
 
+  //Returns HTML for instructions
   renderHelpAsHtml: function() {
     return "<p>Note that the larger circles represent the top topics and the small, white circles represent documents with the top number of tokens associated with that topic.</p>"+
     "<h4>Number of Topics</h4>"+
@@ -408,6 +421,7 @@ var CirclePackingView = DefaultView.extend({
   },
 });
 
+//Wrapper class; contains CirclePackingView and SingleDocumentView
 var CirclePackingViewManager = DefaultView.extend({
 
   readableName: "Top Topics",
