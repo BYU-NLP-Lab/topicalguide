@@ -12,8 +12,8 @@ var CoOccurrenceView = DefaultView.extend({
 
   //HTML templates
   mainTemplate:
-"<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>" +
-"<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
+"<div id=\"plot-controls-matrix\" class=\"col-xs-3 text-center\" style=\"float: right;\"></div>" +
+"<div id=\"plot-view-matrix\" class=\"col-xs-9\" style=\"position: inline; float: left;\"></div>",
 
   controlsTemplate:
 "<h3><b>Controls</b></h3>" +
@@ -56,7 +56,7 @@ var CoOccurrenceView = DefaultView.extend({
   renderControls: function() {
     var self = this;
 
-    var controls = d3.select(this.el).select('#plot-controls');
+    var controls = d3.select(this.el).select('#plot-controls-matrix');
     controls.html(self.controlsTemplate);
 
     //var orderSelector = controls.select('#order-control');
@@ -71,10 +71,10 @@ var CoOccurrenceView = DefaultView.extend({
   renderChart: function() {
     var self = this;
 
-    var el = d3.select(self.el).select("#plot-view");
+    var el = d3.select(self.el).select("#plot-view-matrix");
     el.select("svg").remove();
 
-    var margin = {top: 230, right: 10, bottom: 230, left: 230},
+    var margin = {top: 130, right: 10, bottom: 130, left: 130},
       width = 800,
       height = 800;
 
@@ -85,7 +85,6 @@ var CoOccurrenceView = DefaultView.extend({
     var svg = el.append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
-      .style("margin-left", margin.left + "px")
       .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -189,7 +188,7 @@ var CoOccurrenceView = DefaultView.extend({
         d3.selectAll("text").classed("active", false);
       }
 
-      d3.select(self.el).select("#plot-controls").select("#order-control").on("change", function() {
+      d3.select(self.el).select("#plot-controls-matrix").select("#order-control").on("change", function() {
         //clearTimeout(timeout);
         order(this.value);
       });
@@ -214,7 +213,7 @@ var CoOccurrenceView = DefaultView.extend({
       //var timeout = setTimeout(function() {
         //order("group");
         //d3.select(self.el)
-          //.select("#plot-controls")
+          //.select("#plot-controls-matrix")
           //.select("#order-control")
           //.property("selectedIndex", 2)
           //.node().focus();
