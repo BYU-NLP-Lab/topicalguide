@@ -308,8 +308,6 @@ var CirclePackingView = DefaultView.extend({
       var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
       var documents = analysis.documents;
 
-      console.log(documents);
-
       //Populate totalData with all topic info
       self.totalData = (function() {
         var newdata = {};
@@ -418,7 +416,7 @@ var CirclePackingView = DefaultView.extend({
     "<p>This number represents how many tokens (words) in a document must be associated with the given topic in order for the document to be included in the topic circle. Increasing this number will decrease the number of documents shown in the topic, and decreasing this number will increase the number of documents shown.</p>"+
     "<h4>Top Topics Calculation Method</h4>"+
     "<p>When this is set to \"Total Tokens,\" the top topics will be calculated by how many tokens (words) in the entire dataset are associated with each topic. When it is set to \"Average Percentage,\" the top topics will be calculated by finding the average makeup of that topic per document over all documents.<p>";
-  },
+  }
 });
 
 //Wrapper class; contains CirclePackingView and SingleDocumentView

@@ -58,13 +58,6 @@ var CoOccurrenceView = DefaultView.extend({
 
     var controls = d3.select(this.el).select('#plot-controls-matrix');
     controls.html(self.controlsTemplate);
-
-    //var orderSelector = controls.select('#order-control');
-
-    //orderSelector.on('change', function(value) {
-      //change ordering
-//  });
-
   },
 
   //Renders the chart and links controls to the chart (code largely borrowed from online example)
@@ -241,7 +234,6 @@ var CoOccurrenceView = DefaultView.extend({
       self.$el.html(self.mainTemplate);
 
       var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
-      console.log(analysis);
       var documents = analysis.documents;
 
       var averageTokenCount = function(docs) {
@@ -290,7 +282,6 @@ var CoOccurrenceView = DefaultView.extend({
           if (keyA < keyB) return 1;
           return 0;
         });
-        console.log(allWords);
         return allWords;
       })();	
 
@@ -302,6 +293,7 @@ var CoOccurrenceView = DefaultView.extend({
         }
       }
 
+      //Populates topicData object in the same style as the miserables object in the online example
       self.topicData = (function() {
         var newdata = {};
         newdata.nodes = [];
@@ -324,7 +316,6 @@ var CoOccurrenceView = DefaultView.extend({
         }
         //Populate links
         //var cutoff = averageTokenCount(documents) / 25;
-        //console.log(cutoff);
         var recentLink = {};
         for (var a = 0; a < _.size(analysis.topics); a++) {
           for (var b = a+1; b < _.size(analysis.topics); b++) {
@@ -344,18 +335,6 @@ var CoOccurrenceView = DefaultView.extend({
             }
           }
         }
-        //Normalize by min value
-        //var min = newdata.links[0].value;
-        //for (var l = 1; l < newdata.links.length; l++) {
-          //if (newdata.links[l].value < min) {
-            //min = newdata.links[l].value;
-          //}
-        //}
-	//console.log("MIN: " + min);
-        //for (var m = 0; m < newdata.links.length; m++) {
-        //  newdata.links[m].value = newdata.links[m].value / min;
-        //}
-        console.log(newdata);
         return newdata; 
       })();
 
@@ -366,6 +345,9 @@ var CoOccurrenceView = DefaultView.extend({
 
   //Returns HTML for instructions
   renderHelpAsHtml: function() {
+    return "<p>Note that each cell represents the co-occurrence of the two topics that cross at that cell. The darker the cell, the more frequently they co-occur.</p>"+
+    "<h4>Order</h4>"+
+    "<p>There are three ways to order the matrix. When the topics are ordered by Name, they are ordered alphabetically top to bottom, left to right. When they are ordered by Frequency, the topics are ordered by how often they occur in the dataset. When the topics are ordered by Cluster, they are ordered based on the group that the topics reside in. The groups are created based on topic similarity.</p>";
   }
 });
 
