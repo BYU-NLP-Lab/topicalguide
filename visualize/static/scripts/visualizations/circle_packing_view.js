@@ -17,8 +17,8 @@ var CirclePackingView = DefaultView.extend({
 
   //HTML templates
   mainTemplate:
-"<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>" +
-"<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
+"<div id=\"plot-controls-circles\" class=\"col-xs-3 text-center\" style=\"float: right;\"></div>" +
+"<div id=\"plot-view-circles\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>",
 
   controlsTemplate:
 "<h3><b>Controls</b></h3>"+
@@ -76,7 +76,7 @@ var CirclePackingView = DefaultView.extend({
   renderControls: function() {
     var self = this;
 
-    var controls = d3.select(this.el).select('#plot-controls');
+    var controls = d3.select(this.el).select('#plot-controls-circles');
     controls.html(self.controlsTemplate);	
 
     var topicSelector = controls.select('#top-n-control');
@@ -176,7 +176,7 @@ var CirclePackingView = DefaultView.extend({
   renderChart: function() {
     var self = this;
 
-    var el = d3.select(self.el).select("#plot-view");
+    var el = d3.select(self.el).select("#plot-view-circles");
     el.select("svg").remove();
 
     var margin = 20,
