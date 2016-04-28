@@ -13,7 +13,7 @@ var CoOccurrenceView = DefaultView.extend({
   //HTML templates
   mainTemplate:
 "<div id=\"plot-controls-matrix\" class=\"col-xs-3 text-center\" style=\"float: right;\"></div>" +
-"<div id=\"plot-view-matrix\" class=\"col-xs-9\" style=\"position: inline; float: left;\"></div>",
+"<div id=\"plot-view-matrix\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>",
 
   controlsTemplate:
 "<h3><b>Controls</b></h3>" +
@@ -85,6 +85,7 @@ var CoOccurrenceView = DefaultView.extend({
     var svg = el.append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
+      .style("margin-top", "10px")
       .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 

@@ -25,4 +25,7 @@
 @media screen and (max-width: 1350px) {
 #plot-view-matrix {
     clear: both;
+}
+#plot-controls-matrix {
+    width: 50%;
 }}
