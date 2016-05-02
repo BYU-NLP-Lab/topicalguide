@@ -25,6 +25,13 @@ var CoOccurrenceView = DefaultView.extend({
 "    <option value=\"count\">by Frequency</option>" +
 "    <option value=\"group\">by Cluster</option>" +
 "  </select>" +
+"</div>" +
+"<hr />" +
+"<div>" +
+"  <label>Key</label>" +
+"  <p>Less Co-Occurrence</p>" + 
+"  <img id=\"gradient\" src=\"/static/scripts/visualizations/gradientkey.png\" alt=\"Key\" style=\"width:20px;\">" +
+"  <p>More Co-Occurrence</p>" +
 "</div>",
 
   //No initialization necessary
@@ -67,7 +74,7 @@ var CoOccurrenceView = DefaultView.extend({
     var el = d3.select(self.el).select("#plot-view-matrix");
     el.select("svg").remove();
 
-    var margin = {top: 130, right: 10, bottom: 130, left: 130},
+    var margin = {top: 120, right: 10, bottom: 120, left: 120},
       width = 800,
       height = 800;
 
@@ -134,7 +141,11 @@ var CoOccurrenceView = DefaultView.extend({
         .attr("y", x.rangeBand() / 5)
         .attr("dy", ".32em")
         .attr("text-anchor", "end")
-        .text(function(d, i) { return nodes[i].name; });
+        .text(function(d, i) { if (nodes[i].name.length > 20) { 
+                                 return nodes[i].name.substring(0,18) + "..."; 
+                               } else {
+                                 return nodes[i].name; 
+                               } });
 
       var column = svg.selectAll(".column")
         .data(matrix)
@@ -148,7 +159,11 @@ var CoOccurrenceView = DefaultView.extend({
         .attr("y", x.rangeBand() / 5)
         .attr("dy", ".32em")
         .attr("text-anchor", "start")
-        .text(function(d, i) { return nodes[i].name; });
+        .text(function(d, i) { if (nodes[i].name.length > 20) {
+                                 return nodes[i].name.substring(0,18) + "...";
+                               } else {
+                                 return nodes[i].name;
+                               } });
 
       column.append("text")
         .attr("class", "bottom")
@@ -156,7 +171,11 @@ var CoOccurrenceView = DefaultView.extend({
         .attr("y", x.rangeBand() / 5)
         .attr("dy", ".32em")
         .attr("text-anchor", "end")
-        .text(function(d, i) { return nodes[i].name; });
+        .text(function(d, i) { if (nodes[i].name.length > 20) { 
+                                 return nodes[i].name.substring(0,18) + "..."; 
+                               } else { 
+                                 return nodes[i].name; 
+                               } });
 
       function rowfunc(row) {
         var cell = d3.select(this).selectAll(".cell")

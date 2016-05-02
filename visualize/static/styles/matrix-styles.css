@@ -22,6 +22,9 @@
     fill: red;
 }
 
+#gradient {
+}
+
 @media screen and (max-width: 1350px) {
 #plot-view-matrix {
     clear: both;
