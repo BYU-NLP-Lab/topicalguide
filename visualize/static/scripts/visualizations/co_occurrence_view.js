@@ -28,10 +28,9 @@ var CoOccurrenceView = DefaultView.extend({
 "</div>" +
 "<hr />" +
 "<div>" +
-"  <label>Key</label>" +
-"  <p>Less Co-Occurrence</p>" + 
-"  <img id=\"gradient\" src=\"/static/scripts/visualizations/gradientkey.png\" alt=\"Key\" style=\"width:20px;\">" +
-"  <p>More Co-Occurrence</p>" +
+"  <label>Co-Occurrence Key</label>" +
+"  <br>" +
+"  <img id=\"gradient\" src=\"/static/scripts/visualizations/cooccurrencekey.png\" alt=\"Key\">" +
 "</div>",
 
   //No initialization necessary
