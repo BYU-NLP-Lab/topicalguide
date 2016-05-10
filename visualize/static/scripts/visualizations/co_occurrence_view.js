@@ -377,8 +377,7 @@ var CoOccurrenceViewManager = DefaultView.extend({
   shortName: "co-occur",
 
   mainTemplate:
-"<div id=\"plot-view-container\" class=\"container-fluid\" style=\"overflow: hidden;\"></div>" +
-"<div id=\"document-info-view-container\" class=\"container-fluid\"></div>",
+"<div id=\"plot-view-container\" class=\"container-fluid\" style=\"overflow: hidden;\"></div>",
 
   initialize: function() {
     this.coOccurrenceView = new CoOccurrenceView(_.extend({}, this.getAllModels()));
