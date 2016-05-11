@@ -133,6 +133,7 @@ var CirclePackingView = DefaultView.extend({
         var displaydata = {};
         displaydata.name = "topics";
         displaydata.children = [];
+        displaydata.size = 999999;
         var limit = Math.min(self.totalData.children.length, topics);
         for (var i = 0; i < limit; i++) {
           displaydata.children.push(JSON.parse(JSON.stringify(self.totalData.children[i])));
@@ -153,6 +154,7 @@ var CirclePackingView = DefaultView.extend({
         var displaydata = {};
         displaydata.name = "topics";
         displaydata.children = [];
+        displaydata.size = 999999;
         var limit = Math.min(self.percentageData.children.length, topics);
         for (var i = 0; i < limit; i++) {
           displaydata.children.push(JSON.parse(JSON.stringify(self.percentageData.children[i])));
@@ -216,6 +218,9 @@ var CirclePackingView = DefaultView.extend({
         else {
           if (focus !== d) {
             zoom(d), d3.event.stopPropagation();
+          }
+          else if (d.parent) {
+            zoom(d.parent), d3.event.stopPropagation();
           }
         }
       });
@@ -317,7 +322,7 @@ var CirclePackingView = DefaultView.extend({
           var topic = {};
           topic.name = analysis.topics[i].names["Top 2"];
           topic.children = [];
-          topic.total = "";
+          topic.total = 0;
           newdata.children.push(topic);
         }
         for (var key in documents) {
@@ -342,7 +347,7 @@ var CirclePackingView = DefaultView.extend({
           var topic = {};
           topic.name = analysis.topics[i].names["Top 2"];
           topic.children = [];
-          topic.total = "";
+          topic.total = 0;
           topic.percentage = 0;
           newdata.children.push(topic);
         }
@@ -359,7 +364,7 @@ var CirclePackingView = DefaultView.extend({
         }
         for (var k = 0; k < Object.keys(newdata.children).length; k++) {
           newdata.children[k].percentage = newdata.children[k].percentage / Object.keys(documents).length;
-          newdata.children[k].total = (newdata.children[k].percentage).toString() + "%";//add rounding here
+          newdata.children[k].total = (newdata.children[k].percentage);
         }
         return newdata;
       })();
@@ -388,13 +393,13 @@ var CirclePackingView = DefaultView.extend({
         return 0;
       });
 
-      //Assign values to topics for display
+      //Assign values to topics
       for (var t = 0; t < self.totalData.children.length; t++) {
         var tot = 0;
         for (var d = 0; d < self.totalData.children[t].children.length; d++) {
           tot += self.totalData.children[t].children[d].size;
         }
-        self.totalData.children[t].total = tot.toString();
+        self.totalData.children[t].total = tot;
         self.totalData.children[t].position = t + 1;
       }
 
