@@ -28,7 +28,7 @@ var CoOccurrenceView = DefaultView.extend({
 "</div>" +
 "<hr />" +
 "<div>" +
-"  <label>Co-Occurrence Key</label>" +
+"  <label>Co-Occurrence Frequency</label>" +
 "  <br>" +
 "  <img id=\"gradient\" src=\"/static/scripts/visualizations/cooccurrencekey.png\" alt=\"Key\">" +
 "</div>",
@@ -73,7 +73,17 @@ var CoOccurrenceView = DefaultView.extend({
     var el = d3.select(self.el).select("#plot-view-matrix");
     el.select("svg").remove();
 
-    var margin = {top: 120, right: 10, bottom: 120, left: 120},
+    var longestTitleLength = 0
+
+    for (var topic in self.topicData.nodes) {
+      if (self.topicData.nodes[topic].name.length > longestTitleLength) {
+        longestTitleLength = self.topicData.nodes[topic].name.length
+      }
+    }
+    
+    var titleMargin = longestTitleLength * 7 
+
+    var margin = {top: titleMargin, right: 10, bottom: titleMargin, left: titleMargin},
       width = 800,
       height = 800;
 
@@ -134,17 +144,13 @@ var CoOccurrenceView = DefaultView.extend({
 
       row.append("line")
         .attr("x2", width);
-
+      
       row.append("text")
         .attr("x", -6)
         .attr("y", x.rangeBand() / 5)
         .attr("dy", ".32em")
         .attr("text-anchor", "end")
-        .text(function(d, i) { if (nodes[i].name.length > 20) { 
-                                 return nodes[i].name.substring(0,18) + "..."; 
-                               } else {
-                                 return nodes[i].name; 
-                               } });
+        .text(function(d, i) { return nodes[i].name; });
 
       var column = svg.selectAll(".column")
         .data(matrix)
@@ -158,11 +164,7 @@ var CoOccurrenceView = DefaultView.extend({
         .attr("y", x.rangeBand() / 5)
         .attr("dy", ".32em")
         .attr("text-anchor", "start")
-        .text(function(d, i) { if (nodes[i].name.length > 20) {
-                                 return nodes[i].name.substring(0,18) + "...";
-                               } else {
-                                 return nodes[i].name;
-                               } });
+        .text(function(d, i) { return nodes[i].name; });//nodes[i].name
 
       column.append("text")
         .attr("class", "bottom")
@@ -170,11 +172,7 @@ var CoOccurrenceView = DefaultView.extend({
         .attr("y", x.rangeBand() / 5)
         .attr("dy", ".32em")
         .attr("text-anchor", "end")
-        .text(function(d, i) { if (nodes[i].name.length > 20) { 
-                                 return nodes[i].name.substring(0,18) + "..."; 
-                               } else { 
-                                 return nodes[i].name; 
-                               } });
+        .text(function(d, i) { return nodes[i].name; });
 
       function rowfunc(row) {
         var cell = d3.select(this).selectAll(".cell")
