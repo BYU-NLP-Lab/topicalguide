@@ -7,8 +7,9 @@ var CirclePackingView = DefaultView.extend({
   percentageData: {},
   displayData: {},
   topicArray: [],
+  documentArray: [],
   numTopics: 1,
-  numTokens: 1,
+  numDocuments: 1,
   calcTotal: true,
 
   //View names
@@ -28,8 +29,8 @@ var CirclePackingView = DefaultView.extend({
 "  <select id=\"top-n-control\" type=\"selection\" class=\"form-control\" name=\"Number of Topics\"></select>"+
 "</div>"+
 "<div>"+
-"  <label for=\"document-token-control\">Document Token Requirement</label>"+
-"  <select id=\"document-token-control\" type=\"selection\" class=\"form-control\" name=\"Document Token Requirement\"></select>"+
+"  <label for=\"document-control\">Documents Displayed Per Topic</label>"+
+"  <select id=\"document-control\" type=\"selection\" class=\"form-control\" name=\"Documents Displayed Per Topic\"></select>"+
 "</div>"+
 "<hr />"+
 "<div>"+
@@ -46,11 +47,7 @@ var CirclePackingView = DefaultView.extend({
   //Initializes control values
   initialize: function() {
     this.numTopics = 20; //Found this to be a reasonable number for most datasets
-    this.numTokens = 50; //Found this to be a reasonable number for most datasets
-    this.topicArray = []; //Array of integers 1-100 for easier dropdown menu creation
-    for (var i = 1; i <= 100; i++) {
-      this.topicArray.push(i); 
-    }
+    this.numDocuments = 10; //Found this to be a reasonable number for most datasets
   },
 
   //Don't know the purpose of this; just put it here because it is in all other visualizations
@@ -80,7 +77,7 @@ var CirclePackingView = DefaultView.extend({
     controls.html(self.controlsTemplate);	
 
     var topicSelector = controls.select('#top-n-control');
-    var tokenSelector = controls.select('#document-token-control');
+    var documentSelector = controls.select('#document-control');
 
     //Populates "Number of Topics" control dropdown with integers 1-100 via topicArray
     var topicOptions = topicSelector
@@ -91,41 +88,41 @@ var CirclePackingView = DefaultView.extend({
       .attr('value', function(d) { return d; })
       .text(function(d) { return d; });
 
-    //Populates "Document Token Requirement" control dropdown with integers 1-100 via topicArray
-    var tokenOptions = tokenSelector
+    //Populates "Documents Displayed Per Topic" control dropdown with integers 1-100 via topicArray
+    var documentOptions = documentSelector
       .selectAll('option')
-      .data(self.topicArray)
+      .data(self.documentArray)
       .enter()
       .append('option')
       .attr('value', function(d) { return d; })
       .text(function(d) { return d; });
 
-    //Sets original control values to numTopics and numTokens
+    //Sets original control values to numTopics and numDocuments
     topicOptions[0][self.numTopics-1].selected = true;
-    tokenOptions[0][self.numTokens-1].selected = true;
+    documentOptions[0][self.numDocuments-1].selected = true;
 
     //Sets up behavior of controls
     topicSelector.on('change', function (value) {
       var selectedIndex = topicSelector.property('selectedIndex');
       self.numTopics = selectedIndex + 1;
-      self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal);
+      self.alterDisplayData(self.numTopics, self.numDocumentss, self.calcTotal);
     });
 
-    tokenSelector.on('change', function (value) {
-      var selectedIndex = tokenSelector.property('selectedIndex');
-      self.numTokens = selectedIndex + 1;
-      self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal);
+    documentSelector.on('change', function (value) {
+      var selectedIndex = documentSelector.property('selectedIndex');
+      self.numDocuments = selectedIndex + 1;
+      self.alterDisplayData(self.numTopics, self.numDocuments, self.calcTotal);
     });
 
     d3.select(this.el).select('#calculation-control')
       .on("click", function onCalculationChange() {
         self.calcTotal = document.getElementById('myonoffswitch').checked;
-        self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal);
+        self.alterDisplayData(self.numTopics, self.numDocuments, self.calcTotal);
       });	
   },
 
   //Changes what displayData contains based on control values
-  alterDisplayData: function(topics, tokens, total) {
+  alterDisplayData: function(topics, docs, total) {
     var self = this;
     self.displayData = {};
     if (total) { //Populates displayData with totalData
@@ -133,19 +130,13 @@ var CirclePackingView = DefaultView.extend({
         var displaydata = {};
         displaydata.name = "topics";
         displaydata.children = [];
-        displaydata.size = 999999;
         var limit = Math.min(self.totalData.children.length, topics);
         for (var i = 0; i < limit; i++) {
           displaydata.children.push(JSON.parse(JSON.stringify(self.totalData.children[i])));
         }
         for (var j = 0; j < displaydata.children.length; j++) {
-        //Delete documents with too small of token amounts
-          for (var k = 0; k < displaydata.children[j].children.length; k++) {
-            if (displaydata.children[j].children[k].size < tokens) {
-              displaydata.children[j].children.splice(k, 1);
-              k--;
-            }
-          }
+          //Delete documents
+          displaydata.children[j].children.splice(docs, displaydata.children[j].children.length);
         }
         return displaydata;
       })();
@@ -154,19 +145,13 @@ var CirclePackingView = DefaultView.extend({
         var displaydata = {};
         displaydata.name = "topics";
         displaydata.children = [];
-        displaydata.size = 999999;
         var limit = Math.min(self.percentageData.children.length, topics);
         for (var i = 0; i < limit; i++) {
           displaydata.children.push(JSON.parse(JSON.stringify(self.percentageData.children[i])));
         }
         for (var j = 0; j < displaydata.children.length; j++) {
-          //Delete documents with too small of token amounts
-          for (var k = 0; k < displaydata.children[j].children.length; k++) {
-            if (displaydata.children[j].children[k].size < tokens) {
-              displaydata.children[j].children.splice(k, 1);
-              k--;
-            }
-          }
+          //Delete documents
+          displaydata.children[j].children.splice(docs, displaydata.children[j].children.length);
         }
         return displaydata;
       })();
@@ -192,7 +177,7 @@ var CirclePackingView = DefaultView.extend({
     var pack = d3.layout.pack()
       .padding(2)
       .size([diameter - margin, diameter - margin])
-      .value(function(d) { return d.size; })
+      .value(function(d) { return d.size / d.topicProminence; });
 
     var svg = el.append("svg")
       .attr("width", diameter)
@@ -233,7 +218,7 @@ var CirclePackingView = DefaultView.extend({
       .style("display", function(d) { return d.parent === root ? null : "none"; })
       .text(function(d) { 
         var title = "";
-        if (d.position) { title += (d.position.toString() + ": "); }
+        //if (d.position) { title += (d.position.toString() + ": "); } //Uncomment this to see topic's real positions on visualization
         title += d.name;
         return title; });
 
@@ -313,6 +298,18 @@ var CirclePackingView = DefaultView.extend({
       var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
       var documents = analysis.documents;
 
+      var topicCounter = 1;
+      for (var key in analysis.topics) {
+        self.topicArray.push(topicCounter)
+        topicCounter++;
+      }
+
+      var documentCounter = 1;
+      for (var key in documents) {
+        self.documentArray.push(documentCounter)
+        documentCounter++;
+      }
+
       //Populate totalData with all topic info
       self.totalData = (function() {
         var newdata = {};
@@ -330,7 +327,8 @@ var CirclePackingView = DefaultView.extend({
             if (documents[key] !== undefined && documents[key].topics[j] !== undefined) {
               var docObj = {};
               docObj.name = key;
-              docObj.size = documents[key].topics[j]; 
+              docObj.size = documents[key].topics[j];
+              docObj.topicProminence = 0 
               newdata.children[j].children.push(docObj);
             }
           }
@@ -356,15 +354,16 @@ var CirclePackingView = DefaultView.extend({
             if (documents[key] !== undefined && documents[key].topics[j] !== undefined) {
               var docObj = {};
               docObj.name = key;
-              docObj.size = documents[key].topics[j];
+              docObj.size = (documents[key].topics[j] / documents[key].metrics["Token Count"]) * 100;
+              docObj.topicProminence = 0
               newdata.children[j].children.push(docObj);
-              newdata.children[j].percentage += (docObj.size / documents[key].metrics["Token Count"]);
+              newdata.children[j].percentage += docObj.size / 100;
             }
           }
         }
         for (var k = 0; k < Object.keys(newdata.children).length; k++) {
           newdata.children[k].percentage = newdata.children[k].percentage / Object.keys(documents).length;
-          newdata.children[k].total = (newdata.children[k].percentage);
+          newdata.children[k].total = newdata.children[k].percentage;
         }
         return newdata;
       })();
@@ -393,11 +392,32 @@ var CirclePackingView = DefaultView.extend({
         return 0;
       });
 
+      //Sort documents within each topic by topic tokens or topic percentage
+      for (var td = 0; td < self.totalData.children.length; td++) {
+        self.totalData.children[td].children.sort(function(a, b) {
+          var keyA = a.size;
+          var keyB = b.size;
+          if (keyA > keyB) return -1;
+          if (keyA < keyB) return 1;
+          return 0;
+        });
+      }
+      for (var pd = 0; pd < self.percentageData.children.length; pd++) {
+        self.percentageData.children[pd].children.sort(function(a, b) {
+          var keyA = a.size;
+          var keyB = b.size;
+          if (keyA > keyB) return -1;
+          if (keyA < keyB) return 1;
+          return 0;
+        });
+      } 
+
       //Assign values to topics
       for (var t = 0; t < self.totalData.children.length; t++) {
         var tot = 0;
         for (var d = 0; d < self.totalData.children[t].children.length; d++) {
           tot += self.totalData.children[t].children[d].size;
+          self.totalData.children[t].children[d].topicProminence = t + 1;
         }
         self.totalData.children[t].total = tot;
         self.totalData.children[t].position = t + 1;
@@ -405,10 +425,13 @@ var CirclePackingView = DefaultView.extend({
 
       for (var p = 0; p < self.percentageData.children.length; p++) {
         self.percentageData.children[p].position = p + 1;
+        for (var c = 0; c < self.percentageData.children[p].children.length; c++) {
+          self.percentageData.children[p].children[c].topicProminence = p + 1; 
+        }
       }
 
       self.renderControls();
-      self.alterDisplayData(self.numTopics, self.numTokens, self.calcTotal)
+      self.alterDisplayData(self.numTopics, self.numDocuments, self.calcTotal)
     })	
   },
 
@@ -417,8 +440,8 @@ var CirclePackingView = DefaultView.extend({
     return "<p>Note that the larger circles represent the top topics and the small, white circles represent documents with the top number of tokens associated with that topic.</p>"+
     "<h4>Number of Topics</h4>"+
     "<p>Changing this number will change the number of topics displayed. The topics shown will always be the most common topics, based on the choice of calculation.</p>"+
-    "<h4>Document Token Requirement</h4>"+
-    "<p>This number represents how many tokens (words) in a document must be associated with the given topic in order for the document to be included in the topic circle. Increasing this number will decrease the number of documents shown in the topic, and decreasing this number will increase the number of documents shown.</p>"+
+    "<h4>Documents Displayed Per Topic</h4>"+
+    "<p>This number represents how many documents (white cirlces) will be displayed per topic. The documents displayed will always be the documents with the top number of tokens associated with that topic.</p>"+
     "<h4>Top Topics Calculation Method</h4>"+
     "<p>When this is set to \"Total Tokens,\" the top topics will be calculated by how many tokens (words) in the entire dataset are associated with each topic. When it is set to \"Average Percentage,\" the top topics will be calculated by finding the average makeup of that topic per document over all documents.<p>";
   }
