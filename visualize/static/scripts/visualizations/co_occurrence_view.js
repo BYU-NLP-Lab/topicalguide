@@ -30,7 +30,7 @@ var CoOccurrenceView = DefaultView.extend({
 "<div>" +
 "  <label>Co-Occurrence Frequency</label>" +
 "  <br>" +
-"  <img id=\"gradient\" src=\"/static/scripts/visualizations/cooccurrencekey.png\" alt=\"Key\">" +
+"  <img id=\"key\" src=\"/static/scripts/visualizations/cooccurrencekey.png\" alt=\"Key\">" +
 "</div>",
 
   //No initialization necessary
@@ -220,6 +220,8 @@ var CoOccurrenceView = DefaultView.extend({
           .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
       }
 
+      //Timeout function makes visualization automatically change to a new ordering 
+      //I found it to be unnecessary but it could help illuminate hidden controls
       //var timeout = setTimeout(function() {
         //order("group");
         //d3.select(self.el)
@@ -263,7 +265,7 @@ var CoOccurrenceView = DefaultView.extend({
         return average;
       };
       
-      //Attempt to do clustering
+      //Attempt to do clustering---------------------------------//
       var clusterWords = (function() {
         var allWords = [];
         for (var topic in analysis.topics) {
@@ -308,6 +310,7 @@ var CoOccurrenceView = DefaultView.extend({
           break;
         }
       }
+      //--------------End attempt to do clustering---------------//
 
       //Populates topicData object in the same style as the miserables object in the online example
       self.topicData = (function() {

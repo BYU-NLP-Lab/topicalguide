@@ -79,7 +79,7 @@ var CirclePackingView = DefaultView.extend({
     var topicSelector = controls.select('#top-n-control');
     var documentSelector = controls.select('#document-control');
 
-    //Populates "Number of Topics" control dropdown with integers 1-100 via topicArray
+    //Populates "Number of Topics" control dropdown with integers from 1 to the number of topics via topicArray
     var topicOptions = topicSelector
       .selectAll('option')
       .data(self.topicArray)
@@ -88,7 +88,7 @@ var CirclePackingView = DefaultView.extend({
       .attr('value', function(d) { return d; })
       .text(function(d) { return d; });
 
-    //Populates "Documents Displayed Per Topic" control dropdown with integers 1-100 via topicArray
+    //Populates "Documents Displayed Per Topic" control dropdown with integers from 1 to the number of documents via documentArray
     var documentOptions = documentSelector
       .selectAll('option')
       .data(self.documentArray)
@@ -135,7 +135,7 @@ var CirclePackingView = DefaultView.extend({
           displaydata.children.push(JSON.parse(JSON.stringify(self.totalData.children[i])));
         }
         for (var j = 0; j < displaydata.children.length; j++) {
-          //Delete documents
+          //Delete documents 
           displaydata.children[j].children.splice(docs, displaydata.children[j].children.length);
         }
         return displaydata;
@@ -164,20 +164,20 @@ var CirclePackingView = DefaultView.extend({
     var self = this;
 
     var el = d3.select(self.el).select("#plot-view-circles");
-    el.select("svg").remove();
+    el.select("svg").remove(); //Remove previous renderings
 
     var margin = 20,
       diameter = 960;
 
     var color = d3.scale.linear()
       .domain([-1, 5])//original values: -1, 5
-      .range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])//original values: hsl(152,80%,80%), hsl(228,30%,40%)
+      .range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])
       .interpolate(d3.interpolateHcl);
 
     var pack = d3.layout.pack()
       .padding(2)
       .size([diameter - margin, diameter - margin])
-      .value(function(d) { return d.size / d.topicProminence; });
+      .value(function(d) { return d.size / d.topicProminence; }); //Alter this function to change sizes of document circles
 
     var svg = el.append("svg")
       .attr("width", diameter)
@@ -292,18 +292,19 @@ var CirclePackingView = DefaultView.extend({
 
     var selections = this.selectionModel.attributes;
 
+    //Gets topic info from server and creates objects from data
     this.dataModel.submitQueryByHash(this.getQueryHash(), function(data) {
       self.$el.html(self.mainTemplate);	    
 
       var analysis = data.datasets[selections.dataset].analyses[selections.analysis];
       var documents = analysis.documents;
-
+      
+      //Initializes topicArray and documentArray with numbers of topics and documents
       var topicCounter = 1;
       for (var key in analysis.topics) {
         self.topicArray.push(topicCounter)
         topicCounter++;
       }
-
       var documentCounter = 1;
       for (var key in documents) {
         self.documentArray.push(documentCounter)
