@@ -30,7 +30,7 @@ var CoOccurrenceView = DefaultView.extend({
 "<div>" +
 "  <label>Co-Occurrence Frequency</label>" +
 "  <br>" +
-"  <img id=\"key\" src=\"/static/scripts/visualizations/cooccurrencekey.png\" alt=\"Key\">" +
+"  <img id=\"key\" src=\"/static/scripts/visualizations/matrixkey.png\" alt=\"Key\">" +
 "</div>",
 
   //No initialization necessary

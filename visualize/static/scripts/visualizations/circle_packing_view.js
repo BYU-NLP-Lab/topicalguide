@@ -105,7 +105,7 @@ var CirclePackingView = DefaultView.extend({
     topicSelector.on('change', function (value) {
       var selectedIndex = topicSelector.property('selectedIndex');
       self.numTopics = selectedIndex + 1;
-      self.alterDisplayData(self.numTopics, self.numDocumentss, self.calcTotal);
+      self.alterDisplayData(self.numTopics, self.numDocuments, self.calcTotal);
     });
 
     documentSelector.on('change', function (value) {
