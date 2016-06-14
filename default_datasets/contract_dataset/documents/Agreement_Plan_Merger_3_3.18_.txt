@@ -1,9 +1,0 @@
-number: 28
-title: Agreement Plan Merger 3 3.18 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-3.18   Employee Matters .(a)   There are no proceedings pending or, to Target’s Knowledge, reasonably expected or threatened, between Target, on the one hand, and any employee or person claiming the status of a current or former employee, on the other hand. There are no claims pending, or, to Target’s Knowledge, reasonably expected or threatened, against Target under any workers’ compensation or long-term disability plan or policy. Target has no material unsatisfied obligations relating to employees, former employees, or qualified beneficiaries pursuant to any federal or state law governing health care coverage extension or continuation. Neither Target nor any ERISA Affiliate has direct or indirect liability with respect to any misclassification of any Person as an independent contractor rather than as an employee, or with respect to any employee leased from another employer.(b)   To the Knowledge of Target, no Target Stockholder, director, officer or consultant of Target is obligated under any contract or agreement, subject to any judgment, decree, or order of any court or administrative agency that would interfere with such Person’s efforts to promote the interests of Target or that would interfere with the Business of Target. Neither the execution nor delivery of this Agreement, nor the carrying on of the Business of Target nor any activity of any officers, directors or consultants of Target in connection with the carrying on of the Business of Target will, to the Knowledge of Target, conflict with or result in a breach of the terms, conditions, or provisions of, or constitute a default under, any contract or agreement under which any of such officers, directors or consultants is now bound.

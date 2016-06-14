@@ -1,9 +1,0 @@
-number: 184
-title: Agreement Plan Merger 2 Section 6.14
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 6.14          Survival. Notwithstanding anything in this Agreement to the contrary, the provisions of Section 3.19 and this Article VI shall survive for the full period of all applicable statutes of limitations (giving effect to any waiver, mitigation or extension thereof) plus 60 days.

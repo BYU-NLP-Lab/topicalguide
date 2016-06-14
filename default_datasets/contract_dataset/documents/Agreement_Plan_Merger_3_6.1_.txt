@@ -1,9 +1,0 @@
-number: 58
-title: Agreement Plan Merger 3 6.1 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-6.1   Information Statement and Transmittal Letter .(a)   Target has prepared at its sole cost with the cooperation of Acquiror, an information statement in a form approved by Aqcuiror (the “ Information Statement ”), which includes the form of a Transmittal Letter (the “ Transmittal Letter ”), for delivery to the Target Stockholders, describing this Agreement, the Certificate of Merger, the transactions contemplated hereby and thereby.(b)   Acquiror covenants and agrees to provide promptly to Target such information concerning its business and financial statements and affairs as, in the reasonable judgment of Target or its counsel, may be required or appropriate for inclusion in the Information Statement or in any amendments or supplements thereto, and to cause its counsel and auditors to cooperate with Target’s counsel and auditors in the preparation of the Information Statement or any amendments or supplements thereto. Anything to the contrary contained herein notwithstanding, Target shall not include in the Information Statement any non-public information with respect to Acquiror unless the form and content of which information shall have been approved by Acquiror prior to such inclusion.(c)   Target shall be solely liable for (i) all the contents, information and the statements made in the Information Statement, except for that content, information and statements made by or attributable to Acquiror, and for (ii) the form of the Information Statement and the Transmittal Letter and their compliance with all rules, regulations and Laws except for any Laws applicable to the sale and issuance of Merger Consideration by Acquiror.

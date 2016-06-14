@@ -1,9 +1,0 @@
-number: 26
-title: Agreement Plan Merger 3 3.15 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-3.15   Compliance with Laws . Target has complied in all material respects with all Laws applicable to it, including the rules and regulations of the FDA or any other Governmental Authority, and is not in material violation of, and has not received any written notices of violation with respect to such Laws. Litigation . Exceptas set forth on Schedule 3.16 the Target Disclosure Schedule: (a) there is no private or governmental action, suit, proceeding, claim, arbitration or investigation pending before any Governmental Authority, foreign or domestic, or, to the Knowledge of Target, threatened against Target or any of its properties or any of its officers or directors (in their capacities as such); (b) there is no proceeding pending or, to Target’s Knowledge, threatened, nor has any claim or demand been made to Target that challenges (i) the right, title or interest of Target in, to or under the Proprietary Rights in which Target has (or purports to have) any right, title or interest or (ii) alleges infringement, contributory infringement, inducement to infringe, misappropriation or unlawful use by Target of Proprietary Rights of any other third party; and (c) there is no judgment, decree or order against Target or, to Target’s Knowledge, any of its directors or officers (in their capacities as such), that (i) restricts in any manner the use, transfer or licensing of any Proprietary Rights in which Target has (or purports to have) any right, title or interest, (ii) could prevent, enjoin, or materially alter or delay any of the transactions contemplated by this Agreement, or (iii) that could reasonably be expected to have a Material Adverse Effect.

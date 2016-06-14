@@ -1,9 +1,0 @@
-number: 149
-title: Agreement Plan Merger 2 Section 4.06
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 4.06          Financing. Parent has delivered to the Company a true and complete copy of the executed commitment letter from Perceptive Advisors LLC (the “ Lender ”), together with all exhibits, schedules and annexes thereto (the “ Financing Commitment Letter ”), pursuant to which the Lender has committed to provide Parent with debt financing in an aggregate principal amount of $15.5 million (the “ Financing ”). The Financing Commitment Letter, in the form so delivered, is in full force and effect and is a legal, valid and binding obligations of Parent and, to Parent’s knowledge, the other parties thereto as of the date hereof.  As of the date of this Agreement, the Financing Commitment Letter has not been withdrawn, rescinded or terminated or otherwise amended or modified in any respect, and no such withdrawal, rescission, termination, amendment or modification is contemplated. Assuming (i) the Financing is funded in accordance with the Financing Commitment Letter, (ii) the conditions set forth in  Section 7.02  will be satisfied as of the Closing Date, the funds from the Financing, together with funds (including cash on hand of Parent and its Subsidiaries) otherwise available to Parent, will be sufficient to consummate the transactions contemplated by this Agreement and each Ancillary Document upon the terms contemplated hereby and thereby, together with any fees and expenses of or payable by Parent on the Closing Date with respect thereto and with respect to the Financing.

@@ -1,9 +1,0 @@
-number: 74
-title: Acquisition Agreement Section 8.12
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 8.12 Waiver . At any time prior to the Closing, the parties hereto may (a) extend the time for the performance of any of the obligations or other acts of the other parties hereto, (b) waive any inaccuracies in the representations and warranties contained herein or in any document delivered pursuant hereto and (c) waive compliance with any of the agreements or conditions contained herein. Any agreement on the part of a party hereto to any such extension or waiver shall be valid only if set forth in an instrument in writing signed on behalf of such party.

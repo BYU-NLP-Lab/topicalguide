@@ -1,9 +1,0 @@
-number: 24
-title: Agreement Plan Merger 3 3.13 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-3.13   Minute Books . The minute books of Target contain a materially complete and   accurate summary of all meetings of directors and stockholders or actions by written consent since the time of incorporation of Target through the Agreement Date, and reflects all material transactions referred to in such minutes accurately in all material respects. 

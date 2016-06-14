@@ -1,9 +1,0 @@
-number: 48
-title: Acquisition Agreement Section 5.11
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.11 Communications with Customers and Suppliers . Prior to the Closing, the Purchaser shall not, and shall cause its Affiliates and representatives not to, contact, or engage in any discussions or otherwise communicate with, the Sellers’ customers, suppliers, licensors, licensees and other Persons with which the Sellers have material commercial dealings without obtaining the prior consent of the Sellers (other than any such communication in the ordinary course of business of the Purchaser and their Affiliates without reference to or any purpose relating to the Business, the Acquired Assets, the Assumed Liabilities or the transactions contemplated by this Agreement) or as permitted by the Confidentiality Agreement.

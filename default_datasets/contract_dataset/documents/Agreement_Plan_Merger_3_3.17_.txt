@@ -1,9 +1,0 @@
-number: 27
-title: Agreement Plan Merger 3 3.17 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-3.17   Business Activity Restriction . There is no agreement, judgment, injunction, order, decree or other instrument binding upon Target that has or could reasonably be expected to have the effect of prohibiting or impairing the Business or any current business practice of Target, any acquisition of property by Target or the conduct of business by Target as currently conducted by Target.

@@ -1,9 +1,0 @@
-number: 13
-title: Acquisition Agreement Section 3.3
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.3 Authority of the Sellers . Each Seller has all requisite entity power and authority to execute, deliver and, subject to the entry and effectiveness of the Sale Order, perform its obligations under this Agreement and each of the Ancillary Documents to which such Seller is a party. The execution, delivery and performance of this Agreement and such Ancillary Documents by each Seller and the consummation of the transactions contemplated hereby and thereby have been duly authorized and approved by all requisite entity action of such Seller. Subject to the entry and effectiveness of the Sale Order, this Agreement and each such Ancillary Document have been, duly and validly executed and delivered by each Seller and (assuming this Agreement and each such Ancillary Document constitute, a valid and binding obligation of the Purchaser) constitute a valid and binding obligation of each Seller enforceable against each such Seller in accordance with their terms, subject to applicable bankruptcy, reorganization, insolvency, moratorium and other Laws affecting creditors’ rights generally from time to time in effect and to general equitable principles (the “ Bankruptcy and Equity Exceptions ”).

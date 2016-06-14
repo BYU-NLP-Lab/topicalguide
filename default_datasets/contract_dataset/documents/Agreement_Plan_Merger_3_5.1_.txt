@@ -1,9 +1,0 @@
-number: 55
-title: Agreement Plan Merger 3 5.1 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-5.1   Conditions to Obligations of Each Party to Effect the Merger . The respective obligations of each Party to this Agreement to consummate the transactions contemplated by this Agreement shall be subject to the satisfaction at or prior to the Closing of each of the following conditions, any of which may be waived, in writing, by agreement of all the parties hereto:(a)   Stockholder Approval . This Agreement and the Merger shall be approved by the Target Stockholders by the requisite vote under Delaware Law, Target’s Certificate of Incorporation and any agreement between the Target and the Target Stockholders.(b)   No Injunctions or Restraints; Illegality . No temporary restraining order, preliminary or permanent injunction or other order issued by any court of competent jurisdiction or other legal or regulatory restraint or prohibition preventing the consummation of the Merger and the Final Merger shall be and remain in effect, nor shall there be any action taken, or any statute, rule, regulation or order enacted, entered, enforced or deemed applicable to the Merger and the Final Merger, which makes the consummation of the Merger or the Final Merger illegal.(c)   Governmental Approval .  Acquiror, Target, Merger Sub One and Merger Sub Two shall have timely obtained from each applicable Governmental Authority, if required, all approvals, waivers and consents necessary for consummation of or in connection with the Merger and the Final Merger and the several transactions contemplated hereby.

@@ -1,9 +1,0 @@
-number: 16
-title: Acquisition Agreement Section 3.6
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.6 Financial Statements; Books and Records .(a) The Sellers have made available to the Purchaser copies of the following financial statements (collectively, the “ Financial Statements ”): (i) the audited consolidated balance sheet of the Parent as of December 31, 2013 and the related consolidated statements of operations, comprehensive income (loss), stockholders’ equity (deficit) and cash flows for the fiscal year then ended; and (ii) the unaudited consolidated balance sheet of the Parent as of September 30, 2014 and the related consolidated statements of operations, comprehensive income (loss), stockholders’ equity (deficit) and cash flows for the six months then ended. Subject to the notes thereto, the Financial Statements were prepared, in all material respects, in accordance with GAAP consistently applied during the periods involved and present fairly, in all material respects, the consolidated financial position, results of operations, changes in stockholders’ equity (deficit) and cash flows of the Parent as of the respective dates and for the respective periods referred to in the Financial Statements (in the case of quarterly Financial Statements, subject to normal year-end adjustments).(b) The books and records of the Sellers and the Non-Debtor Subs maintained with respect to the Business and used in the preparation of the Financial Statements accurately and fairly reflect, in all material respects, the transactions and the assets and liabilities of the Sellers and the Non-Debtor Subs with respect to the Business.

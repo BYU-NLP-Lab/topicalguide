@@ -1,9 +1,0 @@
-number: 97
-title: Agreement Plan Merger 3 10.11 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-10.11   Entire Agreement . This Agreement (including the Schedules and Exhibits attached hereto) and the other Transaction Documents contain the entire agreement between the Parties with respect to the subject matter hereof and thereof and supersede all prior agreements, written or oral, with respect thereto.

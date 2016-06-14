@@ -1,9 +1,0 @@
-number: 52
-title: Agreement Plan Merger 3 4.18 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-4.18   Application of Takeover Provisions .  Acquiror and its Board of Directors have taken all necessary action, if any, in order to render inapplicable any control share acquisition, business combination, or other similar takeover, anti-takeover, moratorium, fair price, interested shareholder or similar provision under the articles of incorporation of Acquiror or the laws of the State of Nevada with respect to the transactions contemplated hereby, including the Merger and Acquiror’s issuance of shares of Acquiror Common Stock to the stockholders of Target.  Acquiror has never adopted any shareholder rights plan or similar arrangement relating to accumulations of beneficial ownership of Acquiror Common Stock or a change in control of Acquiror.

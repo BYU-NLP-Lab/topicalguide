@@ -1,9 +1,0 @@
-number: 81
-title: Agreement Plan Merger 3 8.11 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-8.11   Straddle Period . In the case of any taxable period that includes (but does not end on) the Closing Date (a “ Straddle Period ”), the amount of any Taxes based on or measured by income or receipts of the Target for the Pre-Closing Tax Period shall be determined based on an interim closing of the books as of the close of business on the Closing Date and the amount of other Taxes of the Target for a Straddle Period that relates to the Pre-Closing Tax Period shall be deemed to be the amount of such Tax for the entire taxable period multiplied by a fraction the numerator of which is the number of days in the taxable period ending on the Closing Date and the denominator of which is the number of days in such Straddle Period.STOCKHOLDER REPRESENTATIVE

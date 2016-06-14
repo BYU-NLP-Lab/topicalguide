@@ -1,9 +1,0 @@
-number: 8
-title: Agreement Plan Merger 3 2.7 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-2.7   No Further Ownership Rights in Target Common Stock . The Merger Consideration delivered to Target Stockholders in accordance with the terms hereof shall be deemed to have been issued or paid in full satisfaction of all rights pertaining to such shares of Target Common Stock, and there shall be no further registration of transfers on the records of the Surviving Corporation of shares of Target Common Stock which were outstanding immediately prior to the Effective Time. If, after the Effective Time, Certificates are presented to the Surviving Corporation for any reason, they shall be canceled and exchanged as provided in this Article II .

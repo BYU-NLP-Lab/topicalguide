@@ -1,9 +1,0 @@
-number: 48
-title: Agreement Plan Merger 3 4.14 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-4.14   Tax Free Reorganization .  Neither Acquiror nor, to Acquiror’s Knowledge, any of its Affiliates has taken or agreed to take any action that would prevent the Merger and the Final Merger from qualifying as a reorganization under 368(a) of the Code.

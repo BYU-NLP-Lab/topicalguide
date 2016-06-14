@@ -1,9 +1,0 @@
-number: 65
-title: Acquisition Agreement Section 8.3
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 8.3 Survival of Representations, Warranties and Covenants . No representations or warranties in this Agreement or in any Ancillary Document shall survive the Closing. No covenants in this Agreement or in any Ancillary Document shall survive the Closing except to the extent the terms thereof expressly contemplate performance following the Closing.

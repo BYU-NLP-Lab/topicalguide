@@ -1,9 +1,0 @@
-number: 39
-title: Acquisition Agreement Section 5.2
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.2 Access and Information . Subject to the Bidding Procedures and applicable Law, the Sellers shall afford to the Purchaser and its officers, employees, financial advisors, legal counsel, accountants, consultants, financing sources and other authorized representatives reasonable access during normal business hours throughout the period prior to the Closing Date to the books, records and properties of the Sellers and the Non-Debtor Subs and, during such period, shall furnish reasonably promptly to the Purchaser such information as the Purchaser may reasonably request, in each case, related to the Business, the Acquired Assets, the Assumed Liabilities or the Non-Debtor Subs for any purpose related to the consummation of the transactions contemplated by this Agreement; provided, that (a) any information obtained pursuant to this Section 5.2 shall be subject to the Confidentiality Agreement, (b) any books and records or other information that is subject to an attorney-client or other legal privilege or obligation of confidentiality or non-disclosure shall not be made so accessible and (c) such access shall occur only following reasonable prior notice to a person designated by the Sellers and, at the Sellers’ sole discretion, only if accompanied by a designee of the Sellers.

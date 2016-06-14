@@ -1,9 +1,0 @@
-number: 43
-title: Acquisition Agreement Section 5.6
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.6 Cure Costs . With respect to each Assigned Contract and Assumed Lease, on the later of (x) the Closing and (y) the date on which any disputed Cure Cost is settled or resolved by a Final Order of the Bankruptcy Court, the Sellers shall pay (to the extent not previously satisfied), pursuant to Section 365 of the Bankruptcy Code and the Sale Order, the cure and reinstatement costs or expenses (the “ Cure Costs ”) of or relating to the assumption and assignment of such Assigned Contract and Assumed Lease.

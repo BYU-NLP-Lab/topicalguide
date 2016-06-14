@@ -1,9 +1,0 @@
-number: 202
-title: Agreement Plan Merger 2 Section 10.03
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 10.03          Notices. All notices, requests, consents, claims, demands, waivers and other communications hereunder shall be in writing and shall be deemed to have been given (a) when delivered by hand (with written confirmation of receipt); (b) when received by the addressee if sent by a nationally recognized overnight courier (receipt requested); (c) on the date sent by facsimile or e-mail of a PDF document (with confirmation of transmission) if sent during normal business hours of the recipient, and on the next Business Day if sent after normal business hours of the recipient or (d) on the third day after the date mailed, by certified or registered mail, return receipt requested, postage prepaid. Such communications must be sent to the respective parties at the following addresses (or at such other address for a party as shall be specified in a notice given in accordance with this Section 10.03 ):If to the Company:Celleration Inc.6321 Bury Drive, Suite 15Eden Prairie, MN 55346Facsimile: (952) 945-4304E-mail: mwagner@celleration.comAttention: Mark WagnerDorsey & Whitney LLP50 South Sixth Street, Suite 1500Minneapolis, MN 55402Facsimile:      (612) 395-5247E-mail:  moore.brian@dorsey.comAttention:     Brian G. Moore, Esq.If to Parent or Merger Sub:Alliqua BioMedical, Inc.2150 Cabot Blvd. WestLanghorne, PA 19047Facsimile:     (215) 702-8535E-mail: djohnson@alliqua.comAttention:     David JohnsonHaynes and Boone, LLP30 Rockefeller PlazaNew York, NY 10112Facsimile:      (212) 884-8234E-mail:     rick.werner@haynesboone.comAttention:     Rick A. Werner, Esq.If to the Stockholder Representative:Christopher Geyen2528 Wood Duck TrailShakopee, MN 55379Facsimile: (612) 845-0993E-mail: Christophergeyen@yahoo.com

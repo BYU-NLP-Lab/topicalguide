@@ -1,9 +1,0 @@
-number: 163
-title: Agreement Plan Merger 2 Section 5.07
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.07          Resignations. Prior to the Effective Time, Company shall cause each member of the Company Board and each officer of the Company appointed by the Company Board to execute and deliver a letter, which shall not be revoked or amended prior to the Effective Time, effectuating his or her resignation as a director of the Company effective immediately prior to the Effective Time.

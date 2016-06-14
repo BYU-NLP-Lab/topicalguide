@@ -1,9 +1,0 @@
-number: 79
-title: Agreement Plan Merger 3 8.9 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-8.9   Effect of Investigation . No Party shall have a   right to indemnification based on breach of any representation, warranty, covenant or obligation of the other parties contained in or made pursuant to this Agreement, if the Party seeking indemnification had Knowledge with respect to the accuracy or inaccuracy of or compliance with, any such representation, warranty, covenant or obligation before the Closing.

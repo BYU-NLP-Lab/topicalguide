@@ -1,9 +1,0 @@
-number: 20
-title: Agreement Plan Merger 3 3.8 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-3.8   Absence of Undisclosed Liabilities . All Liabilities of Target are set forth on Schedule 3.8 of the Target Disclosure Schedule, including, but not limited to, those incurred or to be incurred in connection with the execution of this Agreement.

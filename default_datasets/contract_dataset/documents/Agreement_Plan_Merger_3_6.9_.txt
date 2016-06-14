@@ -1,9 +1,0 @@
-number: 66
-title: Agreement Plan Merger 3 6.9 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-6.9   Survival of Additional Covenants . The covenants and obligations set forth in this Article VI shall survive the Closing.TERMINATION, AMENDMENT AND WAIVER

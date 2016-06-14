@@ -1,9 +1,0 @@
-number: 32
-title: Acquisition Agreement Section 4.2
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 4.2 Authority of the Purchaser . The Purchaser has all requisite corporate power and authority to execute, deliver and perform their obligations under this Agreement and each of the Ancillary Documents to which it is a party. The execution, delivery and performance of this Agreement and such Ancillary Documents by the Purchaser and the consummation by the Purchaser of the transactions contemplated hereby and thereby have been duly authorized by all requisite corporate action of the Purchaser. This Agreement and each such Ancillary Document has been, or at or prior to Closing (as the case may be) will be, duly and validly executed and delivered by the Purchaser and (assuming this Agreement and each such Ancillary Document constitute a valid and binding obligation of the Sellers) constitute, or at or prior to Closing (as the case may be) will constitute, a valid and binding obligation of the Purchaser enforceable against the Purchaser in accordance with their terms, subject to the Bankruptcy and Equity Exceptions.

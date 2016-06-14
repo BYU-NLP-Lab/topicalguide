@@ -1,9 +1,0 @@
-number: 47
-title: Agreement Plan Merger 3 4.13 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-4.13   Litigation . Except as set forth on Schedule 4.13 the Purchaser Disclosure Schedule: (a) there is no private or governmental action, suit, proceeding, claim, arbitration or investigation pending before any Governmental Authority, foreign or domestic, or, to the Knowledge of Acquiror, threatened against Acquiror or any of its properties or any of its officers or directors (in their capacities as such); and (b) there is no judgment, decree or order against Acquiror or, to Acquiror’s Knowledge, any of its directors or officers (in their capacities as such), that (i) could prevent, enjoin, or materially alter or delay any of the transactions contemplated by this Agreement, or (ii) that could reasonably be expected to have a Material Adverse Effect.

@@ -1,9 +1,0 @@
-number: 30
-title: Agreement Plan Merger 3 3.20 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-3.20   Affiliate Transactions . Except as set forth on Schedule 3.20 of the Target Disclosure Schedule, no Affiliate of Target nor any stockholder, officer, director, partner, member, consultant or employee of any thereof, is at the Agreement Date a party to any transaction with Target, including any contract or arrangement providing for the furnishing of services to or by, providing for rental of Real Property or Tangible Personal Property (including Target Proprietary Rights) to or from, or otherwise requiring payments to or from Target, or any Affiliate thereof.

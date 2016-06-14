@@ -1,9 +1,0 @@
-number: 180
-title: Agreement Plan Merger 2 Section 6.10
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 6.10          Tax Treatment of Merger . Each of Parent, Merger Sub and the Surviving Corporation and each of their respective Affiliates shall not take any action and shall not fail to take any action which action or failure to act would prevent, or would be reasonably likely to prevent, the Merger from qualifying as a reorganization within the meaning of Section 368(a) of the Code.

@@ -1,9 +1,0 @@
-number: 55
-title: Acquisition Agreement Section 5.18
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.18 Use of Names and Marks . The Purchaser acknowledge and agree that, notwithstanding the transfer of Intellectual Property included in the Acquired Assets, (a) the Sellers will continue using their current corporate names during the pendency of the Chapter 11 Cases and any additional time during which the Sellers wind down their affairs, and (b) the Sellers shall be entitled to refer to names and marks included in the Acquired Assets in filings with Governmental Entities, for factual or historical reference and for any other purposes that do not constitute trademark infringement and are not otherwise prohibited by applicable Law.

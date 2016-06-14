@@ -1,9 +1,0 @@
-number: 15
-title: Agreement Plan Merger 3 3.3 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-3.3   No Conflict . The execution and delivery of this Agreement and the other Transaction Documents by Target do not, and the performance by Target of its obligations hereunder and the consummation of the Merger and the transactions contemplated by the other Transaction Documents will not: (a) conflict with or violate any provision of the Certificate of Incorporation or Bylaws or any resolutions adopted by the Board of Directors of Target; (b) assuming that all filings and notifications described in Section 3.4  have been made and except as would not cause a Material Adverse Effect, conflict with or violate any Laws or order applicable to Target; or (c) except as would not cause a Material Adverse Effect, result in any breach of or constitute a default under (with the giving of notice or lapse of time or both), or give to others any right of termination, amendment, acceleration or cancellation of, or result in the creation of a Lien (except for a Permitted Lien) on the Business or Assets of Target, or pursuant to any note, bond, mortgage, indenture, contract, agreement, lease, license, permit, franchise or other instrument or obligation of Target.

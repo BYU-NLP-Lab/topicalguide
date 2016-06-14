@@ -1,9 +1,0 @@
-number: 67
-title: Agreement Plan Merger 3 7.1 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-7.1   Termination . This Agreement may be terminated at any time prior to the Effective Time (with respect to Section 7.1(a) through Section 7.1(c), by written notice by the terminating party to the other Parties):(a)   by the mutual written consent of Acquiror and Target;(b)   by either Acquiror or Target if the Merger shall not have been consummated by [February 28, 2014]; provided , however , that the right to terminate this Agreement under this Section 7.1(b) shall not be available to any Party whose failure to fulfill any obligation under this Agreement has been the cause of or resulted in the failure of the Merger to occur on or before such date;(c)   by either Acquiror or Target if a court of competent jurisdiction or other Governmental Authority shall have issued a nonappealable final order, decree or ruling or taken any other action, in each case having the effect of permanently restraining, enjoining or otherwise prohibiting the Merger, unless the Party relying on such order, decree or ruling or other action has not complied in all material respects with its obligations under this Agreement; or(d)   by Acquiror or Target, if there has been a breach of any representation, warranty, covenant or agreement on the part of the other Party set forth in this Agreement, which breach (i) causes the conditions set forth in Section 8.2(b) (in the case of termination by Acquiror) or Section 8.2(c) (in the case of termination by Target) not to be satisfied and (ii) shall not have been cured within ten (10) Business Days following receipt by the breaching Party of written notice of such breach from the other Party.

@@ -1,9 +1,0 @@
-number: 40
-title: Agreement Plan Merger 3 4.6 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-4.6   Issuance of Shares . Subject to the accuracy of any representations and warranties made by Target Stockholders at the time of such issuance, the issuance and delivery of any shares of Acquiror Common Stock pursuant to this Agreement is and shall be in compliance with applicable federal and state securities laws and such shares, when issued, shall be duly authorized, validly issued, fully paid and non-assessable and free and clear of all Liens and restrictions on transfer, other than those Liens or restrictions specifically set forth and imposed in this Agreement and the other Transaction Agreements.

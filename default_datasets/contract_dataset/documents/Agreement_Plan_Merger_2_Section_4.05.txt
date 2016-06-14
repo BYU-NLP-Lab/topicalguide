@@ -1,9 +1,0 @@
-number: 148
-title: Agreement Plan Merger 2 Section 4.05
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 4.05          Brokers. Except for Cowen and Company LLC, no broker, finder or investment banker is entitled to any brokerage, finder's or other fee or commission in connection with the transactions contemplated by this Agreement or any Ancillary Document based upon arrangements made by or on behalf of Parent or Merger Sub.

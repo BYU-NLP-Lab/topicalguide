@@ -1,9 +1,0 @@
-number: 162
-title: Agreement Plan Merger 2 Section 5.06
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.06          Supplement to Disclosure Schedules . From time to time prior to the Closing, the Company shall have the right (but not the obligation) to supplement or amend the Disclosure Schedules hereto with respect to any matter hereafter arising or of which it becomes aware after the date hereof; provided that such supplemental disclosure shall in no way alter the representations and warranties made by the Company pursuant to Article III of this Agreement, as qualified by the Disclosure Schedules on the date of this Agreement, nor prohibit, in any way, Parent from relying on the representations and warranties made by the Company pursuant to Article III of this Agreement, as qualified by the Disclosure Schedules on the date of this Agreement.

@@ -1,9 +1,0 @@
-number: 37
-title: Acquisition Agreement Section 4.7
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 4.7 Interested Stockholders . Neither the Purchaser, nor any of its “affiliates” or “associates” has been an “interested stockholder” of the Parent at any time within three (3) years of the Effective Date, as those terms are used in Section 203 of the General Corporation Law of the State of Delaware.

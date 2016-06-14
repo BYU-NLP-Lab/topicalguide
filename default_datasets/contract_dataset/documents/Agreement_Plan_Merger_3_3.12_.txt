@@ -1,9 +1,0 @@
-number: 23
-title: Agreement Plan Merger 3 3.12 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-3.12   Interested Party Transactions . Except as set forth on Schedule 3.12 of the Target Disclosure Schedules, Target is not, and in the prior two year period ending on the Agreement Date has not been, indebted to any director, officer, employee or agent of Target (except for amounts due as normal salaries and bonuses and in reimbursement of ordinary expenses), and no such Person is, and in the prior two year period ending on the Agreement Date has been, indebted to Target. 

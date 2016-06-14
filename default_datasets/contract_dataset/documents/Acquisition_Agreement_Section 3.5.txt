@@ -1,9 +1,0 @@
-number: 15
-title: Acquisition Agreement Section 3.5
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.5 No Violations . Assuming that the consents, approvals, authorizations, declarations, filings and registrations referred to in Sections 3.4 and 4.3 have been made or obtained and remain in full force and effect and the conditions set forth in Section 6.1 have been satisfied, neither the execution, delivery or performance of this Agreement and the Ancillary Documents by the Sellers nor the consummation by the Sellers of the transactions contemplated hereby or thereby will (a) conflict with or result in any breach of any provisions of the certificate of incorporation, bylaws or other organizational documents of any Seller or any Non-Debtor Sub, (b) with or without notice or lapse of time or both, result in any breach or violation of or constitute a default or give rise to any right of termination, acceleration, vesting, payment, exercise or revocation under, any Assigned Contract to which any of the Sellers or any Non-Debtor Sub is a party or by which any of their respective properties or assets are bound, (c) result in the creation or imposition of any Encumbrance other than Permitted Encumbrances on any properties or assets of the Sellers or any Non-Debtor Sub or (d) violate any Order or Law applicable to any Seller or any Non-Debtor Sub or their respective properties or assets, except in the case of clauses (b), (c) and (d), for breaches, violations, defaults, rights, creations or impositions that (i) would not, individually or in the aggregate, have a Material Adverse Effect or (ii) are excused by or unenforceable as a result of the filing of the Petitions or as a result of the entry or effectiveness of the Sale Order.

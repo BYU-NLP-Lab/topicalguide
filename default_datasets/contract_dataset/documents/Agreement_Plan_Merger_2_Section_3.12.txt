@@ -1,9 +1,0 @@
-number: 127
-title: Agreement Plan Merger 2 Section 3.12
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.12          Customers and Suppliers.(a)           Section 3.12(a) of the Disclosure Schedules sets forth (i) each customer who has paid aggregate consideration to the Company for goods or services rendered in an amount greater than or equal to $100,000 for each of the two most recent fiscal years (collectively, the “ Material Customers ”); and (ii) the amount of consideration paid by each Material Customer during such periods. The Company has not received any notice, and has no Knowledge, that any of its Material Customers has ceased, or intends to cease after the Closing, to use its goods or services or to otherwise terminate or materially reduce its relationship with the Company.(b)           Section 3.12(b) of the Disclosure Schedules sets forth (i) each supplier to whom the Company has paid consideration for goods or services rendered in an amount greater than or equal to $100,000 for each of the two most recent fiscal years (collectively, the “ Material Suppliers ”); and (ii) the amount of consideration paid to each Material Supplier during such periods. The Company has not received any notice, and has no Knowledge, that any of its Material Suppliers has ceased, or intends to cease, to supply goods or services to the Company or to otherwise terminate or materially reduce its relationship with the Company.

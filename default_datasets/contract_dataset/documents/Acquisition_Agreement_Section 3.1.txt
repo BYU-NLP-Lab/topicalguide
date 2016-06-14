@@ -1,9 +1,0 @@
-number: 11
-title: Acquisition Agreement Section 3.1
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.1 Organization . Each Seller and each Non-Debtor Sub is validly existing and in good standing under the laws of the jurisdiction of its organization and has therequisite power and authority to own, lease and operate its properties and to carry on its business as it is now being conducted, except where the failure to be so existing and in good standing or to have such power and authority would not, individually or in the aggregate, have a Material Adverse Effect. Each Seller and each Non-Debtor Sub is duly qualified or licensed to do business as a foreign entity and is in good standing in each jurisdiction in which the nature of the business conducted by it makes such qualification or licensing necessary, except where the failure to be so duly qualified, licensed and in good standing would not, individually or in the aggregate, have a Material Adverse Effect. The Sellers have made available to the Purchaser a complete and correct copy of the organizational documents of each Seller and each Non-Debtor Sub, as in effect on the Effective Date.

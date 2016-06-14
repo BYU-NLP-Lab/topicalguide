@@ -1,9 +1,0 @@
-number: 29
-title: Acquisition Agreement Section 3.19
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.19 Insurance . Section 3.19 of the Seller Disclosure Schedule sets forth a complete and correct list, as of the Effective Date, of all material insurance policies and bonds maintained by any Seller or any Non-Debtor Sub with respect to the Business, the Acquired Assets or the Assumed Liabilities, including in respect of properties, buildings, equipment, fixtures, employees and operations.

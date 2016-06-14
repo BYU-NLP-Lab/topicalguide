@@ -1,9 +1,0 @@
-number: 136
-title: Agreement Plan Merger 2 Section 3.21
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.21          Related Party Transactions. No executive officer or director of the Company or any person owning 5% or of the Shares (or any of such person's immediate family members or Affiliates or associates) is a party, either directly or indirectly, to any Contract with or binding upon the Company or any of its assets, rights or properties or has any interest in any property owned by the Company or has engaged in any transaction with any of the foregoing within the last twelve (12) months.

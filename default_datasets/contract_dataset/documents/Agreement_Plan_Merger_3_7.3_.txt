@@ -1,9 +1,0 @@
-number: 69
-title: Agreement Plan Merger 3 7.3 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-7.3   Amendment . Subject to the provisions of applicable legal requirements, prior to the Effective Time, the Parties hereto may amend this Agreement only by authorized action at any time before or after the adoption of this Agreement by the Target Stockholders pursuant to an instrument in writing signed on behalf of each of the Parties hereto (provided that after such adoption of this Agreement by the Target Stockholders, no amendment shall be made which by Law requires further approval by the Target Stockholders without such further stockholder approval). To the extent permitted by applicable legal requirements, from and after the Effective Time, Acquiror and the Stockholder Representative may cause this Agreement to be amended only by execution of an instrument in writing signed on behalf of Acquiror and the Stockholder Representative.

@@ -1,9 +1,0 @@
-number: 172
-title: Agreement Plan Merger 2 Section 6.02
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 6.02          Termination of Existing Tax Sharing Agreements. Any and all existing Tax sharing agreements (whether written or not) binding upon the Company shall be terminated as of the Closing Date, other than any lease, loan, or similar commercial agreement the principal purpose of which is not related to Taxes. After such date neither the Surviving Corporation nor Parent shall have any further rights or liabilities thereunder.

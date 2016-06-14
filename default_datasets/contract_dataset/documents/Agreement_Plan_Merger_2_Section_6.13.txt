@@ -1,9 +1,0 @@
-number: 183
-title: Agreement Plan Merger 2 Section 6.13
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 6.13          FIRPTA Statement. On the Closing Date, the Company shall deliver to Parent a certificate, dated as of the Closing Date, certifying to the effect that no interest in the Company is a U.S. real property interest (such certificate in the form required by Treasury Regulation Section 1.897-2(h) and 1.1445-2(c)) (the “ FIPRTA Statement ”).

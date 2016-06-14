@@ -1,9 +1,0 @@
-number: 76
-title: Agreement Plan Merger 3 8.6 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-8.6   Exclusive Remedy .  The indemnification pursuant to this Article VIII shall be the sole and exclusive remedy of the Parties in connection with this Agreement, the transactions contemplated hereby, or any breach, claim or Damage hereunder. 

@@ -1,9 +1,0 @@
-number: 67
-title: Acquisition Agreement Section 8.5
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 8.5 Notices . All notices, requests, claims, demands or other communications hereunder shall be deemed to have been duly given and made if in writing and (a) at the time personally delivered if served by personal delivery upon the party hereto for whom it is intended, (b) at the time received if delivered by registered or certified mail (postage prepaid, return receipt requested) or by a national courier service (delivery of which is confirmed), or (c) upon confirmation if sent by facsimile or email; in each case to the Person at the address set forth below, or such other address as may be designated in writing hereafter, in the same manner, by such Person:if to the Purchaser, to:Valeant Pharmaceuticals International, Inc.400 Somerset Corporate BoulevardBridgewater, NJ 08807Facsimile:     (949) 315-3590Email:           mike.pearson@valeant.comAttention:      Chief Executive Officerrobert.chaionn@valeant.comwith a copy (which shall not constitute notice) to:Weil, Gotshal & Manges LLP767 Fifth AvenueNew York, New York 10153michael.aiello@weil.com andted.waksman@weil.comMichael J. Aiello and Ted S. Waksmanif to the Sellers, to:Dendreon CorporationSeattle, Washington 98101rcrotty@dendreon.comwith a copy (which shall not constitute notice) to:Skadden, Arps, Slate, Meagher & Flom LLP500 Boylston StreetBoston, Massachusetts 02116graham.robinson@skadden.comSkadden, Arps, Slate, Meagher & Flom LLPNew York City, New York 10036ken.ziman@skadden.comSkadden, Arps, Slate, Meagher & Flom LLP155 N. Wacker DriveChicago, Illinois 60606felicia.perlman@skadden.com

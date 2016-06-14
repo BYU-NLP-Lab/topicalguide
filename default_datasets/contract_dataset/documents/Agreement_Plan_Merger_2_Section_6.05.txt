@@ -1,9 +1,0 @@
-number: 175
-title: Agreement Plan Merger 2 Section 6.05
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 6.05          Straddle Period. In the case of Taxes that are payable with respect to a taxable period that begins before and ends after the Closing Date (each such period, a “ Straddle Period ”), the portion of any such Taxes that are treated as Pre-Closing Taxes for purposes of this Agreement shall be:(a)          in the case of Taxes (i) based upon, or related to, income, receipts, profits, wages, capital or net worth, (ii) imposed in connection with the sale, transfer or assignment of property, or (iii) required to be withheld, deemed equal to the amount which would be payable if the taxable year ended with the Closing Date; and(b)          in the case of other Taxes, deemed to be the amount of such Taxes for the entire period multiplied by a fraction the numerator of which is the number of days in the period ending on the Closing Date and the denominator of which is the number of days in the entire period.

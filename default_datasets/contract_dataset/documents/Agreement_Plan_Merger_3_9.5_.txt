@@ -1,9 +1,0 @@
-number: 86
-title: Agreement Plan Merger 3 9.5 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-9.5   Reliance on Stockholder Representative .  Acquiror, Merger Sub, their respective Affiliates (including after the Effective Time, the Surviving Corporation) and the Escrow Agent, shall be entitled to rely on the appointment of Holdings as Stockholder Representative and treat such Stockholder Representative as the duly appointed attorney-in-fact of each Target Stockholder and as having the duties, power and authority provided for in this Agreement and the Escrow Agreement.  None of Acquiror, Merger Sub, their respective Affiliates (including after the Effective Time, the Surviving Corporation), or the Escrow Agent shall be liable to any Target Stockholder for any actions taken or omitted by them in reliance upon any instructions, notice or other instruments delivered by the Stockholder Representative.  No resignation of the Stockholder Representative shall become effective unless at least thirty (30) days prior written notice of the replacement or resignation of such Stockholder Representative shall be provided to Acquiror and the Escrow Agent.  Acquiror, Merger Sub, their respective Affiliates (including after the Effective Time, the Surviving Corporation) and the Escrow Agent, shall be entitled to rely at any time after receipt of any such notice on the most recent notice so received.  If the Stockholder Representative shall be unable or unwilling to serve in such capacity, his, her or its successor who shall serve and exercise the powers of the Stockholder Representative hereunder shall be appointed by a written instrument signed by Target Stockholders holding a majority interest in the Escrow Fund held in escrow at such time.

@@ -1,9 +1,0 @@
-number: 46
-title: Acquisition Agreement Section 5.9
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.9 Break-Up Fee and Expense Reimbursement . Notwithstanding anything in this Agreement to the contrary, and if approved by the Bankruptcy Court pursuant to the Stalking Horse Order, the Sellers agree to pay the Purchaser the Break-Up Fee and the Expense Reimbursement Amount in accordance with Section 7.2(b) of this Agreement and the Stalking Horse Order.

@@ -1,9 +1,0 @@
-number: 166
-title: Agreement Plan Merger 2 Section 5.10
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.10          Closing Conditions. From the date hereof until the Closing, subject to the terms of this Agreement, each party hereto shall use commercially reasonable efforts to take such actions as are necessary to expeditiously satisfy the closing conditions set forth in Article VII hereof.

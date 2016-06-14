@@ -1,9 +1,0 @@
-number: 57
-title: Acquisition Agreement Section 5.20
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.20 Updates to Schedule 1.1(e) . The Purchaser shall have the right, by written notice delivered to the Sellers at any time during the period from and after the date hereof and until the Closing Date, to delete any Contract or real property lease from Schedule 1.1(e) ; provided, that the Purchaser shall pay (or cause its designated Affiliate or Affiliates to pay) to the Sellers an amount equal to the Rejection Costs, after the amount of the Rejection Costs has been determined in accordance with the definition thereof, and it being understood that any such Contract or real property deleted by the Purchaser from such schedule may subsequently be rejected by the Sellers in the Chapter 11 Cases; provided, however, the Sellers shall consider any reasonable requests by the Purchaser following the Closing Date and prior to confirmation of a chapter 11 plan with respect to the Sellers, that the Sellers file a motion to assume and assign to the Purchaser such Contract or real property lease rather than reject it. The Purchaser shall also have the right by written notice delivered to the Sellers at any time during the period from and after the date hereof and until the Closing Date to add any Contract or real property lease to Schedule 1.1(e) ; provided, that such Contract or real property lease has not been previously rejected in the Chapter 11 Cases.CONDITIONS PRECEDENT

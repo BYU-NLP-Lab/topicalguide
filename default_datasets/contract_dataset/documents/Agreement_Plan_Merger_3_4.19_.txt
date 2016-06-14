@@ -1,9 +1,0 @@
-number: 53
-title: Agreement Plan Merger 3 4.19 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-4.19   No Vote Required .  No vote of holders of any class or series of Acquiror’s capital stock is necessary to approve the Merger.

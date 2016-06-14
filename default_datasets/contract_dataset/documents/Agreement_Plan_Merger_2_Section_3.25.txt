@@ -1,9 +1,0 @@
-number: 140
-title: Agreement Plan Merger 2 Section 3.25
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.25          Brokers. No broker, finder or investment banker is entitled to any brokerage, finder's or other fee or commission in connection with the transactions contemplated by this Agreement or any Ancillary Document based upon arrangements made by or on behalf of the Company.

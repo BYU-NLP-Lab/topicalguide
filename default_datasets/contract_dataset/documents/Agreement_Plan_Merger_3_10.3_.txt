@@ -1,9 +1,0 @@
-number: 89
-title: Agreement Plan Merger 3 10.3 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-10.3   Assignment; Binding Effect; Benefit . Neither this Agreement nor any of the rights, interests or obligations hereunder shall be assigned by any Party (whether by operation of Laws or otherwise) without the prior written consent of any other Party except that Acquiror shall be permitted to assign its rights, interests and obligations to an Affiliate of Acquiror or in connection with a Change of Control without obtaining any consent from any other Party; provided that Acquiror shall remain liable for all such obligations hereunder. Any purported assignment, unless so consented to or permitted as provided herein, shall be void and without effect. Subject to the foregoing, this Agreement shall be binding upon and shall inure to the benefit of the Parties and their respective successors and permitted assigns. Notwithstanding anything contained in this Agreement to the contrary, nothing in this Agreement, expressed or implied, is intended to confer on any Person other than the Parties or their respective successors and permitted assigns any rights or remedies under or by reason of this Agreement.

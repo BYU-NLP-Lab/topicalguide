@@ -1,9 +1,0 @@
-number: 75
-title: Acquisition Agreement Section 8.13
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 8.13 Counterparts; Effectiveness . This Agreement may be executed in two or more counterparts, each of which shall be deemed to be an original but all of which shall constitute one and the same agreement.

@@ -1,9 +1,0 @@
-number: 192
-title: Agreement Plan Merger 2 Section 8.04
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 8.04          Certain Limitations. The indemnification provided for in Section 8.02 and Section 8.03 shall be subject to the following limitations:(a)          Stockholders, Optionholders and Warrantholders shall not be liable to the Parent Indemnitees for indemnification under Section 8.02(a) until the aggregate amount of all Losses in respect of indemnification under Section 8.02(a) exceeds $250,000(the “ Basket ”), in which event Stockholders, Optionholders and Warrantholders shall be required to pay or be liable for all such Losses in excess of the Basket.(b)          Parent shall not be liable to the Stockholder Indemnitees for indemnification under Section 8.03(a) until the aggregate amount of all Losses in respect of indemnification under Section 8.03(a) exceeds the Basket, in which event Parent shall be required to pay or be liable for all such Losses in excess of the Basket.(c)          Notwithstanding the foregoing, the limitations set forth in Section 8.04(a) and Section 8.04(b) shall not apply to Losses based upon, arising out of, with respect to or by reason of any inaccuracy in or breach of any representation or warranty in the first sentence of Section 3.01 , Section 3.02(a) , Section 3.04 , Section 4.01 and Section 4.03 .(d)          For purposes of this Article VIII , any inaccuracy in or breach of any representation or warranty shall be determined without regard to any materiality, Material Adverse Effect or other similar qualification contained in or otherwise applicable to such representation or warranty.

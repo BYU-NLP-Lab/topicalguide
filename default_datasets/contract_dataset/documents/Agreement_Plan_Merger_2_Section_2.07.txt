@@ -1,9 +1,0 @@
-number: 101
-title: Agreement Plan Merger 2 Section 2.07
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 2.07     Directors and Officers. The directors and officers of Merger Sub, in each case, immediately prior to the Effective Time shall, from and after the Effective Time, be the directors and officers, respectively, of the Surviving Corporation until their successors have been duly elected or appointed and qualified or until their earlier death, resignation or removal in accordance with the certificate of incorporation and by-laws of the Surviving Corporation.

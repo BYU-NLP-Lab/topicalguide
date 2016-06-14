@@ -1,9 +1,0 @@
-number: 8
-title: Acquisition Agreement Section 1.8
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 1.8 No Withholding . Any amount paid to a Seller shall be made free and clear of any withholding or other Tax.

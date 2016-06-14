@@ -1,9 +1,0 @@
-number: 169
-title: Agreement Plan Merger 2 Section 5.13
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.13          Public Announcements. As soon as reasonably practicable after the date of this Agreement, Parent and the Company shall mutually agree upon a joint initial press release concerning this Agreement and the transactions contemplated hereby, which shall be disseminated at such time and in such manner as is agreed upon in writing by Parent and the Company (not to be unreasonably withheld, conditioned or delayed).

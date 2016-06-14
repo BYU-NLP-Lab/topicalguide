@@ -1,9 +1,0 @@
-number: 11
-title: Agreement Plan Merger 3 2.10 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-2.10   Taking of Necessary Action; Further Action . Each of Acquiror, Merger Sub, and Target will take all such reasonable and lawful action as may be necessary or desirable in order to effectuate the Merger in accordance with this Agreement as promptly as possible. If, at any time after the Effective Time, any further action is necessary or desirable to carry out the purposes of this Agreement and to vest the Surviving Corporation with full right, title and possession to all assets, property, rights, privileges, powers and franchises of Target and Merger Sub, the officers and directors of Target and Merger Sub are fully authorized in the name of their respective corporations or otherwise to take, and will take, all such lawful and necessary action, so long as such action is not inconsistent with this Agreement.

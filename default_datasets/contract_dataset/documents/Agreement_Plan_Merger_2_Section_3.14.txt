@@ -1,9 +1,0 @@
-number: 129
-title: Agreement Plan Merger 2 Section 3.14
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.14          Legal Proceedings; Governmental Orders.(a)          There are no Actions pending or, to the Company's Knowledge, threatened (a) against or by the Company, any of its properties or assets or any of its officers, directors or employees (in their capacities as such) that would be material to the Company; or (b) against or by the Company that challenges or seeks to prevent, enjoin or otherwise delay the transactions contemplated by this Agreement. To the Company’s Knowledge, no event has occurred or circumstances exist that may give rise to, or serve as a basis for, any such Action.(b)          There are no outstanding Governmental Orders and no unsatisfied judgments, penalties or awards against or affecting the Company or any of its properties or assets.

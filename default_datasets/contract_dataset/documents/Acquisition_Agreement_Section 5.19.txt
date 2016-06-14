@@ -1,9 +1,0 @@
-number: 56
-title: Acquisition Agreement Section 5.19
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.19 NDC Code . To the extent not transferred as part of the Acquired Assets, the Sellers hereby grant, effective as of the Closing Date, to the Purchaser (and the Purchaser’s Affiliates) a royalty-free, paid-up license under the Sellers’ NDC numbers used in connection with the Business (including the NDC number for the biologic Provenge) to the extent necessary to allow the Purchaser and its Affiliates and their designees to market, distribute and sell the inventory acquired as part of the Acquired Assets and any additional inventory bearing such NDC numbers.

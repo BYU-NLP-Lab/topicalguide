@@ -1,9 +1,0 @@
-number: 58
-title: Acquisition Agreement Section 6.1
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 6.1 Conditions Precedent to Obligation of the Sellers and the Purchaser . The respective obligations of each party hereto to effect the transactions contemplated by this Agreement shall be subject to the satisfaction at or prior to the Closing of the following conditions:(a) the Stalking Horse Order shall have been entered by the Bankruptcy Court no later than February 6, 2015 (or February 9, 2015, solely if extended pursuant to Section 5.7(a) ) and shall not be subject to any effective stay;(b) the Sale Order shall have been entered by the Bankruptcy Court no later than twenty-eight (28) days after the date hereof and shall not be subject to any effective stay;(c) the waiting period (and any extensions thereof) applicable to the Acquisition under the HSR Act shall have expired or been terminated; and(d) no Governmental Entity of competent jurisdiction shall have enacted, enforced or entered any Law and no Order shall be in effect on the Closing Date that prohibits the consummation of the Closing.

@@ -1,9 +1,0 @@
-number: 22
-title: Acquisition Agreement Section 3.12
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.12 Real Property Leases .(a) On the Closing Date, the Sellers will sell, assign and transfer to the Purchaser a valid leasehold interest with respect to each of the Assumed Leases which is a lease (as opposed to a sublease), and a valid subleasehold interest with respect to each of the Assumed Leases which is a sublease, free and clear of all Encumbrances other than Permitted Encumbrances. Section 3.12(a) of the Seller Disclosure Schedule sets forth a complete and correct list of all the instruments through which the Sellers derive their leasehold and subleasehold interests in the Assumed Leases.(b) Section 3.12(b) of the Seller Disclosure Schedule sets forth a complete and correct list of all real property leases and subleases to which each Non-Debtor Sub is a party. The applicable Non-Debtor Sub has a valid leasehold or subleasehold interest with respect to each such lease or sublease, free and clear of all Encumbrances other than Permitted Encumbrances.(c) Complete and correct copies of the Assumed Leases and the real property leases and subleases of each Non-Debtor Sub (collectively, the “ Leases ”) have been made available to the Purchaser as of the Effective Date.

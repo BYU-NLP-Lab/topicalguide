@@ -1,9 +1,0 @@
-number: 93
-title: Agreement Plan Merger 3 10.7 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-10.7   Attorneys’ Fees . In the event of the bringing of any action by any Party hereto against any other Party arising out of this Agreement or the other Transaction Documents, the Party who is determined to be the prevailing party shall be entitled to recover from the other Party the reasonable costs and expenses of bringing such action, including reasonable attorneys’ fees.

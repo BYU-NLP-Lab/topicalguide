@@ -1,9 +1,0 @@
-number: 203
-title: Agreement Plan Merger 2 Section 10.04
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 10.04          Interpretation. For purposes of this Agreement, (a) the words “include,” “includes” and “including” shall be deemed to be followed by the words “without limitation”; (b) the word “or” is not exclusive; and (c) the words “herein,” “hereof,” “hereby,” “hereto” and “hereunder” refer to this Agreement as a whole. Unless the context otherwise requires, references herein: (x) to Articles, Sections, Disclosure Schedules and Exhibit mean the Articles and Sections of, and Disclosure Schedules and Exhibit attached to, this Agreement; (y) to an agreement, instrument or other document means such agreement, instrument or other document as amended, supplemented and modified from time to time to the extent permitted by the provisions thereof and (z) to a statute means such statute as amended from time to time and includes any successor legislation thereto and any regulations promulgated thereunder. This Agreement shall be construed without regard to any presumption or rule requiring construction or interpretation against the party drafting an instrument or causing any instrument to be drafted. The Disclosure Schedules and Exhibit referred to herein shall be construed with, and as an integral part of, this Agreement to the same extent as if they were set forth verbatim herein.

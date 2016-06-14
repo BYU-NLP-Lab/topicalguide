@@ -1,9 +1,0 @@
-number: 9
-title: Agreement Plan Merger 3 2.8 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-2.8   Acceleration of Merger Consideration .   Notwithstanding any provision of this Agreement to the contrary, immediately prior to the effective time of a Change of Control with respect to Acquiror, each component of the Merger Consideration which has not been delivered or paid by the Acquiror prior to such Change of Control (including, as applicable, the ANDA Share Consideration, the Escrow Shares and the Earn-Out Payments), shall be accelerated and delivered and paid by the Acquiror as provided in this  Article II ; provided, however, that the Acquiror shall not be required to accelerate and deliver Merger Consideration if both of the following two conditions are met (i) the Change of Control with respect to Acquiror is closed prior to ANDA Approval, and (ii) the definitive agreement pursuant to which the Change of Control is effected expressly provides that the acquiring or surviving Person in such Change of Control transaction shall be obligated to comply with the Acquiror’s obligations pursuant to this Agreement, including, without limitation, the obligation to issue or pay the Merger Consideration is accordance with the terms of this Agreement.

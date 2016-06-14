@@ -1,9 +1,0 @@
-number: 158
-title: Agreement Plan Merger 2 Section 5.02
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.02          Access to Information.(a)          From the date hereof until the Closing, the Company shall (a) upon reasonable notice, afford Parent and its Representatives full and free access to and the right to inspect all of the Real Property, properties, assets, premises, books and records, Contracts and other documents and data related to the Company; (b) furnish Parent and its Representatives with such financial, operating and other data and information related to the Company as Parent or any of its Representatives may reasonably request; and (c) instruct the Representatives of the Company to cooperate with Parent in its investigation of the Company. Any investigation pursuant to this Section 5.02 shall be conducted in such manner as not to interfere unreasonably with the conduct of the business of the Company. No investigation by Parent or other information received by Parent shall operate as a waiver or otherwise affect any representation, warranty or agreement given or made by the Company in this Agreement.(b)          Parent and the Company shall comply with, and shall cause their respective Representatives to comply with, all of their respective obligations under the Confidentiality Agreement, dated April 2, 2014, between Parent and the Company (the “ Confidentiality Agreement ”), which shall survive the termination of this Agreement in accordance with the terms set forth therein.

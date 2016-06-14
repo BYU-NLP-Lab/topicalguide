@@ -1,9 +1,0 @@
-number: 70
-title: Agreement Plan Merger 3 7.4 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-7.4   Extension; Waiver . At any time prior to the Effective Time, the parties hereto, by action taken or authorized by their respective Boards of Directors, may, to the extent legally allowed: (a) extend the time for the performance of any of the obligations or other acts of the other parties hereto; (b) waive any inaccuracies in the representations and warranties contained herein or in any document delivered pursuant hereto; and (c) waive compliance with any of the agreements or conditions contained herein. Any agreement on the part of a Party hereto to any such extension or waiver shall be valid only if set forth in a written instrument signed on behalf of such Party.SURVIVAL; INDEMNIFICATION

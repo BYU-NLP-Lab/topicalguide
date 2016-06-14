@@ -1,9 +1,0 @@
-number: 71
-title: Acquisition Agreement Section 8.9
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 8.9 Governing Law; Submission of Jurisdiction; Waiver of Jury Trial . This Agreement shall be governed by and construed in accordance with the laws of the State of Delaware without regard to the rules of conflict of laws of the State of Delaware or any other jurisdiction. Each of the parties hereto irrevocably and unconditionally consents to submit to the exclusive jurisdiction of the Bankruptcy Court for any litigation arising out of or relating to this Agreement and the transactions contemplated thereby (and agrees not to commence any litigation relating thereto except in the Bankruptcy Court), and waives any objection to the laying of venue of any such litigation in the Bankruptcy Court. Each party hereto hereby consents to service of process in the manner and at the address set forth in Section 8.5 . EACH PARTY HERETO IRREVOCABLY AND UNCONDITIONALLY WAIVES ANY RIGHT IT MAY HAVE TO A TRIAL BY JURY IN RESPECT OF ANY LITIGATION ARISING OUT OF OR RELATING TO THIS AGREEMENT OR THE TRANSACTIONS CONTEMPLATED HEREBY.

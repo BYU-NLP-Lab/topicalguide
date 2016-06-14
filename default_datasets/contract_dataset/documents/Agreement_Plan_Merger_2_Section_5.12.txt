@@ -1,9 +1,0 @@
-number: 168
-title: Agreement Plan Merger 2 Section 5.12
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.12          Section 16 Matters . Prior to the Effective Time, Parent and the Company shall take all such steps as may be reasonably required to cause any disposition of Shares (including derivative securities with respect to Shares) or acquisitions of Parent Shares (including derivative securities with respect to Parent Shares) resulting from the transactions contemplated by this Agreement by each Person who will become subject to the reporting requirements with respect to Parent, to be exempt under Rule 16b-3 promulgated under the Exchange Act.

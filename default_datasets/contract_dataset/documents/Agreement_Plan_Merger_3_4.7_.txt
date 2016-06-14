@@ -1,9 +1,0 @@
-number: 41
-title: Agreement Plan Merger 3 4.7 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-4.7   No Finder . Neither Acquiror nor any Person acting on behalf of Acquiror has agreed to pay to any broker, finder, investment banker or any other Person, a brokerage, finder’s or other fee or commission in connection with this Agreement or any matter related hereto, nor has any broker, finder, investment banker or any other Person taken any action on which a claim for any such payment could be based.

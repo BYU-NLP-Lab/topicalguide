@@ -1,9 +1,0 @@
-number: 51
-title: Agreement Plan Merger 3 4.17 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-4.17   No Integrated Offering .  Neither Acquiror nor any Affiliates of Acquiror, nor any Person acting on the behalf of any of the foregoing, has, directly or indirectly, made any offers or sales of any security or solicited any offers to purchase any security, under circumstances that would require registration of any of the shares of Acquiror Common Stock issuable pursuant to and by virtue of the Merger under the Securities Act or cause such offering of Acquiror Common Stock to be integrated with prior offerings by Acquiror for purposes of the Securities Act or any applicable shareholder approval requirements of any authority.

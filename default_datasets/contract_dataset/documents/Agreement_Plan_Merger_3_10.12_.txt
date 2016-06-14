@@ -1,9 +1,0 @@
-number: 98
-title: Agreement Plan Merger 3 10.12 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-10.12   Waivers and Amendments; Non-Contractual Remedies; Preservation of   Remedies . This Agreement may be amended, superseded, canceled, renewed or extended only by a written instrument signed by each of the Parties. The provisions hereof may be waived only in writing signed by each of the Parties. No delay on the part of any Party in exercising any right, power or privilege hereunder shall operate as a waiver thereof, nor shall any waiver on the part of any Party of any such right, power or privilege, nor any single or partial exercise of any such right, power or privilege, preclude any further exercise thereof or the exercise of any other such right, power or privilege. Except as otherwise provided herein, the rights and remedies herein provided are cumulative and are not exclusive of any rights or remedies that any Party may otherwise have at law or in equity.

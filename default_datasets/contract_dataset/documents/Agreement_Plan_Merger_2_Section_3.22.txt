@@ -1,9 +1,0 @@
-number: 137
-title: Agreement Plan Merger 2 Section 3.22
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.22          Banks; Powers of Attorney . Section 3.22 of the Disclosure Schedules lists as of the date hereof the names and locations of all banks in which the Company has accounts or safe deposit boxes and the names of all persons authorized to draw thereon or to have access thereto. Except as set forth in Section 3.22 of the Disclosure Schedules, no Person holds a power of attorney to act on behalf of the Company.

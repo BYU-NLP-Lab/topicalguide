@@ -1,9 +1,0 @@
-number: 68
-title: Agreement Plan Merger 3 7.2 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-7.2   Effect of Termination . In the event of termination of this Agreement as provided in Section 7.1, there shall be no liability or obligation on the part of Acquiror, Merger Sub,  or Target or their respective officers, directors, or stockholders, except to the extent that such termination results from the willful breach by a Party of any of its representations, warranties or covenants set forth in this Agreement; provided , however , that the provisions of Sections 6.2, 6.3, 6.6  and Article X  shall remain in full force and effect and survive any termination of this Agreement.

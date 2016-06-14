@@ -1,9 +1,0 @@
-number: 107
-title: Agreement Plan Merger 2 Section 2.13
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 2.13     No Further Ownership Rights in Company Common Stock, Options and Company Warrants. All Merger Consideration paid or payable upon the surrender of Certificates, and all Merger Consideration paid or payable in respect of the Options and Company Warrants, in accordance with the terms hereof shall be deemed to have been paid or payable in full satisfaction of all rights pertaining to the Shares formerly represented by such Certificate and such Options and Company Warrants, and from and after the Effective Time, there shall be no further registration of transfers of Shares on the stock transfer books of the Surviving Corporation. If, after the Effective Time, Certificates are presented to the Surviving Corporation, they shall be cancelled and exchanged for the Merger Consideration provided for, and in accordance with the procedures set forth, in this Article II and elsewhere in this Agreement.

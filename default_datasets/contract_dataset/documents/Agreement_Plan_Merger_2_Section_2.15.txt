@@ -1,9 +1,0 @@
-number: 109
-title: Agreement Plan Merger 2 Section 2.15
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 2.15     Withholding Rights . Each of the Exchange Agent, Parent, Merger Sub and the Surviving Corporation shall be entitled to deduct and withhold from the consideration otherwise payable to any Person pursuant to this Article II such amounts as may be required to be deducted and withheld with respect to the making of such payment under any provision of Tax Law. To the extent that amounts are so deducted and withheld by the Exchange Agent, Parent, Merger Sub or the Surviving Corporation, as the case may be, such amounts shall be treated for all purposes of this Agreement as having been paid to the Person in respect of which the Exchange Agent, Parent, Merger Sub or the Surviving Corporation, as the case may be, made such deduction and withholding.

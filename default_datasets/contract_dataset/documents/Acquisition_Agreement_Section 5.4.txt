@@ -1,9 +1,0 @@
-number: 41
-title: Acquisition Agreement Section 5.4
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.4 Additional Matters . Subject to the terms and conditions herein provided, each of the parties hereto agrees to use all reasonable best efforts to take, or cause to be taken, all action and to do, or cause to be done, all things necessary, proper or advisable under applicable Laws to consummate and make effective the transactions contemplated by this Agreement as promptly as practicable, including that in the case of Contracts included in the Acquired Assets that cannot be transferred or assigned effectively without the consent of third parties (after giving effect to the Sale Order and the Bankruptcy Code), the Sellers shall, at the Purchaser’ sole expense and subject to any approval of the Bankruptcy Court that may be required, reasonably cooperate with the Purchaser in endeavoring to obtain such consent (provided, that nothing in this Section 5.4 shall require any Seller or any Affiliate thereof to make any expenditure or incur any obligation on its own or on behalf of the Purchaser (unless funds in the full amount thereof are advanced to the Sellers in cash)); provided, that the obligations of the parties hereto to obtain any consent, approval or waiver from the Bankruptcy Court shall be governed exclusively by Section 5.7 .

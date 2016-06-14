@@ -1,9 +1,0 @@
-number: 144
-title: Agreement Plan Merger 2 Section 4.01
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 4.01          Organization and Authority of Parent and Merger Sub. Each of Parent and Merger Sub is a corporation duly organized, validly existing and in good standing under the Laws of the jurisdiction of its incorporation. Each of Parent and Merger Sub has full corporate power and authority to enter into and perform its obligations under this Agreement and the Ancillary Documents to which it is a party and to consummate the transactions contemplated hereby and thereby. The execution, delivery and performance by Parent and Merger Sub of this Agreement and any Ancillary Document to which they are a party and the consummation by Parent and Merger Sub of the transactions contemplated hereby and thereby have been duly authorized by all requisite corporate action on the part of Parent and Merger Sub and no other corporate proceedings on the part of Parent and Merger Sub are necessary to authorize the execution, delivery and performance of this Agreement or to consummate the Merger and the other transactions contemplated hereby and thereby. This Agreement has been duly executed and delivered by Parent and Merger Sub, and (assuming due authorization, execution and delivery by each other party hereto) this Agreement constitutes a legal, valid and binding obligation of Parent and Merger Sub enforceable against Parent and Merger Sub in accordance with its terms. When each Ancillary Document to which Parent or Merger Sub is or will be a party has been duly executed and delivered by Parent or Merger Sub (assuming due authorization, execution and delivery by each other party thereto), such Ancillary Document will constitute a legal and binding obligation of Parent or Merger Sub enforceable against it in accordance with its terms.

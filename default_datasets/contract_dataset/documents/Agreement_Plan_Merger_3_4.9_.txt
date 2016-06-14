@@ -1,9 +1,0 @@
-number: 43
-title: Agreement Plan Merger 3 4.9 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-4.9   Absence of Undisclosed Liabilities . Except as reflected in the unaudited balance sheet of Acquiror as of September 30, 2014 and included in Acquiror’s Quarterly Report on form 10-Q for the quarterly period ended on such date (the “ Acquiror Latest Balance Sheet ”), Acquiror has no SEC reportable material liabilities (whether accrued, absolute, contingent, unliquidated or otherwise) other than liabilities which have arisen after the date of the Acquiror Latest Balance Sheet in the ordinary course of business or liabilities to its directors, officers and employees.

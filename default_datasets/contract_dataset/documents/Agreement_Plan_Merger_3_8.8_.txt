@@ -1,9 +1,0 @@
-number: 78
-title: Agreement Plan Merger 3 8.8 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-8.8   Survival  of Indemnification Claims . The indemnification obligations set forth in this Article VIII shall survive the Closing. 

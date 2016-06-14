@@ -1,9 +1,0 @@
-number: 12
-title: Agreement Plan Merger 3 2.11 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-2.11   Securities Laws Issues . Acquiror intends to issue the shares of Acquiror Common Stock as provided in this Agreement pursuant to a “private placement” exemption or exemptions from registration under Section 4(2) of the Securities Act and/or Regulation D promulgated under the Securities Act and an exemption from qualification under the laws of the States of California, Delaware and Massachusetts and other applicable state securities laws. Acquiror and Target shall comply with all applicable provisions of and rules under the Securities Act and applicable state securities laws in connection with the offering and issuance of the shares of Acquiror Common Stock pursuant to this Agreement. Such shares of Acquiror Common Stock will be “restricted securities” under the Federal and state securities laws and cannot be offered or resold except pursuant to registration under the Securities Act or an available exemption from registration.

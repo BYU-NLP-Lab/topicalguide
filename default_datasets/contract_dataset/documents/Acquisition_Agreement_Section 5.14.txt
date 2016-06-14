@@ -1,9 +1,0 @@
-number: 51
-title: Acquisition Agreement Section 5.14
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 5.14 Post-Closing Books and Records . For a period of seven (7) years after the Closing Date (or such longer period as may be required by any Governmental Entity, applicable Order or Law or any ongoing Action):(a) the Purchaser shall not dispose of or destroy any of the business records and files of the Business transferred to it hereunder; and(b) the Purchaser shall allow the Sellers and any of their directors, officers, employees, financial advisors, legal counsel, accountants, consultants and other authorized representatives access to all business records and files of the Sellers, the Non-Debtor Subs or the Business that are transferred to the Purchaser hereunder, which are reasonably required by the Sellers for purposes related to the Chapter 11 Cases, the wind-down of the operations of the Sellers, the functions of any trusts or other successors to the Sellers, Tax matters and other reasonable business purposes, during regular business hours and upon reasonable prior notice, and the Sellers shall have the right to make copies of any such records and files.Notwithstanding the foregoing, during such period, the Purchaser may dispose of any such business records or files of the Business which are offered to, but not accepted by, the Sellers within ninety (90) days of receipt of such offer.

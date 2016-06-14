@@ -1,9 +1,0 @@
-number: 83
-title: Agreement Plan Merger 3 9.2 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-9.2   Notices .  Any notice given to the Stockholder Representative will constitute notice to each and all of Target Stockholders at the time notice is given to the Stockholder Representative.  Any action taken by, or notice or instruction received from, the Stockholder Representative will be deemed to be action by, or notice or instruction from, each and all of Target Stockholders.  Acquiror, Merger Sub, the Company and the Surviving Corporation may, and the Escrow Agent will, disregard any notice or instruction received from any one or more individual Target Stockholders.

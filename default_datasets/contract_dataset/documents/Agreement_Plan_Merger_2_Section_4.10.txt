@@ -1,9 +1,0 @@
-number: 153
-title: Agreement Plan Merger 2 Section 4.10
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 4.10          Legal Proceedings. Parent has complied, and is now complying, with all Laws applicable to it or its business, properties or assets. No investigation, review or Proceeding by any Governmental Authority in relation to any actual or alleged material violation of Law by Parent is pending or, to Parent’s knowledge, threatened, nor has Parent received any written notice from any Governmental Authority indicating an intention to conduct the same. Parent is not a party to any consent or similar Contract with a Governmental Authority that: would reasonably be expected to, either individually or in the aggregate, result in a Material Adverse Effect. Parent has not received any written notice of, or been charged with, the violation of any material Law. All Permits required for Parent to conduct its business as currently being conducted and as presently planned to be conducted have been obtained by it and are valid and in full force and effect. All fees and charges with respect to such Permits as of the date hereof have been paid in full.

@@ -1,9 +1,0 @@
-number: 35
-title: Acquisition Agreement Section 4.5
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 4.5 Brokers . Except for Jerry Lundquist, no Person is entitled to any brokerage, financial advisory, finder’s or similar fee or commission in connection with the transactions contemplated by this Agreement based upon arrangements made by or on behalf of the Purchaser or their Affiliates.

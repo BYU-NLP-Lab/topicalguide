@@ -1,9 +1,0 @@
-number: 27
-title: Acquisition Agreement Section 3.17
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 3.17 Environmental Matters .(a) To the Knowledge of the Sellers, each Seller and Non-Debtor Sub is in compliance with all applicable Environmental Laws, including possessing and complying with all Environmental Permits, except where the failure to be in such compliance or possess such Environmental Permits would not, individually or in the aggregate, have a Material Adverse Effect.(b) There is no Environmental Claim currently pending or, to the Knowledge of the Sellers, currently threatened against any Seller or Non-Debtor Sub that, individually or in the aggregate, would have a Material Adverse Effect, and no Seller or Non-Debtor Sub is a party to any Order pursuant to applicable Environmental Law, excluding such Orders that have expired with no further obligation on the part of the Sellers or the Non-Debtor Subs.(c) To the Knowledge of the Sellers, there has been no Release of any Hazardous Material at any property that is currently or was formerly owned, operated or leased by any Seller or Non-Debtor Sub that, individually or in the aggregate, would have a Material Adverse Effect.(d) The representations and warranties set forth in this Section 3.17 are the Sellers’ sole and exclusive representations and warranties with respect to environmental matters.

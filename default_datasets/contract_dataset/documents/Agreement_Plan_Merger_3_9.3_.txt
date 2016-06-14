@@ -1,9 +1,0 @@
-number: 84
-title: Agreement Plan Merger 3 9.3 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-9.3   Agreement of the Stockholder Representative .  The Stockholder Representative hereby agrees to do such acts, and execute further documents, as shall be necessary to carry out the provisions of this Agreement and the Escrow Agreement.

@@ -1,9 +1,0 @@
-number: 37
-title: Agreement Plan Merger 3 4.1 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-4.1   Organization and Qualification . Acquiror is a corporation duly organized, validly existing and in good standing under the laws of the State of Nevada and has all requisite corporate or other power and authority and all necessary governmental approvals to own, lease and operate its properties and to carry on its business as now being conducted, except where the failure to be so organized, existing and in good standing or to have such power, authority, and governmental approvals would not have, individually or in the aggregate, a material adverse effect on the ability of Acquiror to consummate the Merger. Each of Merger Sub One and Merger Sub Two is a corporation duly organized, validly existing and in good standing under the laws of the State of Delaware.  The copies of the articles of incorporation and bylaws of Acquiror, and the respective certificates of incorporation and bylaws of Merger Sub One and Merger Sub Two provided by Acquiror to Target, including any amendments to each of the foregoing, are true, complete and correct copies of such documents as in effect as of the date hereof, and shall be in effect on the Effective Date.

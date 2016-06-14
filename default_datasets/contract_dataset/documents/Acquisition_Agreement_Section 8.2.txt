@@ -1,9 +1,0 @@
-number: 64
-title: Acquisition Agreement Section 8.2
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-Section 8.2 Bulk Sales . The Purchaser hereby waives compliance by the Sellers and their Affiliates with the requirements and provisions of any “bulk-transfer” or similar laws of any jurisdiction that may otherwise be applicable with respect to the sale, conveyance, assignment or transfer of any or all of the Acquired Assets to the Purchaser.

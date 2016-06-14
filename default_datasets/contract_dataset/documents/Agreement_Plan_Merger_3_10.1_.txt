@@ -1,9 +1,0 @@
-number: 87
-title: Agreement Plan Merger 3 10.1 
-author_name: Grant
-month: Febuary
-president_name: Grant
-year: 2016
-day: 25
-
-10.1   Notices . All notices, requests, claims, demands or other communications that are required or may be given pursuant to the terms of this Agreement shall be in writing and shall be deemed to have been duly given (a) when delivered, if delivered by hand, one Business Day after transmitted, if transmitted by a nationally recognized overnight courier service, (c) when sent via facsimile or electronic mail  with confirmation of receipt, or (d) three Business Days after mailing, if mailed by registered or certified mail (return receipt requested), to the parties at the following addresses (or at such other address for a party as shall be specified in a notice given in accordance with this Section 10.1):(a)   If to Acquiror or Merger Sub:Innovus Pharmaceuticals, Inc.9171 Towne Centre Drive, Suite 440San Diego, CA 92122Attention: President & CEOTel: (858) 964-5123Fax: (858) 964-2130With a simultaneous copy to:Randy Berholtz, Esq.Innovus Pharmaceuticals, Inc.Acting General Counsel and Secretary(b)   If to Target:Novalere FP, Inc.199 Wells Avenue, Suite 208                 Newton, MA 02459(c)   If to Holdings:151 Tremont Street, PenthouseBoston, MA 02111If to Target or Holdings with a simultaneous copy to:155 Seaport Blvd.Boston, MA 02210Attention: Gil Arie, Esq.Tel: (617) 832-1781Fax: (617) 832-7000Email: garie@foleyhoag.com
