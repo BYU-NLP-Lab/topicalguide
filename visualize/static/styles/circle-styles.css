@@ -85,3 +85,11 @@
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
     right: 0px;
 }
+
+@media screen and (max-width: 1300px) {
+#plot-view-circles {
+    clear: both;
+}
+#plot-controls-circles {
+    width: 50%;
+}}
