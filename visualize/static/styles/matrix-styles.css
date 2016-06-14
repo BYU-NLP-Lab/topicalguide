@@ -1,0 +1,34 @@
+.matrix-background {
+    fill: #eee;
+}
+
+.row line {
+    stroke: #fff;
+}
+
+.row text {
+    font: 10px sans-serif;
+}
+
+.column text {
+    font: 10px sans-serif;
+}
+
+.row text.active {
+    fill: red;
+}
+
+.column text.active {
+    fill: red;
+}
+
+#key {
+}
+
+@media screen and (max-width: 1350px) {
+#plot-view-matrix {
+    clear: both;
+}
+#plot-controls-matrix {
+    width: 50%;
+}}
