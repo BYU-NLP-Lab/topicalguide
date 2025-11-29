@@ -112,7 +112,7 @@ var AllDocumentsSubView = DefaultView.extend({
                 topicNames[topicNum] = names[selectedScheme] || names["Top3"] || topicNum;
             }
 
-            var header = ["", "Document", "Year", "Top Topics", "Preview"];
+            var header = ["", "Document", "Year", "Topic 1", "Topic 2", "Topic 3", "Preview"];
             var documentData = d3.entries(documents).map(function(entry) {
                 var doc = entry.value;
                 var filename = entry.key;
@@ -121,13 +121,15 @@ var AllDocumentsSubView = DefaultView.extend({
                 var year = doc.metadata && doc.metadata.year ? doc.metadata.year : "";
 
                 // Get top 3 topics
-                var topTopics = "";
+                var topic1 = "", topic2 = "", topic3 = "";
                 if (doc.topics) {
                     var topicList = d3.entries(doc.topics)
                         .sort(function(a, b) { return b.value - a.value; })
                         .slice(0, 3)
                         .map(function(t) { return topicNames[t.key] || t.key; });
-                    topTopics = topicList.join(", ");
+                    topic1 = topicList[0] || "";
+                    topic2 = topicList[1] || "";
+                    topic3 = topicList[2] || "";
                 }
 
                 // Get preview (first 150 characters)
@@ -139,7 +141,7 @@ var AllDocumentsSubView = DefaultView.extend({
                     }
                 }
 
-                return [filename, filename, year, topTopics, preview];
+                return [filename, filename, year, topic1, topic2, topic3, preview];
             });
 
             var onClick = function(d, i) {
@@ -148,7 +150,7 @@ var AllDocumentsSubView = DefaultView.extend({
             createSortableTable(table, {
                 header: header,
                 data: documentData,
-                onClick: { "1": onClick, "2": onClick, "3": onClick, "4": onClick },
+                onClick: { "1": onClick, "2": onClick, "3": onClick, "4": onClick, "5": onClick, "6": onClick },
                 favicon: [0, "documents", this],
                 sortBy: 2,  // Sort by year by default
                 sortAscending: false,  // Most recent first
@@ -161,7 +163,7 @@ var AllDocumentsSubView = DefaultView.extend({
         "<ul>"+
         "<li><b>Document</b>: The document filename</li>"+
         "<li><b>Year</b>: Publication year from metadata</li>"+
-        "<li><b>Top Topics</b>: The three most prominent topics in the document</li>"+
+        "<li><b>Topic 1, 2, 3</b>: The three most prominent topics in the document</li>"+
         "<li><b>Preview</b>: First 150 characters of the document text</li>"+
         "</ul>"+
         "<p>Click on any column header to sort by that column. Click on a document row to view its full text and details. "+
