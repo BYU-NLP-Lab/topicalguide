@@ -227,3 +227,195 @@ contact:
     Provo, UT 84602
     Phone: (801) 422-9339 or (801) 422-3821
     Email: copyright@byu.edu
+
+## Opportunities for Enhanced Topic Analysis
+
+The Topical Guide provides a solid foundation for topic modeling with LDA and HLDA. Based on an audit of the current implementation, here are opportunities to enhance topic analysis capabilities:
+
+### Modern Topic Modeling Approaches
+
+**Neural Topic Models**
+- **BERTopic**: Leverage transformer-based embeddings (BERT, RoBERTa) for context-aware topic extraction
+  - Better handling of semantic relationships and polysemy
+  - Improved topic coherence, especially for domain-specific terminology
+  - Particularly valuable for State of the Union dataset with evolving political language
+- **Top2Vec**: Combines document and word embeddings for automatic topic discovery
+  - No need to specify number of topics in advance
+  - Better captures semantic similarity
+- **CTM (Contextualized Topic Models)**: Combines neural language models with topic modeling
+  - Handles short texts better than traditional LDA
+  - More robust to vocabulary changes over time
+
+**Implementation Path**: Add new analysis interfaces in `import_tool/analysis/interfaces/` similar to `mallet_analysis.py`
+
+### Temporal and Dynamic Analysis
+
+**Dynamic Topic Modeling**
+- Track topic evolution across time periods in the State of the Union dataset (1790-2025)
+- Identify emerging topics, declining topics, and persistent themes
+- Visualize topic trajectories over 235 years of presidential addresses
+- Detect topic "birth" and "death" events correlated with historical periods
+
+**Topic Evolution Metrics**
+- Topic stability over time windows
+- Topic drift detection (gradual vs. sudden changes)
+- Cross-administration topic comparison
+- Era-specific topic clustering (Revolutionary, Civil War, Industrial, Modern, etc.)
+
+**Implementation Path**: Extend `import_tool/metric/topic/` with temporal analysis modules; enhance `visualize/api.py` to support time-series queries
+
+### Advanced Coherence and Quality Metrics
+
+**Beyond PMI Coherence**
+- **C_v coherence**: Better correlates with human interpretability judgments
+- **NPMI (Normalized PMI)**: Addresses PMI bias toward rare words
+- **U_Mass coherence**: Uses document co-occurrence instead of sliding windows
+- **Topic Diversity**: Measure uniqueness of words across topics (avoid redundant topics)
+- **Topic Exclusivity**: Balance between topic coherence and topic distinctiveness
+
+**Current State**: Basic PMI coherence implemented in `import_tool/metric/topic/coherence.py`
+
+**Implementation Path**: Add new metric modules following the pattern in `import_tool/metric/topic/`
+
+### Enhanced Topic Naming and Labeling
+
+**Modern Labeling Approaches**
+- **LLM-based topic labeling**: Use GPT/Claude to generate human-readable topic names from top words and example documents
+- **Named Entity Recognition (NER)**: Extract key entities (people, places, organizations) to enrich topic descriptions
+- **Phrase extraction**: Use noun phrases instead of single words for more descriptive labels
+- **Hierarchical labeling**: Multi-level topic descriptions (short label + detailed description)
+
+**Current State**: Simple Top-N and TF-ITF naming in `import_tool/analysis/name_schemes/`
+
+**Implementation Path**: Extend `AbstractTopicNamer` with new naming schemes; integrate with external APIs or local NER models
+
+### Visualization Enhancements
+
+**Topic Embedding Visualizations**
+- **t-SNE/UMAP**: 2D visualizations of topic relationships based on word distributions
+- **Topic correlation networks**: Interactive graphs showing related topics
+- **Temporal topic flows**: Sankey diagrams or river plots showing topic evolution
+- **Topic-document heatmaps**: Visualize topic distributions across document collections
+
+**Hierarchical Topic Improvements**
+- Interactive tree visualization for HLDA results
+- Dendrogram-based topic browsing
+- Topic merging and splitting suggestions
+
+**Implementation Path**: Extend frontend in `visualize/` directory; add JavaScript libraries for interactive visualizations
+
+### Document-Level Improvements
+
+**Advanced Document Analysis**
+- **Document clustering**: Group documents by topic similarity beyond simple topic assignment
+- **Topic threading**: Trace topic development across related documents (e.g., follow "healthcare" through multiple administrations)
+- **Anomaly detection**: Identify documents with unusual topic distributions
+- **Cross-reference analysis**: Find documents that bridge multiple topics
+
+**Implementation Path**: Add to `import_tool/metric/document/` and enhance `visualize/models.py` Document methods
+
+### Preprocessing Enhancements
+
+**Text Processing**
+- **Better bigram/trigram detection**: Use pointwise mutual information or log-likelihood ratios
+- **Advanced stemming/lemmatization**: Integrate spaCy or NLTK's WordNet lemmatizer
+- **Domain-specific stopwords**: Automatically identify and filter domain-specific common words
+- **Rare word filtering**: More sophisticated frequency-based filtering
+- **Spelling normalization**: Handle historical spelling variations in older State of the Union addresses
+
+**Current State**: Basic bigram detection and Porter stemming in `mallet_analysis.py`
+
+**Implementation Path**: Enhance `_prepare_analysis_input()` in `import_tool/analysis/interfaces/mallet_analysis.py`
+
+### Model Diagnostics and Evaluation
+
+**Model Quality Assessment**
+- **Perplexity**: Measure how well the model predicts held-out documents
+- **Topic stability**: Cross-validation to assess topic reproducibility
+- **Optimal topic count selection**: Automated methods to determine ideal number of topics
+- **Convergence diagnostics**: Track and visualize MALLET training convergence
+
+**Comparative Analysis**
+- Side-by-side comparison of different topic counts
+- Compare LDA vs. HLDA results on same dataset
+- A/B testing framework for preprocessing choices
+
+**Implementation Path**: Add to `import_tool/metric/analysis/` for dataset-level metrics
+
+### Interactive Topic Refinement
+
+**User-Driven Improvements**
+- **Topic merging**: Combine similar topics based on user judgment
+- **Topic splitting**: Break overly broad topics into subtopics
+- **Word inclusion/exclusion**: Manually adjust topic-word associations
+- **Feedback loop**: Re-run analysis incorporating user corrections
+
+**Implementation Path**: Add API endpoints in `visualize/api.py`; create admin interface
+
+### Sentiment and Affect Analysis
+
+**Emotion Detection**
+- Sentiment analysis per topic (expand existing `sentiment.py`)
+- Emotion classification (joy, anger, fear, etc.) for topic instances
+- Tone analysis across presidential administrations
+- Rhetorical device detection
+
+**Implementation Path**: Enhance `import_tool/metric/topic/sentiment.py`; integrate sentiment lexicons or pre-trained models
+
+### Multi-Modal and Cross-Lingual Extensions
+
+**Language Support**
+- Multi-language topic modeling for translated documents
+- Cross-lingual topic alignment
+- Language-specific preprocessing pipelines
+
+**Multi-Modal Analysis**
+- Integrate image analysis for documents with figures
+- Audio/video transcript topic modeling
+- Joint text-metadata modeling
+
+### Performance and Scalability
+
+**Optimization Opportunities**
+- **Parallel processing**: Parallelize MALLET training and metric computation
+- **Incremental updates**: Add new documents without full retraining
+- **Caching strategies**: Cache frequently accessed topic-document matrices
+- **Database optimization**: Index optimization for large-scale queries
+
+**Current State**: Single-threaded MALLET execution
+
+**Implementation Path**: Add multiprocessing to `import_tool/analysis/interfaces/`; optimize database queries in `visualize/models.py`
+
+### Specific Recommendations for State of the Union Dataset
+
+Given the 235-year temporal span (1790-2025):
+
+1. **Historical language evolution**: Track vocabulary changes and topic shifts across centuries
+2. **Presidential comparison**: Cluster presidents by topic emphasis
+3. **Crisis detection**: Identify periods where topic distributions shift dramatically (wars, depressions, pandemics)
+4. **Policy tracking**: Follow specific policy topics (taxation, immigration, healthcare) across time
+5. **Rhetorical analysis**: Compare speaking styles and themes across different eras
+
+### Implementation Priority Recommendations
+
+**High Impact, Lower Effort**
+1. Add C_v coherence metric
+2. Improve topic naming with phrase extraction
+3. Add temporal visualization (topic over time)
+4. Implement topic diversity metrics
+
+**High Impact, Higher Effort**
+1. Integrate BERTopic or similar neural approach
+2. Build dynamic topic modeling for temporal analysis
+3. Create interactive topic evolution visualization
+4. Implement LLM-based topic labeling
+
+**Research-Oriented**
+1. Develop comparative analysis framework
+2. Build topic stability and reproducibility metrics
+3. Create automated optimal topic count selection
+4. Implement cross-lingual topic alignment
+
+### Contributing
+
+We welcome contributions in any of these areas. For major enhancements, please open an issue first to discuss the approach. See the Contributing section above for details on submitting pull requests.
