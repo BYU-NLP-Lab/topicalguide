@@ -1,8 +1,7 @@
-from __future__ import division, print_function, unicode_literals
 import os
 import io
 from import_tool import basic_tools
-from abstract_dataset import AbstractDataset, AbstractDocument
+from .abstract_dataset import AbstractDataset, AbstractDocument
     
 
 class GenericDataset(AbstractDataset):
@@ -84,7 +83,7 @@ class GenericDataset(AbstractDataset):
         self._documents_index = 0
         return self
     
-    def next(self):
+    def __next__(self):
         """
         Return the next GenericDocument.  Files that cannot be opened \
         or raise an error will not be included.

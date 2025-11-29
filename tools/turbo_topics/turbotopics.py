@@ -19,7 +19,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-from __future__ import division
 import sys, re, random, copy, itertools
 from math import *
 
@@ -185,7 +184,7 @@ class LikelihoodRatio:
         max_score = 0
         nperm = int(1.0 / self.pvalue)
         table = sorted(marg.items(), key = lambda x: -x[1])
-        for perm in xrange(nperm):
+        for perm in range(nperm):
             perm_bigram = sample_no_replace(total, table, count)
             obs_score = self.score(count, marg, perm_bigram, total, 1)
             obs_score = max(obs_score.values())
@@ -294,7 +293,7 @@ class MultTest:
         max_score = 0
         nperm = int(1.0 / self.pvalue)
         table = sorted(marg.items(), key = lambda x: -x[1])
-        for perm in xrange(nperm):
+        for perm in range(nperm):
             perm_bigram = sample_no_replace(total, table, count)
             obs_score = self.score(count, marg, perm_bigram, total, 1)
             obs_score = max(obs_score.values())
@@ -347,7 +346,7 @@ def sample_no_replace(total, table, nitems):
         print(n)
         assert(False)
 
-    sample = random.sample(xrange(total), nitems)
+    sample = random.sample(range(total), nitems)
     count = {}
     for n in sample:
         w = nth_item_from_table(n)

@@ -1,4 +1,3 @@
-from __future__ import division, print_function, unicode_literals
 from django.db.models import Count
 from math import isnan
 from numpy import dot, zeros
@@ -15,7 +14,7 @@ def compute_metric(database_id, dataset_db, analysis_db):
     
     # Collect word type counts into a topic by document matrix
     doc_count = len(doc_idx)
-    doctopicvectors = [zeros(doc_count) for i in xrange(0, topic_count)]
+    doctopicvectors = [zeros(doc_count) for i in range(0, topic_count)]
     for row in topic_doc_word_type_counts:
         topic_num = row['topics__number']
         doc_index = row['document__index']
@@ -23,8 +22,8 @@ def compute_metric(database_id, dataset_db, analysis_db):
         doctopicvectors[topic_num][doc_index] = count
     
     
-    for i in xrange(0, topic_count):
-        for j in xrange(0, topic_count):
+    for i in range(0, topic_count):
+        for j in range(0, topic_count):
             topic1_doc_vals = doctopicvectors[i]
             topic2_doc_vals = doctopicvectors[j]
             topic1 = topics_idx[i]

@@ -1,7 +1,6 @@
-from __future__ import division, print_function, unicode_literals
 from django.db import transaction
 from django.db.models.aggregates import Count
-from abstract_topic_namer import AbstractTopicNamer
+from .abstract_topic_namer import AbstractTopicNamer
 from visualize.models import TopicNameScheme, TopicName
 
 
@@ -25,4 +24,4 @@ class TopNTopicNamer(AbstractTopicNamer):
         top_n_items = topic.tokens.values("word_type__word")\
                       .annotate(count=Count("word_type__word"))\
                       .order_by('-count')[:self.n]
-        return u' '.join(unicode(x['word_type__word']) for x in top_n_items)
+        return u' '.join(str(x['word_type__word']) for x in top_n_items)

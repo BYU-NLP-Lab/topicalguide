@@ -1,5 +1,4 @@
 # coding=utf-8
-from __future__ import division, print_function, unicode_literals
 
 import argparse
 import os
@@ -7,7 +6,7 @@ import re
 import sys
 import numpy as np
 import scipy.stats as stats
-from StringIO import StringIO
+from io import StringIO
 
 
 # Based on Chapter 5 of "Foundations of Statistical Natural Language Processing"
@@ -53,7 +52,7 @@ class BigramFinder(object):
         
         self.training = True
         
-        for i in xrange(0, len(tokens)-1):
+        for i in range(0, len(tokens)-1):
             curr_token, __ = tokens[i]
             next_token, __ = tokens[i+1]
             if curr_token not in self.stopwords:
@@ -94,7 +93,7 @@ class BigramFinder(object):
             return
         
         for (stat, pair_count, doc_count, w1, w2) in self.bigrams:
-            print(unicode(stat)+'\t'+unicode(pair_count)+'\t'+doc_count+'\t'+w1+'\t'+w2)
+            print(str(stat)+'\t'+str(pair_count)+'\t'+doc_count+'\t'+w1+'\t'+w2)
     
     def combine(self, tokens, text):
         """Train the bigram finder.
@@ -161,7 +160,7 @@ class BigramFinder(object):
                     str(doc_count), w1, w2)
         self.bigrams.sort()
         self.bigrams.reverse()
-        for i in xrange(0,len(self.bigrams)):
+        for i in range(0,len(self.bigrams)):
             self.reference_bigrams[(self.bigrams[i][3],self.bigrams[i][4])] = True
     
     def _next_word_char(self, pos, tlength, text):

@@ -4,11 +4,18 @@ Copyright 2010-2015 Brigham Young University
 
 ## About
 
-The topical guide is a tool aimed at helping laymen and experts intuitively
+The Topical Guide is a tool aimed at helping laymen and experts intuitively
 navigate the topic distribution produced by a topic model, such as LDA, over a
 given dataset.
 
 Learn more by visiting [the wiki](https://github.com/BYU-NLP-Lab/topicalguide/wiki).
+
+## Requirements
+
+- Python 3.10 or higher
+- Django 4.2 (LTS)
+- MALLET (for topic modeling)
+- See `requirements.txt` for complete list of dependencies
 
 ## Installation
 
@@ -22,81 +29,109 @@ Then navigate to the `topicalguide` directory.
 
 ### 2. Install Dependencies
 
-Superuser permissions are necessary to install the Topical Guide as shown in the 
-current instructions.
+**It is strongly recommended to use a virtual environment.** You can create one using Python's built-in `venv` module:
 
-In order to circumvent the need for superuser permissions, you can create a virtual
-environment using `virtualenv`, `virtualenvwrapper`, `pyenv`, or another tool.
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-To use `virtualenv`, type the following inside the project's root directory:
+You must activate your virtual environment any time that `(venv)` does not appear in front of your command line.
 
-    virtualenv ENV
-    source ENV/bin/activate
+Once activated, install all dependencies:
 
-You must activate your virtual environment by typing the second line above any time
-that `(ENV)` does not appear in front of your command line.
+```bash
+pip install -r requirements.txt
+```
 
-Documentation for all of the above mentioned tools can be found here:
-[virtualenv](https://virtualenv.pypa.io/en/latest/)
-[virtualenvwrapper](https://virtualenvwrapper.readthedocs.org/en/latest/)
-[pyenv](https://github.com/yyuu/pyenv#installation)
+Note: If you encounter issues, ensure you're using Python 3.10 or higher:
 
-
-Dependencies are listed in the `requirements.txt` file and can be easily installed with:
-
-    pip install -r requirements.txt
+```bash
+python --version
+```
 
 If you want to use the word stemmer then run the following:
     
     cd tools/stemmer/
     ./make_english_stemmer.sh
 
-### 3. Create Settings
+### 3. Configure Django Settings
 
-In order for django to run it needs `settings.py` to be created.
-First, copy the template:
+The project uses Django 4.2. If you need to customize settings, copy the template:
 
-    cp topicalguide/settings.py.template topicalguide/settings.py
+```bash
+cp topicalguide/settings.py.template topicalguide/settings.py
+```
 
-Second, go to [this website](http://www.miniwebtool.com/django-secret-key-generator/) to generate your `SECRET_KEY`.
+Then edit `topicalguide/settings.py`:
 
-Third, open `topicalguide/settings.py` in your favorite text editor.  
-Within this file:
+1. Generate a `SECRET_KEY` at [django-secret-key-generator](http://www.miniwebtool.com/django-secret-key-generator/) and insert it
+2. The default SQLite database configuration should work out of the box
+3. For development, keep `DEBUG = True` (already set)
+4. For production, set `DEBUG = False` and configure `ALLOWED_HOSTS`
 
-(1) Insert your generated `SECRET_KEY` where it says
+**For most users, the existing `settings.py` file should work without modification.**
 
-	SECRET_KEY=''
+### 3a. Initialize the Database
 
-(2) Set your database settings. You could use sqlite, which is configured for you. 
-If you want to use Postgres there are instructions below for setting it up on Fedora.
+Run Django migrations to set up the database:
 
-(3) Set `DEBUG = True` to use the developement server.
-If DEBUG is set to False then ALLOWED_HOSTS must be set. See Django's documentation for further details.
-
-(4) Optionally, configure other various django options.
+```bash
+python manage.py migrate
+```
 
 ### 4. Import a Dataset
 
-You can run (from the project's root directory):
-    
-    ./default_datasets/import_state_of_the_union.sh
-    
-or
+#### State of the Union Dataset (1790-2025)
 
-    python tg.py import default_datasets/state_of_the_union/ --identifier state_of_the_union --public --public-documents
-    python tg.py analyze state_of_the_union --number-of-topics 100
+The project includes a State of the Union addresses dataset spanning from 1790 to 2025.
 
-For more options on importing see the documentation by running:
+**Option 1: Quick Import (recommended)**
 
-    python tg.py -h
+```bash
+python tg.py import default_datasets/state_of_the_union/ --identifier state_of_the_union --public --verbose
+python tg.py analyze state_of_the_union --number-of-topics 20 --stopwords stopwords/english_all.txt --verbose
+```
 
-### 5. Done!
+**Option 2: Using the provided script**
 
-Start up the development web server with the following command:
+```bash
+./default_datasets/import_state_of_the_union.sh
+```
 
-    python manage.py runserver
+The project includes several stopword files in the `stopwords/` directory (`english_all.txt`, `english_mallet.txt`, `en.txt`) for filtering common words during topic modeling.
 
-and then open a web browser and navigate to http://localhost:8000/.
+#### Updating the State of the Union Dataset
+
+To download the most recent State of the Union addresses (2011-2025):
+
+```bash
+python download_sotu.py
+```
+
+This will fetch recent speeches from the American Presidency Project and save them in the proper format.
+
+#### Custom Datasets
+
+For more options on importing custom datasets:
+
+```bash
+python tg.py -h
+```
+
+### 5. Start the Web Server
+
+Make sure your virtual environment is activated, then start the Django development server:
+
+```bash
+python manage.py runserver
+```
+
+Open a web browser and navigate to:
+
+**http://localhost:8000/**
+
+You should see the Topical Guide interface with your imported dataset(s).
 
 ## POSTGRESQL
 

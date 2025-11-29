@@ -1,4 +1,3 @@
-from __future__ import division, print_function, unicode_literals
 import random
 
 
@@ -13,7 +12,7 @@ def reservoir_sample(sample_size, data_count, seed=None):
     random.seed(seed)
     sample_indices = []
 
-    for index in xrange(data_count):
+    for index in range(data_count):
         # Generate the reservoir
         if index < sample_size:
             sample_indices.append(index)

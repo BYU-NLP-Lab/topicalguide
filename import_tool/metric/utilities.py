@@ -1,4 +1,3 @@
-from __future__ import division, print_function, unicode_literals
 import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
 from django.db import transaction

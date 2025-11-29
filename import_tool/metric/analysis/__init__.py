@@ -1,11 +1,10 @@
-from __future__ import division, print_function, unicode_literals
 from collections import OrderedDict
 from visualize.models import AnalysisMetricValue
-import entropy
-import token_count
-import type_count
-import stopword_count
-import excluded_word_count
+from . import entropy
+from . import token_count
+from . import type_count
+from . import stopword_count
+from . import excluded_word_count
 
 database_table = AnalysisMetricValue
 metrics = OrderedDict([

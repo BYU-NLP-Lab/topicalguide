@@ -23,7 +23,7 @@
 import time
 from git import Repo
 from django.http import HttpResponse
-from django.template import RequestContext, loader
+from django.template import loader
 from django.views.decorators.gzip import gzip_page
 from django.views.decorators.cache import never_cache
 
@@ -53,20 +53,18 @@ def root(request, *args, **kwargs):
     try:
         tags = Repo(__file__).tags
         if tags:
-            version = unicode(tags[-1])
+            version = str(tags[-1])
     except:
         pass
     context['version'] = version
-    
+
     template = loader.get_template('root.html')
-    template_context = RequestContext(request, context)
-    return HttpResponse(template.render(template_context))
+    return HttpResponse(template.render(context, request))
 
 @gzip_page
 def terms(request, *args, **kwargs):
     template = loader.get_template('terms.html')
-    context = RequestContext(request, {})
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render({}, request))
 
 #~ @never_cache
 #~ @gzip_page

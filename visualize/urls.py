@@ -1,8 +1,8 @@
-from django.conf.urls import patterns, include, url
+from django.urls import path
 from visualize import root, api
 
-urlpatterns = patterns('',
-    url(r'^$', root.root, name='root'),
-    url(r'^terms$', root.terms, name='terms'),
-    url(r'^api$', api.api, name='api'),
-)
+urlpatterns = [
+    path('', root.root, name='root'),
+    path('terms', root.terms, name='terms'),
+    path('api', api.api, name='api'),
+]

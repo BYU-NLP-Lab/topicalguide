@@ -1,7 +1,6 @@
-from __future__ import division, print_function, unicode_literals
 
 import random
-from abstract_analysis import AbstractAnalysis
+from .abstract_analysis import AbstractAnalysis
 
 
 class RandomAnalysis(AbstractAnalysis):

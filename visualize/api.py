@@ -32,7 +32,7 @@ from django.http import HttpResponse
 from django.views.decorators.cache import cache_control
 from django.db import connections
 from topicalguide import settings
-from utils import reservoir_sample
+from .utils import reservoir_sample
 
 DEBUG = settings.DEBUG
 MAX_DATASETS_PER_REQUEST = 1
@@ -111,7 +111,7 @@ def api(request):
     # Check the cache.
     path = request.get_full_path()
     DJANGO_CACHE_KEY_LENGTH_LIMIT = 250
-    if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and cache.has_key(path):
+    if len(path) <= DJANGO_CACHE_KEY_LENGTH_LIMIT and path in cache:
         return HttpResponse(cache.get(path), content_type='application/json')
     start_time = time.time()
     

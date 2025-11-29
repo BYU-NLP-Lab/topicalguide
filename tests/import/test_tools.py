@@ -1,7 +1,7 @@
 '''Test the basic tools'''
 
 from topic_modeling import tools
-from StringIO import StringIO
+from io import StringIO
 import datetime
 
 import pytest

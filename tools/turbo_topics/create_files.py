@@ -22,7 +22,6 @@
 # contact the Copyright Licensing Office, Brigham Young University, 3760 HBLL,
 # Provo, UT 84602, (801) 422-9339 or 422-3821, e-mail copyright@byu.edu.
 
-from __future__ import division
 from collections import defaultdict
 from optparse import OptionParser
 

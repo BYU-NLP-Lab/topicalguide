@@ -1,8 +1,8 @@
-from __future__ import division, print_function, unicode_literals
 import os
 import re
-from DateTime import DateTime
-from HTMLParser import HTMLParser
+import html
+from dateutil.parser import parse as dateutil_parse
+from html.parser import HTMLParser
 
 
 def seperate_metadata_and_content(s):
@@ -102,7 +102,7 @@ def get_type(value):
     if lower_value == 'true' or lower_value == 'false' or lower_value == 't' or lower_value == 'f':
         return 'bool'
     try:
-        DateTime(value)
+        dateutil_parse(value)
         return 'datetime'
     except:
         pass
@@ -155,20 +155,21 @@ def create_subdocuments(name, content, major_delimiter='\n', min_chars=1000):
         while index < min_chars:
             index = content.find(major_delimiter, index + 1)
             if index < 0:
-                subdoc_contents[subdoc_number] = content
+                # No delimiter found, add remaining content (strip trailing delimiter if present)
+                subdoc_contents[subdoc_number] = content.rstrip(major_delimiter)
                 subdoc_number += 1
                 content = ''
                 break
             elif index >= min_chars:
                 subdoc_contents[subdoc_number] = content[0: index]
-                content = content[index:]
+                content = content[index + len(major_delimiter):]
                 if len(content) < min_chars:
                     subdoc_contents[subdoc_number] = subdoc_contents[subdoc_number] + content
                     content = ''
                 subdoc_number += 1
     
     result = []
-    for index in xrange(0, subdoc_number):
+    for index in range(0, subdoc_number):
         result.append((name + '_subdoc' + str(index), subdoc_contents[index]))
     return result
 
@@ -176,7 +177,7 @@ def remove_html_tags(text, remove_entities=False):
     """Return string that has no HTML tags and removes HTML entities if specified."""
     class HTMLStripper(HTMLParser):
         def __init__(self):
-            self.reset()
+            super().__init__(convert_charrefs=False)
             self.content = []
         def handle_data(self, data):
             self.content.append(data)
@@ -195,8 +196,7 @@ def remove_html_tags(text, remove_entities=False):
 
 def replace_html_entities(text):
     """Return string with HTML entities replaced with unicode characters."""
-    parser = HTMLParser()
-    return parser.unescape(text)
+    return html.unescape(text)
 
 def get_unicode_content(file_path, encoding=None):
     """
@@ -219,10 +219,10 @@ def get_unicode_content(file_path, encoding=None):
             return contents.decode(encoding=determined_encoding)
         else:
             with open(file_path, 'r') as f:
-                return unicode(f.read(), encoding=encoding, errors='ignore')
+                return str(f.read(), encoding=encoding, errors='ignore')
     except UnicodeError:
         with open(file_path, 'r') as f:
-            return unicode(f.read(), encoding='utf-8', errors='ignore')
+            return str(f.read(), encoding='utf-8', errors='ignore')
 
 def remove_punctuation(s):
     """Return a string without punctuation (only alpha, numeric, underscore and whitespace characters survive)."""

@@ -1,4 +1,3 @@
-from __future__ import division, print_function, unicode_literals
 from django.db.models import Count
 from visualize.models import WordType
 from math import isnan
@@ -17,15 +16,15 @@ def compute_metric(database_id, dataset_db, analysis_db):
     word_type_count = len(word_idx)
     
     # Create topic by word type matrix that stores the intersecting counts
-    topicwordvectors = [zeros(word_type_count) for i in xrange(0, topic_count)]
+    topicwordvectors = [zeros(word_type_count) for i in range(0, topic_count)]
     for row in topic_word_type_query:
         topic_num = row['topics__number']
         word_index = word_idx[row['word_type']]
         count = row['count']
         topicwordvectors[topic_num][word_index] = count
     
-    for i in xrange(0, topic_count):
-        for j in xrange(0, topic_count):
+    for i in range(0, topic_count):
+        for j in range(0, topic_count):
             topic1_word_vals = topicwordvectors[i]
             topic2_word_vals = topicwordvectors[j]
             topic1 = topics_idx[i]

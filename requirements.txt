@@ -1,17 +1,23 @@
-django==1.7
-nltk
-numpy>=1.8.2
-scipy>=0.14.0
-GitPython
-DateTime
+# Core dependencies
+Django==4.2.17  # Current LTS version
+nltk==3.9.2
+numpy>=2.0.0
+scipy>=1.15.0
+GitPython>=3.1.0
+python-dateutil>=2.9.0  # Replaces DateTime
 
-# optional
-django-debug-toolbar
-django-extensions
-gunicorn
-docopt
-chardet
+# For downloading State of the Union addresses
+requests>=2.31.0
+beautifulsoup4>=4.12.0
 
-# for testing
-pytest
-selenium
+# Optional but recommended
+django-debug-toolbar>=4.4.0
+django-extensions>=3.2.0
+gunicorn>=23.0.0
+docopt>=0.6.0
+chardet>=5.2.0
+
+# For testing
+pytest>=9.0.0
+pytest-django>=4.9.0
+selenium>=4.30.0

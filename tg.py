@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import division, print_function, unicode_literals
 
 import os
 import re
@@ -171,13 +170,13 @@ def exec_list(args):
         print()
         
         print('Datasets:')
-        for dataset, items in datasets.iteritems():
+        for dataset, items in datasets.items():
             print(dataset+" ("+items['metadata']['readable_name']+")")
             analyses = items['analyses']
             if len(analyses) == 0:
                 print('\tNo analyses available.')
             else:
-                for analysis, items2 in analyses.iteritems():
+                for analysis, items2 in analyses.items():
                     print('\t'+analysis+" ("+items2['metadata']['readable_name']+")")
 
 
@@ -323,7 +322,7 @@ def main():
                                 Note that you may need to build the stemmer by running the script
                                 "tools/stemmer/make_english_stemmer.sh" from the directory "tools/stemmer".
                                 """)
-    analysis_parser.add_argument('--token-regex', type=unicode, action='store', default=import_system_utilities.TOKEN_REGEX,
+    analysis_parser.add_argument('--token-regex', type=str, action='store', default=import_system_utilities.TOKEN_REGEX,
                                 help=
                                 """Optionally specify the token regex to be used with this dataset, 
                                 allowing white space will cause errors.

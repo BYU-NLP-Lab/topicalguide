@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 import io
 from os.path import join
 from django.db import transaction
@@ -22,8 +21,8 @@ def create_dataset(database_id, dataset, dataset_dir, meta_types_db, **kwargs):
                      metadata.utilities module
     
     Keyword Arguments:
-    public -- make this dataset public (anybody can explore it)
-    public_documents -- make the document text publicly available
+    public -- make this dataset public (anybody can explore it) (default False)
+    public_documents -- make the document text publicly available (default True)
     
     Return the Dataset django database object after creation.
     """
@@ -34,7 +33,7 @@ def create_dataset(database_id, dataset, dataset_dir, meta_types_db, **kwargs):
         
         if created:
             dataset_db.public = kwargs.setdefault('public', False)
-            dataset_db.public_documents = kwargs.setdefault('public_documents', False)
+            dataset_db.public_documents = kwargs.setdefault('public_documents', True)
             dataset_db.visible = False
             dataset_db.save()
             metadata_types = dataset.metadata_types

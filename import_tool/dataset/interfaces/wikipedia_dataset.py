@@ -1,10 +1,9 @@
-from __future__ import print_function
 
 import os
 import sys
 
 from import_tool import basic_tools
-from abstract_dataset import AbstractDataset, AbstractDocument
+from .abstract_dataset import AbstractDataset, AbstractDocument
 
 
 class WikipediaDataset(AbstractDataset):

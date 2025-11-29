@@ -1,9 +1,8 @@
-from __future__ import print_function
 import os
 import io
 import json
 from import_tool import basic_tools
-from generic_dataset import GenericDataset, GenericDocument
+from .generic_dataset import GenericDataset, GenericDocument
 
 
 class JsonDataset(GenericDataset):

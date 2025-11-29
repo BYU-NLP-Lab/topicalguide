@@ -1,4 +1,3 @@
-from __future__ import division, print_function, unicode_literals
 
 import os
 import json
@@ -15,18 +14,20 @@ from django.core.management import call_command
 #~ settings.DEBUG = False # TODO uncomment this
 # the 'DJANGO_SETTINGS_MODULE' must be set before the database models can be used.
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topicalguide.settings'
+# Initialize Django before importing models
+django.setup()
 from django.db import transaction, connections
 from django.db.models import Max
 
-import basic_tools
-from tools import VerboseTimer
-from dataset.utilities import create_dataset, create_documents
-from analysis.utilities import get_all_word_types, create_analysis, \
+from . import basic_tools
+from .tools import VerboseTimer
+from .dataset.utilities import create_dataset, create_documents
+from .analysis.utilities import get_all_word_types, create_analysis, \
      create_word_type_entries, create_tokens, create_topic_heirarchy, \
      create_stopwords, create_excluded_words, create_topic_names
-from analysis.name_schemes.top_n import TopNTopicNamer
-from analysis.name_schemes.tf_itf import TfitfTopicNamer
-from metadata.utilities import get_all_metadata_types
+from .analysis.name_schemes.top_n import TopNTopicNamer
+from .analysis.name_schemes.tf_itf import TfitfTopicNamer
+from .metadata.utilities import get_all_metadata_types
 from visualize.models import *
 
 DATABASE_OPTIMIZE_DEBUG = True # settings.DEBUG
@@ -80,7 +81,6 @@ def run_syncdb(database_info):
                      if None then the default database is used
     Return the identifier the import process should use.
     """
-    django.setup()
     dataset_identifier = 'default'
     if database_info: # create an entry in DATABASES if database_info is present
         dataset_identifier = '12345'
@@ -105,7 +105,7 @@ def check_dataset(dataset):
     for doc in dataset:
         content = doc.content
         meta = doc.metadata
-        assert type(content) == unicode
+        assert type(content) == str
         if content == '' or content == None: # collect blank documents
             blank_documents.append(doc.source)
         if meta == {} or meta == None: # collect blank metadata
@@ -142,12 +142,12 @@ def check_dataset(dataset):
     else:
         print('No dataset metadata.')
     print()
-    for key, value in dataset.metadata_types.iteritems():
+    for key, value in dataset.metadata_types.items():
         if key not in dataset_metadata_types:
-            print("Metadata type in dataset metadata_types not specified: " + unicode(key))
+            print("Metadata type in dataset metadata_types not specified: " + str(key))
         else:
             if dataset_metadata_types[key] != value:
-                print("Metadata type for dataset metadata_types doesn't match that found: %s: %s"%(unicode(key), unicode(value)))
+                print("Metadata type for dataset metadata_types doesn't match that found: %s: %s"%(str(key), str(value)))
     
     if doc_metadata_types:
         print('Listing of document metadata and their associated types: ')
@@ -155,12 +155,12 @@ def check_dataset(dataset):
             print(key + ': ' + value)
     else:
         print('No document metdata')
-    for key, value in dataset.document_metadata_types.iteritems():
+    for key, value in dataset.document_metadata_types.items():
         if key not in doc_metadata_types:
-            print("Metadata type in document metadata_types not specified: " + unicode(key))
+            print("Metadata type in document metadata_types not specified: " + str(key))
         else:
             if doc_metadata_types[key] != value:
-                print("Metadata type for document metadata_types doesn't match that found: %s: %s"%(unicode(key), unicode(value)))
+                print("Metadata type for document metadata_types doesn't match that found: %s: %s"%(str(key), str(value)))
     
     print()
 
@@ -173,7 +173,7 @@ def import_dataset(database_id, dataset, directories, **kwargs):
     
     Keyword arguments:
     public -- make the dataset public (default False)
-    public_documents -- make the document text available (default False)
+    public_documents -- make the document text available (default True)
     verbose -- print output about progress (default False)
     
     Return the dataset's name/identifier.
@@ -224,8 +224,8 @@ def check_analysis(database_id, dataset_name, analysis, directories,
     """
     def dict_to_string(d):
         result = ''
-        for k, v in d.iteritems():
-            result += unicode(k) + ': ' + unicode(v) + '\n'
+        for k, v in d.items():
+            result += str(k) + ': ' + str(v) + '\n'
         return result
     
     print('Analysis Name:', analysis.name)
@@ -402,7 +402,7 @@ def link_dataset(database_id, dataset_name):
 
 def get_all_metric_names():
     """Return a list of all metric names."""
-    from metric import all_metrics
+    from .metric import all_metrics
     return all_metrics.keys()
 
 def run_metrics(database_id, dataset_name, analysis_name, metrics):
@@ -414,8 +414,8 @@ def run_metrics(database_id, dataset_name, analysis_name, metrics):
                      metrics
     metrics -- a list of metric names to be run
     """
-    from metric import all_metrics, all_tables, all_metrics_exists
-    from metric.utilities import get_metric_names, run_metric
+    from .metric import all_metrics, all_tables, all_metrics_exists
+    from .metric.utilities import get_metric_names, run_metric
     
     metrics_db = get_metric_names(database_id)
     dataset_db = Dataset.objects.using(database_id).get(name=dataset_name)

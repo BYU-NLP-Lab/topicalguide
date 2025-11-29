@@ -1,4 +1,3 @@
-from __future__ import division, print_function, unicode_literals
 import io
 import json
 import math
@@ -8,7 +7,7 @@ import subprocess
 from os.path import join, abspath
 from import_tool import basic_tools
 from import_tool.import_system_utilities import TOKEN_REGEX
-from abstract_analysis import AbstractAnalysis
+from .abstract_analysis import AbstractAnalysis
 
 
 class MalletLdaAnalysis(AbstractAnalysis):
@@ -198,11 +197,11 @@ class MalletLdaAnalysis(AbstractAnalysis):
                     tokens = self.tokenize(doc.get_content())
                     for token, token_start in tokens:
                         temp_word_type_counts[token] = temp_word_type_counts.setdefault(token, 0) + 1
-                for word_type, count in temp_word_type_counts.iteritems(): # add singletons to stopword list
+                for word_type, count in temp_word_type_counts.items(): # add singletons to stopword list
                     if count <= word_type_count_threshold:
                         self._excluded_words[word_type] = True
                 with io.open(self.excluded_words_file, 'w', encoding='utf-8') as ex_f:
-                    ex_f.write(unicode(json.dumps(self._excluded_words)))
+                    ex_f.write(str(json.dumps(self._excluded_words)))
             
             haltwords = dict(self.stopwords)
             haltwords.update(self._excluded_words)
@@ -225,7 +224,7 @@ class MalletLdaAnalysis(AbstractAnalysis):
                     count = 0
                     subcount = 0
                     for doc_index, doc in enumerate(documents):
-                        doc_content = unicode(doc.get_content())
+                        doc_content = str(doc.get_content())
                         count += 1
                         subdocuments = self.create_subdocuments(doc_index, doc_content)
                         token_start_index_offset = 0 # needed to make sure the start index remains correct once the document is re-merged
@@ -262,11 +261,11 @@ class MalletLdaAnalysis(AbstractAnalysis):
                                     tok_num = len(wordtype_to_number)
                                     number_to_wordtype.append(tok_stem)
                                     wordtype_to_number[tok_stem] = tok_num
-                                token_numbers.append(unicode(tok_num))
+                                token_numbers.append(str(tok_num))
                                 token_start_indices.append([tok, tok_start])
                             text = u' '.join(token_numbers)
                             w.write(u'{0} all {1}\n'.format(subdoc_name, text))
-                            w2.write(unicode(json.dumps(token_start_indices)))
+                            w2.write(str(json.dumps(token_start_indices)))
                             token_start_index_offset += len(subdoc_content)
                             for tok, tok_start in tokens:
                                 try:
@@ -281,13 +280,13 @@ class MalletLdaAnalysis(AbstractAnalysis):
                         raise Exception('No files processed.')
             # record which subdocuments belong to which documents
             with io.open(self.subdoc_to_doc_map_file, 'w', encoding='utf-8') as w:
-                w.write(unicode(json.dumps(subdoc_to_doc_map)))
+                w.write(str(json.dumps(subdoc_to_doc_map)))
             with io.open(self.wordtype_to_number_file, 'w', encoding='utf-8') as w:
-                w.write(unicode(json.dumps(wordtype_to_number)))
+                w.write(str(json.dumps(wordtype_to_number)))
             with io.open(self.number_to_wordtype_file, 'w', encoding='utf-8') as w:
-                w.write(unicode(json.dumps(number_to_wordtype)))
+                w.write(str(json.dumps(number_to_wordtype)))
             with io.open(self.wordtype_file, 'w', encoding='utf-8') as w:
-                w.write(unicode(json.dumps(wordtypes)))
+                w.write(str(json.dumps(wordtypes)))
         except: # cleanup
             self._cleanup(self.mallet_input_file)
             self._cleanup(self.subdoc_to_doc_map_file)
@@ -416,7 +415,6 @@ class MalletLdaAnalysis(AbstractAnalysis):
                     print(len(self.number_to_wordtype))
                     print(len(start_indices))
                     raise
-        raise StopIteration
     
     def get_hierarchy_iterator(self):
         return []
@@ -571,7 +569,6 @@ class MalletHldaAnalysis(MalletLdaAnalysis):
                     print(doc_index)
                     print(tok_index)
                     raise
-        raise StopIteration
     
     def get_hierarchy_iterator(self):
         return self._hierarchy

@@ -1,4 +1,3 @@
-from __future__ import division, print_function, unicode_literals
 from django.db.models import Count
 
 

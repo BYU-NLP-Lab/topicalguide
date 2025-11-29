@@ -2,6 +2,7 @@
 .settings
 .project
 *.pyc
+__pycache__/
 *.swp
 java/bin
 .dbs
@@ -14,5 +15,9 @@ yamba
 datasets/
 /Main.vim.sess
 /tg.sqlite3
+/topicalguide.db
+*.db
 /topicalguide/settings.py
 /working/
+venv/
+ENV/

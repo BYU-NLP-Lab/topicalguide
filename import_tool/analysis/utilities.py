@@ -1,4 +1,3 @@
-from __future__ import division, print_function, unicode_literals
 import time
 from import_tool.tools import VerboseTimer
 from visualize.models import *
@@ -52,7 +51,7 @@ def create_word_types(database_id, commit, word_types_db):
     with transaction.atomic(using=database_id):
         requery_list = []
         commit_list = []
-        for word, word_rep in commit.iteritems():
+        for word, word_rep in commit.items():
             requery_list.append(word)
             commit_list.append(word_rep)
         WordType.objects.using(database_id).bulk_create(commit_list)
@@ -238,7 +237,7 @@ def create_topic_names(database_id, analysis_db, topic_namers, verbose=False):
             with transaction.atomic(using=database_id):
                 topic_names = topic_namer.name_topics(database_id, analysis_db)
                 topic_names_to_commit = []
-                for topic_number, topic_name in topic_names.iteritems():
+                for topic_number, topic_name in topic_names.items():
                     topic_names_to_commit.append(TopicName(topic=topics_db[topic_number], name_scheme=name_scheme_db, name=topic_name))
                 TopicName.objects.using(database_id).bulk_create(topic_names_to_commit)
         else:
