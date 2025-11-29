@@ -122,8 +122,8 @@ var AllDocumentsSubView = DefaultView.extend({
 
                 // Get top 3 topics
                 var topTopics = "";
-                if (doc.top_n_topics) {
-                    var topicList = d3.entries(doc.top_n_topics)
+                if (doc.topics) {
+                    var topicList = d3.entries(doc.topics)
                         .sort(function(a, b) { return b.value - a.value; })
                         .slice(0, 3)
                         .map(function(t) { return topicNames[t.key] || t.key; });
