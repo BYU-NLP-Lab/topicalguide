@@ -52,8 +52,11 @@ var AllDocumentsSubView = DefaultView.extend({
                 "analyses": selection["analysis"],
                 "dataset_attr": "document_count",
                 "documents": "*",
+                "document_attr": ["text", "metadata", "top_n_topics"],
                 "document_continue": this.settingsModel.attributes["documentContinue"],
                 "document_limit": this.settingsModel.attributes["displayNDocuments"],
+                "topics": "*",
+                "topic_attr": "names",
         }, function(data) {
             var documents = extractDocuments(data);
             var documentCount = data.datasets[selection["dataset"]].document_count;
@@ -99,27 +102,70 @@ var AllDocumentsSubView = DefaultView.extend({
                 .classed("text-center", true);
             var table = container.select("#documents-table-container").append("table")
                 .classed("table table-hover table-condensed", true);
-            
-            var header = ["", "Document"];
-            var documents = d3.entries(documents).map(function(entry) {
-                return [entry.key, entry.key];
+
+            // Get topic names for display
+            var topics = extractTopics(data);
+            var selectedScheme = this.selectionModel.get("topic_name_scheme") || "Top3";
+            var topicNames = {};
+            for (var topicNum in topics) {
+                var names = topics[topicNum].names;
+                topicNames[topicNum] = names[selectedScheme] || names["Top3"] || topicNum;
+            }
+
+            var header = ["", "Document", "Year", "Top Topics", "Preview"];
+            var documentData = d3.entries(documents).map(function(entry) {
+                var doc = entry.value;
+                var filename = entry.key;
+
+                // Extract year from metadata
+                var year = doc.metadata && doc.metadata.year ? doc.metadata.year : "";
+
+                // Get top 3 topics
+                var topTopics = "";
+                if (doc.top_n_topics) {
+                    var topicList = d3.entries(doc.top_n_topics)
+                        .sort(function(a, b) { return b.value - a.value; })
+                        .slice(0, 3)
+                        .map(function(t) { return topicNames[t.key] || t.key; });
+                    topTopics = topicList.join(", ");
+                }
+
+                // Get preview (first 150 characters)
+                var preview = "";
+                if (doc.text) {
+                    preview = doc.text.substring(0, 150).trim();
+                    if (doc.text.length > 150) {
+                        preview += "...";
+                    }
+                }
+
+                return [filename, filename, year, topTopics, preview];
             });
+
             var onClick = function(d, i) {
                 this.selectionModel.set({ "document": d[0] });
             }.bind(this);
             createSortableTable(table, {
-                header: header, 
-                data: documents, 
-                onClick: { "1": onClick },
+                header: header,
+                data: documentData,
+                onClick: { "1": onClick, "2": onClick, "3": onClick, "4": onClick },
                 favicon: [0, "documents", this],
-                sortBy: 1,
-                sortAscending: true,
+                sortBy: 2,  // Sort by year by default
+                sortAscending: false,  // Most recent first
             });
         }.bind(this), this.renderError.bind(this));
     },
     
     renderHelpAsHtml: function() {
-        return "<p>Select a document from the list to learn more about it. Use the green arrows to navigate the pages.</p>";
+        return "<p>Browse all documents in the dataset. The table shows:</p>"+
+        "<ul>"+
+        "<li><b>Document</b>: The document filename</li>"+
+        "<li><b>Year</b>: Publication year from metadata</li>"+
+        "<li><b>Top Topics</b>: The three most prominent topics in the document</li>"+
+        "<li><b>Preview</b>: First 150 characters of the document text</li>"+
+        "</ul>"+
+        "<p>Click on any column header to sort by that column. Click on a document row to view its full text and details. "+
+        "Use the green arrows to navigate between pages.</p>";
     },
 });
 
