@@ -3,10 +3,12 @@
 Generate LLM-based topic names for an existing topic model analysis.
 
 Usage:
-    python generate_llm_topic_names.py <dataset_name> <analysis_name>
+    python generate_llm_topic_names.py <dataset_name> <analysis_name> [--update] [--model MODEL]
 
-Example:
+Examples:
     python generate_llm_topic_names.py state_of_the_union lda20topics
+    python generate_llm_topic_names.py state_of_the_union lda20topics --update
+    python generate_llm_topic_names.py state_of_the_union lda20topics --model gpt-4o
 
 Requirements:
     - OpenAI API key set as OPENAI_API_KEY environment variable
@@ -15,6 +17,7 @@ Requirements:
 
 import os
 import sys
+import argparse
 import django
 
 # Setup Django
@@ -23,19 +26,25 @@ django.setup()
 
 from import_tool.analysis.name_schemes.llm_namer import LLMTopicNamer
 from import_tool.analysis.utilities import create_topic_names
-from visualize.models import Analysis
+from visualize.models import Analysis, TopicNameScheme, TopicName
 
 
 def main():
-    if len(sys.argv) < 3:
-        print(__doc__)
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description='Generate LLM-based topic names for an existing topic model analysis.'
+    )
+    parser.add_argument('dataset_name', help='Name of the dataset')
+    parser.add_argument('analysis_name', help='Name of the analysis')
+    parser.add_argument('--update', action='store_true',
+                        help='Delete existing LLM-10words names and regenerate them')
+    parser.add_argument('--model', default='gpt-4o-mini',
+                        help='OpenAI model to use (default: gpt-4o-mini)')
 
-    dataset_name = sys.argv[1]
-    analysis_name = sys.argv[2]
+    args = parser.parse_args()
 
-    # Optional: Get model from command line (default: gpt-4o-mini)
-    model = sys.argv[3] if len(sys.argv) > 3 else "gpt-4o-mini"
+    dataset_name = args.dataset_name
+    analysis_name = args.analysis_name
+    model = args.model
 
     print(f"Generating LLM-based topic names for:")
     print(f"  Dataset: {dataset_name}")
@@ -61,6 +70,20 @@ def main():
     print(f"Found {num_topics} topics to name.")
     print()
 
+    # Delete existing LLM-10words names if --update flag is set
+    if args.update:
+        try:
+            llm_scheme = TopicNameScheme.objects.get(name='LLM-10words')
+            deleted_count = TopicName.objects.filter(
+                topic__analysis=analysis_db,
+                name_scheme=llm_scheme
+            ).delete()[0]
+            print(f"Deleted {deleted_count} existing LLM-10words topic names.")
+            print()
+        except TopicNameScheme.DoesNotExist:
+            print("No existing LLM-10words names to delete.")
+            print()
+
     # Check for OpenAI API key
     if not os.environ.get('OPENAI_API_KEY'):
         print("Error: OPENAI_API_KEY environment variable not set.")
@@ -85,11 +108,8 @@ def main():
         print()
         print("✓ LLM-based topic names generated successfully!")
         print()
-        print("View them in the web interface:")
-        print("  1. python manage.py runserver")
-        print("  2. Navigate to http://localhost:8000/")
-        print(f"  3. Select dataset '{dataset_name}' and analysis '{analysis_name}'")
-        print("  4. Look for the 'LLM-10words' naming scheme")
+        print("View them in the web interface or run:")
+        print(f"  python view_llm_topic_names.py {dataset_name} {analysis_name}")
 
     except Exception as e:
         print(f"Error generating topic names: {e}")

@@ -127,12 +127,15 @@ class LLMTopicNamer(AbstractTopicNamer):
         # Extract the topic name from the response
         topic_name = response.choices[0].message.content.strip()
 
-        # Ensure it's not too long
-        if len(topic_name) > self.max_label_length:
-            topic_name = topic_name[:self.max_label_length].rsplit(' ', 1)[0]
-
         # Remove quotes if present
         topic_name = topic_name.strip('"').strip("'")
+
+        # Replace " and " with ", " to save space
+        topic_name = topic_name.replace(" and ", ", ")
+
+        # Ensure it's not too long (after replacements)
+        if len(topic_name) > self.max_label_length:
+            topic_name = topic_name[:self.max_label_length].rsplit(' ', 1)[0]
 
         return topic_name
 
