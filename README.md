@@ -133,6 +133,25 @@ Open a web browser and navigate to:
 
 You should see the Topical Guide interface with your imported dataset(s).
 
+### 6. (Optional) Generate LLM-Based Topic Names
+
+For more intuitive topic names, you can use OpenAI's GPT models to automatically generate human-readable labels:
+
+```bash
+# Install OpenAI package
+pip install openai
+
+# Set your OpenAI API key
+export OPENAI_API_KEY='your-api-key-here'
+
+# Generate LLM-based topic names for your analysis
+python generate_llm_topic_names.py state_of_the_union lda20topics
+```
+
+This will create topic names like "Military Operations and National Defense" instead of "war military troops".
+
+**See [LLM_TOPIC_NAMING.md](LLM_TOPIC_NAMING.md) for detailed documentation, configuration options, and cost information.**
+
 ## POSTGRESQL
 
 It can be tons faster to use postgres. Because it took me a bit of hunting to
@@ -280,14 +299,14 @@ The Topical Guide provides a solid foundation for topic modeling with LDA and HL
 ### Enhanced Topic Naming and Labeling
 
 **Modern Labeling Approaches**
-- **LLM-based topic labeling**: Use GPT/Claude to generate human-readable topic names from top words and example documents
+- ✅ **LLM-based topic labeling**: **IMPLEMENTED** - Use OpenAI GPT models to generate human-readable topic names from top words and example documents (see [LLM_TOPIC_NAMING.md](LLM_TOPIC_NAMING.md))
 - **Named Entity Recognition (NER)**: Extract key entities (people, places, organizations) to enrich topic descriptions
 - **Phrase extraction**: Use noun phrases instead of single words for more descriptive labels
 - **Hierarchical labeling**: Multi-level topic descriptions (short label + detailed description)
 
-**Current State**: Simple Top-N and TF-ITF naming in `import_tool/analysis/name_schemes/`
+**Current State**: Top-N, TF-ITF, and LLM-based naming implemented in `import_tool/analysis/name_schemes/`
 
-**Implementation Path**: Extend `AbstractTopicNamer` with new naming schemes; integrate with external APIs or local NER models
+**Implementation Path**: Extend `AbstractTopicNamer` with additional naming schemes; integrate NER or phrase extraction
 
 ### Visualization Enhancements
 
@@ -408,7 +427,7 @@ Given the 235-year temporal span (1790-2025):
 1. Integrate BERTopic or similar neural approach
 2. Build dynamic topic modeling for temporal analysis
 3. Create interactive topic evolution visualization
-4. Implement LLM-based topic labeling
+4. ~~Implement LLM-based topic labeling~~ ✅ **COMPLETED**
 
 **Research-Oriented**
 1. Develop comparative analysis framework

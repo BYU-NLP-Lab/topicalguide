@@ -21,3 +21,6 @@ chardet>=5.2.0
 pytest>=9.0.0
 pytest-django>=4.9.0
 selenium>=4.30.0
+
+# For LLM-based topic naming (optional)
+openai>=1.0.0
