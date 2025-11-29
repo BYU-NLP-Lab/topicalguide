@@ -112,11 +112,12 @@ DEBUG_SELECITON_MODEL = false;
 var SelectionModel = Backbone.Model.extend({
     
     availableSelections: {
-        "dataset": String, 
-        "analysis": String, 
-        "topic": String, 
-        "document": String, 
-        "word": String
+        "dataset": String,
+        "analysis": String,
+        "topic": String,
+        "document": String,
+        "word": String,
+        "topic_name_scheme": String
     },
     
     initialize: function() {

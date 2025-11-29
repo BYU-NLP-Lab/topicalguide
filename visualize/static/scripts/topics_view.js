@@ -10,9 +10,13 @@ var AllTopicSubView = DefaultView.extend({
     
     formTemplate:
 "<form role=\"form\">"+
-"    <div class=\"form-group col-xs-6\">"+
+"    <div class=\"form-group col-xs-4\">"+
 "        <label for=\"words-input\">Filter Topics by Words</label>"+
 "        <input id=\"words-input\" class=\"form-control\" type=\"text\" placeholder=\"Enter words...\"></input>"+
+"    </div>"+
+"    <div class=\"form-group col-xs-2\">"+
+"        <label for=\"naming-scheme-select\">Topic Names</label>"+
+"        <select id=\"naming-scheme-select\" class=\"form-control\"></select>"+
 "    </div>"+
 "    <div class=\"form-group col-xs-2\">"+
 "        <label for=\"top-words-input\">Top Words</label>"+
@@ -81,6 +85,28 @@ var AllTopicSubView = DefaultView.extend({
         }
         this.settingsModel.trigger("multichange");
     },
+
+    populateNamingSchemeDropdown: function(schemes) {
+        var that = this;
+        var dropdown = d3.select("#naming-scheme-select");
+        var selectedScheme = this.selectionModel.get("topic_name_scheme") || "Top3";
+
+        // Clear and populate dropdown
+        dropdown.html("");
+        schemes.forEach(function(scheme) {
+            dropdown.append("option")
+                .attr("value", scheme)
+                .property("selected", scheme === selectedScheme)
+                .text(scheme);
+        });
+
+        // Set up change event handler
+        dropdown.on("change", function() {
+            var newScheme = d3.select(this).property("value");
+            that.selectionModel.set({ "topic_name_scheme": newScheme });
+            that.renderTopicsTable();
+        });
+    },
     
     renderTopicsTable: function() {
         var container = d3.select("#table-container").html(this.loadingTemplate);
@@ -97,7 +123,27 @@ var AllTopicSubView = DefaultView.extend({
             "analysis_attr": "metrics",
         }, function(data) {
             container.html("");
-            
+
+            // Populate naming scheme dropdown from available schemes
+            var topics = extractTopics(data);
+            var firstTopic = d3.entries(topics)[0];
+            if(firstTopic) {
+                var availableSchemes = Object.keys(firstTopic.value.names);
+                this.populateNamingSchemeDropdown(availableSchemes);
+            }
+
+            // Get selected naming scheme or use smart default
+            var selectedScheme = this.selectionModel.get("topic_name_scheme");
+            if(!selectedScheme || selectedScheme === "") {
+                // Smart default: prefer LLM-10words if available, otherwise Top3
+                if(firstTopic && "LLM-10words" in firstTopic.value.names) {
+                    selectedScheme = "LLM-10words";
+                } else {
+                    selectedScheme = "Top3";
+                }
+                this.selectionModel.set({ "topic_name_scheme": selectedScheme });
+            }
+
             // Create HTML table element.
             var table = container.append("table")
                 .attr("id", "topics-table")
@@ -107,7 +153,6 @@ var AllTopicSubView = DefaultView.extend({
             // Format data.
             var totalTokens = data.datasets[this.selectionModel.get("dataset")].analyses[this.selectionModel.get("analysis")].metrics["Token Count"];
             var displayNWords = settings['topicDisplayNWords'];
-            var topics = extractTopics(data);
             topics = d3.entries(topics).map(function(d) {
                 var wordObjects = d.value["words"];
                 var wordTypes = [];
@@ -116,7 +161,8 @@ var AllTopicSubView = DefaultView.extend({
                 var words = wordTypes.slice(0, displayNWords).join(" ");
                 var wordsTokenCount = _.reduce(wordTypes, function(sum, word) { return sum + wordObjects[word]["token_count"]; }, 0);
                 var topicTokenCount = parseFloat(d.value.metrics["Token Count"]);
-                return [parseFloat(d.key), parseFloat(d.key), (topicTokenCount*100)/totalTokens, d.value.names["Top3"], words, (wordsTokenCount*100)/topicTokenCount];
+                var topicName = d.value.names[selectedScheme] || d.value.names["Top3"] || "";
+                return [parseFloat(d.key), parseFloat(d.key), (topicTokenCount*100)/totalTokens, topicName, words, (wordsTokenCount*100)/topicTokenCount];
             });
             topics = topics.filter(function(item) { return item[3] != ""; });
             var wordPercentage = _.reduce(topics, function(total, innerArray) {
@@ -297,12 +343,14 @@ var SingleTopicView = DefaultView.extend({
                 var header = ["", "#", "Topic Name"];
                 var updateHeader = true;
                 var percentageColumns = [];
+                var selectedScheme = that.selectionModel.get("topic_name_scheme") || "Top3";
                 var finalData = d3.entries(allTopics)
                     .filter(function(entry) {
                         return entry.key != currentTopic;
                     })
                     .map(function(entry) {
-                        var result = [entry.key, entry.key, entry.value.names.Top3];
+                        var topicName = entry.value.names[selectedScheme] || entry.value.names["Top3"] || "";
+                        var result = [entry.key, entry.key, topicName];
                         var index = parseFloat(entry.key);
                         var pairwise = topic["pairwise"];
                         for(key in pairwise) {
@@ -560,11 +608,12 @@ var SingleTopicSubView = DefaultView.extend({
             "analysis_attr": "metrics",
         }, function(data) { // Render the content
             container.html(this.dropdownTemplate);
-            
+
             var sortList = [];
+            var selectedScheme = this.selectionModel.get("topic_name_scheme") || "Top3";
             var topics = extractTopics(data);
             topics = d3.entries(topics).map(function(d) {
-                
+
                 var items = {};
                 for(key in d.value.names) {
                     items[key] = d.value.names[key];
@@ -576,8 +625,9 @@ var SingleTopicSubView = DefaultView.extend({
                 if(d.key === "0") {
                     for(key in items) sortList.push(key);
                 }
-                return [d.key, d.value.names.Top3, items];
-            });
+                var topicName = d.value.names[selectedScheme] || d.value.names["Top3"] || "";
+                return [d.key, topicName, items];
+            }.bind(this));
             var tableHeader = ['Topics'];
             var ascending = true;
             var sortBy = 'Number';
