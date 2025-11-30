@@ -9,6 +9,13 @@ var PlotView = DefaultView.extend({
 "<h3><b>Controls</b></h3>"+
 "<hr />"+
 "<div>"+
+"    <label for=\"document-picker-control\">Select Document</label>"+
+"    <select id=\"document-picker-control\" type=\"selection\" class=\"form-control\" name=\"Document\">"+
+"        <option value=\"\">(Click a point or select here)</option>"+
+"    </select>"+
+"</div>"+
+"<hr />"+
+"<div>"+
 "    <label for=\"x-axis-control\">X Axis</label>"+
 "    <select id=\"x-axis-control\" type=\"selection\" class=\"form-control\" name=\"X Axis\"></select>"+
 "</div>"+
@@ -36,6 +43,7 @@ var PlotView = DefaultView.extend({
     
     initialize: function() {
         this.selectionModel.on("change:analysis", this.render, this);
+        this.selectionModel.on("change:document", this.updateDocumentPicker, this);
         this.model = new Backbone.Model(); // Used to store document data.
     },
     
@@ -191,7 +199,10 @@ var PlotView = DefaultView.extend({
         if("topics" in valueNames) {
             var valueTopics = valueNames.topics;
             for(topKey in valueTopics) {
-                valueTopics[topKey] = toTitleCase(allTopics[topKey].names.Top3);
+                // Skip topics that don't exist (e.g., BERTopic outlier topic -1)
+                if(allTopics[topKey] && allTopics[topKey].names && allTopics[topKey].names.Top3) {
+                    valueTopics[topKey] = toTitleCase(allTopics[topKey].names.Top3);
+                }
             }
         }
         
@@ -203,6 +214,18 @@ var PlotView = DefaultView.extend({
         };
     },
     
+    updateDocumentPicker: function() {
+        var documentPicker = d3.select(this.el).select("#document-picker-control");
+        if(!documentPicker.empty()) {
+            var selectedDoc = this.selectionModel.get("document");
+            if(selectedDoc && selectedDoc !== "") {
+                documentPicker.property("value", selectedDoc);
+            } else {
+                documentPicker.property("value", "");
+            }
+        }
+    },
+
     renderControls: function() {
         var that = this;
         var controls = d3.select(this.el).select("#plot-controls");
@@ -265,7 +288,29 @@ var PlotView = DefaultView.extend({
             color.property("value", this.settingsModel.get("colorSelection").value);
         }
         
+        // Populate document picker.
+        var documentPicker = controls.select("#document-picker-control");
+        var data = this.model.attributes.data;
+        var documentIds = d3.keys(data).sort();
+        documentPicker.selectAll("option.doc-option")
+            .data(documentIds)
+            .enter()
+            .append("option")
+            .classed("doc-option", true)
+            .attr("value", function(d) { return d; })
+            .text(function(d) { return d; });
+
+        // Set document picker to current selection if any.
+        if(this.selectionModel.has("document") && this.selectionModel.get("document") !== "") {
+            documentPicker.property("value", this.selectionModel.get("document"));
+        }
+
         // Set control listeners.
+        documentPicker.on("change", function documentPickerChange() {
+            var value = documentPicker.property("value");
+            that.selectionModel.set({ document: value });
+        });
+
         xAxis.on("change", function xAxisChange() {
             var group = $(this).find(":selected").parent().attr("value");
             var value = xAxis.property("value");
@@ -780,4 +825,4 @@ var PlotViewManager = DefaultView.extend({
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], PlotViewManager);
+globalViewModel.addViewClass([], PlotViewManager);

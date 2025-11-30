@@ -27,6 +27,8 @@ from .analysis.utilities import get_all_word_types, create_analysis, \
      create_stopwords, create_excluded_words, create_topic_names
 from .analysis.name_schemes.top_n import TopNTopicNamer
 from .analysis.name_schemes.tf_itf import TfitfTopicNamer
+from .analysis.name_schemes.bertopic_namer import BertopicNamer
+from .analysis.name_schemes.llm_namer import LLMTopicNamer
 from .metadata.utilities import get_all_metadata_types
 from visualize.models import *
 
@@ -43,11 +45,18 @@ BASIC_ANALYSIS_METRICS = [
     'analysis:token_count', 'analysis:type_count', 'analysis:stopword_count',
     'analysis:excluded_word_count', 'analysis:entropy',
     'topic:token_count', 'topic:type_count', 'topic:document_entropy', 'topic:word_entropy',
-    'topic-pairwise:document_correlation', 'topic-pairwise:word_correlation'
+    'topic-pairwise:document_correlation', 'topic-pairwise:word_correlation', 'topic-pairwise:embedding_distance'
 ]
 DEFAULT_TOPIC_NAMERS = [
-    TopNTopicNamer(3), TfitfTopicNamer(3)
+    TopNTopicNamer(3), TfitfTopicNamer(3), BertopicNamer(5)
 ]
+
+# Add LLM namer if OpenAI API key is available
+try:
+    DEFAULT_TOPIC_NAMERS.append(LLMTopicNamer(n_words=10, n_docs=3))
+except ValueError:
+    # No API key available, skip LLM namer
+    pass
 
 def make_working_dir():
     """Make the 'working/' dir.

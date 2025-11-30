@@ -18,7 +18,7 @@ var ForceView = DefaultView.extend({
 "<label id=\"force-size-slider-min\" style=\"display: block; float: left;\"></label><label id=\"force-size-slider-max\" style=\"display: block; float: right;\"></label>"+
 "<div id=\"force-size-slider\" style=\"clear: both;\"></div>"+
 "<hr />"+
-"<label>Select Correlation Metric</label>"+
+"<label>Distance Metric</label>"+
 "<p><select id=\"force-metric-options\"></select></p>",
 
     initialize: function() {
@@ -26,7 +26,10 @@ var ForceView = DefaultView.extend({
         this.model = new Backbone.Model(); // For storing settings and data.
     },
     
-    cleanup: function() {},
+    cleanup: function() {
+        this.selectionModel.off(null, null, this);
+        this.stopListening();
+    },
     
     render: function() {
         this.$el.empty();
@@ -347,7 +350,6 @@ var ForceView = DefaultView.extend({
         });
         
         function linkWidth(d) {
-            console.log(d.value);
             return d.value;
         };
         
@@ -421,10 +423,11 @@ var ForceView = DefaultView.extend({
                "<p>This decides which links between topics are visible/created. The threshold values are pulled from Document Correlation or Word Correlation (or any other pairwise topic metrics that are available).</p>"+
                "<h4>Topic Size Threshold</h4>"+
                "<p>The topic size is based off of word token or word instance counts. This will effect which topics, the circles, are displayed.</p>"+
-               "<h4>Select Correlation Metric</h4>"+
-               "<p>This is the metric that will adjust how the topics are correlated. Word Correlation is based of of how many words (word types) the topics share. Document Correlation is based off of how many documents the topics share.</p>";
+               "<h4>Distance Metric</h4>"+
+               "<p>This is the metric that will adjust how the topics are correlated. Options include document correlation, word correlation, and embedding distance (for BERTopic analyses). Word Correlation is based on how many words (word types) the topics share. Document Correlation is based on how many documents the topics share.</p>";
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], ForceView);
+// Temporarily disabled
+// globalViewModel.addViewClass([], ForceView);
 

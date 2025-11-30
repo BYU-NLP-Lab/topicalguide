@@ -123,8 +123,27 @@ python tg.py -h
 
 Make sure your virtual environment is activated, then start the Django development server:
 
+**Option 1: Direct start (output to console)**
 ```bash
 python manage.py runserver
+```
+
+**Option 2: Start with logging (recommended for development)**
+```bash
+./start_server.sh
+```
+
+This starts the server with all output logged to `logs/server-YYYY-MM-DD_HH-MM-SS.log`. A symlink `logs/server-latest.log` always points to the most recent log. In another terminal, you can tail the log:
+
+```bash
+./tail_server_log.sh
+# or
+tail -f logs/server-latest.log
+```
+
+To stop a background server:
+```bash
+./stop_server.sh
 ```
 
 Open a web browser and navigate to:
@@ -150,7 +169,7 @@ python generate_llm_topic_names.py state_of_the_union lda20topics
 
 This will create topic names like "Military Operations and National Defense" instead of "war military troops".
 
-**See [LLM_TOPIC_NAMING.md](LLM_TOPIC_NAMING.md) for detailed documentation, configuration options, and cost information.**
+**See [docs/LLM_TOPIC_NAMING.md](docs/LLM_TOPIC_NAMING.md) for detailed documentation, configuration options, and cost information.**
 
 ## POSTGRESQL
 
@@ -254,14 +273,20 @@ The Topical Guide provides a solid foundation for topic modeling with LDA and HL
 ### Modern Topic Modeling Approaches
 
 **Neural Topic Models**
-- **BERTopic**: Leverage transformer-based embeddings (BERT, RoBERTa) for context-aware topic extraction
+- ✅ **BERTopic**: **IMPLEMENTED** - Leverage transformer-based embeddings (BERT, RoBERTa) for context-aware topic extraction
   - Better handling of semantic relationships and polysemy
   - Improved topic coherence, especially for domain-specific terminology
   - Particularly valuable for State of the Union dataset with evolving political language
-- **Top2Vec**: Combines document and word embeddings for automatic topic discovery
+  - Uses sentence transformers → UMAP → HDBSCAN → c-TF-IDF pipeline
+  - Automatic topic discovery (no need to specify topic count) or fixed topic count
+  - **Embedding-based features**: Topic similarity metrics, interactive visualizations (see [docs/BERTOPIC_EMBEDDINGS.md](docs/BERTOPIC_EMBEDDINGS.md))
+  - **Hierarchical topics**: Visualization available; full hierarchy navigation and data model integration pending
+  - **Usage**: `python tg.py analyze state_of_the_union --analysis-tool BERTopic --number-of-topics 20 --stopwords stopwords/english_all.txt --verbose`
+  - **Note**: Requires Python ≤3.13 due to dependency constraints (numba/hdbscan compatibility)
+- **Top2Vec**: Simpler alternative to BERTopic for document/word embeddings
   - No need to specify number of topics in advance
   - Better captures semantic similarity
-- **CTM (Contextualized Topic Models)**: Combines neural language models with topic modeling
+- **CTM (Contextualized Topic Models)**: Hybrid neural/topic model approach
   - Handles short texts better than traditional LDA
   - More robust to vocabulary changes over time
 
@@ -269,19 +294,37 @@ The Topical Guide provides a solid foundation for topic modeling with LDA and HL
 
 ### Temporal and Dynamic Analysis
 
-**Dynamic Topic Modeling**
-- Track topic evolution across time periods in the State of the Union dataset (1790-2025)
-- Identify emerging topics, declining topics, and persistent themes
-- Visualize topic trajectories over 235 years of presidential addresses
-- Detect topic "birth" and "death" events correlated with historical periods
+**Dynamic Topic Models (DTM)**
+- **Core Capability**: Track how topics evolve over time in the State of the Union dataset (1790-2025)
+- **Key Features**:
+  - Topic birth, evolution, and death across 235 years
+  - Word probability changes within topics over time (e.g., "defense" terminology evolution)
+  - Topic trajectory visualization (topic strength over decades)
+  - Historical event correlation (wars, economic shifts, policy changes)
+- **Implementation Options**:
+  - Build on LDA using `gensim.models.ldaseqmodel` for DTM
+  - Extend BERTopic with temporal binning (`topics_over_time()` method)
+  - Custom temporal slicing with post-hoc analysis
+- **Ideal Time Slices for SOTU**:
+  - By decade (1790s, 1800s, ..., 2020s)
+  - By presidential administration
+  - By historical era (Revolutionary, Antebellum, Civil War, Gilded Age, etc.)
+- **Visualizations Needed**:
+  - Sankey diagrams for topic flow across time periods
+  - River plots showing topic prevalence over time
+  - Topic trajectory line charts
+  - Era comparison heatmaps
 
 **Topic Evolution Metrics**
 - Topic stability over time windows
 - Topic drift detection (gradual vs. sudden changes)
 - Cross-administration topic comparison
-- Era-specific topic clustering (Revolutionary, Civil War, Industrial, Modern, etc.)
+- Crisis-correlated topic shifts (wars, depressions, pandemics)
+- Policy topic emergence and decline patterns
 
-**Implementation Path**: Extend `import_tool/metric/topic/` with temporal analysis modules; enhance `visualize/api.py` to support time-series queries
+**Implementation Path**: Extend `import_tool/metric/topic/` with temporal analysis modules; enhance `visualize/api.py` to support time-series queries; add new visualization components for temporal flows
+
+**Unique Value for SOTU Dataset**: The 235-year span makes DTM particularly powerful for understanding American political discourse evolution, tracking topics like "national defense" from Revolutionary War → Cold War → War on Terror, or following the emergence of topics like civil rights, environmentalism, and technology policy.
 
 ### Advanced Coherence and Quality Metrics
 
@@ -313,6 +356,7 @@ The Topical Guide provides a solid foundation for topic modeling with LDA and HL
 **Topic Embedding Visualizations**
 - **t-SNE/UMAP**: 2D visualizations of topic relationships based on word distributions
 - **Topic correlation networks**: Interactive graphs showing related topics
+  - **Force View visualization**: Force-directed graph showing topic relationships based on distance metrics (document correlation, word correlation, embedding distance) - Currently disabled but implementation complete and audited; ready to re-enable
 - **Temporal topic flows**: Sankey diagrams or river plots showing topic evolution
 - **Topic-document heatmaps**: Visualize topic distributions across document collections
 
@@ -424,8 +468,8 @@ Given the 235-year temporal span (1790-2025):
 4. Implement topic diversity metrics
 
 **High Impact, Higher Effort**
-1. Integrate BERTopic or similar neural approach
-2. Build dynamic topic modeling for temporal analysis
+1. ~~Integrate BERTopic for neural topic modeling~~ ✅ **COMPLETED**
+2. Build dynamic topic modeling (DTM) for temporal analysis
 3. Create interactive topic evolution visualization
 4. ~~Implement LLM-based topic labeling~~ ✅ **COMPLETED**
 
@@ -434,6 +478,88 @@ Given the 235-year temporal span (1790-2025):
 2. Build topic stability and reproducibility metrics
 3. Create automated optimal topic count selection
 4. Implement cross-lingual topic alignment
+
+### Exploratory Data Analysis (EDA) Enhancements
+
+The Topical Guide's core strength is facilitating exploratory data analysis of document collections. While BERTopic provides excellent visualizations, the Topical Guide adds value through persistent storage, multi-analysis comparison, and document-level exploration. However, several key EDA capabilities are missing:
+
+**Document Search and Filtering**
+- **Full-text search**: Search across all documents for keywords or phrases
+- **Faceted browsing**: Filter documents by topic, year, metadata fields, or combinations
+- **Advanced queries**: Boolean search, phrase matching, proximity search
+- **Regex search**: Pattern-based document discovery
+- **Export filtered sets**: Save/export document lists for further analysis
+
+**Interactive Document Analysis**
+- **Document comparison**: Side-by-side view of multiple documents
+- **Similar document finder**: Use embeddings or topic distributions to find related documents
+- **Outlier detection**: Identify documents with unusual topic distributions
+- **Document clustering**: Group documents beyond simple topic assignment
+- **Topic threading**: Trace how topics develop across related documents
+
+**Statistical Summaries and Overviews**
+- **Corpus statistics**: Document count by year, average document length, vocabulary size
+- **Topic distribution summaries**: Documents per topic, topic concentration metrics
+- **Temporal patterns**: Documents and topics over time periods
+- **Coverage analysis**: Which documents/time periods are well-covered by topics?
+- **Data quality metrics**: Missing metadata, outlier documents, coverage gaps
+
+**Enhanced Filtering and Facets**
+- **Year range slider**: Filter documents by date range
+- **Topic filters**: Show only documents with specific topics above threshold
+- **Metadata facets**: Filter by president, party, event type, custom fields
+- **Combinatorial filters**: AND/OR logic for complex queries
+- **Filter persistence**: Save and share filter configurations
+
+**Document-Centric Views**
+- **Document cards**: Rich preview with metadata, topics, and text snippet
+- **Document timelines**: Chronological visualization of documents
+- **Document networks**: Visualize document relationships based on topic similarity
+- **Reading list**: Curate and annotate collections of documents for analysis
+- **Annotation support**: Add notes and tags to documents
+
+**Comparative Analysis Tools**
+- **Compare topic models**: Side-by-side comparison of different analyses on same dataset
+- **Compare time periods**: Contrast document collections from different eras
+- **Compare document subsets**: Analyze differences between filtered document sets
+- **Metric comparison**: Compare documents using different similarity measures
+
+**Export and Integration**
+- **CSV export**: Export filtered document lists with metadata and topic scores
+- **JSON API**: Programmatic access to filtered documents
+- **Citation export**: Export document references in standard formats
+- **Analysis export**: Save complete analysis state for reproduction
+
+**Implementation Priority for EDA**
+
+**Quick Wins (High Value, Lower Effort)**
+1. Add full-text search to document browser
+2. Implement basic year range filtering
+3. Add "find similar documents" using existing topic distributions
+4. Create document count summaries by year/topic
+
+**Medium Effort**
+1. Build faceted filtering UI (year + topic + metadata)
+2. Implement document comparison view
+3. Add CSV export for filtered document lists
+4. Create statistical summary dashboard
+
+**Higher Effort**
+1. Implement embedding-based document similarity (requires storing document embeddings)
+2. Build document network visualization
+3. Create advanced query builder with Boolean logic
+4. Implement document clustering beyond topic assignments
+
+**Why This Matters for EDA**
+
+These features address the core EDA workflow:
+1. **Discover**: Find interesting documents through search and filtering
+2. **Explore**: Navigate related documents and understand patterns
+3. **Compare**: Contrast different document sets or time periods
+4. **Validate**: Check that topics capture meaningful document groupings
+5. **Export**: Take findings to other tools for deeper analysis
+
+This differentiates the Topical Guide from BERTopic (which focuses on topic-level visualization) by emphasizing **document-level exploration and discovery**.
 
 ### Contributing
 

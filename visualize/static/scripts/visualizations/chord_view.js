@@ -24,7 +24,7 @@ var ChordView = DefaultView.extend({
 "<div class=\"col-xs-4\" style=\"text-align: right; padding-left: 2px; padding-right: 2px;\"><b>High</b></div>"+
 "<div id=\"palette\" style=\"clear: both; height: 1.4em; display: block; padding: 2px; margin: 2px; border: 1px solid black;\"></div>"+
 "<hr />"+
-"<label>Select Correlation Metric</label>"+
+"<label>Distance Metric</label>"+
 "<p><select id=\"metric-options\"></select></p>",
 
     initialize: function() {
@@ -398,9 +398,9 @@ var ChordView = DefaultView.extend({
                "<h4>Correlation Color Legend</h4>"+
                "<p>The more red the chord is the more similar the topics are, and vice versa with the color blue. "+
                "Note that red colors indicate that the relationship is above average for the selection and blue colors are below average for the selection.</p>"+
-               "<h4>Select Correlation Metric</h4>"+
-               "<p>This is the metric that will adjust how the topics are correlated.</p>";
+               "<h4>Distance Metric</h4>"+
+               "<p>This is the metric that will adjust how the topics are correlated. Options include document correlation, word correlation, and embedding distance (for BERTopic analyses).</p>";
     },
 });
 
-globalViewModel.addViewClass(["Visualizations"], ChordView);
+globalViewModel.addViewClass([], ChordView);

@@ -302,8 +302,8 @@ def main():
     analysis_parser.add_argument('-a', '--analysis-tool', type=str, action='store', default='MalletLDA',
                                  choices=analyses.keys(),
                                  help="""Choose the method of topic analysis, MalletLDA is default.""")
-    analysis_parser.add_argument('-t', '--number-of-topics', type=int, action='store', default=50, 
-                                 help='The number of topics that will be created.')
+    analysis_parser.add_argument('-t', '--number-of-topics', type=int, action='store', default=50,
+                                 help='The number of topics that will be created. For BERTopic: use 0 for auto-discovery (no reduction).')
     analysis_parser.add_argument('-i', '--identifier', type=str, action='store', default=None, 
                                  help='Optionally set the identifier for this analysis. The import system will set this if not specified.')
     analysis_parser.add_argument('-l', '--number-of-levels', type=int, action='store', default=2, 

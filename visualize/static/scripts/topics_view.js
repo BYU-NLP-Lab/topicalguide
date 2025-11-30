@@ -14,15 +14,11 @@ var AllTopicSubView = DefaultView.extend({
 "        <label for=\"words-input\">Filter Topics by Words</label>"+
 "        <input id=\"words-input\" class=\"form-control\" type=\"text\" placeholder=\"Enter words...\"></input>"+
 "    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
-"        <label for=\"naming-scheme-select\">Topic Names</label>"+
-"        <select id=\"naming-scheme-select\" class=\"form-control\"></select>"+
-"    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
+"    <div class=\"form-group col-xs-3\">"+
 "        <label for=\"top-words-input\">Top Words</label>"+
 "        <input id=\"top-words-input\" class=\"form-control\" type=\"number\" placeholder=\"Enter a #.\"></input>"+
 "    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
+"    <div class=\"form-group col-xs-3\">"+
 "        <label for=\"display-words-input\">Display Words</label>"+
 "        <input id=\"display-words-input\" class=\"form-control\" type=\"number\" placeholder=\"Enter a #.\"></input>"+
 "    </div>"+
@@ -36,6 +32,7 @@ var AllTopicSubView = DefaultView.extend({
         var settings = _.extend({ "words": "*", "topicTopNWords": 10, "topicDisplayNWords": 10, "sortBy": 1, "sortAscending": true }, this.settingsModel.attributes)
         this.settingsModel.set(settings);
         this.listenTo(this.settingsModel, "multichange", this.renderTopicsTable);
+        this.listenTo(this.selectionModel, "change:topic_name_scheme", this.renderTopicsTable);
     },
     
     cleanup: function(topics) {
@@ -86,28 +83,6 @@ var AllTopicSubView = DefaultView.extend({
         this.settingsModel.trigger("multichange");
     },
 
-    populateNamingSchemeDropdown: function(schemes) {
-        var that = this;
-        var dropdown = d3.select("#naming-scheme-select");
-        var selectedScheme = this.selectionModel.get("topic_name_scheme") || "Top3";
-
-        // Clear and populate dropdown
-        dropdown.html("");
-        schemes.forEach(function(scheme) {
-            dropdown.append("option")
-                .attr("value", scheme)
-                .property("selected", scheme === selectedScheme)
-                .text(scheme);
-        });
-
-        // Set up change event handler
-        dropdown.on("change", function() {
-            var newScheme = d3.select(this).property("value");
-            that.selectionModel.set({ "topic_name_scheme": newScheme });
-            that.renderTopicsTable();
-        });
-    },
-    
     renderTopicsTable: function() {
         var container = d3.select("#table-container").html(this.loadingTemplate);
         var selection = this.selectionModel.attributes;
@@ -124,25 +99,9 @@ var AllTopicSubView = DefaultView.extend({
         }, function(data) {
             container.html("");
 
-            // Populate naming scheme dropdown from available schemes
+            // Get topics and selected naming scheme
             var topics = extractTopics(data);
-            var firstTopic = d3.entries(topics)[0];
-            if(firstTopic) {
-                var availableSchemes = Object.keys(firstTopic.value.names);
-                this.populateNamingSchemeDropdown(availableSchemes);
-            }
-
-            // Get selected naming scheme or use smart default
-            var selectedScheme = this.selectionModel.get("topic_name_scheme");
-            if(!selectedScheme || selectedScheme === "") {
-                // Smart default: prefer LLM-10words if available, otherwise Top3
-                if(firstTopic && "LLM-10words" in firstTopic.value.names) {
-                    selectedScheme = "LLM-10words";
-                } else {
-                    selectedScheme = "Top3";
-                }
-                this.selectionModel.set({ "topic_name_scheme": selectedScheme });
-            }
+            var selectedScheme = this.selectionModel.get("topic_name_scheme") || "Top3";
 
             // Create HTML table element.
             var table = container.append("table")
@@ -222,12 +181,13 @@ var AllTopicSubView = DefaultView.extend({
 
 var SingleTopicView = DefaultView.extend({
     
-    mainTemplate: 
+    mainTemplate:
 "<div id=\"single-topic-title\" class=\"row\"></div>"+
 "<div id=\"single-topic-info\" class=\"row\"></div>",
-    
+
     initialize: function() {
         this.listenTo(this.selectionModel, "change:topic", this.render);
+        this.listenTo(this.selectionModel, "change:topic_name_scheme", this.render);
     },
     
     render: function() {
@@ -562,8 +522,10 @@ var SingleTopicSubView = DefaultView.extend({
                           "</button>"+
                           "<ul id=\"sort-by\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
                       "</div>",
-    
-    initialize: function() {},
+
+    initialize: function() {
+        this.listenTo(this.selectionModel, "change:topic_name_scheme", this.renderAllTopicsSideBar);
+    },
     
     cleanup: function() {
         if(this.info !== undefined) {
@@ -588,6 +550,7 @@ var SingleTopicSubView = DefaultView.extend({
     renderAllTopicsSideBar: function() {
         var selections = this.selectionModel.attributes;
         var container = d3.select("#all-topic-container");
+        container.html("");  // Clear the container before re-rendering
         container.append("button")
             .classed("btn btn-default", true)
             .attr("type", "button")
@@ -731,5 +694,8 @@ var TopicView = DefaultView.extend({
     
 });
 
-// Add the Topic View to the top level menu
+// Set Topics as the default root view (instead of Datasets)
+// This allows users to start with topic exploration immediately
+globalViewModel.setRootViewClass(TopicView);
+// Also add it to the top level menu for navigation
 globalViewModel.addViewClass([], TopicView);

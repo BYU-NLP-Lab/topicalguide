@@ -19,6 +19,9 @@ def compute_metric(database_id, dataset_db, analysis_db):
     topicwordvectors = [zeros(word_type_count) for i in range(0, topic_count)]
     for row in topic_word_type_query:
         topic_num = row['topics__number']
+        # Skip tokens with no topic assignment (outliers)
+        if topic_num is None:
+            continue
         word_index = word_idx[row['word_type']]
         count = row['count']
         topicwordvectors[topic_num][word_index] = count

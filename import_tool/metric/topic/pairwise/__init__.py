@@ -2,12 +2,14 @@ from collections import OrderedDict
 from visualize.models import TopicPairwiseMetricValue
 from . import document_correlation
 from . import word_correlation
+from . import embedding_distance
 #~ from . import coherence
 
 database_table = TopicPairwiseMetricValue
 metrics = OrderedDict([
     ('document_correlation', document_correlation),
     ('word_correlation', word_correlation),
+    ('embedding_distance', embedding_distance),
     #~ ('coherence', coherence),
 ])
 

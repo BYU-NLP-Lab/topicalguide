@@ -2,8 +2,8 @@
 var TopicsOverTimeView = DefaultView.extend({
 
     mainTemplate:
-        "<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>"+
-        "<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
+        "<div id=\"plot-controls\" class=\"col-xs-3\" style=\"display: inline; float: left;\"></div>"+
+        "<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>",
 
     controlsTemplate:
         "<h3><b>Controls</b></h3>"+
@@ -16,6 +16,16 @@ var TopicsOverTimeView = DefaultView.extend({
         "<div>"+
         "   <label for=\"metadata-control\">Metadata</label>"+
         "   <select id=\"metadata-control\" type=\"selection\" class=\"form-control\" name=\"Metadata\" style=\"height:30px\"></select>"+
+        "</div>"+
+        "<br />"+
+        "<div>"+
+        "   <label for=\"min-year-control\">Min Year</label>"+
+        "   <input id=\"min-year-control\" type=\"number\" class=\"form-control\" placeholder=\"Min year\">"+
+        "</div>"+
+        "<br />"+
+        "<div>"+
+        "   <label for=\"max-year-control\">Max Year</label>"+
+        "   <input id=\"max-year-control\" type=\"number\" class=\"form-control\" placeholder=\"Max year\">"+
         "</div>"+
         "<br />"+
         "<div>"+
@@ -70,8 +80,8 @@ var TopicsOverTimeView = DefaultView.extend({
             this.model.set({
                 // Dimensions of svg viewBox.
                 dimensions: {
-                    width: 800,
-                    height: 800,
+                    width: 600,
+                    height: 400,
                 },
                 
                 // Duration of the transitions.
@@ -100,7 +110,7 @@ var TopicsOverTimeView = DefaultView.extend({
                 type: "int",
                 title: "",
                 text: [],
-                rangeMax: 800,
+                rangeMax: 600,
                 noData: {},
             };
             this.yInfo = {
@@ -109,7 +119,7 @@ var TopicsOverTimeView = DefaultView.extend({
                 type: "float",
                 title: "topic percentage",
                 text: [],
-                rangeMax: 800,
+                rangeMax: 400,
                 noData: {},
             };
             this.meta = "",
@@ -136,13 +146,29 @@ var TopicsOverTimeView = DefaultView.extend({
                 .text(toTitleCase(topic.names.Top3));
         }
 
-        // Get Metadata options
+        // Get Metadata options - only include time-related dimensions
         var metadataSelect = this.metadataSelect = controls.select("#metadata-control");
         var metadata = this.model.get("metadata_types");
+
+        // Filter to only time-related metadata fields
+        var timeRelatedFields = ['year', 'date', 'decade', 'month', 'timestamp', 'time'];
+        var filteredMetadata = metadata.filter(function(type) {
+            var lowerType = type.toLowerCase();
+            return timeRelatedFields.some(function(field) {
+                return lowerType.indexOf(field) !== -1;
+            });
+        });
+
+        // Default to 'year' if available, otherwise first time-related field
         var defaultMetadata = null;
-        for (index in metadata) {
-            var type = metadata[index];
-            if (defaultMetadata === null) defaultMetadata = type;
+        if (filteredMetadata.indexOf('year') !== -1) {
+            defaultMetadata = 'year';
+        } else if (filteredMetadata.length > 0) {
+            defaultMetadata = filteredMetadata[0];
+        }
+
+        for (index in filteredMetadata) {
+            var type = filteredMetadata[index];
             metadataSelect
                 .append("option")
                 .attr("value", type)
@@ -163,6 +189,12 @@ var TopicsOverTimeView = DefaultView.extend({
             var checkboxProp = gtMap[this.settingsModel.get("graphType")];
             graphTypeToggle.bootstrapToggle(checkboxProp);
         }
+        if (this.settingsModel.has("minYear")) {
+            minYearControl.property("value", this.settingsModel.get("minYear"));
+        }
+        if (this.settingsModel.has("maxYear")) {
+            maxYearControl.property("value", this.settingsModel.get("maxYear"));
+        }
 
         this.topicChanged =  function topicChange() {
             var selected = $("#plot-controls #topics-control").find(":selected");
@@ -173,6 +205,9 @@ var TopicsOverTimeView = DefaultView.extend({
             that.settingsModel.set({ topicSelection: selected_array });
         };
 
+        var minYearControl = controls.select("#min-year-control");
+        var maxYearControl = controls.select("#max-year-control");
+
         topicSelect.on("change", this.topicChanged);
         metadataSelect.on("change", function metadataChanged() {
             var value = metadataSelect.property("value");
@@ -182,11 +217,21 @@ var TopicsOverTimeView = DefaultView.extend({
             var value = gtMap[graphTypeToggle.prop("checked") ? "on" : "off"];
             that.settingsModel.set({ "graphType": value });
         });
+        minYearControl.on("change", function minYearChanged() {
+            var value = minYearControl.property("value");
+            that.settingsModel.set({ minYear: value ? parseInt(value) : null });
+        });
+        maxYearControl.on("change", function maxYearChanged() {
+            var value = maxYearControl.property("value");
+            that.settingsModel.set({ maxYear: value ? parseInt(value) : null });
+        });
 
         var defaultSettings = {
             topicSelection: [],
             metadataSelection: defaultMetadata,
             graphType: gtMap["on"],
+            minYear: null,
+            maxYear: null,
         }
 
         this.settingsModel.set(_.extend({}, defaultSettings, this.settingsModel.attributes));
@@ -261,11 +306,13 @@ var TopicsOverTimeView = DefaultView.extend({
         this.settingsModel.on("change:topicSelection", this.calculateYAxis, this);
         this.settingsModel.on("change:metadataSelection", this.calculateXAxis, this);
         this.settingsModel.on("change:graphType", this.calculateYAxis, this);
+        this.settingsModel.on("change:minYear", this.calculateXAxis, this);
+        this.settingsModel.on("change:maxYear", this.calculateXAxis, this);
 //        this.settingsModel.on("change:xSelection", this.calculateXAxis, this);
 //        this.settingsModel.on("change:ySelection", this.calculateYAxis, this);
 //        this.settingsModel.on("change:radiusSelection", this.calculateRadiusAxis, this);
 //        this.settingsModel.on("change:colorSelection", this.calculateColorAxis, this);
-        
+
         this.calculateAll();
     },
     
@@ -332,6 +379,8 @@ var TopicsOverTimeView = DefaultView.extend({
     getSelectionInfo: function(value, excluded) {
         var data = this.model.get("documents");
         var group = "metadata";
+        var minYear = this.settingsModel.get("minYear");
+        var maxYear = this.settingsModel.get("maxYear");
         var min = Number.MAX_VALUE;
         var max = -Number.MAX_VALUE;
         var avg = 0;
@@ -342,7 +391,7 @@ var TopicsOverTimeView = DefaultView.extend({
         for(var key in data) {
             if(key in excluded) continue;
             var val = data[key][group][value];
-            
+
             if(!type) { // Set the type.
                 type = this.getType(val);
                 if(type === "text") {
@@ -353,9 +402,18 @@ var TopicsOverTimeView = DefaultView.extend({
                     max = val;
                 }
             }
-            
+
             if(type !== "text") {
                 val = parseFloat(val);
+
+                // Filter based on year range if specified
+                if (minYear !== null && !isNaN(val) && val < minYear) {
+                    continue;
+                }
+                if (maxYear !== null && !isNaN(val) && val > maxYear) {
+                    continue;
+                }
+
                 if(val < min) min = val;
                 if(val > max) max = val;
                 total += val;
@@ -364,7 +422,7 @@ var TopicsOverTimeView = DefaultView.extend({
                 text[val] = true;
             }
         }
-        
+
         this.settingsModel.set({ metadataOptions: _.keys(text) });
 
         if(type === "text") {
@@ -374,22 +432,22 @@ var TopicsOverTimeView = DefaultView.extend({
             domain.push("");
             text = domain;
         }
-        
+
         if(min === Number.MAX_VALUE && max === -Number.MAX_VALUE) {
             min = 0;
             max = 0;
         }
-        
+
         if(count > 0) {
             avg = total/count;
         }
-        
+
         return {
-            min: min, 
-            max: max+1, 
+            min: min,
+            max: max+1,
             avg: avg,
-            type: type, 
-            text: text, 
+            type: type,
+            text: text,
             title: toTitleCase(value.replace('_', ' ')),
         };
     },
@@ -622,8 +680,7 @@ var TopicsOverTimeView = DefaultView.extend({
      *
      * Precondition: Given topic exists in the dataset
      *
-     * inputs - Any number of topic ids as arguments
-     *          If a single topic is selected, it will move on to the histogram (bar chart)
+     * Always uses bar chart regardless of number of topics selected
      */
     selectTopics: function() {
 
@@ -633,37 +690,25 @@ var TopicsOverTimeView = DefaultView.extend({
 
         var topicIds = this.settingsModel.get("topicSelection");
 
-        if (topicIds.length > 1 || topicIds.length === 0) {
-            this.showLineChart(topicIds);
-            return;
-        }
-        else if (topicIds.length < 0) {
-            throw new Error('Something is wrong with your array length...');
-        }
-
-        // Otherwise get the only topic id and transition to bar chart
-        var topicId = topicIds[0];
-
-        // Select the topic data
-        this.settingsModel.set({ selectedTopicData: this.model.get("topics")[topicId] });
-
-        // Transition the line chart into hiding
+        // Hide line chart if it exists
         if (this.lineChart !== null)
             this.transitionLineChart(null, 1000);
 
-        // Initialize and make the bar chart for the selected topic visible
-        this.setBarChart();
+        // Show bar chart for selected topics
+        if (topicIds.length > 0) {
+            this.showBars(topicIds);
+        }
     },
 
     /**
-     * Deselect a topic and make the line chart appear
+     * Show bar chart for selected topics
      *
-     * Precondition: None
-     * Postcondition: The line chart is visible and interactive
+     * Precondition: topicIds is a non-empty array
+     * Postcondition: Bar chart is visible with selected topics
      */
-    showLineChart: function(topicIds) {
+    showBars: function(topicIds) {
 
-        // Hide the bar chart
+        // Hide existing bars if any
         if (this.bars) {
             this.unsetBarChart();
         }
@@ -673,14 +718,9 @@ var TopicsOverTimeView = DefaultView.extend({
         topics.min = minMax.min;
         topics.max = minMax.max;
 
-        // Initialize the line chart
-        if (this.lineChart === null) { // Conditional breaks scaling
-            this.initLineChart();
-        }
-
-        // Transition the line chart into view
-        this.transitionLineChart(topicIds, 1000);
-
+        // Initialize and show bars for all selected topics
+        this.initBarsForTopics(topicIds);
+        this.transitionBarsUp(1500);
     },
 
     /**
@@ -716,51 +756,73 @@ var TopicsOverTimeView = DefaultView.extend({
     },
 
     /**
-     * Initializes the dimensions, colors, and events of each bar in the bar chart
+     * Initializes bars for multiple topics
      *
-     * Precondition: Axes are correctly set for the selected topic
+     * Precondition: Axes are correctly set
      * Postcondition: Bars can be transitioned into place
      */
-    initBars: function() {
+    initBarsForTopics: function(topicIds) {
 
         var dim = this.model.attributes.dimensions;
         var yInfo = this.yInfo;
         var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
         var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
         var colors = this.model.get("colorSpectrum");
-        var documents = this.model.get("documents");
-        var height = dim.height;
-        var svg = this.svg;
-        var selTopicData = this.settingsModel.get("selectedTopicData");
-        var data = selTopicData.data;
-        var yearDomain = xScale.domain();
-        var yearRange = xScale.range();
+        var topics = this.model.get("topics");
+        var selectedMetadata = this.settingsModel.get("metadataSelection");
+        var minYear = this.settingsModel.get("minYear");
+        var maxYear = this.settingsModel.get("maxYear");
         var barWidth = this.getBarWidth(xScale);
-
-        var getOnBarMouseover = this.getOnBarMouseover;
-        var getOnBarMouseout = this.getOnBarMouseout;
-        var select = this.selectTopics;
+        var colorScale = this.getColorScale(colors.a, colors.b, topicIds.length);
         var that = this;
 
         // Delete existing elements to conserve memory
         this.plot.selectAll(".bar").data([]).exit().remove();
 
-        // Set the data for the bars
-        var selectedMetadata = this.settingsModel.get("metadataSelection");
-        var data = selTopicData[selectedMetadata].data;
-        var indices = selTopicData[selectedMetadata].metaIndices;
+        // Collect all bar data for all selected topics
+        var allBarsData = [];
+        for (var i = 0; i < topicIds.length; i++) {
+            var topicId = topicIds[i];
+            var topic = topics[topicId];
+            var topicName = topic.name;
+            var metaTopic = topic[selectedMetadata];
+            var indices = metaTopic.metaIndices;
+            var data = metaTopic.data;
+
+            for (var j = 0; j < indices.length; j++) {
+                var idx = indices[j];
+                var metaValue = idx.meta;
+
+                // Filter based on year range if specified
+                if (minYear !== null && !isNaN(metaValue) && metaValue < minYear) {
+                    continue;
+                }
+                if (maxYear !== null && !isNaN(metaValue) && metaValue > maxYear) {
+                    continue;
+                }
+
+                allBarsData.push({
+                    topicId: topicId,
+                    topicName: topicName,
+                    topicIndex: i,
+                    meta: metaValue,
+                    index: idx.index,
+                    data: data
+                });
+            }
+        }
 
         this.bars = this.plot.selectAll(".bar")
-            .data(indices);
+            .data(allBarsData);
 
         // Init d3 tip
         this.tip = d3.tip(this.svg.nearestViewportElement)
             .attr("class", "d3-tip")
             .offset([-73, 0])
             .html(function(d) {
-                var datum = data[d.meta][d.index];
+                var datum = d.data[d.meta][d.index];
                 var roundedProb = Math.round((datum.probability*1000).toFixed(2))/10;
-                var html = "<strong>Document:</strong> <span style='color:red'>" + datum.doc_id + "</span>"+
+                var html = "<strong>Topic:</strong> <span style='color:red'>" + d.topicName + "</span>"+
                     "<br />"+
                     "<strong>Percent of Topic:</strong> <span style='color:red'>" + roundedProb + "%</span>"+
                     "<br />"+
@@ -769,8 +831,6 @@ var TopicsOverTimeView = DefaultView.extend({
                 return html;
             });
         this.svg.call(this.tip);
-
-        var colorScale = this.getColorScale(colors.a, colors.b, 1);
 
         // Append SVG elements with class "bar"
         this.bars.enter()
@@ -781,7 +841,7 @@ var TopicsOverTimeView = DefaultView.extend({
             .attr("width", barWidth)
             .attr("height", 0)
             .style("padding", 10)
-            .style("fill", function(d, i) { return colorScale(1); })
+            .style("fill", function(d, i) { return colorScale(d.topicIndex); })
             .style("opacity", 0)
             .style("stroke", "white")
             .style("stroke-opacity", 0.3)
@@ -791,11 +851,9 @@ var TopicsOverTimeView = DefaultView.extend({
             })
             .on("mouseout", function(d) {
                 that.tip.hide(d);
-                d3.select(this).style("fill", colorScale(1));
-            });
-
-        this.bars
-            .attr("data-legend", selTopicData.name);
+                d3.select(this).style("fill", colorScale(d.topicIndex));
+            })
+            .attr("data-legend", function(d) { return d.topicName; });
 
         return this.bars;
     },
@@ -944,7 +1002,7 @@ var TopicsOverTimeView = DefaultView.extend({
      * Transitions the bars in the chart into place (from height 0 to end height and bottom y to end y)
      *
      * Precondition: Bars have been initialized
-     * Precondition: Bars are at the correct x coordinates   
+     * Precondition: Bars are at the correct x coordinates
      *
      * bars - D3 entered bar element to transition
      * duration - The duration of the transition in ms (0 is instant)
@@ -957,10 +1015,11 @@ var TopicsOverTimeView = DefaultView.extend({
         var xScale = this.getScale(this.xInfo, [0, this.xInfo.rangeMax]);
         var yScale = this.getScale(this.yInfo, [this.yInfo.rangeMax, 0]);
         var height = dim.height;
-        var selectedMetadata = this.settingsModel.get("metadataSelection");
-        var data = this.settingsModel.get("selectedTopicData")[selectedMetadata].data;
         var graphType = this.settingsModel.get("graphType");
         var barWidth = this.getBarWidth(xScale);
+
+        // Track cumulative probabilities for stacking
+        var cumulativeProbs = {};
 
         // Make opaque and transition y and height into final positions
         var bars = this.svg.selectAll(".bar")
@@ -968,22 +1027,31 @@ var TopicsOverTimeView = DefaultView.extend({
             .style("opacity", 1)
             .attr("x", function(d) { return xScale(d.meta); })
             .attr("y", function(d) {
+                var data = d.data;
                 var probability = 0;
                 if (d.index in data[d.meta])
                     probability = data[d.meta][d.index].probability;
-                data[d.meta].forEach(function(value, index, array) { // Get cumulative value (stack 'em up)
-                    if (graphType !== "Overlaid") {
-                        if (index < d.index) probability += value.probability;
+
+                // For stacked bars, add cumulative probability
+                if (graphType === "Stacked") {
+                    var key = d.meta + "_" + d.index;
+                    if (!(key in cumulativeProbs)) {
+                        cumulativeProbs[key] = 0;
                     }
-                });
-                return yScale(probability);
+                    var y = yScale(cumulativeProbs[key] + probability);
+                    cumulativeProbs[key] += probability;
+                    return y;
+                } else {
+                    return yScale(probability);
+                }
             })
             .attr("height", function(d) {
+                var data = d.data;
                 var probability = 0;
                 if (d.index in data[d.meta])
                     probability = data[d.meta][d.index].probability;
-                return yScale(yInfo.min) - yScale(probability); 
-                })
+                return yScale(yInfo.min) - yScale(probability);
+            })
             .attr("width", function(d) {
                 var width = barWidth;
                 if (graphType === "Overlaid")
@@ -1480,5 +1548,5 @@ var TopicsOverTimeView = DefaultView.extend({
 
 });
 
-globalViewModel.addViewClass(["Visualizations"], TopicsOverTimeView);
+globalViewModel.addViewClass([], TopicsOverTimeView);
 

@@ -17,6 +17,9 @@ def compute_metric(database_id, dataset_db, analysis_db):
     doctopicvectors = [zeros(doc_count) for i in range(0, topic_count)]
     for row in topic_doc_word_type_counts:
         topic_num = row['topics__number']
+        # Skip tokens with no topic assignment (outliers)
+        if topic_num is None:
+            continue
         doc_index = row['document__index']
         count = row['count']
         doctopicvectors[topic_num][doc_index] = count

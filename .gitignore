@@ -21,3 +21,4 @@ datasets/
 /working/
 venv/
 ENV/
+logs/

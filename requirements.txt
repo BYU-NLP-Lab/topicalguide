@@ -24,3 +24,11 @@ selenium>=4.30.0
 
 # For LLM-based topic naming (optional)
 openai>=1.0.0
+
+# For BERTopic topic modeling (optional)
+# NOTE: BERTopic dependencies (specifically numba) currently require Python <=3.13
+# If using Python 3.14+, BERTopic installation will fail until dependencies are updated
+bertopic>=0.16.0
+sentence-transformers>=2.2.0
+umap-learn>=0.5.5
+hdbscan>=0.8.33

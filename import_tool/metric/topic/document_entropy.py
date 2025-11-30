@@ -14,6 +14,9 @@ def compute_metric(database_id, dataset_db, analysis_db):
     for row in topic_counts:
         topic_token_count = row['count']
         topic_id = row['topics']
+        # Skip tokens with no topic assignment (outliers)
+        if topic_id is None:
+            continue
         entropy = 0
         total_token_count = 0
         if topic_token_count > 0:
@@ -23,7 +26,8 @@ def compute_metric(database_id, dataset_db, analysis_db):
                 if topic_doc_count > 0:
                     total_token_count += topic_doc_count
                     prob = topic_doc_count / topic_token_count
-                    entropy -= prob * log(prob, 2)
+                    if prob > 0:  # Skip zero probabilities
+                        entropy -= prob * log(prob, 2)
                 try:
                     next_topic_doc_row = next(topic_doc_counts_iter)
                 except:

@@ -165,5 +165,7 @@ var DatasetView = DefaultView.extend({
     },
 });
 
-// Add the Datasets View as the root view
-globalViewModel.setRootViewClass(DatasetView);
+// Datasets view is no longer in the navigation menu since we have:
+// 1. Global dataset selector at the top for switching datasets
+// 2. Dataset Info tab for viewing dataset metadata
+// The view is kept for potential future use but not added to the menu.

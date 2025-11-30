@@ -13,5 +13,6 @@ def compute_metric(database_id, dataset_db, analysis_db):
     entropy = 0.0
     for row in topic_token_counts_query:
         prob = float(row['count']) / total
-        entropy -= prob * log(prob, 2)
+        if prob > 0:  # Skip zero probabilities (limit of p*log(p) as p→0 is 0)
+            entropy -= prob * log(prob, 2)
     return [{'analysis': analysis_db, 'value': entropy }]

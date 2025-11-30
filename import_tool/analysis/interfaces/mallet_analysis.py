@@ -183,26 +183,30 @@ class MalletLdaAnalysis(AbstractAnalysis):
         wordtype_to_number = {}
         number_to_wordtype = []
         wordtypes = {}
-        
+
         # prevent duplicating work
         if os.path.exists(self.wordtype_file):
             return
-        
+
         try:
             # First find singletons
             if self.remove_singletons:
                 word_type_count_threshold = max(1, int(math.log(documents.count(), 10)) - 2)
                 temp_word_type_counts = {}
                 for doc_index, doc in enumerate(documents):
-                    tokens = self.tokenize(doc.get_content())
-                    for token, token_start in tokens:
-                        temp_word_type_counts[token] = temp_word_type_counts.setdefault(token, 0) + 1
+                    # When using subdocuments, count words across all subdocs
+                    doc_content = doc.get_content()
+                    subdocuments = self.create_subdocuments(doc_index, doc_content)
+                    for subdoc_name, subdoc_content in subdocuments:
+                        tokens = self.tokenize(subdoc_content)
+                        for token, token_start in tokens:
+                            temp_word_type_counts[token] = temp_word_type_counts.setdefault(token, 0) + 1
                 for word_type, count in temp_word_type_counts.items(): # add singletons to stopword list
                     if count <= word_type_count_threshold:
                         self._excluded_words[word_type] = True
                 with io.open(self.excluded_words_file, 'w', encoding='utf-8') as ex_f:
                     ex_f.write(str(json.dumps(self._excluded_words)))
-            
+
             haltwords = dict(self.stopwords)
             haltwords.update(self._excluded_words)
             # Second find bigrams, iterate through documents and train.
@@ -210,15 +214,20 @@ class MalletLdaAnalysis(AbstractAnalysis):
                 from import_tool.analysis.bigram_finder import BigramFinder
                 bigram_finder = BigramFinder(stopwords=haltwords)
                 for doc_index, doc in enumerate(documents):
-                    bigram_finder.train(doc_index, self.tokenize(doc.get_content()))
+                    # When using subdocuments, train bigrams on subdocs
+                    doc_content = doc.get_content()
+                    subdocuments = self.create_subdocuments(doc_index, doc_content)
+                    for subdoc_name, subdoc_content in subdocuments:
+                        bigram_finder.train(subdoc_name, self.tokenize(subdoc_content))
                 bigram_finder.print()
-            
+
             # Third, we're going to stem words
             if self.stem_words:
                 from import_tool.analysis.stemmer import Stemmer
                 stemmer = Stemmer(self._working_dir, self.base_dir)
-            
-            # for each document tokenize and map tokens to numbers to avoid regex problems before passing data to Mallet
+
+            # New approach: Treat each subdocument as a completely separate document for MALLET
+            # This avoids the token position tracking bug in the old approach
             with io.open(self.mallet_input_file, 'w', encoding='utf-8') as w:
                 with io.open(self.start_index_file, 'w', encoding='utf-8') as w2:
                     count = 0
@@ -227,32 +236,32 @@ class MalletLdaAnalysis(AbstractAnalysis):
                         doc_content = str(doc.get_content())
                         count += 1
                         subdocuments = self.create_subdocuments(doc_index, doc_content)
-                        token_start_index_offset = 0 # needed to make sure the start index remains correct once the document is re-merged
+
                         for subdoc_name, subdoc_content in subdocuments:
                             if subcount > 0:
                                 w2.write(u'\n')
                             subcount += 1
                             subdoc_to_doc_map[subdoc_name] = doc_index
+
+                            # Tokenize the subdocument content directly (no offset tracking)
                             tokens = self.tokenize(subdoc_content)
-                            
+
                             if self.find_bigrams:
                                 tokens = bigram_finder.combine(tokens, subdoc_content)
-                            
+
                             token_numbers = []
                             token_start_indices = []
                             only_tokens = []
-                            tokens_temp = []
+
                             for tok, tok_start in tokens:
                                 only_tokens.append(tok)
-                                tokens_temp.append([tok, tok_start + token_start_index_offset])
-                            tokens = tokens_temp
-                            tokens_temp = None
+
                             if self.stem_words:
                                 stemmed_tokens = stemmer.stem(only_tokens)
                             else:
                                 stemmed_tokens = only_tokens
-                            for tup, tok_stem in zip(tokens, stemmed_tokens):
-                                tok, tok_start = tup
+
+                            for (tok, tok_start), tok_stem in zip(tokens, stemmed_tokens):
                                 wordtypes[tok] = True
                                 wordtypes[tok_stem] = True
                                 try:
@@ -262,22 +271,16 @@ class MalletLdaAnalysis(AbstractAnalysis):
                                     number_to_wordtype.append(tok_stem)
                                     wordtype_to_number[tok_stem] = tok_num
                                 token_numbers.append(str(tok_num))
+                                # Store subdocument-relative positions
                                 token_start_indices.append([tok, tok_start])
+
                             text = u' '.join(token_numbers)
                             w.write(u'{0} all {1}\n'.format(subdoc_name, text))
                             w2.write(str(json.dumps(token_start_indices)))
-                            token_start_index_offset += len(subdoc_content)
-                            for tok, tok_start in tokens:
-                                try:
-                                    assert doc_content[tok_start:tok_start+len(tok)].lower() == tok.lower()
-                                except:
-                                    print(tok_start)
-                                    print(len(tok))
-                                    print('"'+doc_content[tok_start:tok_start+len(tok)].lower()+'"')
-                                    print('"'+tok.lower()+'"')
-                                    raise
+
                     if not count:
                         raise Exception('No files processed.')
+
             # record which subdocuments belong to which documents
             with io.open(self.subdoc_to_doc_map_file, 'w', encoding='utf-8') as w:
                 w.write(str(json.dumps(subdoc_to_doc_map)))

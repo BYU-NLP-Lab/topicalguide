@@ -1,23 +1,28 @@
 
 var AllDocumentsSubView = DefaultView.extend({
     readableName: "Browse All Documents",
-    
+
     initialize: function() {
         var defaults = {
-            documentContinue: 0, 
+            documentContinue: 0,
             displayNDocuments: 30,
         };
         this.settingsModel.set(_.extend(defaults, this.settingsModel.attributes));
     },
-    
-    cleanup: function(topics) {},
-    
+
+    cleanup: function(topics) {
+        this.selectionModel.off(null, null, this);
+    },
+
     render: function() {
         this.$el.html("<div id=\"top-matter-container\"></div><div id=\"documents-container\"></div>");
         this.renderTopMatter();
         this.renderTable();
         this.listenTo(this.settingsModel, "change", this.renderTopMatter);
         this.listenTo(this.settingsModel, "change", this.renderTable);
+        this.listenTo(this.selectionModel, "change:dataset", this.render);
+        this.listenTo(this.selectionModel, "change:analysis", this.render);
+        this.listenTo(this.selectionModel, "change:topic_name_scheme", this.renderTable);
     },
     
     renderTopMatter: function() {
@@ -122,15 +127,52 @@ var AllDocumentsSubView = DefaultView.extend({
 
                 // Get top 3 topics
                 var topic1 = "", topic2 = "", topic3 = "";
-                if (doc.topics) {
-                    var topicList = d3.entries(doc.topics)
+
+                // Handle both doc.topics (object) and doc.top_n_topics (array)
+                var topicList = [];
+                if (doc.top_n_topics && Array.isArray(doc.top_n_topics)) {
+                    // top_n_topics is an array of [topic_id, probability] pairs
+                    topicList = doc.top_n_topics
+                        .filter(function(pair) {
+                            return pair && pair[0] !== null && pair[0] !== undefined && pair[0] !== -1;
+                        })
+                        .slice(0, 3)
+                        .map(function(pair) {
+                            var topicId = pair[0].toString();
+                            var topicName = topicNames[topicId];
+                            if (topicName && topicName !== "null" && topicName !== "undefined") {
+                                return topicName;
+                            } else {
+                                return "Topic " + topicId;
+                            }
+                        });
+                } else if (doc.topics) {
+                    // topics is an object mapping topic_id -> probability
+                    topicList = d3.entries(doc.topics)
+                        .filter(function(t) {
+                            // Filter out null keys, "-1" (outlier), and invalid values
+                            return t.key !== null &&
+                                   t.key !== undefined &&
+                                   t.key !== "null" &&
+                                   t.key !== "-1" &&
+                                   t.value !== null &&
+                                   t.value !== undefined;
+                        })
                         .sort(function(a, b) { return b.value - a.value; })
                         .slice(0, 3)
-                        .map(function(t) { return topicNames[t.key] || t.key; });
-                    topic1 = topicList[0] || "";
-                    topic2 = topicList[1] || "";
-                    topic3 = topicList[2] || "";
+                        .map(function(t) {
+                            var topicName = topicNames[t.key];
+                            if (topicName && topicName !== "null" && topicName !== "undefined") {
+                                return topicName;
+                            } else {
+                                return "Topic " + t.key;
+                            }
+                        });
                 }
+
+                topic1 = topicList[0] || "";
+                topic2 = topicList[1] || "";
+                topic3 = topicList[2] || "";
 
                 // Get preview (first 150 characters)
                 var preview = "";
@@ -491,7 +533,7 @@ var DocumentInfoView = DefaultView.extend({
     render: function() {
         this.$el = $(this.el);
         if(this.selectionModel.get("document") === "") {
-            this.$el.html("<p>A document needs to be selected in order to use this view.</p>");
+            this.$el.html("<p>Click on a document (point) in the plot above to view its details.</p>");
             return;
         }
         
