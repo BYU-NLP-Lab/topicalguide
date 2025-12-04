@@ -170,6 +170,7 @@ function createSortableTable(table, options) {
         favicon: false,
         sortBy: 0,
         sortAscending: true,
+        htmlColumns: [],  // Columns that should render HTML instead of escaping it
     };
     options = _.extend(defaults, options);
     // Find all of the maxes.
@@ -184,6 +185,11 @@ function createSortableTable(table, options) {
     var percent = {};
     for(i=0; i<options.percentages.length; i++) {
         percent[options.percentages[i].toString()] = null;
+    }
+    // Turn htmlColumns to a set for quick lookup
+    var htmlCols = {};
+    for(i=0; i<options.htmlColumns.length; i++) {
+        htmlCols[options.htmlColumns[i].toString()] = null;
     }
     
     // Sort functions where i is the column to sort by.
@@ -251,13 +257,25 @@ function createSortableTable(table, options) {
             .enter()
             .append("td");
         // Fill in table values
-        td.filter(function(d, i) { return (i in maxes)?false:true; })
+        var nonBarCells = [];
+        td.each(function(d, i) {
+            if (!(i in maxes)) {
+                nonBarCells.push({element: this, data: d, index: i});
+            }
+        });
+        d3.selectAll(nonBarCells.map(function(c) { return c.element; }))
             .append("a")
             .style("color", "black")
             .classed("nounderline", true)
-            .text(function(d) { return d; })
-            .each(function(d, i) {
-                if(options.favicon && i === options.favicon[0]) {
+            .each(function(d, arrayIndex) {
+                var originalIndex = nonBarCells[arrayIndex].index;
+                // Use .html() for HTML columns, .text() for others
+                if(originalIndex.toString() in htmlCols) {
+                    d3.select(this).html(d);
+                } else {
+                    d3.select(this).text(d);
+                }
+                if(options.favicon && originalIndex === options.favicon[0]) {
                     createFavsIcon(d3.select(this), options.favicon[1], d.toString(), options.favicon[2]);
                 }
             });

@@ -143,5 +143,5 @@ var TopicEmbeddingsView = DefaultView.extend({
     },
 });
 
-// Add as top-level tab (not a submenu)
-globalViewModel.addViewClass([], TopicEmbeddingsView);
+// Topic Space view disabled - keep BERTopic analyses but hide visualizations tab
+// globalViewModel.addViewClass([], TopicEmbeddingsView);

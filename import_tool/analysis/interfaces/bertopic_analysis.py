@@ -173,6 +173,12 @@ class BertopicAnalysis(AbstractAnalysis):
         self.vocab_file = join(self._working_dir, 'vocabulary.json')
         self.token_assignments_file = join(self._working_dir, 'token_assignments.json')
         self.topic_embeddings_file = join(self._working_dir, 'topic_embeddings.json')
+        self.hierarchy_file = join(self._working_dir, 'hierarchy.json')
+
+        # Additional files for BERTopic visualizations
+        self.documents_txt_file = join(self._working_dir, 'documents.txt')
+        self.timestamps_file = join(self._working_dir, 'timestamps.txt')
+        self.classes_file = join(self._working_dir, 'classes.txt')
 
     @property
     def token_regex(self):
@@ -243,14 +249,41 @@ class BertopicAnalysis(AbstractAnalysis):
         # If using subdocuments, split each document into chunks
         doc_texts = []
         doc_indices = []
+        doc_timestamps = []
+        doc_classes = []
 
         for doc_index, doc in enumerate(documents):
             content = doc.get_content()
             subdocuments = self.create_subdocuments(doc_index, content)
 
+            # Try to extract metadata for visualizations
+            timestamp = None
+            doc_class = None
+
+            # Get metadata from document (using Django model method)
+            try:
+                metadata = doc.get_metadata()
+
+                # Check for temporal metadata (year, date, etc.)
+                for key in ['year', 'date', 'timestamp', 'time', 'published_date']:
+                    if key in metadata and metadata[key]:
+                        timestamp = str(metadata[key])
+                        break
+
+                # Check for class/category metadata
+                for key in ['class', 'category', 'label', 'type', 'author', 'author_name', 'president_name', 'source']:
+                    if key in metadata and metadata[key]:
+                        doc_class = str(metadata[key])
+                        break
+            except Exception as e:
+                # If metadata extraction fails, continue without it
+                pass
+
             for subdoc_name, subdoc_content in subdocuments:
                 doc_texts.append(subdoc_content)
                 doc_indices.append(doc_index)  # Track original document index
+                doc_timestamps.append(timestamp)
+                doc_classes.append(doc_class)
 
         if self.create_subdocuments_method:
             print(f"Loaded {len(documents)} documents, split into {len(doc_texts)} subdocuments")
@@ -312,13 +345,57 @@ class BertopicAnalysis(AbstractAnalysis):
         # Save topic embeddings
         self._save_topic_embeddings(topic_model)
 
+        # Compute and save hierarchical topic structure
+        self._save_hierarchy(topic_model, doc_texts)
+
         # Extract and save vocabulary
         self._extract_vocabulary()
 
         # Create token-to-topic assignments for compatibility
         self._create_token_assignments()
 
+        # Save additional files for BERTopic native visualizations
+        self._save_visualization_files(doc_texts, doc_timestamps, doc_classes)
+
         print("BERTopic analysis complete!")
+
+    def _save_visualization_files(self, doc_texts, doc_timestamps, doc_classes):
+        """
+        Save additional files needed for BERTopic native visualizations.
+
+        Args:
+            doc_texts: List of document text strings
+            doc_timestamps: List of timestamps (may contain None values)
+            doc_classes: List of class labels (may contain None values)
+        """
+        # Save documents.txt for Documents Map and Hierarchical Documents visualizations
+        print("Saving documents.txt for visualizations...")
+        with io.open(self.documents_txt_file, 'w', encoding='utf-8') as f:
+            for text in doc_texts:
+                # Write each document on a single line, escaping newlines
+                f.write(text.replace('\n', ' ').replace('\r', ' ') + '\n')
+
+        # Save timestamps.txt if temporal data is available
+        if any(ts is not None for ts in doc_timestamps):
+            print("Saving timestamps.txt for Topics Over Time visualization...")
+            with io.open(self.timestamps_file, 'w', encoding='utf-8') as f:
+                for timestamp in doc_timestamps:
+                    # Write timestamp or empty line if None
+                    f.write(str(timestamp) if timestamp is not None else '' + '\n')
+            print(f"  Found temporal data for {sum(1 for ts in doc_timestamps if ts is not None)} documents")
+        else:
+            print("No temporal metadata found - skipping timestamps.txt")
+
+        # Save classes.txt if class labels are available
+        if any(cls is not None for cls in doc_classes):
+            print("Saving classes.txt for Topics Per Class visualization...")
+            with io.open(self.classes_file, 'w', encoding='utf-8') as f:
+                for doc_class in doc_classes:
+                    # Write class or empty line if None
+                    f.write(str(doc_class) if doc_class is not None else '' + '\n')
+            print(f"  Found class labels for {sum(1 for cls in doc_classes if cls is not None)} documents")
+        else:
+            print("No class/category metadata found - skipping classes.txt")
 
     def _save_topic_embeddings(self, topic_model):
         """
@@ -346,6 +423,39 @@ class BertopicAnalysis(AbstractAnalysis):
         print(f"Saving embeddings for {len(embeddings_dict)} topics...")
         with io.open(self.topic_embeddings_file, 'w', encoding='utf-8') as f:
             json.dump(embeddings_dict, f)
+
+    def _save_hierarchy(self, topic_model, doc_texts):
+        """
+        Compute and save the hierarchical topic structure.
+
+        BERTopic's hierarchical_topics() performs agglomerative clustering on topics
+        based on their c-TF-IDF representations, creating a dendrogram showing which
+        topics are most similar and how they merge.
+
+        Args:
+            topic_model: Trained BERTopic model
+            doc_texts: List of document texts
+        """
+        print("Computing hierarchical topic structure...")
+
+        # Get the hierarchical topics DataFrame
+        # This performs agglomerative clustering on the topics
+        hierarchical_topics = topic_model.hierarchical_topics(doc_texts)
+
+        # The DataFrame has columns: Parent_ID, Parent_Name, Topics,
+        # Child_Left_ID, Child_Left_Name, Child_Right_ID, Child_Right_Name, Distance
+
+        # Convert DataFrame to a list of dictionaries for JSON serialization
+        hierarchy_data = {
+            'merges': hierarchical_topics.to_dict('records'),
+            'num_topics': len(topic_model.get_topic_freq()) - 1  # Exclude outlier topic (-1)
+        }
+
+        # Save the full hierarchy data
+        with io.open(self.hierarchy_file, 'w', encoding='utf-8') as f:
+            json.dump(hierarchy_data, f, indent=2)
+
+        print(f"Saved hierarchical structure with {len(hierarchical_topics)} merge steps")
 
     def _extract_vocabulary(self):
         """Extract vocabulary from all documents."""
@@ -415,10 +525,23 @@ class BertopicAnalysis(AbstractAnalysis):
 
     def get_hierarchy_iterator(self):
         """
-        Return topic hierarchy.
+        Return topic hierarchy as an iterator of (parent_topic, child_topic) tuples.
 
-        BERTopic supports hierarchical topics, but for initial implementation
-        we'll return empty (no hierarchy).
+        BERTopic's hierarchical clustering creates a dendrogram with synthetic parent
+        nodes that don't correspond to real topics. The hierarchy information is saved
+        in hierarchy.json and can be used directly to find related topics based on
+        merge distances, without needing to store parent-child relationships in the
+        database Topic.parent field.
+
+        Returns:
+            list: Empty list - BERTopic hierarchy is stored in hierarchy.json instead
         """
-        # TODO: Implement hierarchical topics using topic_model.hierarchical_topics()
+        # BERTopic's hierarchical_topics() creates synthetic parent topic IDs that
+        # don't exist in the actual topic list. For example, with topics 0-19, the
+        # hierarchy creates parent IDs like 20, 21, 22, etc. representing merged
+        # clusters. These don't map well to the Topic.parent field which expects
+        # all nodes to be real topics.
+        #
+        # Instead, the hierarchy.json file contains the full dendrogram with merge
+        # distances, which can be used to find related topics more accurately.
         return []

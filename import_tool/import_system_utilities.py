@@ -58,6 +58,75 @@ except ValueError:
     # No API key available, skip LLM namer
     pass
 
+def update_bertopic_model_labels(database_id, dataset_db, analysis_db, verbose=False):
+    """
+    Update the saved BERTopic model with better topic names from the database.
+    This ensures BERTopic's native visualizations show meaningful topic labels.
+
+    Args:
+        database_id: Database identifier
+        dataset_db: Dataset database object
+        analysis_db: Analysis database object
+        verbose: Print progress messages
+    """
+    import os
+    import pickle
+    from visualize.models import Topic, TopicNameScheme, TopicName
+
+    # Get the model file path
+    model_file = os.path.join(dataset_db.dataset_dir, 'analyses', analysis_db.name, 'bertopic_model.pkl')
+
+    if not os.path.exists(model_file):
+        if verbose: print(f'  Warning: BERTopic model file not found at {model_file}')
+        return
+
+    # Try to find LLM-generated names first, fall back to other schemes
+    preferred_schemes = ['LLM-10words', 'BERTopic c-TF-IDF Top 5', 'TF-ITF Top 3', 'Top3']
+    scheme = None
+
+    for scheme_name in preferred_schemes:
+        try:
+            scheme = TopicNameScheme.objects.using(database_id).get(name=scheme_name)
+            break
+        except TopicNameScheme.DoesNotExist:
+            continue
+
+    if not scheme:
+        if verbose: print('  Warning: No topic naming scheme found for BERTopic model update')
+        return
+
+    # Load custom topic labels from database
+    topics = Topic.objects.using(database_id).filter(analysis=analysis_db).order_by('number')
+    custom_labels = {}
+
+    for topic in topics:
+        try:
+            topic_name = TopicName.objects.using(database_id).get(topic=topic, name_scheme=scheme)
+            custom_labels[topic.number] = topic_name.name
+        except TopicName.DoesNotExist:
+            # Fall back to topic number if name not found
+            custom_labels[topic.number] = f"Topic {topic.number}"
+
+    if not custom_labels:
+        if verbose: print('  Warning: No topic names found to update BERTopic model')
+        return
+
+    # Load, update, and resave the model
+    try:
+        with open(model_file, 'rb') as f:
+            topic_model = pickle.load(f)
+
+        # Update the model's topic labels
+        topic_model.set_topic_labels(custom_labels)
+
+        # Save the updated model
+        with open(model_file, 'wb') as f:
+            pickle.dump(topic_model, f)
+
+        if verbose: print(f'  Updated BERTopic model labels using {scheme.name} naming scheme')
+    except Exception as e:
+        if verbose: print(f'  Warning: Failed to update BERTopic model labels: {str(e)}')
+
 def make_working_dir():
     """Make the 'working/' dir.
     Return the absolute path.
@@ -371,7 +440,11 @@ def run_analysis(database_id, dataset_name, analysis, directories,
             for query in con.queries[query_count:]:
                 print(query['time'])
                 print(query['sql'])
-    
+
+    # Update BERTopic model with better topic names for visualizations
+    if analysis_db.name.startswith('bertopic'):
+        update_bertopic_model_labels(database_id, dataset_db, analysis_db, verbose=verbose)
+
     if verbose: print('Running metrics.')
     run_metrics(database_id, dataset_db.name, analysis_db.name, BASIC_ANALYSIS_METRICS)
     

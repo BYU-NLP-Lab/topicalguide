@@ -27,13 +27,22 @@
 
 /* Header */
 .header {
+	position: fixed;
 	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 1030;
     width: 100%;
     clear: both;
     font-family: 'Varela Round', sans-serif;
     border-radius: 0;
     display: block;
-    padding: 0.5em 0.5em 0.5em 0.5em;
+    padding: 0;
+    background-color: white;
+}
+
+.header .navbar {
+    margin-bottom: 0;
 }
 
 .share > div{
@@ -91,7 +100,7 @@ a.nounderline:hover {
  ************************/
 
 body {
-	padding: 0;
+	padding: 160px 0 0 0;  /* Top padding for fixed header (selectors + navbar) */
 	margin: 0;
 }
 

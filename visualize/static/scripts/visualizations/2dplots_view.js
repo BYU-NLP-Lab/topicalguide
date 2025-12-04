@@ -42,7 +42,9 @@ var PlotView = DefaultView.extend({
     readableName: "2D Plots",
     
     initialize: function() {
+        this.selectionModel.on("change:dataset", this.render, this);
         this.selectionModel.on("change:analysis", this.render, this);
+        this.selectionModel.on("change:topic_name_scheme", this.render, this);
         this.selectionModel.on("change:document", this.updateDocumentPicker, this);
         this.model = new Backbone.Model(); // Used to store document data.
     },
@@ -195,13 +197,14 @@ var PlotView = DefaultView.extend({
         
         // Make sure the topic's readable name is set.
         var allTopics = analysis.topics;
+        var selectedScheme = this.selectionModel.get("topic_name_scheme") || "Top3";
         console.log(valueNames);
         if("topics" in valueNames) {
             var valueTopics = valueNames.topics;
             for(topKey in valueTopics) {
                 // Skip topics that don't exist (e.g., BERTopic outlier topic -1)
-                if(allTopics[topKey] && allTopics[topKey].names && allTopics[topKey].names.Top3) {
-                    valueTopics[topKey] = toTitleCase(allTopics[topKey].names.Top3);
+                if(allTopics[topKey] && allTopics[topKey].names) {
+                    valueTopics[topKey] = toTitleCase(allTopics[topKey].names[selectedScheme] || allTopics[topKey].names.Top3);
                 }
             }
         }

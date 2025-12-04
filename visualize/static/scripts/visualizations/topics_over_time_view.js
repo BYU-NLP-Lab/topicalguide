@@ -37,7 +37,9 @@ var TopicsOverTimeView = DefaultView.extend({
     readableName: "Topics Over Time",
 
     initialize: function() {
+        this.selectionModel.on("change:dataset", this.render, this);
         this.selectionModel.on("change:analysis", this.render, this);
+        this.selectionModel.on("change:topic_name_scheme", this.render, this);
         this.model = new Backbone.Model();
         this.settings = new Backbone.Model();
         this.lineChart = null;
@@ -138,12 +140,13 @@ var TopicsOverTimeView = DefaultView.extend({
         // Get selects to be populated
         var topicSelect = this.topicSelect = controls.select("#topics-control");
         var raw_topics = this.model.attributes.raw_topics;
+        var selectedScheme = this.selectionModel.get("topic_name_scheme") || "Top3";
         for (key in raw_topics) {
             topic = raw_topics[key];
             topicSelect
                 .append("option")
                 .attr("value", key)
-                .text(toTitleCase(topic.names.Top3));
+                .text(toTitleCase(topic.names[selectedScheme] || topic.names.Top3));
         }
 
         // Get Metadata options - only include time-related dimensions
@@ -1242,10 +1245,11 @@ var TopicsOverTimeView = DefaultView.extend({
             this.normalizeDocumentPercentage(documents);
             metadataInfo = this.getMetadataInfo(documents);
 
+            var selectedScheme = this.selectionModel.get("topic_name_scheme") || "Top3";
             for (var topic in analysisData.topics) {
                 processedTopic = this.processTopicData(topic, documents, metadataInfo);
                 var topicData = topics[topic] = processedTopic.data
-                topics[topic].name = toTitleCase(analysisData.topics[topic].names.Top3);
+                topics[topic].name = toTitleCase(analysisData.topics[topic].names[selectedScheme] || analysisData.topics[topic].names.Top3);
             }
 
         } else {

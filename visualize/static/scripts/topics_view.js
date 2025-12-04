@@ -10,17 +10,13 @@ var AllTopicSubView = DefaultView.extend({
     
     formTemplate:
 "<form role=\"form\">"+
-"    <div class=\"form-group col-xs-4\">"+
+"    <div class=\"form-group col-xs-6\">"+
 "        <label for=\"words-input\">Filter Topics by Words</label>"+
 "        <input id=\"words-input\" class=\"form-control\" type=\"text\" placeholder=\"Enter words...\"></input>"+
 "    </div>"+
-"    <div class=\"form-group col-xs-3\">"+
+"    <div class=\"form-group col-xs-4\">"+
 "        <label for=\"top-words-input\">Top Words</label>"+
 "        <input id=\"top-words-input\" class=\"form-control\" type=\"number\" placeholder=\"Enter a #.\"></input>"+
-"    </div>"+
-"    <div class=\"form-group col-xs-3\">"+
-"        <label for=\"display-words-input\">Display Words</label>"+
-"        <input id=\"display-words-input\" class=\"form-control\" type=\"number\" placeholder=\"Enter a #.\"></input>"+
 "    </div>"+
 "    <div class=\"form-group col-xs-2\">"+
 "        <label for=\"submit-button\"></label>"+
@@ -29,7 +25,7 @@ var AllTopicSubView = DefaultView.extend({
 "</form>",
     
     initialize: function() {
-        var settings = _.extend({ "words": "*", "topicTopNWords": 10, "topicDisplayNWords": 10, "sortBy": 1, "sortAscending": true }, this.settingsModel.attributes)
+        var settings = _.extend({ "words": "*", "topicTopNWords": 10, "sortBy": 1, "sortAscending": true }, this.settingsModel.attributes)
         this.settingsModel.set(settings);
         this.listenTo(this.settingsModel, "multichange", this.renderTopicsTable);
         this.listenTo(this.selectionModel, "change:topic_name_scheme", this.renderTopicsTable);
@@ -50,16 +46,32 @@ var AllTopicSubView = DefaultView.extend({
         var settings = this.settingsModel.attributes;
         var words = settings["words"].split(/[\s,]+/).join(" ");
         var topNWords = settings["topicTopNWords"];
-        var displayNWords = settings["topicDisplayNWords"];
-        
+
         // Create the form
         var el = d3.select(this.el).select("#form-container");
         el.html(this.formTemplate);
         el.select("#words-input").property("value", words);
         el.select("#top-words-input").property("value", topNWords);
-        el.select("#display-words-input").property("value", displayNWords);
+
+        // Add dynamic filtering on input
+        var debounceTimer;
+        el.select("#words-input").on("input", function() {
+            // Debounce the input to avoid too many requests
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                that.formSubmit();
+            }, 500); // Wait 500ms after user stops typing
+        });
+
+        // Also update on change for Top Words
+        el.select("#top-words-input").on("change", function() {
+            that.formSubmit();
+        });
+
+        // Keep form submit for users who press Enter
         el.select("form").on("submit", function() {
             d3.event.preventDefault();
+            clearTimeout(debounceTimer);
             that.formSubmit();
         });
     },
@@ -71,14 +83,14 @@ var AllTopicSubView = DefaultView.extend({
         words.sort();
         words = _.uniq(words, true);
         words = words.join(",");
+        // Treat empty filter as '*' (show all topics)
+        if (words === "") {
+            words = "*";
+        }
         var topNWords = parseInt(d3.select("#top-words-input").property("value"));
-        var displayNWords = parseInt(d3.select("#display-words-input").property("value"));
         this.settingsModel.set({ words: words });
         if($.isNumeric(topNWords) && topNWords > 0) {
             this.settingsModel.set({ topicTopNWords: topNWords });
-        }
-        if($.isNumeric(displayNWords) && topNWords > 0) {
-            this.settingsModel.set({ topicDisplayNWords: displayNWords });
         }
         this.settingsModel.trigger("multichange");
     },
@@ -87,12 +99,17 @@ var AllTopicSubView = DefaultView.extend({
         var container = d3.select("#table-container").html(this.loadingTemplate);
         var selection = this.selectionModel.attributes;
         var settings = this.settingsModel.attributes;
-        // Make a request
+
+        // Parse filter words for client-side filtering
+        var filterWords = settings["words"] === "*" ? [] : settings["words"].split(',');
+        var filterWordsSet = new Set(filterWords);
+
+        // Make a request - always request all words to show in display
         this.dataModel.submitQueryByHash({
             "datasets": selection["dataset"],
             "analyses": selection["analysis"],
             "topics": "*",
-            "words": settings["words"],
+            "words": "*",  // Always get all words
             "top_n_words": settings["topicTopNWords"],
             "topic_attr": ["metrics", "names", "top_n_words"],
             "analysis_attr": "metrics",
@@ -111,19 +128,47 @@ var AllTopicSubView = DefaultView.extend({
             var header = ["", "#", "% of Corpus", "Name", "Top Words", "% of Topic"];
             // Format data.
             var totalTokens = data.datasets[this.selectionModel.get("dataset")].analyses[this.selectionModel.get("analysis")].metrics["Token Count"];
-            var displayNWords = settings['topicDisplayNWords'];
+            var topNWords = settings['topicTopNWords'];
             topics = d3.entries(topics).map(function(d) {
                 var wordObjects = d.value["words"];
                 var wordTypes = [];
                 for(key in wordObjects) wordTypes.push(key);
                 wordTypes.sort(function(a, b) { return wordObjects[b]["token_count"]-wordObjects[a]["token_count"]; });
-                var words = wordTypes.slice(0, displayNWords).join(" ");
+
+                // Check if any of the filter words are in this topic's top N words
+                var hasMatchingWord = filterWords.length === 0 ||
+                    wordTypes.some(function(word) { return filterWordsSet.has(word); });
+
+                // Create words display with matched words in bold
+                var wordsHtml = wordTypes.slice(0, topNWords).map(function(word) {
+                    if (filterWordsSet.has(word)) {
+                        return "<b>" + word + "</b>";
+                    }
+                    return word;
+                }).join(" ");
+
                 var wordsTokenCount = _.reduce(wordTypes, function(sum, word) { return sum + wordObjects[word]["token_count"]; }, 0);
                 var topicTokenCount = parseFloat(d.value.metrics["Token Count"]);
                 var topicName = d.value.names[selectedScheme] || d.value.names["Top3"] || "";
-                return [parseFloat(d.key), parseFloat(d.key), (topicTokenCount*100)/totalTokens, topicName, words, (wordsTokenCount*100)/topicTokenCount];
+                return [parseFloat(d.key), parseFloat(d.key), (topicTokenCount*100)/totalTokens, topicName, wordsHtml, (wordsTokenCount*100)/topicTokenCount, hasMatchingWord];
             });
+            // Filter out topics without names
             topics = topics.filter(function(item) { return item[3] != ""; });
+            // When word filter is active, also filter out topics with no matching words
+            if (filterWords.length > 0) {
+                topics = topics.filter(function(item) { return item[6]; }); // item[6] is hasMatchingWord
+            }
+            // Remove the hasMatchingWord flag (item[6]) from display
+            topics = topics.map(function(item) { return item.slice(0, 6); });
+
+            // Show message if no topics match the filter
+            if (topics.length === 0) {
+                container.append("div")
+                    .classed("alert alert-info", true)
+                    .html("<strong>No topics found.</strong> No topics contain the specified word(s). Try different words or use '*' to show all topics.");
+                return;
+            }
+
             var wordPercentage = _.reduce(topics, function(total, innerArray) {
                 return total + ((innerArray[2] * innerArray[5])/10000);
             }, 0);
@@ -139,7 +184,7 @@ var AllTopicSubView = DefaultView.extend({
             var toCleanup = createSortableTable(table, {
                 header: header,
                 data: topics,
-                onClick: {  
+                onClick: {
                     "1": onClick,
                     "3": onClick,
                     "4": onClick,
@@ -149,7 +194,8 @@ var AllTopicSubView = DefaultView.extend({
                 favicon: [0, "topics", this],
                 sortBy: this.settingsModel.get("sortBy"),
                 sortAscending: this.settingsModel.get("sortAscending"),
-                onSort: onSort
+                onSort: onSort,
+                htmlColumns: [4]  // Column 4 (Top Words) contains HTML
             });
             // Add the word as percentage of corpus total at the bottom.
             var wordPercentageContainer = container.append("div");
@@ -160,14 +206,12 @@ var AllTopicSubView = DefaultView.extend({
     },
     
     renderHelpAsHtml: function() {
-        return "<h4>FilterTopics by Words</h4>"+
-        "<p>To filter the topics enter words separated by commas or spaces, use the asterisk (*) to indicate all words.</p>"+
+        return "<h4>Filter Topics by Words</h4>"+
+        "<p>Enter words separated by commas or spaces to filter topics. Only topics where the specified words appear in the top N words will be shown. Matching words will be shown in <b>bold</b>. Leave empty or use '*' to show all topics.</p>"+
         "<h4>Top Words</h4>"+
-        "<p>This field is to limit the results returned by the server. The results are used to determine the % of the topic they make up.</p>"+
-        "<h4>Display Words</h4>"+
-        "<p>This will determine the maximum number of words displayed on the screen.</p>"+
+        "<p>Controls how many of each topic's most frequent words to retrieve and display. Also defines which words are considered when filtering - a topic will only match if your search words appear in its top N words.</p>"+
         "<h4>Submit</h4>"+
-        "<p>Click submit to view the changes made.</p>"+
+        "<p>Click submit to view the changes made (or press Enter in any field).</p>"+
         "<h4>The Topics Table</h4>"+
         "<p><ul>"+
         "<li>The '% of Corpus' column is the amount of the corpus the topic makes up by word count. "+
@@ -288,7 +332,7 @@ var SingleTopicView = DefaultView.extend({
                 "datasets": selections["dataset"],
                 "analyses": selections["analysis"],
                 "topics": selections["topic"],
-                "topic_attr": "metrics,names,pairwise",
+                "topic_attr": "metrics,names,pairwise,related_topics",
         }, function(data) {
             this.dataModel.submitQueryByHash({
                 "datasets": selections["dataset"],
@@ -300,6 +344,44 @@ var SingleTopicView = DefaultView.extend({
                 var allTopics = extractTopics(allTopicsData);
                 var currentTopic = that.selectionModel.get("topic");
                 var topic = extractTopics(data)[currentTopic];
+
+                // Display BERTopic hierarchy-based related topics if available
+                if (topic.related_topics && topic.related_topics.length > 0) {
+                    content.append("h4").text("Related Topics (from BERTopic Hierarchy)");
+                    content.append("p")
+                        .classed("text-muted", true)
+                        .html("<small>Topics are ranked by hierarchical similarity (lower distance = more similar)</small>");
+
+                    var selectedScheme = that.selectionModel.get("topic_name_scheme") || "Top3";
+                    var hierarchyData = topic.related_topics.map(function(item) {
+                        var topicNum = item[0];
+                        var distance = item[1];
+                        var topicName = allTopics[topicNum] && allTopics[topicNum].names
+                            ? (allTopics[topicNum].names[selectedScheme] || allTopics[topicNum].names["Top3"] || "")
+                            : "";
+                        return [topicNum, topicNum, topicName, (1 - distance) * 100]; // Convert distance to similarity percentage
+                    });
+
+                    var hierarchyTable = content.append("table")
+                        .classed("table table-hover table-condensed", true);
+                    var onClick = function(d, i) {
+                        that.selectionModel.set({ "topic": d[0] });
+                    };
+                    createSortableTable(hierarchyTable, {
+                        header: ["", "#", "Topic Name", "Similarity"],
+                        data: hierarchyData,
+                        onClick: { "1": onClick, "2": onClick },
+                        bars: [3],
+                        percentages: [3],
+                        favicon: [0, "topics", that],
+                        sortBy: 3,
+                        sortAscending: false,
+                    });
+
+                    content.append("hr");
+                    content.append("h4").text("Pairwise Topic Metrics");
+                }
+
                 var header = ["", "#", "Topic Name"];
                 var updateHeader = true;
                 var percentageColumns = [];

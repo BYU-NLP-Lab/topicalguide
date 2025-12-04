@@ -226,6 +226,58 @@ def query_analyses(options, dataset_db):
     
     return analyses
     
+def get_related_topics_from_hierarchy(topic_number, analysis_db, max_related=10):
+    """
+    Get related topics from BERTopic hierarchy file.
+
+    Returns a list of (topic_number, distance) tuples sorted by similarity
+    (smallest distance = most similar).
+    """
+    import os
+    import json
+
+    # Build path to hierarchy file
+    hierarchy_path = os.path.join(
+        analysis_db.dataset.dataset_dir,
+        'analyses',
+        analysis_db.name,
+        'hierarchy.json'
+    )
+
+    if not os.path.exists(hierarchy_path):
+        return []
+
+    try:
+        with open(hierarchy_path, 'r') as f:
+            hierarchy_data = json.load(f)
+    except Exception:
+        return []
+
+    # Find all topics that this topic merges with
+    related = []
+
+    for merge in hierarchy_data['merges']:
+        left_child = merge['Child_Left_ID']
+        right_child = merge['Child_Right_ID']
+        distance = merge['Distance']
+
+        # Convert to int if they're strings
+        try:
+            left_id = int(left_child) if isinstance(left_child, str) else left_child
+            right_id = int(right_child) if isinstance(right_child, str) else right_child
+        except (ValueError, TypeError):
+            continue
+
+        # If this topic is one of the children, the other child is related
+        if left_id == topic_number:
+            related.append((right_id, distance))
+        elif right_id == topic_number:
+            related.append((left_id, distance))
+
+    # Sort by distance (most similar first) and limit to max_related
+    related.sort(key=lambda x: x[1])
+    return related[:max_related]
+
 def query_topics(options, dataset_db, analysis_db):
     topics = {}
     if 'topic_attr' in options:
@@ -233,11 +285,12 @@ def query_topics(options, dataset_db, analysis_db):
             topics_queryset = analysis_db.topics.all();
         else:
             topics_queryset = analysis_db.topics.filter(number__in=options['topics'])
-        
+
         TOPIC_ATTR = {
             'metadata': lambda topic: {md.metadata_type.name: md.value() for md in topic.metadata_values.all()},
             'metrics': lambda topic: {mv.metric.name: mv.value for mv in topic.metric_values.all()},
             'names': lambda topic: {name.name_scheme.name: name.name for name in topic.names.all()},
+            'related_topics': lambda topic: get_related_topics_from_hierarchy(topic.number, analysis_db),
         }
         
         topic_attr = options.setdefault('topic_attr', [])

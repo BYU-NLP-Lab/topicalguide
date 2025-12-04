@@ -377,10 +377,20 @@ class Topic(models.Model):
     
     def top_n_words(self, words='*', top_n=10):
         topic_words = self.tokens.values('word_type__word').annotate(count=Count('word_type__word'))
-        if words != '*':
-            topic_words = topic_words.filter(word_type__word__in=words)
         topic_words = topic_words.order_by('-count')
-        return {value['word_type__word']: {'token_count': value['count']} for value in topic_words[:top_n]}
+
+        if words == '*':
+            # Return all top N words
+            return {value['word_type__word']: {'token_count': value['count']} for value in topic_words[:top_n]}
+        else:
+            # First get the top N words for this topic
+            top_words = list(topic_words[:top_n])
+            top_word_types = {value['word_type__word'] for value in top_words}
+
+            # Then filter to only return the requested words that are in the top N
+            return {value['word_type__word']: {'token_count': value['count']}
+                    for value in top_words
+                    if value['word_type__word'] in words}
     
     def top_n_documents(self, documents='*', top_n=10):
         topicdocs = self.tokens.values('document__id', 'document__filename').annotate(count=Count('document__id'))

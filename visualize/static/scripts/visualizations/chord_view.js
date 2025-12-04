@@ -28,7 +28,9 @@ var ChordView = DefaultView.extend({
 "<p><select id=\"metric-options\"></select></p>",
 
     initialize: function() {
+        this.selectionModel.on("change:dataset", this.render, this);
         this.selectionModel.on("change:analysis", this.render, this);
+        this.selectionModel.on("change:topic_name_scheme", this.renderChordDiagram, this);
         this.model = new Backbone.Model(); // For storing settings and data.
     },
     
@@ -75,9 +77,10 @@ var ChordView = DefaultView.extend({
                 metricOptions.push(key);
             }
             metricOptions.sort();
+            var selectedScheme = this.selectionModel.get("topic_name_scheme") || "Top3";
             var names = {};
             for(i=0; i<topicCount; i++) { // Extract names.
-                names[i] = topics[i].names.Top3;
+                names[i] = topics[i].names[selectedScheme] || topics[i].names.Top3;
             }
             var metric = metricOptions[0];
             var matrices = {};

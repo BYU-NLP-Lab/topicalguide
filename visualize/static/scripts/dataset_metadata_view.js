@@ -52,7 +52,7 @@ var DatasetMetadataView = DefaultView.extend({
             "datasets": dataset,
             "analyses": "*",
             "dataset_attr": ["metadata", "metrics"],
-            "analysis_attr": ["metadata", "metrics"],
+            "analysis_attr": ["metadata", "metrics", "topic_count"],
         }, this.renderDataset.bind(this), this.renderError.bind(this));
 
         return this;
@@ -146,7 +146,7 @@ var DatasetMetadataView = DefaultView.extend({
             var description = (analysis.metadata && analysis.metadata.description) ||
                              "No description";
 
-            var topicCount = (analysis.metrics && analysis.metrics["Topic Count"]) || "N/A";
+            var topicCount = analysis.topic_count || "N/A";
 
             var row = tbody.append("tr");
             row.append("td").text(readableName);
