@@ -1,6 +1,6 @@
 # Core dependencies
 Django==4.2.29  # Current LTS version - security updates (CVE-2026-25673)
-nltk==3.9.2
+nltk==3.9.3  # Security update (CVE-2025-14009 Zip Slip)
 numpy>=2.0.0
 scipy>=1.15.0
 GitPython>=3.1.0
