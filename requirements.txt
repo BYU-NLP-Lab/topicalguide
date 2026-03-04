@@ -1,5 +1,5 @@
 # Core dependencies
-Django==4.2.27  # Current LTS version - security updates
+Django==4.2.29  # Current LTS version - security updates (CVE-2026-25673)
 nltk==3.9.2
 numpy>=2.0.0
 scipy>=1.15.0
