@@ -1,5 +1,5 @@
 # Core dependencies
-Django==4.2.29  # Current LTS version - security updates (CVE-2026-25673)
+Django==4.2.30  # Current LTS version - security updates (CVE-2026-33034, CVE-2026-3902, CVE-2026-33033, +2)
 nltk==3.10.0  # Security update (CVE-2026-12061 ReDoS in ReviewsCorpusReader)
 numpy>=2.0.0
 scipy>=1.15.0
