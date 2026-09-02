@@ -15,7 +15,7 @@ django-debug-toolbar>=4.4.0
 django-extensions>=3.2.0
 gunicorn>=23.0.0
 docopt>=0.6.0
-chardet>=5.2.0
+chardet>=7.6.0
 
 # For testing
 pytest>=9.0.0
