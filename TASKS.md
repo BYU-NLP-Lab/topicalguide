@@ -48,7 +48,7 @@ priorities change.
 | **2.1** front-end upgrades — **done** except D3 | Bootstrap 5, jQuery 3, jQuery UI 1.13, Underscore. D3 stays at v3 deliberately: no advisory, and v4+ rewrites all six visualizations. |
 | **5.3, 5.4** architecture note and README rewrite | Half the README no longer describes this project. |
 | **5.5** nothing to look at on a fresh clone | Decide demo database vs `make demo` before reaching for Git LFS. |
-| **2.3, 4.2** CI follow-ups | Declare `pytest-cov`, put `--cov` in the CI run, split the ML deps. |
+| **2.3, 4.2** CI follow-ups — **coverage done** | `pytest-cov` declared and `--cov` in the CI run. Remaining: split the ML deps. |
 | **2.5** Python 3.11 → 3.13 | Independent of Django, and removes half the work from the 6.2 LTS jump in April 2027. |
 
 ### Tier 4 — the research programme
@@ -563,6 +563,30 @@ numba supports 3.14 now. Fix that comment while you are there.
 The suite emits no Django deprecation warnings on either 4.2 or 5.2, so
 nothing in the code obstructs whichever path is taken.
 
+### 2.6 nltk dropped rather than pinned — **done**
+
+Dependabot raised CVE-2026-81726 (High, CVSS 4.0 8.3): NLTK's model-artifact
+APIs — `TransitionParser`, `AveragedPerceptron`, `PerceptronTagger` and the
+maxent parameter APIs — use raw file operations on caller-controlled paths and
+so read and write outside the sandbox roots even with `nltk.pathsec`
+`ENFORCE=True`. It affects **every release through 3.10.3, which is still the
+newest on PyPI**, so there was no fixed version to pin to. It is the fourth in
+the same family, after CVE-2026-54293 (`nltk.data.load()`), CVE-2026-12074
+(`FramenetCorpusReader.frame()`) and the downloader's arbitrary file overwrite.
+
+The resolution was to remove the dependency: a case-insensitive grep across the
+repository matched `nltk` on exactly one line — its own entry in
+`requirements.txt`. Nothing imports it. The stopword lists are plain files in
+`stopwords/` and tokenization is hand-rolled in `import_tool/`. It was also
+uninstalled from the development `venv/`, where `pip show` listed no
+`Required-by`, so nothing else lost a dependency.
+
+The suite passes unchanged without it (61 passed, 1 xfailed) and got roughly
+4× faster — 59s to 14s — because nltk's import is no longer paid for at
+collection. Worth remembering as the general lesson: **an unused pinned
+dependency is a recurring alert with no upside**, and the rest of
+`requirements.txt` deserves the same grep.
+
 ---
 
 ## 3. Performance
@@ -639,18 +663,16 @@ on every import.
 
 Pairs with 5.5: the same fixture is what a `make demo` target would use.
 
-### 4.2 Coverage measurement — **done, now wire it in**
+### 4.2 Coverage measurement — **done and wired in**
 
-The numbers above came from `pytest-cov`, which is not yet a declared
-dependency. Two steps remain:
+The numbers above came from `pytest-cov`, which is now a declared dependency
+(`requirements.txt`) and runs on every build: the CI step in
+`.github/workflows/tests.yml` passes `--cov=visualize --cov=import_tool`. A
+local run reproduces the same **22%** total over 3,480 statements.
 
-- add `pytest-cov` to `requirements.txt` beside the other test tooling;
-- add `--cov=visualize --cov=import_tool` to the CI run in
-  `.github/workflows/tests.yml`, so the figure appears on every build instead
-  of being something to go looking for.
-
-Resist a coverage *threshold* until 4.1 lands. At 22% any gate would either be
-set so low it means nothing or would fail every build.
+Deliberately no `--cov-fail-under`. At 22% a threshold would either be set so
+low it means nothing or would fail every build; revisit once 4.1 has covered
+the import pipeline.
 
 ### 4.3 The API's own error paths are thinly covered
 

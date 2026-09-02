@@ -47,6 +47,11 @@ jobs:
         # TG_REQUIRE_BROWSER turns "Chrome is missing" from a skip into a
         # failure, so CI cannot go green having silently skipped the browser
         # suite. -rs lists the reason for any test that does skip.
+        #
+        # --cov reports coverage on every build rather than leaving it as
+        # something to go looking for. Deliberately no --cov-fail-under: at 22%
+        # a gate would either mean nothing or fail every build. Revisit once
+        # TASKS.md 4.1 covers the import pipeline.
         env:
           TG_REQUIRE_BROWSER: '1'
-        run: pytest -v -rs
+        run: pytest -v -rs --cov=visualize --cov=import_tool

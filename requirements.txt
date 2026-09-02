@@ -1,6 +1,9 @@
 # Core dependencies
 Django==5.2.17  # Current LTS. 4.2 reached end of life at 4.2.30, so its last 6 CVEs had no fix in that series.
-nltk==3.10.3  # Security update (CVE-2026-79675 JVM arg injection, CVE-2026-78680 Graphviz 'dot' search path, CVE-2026-12061 ReDoS)
+# nltk removed: nothing in this repo imports it (stopword lists live in stopwords/,
+# tokenization is hand-rolled), and it has a steady drip of path-traversal CVEs --
+# CVE-2026-81726 (model-artifact APIs bypass pathsec) affects every release through
+# 3.10.3, which is still the latest on PyPI, so there is no fixed version to pin.
 numpy>=2.0.0
 scipy>=1.15.0
 GitPython>=3.1.61
@@ -20,6 +23,7 @@ chardet>=7.6.0  # 7.x removed chardet.universaldetector; basic_tools imports Uni
 # For testing
 pytest>=9.0.0
 pytest-django>=4.14.0
+pytest-cov>=7.1.0  # CI passes --cov; see TASKS.md 4.2. No threshold until 4.1 lands.
 selenium>=4.30.0
 
 # For LLM-based topic naming (optional)
