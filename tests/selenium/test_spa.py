@@ -381,3 +381,35 @@ def test_bootstrap_javascript_is_functional(app):
     assert WebDriverWait(app, WAIT_SECONDS).until(
         lambda d: not d.execute_script(
             "return jQuery('#main-nav-help-modal').hasClass('in');"))
+
+
+def test_jquery_ui_slider_initialises(app, wait):
+    """The chord view's threshold control is a jQuery UI slider.
+
+    `.slider()` is the only jQuery UI widget this app uses, and jQuery UI is
+    tied to the jQuery version, so this is the pairing that breaks when either
+    is upgraded. Asserting the widget actually initialised catches that, where
+    merely finding the element would not.
+    """
+    view = nav_to(app, wait, 'Chord Diagram')
+    wait.until(lambda d: view.find_elements(By.ID, 'chords-slider'))
+
+    assert app.execute_script('return typeof jQuery.fn.slider;') == 'function'
+    assert app.execute_script(
+        "return jQuery('#chords-slider').hasClass('ui-slider');")
+
+
+def test_bootstrap_toggle_initialises(app, wait):
+    """The stacked/overlaid switch in Topics Over Time is bootstrap-toggle.
+
+    It is a third-party Bootstrap plugin and therefore sensitive to both the
+    jQuery and Bootstrap versions; it wraps its checkbox in a .toggle element
+    when it initialises.
+    """
+    nav_to(app, wait, 'Topics Over Time')
+    wait.until(lambda d: d.find_elements(By.ID, 'graph-control'))
+
+    assert app.execute_script(
+        'return typeof jQuery.fn.bootstrapToggle;') == 'function'
+    assert app.execute_script(
+        "return jQuery('#graph-control').parent().hasClass('toggle');")

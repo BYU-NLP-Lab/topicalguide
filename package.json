@@ -8,7 +8,8 @@
     "backbone": "1.1.2",
     "bootstrap": "3.4.1",
     "d3": "3.4.11",
-    "jquery": "1.11.1",
+    "jquery": "3.7.1",
+    "jquery-ui": "1.13.3",
     "underscore": "1.13.8"
   }
 }

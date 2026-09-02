@@ -27,8 +27,8 @@ inferred from filenames.
 
 | Library | Version | Released | Path | In `package.json` |
 | --- | --- | --- | --- | --- |
-| jQuery | 1.11.1 | 2014 | `scripts/libs/jquery-1.11.1.min.js` | yes |
-| jQuery UI | 1.11.0 | 2014 | `jquery-ui/` | **no** — 1.11.x was never published to npm under `jquery-ui` |
+| jQuery | 3.7.1 | 2023 | `scripts/libs/jquery-3.7.1.min.js` | yes |
+| jQuery UI | 1.13.3 | 2024 | `jquery-ui/` | yes |
 | Backbone | 1.1.2 | 2014 | `scripts/libs/backbone.min.js` | yes |
 | Underscore | 1.13.8 | 2024 | `scripts/libs/underscore.min.js` | yes |
 | D3 | 3.4.11 | 2014 | `scripts/libs/d3.v3.min.js` | yes |
@@ -37,19 +37,21 @@ inferred from filenames.
 | Bootstrap | 3.4.1 | 2019 | `bootstrap/` | yes |
 | Bootstrap Toggle | 2.1.0 | — | `bootstrap-toggle/` | **no** — npm has 1.1.0, then 2.0.0 and 2.2.x |
 
-Four entries cannot be expressed in `package.json` because the exact vendored
+Three entries cannot be expressed in `package.json` because the exact vendored
 version does not exist in the npm registry. Declaring a nearby version instead
 would be worse than declaring nothing: Dependabot would report on a release
 this project does not actually ship, and a version *newer* than reality would
 hide real advisories. They are listed here so the gap is visible rather than
-silent, and they need checking by hand.
+silent, and they need checking by hand. (jQuery UI joined the declarable set
+when it moved from 1.11.0 to 1.13.3, which is on npm.)
 
 ## Known exposure
 
-jQuery below 3.5.0 carries CVE-2020-11022 and CVE-2020-11023: passing
-attacker-influenced markup to `html()`, `append()` and similar can execute
-script. The Backbone views build markup from `/api` data throughout, so this is
-not a theoretical concern for this codebase.
+jQuery was upgraded 1.11.1 → 3.7.1, clearing CVE-2015-9251, CVE-2019-11358 and
+CVE-2020-11023 — XSS and prototype pollution reachable through `html()` and
+`append()`, which the Backbone views use on `/api` data throughout. jQuery UI
+moved 1.11.0 → 1.13.3 in the same change, because 1.11 predates jQuery 3
+support and the two are a pair.
 
 Bootstrap was upgraded 3.2.0 → 3.4.1, clearing six XSS advisories
 (CVE-2016-10735, CVE-2018-14040, CVE-2018-14042, CVE-2018-20676,
@@ -75,16 +77,19 @@ The procedure that keeps the manifest and the shipped file in step:
 3. Update the `<script>`/`<link>` tags in `visualize/templates/root.html` if the
    filename carries a version.
 4. Update the table above.
-5. Run `pytest tests/selenium`. Two tests exist specifically for this:
+5. Run `pytest tests/selenium`. Four tests exist specifically for this, because
+   a broken library often still renders an approximately correct page and the
+   rendered-output assertions alone are not sufficient evidence:
    `test_no_severe_console_errors` visits every view and fails on any severe
-   browser console message, and `test_bootstrap_javascript_is_functional`
-   drives a Bootstrap plugin through its own API. A broken library often still
-   renders an approximately correct page, so the rendered-output assertions
-   alone are not sufficient evidence.
+   browser console message; `test_bootstrap_javascript_is_functional` drives a
+   Bootstrap plugin through its own API; `test_jquery_ui_slider_initialises`
+   and `test_bootstrap_toggle_initialises` check the two third-party widgets,
+   which are the pieces most sensitive to a jQuery or Bootstrap version
+   change.
 6. Bump the version in `/package.json` in the **same commit**.
 
-Upgrading is a real project, not a version bump — jQuery 1.x → 3.x removes
-`.load()`, `.size()` and `.andSelf()` and changes deferred semantics, and D3 v3
-→ v4+ restructures every module, which would touch all six visualizations. The
-browser suite in `tests/selenium/` is what makes it attemptable: work one
-library at a time and let the tests say what broke. See TASKS.md 2.1.
+D3 remains at v3.4.11. It has no open advisory, and v3 → v4+ restructures
+every module, so it would touch all six visualizations for no security gain.
+
+The browser suite is what makes any of this attemptable: work one library at a
+time and let the tests say what broke. See TASKS.md 2.1.
