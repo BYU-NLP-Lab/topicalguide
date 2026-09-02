@@ -21,8 +21,6 @@ priorities change.
 
 | Item | Why now |
 | --- | --- |
-| **2.4** front-end CVEs — **all 15 cleared** | Bootstrap 5.3.8, jQuery 3.7.1, jQuery UI 1.13.3, lodash replaced by Underscore. Kept in Tier 1 as the record of how it was done and what it cost. |
-| **4.4** `/bertopic-viz` access control — **fixed** | It served private datasets and let their names be enumerated. Kept here because it is the argument for 4.1: the bug was found by measuring coverage, not by reading code. |
 | **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
 
 ### Tier 2 — hours of work, disproportionate payoff
@@ -44,10 +42,10 @@ priorities change.
 | **1.3, 1.4, 1.5, 1.5b** error handling | 26 bare excepts, failures that render as content, and unguarded DOM lookups in async callbacks. Hides the next bug. |
 | **1.2, 4.3** `/api` error contract | Failure reported two incompatible ways, neither with a usable status code. |
 | **3.1, 3.2** N+1 queries and dead cache | One request can issue hundreds of queries; the cache never engages and never invalidates. |
-| **2.1** front-end upgrades — **done** except D3 | Bootstrap 5, jQuery 3, jQuery UI 1.13, Underscore. D3 stays at v3 deliberately: no advisory, and v4+ rewrites all six visualizations. |
+| **2.1** vendored front-end leftovers | D3 3.4.11 and Backbone 1.1.2 stay put deliberately; d3-tip and d3.layout.cloud cannot be declared at all and need checking by hand. |
 | **5.3, 5.4** architecture note and README rewrite | Half the README no longer describes this project. |
 | **5.5** nothing to look at on a fresh clone | Decide demo database vs `make demo` before reaching for Git LFS. |
-| **2.3, 2.6** dependency follow-ups | Split the ML deps out of the default install, and grep the rest of `requirements.txt` for packages nothing imports. |
+| **2.6** dependency audit | Grep `requirements.txt` for packages nothing imports, and split the ML deps out of the default install. |
 | **2.5** Python 3.11 → 3.13 | Independent of Django, and removes half the work from the 6.2 LTS jump in April 2027. |
 
 ### Tier 4 — the research programme
@@ -376,27 +374,19 @@ implementation with `value()`, so the cost of keeping it is small but not zero.
 
 ## 2. Security and operations
 
-### 2.1 Vendored front-end libraries — **scanning and upgrades done**
+### 2.1 Vendored front-end libraries: what is left un-upgraded
 
 Everything the app loads in the browser is committed under `visualize/static/`
 rather than installed, and `visualize/static/VENDOR.md` is the inventory.
-Versions there were read from each file's own banner, not inferred from
-filenames.
+Versions there are read from each file's own banner, not inferred from
+filenames. `/package.json` declares them so Dependabot can scan them, and
+`.github/dependabot.yml` enables npm and github-actions alongside pip.
 
-**Scanning — done.** Because they were vendored blobs with no manifest,
-Dependabot could not see them at all, and every alert this repository had ever
-raised was Python. `/package.json` now declares them, and
-`.github/dependabot.yml` enables npm and github-actions alongside pip. What
-that exposed is 2.4.
-
-Note the limitation that makes this easy to misread: **a Dependabot PR against
-`package.json` edits one line of JSON and does not update the committed file.**
-It is a notification, not a fix, and npm pull requests are disabled for that
-reason — alerts stay on.
-
-**Upgrades — done.** Bootstrap 3.2.0 → **5.3.8**, jQuery 1.11.1 → **3.7.1**,
-jQuery UI 1.11.0 → **1.13.3**, lodash 2.4.1 → **Underscore 1.13.8**, and
-bootstrap-toggle removed in favour of Bootstrap 5's form-switch.
+**The trap in that setup:** a Dependabot PR against `package.json` edits one
+line of JSON and does **not** update the committed file under
+`visualize/static/`. It is a notification, not a fix. npm pull requests are
+disabled for that reason and alerts stay on, so an npm alert here always means
+hand-editing the vendored file.
 
 **What is deliberately left:**
 
@@ -419,35 +409,12 @@ schema and query structure to any caller. Gate it on an explicit setting
 (`TG_API_DIAGNOSTICS`) rather than on `DEBUG`, so switching `DEBUG` on to chase
 a bug in a shared environment does not also start publishing the query log.
 
-### 2.3 CI — **done**, with one follow-up
+### 2.3 Drop `master` from the CI trigger once the forks have moved
 
-`.github/workflows/tests.yml` now runs on every push and pull request:
-install, build `settings.py` from the template via
-`scripts/bootstrap_settings.py`, `manage.py check`, then `pytest`.
-
-Two decisions worth keeping: CI sets `TG_REQUIRE_BROWSER`, which turns "Chrome
-could not start" from a skip into a failure, because a green run that silently
-skipped all 20 browser tests is worse than a red one; and it builds
-`settings.py` with the same script a new developer runs, so the onboarding path
-in 5.1 cannot rot unnoticed again.
-
-**Follow-ups:** the workflow installs the full `requirements.txt`, which pulls
-torch and the rest of the ML stack on every cache miss, though nothing the
-tests touch needs it. Installing everything is deliberate — it also verifies
-the README's install instructions — but if CI proves slow, split the file
-rather than trimming the CI install. See 5.5.
-
-The Node 20 deprecation warning is resolved: `actions/checkout` and
-`actions/setup-python` are now on v7, merged from Dependabot with CI green on
-both.
-
-**Default branch renamed `master` → `main`.** The workflow lists
-`branches: [main, master]` during the transition, because the push trigger is
-the only branch-filtered part and renaming first would have stopped CI firing
-on every push while still showing green from the last old run. GitHub redirects
-`master` to `main` for fetches and clones, so existing checkouts keep working,
-but the repository has 13 forks whose owners should re-point at their
-convenience:
+`.github/workflows/tests.yml` lists `branches: [main, master]` on its push
+trigger, left over from the default-branch rename. GitHub redirects `master` to
+`main` for fetches and clones so existing checkouts keep working, but the
+repository has 13 forks whose owners should re-point at their convenience:
 
 ```
 git branch -m master main
@@ -456,54 +423,7 @@ git branch -u origin/main main
 git remote set-head origin -a
 ```
 
-Drop `master` from the workflow trigger once that has settled.
-
-### 2.4 The manifest exposed 15 front-end alerts; all are now cleared **[verified]**
-
-Adding `/package.json` made Dependabot raise **15 alerts on libraries it had
-never been able to scan** — one critical, two high, twelve medium. Before the
-manifest existed the repository reported zero open alerts, which is the measure
-of how much 2.1 was hiding.
-
-| Change | Cleared | Cost |
-| --- | --- | --- |
-| Bootstrap 3.2.0 → 3.4.1 | 6 | drop-in dist swap |
-| lodash 2.4.1 → **Underscore 1.13.8** | 5, incl. the critical | one call site |
-| jQuery 1.11.1 → 3.7.1, jQuery UI → 1.13.3 | 3 | no application code |
-| Bootstrap 3.4.1 → **5.3.8** | 2 | the migration below |
-
-Three findings worth keeping.
-
-**The lodash advisories were not reachable, but that was beside the point.**
-None of `_.defaultsDeep`, `_.merge`, `_.set` or `_.zipObjectDeep` appears in
-application code, and the three `_.template` calls compile hard-coded markup.
-The blocker on upgrading was not how the app used lodash but how **Backbone**
-did: lodash 4 renamed `_.any` to `_.some`, and Backbone 1.1.2 still calls it, so
-lodash 4 killed the app on boot. Underscore — what Backbone is written against
-— was the fix, not a workaround.
-
-**An upgrade can hide a break.** Bootstrap 3.4's sanitizer, added upstream to
-fix this very advisory class, stripped the `onclick` attributes the favourites
-view generated. The injection was neutralised and the links stopped working at
-the same time, and neither was visible without opening the popover and reading
-the DOM. The underlying fault was ours: those handlers were built by
-concatenating corpus-derived favourite keys into a script string, which an
-ordinary English possessive is enough to break. Fixed by carrying the type in a
-class and the key in the link text, read back by a delegated listener.
-
-**Screenshots caught what the tests could not.** The Bootstrap 5 migration
-introduced four visual regressions that 55 passing tests did not notice —
-stacked global selectors, a stacked filter form, stacked footer pills, and
-underlined links everywhere. One of them was not merely cosmetic: the taller
-header overflowed the fixed 160px body padding and covered the page, so clicks
-on the documents table were being intercepted by the navbar.
-
-Migration notes, for the next framework move: dual-classing first (adding the
-Bootstrap 5 name beside the Bootstrap 3 one wherever 5's name did not exist in
-3) took the class renames out of the risky step entirely, and extracting
-Glyphicons into a standalone stylesheet took another 35 changes out of it.
-What remained was structural — the navbar, the JS API, and the two plugins
-Bootstrap 5 has no equivalent for.
+Drop `master` from the trigger once that has settled.
 
 ### 2.5 Django: stay on 5.2 LTS and wait for 6.2 **[decided]**
 
@@ -547,10 +467,15 @@ nothing in the code obstructs whichever path is taken.
 `nltk` was pinned but never imported — a grep matched it on one line, its own
 entry — so four rounds of path-traversal advisories were spent on a package the
 project does not use. An unused pinned dependency is a recurring alert with no
-upside. Grep the rest of `requirements.txt` the same way, and note that this
-overlaps with 2.3's remaining ML-dependency split: `bertopic`,
-`sentence-transformers`, `umap-learn` and `hdbscan` are genuinely used but only
-by the optional BERTopic path.
+upside. Grep the rest of `requirements.txt` the same way.
+
+Related, and worth doing in the same pass: CI installs the full
+`requirements.txt`, which pulls torch and the rest of the ML stack on every
+cache miss, though nothing the tests touch needs it. Installing everything is
+deliberate — it also verifies the README's install instructions — so if CI
+proves slow, split the file rather than trimming the CI install. `bertopic`,
+`sentence-transformers`, `umap-learn` and `hdbscan` are genuinely used, but
+only by the optional BERTopic path. See 5.5.
 
 ---
 
@@ -589,8 +514,9 @@ guess at which requests are worth caching.
 
 ## 4. Testing
 
-61 tests: 12 on `/api`, 6 on `/bertopic-viz`, 18 unit tests, and 25 in the
-browser. Coverage was measured rather than guessed, with
+92 tests: 12 on `/api`, 6 on `/bertopic-viz`, 30 on the model-level metadata
+accessors, 17 unit tests, and 27 in the browser. Coverage is measured rather
+than guessed, on every CI run and locally with
 
     pytest --cov=visualize --cov=import_tool --cov-report=term-missing
 
@@ -601,8 +527,8 @@ and the headline is **22%**. The distribution matters more than the number:
 | `visualize/root.py` | 90% | fine |
 | `import_tool/basic_tools.py` | 84% | fine |
 | `visualize/api.py` | 69% | the uncovered part is error paths — 4.3 |
-| `visualize/models.py` | 61% | the uncovered part is where 1.1 lives — 4.5 |
-| `visualize/bertopic_viz.py` | 21% | was 9%; measuring it found a bug — 4.4 |
+| `visualize/models.py` | 67% | tested only through the metadata accessors |
+| `visualize/bertopic_viz.py` | 21% | the rest needs a real BERTopic pickle — 4.4 |
 | `visualize/utils.py` | 18% | `reservoir_sample` — 4.5 |
 | `import_tool/import_system_utilities.py` | **0%** | 571 statements — 4.1 |
 | `import_tool/metric/**` | **0%** | all 16 live metrics — 4.1 |
@@ -643,27 +569,16 @@ is most of `api.py`'s missing 31%. Not covered: a malformed or out-of-range
 `%`-unescaping branch of `filter_set_to_list` at `api.py:48`. Worth extending
 alongside 1.2, since fixing the error contract touches this code anyway.
 
-### 4.4 `/bertopic-viz` was 9% covered, and that hid an access control bug **[verified]**
+### 4.4 `/bertopic-viz` is 21% covered, and calls `pickle.load`
 
-Measuring coverage is what surfaced this. The route looked its dataset up with
-`Dataset.objects.get(name=...)` where `/api` uses
-`filter(..., public=True, visible=True)`, so the two disagreed about who may
-see what. Demonstrated against a `public=False, visible=False` dataset:
-`/api?datasets=*` returned `[]` while `/bertopic-viz/secret_corpus/...` got past
-both lookups and failed only because the model file was absent — with the
-pickle present it would have rendered the visualization for anyone. Its error
-messages were also an enumeration oracle, giving three distinguishable answers
-for "no such dataset", "private dataset" and "wrong analysis type".
-
-Fixed, with six tests where there were none; three of them fail against the
-previous code.
-
-The endpoint is still only 21% covered, because the rest needs a real BERTopic
-pickle to exercise. That is the one place where a fixture is genuinely
-expensive, so it is reasonable to leave — but note the route calls
+The rest of the endpoint needs a real BERTopic pickle to exercise, which is the
+one place in this suite where a fixture is genuinely expensive — so the gap is
+reasonable to leave. What is worth watching is that the route calls
 `pickle.load` on a file path built from `dataset.dataset_dir`. That path comes
-from the database rather than the URL, so it is not attacker-controlled today;
-it is worth keeping that way deliberately rather than by accident.
+from the database rather than the URL, so it is not attacker-controlled today.
+Keep it that way deliberately rather than by accident: any change that lets a
+request influence that path turns an uncovered branch into remote code
+execution.
 
 ### 4.5 A specific gap worth closing before the big one
 
@@ -763,7 +678,7 @@ already in the repository, and `random_analysis.py` gives an analysis with no
 MALLET dependency, so a `make demo` target could build a usable database in
 seconds — which also exercises the pipeline that 4.1 wants tested.
 
-A related follow-up from 2.3: splitting the optional ML packages into
+A related follow-up from 2.6: splitting the optional ML packages into
 `requirements-ml.txt` and the test tooling into `requirements-dev.txt` would
 cut CI install time substantially. Check that Dependabot still picks up the new
 files by name before splitting — dropping packages out of scanning would repeat
@@ -1066,16 +981,11 @@ new modelling either, only occurrence-level and object-level embedding runs
 over data already in the database. 7.2 and 7.5 are the research-grade items and
 deserve their own design.
 
-## Three things to carry forward
+## Two things to carry forward
 
-**4.1 is the largest coverage gap.** 61 tests cover `/api` and the single-page
+**4.1 is the largest coverage gap.** 91 tests cover `/api` and the single-page
 app well; the import and analysis pipeline — the core product — is at 0%.
 
 **0.4's five recoverable metrics are the cheapest way to make the topics table
 say something useful.** Right now it shows only "% of Corpus" and "% of Topic",
 so a reader cannot tell a coherent topic from noise.
-
-**Measuring coverage found a bug, twice over.** The 9% file turned out to be
-serving private datasets (4.4), and the uncovered half of `models.py` is
-exactly where the falsy-value bug lives (1.1, 4.5). Low coverage is not only a
-missing-tests problem; it marks the code nobody has looked at recently.
