@@ -2,11 +2,73 @@
 
 Observations from working through the test suite, the `/api` endpoint, the
 Backbone front end and the import pipeline. Each item says what is wrong, how
-it was verified, and why it matters. Ordered roughly by value per unit of
-effort within each section.
+it was verified, and why it matters.
 
 Items marked **[verified]** were reproduced directly; the rest are readings of
 the code that still deserve a confirming test before acting.
+
+The numbered sections below are grouped by **subject** — correctness,
+security, performance and so on. The table that follows groups the same items
+by **impact**, which is the order to actually work in. Section numbers are
+stable and referenced from commit messages, so nothing is renumbered when
+priorities change.
+
+---
+
+## Priorities
+
+### Tier 1 — do first: security and silent data loss
+
+| Item | Why now |
+| --- | --- |
+| **2.4** 15 front-end CVEs | One critical and two high, live in production code. Bootstrap 3.2.0 → 3.4.1 alone clears six and is likely a file swap. |
+| **1.1** falsy metadata | Any `0`, `False` or `""` silently reads back as absent. Corrupts data in every view, and the fix is a few lines. |
+| **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
+
+### Tier 2 — hours of work, disproportionate payoff
+
+| Item | Why |
+| --- | --- |
+| **0.9** empty state names a file that does not exist | One line. It is the first thing a new user reads. |
+| **0.1** two finished visualizations switched off | The code is written. Uncomment, run the browser tests, find out. |
+| **0.2** Topics Over Time opens blank | The signature view of a 235-year corpus draws nothing until you know to click. |
+| **5.1, 5.2** README onboarding | The documented install path cannot work on a fresh clone. |
+| **2.2** `DEBUG` leaks every SQL query into API responses | Small change, removes an information-disclosure footgun. |
+
+### Tier 3 — substantial, and where the durable value is
+
+| Item | Why |
+| --- | --- |
+| **4.1** no test for the import pipeline | The core product is untested. Would have caught two bugs fixed this session, years earlier. |
+| **0.4** five recoverable topic metrics | Cheapest route to showing a user which topics are worth reading. |
+| **1.3, 1.4, 1.5** error handling | 26 bare excepts, plus failures that render as content. Hides the next bug. |
+| **1.2, 4.3** `/api` error contract | Failure reported two incompatible ways, neither with a usable status code. |
+| **3.1, 3.2** N+1 queries and dead cache | One request can issue hundreds of queries; the cache never engages and never invalidates. |
+| **2.1** the front-end upgrade itself | jQuery 1→3 and D3 v3→v4+. Real project; 2.4 lists the cheap parts to take first. |
+| **5.3, 5.4** architecture note and README rewrite | Half the README no longer describes this project. |
+| **5.5** nothing to look at on a fresh clone | Decide demo database vs `make demo` before reaching for Git LFS. |
+| **2.3, 4.2** CI follow-ups | Split ML deps, bump the Node-20 actions, add coverage measurement. |
+
+### Tier 4 — the research programme
+
+Sections **6** and **7**, plus the product proposals in **0.3, 0.5, 0.6, 0.7,
+0.8**. These are weeks of work and change what the tool *is* rather than
+whether it works.
+
+**6.1** — document and passage embeddings — is the one foundational build:
+6.2, 6.3, 6.5 and 7.6 are all blocked on it, and the libraries are already
+installed. After that, **7.4** (researcher-defined semantic axes) is the
+highest expressive-power-to-effort item in this document — two centroids and a
+projection. **7.1** (embedding token occurrences rather than word types, for
+word senses) is the most distinctive, because the schema already records every
+occurrence with its context offset and its own topic assignment, which is
+exactly what type-level topic browsers throw away.
+
+### Done this session
+
+**2.3** CI · **2.1** front-end scanning (the upgrade remains open) · plus the
+nltk and Django upgrades, the 49-test suite, the Django 4.2 settings template,
+and the Python 3 cleanup. See the task table at the end.
 
 ---
 
@@ -342,6 +404,52 @@ the README's install instructions — but if CI proves slow, split the file
 rather than trimming the CI install. See 5.5. Separately, GitHub now warns that
 `actions/checkout@v4` and `actions/setup-python@v5` target the deprecated
 Node.js 20 and are being forced onto Node 24; bump both when convenient.
+
+### 2.4 The front-end manifest immediately exposed 15 alerts **[verified]**
+
+Within minutes of `/package.json` landing, Dependabot raised **15 alerts on
+libraries that had never been scanned** — one critical, two high, twelve
+medium. This is the concrete answer to whether 2.1 was worth doing: the
+repository had shown zero open alerts an hour earlier.
+
+| Severity | Package | CVE | Fixed in | Issue |
+| --- | --- | --- | --- | --- |
+| **critical** | lodash 2.4.1 | CVE-2019-10744 | 4.17.12 | prototype pollution |
+| **high** | lodash | CVE-2018-16487 | 4.17.11 | prototype pollution |
+| **high** | lodash | CVE-2021-23337 | 4.17.21 | command injection |
+| medium | lodash | CVE-2018-3721, CVE-2026-2950 | 4.17.5 / 4.18.0 | prototype pollution |
+| medium | jquery 1.11.1 | CVE-2015-9251 | 1.12.2 | XSS |
+| medium | jquery | CVE-2019-11358 | 3.4.0 | prototype pollution → XSS |
+| medium | jquery | CVE-2020-11023 | 3.5.0 | XSS via `html()`/`append()` |
+| medium | bootstrap 3.2.0 | CVE-2016-10735, CVE-2018-14040, CVE-2018-14042, CVE-2018-20676, CVE-2018-20677 | 3.4.0 | XSS |
+| medium | bootstrap | CVE-2019-8331 | 3.4.1 | XSS |
+| medium | bootstrap | CVE-2024-6485 | **none** | XSS |
+
+**On the real exposure.** These are mostly XSS and prototype pollution, which
+need attacker-influenced input to reach the vulnerable call. In this app the
+untrusted surface is corpus content: documents are imported from disk, stored,
+returned by `/api`, and rendered into markup by the Backbone views. So the
+threat model is "someone imports a corpus containing hostile text", not "any
+visitor can attack the page". That is a narrower risk than the raw counts
+suggest — and not zero, since importing third-party corpora is exactly what
+this tool is for.
+
+**Effort is very unevenly distributed, so do the cheap ones first:**
+
+- **Bootstrap 3.2.0 → 3.4.1** clears six of the twelve medium alerts and is a
+  patch-level move within 3.x. Very likely a drop-in file swap. Do this first.
+- **lodash 2.4.1 → 4.17.21+** clears the critical and both highs — the whole
+  top of the table — but crosses two major versions with real API changes
+  (`_.pluck` and `_.where` removed, `_.first`/`_.rest` renamed, callback
+  shorthand changed). Check what actually uses lodash before estimating;
+  Backbone pulls it in, but this codebase may touch little of it directly.
+- **jQuery 1.11.1 → 3.5.0+** clears the remaining three but is the big one, and
+  drags jQuery UI with it. See 2.1.
+- **CVE-2024-6485 has no fixed version in Bootstrap 3.x** — clearing it means
+  Bootstrap 4/5, a redesign. Accept and document it, or plan separately.
+
+The browser suite is the safety net for all of these: change one library, run
+`pytest tests/selenium`, see what broke.
 
 ---
 
@@ -802,39 +910,6 @@ not weeks, and both produce visible results immediately. 7.1 and 7.3 need no
 new modelling either, only occurrence-level and object-level embedding runs
 over data already in the database. 7.2 and 7.5 are the research-grade items and
 deserve their own design.
-
-## Where to start
-
-If only a few of these get done:
-
-1. **0.9** — the wrong command in the empty state. One line, and it is the
-   first thing a new user reads.
-2. **0.1** — re-enable the two finished visualizations. The code is written;
-   the browser tests will tell you within minutes whether they still work.
-3. **0.2** — default Topics Over Time to the topics that changed most. Turns
-   the app's signature view from blank into an answer.
-4. **1.1** — the falsy-metadata bug. Small fix, and it silently corrupts any
-   zero or `False` in the data.
-5. **1.6** — the 1.76 million orphaned rows. Not urgent, but if the import
-   pipeline is producing them, that is a bug well beyond one database.
-
-(2.3, CI, was the fourth entry here and is now done.)
-
-And if there is appetite for one larger build: **6.1**, document and passage
-embeddings with hybrid search. It is the missing foundation under semantic
-search, grounded question answering, the semantic map and contrastive analysis
-— four of the six discovery features in section 6 are blocked on it, and the
-libraries are already installed.
-
-Once that exists, **7.4** (researcher-defined semantic axes) is the highest
-ratio of expressive power to effort in this document: a difference of two
-centroids and a projection, and the 2D-plots view becomes an instrument the
-researcher configures by example rather than a chooser over fixed fields.
-
-The most *distinctive* item, in the sense that few tools could offer it, is
-**7.1** — the database already records every token occurrence with its context
-offset and its own topic assignment, which is exactly what word-sense work
-needs and what type-level topic browsers throw away.
 
 ## Task list ↔ this document
 
