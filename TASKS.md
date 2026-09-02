@@ -65,19 +65,45 @@ dataset invites, and today it cannot be asked. Grouping and colouring by a
 categorical metadata field would open it up, and it is additive — the existing
 axes keep working.
 
-### 0.4 Topic quality is computed but not surfaced
+### 0.4 Topic quality is not surfaced, and the metrics that would show it are gone
 
-`import_tool/metric/topic/` contains coherence, entropy (document, word,
-attribute), token and type counts, alpha and sentiment. The topics table shows
-only "% of Corpus" and "% of Topic". A user has no way to tell a coherent,
-meaningful topic from model noise, which is the first judgement anyone makes
-when reading a topic model.
+**Correction to an earlier draft of this file.** This item originally said
+these metrics were "computed but not surfaced", implying they only needed
+reconnecting. They were not computed. Nine metric modules had been commented
+out of their registries for years, and were written against the pre-4.2
+`add_metric()` protocol and models that no longer exist — `TopicMetric`,
+`topic.topicword_set`, `word.ngram`, `word.type`. They could not have run.
+They have since been removed from the tree, and remain in git history — see
+`git log --diff-filter=D -- import_tool/metric/`.
 
-Surfacing coherence per topic — as a sortable column, and as an optional sort
-order for the table — would let users find the good topics instead of scrolling
-past the junk ones. Note this tree is currently dead Python 2 code (task #1);
-that task's migrate-or-delete decision should weigh this, because "delete"
-forecloses a genuinely useful feature.
+What was lost, and what reviving each would take:
+
+| module | computed | blocker beyond the schema |
+| --- | --- | --- |
+| `topic/coherence` | average pairwise PMI over a topic's top 10 words | needed an external SQLite co-occurrence database via `kwargs['counts']`, not in this repo |
+| `topic/pairwise/coherence` | the same PMI between topics | same external database (imported `compute_pmi` from the above) |
+| `topic/alpha` | per-topic LDA alpha | parsed a Mallet `state_file` passed as a kwarg |
+| `topic/sentiment` | topic sentiment | shelled out to an external tool via `Popen` |
+| `topic/attribute_entropy` | entropy of a topic over document metadata values | none — pure ORM, the most straightforward to rewrite |
+| `topic/subset_document_entropy` | document entropy per metadata subset | none — pure ORM; emitted one metric per attribute value |
+| `topic/subset_token_count` | token count per metadata subset | none — pure ORM; same shape as above |
+| `document/pairwise/topic_correlation` | cosine similarity between documents' topic vectors | none — NumPy plus ORM |
+| `document/pairwise/word_correlation` | cosine similarity between documents' word vectors | none — NumPy plus ORM |
+
+The point stands regardless: the topics table shows only "% of Corpus" and
+"% of Topic", so a user has no way to tell a coherent topic from model noise —
+the first judgement anyone makes when reading a topic model.
+
+The five "none" rows are ordinary rewrites against `compute_metric(database_id,
+dataset_db, analysis_db)`, following any live module such as
+`topic/token_count.py` as a template. `attribute_entropy` is the natural first
+one: pure ORM, and it directly serves the faceting in 0.3.
+
+For coherence specifically, prefer reimplementing over reviving. NPMI computed
+over the corpus itself is self-contained and needs no external counts database,
+which is what made the original unrunnable even before the schema moved. That
+also connects it to 6.8, where coherence becomes the basis for comparing whole
+analyses rather than just ranking topics within one.
 
 ### 0.5 Analyses cannot be compared
 
