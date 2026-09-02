@@ -5,10 +5,13 @@ testing here is navigation and data display.
 '''
 
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support.ui import WebDriverWait # available since 2.4.0
 import time
 import os
+import urllib.error
+import urllib.request
 
 import pdb
 
@@ -23,9 +26,10 @@ driver = None
 wait = None
 db = None
 
-URL = 'http://localhost:8000/'
+URL = os.environ.get('TG_TEST_URL', 'http://localhost:8000/')
 # URL = 'http://tg.byu.edu/'
-webdriver.chrome.driver = os.path.expanduser('~/Downloads/chromedriver')
+# Leave CHROMEDRIVER unset to let Selenium Manager locate a matching driver.
+CHROMEDRIVER = os.environ.get('CHROMEDRIVER', '')
 
 widgets.infect(driver)
 
@@ -38,10 +42,30 @@ BASE_DIR = os.path.dirname(__file__)
 
 xfail = pytest.mark.xfail
 
+def make_driver():
+    """Build a Chrome driver, honouring $CHROMEDRIVER and $HEADLESS."""
+    options = webdriver.ChromeOptions()
+    if os.environ.get('HEADLESS'):
+        options.add_argument('--headless=new')
+    if CHROMEDRIVER:
+        return webdriver.Chrome(service=ChromeService(executable_path=CHROMEDRIVER),
+                                options=options)
+    return webdriver.Chrome(options=options)
+
 def setup_module(module):
     global driver, wait
-    driver = webdriver.Chrome(webdriver.chrome.driver)
+    try:
+        urllib.request.urlopen(URL, timeout=5)
+    except (urllib.error.URLError, OSError) as e:
+        pytest.skip('these integration tests need the Topical Guide server '
+                    'serving %s (see start_server.sh): %s' % (URL, e))
+    try:
+        driver = make_driver()
+    except WebDriverException as e:
+        pytest.skip('these integration tests need Chrome and a matching '
+                    'chromedriver: %s' % e)
     wait = WebDriverWait(driver, 30)
+    widgets.infect(driver)
 
 def teardown_module(module):
     if not os.path.exists(os.path.join(BASE_DIR, '../etc')):

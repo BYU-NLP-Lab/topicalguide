@@ -29,11 +29,15 @@ def test_get_all_files_from_directory():
     directory = 'test_resources/documents'
     path = os.path.join(root_dir, directory)
     
+    path2 = os.path.join(path, 'test_directory')
+
     files = basic_tools.get_all_files_from_directory(path)
     assert os.path.join(path, 'test1.txt') in files
     assert os.path.join(path, 'test2.txt') in files
-    
-    path2 = os.path.join(path, 'test_directory')
+    # non-recursive must not descend into subdirectories
+    assert os.path.join(path2, 'test3.txt') not in files
+    assert len(files) == 2
+
     files2 = basic_tools.get_all_files_from_directory(path, True)
     print(files2)
     assert os.path.join(path, 'test1.txt') in files2

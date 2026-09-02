@@ -76,10 +76,12 @@ def get_all_files_from_directory(directory, recursive=False):
     Return a list of absolute file paths starting at the given directory.
     """
     list_of_files = []
-    
-    for root, dirs, files in os.walk(directory, followlinks=recursive):
+
+    for root, dirs, files in os.walk(directory):
         for file in files:
             list_of_files.append(os.path.join(root, file))
+        if not recursive:
+            dirs[:] = []
     return list_of_files
 
 def get_type(value):
@@ -205,24 +207,24 @@ def get_unicode_content(file_path, encoding=None):
     Note that this uses the chardet library and may cause problems, if an error is thrown then
     a utf-8 encoding is assumed and unrecognize caracters are discarded.
     """
-    from chardet.universaldetector import UniversalDetector
-    
+    from chardet import UniversalDetector
+
     try:
         if not encoding:
             detector = UniversalDetector()
-            contents = ''
+            contents = b''
             with open(file_path, 'rb') as f:
                 contents = f.read()
                 detector.feed(contents)
             detector.close()
-            determined_encoding = detector.result['encoding']
+            determined_encoding = detector.result['encoding'] or 'utf-8'
             return contents.decode(encoding=determined_encoding)
         else:
-            with open(file_path, 'r') as f:
-                return str(f.read(), encoding=encoding, errors='ignore')
-    except UnicodeError:
-        with open(file_path, 'r') as f:
-            return str(f.read(), encoding='utf-8', errors='ignore')
+            with open(file_path, 'rb') as f:
+                return f.read().decode(encoding=encoding, errors='ignore')
+    except (UnicodeError, LookupError):
+        with open(file_path, 'rb') as f:
+            return f.read().decode(encoding='utf-8', errors='ignore')
 
 def remove_punctuation(s):
     """Return a string without punctuation (only alpha, numeric, underscore and whitespace characters survive)."""
