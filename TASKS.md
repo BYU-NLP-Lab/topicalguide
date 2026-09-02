@@ -23,7 +23,7 @@ priorities change.
 | --- | --- |
 | **2.4** front-end CVEs — **all 15 cleared** | Bootstrap 5.3.8, jQuery 3.7.1, jQuery UI 1.13.3, lodash replaced by Underscore. Kept in Tier 1 as the record of how it was done and what it cost. |
 | **4.4** `/bertopic-viz` access control — **fixed** | It served private datasets and let their names be enumerated. Kept here because it is the argument for 4.1: the bug was found by measuring coverage, not by reading code. |
-| **1.1** falsy metadata | Any `0`, `False` or `""` silently reads back as absent. Corrupts data in every view, the fix is a few lines, and 4.5 says where the tests go. |
+| **1.1** falsy metadata — **fixed** | Any `0`, `False` or `""` used to read back as absent. Now selected by NULL rather than truthiness, with 30 tests. |
 | **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
 
 ### Tier 2 — hours of work, disproportionate payoff
@@ -286,9 +286,28 @@ score or year of zero silently disappears from the API and every view. The
 same block raises "MetadataValues cannot be of more than one type" by counting
 truthy columns, so it also mis-detects when a legitimate zero is present.
 
-Fix by testing `is not None` per column, ideally driven off the
-`MetadataType.datatype` that is already stored rather than by guessing from the
-columns.
+**Fixed.** Both accessors now go through one `_populated()` helper that selects
+the column with `is not None`, so the type is decided by which column holds a
+value and the "more than one type" guard counts populated columns rather than
+truthy ones. `type()` had the same bug and was equally wrong: a zero-valued
+field reported *no type at all*.
+
+Driving the choice off the stored `MetadataType.datatype`, as this item
+originally suggested, was considered and rejected. It would cost a query per
+value wherever `metadata_type` is not prefetched — the N+1 shape 3.1 is about —
+and it would disagree with the data on any row whose populated column and
+declared datatype differ, which is exactly the case worth surfacing rather than
+silently resolving. The write path makes the column authoritative: every value
+is written by `MetadataValue.set()`, which populates one column and leaves the
+rest NULL.
+
+Covered by `tests/visualize/test_models.py` — 30 tests, parametrised over
+int/float/bool/text at both their zero and an ordinary value, in memory and
+after a reload from the database. Reverting the fix fails 15 of them.
+
+One loose end: `type()` has **no callers in production code**. It is exercised
+only by the new tests. Worth deciding whether it earns its place before the
+next round of model cleanup.
 
 ### 1.2 `/api` reports failure two different ways, both with the wrong status
 
@@ -706,11 +725,12 @@ it is worth keeping that way deliberately rather than by accident.
 
 ### 4.5 Two specific gaps worth closing before the big one
 
-**`MetadataValue.set` and `value()` in `models.py`.** Uncovered, and precisely
-where the falsy-value bug in 1.1 lives. Tests here do double duty: they pin the
-current behaviour and then verify the fix. `tests/conftest.py`'s `set_metadata`
-already takes a datatype, so a parametrised test over int/float/bool/text at
-their zero values is a few lines.
+**`MetadataValue.set` and `value()` in `models.py` — done.**
+`tests/visualize/test_models.py` covers both, plus `type()` and `__str__`,
+parametrised over int/float/bool/text at their zero values through
+`tests/conftest.py`'s `set_metadata`. That is what 1.1 was fixed against;
+`visualize/models.py` went from 61% to 67% covered and the suite from 61 tests
+to 91.
 
 **`visualize/utils.py` at 18%.** `reservoir_sample` is the document-sampling
 path `/api` takes whenever `document_limit` is exceeded. Sampling code is easy

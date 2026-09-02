@@ -70,41 +70,44 @@ class MetadataValue(models.Model):
         else:
             raise Exception("Values of type '{0}' aren't supported by MetadataValue".format(value_type))
     
+    # set() writes exactly one of these columns and leaves the rest NULL, so
+    # the populated column is what identifies the type. Test each for NULL
+    # rather than for truthiness: a stored 0, 0.0, False or "" is a real value
+    # and must read back as itself, not as missing. Deciding the type from
+    # metadata_type.datatype instead would be a query per value wherever the
+    # type is not prefetched (see TASKS.md 3.1), and would also disagree with
+    # the data on any row whose stored column and declared datatype differ.
+    VALUE_COLUMNS = (
+        ('float', 'float_value'),
+        ('text', 'text_value'),
+        ('int', 'int_value'),
+        ('bool', 'bool_value'),
+        ('datetime', 'datetime_value'),
+    )
+
+    def _populated(self):
+        """Return (type name, raw value) for the one populated column.
+
+        Returns (None, None) when no column is populated, and raises when more
+        than one is.
+        """
+        populated = [(value_type, getattr(self, column))
+                     for value_type, column in self.VALUE_COLUMNS
+                     if getattr(self, column) is not None]
+        if len(populated) > 1:
+            raise Exception("MetadataValues cannot be of more than one type.")
+        if not populated:
+            return (None, None)
+        return populated[0]
+
     def value(self):
-        result = None
-        if self.float_value:
-            result = self.float_value
-        if self.text_value:
-            if result: raise Exception("MetadataValues cannot be of more than one type.")
-            result = self.text_value
-        if self.int_value:
-            if result: raise Exception("MetadataValues cannot be of more than one type.")
-            result = self.int_value
-        if self.bool_value:
-            if result: raise Exception("MetadataValues cannot be of more than one type.")
-            result = self.bool_value
-        if self.datetime_value:
-            if result: raise Exception("MetadataValues cannot be of more than one type.")
-            result = str(self.datetime_value)
-        return result
+        value_type, value = self._populated()
+        if value_type == 'datetime':
+            return str(value)
+        return value
 
     def type(self):
-        type = None
-        if self.float_value:
-            type = 'float'
-        if self.text_value:
-            if type: raise Exception("MetadataValues cannot be of more than one type.")
-            type = 'text'
-        if self.int_value:
-            if type: raise Exception("MetadataValues cannot be of more than one type.")
-            type = 'int'
-        if self.bool_value:
-            if type: raise Exception("MetadataValues cannot be of more than one type.")
-            type = 'bool'
-        if self.datetime_value:
-            if type: raise Exception("MetadataValues cannot be of more than one type.")
-            type = 'datetime'
-        return type
+        return self._populated()[0]
 
 ##############################################################################
 # Tables for gathering statistics.
