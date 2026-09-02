@@ -10,16 +10,24 @@ updates:
     open-pull-requests-limit: 5
 
   # Front-end libraries. These are VENDORED, not installed -- /package.json
-  # exists only so this ecosystem has a manifest to read. A pull request here
-  # edits one line of JSON and does NOT update the committed file under
-  # visualize/static/. Read visualize/static/VENDOR.md before merging one.
+  # exists only so this ecosystem has a manifest for Dependabot to read.
+  #
+  # open-pull-requests-limit: 0 disables PULL REQUESTS while leaving SECURITY
+  # ALERTS on, which is the whole point of the manifest. Automated PRs here are
+  # actively dangerous: they edit one line of JSON and do not touch the
+  # committed asset under visualize/static/, so merging one would mark a CVE
+  # resolved while the vulnerable file is still served. Dependabot's first batch
+  # proposed exactly that, including lodash 2.4.1 -> 4.18.1 against a critical
+  # advisory.
+  #
+  # Upgrade by hand instead: replace the file, update the <script> tag and the
+  # table in visualize/static/VENDOR.md, run the browser tests, then bump the
+  # version here in the same commit.
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "vendored:"
+    open-pull-requests-limit: 0
 
   # Workflow actions. CI currently warns that actions/checkout@v4 and
   # actions/setup-python@v5 target the deprecated Node.js 20.
