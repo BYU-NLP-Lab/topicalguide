@@ -13,7 +13,7 @@ Learn more by visiting [the wiki](https://github.com/BYU-NLP-Lab/topicalguide/wi
 ## Requirements
 
 - Python 3.10 or higher
-- Django 4.2 (LTS)
+- Django 5.2 (LTS)
 - MALLET (for topic modeling)
 - See `requirements.txt` for complete list of dependencies
 
@@ -57,7 +57,7 @@ If you want to use the word stemmer then run the following:
 
 ### 3. Configure Django Settings
 
-The project uses Django 4.2. If you need to customize settings, copy the template:
+The project uses Django 5.2. If you need to customize settings, copy the template:
 
 ```bash
 cp topicalguide/settings.py.template topicalguide/settings.py
