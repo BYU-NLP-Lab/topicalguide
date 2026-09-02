@@ -22,7 +22,7 @@ def test_capture(app, wait):
         app.save_screenshot(os.path.join(OUT, name))
         print("captured", name)
     # The favourites popover, which the sanitizer work touched.
-    app.execute_script("jQuery('#main-nav-favs').popover('show');")
+    app.execute_script("bootstrap.Popover.getOrCreateInstance(document.getElementById('main-nav-favs')).show();")
     wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, '.popover'))
     app.save_screenshot(os.path.join(OUT, '07-favourites-popover.png'))
     print("captured 07-favourites-popover.png")

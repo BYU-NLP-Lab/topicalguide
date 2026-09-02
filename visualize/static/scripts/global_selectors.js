@@ -45,18 +45,20 @@
             '          </svg>' +
             '        </a>' +
             '      </div>' +
-            '      <div id="global-selectors" class="form-inline" style="flex: 1;">' +
-            '        <div class="form-group mb-3">' +
-            '          <label for="dataset-selector" style="margin-right: 5px; color: #555; font-weight: 600;">Dataset:</label>' +
-            '          <select id="dataset-selector" class="form-control input-sm" style="min-width: 200px;"></select>' +
+            // Bootstrap 5 removed .form-inline and .input-sm; inline layout is
+            // flex utilities now, and a <select> takes .form-select.
+            '      <div id="global-selectors" class="d-flex align-items-center flex-wrap" style="flex: 1;">' +
+            '        <div class="d-flex align-items-center me-3">' +
+            '          <label for="dataset-selector" style="margin-right: 5px; color: #555; font-weight: 600; white-space: nowrap;">Dataset:</label>' +
+            '          <select id="dataset-selector" class="form-select form-select-sm" style="min-width: 200px;"></select>' +
             '        </div>' +
-            '        <div class="form-group mb-3" style="margin-left: 15px;">' +
-            '          <label for="analysis-selector" style="margin-right: 5px; color: #555; font-weight: 600;">Analysis:</label>' +
-            '          <select id="analysis-selector" class="form-control input-sm" style="min-width: 200px;"></select>' +
+            '        <div class="d-flex align-items-center me-3">' +
+            '          <label for="analysis-selector" style="margin-right: 5px; color: #555; font-weight: 600; white-space: nowrap;">Analysis:</label>' +
+            '          <select id="analysis-selector" class="form-select form-select-sm" style="min-width: 200px;"></select>' +
             '        </div>' +
-            '        <div class="form-group mb-3" style="margin-left: 15px;">' +
-            '          <label for="global-nameScheme-selector" style="margin-right: 5px; color: #555; font-weight: 600;">Topic Names:</label>' +
-            '          <select id="global-nameScheme-selector" class="form-control input-sm" style="min-width: 180px;"></select>' +
+            '        <div class="d-flex align-items-center">' +
+            '          <label for="global-nameScheme-selector" style="margin-right: 5px; color: #555; font-weight: 600; white-space: nowrap;">Topic Names:</label>' +
+            '          <select id="global-nameScheme-selector" class="form-select form-select-sm" style="min-width: 180px;"></select>' +
             '        </div>' +
             '      </div>' +
             '    </div>' +

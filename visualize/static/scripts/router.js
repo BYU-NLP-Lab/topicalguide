@@ -225,24 +225,25 @@ var NavigationView = DefaultView.extend({
     
     template: $("#main-nav-template").html(),
     compiledItemTemplate: _.template(
+        "<li class=\"nav-item\">"+
         "<% if(active) { %>"+
-        "    <li class=\"active\">"+
+        "    <a class=\"nav-link active\" href=\"<%= href %>\"><%= name %></a>"+
         "<% } else { %>"+
-        "    <li>"+
+        "    <a class=\"nav-link\" href=\"<%= href %>\"><%= name %></a>"+
         "<% } %>"+
-        "<a href=\"<%= href %>\"><%= name %></a></li>"
+        "</li>"
     ),
     compiledDropdownTemplate: _.template(
-        "<a class=\"dropdown-toggle\" data-toggle=\"dropdown\" data-bs-toggle=\"dropdown\" style=\"cursor: pointer;\"><%= name %><% if(isTopMenu) { %><span class=\"caret\"></span><% } %></a>"+
+        "<a class=\"nav-link dropdown-toggle\" data-bs-toggle=\"dropdown\" style=\"cursor: pointer;\"><%= name %></a>"+
         "<ul class=\"dropdown-menu\" role=\"menu\"></ul>"
     ),
     settingsTemplate: 
-        "<ul class=\"nav navbar-nav navbar-right\">"+
-        "    <li><a id=\"main-nav-favs\" style=\"cursor: pointer;\">"+icons.filledStar+"</a></li>"+
-        "    <li><a id=\"main-nav-help\" style=\"cursor: pointer;\">"+icons.help+"</a></li>"+
-        "    <li class=\"dropdown\" style=\"cursor: pointer;\">"+
-        "        <a class=\"dropdown-toggle\" data-toggle=\"dropdown\" data-bs-toggle=\"dropdown\">"+icons.settings+"</a>"+
-        "        <ul id=\"main-nav-settings\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
+        "<ul class=\"nav navbar-nav ms-auto d-flex flex-row align-items-center\">"+
+        "    <li class=\"nav-item\"><a class=\"nav-link\" id=\"main-nav-favs\" style=\"cursor: pointer;\">"+icons.filledStar+"</a></li>"+
+        "    <li class=\"nav-item\"><a class=\"nav-link\" id=\"main-nav-help\" style=\"cursor: pointer;\">"+icons.help+"</a></li>"+
+        "    <li class=\"nav-item dropdown\" style=\"cursor: pointer;\">"+
+        "        <a class=\"nav-link dropdown-toggle\" data-bs-toggle=\"dropdown\">"+icons.settings+"</a>"+
+        "        <ul id=\"main-nav-settings\" class=\"dropdown-menu dropdown-menu-end\" role=\"menu\"></ul>"+
         "    </li>"+
         "</ul>",
     
@@ -267,42 +268,43 @@ var NavigationView = DefaultView.extend({
             .append("li")
             .on("click", function(d) {
                 globalViewModel.changeSettingsView(d.key);
-                $("#main-nav-settings-modal").modal("show");
+                showModal("main-nav-settings-modal");
             })
             .append("a")
             .text(function(d) { return d.key; });
-        
+
         // Add help modal functionality.
         $("#main-nav-help").on("click", function(elem) {
             globalViewModel.helpView.render();
-            $("#main-nav-help-modal").modal("show");
+            showModal("main-nav-help-modal");
         });
-        
+
         // Add favorites popover functionality.
         var enter = function() { // Make the popover appear on hover.
-            $(this).popover("show");
+            favoritesPopover().show();
             $(".popover").on("mouseleave", function() {
-                $("#main-nav-favs").popover("hide");
+                hideFavoritesPopover();
             })
         };
         var exit = function() { // Make the popover disappear on hover out.
             setTimeout(function() {
                 if(!$(".popover:hover").length) {
-                    $("#main-nav-favs").popover("hide");
+                    hideFavoritesPopover();
                 }
             }, 100);
         };
-        var favs = $("#main-nav-favs");
-        favs.popover({ // Create the settings.
+        // Bootstrap 5 has no jQuery plugin interface, so the popover is
+        // constructed once here and reached through its instance afterwards.
+        new bootstrap.Popover(document.getElementById("main-nav-favs"), {
                 "html": true,
                 "trigger": "manual",
-                "viewport": "body",
                 "container": "body",
                 "placement": "bottom",
                 "animation": true,
                 "title": function() { return globalViewModel.favsView.readableName; },
-                "content": function() { console.log(this); globalViewModel.favsView.render(); return globalViewModel.favsView.$el.html(); },
-            })
+                "content": function() { globalViewModel.favsView.render(); return globalViewModel.favsView.$el.html(); },
+            });
+        $("#main-nav-favs")
             .on("mouseenter", enter)
             .on("mouseleave", exit);
         

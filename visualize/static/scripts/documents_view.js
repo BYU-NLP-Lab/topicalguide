@@ -219,15 +219,18 @@ var DocumentInfoView = DefaultView.extend({
     textFormTemplate:
 "<div class=\"row\"><div class=\"col-xs-12 col-12\">"+
 "    <form id=\"text-highlight-form\" role=\"form\" class=\"input-group\">"+
-"        <span id=\"highlight-buttons\" class=\"input-group-btn\" data-toggle=\"buttons\" data-bs-toggle=\"buttons\">"+
-"            <label class=\"btn btn-primary\">No Highlights<input type=\"radio\" name=\"options\" id=\"no-highlights\" checked></label>"+
-"            <label class=\"btn btn-primary\">Topic Highlights<input type=\"radio\" name=\"options\" id=\"topic-highlights\"></label>"+
-"            <label class=\"btn btn-primary\">Word Highlights<input type=\"radio\" name=\"options\" id=\"word-highlights\"></label>"+
+// Bootstrap 5 removed data-toggle="buttons"; a radio button group is now an
+// input.btn-check followed by its label, as siblings rather than nested.
+"        <span id=\"highlight-buttons\">"+
+"            <input type=\"radio\" class=\"btn-check\" name=\"options\" id=\"no-highlights\" checked>"+
+"            <label class=\"btn btn-primary\" for=\"no-highlights\">No Highlights</label>"+
+"            <input type=\"radio\" class=\"btn-check\" name=\"options\" id=\"topic-highlights\">"+
+"            <label class=\"btn btn-primary\" for=\"topic-highlights\">Topic Highlights</label>"+
+"            <input type=\"radio\" class=\"btn-check\" name=\"options\" id=\"word-highlights\">"+
+"            <label class=\"btn btn-primary\" for=\"word-highlights\">Word Highlights</label>"+
 "        </span>"+
 "        <input disabled class=\"form-control\" type=\"text\" id=\"topic-word-input\" placeholder=\"\">"+
-"        <span class=\"input-group-btn\">"+
-"            <input disabled class=\"btn btn-default btn-secondary\" id=\"topic-word-submit-button\" type=\"submit\"></input>"+
-"        </span>"+
+"        <input disabled class=\"btn btn-default btn-secondary\" id=\"topic-word-submit-button\" type=\"submit\"></input>"+
 "    </form>"+
 "</div></div>",
     
@@ -289,11 +292,15 @@ var DocumentInfoView = DefaultView.extend({
                 }
             });
             d3.select("#highlight-buttons").selectAll("label").on("click", function() {
-                var id = d3.select(this).select("input").attr("id");
+                // The label now points at its radio by "for" rather than
+                // containing it.
+                var id = d3.select(this).attr("for");
                 that.settingsModel.set({ selectedHighlight: id });
             });
-            d3.select(d3.select("#"+this.settingsModel.get("selectedHighlight")).node().parentNode)
-                .classed("active", true);
+            // Bootstrap 5 styles the checked radio's label itself, so marking
+            // the radio checked is all that is needed.
+            d3.select("#"+this.settingsModel.get("selectedHighlight"))
+                .property("checked", true);
             
             this.listenTo(this.settingsModel, "change:selectedHighlight", this.highlightChanged);
             this.listenTo(this.settingsModel, "change:words", this.requestWordHighlightData);

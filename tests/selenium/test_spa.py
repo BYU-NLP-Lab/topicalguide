@@ -377,23 +377,38 @@ def test_no_severe_console_errors(app, wait):
 
 
 def test_bootstrap_javascript_is_functional(app):
-    """Bootstrap's modal plugin, driven through its own API.
+    """Bootstrap's modal, driven through its own API.
 
-    Bootstrap ships as a jQuery plugin, so a version mismatch between the two
-    shows up as a missing function rather than a visual change.
+    Bootstrap 5 has no jQuery plugin interface, so its components are reached
+    through the global `bootstrap` object. A library that failed to load shows
+    up here as a missing constructor rather than as a visual change. Bootstrap
+    5 marks a shown modal with `.show`, where 3 used `.in`.
     """
-    assert app.execute_script('return typeof jQuery.fn.modal;') == 'function'
-    assert app.execute_script('return typeof jQuery.fn.tooltip;') == 'function'
+    assert app.execute_script('return typeof bootstrap.Modal;') == 'function'
+    assert app.execute_script('return typeof bootstrap.Popover;') == 'function'
 
-    app.execute_script("jQuery('#main-nav-help-modal').modal('show');")
+    app.execute_script(
+        "bootstrap.Modal.getOrCreateInstance("
+        "document.getElementById('main-nav-help-modal')).show();")
     assert WebDriverWait(app, WAIT_SECONDS).until(
         lambda d: d.execute_script(
-            "return jQuery('#main-nav-help-modal').hasClass('in');"))
+            "return document.getElementById('main-nav-help-modal')"
+            ".classList.contains('show');"))
 
-    app.execute_script("jQuery('#main-nav-help-modal').modal('hide');")
+    app.execute_script(
+        "bootstrap.Modal.getOrCreateInstance("
+        "document.getElementById('main-nav-help-modal')).hide();")
     assert WebDriverWait(app, WAIT_SECONDS).until(
         lambda d: not d.execute_script(
-            "return jQuery('#main-nav-help-modal').hasClass('in');"))
+            "return document.getElementById('main-nav-help-modal')"
+            ".classList.contains('show');"))
+
+
+def show_favourites_popover(driver):
+    """Open the favourites popover through Bootstrap 5's API."""
+    driver.execute_script(
+        "bootstrap.Popover.getOrCreateInstance("
+        "document.getElementById('main-nav-favs')).show();")
 
 
 def add_favourite_document(driver, filename):
@@ -421,9 +436,9 @@ def test_favourites_popover_selects_the_favourite(app, wait):
     """
     add_favourite_document(app, 'doc1.txt')
 
-    app.execute_script("jQuery('#main-nav-favs').popover('show');")
+    show_favourites_popover(app)
     link = wait.until(lambda d: d.find_element(
-        By.CSS_SELECTOR, '.popover .popover-content a.fav-item'))
+        By.CSS_SELECTOR, '.popover .popover-body a.fav-item'))
     # The popover animates in, so read textContent rather than the rendered
     # text, which is empty until the element is visible.
     assert link.get_attribute('textContent') == 'doc1.txt'
@@ -472,17 +487,21 @@ def test_jquery_ui_slider_initialises(app, wait):
         "return jQuery('#chords-slider').hasClass('ui-slider');")
 
 
-def test_bootstrap_toggle_initialises(app, wait):
-    """The stacked/overlaid switch in Topics Over Time is bootstrap-toggle.
+def test_graph_type_switch_works(app, wait):
+    """The stacked/overlaid switch in Topics Over Time.
 
-    It is a third-party Bootstrap plugin and therefore sensitive to both the
-    jQuery and Bootstrap versions; it wraps its checkbox in a .toggle element
-    when it initialises.
+    This was bootstrap-toggle, a Bootstrap 3-only plugin that drew its own
+    on/off wording. It is now Bootstrap 5's form-switch with a label the view
+    keeps in step, so the label text is the thing worth asserting.
     """
-    nav_to(app, wait, 'Topics Over Time')
-    wait.until(lambda d: d.find_elements(By.ID, 'graph-control'))
+    view = nav_to(app, wait, 'Topics Over Time')
+    switch = wait.until(lambda d: d.find_element(By.ID, 'graph-control'))
 
-    assert app.execute_script(
-        'return typeof jQuery.fn.bootstrapToggle;') == 'function'
-    assert app.execute_script(
-        "return jQuery('#graph-control').parent().hasClass('toggle');")
+    assert 'form-switch' in app.execute_script(
+        "return document.getElementById('graph-control').parentNode.className;")
+    assert view.find_element(By.ID, 'graph-control-label').text == 'Stacked'
+
+    switch.click()
+
+    wait.until(lambda d: view.find_element(
+        By.ID, 'graph-control-label').text == 'Overlaid')

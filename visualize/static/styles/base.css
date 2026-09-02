@@ -54,6 +54,15 @@
     line-height: normal;
 }
 
+/* Bootstrap 5's reboot underlines every link; Bootstrap 3 did not, and this
+   app's tables and menus are full of links that read badly underlined. */
+a {
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
 /* Logo */
 a.nav-logo:link, a.nav-logo:hover, a.nav-logo:visited, a.nav-logo:active {
     text-decoration: none;
@@ -78,9 +87,14 @@ svg.nav-logo {
     padding: 5px 0px 5px 0px;
 }
 
-.centered-pills { text-align: center; }
-.centered-pills { display: inline-block; }
-.centered-pills > li { display: inline; }
+/* Bootstrap 5's .nav is a flex row; this used to override it with
+   inline-block, which left each block-level .nav-link on its own line. */
+.centered-pills {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    text-align: center;
+}
 
 
 

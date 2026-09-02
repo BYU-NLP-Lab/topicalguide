@@ -34,10 +34,10 @@ inferred from filenames.
 | D3 | 3.4.11 | 2014 | `scripts/libs/d3.v3.min.js` | yes |
 | d3-tip | 0.6.3 | 2013 | `scripts/libs/d3.tip.v0.6.3.js` | **no** — npm's `d3-tip` starts at 0.6.7 |
 | d3.layout.cloud | unknown | — | `scripts/libs/d3.layout.cloud.js` | **no** — the file carries no version banner |
-| Bootstrap | 3.4.1 | 2019 | `bootstrap/` | yes |
-| Bootstrap Toggle | 2.1.0 | — | `bootstrap-toggle/` | **no** — npm has 1.1.0, then 2.0.0 and 2.2.x |
+| Bootstrap | 5.3.8 | 2025 | `bootstrap5/` | yes |
+| Glyphicons Halflings | from Bootstrap 3.4.1 | 2019 | `styles/glyphicons.css`, `fonts/` | n/a — extracted, not a package |
 
-Three entries cannot be expressed in `package.json` because the exact vendored
+Two entries cannot be expressed in `package.json` because the exact vendored
 version does not exist in the npm registry. Declaring a nearby version instead
 would be worse than declaring nothing: Dependabot would report on a release
 this project does not actually ship, and a version *newer* than reality would
@@ -53,12 +53,15 @@ CVE-2020-11023 — XSS and prototype pollution reachable through `html()` and
 moved 1.11.0 → 1.13.3 in the same change, because 1.11 predates jQuery 3
 support and the two are a pair.
 
-Bootstrap was upgraded 3.2.0 → 3.4.1, clearing six XSS advisories
-(CVE-2016-10735, CVE-2018-14040, CVE-2018-14042, CVE-2018-20676,
-CVE-2018-20677, CVE-2019-8331). Two remain with no fix in the 3.x line —
-CVE-2024-6485 (data-\* attributes) and CVE-2025-1647 (popover and tooltip) —
-and clearing them means Bootstrap 4 or 5, a redesign. Note the app does call
-`.popover()` in `router.js`, so the second is reachable.
+Bootstrap was migrated **3.2.0 → 3.4.1 → 5.3.8**, clearing all eight of its
+advisories, including CVE-2024-6485 and CVE-2025-1647, which had no fix
+available anywhere in the 3.x line.
+
+jQuery was upgraded 1.11.1 → 3.7.1, clearing CVE-2015-9251, CVE-2019-11358 and
+CVE-2020-11023 — XSS and prototype pollution reachable through `html()` and
+`append()`, which the Backbone views use on `/api` data throughout. jQuery UI
+moved 1.11.0 → 1.13.3 in the same change, because 1.11 predates jQuery 3
+support and the two are a pair.
 
 Lodash 2.4.1 was **replaced by Underscore**, removing five advisories including
 a critical prototype-pollution one. Lodash could not simply be upgraded:
@@ -66,6 +69,12 @@ Backbone 1.1.2 calls `_.any`, which lodash 4 renamed to `_.some`, so loading
 lodash 4 kills the app on boot. Backbone is written against Underscore anyway —
 lodash was always a substitution here. The only application code that had to
 change was one `_.forOwn` call, which became `_.each`.
+
+Bootstrap Toggle is gone. It was a Bootstrap 3-only plugin with no version 5
+equivalent, used for one switch; that is now Bootstrap 5's own form-switch.
+
+D3 remains at v3.4.11. It has no open advisory, and v3 → v4+ restructures every
+module, so it would touch all six visualizations for no security gain.
 
 ## Upgrading one of these
 

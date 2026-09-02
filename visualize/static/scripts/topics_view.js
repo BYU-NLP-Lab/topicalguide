@@ -9,7 +9,9 @@ var AllTopicSubView = DefaultView.extend({
 "<div id=\"table-container\" class=\"row container-fluid\"></div>",
     
     formTemplate:
-"<form role=\"form\">"+
+// The form is the flex row: Bootstrap 5 columns lay out against a .row
+// parent, where Bootstrap 3's floated col-xs-* did not care.
+"<form role=\"form\" class=\"row\">"+
 "    <div class=\"form-group mb-3 col-xs-6 col-6\">"+
 "        <label for=\"words-input\">Filter Topics by Words</label>"+
 "        <input id=\"words-input\" class=\"form-control\" type=\"text\" placeholder=\"Enter words...\"></input>"+

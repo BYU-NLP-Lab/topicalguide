@@ -52,7 +52,7 @@ var FavoritesQuickSelectView = DefaultView.extend({
     // Force the popover to hide if it needs to re-render.
     // It only re-renders if the user mouses over the popover button.
     forceHide: function() {
-        $("#main-nav-favs").popover("hide");
+        hideFavoritesPopover();
     },
     
     render: function() {

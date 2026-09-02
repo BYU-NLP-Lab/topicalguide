@@ -5,17 +5,17 @@
         <title>Topical Guide</title>
         <link rel="shortcut icon" href="{{nlp_lab_small_logo_url}}" />
         
-        <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/css/bootstrap.min.css" />
-        <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap/css/bootstrap-theme.min.css" />
-        <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap-toggle/css/bootstrap-toggle.min.css" />
+        <link rel="stylesheet" type="text/css" href="{{MEDIA}}/bootstrap5/css/bootstrap.min.css" />
+        <!-- Bootstrap 4 dropped Glyphicons; the font is kept on its own. -->
+        <link rel="stylesheet" type="text/css" href="{{STYLES}}/glyphicons.css" />
         <link rel="stylesheet" type="text/css" href="{{MEDIA}}/jquery-ui/jquery-ui.css" />
         <link rel="stylesheet" type="text/css" href="{{MEDIA}}/jquery-ui/jquery-ui.theme.css" />
         <link rel="stylesheet" type="text/css" href="{{STYLES}}/base.css" />
         <link rel="stylesheet" type="text/css" href="{{STYLES}}/tip-styles.css" />
         
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/jquery-3.7.1.min.js"></script>
-        <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/bootstrap/js/bootstrap.js"></script>
-        <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/bootstrap-toggle/js/bootstrap-toggle.js"></script>
+        <!-- The bundle includes Popper, which popovers and dropdowns need. -->
+        <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/bootstrap5/js/bootstrap.bundle.min.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/underscore.min.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/backbone.min.js"></script>
         <script charset="utf-8" type="text/javascript" src="{{SCRIPTS}}/libs/d3.v3.min.js"></script>
@@ -24,18 +24,14 @@
         <script charset="utf-8" type="text/javascript" src="{{MEDIA}}/jquery-ui/jquery-ui.js"></script>
 
         <script id="main-nav-template" type="text/template">
-            <nav class="navbar navbar-default" role="navigation">
+            <nav class="navbar navbar-expand-lg bg-body-tertiary" role="navigation">
                 <div class="container-fluid">
-                    <div id="main-nav-brand" class="navbar-header">
-                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-bs-toggle="collapse" data-target="#js-navbar-collapse-hook" data-bs-target="#js-navbar-collapse-hook">
-                            <span class="sr-only">Toggle navigation</span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                        </button>
-                    </div>
+                    <div id="main-nav-brand" class="navbar-brand p-0"></div>
+                    <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#js-navbar-collapse-hook" aria-controls="js-navbar-collapse-hook" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
                     <div id="js-navbar-collapse-hook" class="collapse navbar-collapse">
-                        <ul id="main-nav-bar" class="nav navbar-nav"></ul>
+                        <ul id="main-nav-bar" class="nav nav-tabs navbar-nav me-auto"></ul>
                     </div>
                 </div>
             </nav>
@@ -76,12 +72,12 @@
             <footer class="footer">
                 <p><a href="{{nlp_lab_url|safe}}"><img width="135px" height="135px" src="{{nlp_lab_logo_url|safe}}"/></a></p>
                 <div class="text-center">
-                    <ul class="nav nav-pills centered-pills">
-                        <li><a href="{{wiki_url|safe}}">Topical Guide Wiki</a></li>
-                        <li><a href="{% url 'terms' %}">Terms of Use</a></li>
-                        <li><a href="{{nlp_lab_url|safe}}">NLP Home</a></li>
-                        <li><a href="{{cs_dept_url|safe}}">CS Department Home</a></li>
-                        <li><a href="http://www.byu.edu">BYU Home</a></li>
+                    <ul class="nav nav-pills centered-pills justify-content-center">
+                        <li class="nav-item"><a class="nav-link" href="{{wiki_url|safe}}">Topical Guide Wiki</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'terms' %}">Terms of Use</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{nlp_lab_url|safe}}">NLP Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{cs_dept_url|safe}}">CS Department Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="http://www.byu.edu">BYU Home</a></li>
                     </ul>
                 </div>
                 <p>{{last_updated}}</p>

@@ -31,7 +31,13 @@ var TopicsOverTimeView = DefaultView.extend({
         "<div>"+
         "   <label for=\"graph-control\">Graph Type</label>"+
         "   <br />"+
-        "   <input id=\"graph-control\" type=\"checkbox\" checked data-toggle=\"toggle\" data-bs-toggle=\"toggle\" data-on=\"Stacked\" data-off=\"Overlaid\" data-onstyle=\"success\" data-offstyle=\"warning\" data-size=\"small\">"+
+        // Bootstrap 5's own form-switch. This was bootstrap-toggle, a
+        // Bootstrap 3-only plugin with no version 5 equivalent; the label
+        // beside it carries the Stacked/Overlaid wording the plugin drew.
+        "   <div class=\"form-check form-switch\">"+
+        "       <input class=\"form-check-input\" id=\"graph-control\" type=\"checkbox\" role=\"switch\" checked>"+
+        "       <label class=\"form-check-label\" for=\"graph-control\" id=\"graph-control-label\">Stacked</label>"+
+        "   </div>"+
         "</div>",
 
     readableName: "Topics Over Time",
@@ -178,7 +184,15 @@ var TopicsOverTimeView = DefaultView.extend({
                 .text(toTitleCase(type.replace('_', ' ')));
         }
 
-        var graphTypeToggle = this.graphTypeToggle = $("#plot-controls #graph-control").bootstrapToggle();
+        var graphTypeToggle = this.graphTypeToggle = $("#plot-controls #graph-control");
+        // Keep the wording next to the switch in step with its state, which
+        // bootstrap-toggle used to do by drawing the labels itself.
+        var syncGraphTypeLabel = function() {
+            $("#graph-control-label").text(
+                graphTypeToggle.prop("checked") ? "Stacked" : "Overlaid");
+        };
+        graphTypeToggle.off("change.gtlabel").on("change.gtlabel", syncGraphTypeLabel);
+        syncGraphTypeLabel();
         var gtMap = this.model.get("graphToggleMap");
 
         if (this.settingsModel.has("topicSelection")) {
@@ -189,8 +203,11 @@ var TopicsOverTimeView = DefaultView.extend({
             metadataSelect.property("value", this.settingsModel.get("metadataSelection"));
         }
         if (this.settingsModel.has("graphType")) {
+            // gtMap turns "Stacked"/"Overlaid" into "on"/"off"; a plain
+            // checkbox takes that as its checked state.
             var checkboxProp = gtMap[this.settingsModel.get("graphType")];
-            graphTypeToggle.bootstrapToggle(checkboxProp);
+            graphTypeToggle.prop("checked", checkboxProp === "on");
+            syncGraphTypeLabel();
         }
         if (this.settingsModel.has("minYear")) {
             minYearControl.property("value", this.settingsModel.get("minYear"));

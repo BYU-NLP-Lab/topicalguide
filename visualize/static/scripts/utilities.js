@@ -66,6 +66,27 @@ function hashToUrl(hash) {
 }
 
 /*
+ * Bootstrap 5 removed the jQuery plugin interface, so components are reached
+ * through their own classes. These wrap the three things this app does with
+ * them, so call sites stay readable and the Bootstrap API lives in one place.
+ */
+function showModal(id) {
+    var el = document.getElementById(id);
+    if(el) bootstrap.Modal.getOrCreateInstance(el).show();
+}
+
+function favoritesPopover() {
+    return bootstrap.Popover.getOrCreateInstance(
+        document.getElementById("main-nav-favs"));
+}
+
+function hideFavoritesPopover() {
+    var el = document.getElementById("main-nav-favs");
+    var popover = el && bootstrap.Popover.getInstance(el);
+    if(popover) popover.hide();
+}
+
+/*
  * Return true if local storage is enabled.
  */
 function hasLocalStorage() {
