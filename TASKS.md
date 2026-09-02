@@ -242,6 +242,39 @@ asserted against — is worth grepping for deliberately. Every boolean parameter
 in `import_tool/` that no test exercises in its non-default state is a
 candidate.
 
+### 1.6 The dev database has 1.76 million foreign key violations **[verified]**
+
+Found during the Django 5.2 upgrade and not caused by it. `working/tg.sqlite3`
+(gitignored, 1 GB, last modified December 2025) fails `PRAGMA
+foreign_key_check` with **1,762,639** violations. The sample is uniform: rows
+in `visualize_analysismetadatavalue` whose `analysis_id` points at a
+`visualize_analysis` row that does not exist — `analysis_id` 1, while the table
+holds six analyses.
+
+The visible symptom is that any command opening a SQLite schema editor against
+it fails:
+
+```
+$ python manage.py sqlmigrate visualize 0002
+django.db.utils.IntegrityError: The row in table 'visualize_analysismetadatavalue'
+with primary key '1' has an invalid foreign key ...
+```
+
+Against a clean database the same command succeeds and prints `-- (no-op)`, so
+the migration is fine and the data is not.
+
+The question worth answering is whether a delete path in the import pipeline
+can orphan rows — `tg.py remove-metrics`, or re-importing and re-analysing a
+dataset. Django cascades in Python, so deletes issued as raw SQL or as bulk
+operations that bypass the ORM are the usual cause, and 1.7 million of them
+suggests something systematic rather than a one-off.
+
+Investigate read-only first: group the violations by table to see whether only
+`analysismetadatavalue` is affected, and check whether SQLite foreign keys were
+even enforced when the rows were written — Django enables them per connection,
+so data written by another tool may never have been checked. Do not repair the
+file without asking; it is working data with no backup in the repository.
+
 ---
 
 ## 2. Security and operations
@@ -269,17 +302,25 @@ schema and query structure to any caller. Gate it on an explicit setting
 (`TG_API_DIAGNOSTICS`) rather than on `DEBUG`, so switching `DEBUG` on to chase
 a bug in a shared environment does not also start publishing the query log.
 
-### 2.3 No CI **[verified]**
+### 2.3 CI — **done**, with one follow-up
 
-There is no `.github/` directory. The 49-test suite added this session runs
-only when someone remembers to run it. A workflow on push and pull request
-would cost very little: `pip install -r requirements.txt` then `pytest`. Chrome
-is preinstalled on GitHub's `ubuntu-latest` runners and the browser fixture
-already falls back to Selenium Manager and honours `HEADLESS`, so the browser
-tests need no extra setup.
+`.github/workflows/tests.yml` now runs on every push and pull request:
+install, build `settings.py` from the template via
+`scripts/bootstrap_settings.py`, `manage.py check`, then `pytest`.
 
-This matters most for the Django 5.2 upgrade — that is exactly the change you
-want a green run on before merging.
+Two decisions worth keeping: CI sets `TG_REQUIRE_BROWSER`, which turns "Chrome
+could not start" from a skip into a failure, because a green run that silently
+skipped all 20 browser tests is worse than a red one; and it builds
+`settings.py` with the same script a new developer runs, so the onboarding path
+in 5.1 cannot rot unnoticed again.
+
+**Follow-ups:** the workflow installs the full `requirements.txt`, which pulls
+torch and the rest of the ML stack on every cache miss, though nothing the
+tests touch needs it. Installing everything is deliberate — it also verifies
+the README's install instructions — but if CI proves slow, split the file
+rather than trimming the CI install. See 5.5. Separately, GitHub now warns that
+`actions/checkout@v4` and `actions/setup-python@v5` target the deprecated
+Node.js 20 and are being forced onto Node 24; bump both when convenient.
 
 ---
 
@@ -388,6 +429,61 @@ data" symptoms will look at Django before they look at the browser.
 
 A short `docs/architecture.md` covering request flow, view registration and
 client-side caching would save the next person the reconstruction.
+
+### 5.4 The README has drifted well beyond its settings section
+
+5.1 and 5.2 are specific errors. The file needs a full pass — it is 566 lines
+and much of it no longer describes this project.
+
+- It tells users to "switch `DBTYPE` to `'postgres'`" (line 186). **`DBTYPE`
+  does not exist anywhere in the codebase** — not in the settings template, not
+  in any `.py`. The whole POSTGRESQL section needs checking against how
+  `DATABASES` is actually configured.
+- It never mentions tests, though there are now 49 and CI runs them on every
+  push. It needs a "Running the tests" section covering `pytest` and the
+  environment variables the browser fixture honours: `HEADED`, `CHROMEDRIVER`,
+  `TG_REQUIRE_BROWSER`, `TG_TEST_URL`, `TG_TEST_WAIT`.
+- It never mentions `scripts/bootstrap_settings.py`, now the supported way to
+  create `settings.py` and what CI runs.
+- It says "Python 3.10 or higher" while `requirements.txt` notes BERTopic's
+  numba dependency needs ≤ 3.13. State the supported window; CI runs 3.11.
+- It says to `pip install openai` separately, but openai is in
+  `requirements.txt`.
+- Its import examples use `--number-of-topics 20` while
+  `default_datasets/import_state_of_the_union.sh` uses 100.
+- **Lines 269–566 are a forward-looking essay** — roughly half the file —
+  that now overlaps and disagrees with sections 0, 6 and 7 here. Cut it,
+  condense it, or move it into this document, so there is one place for
+  proposals rather than two that contradict each other.
+
+### 5.5 A fresh clone has nothing to look at
+
+The database starts empty, so the app renders "No datasets yet" and none of the
+six views can be seen without first running the full import and MALLET
+analysis. That is a steep first five minutes for a tool whose value is visual.
+
+Git LFS is the right mechanism for shipping a prebuilt database, but the sizing
+decides the approach:
+
+- `working/tg.sqlite3` is 1 GB. GitHub's free LFS tier is 1 GB of storage and
+  1 GB/month of bandwidth, so one copy exhausts it, and every re-import stores
+  another **full** 1 GB object — SQLite files do not delta-compress, and LFS
+  deduplicates whole objects only.
+- That file must not be published in any case: it is the one carrying the 1.76
+  million foreign key violations in 1.6. Shipping it distributes the corruption
+  to every clone.
+
+Cheaper options to price first: a trimmed demo database (one dataset, one
+20-topic analysis — likely tens of MB), or nothing binary at all. The corpus is
+already in the repository, and `random_analysis.py` gives an analysis with no
+MALLET dependency, so a `make demo` target could build a usable database in
+seconds — which also exercises the pipeline that 4.1 wants tested.
+
+A related follow-up from 2.3: splitting the optional ML packages into
+`requirements-ml.txt` and the test tooling into `requirements-dev.txt` would
+cut CI install time substantially. Check that Dependabot still picks up the new
+files by name before splitting — dropping packages out of scanning would repeat
+the blind spot in 2.1.
 
 ---
 
@@ -696,9 +792,12 @@ If only a few of these get done:
    the browser tests will tell you within minutes whether they still work.
 3. **0.2** — default Topics Over Time to the topics that changed most. Turns
    the app's signature view from blank into an answer.
-4. **2.3** — CI, before the Django upgrade rather than after.
-5. **1.1** — the falsy-metadata bug. Small fix, and it silently corrupts any
+4. **1.1** — the falsy-metadata bug. Small fix, and it silently corrupts any
    zero or `False` in the data.
+5. **1.6** — the 1.76 million orphaned rows. Not urgent, but if the import
+   pipeline is producing them, that is a bug well beyond one database.
+
+(2.3, CI, was the fourth entry here and is now done.)
 
 And if there is appetite for one larger build: **6.1**, document and passage
 embeddings with hybrid search. It is the missing foundation under semantic
@@ -716,13 +815,42 @@ The most *distinctive* item, in the sense that few tools could offer it, is
 offset and its own topic assignment, which is exactly what word-sense work
 needs and what type-level topic browsers throw away.
 
-## Relationship to the session task list
+## Task list ↔ this document
 
-- Task #1 (Python 2 → 3) overlaps 1.4 — several bare excepts sit in the same
-  unmigrated modules — and its migrate-or-delete decision for
-  `import_tool/metric/` should account for 0.4, which wants those metrics
-  surfaced rather than deleted.
-- Task #4 (Django 5.2) should land after 2.3 (CI), so the upgrade gets a green
-  run before merge.
-- Section 4.1 is the largest remaining coverage gap now that the SPA and API
-  are covered.
+Every task on the session list maps to a section here, and every open section
+has a task. Sections 6 and 7 are the exception by design: they are a catalogue
+of a research programme rather than a queue, so they carry a single foundation
+task (#20) instead of sixteen.
+
+| Task | Sections | Status |
+| --- | --- | --- |
+| #1 Python 2 → 3 | 1.4, 1.5, 0.4 | done — dead modules removed; **1.4's 26 bare excepts were not addressed, see #16** |
+| #2 USE_L10N | 5.1 | done |
+| #3 Browser coverage | 4.1, 4.3 | done — 49 tests |
+| #4 Django 5.2 LTS | — | done |
+| #5 CI | 2.3 | done |
+| #6 Front-end dependency scanning | 2.1 | open |
+| #7 Falsy metadata | 1.1 | open |
+| #8 README onboarding + empty state | 5.1, 5.2, 0.9 | open |
+| #9 `/api` error contract | 1.2, 4.3 | open |
+| #10 Pipeline end-to-end test | 4.1, 4.2 | open |
+| #11 Full README review | 5.3, 5.4 | open |
+| #12 Dev database integrity | 1.6 | open |
+| #13 Demo database / Git LFS | 5.5 | open |
+| #14 Re-enable visualizations | 0.1 | open |
+| #15 Topics Over Time default | 0.2, 6.7 | open |
+| #16 Bare excepts | 1.3, 1.4, 1.5 | open |
+| #17 `DEBUG` leaks SQL | 2.2 | open |
+| #18 N+1 and caching | 3.1, 3.2 | open |
+| #19 Recoverable metrics | 0.4 | open |
+| #20 Embeddings foundation | 6.1, and 6.2/6.3/6.5/7.x downstream | open |
+| #21 Split ML dependencies | 2.3, 5.5 | open |
+
+Sections with no dedicated task, folded into the ones above: 0.3, 0.5, 0.6,
+0.7 and 0.8 are product proposals awaiting a decision rather than queued work;
+6.2–6.8 and 7.1–7.8 sit behind #20.
+
+Two things to carry forward: 4.1 is the largest remaining coverage gap now that
+the SPA and API are covered, and 0.4's five recoverable metrics (#19) are the
+cheapest way to put something in the topics table that tells a good topic from
+a bad one.
