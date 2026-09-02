@@ -54,7 +54,9 @@ function hashToUrl(hash) {
         }
     };
     var keys = [];
-    _.forOwn(hash, function(value, key) { keys.push(key); });
+    // _.each, not lodash's _.forOwn: same signature, and Underscore's each
+    // iterates an object's own enumerable properties.
+    _.each(hash, function(value, key) { keys.push(key); });
     keys.sort();
     var items = [];
     _.forEach(keys, function(key) {

@@ -21,7 +21,7 @@ priorities change.
 
 | Item | Why now |
 | --- | --- |
-| **2.4** 9 front-end CVEs remaining | Bootstrap cleared six. The lodash critical is **not reachable** from app code, so this is urgent-ish rather than an emergency. Next move is replacing lodash with Underscore — Backbone 1.1.2 blocks lodash 4, and that swap clears all five lodash alerts including the critical. |
+| **2.4** 5 front-end CVEs remaining | Down from 15: Bootstrap 3.4.1 cleared six, replacing lodash with Underscore cleared five including the critical. Left are 3 jQuery (needs jQuery UI moved too) and 2 Bootstrap with **no fix in 3.x** — one of which, CVE-2025-1647, is reachable via `.popover()`. |
 | **1.1** falsy metadata | Any `0`, `False` or `""` silently reads back as absent. Corrupts data in every view, and the fix is a few lines. |
 | **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
 
@@ -512,11 +512,19 @@ of the code as it stands today — the moment someone writes `_.merge`, it
 becomes exploitable with no warning. Treat it as reduced urgency, not as
 resolved.
 
-**Bootstrap 3.2.0 → 3.4.1 is done**, clearing six of the twelve medium alerts.
-It was a drop-in dist swap needing no template change. Nine alerts remain.
+**Bootstrap 3.2.0 → 3.4.1 — done.** A drop-in dist swap needing no template
+change, clearing six advisories.
 
-**Backbone 1.1.2 is the pin holding the rest in place** — this is the finding
-that matters, and it was measured rather than assumed.
+**Lodash → Underscore 1.13.8 — done.** Clears the remaining five, *including
+the critical*. The reasoning is below; the change itself was small.
+
+Two Bootstrap advisories survive and have **no fix in the 3.x line**:
+CVE-2024-6485 (`data-*` attributes) and CVE-2025-1647 (popover and tooltip),
+the latter only becoming visible once 3.4.1 was in place. Unlike the lodash
+advisories, **CVE-2025-1647 is reachable** — `router.js` calls `.popover()` in
+four places. Clearing either means Bootstrap 4 or 5, a redesign.
+
+**Backbone 1.1.2 was the pin** — measured, not assumed.
 
 Swapping lodash 4.17.21 in and loading the app produces:
 
@@ -534,20 +542,20 @@ code, understates the work: the blocker is not how the app uses lodash but how
 **Backbone** does. lodash 3.10.1, the last release with an Underscore-compatible
 build, does not help either — CVE-2019-10744 is fixed in 4.17.12.
 
-Three ways out, in increasing order of ambition:
+**The fix was to replace lodash with Underscore rather than upgrade it.**
+Backbone is written against Underscore; lodash was always a substitution here.
+Underscore 1.13.8 provides everything the application used —`extend`, `size`,
+`reduce`, `map`, `keys`, `uniq`, `filter`, `forEach`, `template` — and retains
+the `_.any`, `_.where` and `_.invoke` that Backbone 1.1.2 needs and lodash 4
+dropped. One call had to change: `_.forOwn` in `utilities.js` became `_.each`,
+which takes the same arguments.
 
-1. **Replace lodash with Underscore.** Backbone is written against Underscore,
-   not lodash; using lodash here was always a substitution. The application's
-   own usage is six functions — `extend`, `size`, `reduce`, `map`, `keys`,
-   `uniq` (plus `template`) — all of which Underscore provides. This removes
-   lodash from the tree entirely and with it **all five lodash advisories,
-   including the critical**, without touching Backbone. Most likely the right
-   answer, and the cheapest.
-2. **Upgrade Backbone and lodash together.** Larger surface, and needs checking
-   that current Backbone tolerates lodash 4 at all.
-3. **Leave it**, on the basis that the vulnerable entry points are unreachable
-   from application code today. Only defensible while that stays true, which
-   nothing enforces.
+Verified in the browser afterwards: `_.VERSION` is 1.13.8, `_.forOwn` is gone,
+`_.any`/`_.where`/`_.invoke` are present, `#main-container` renders, and the
+console is clean across all six views.
+
+This also *reduces* what is vendored — lodash is gone from the tree rather than
+replaced with a newer copy.
 
 **jQuery 1.11.1 → 3.5.0+** clears the remaining three alerts and is coupled the
 same way: jQuery UI 1.11.0 predates jQuery 3 support, so both move together.

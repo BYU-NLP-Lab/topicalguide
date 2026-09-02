@@ -30,7 +30,7 @@ inferred from filenames.
 | jQuery | 1.11.1 | 2014 | `scripts/libs/jquery-1.11.1.min.js` | yes |
 | jQuery UI | 1.11.0 | 2014 | `jquery-ui/` | **no** — 1.11.x was never published to npm under `jquery-ui` |
 | Backbone | 1.1.2 | 2014 | `scripts/libs/backbone.min.js` | yes |
-| Lodash | 2.4.1 | 2013 | `scripts/libs/lodash.min.js` | yes |
+| Underscore | 1.13.8 | 2024 | `scripts/libs/underscore.min.js` | yes |
 | D3 | 3.4.11 | 2014 | `scripts/libs/d3.v3.min.js` | yes |
 | d3-tip | 0.6.3 | 2013 | `scripts/libs/d3.tip.v0.6.3.js` | **no** — npm's `d3-tip` starts at 0.6.7 |
 | d3.layout.cloud | unknown | — | `scripts/libs/d3.layout.cloud.js` | **no** — the file carries no version banner |
@@ -53,8 +53,17 @@ not a theoretical concern for this codebase.
 
 Bootstrap was upgraded 3.2.0 → 3.4.1, clearing six XSS advisories
 (CVE-2016-10735, CVE-2018-14040, CVE-2018-14042, CVE-2018-20676,
-CVE-2018-20677, CVE-2019-8331). One remains with no fix in the 3.x line —
-CVE-2024-6485 — which would require Bootstrap 4 or 5 and a redesign.
+CVE-2018-20677, CVE-2019-8331). Two remain with no fix in the 3.x line —
+CVE-2024-6485 (data-\* attributes) and CVE-2025-1647 (popover and tooltip) —
+and clearing them means Bootstrap 4 or 5, a redesign. Note the app does call
+`.popover()` in `router.js`, so the second is reachable.
+
+Lodash 2.4.1 was **replaced by Underscore**, removing five advisories including
+a critical prototype-pollution one. Lodash could not simply be upgraded:
+Backbone 1.1.2 calls `_.any`, which lodash 4 renamed to `_.some`, so loading
+lodash 4 kills the app on boot. Backbone is written against Underscore anyway —
+lodash was always a substitution here. The only application code that had to
+change was one `_.forOwn` call, which became `_.each`.
 
 ## Upgrading one of these
 
