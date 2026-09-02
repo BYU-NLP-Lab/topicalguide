@@ -383,7 +383,22 @@ def test_bootstrap_javascript_is_functional(app):
             "return jQuery('#main-nav-help-modal').hasClass('in');"))
 
 
-def test_favourites_popover_selects_the_favourite(app, wait, live_server):
+def add_favourite_document(driver, filename):
+    """Make `filename` a favourited document, without reloading the page.
+
+    Writing to localStorage and reloading races the app: the favourites model
+    persists itself back, so the planted value can be overwritten before the
+    new page reads it. That passed locally and failed in CI. Driving the
+    model's own loader is deterministic and needs no navigation.
+    """
+    driver.execute_script(
+        'window.localStorage[arguments[0]] = arguments[1];'
+        'globalFavoritesModel.loadFromLocalStorage();',
+        'favs-dataset-%s-analysis-%s-documents' % (DATASET_NAME, ANALYSIS_NAME),
+        json.dumps({filename: True}))
+
+
+def test_favourites_popover_selects_the_favourite(app, wait):
     """Clicking a favourite in the quick-select popover must change selection.
 
     Bootstrap 3.4 sanitizes popover content and strips event-handler
@@ -391,12 +406,7 @@ def test_favourites_popover_selects_the_favourite(app, wait, live_server):
     removed and the links did nothing. Nothing caught that, because the popover
     still rendered and the text still looked right.
     """
-    key = 'favs-dataset-%s-analysis-%s-documents' % (DATASET_NAME, ANALYSIS_NAME)
-    app.execute_script(
-        'window.localStorage[arguments[0]] = JSON.stringify({"doc1.txt": true});',
-        key)
-    app.get(live_server.url)
-    wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, '#main-nav-bar li'))
+    add_favourite_document(app, 'doc1.txt')
 
     app.execute_script("jQuery('#main-nav-favs').popover('show');")
     link = wait.until(lambda d: d.find_element(
@@ -411,7 +421,7 @@ def test_favourites_popover_selects_the_favourite(app, wait, live_server):
     wait.until(lambda d: 'document=doc1.txt' in d.current_url)
 
 
-def test_favourites_popover_does_not_build_scripts_from_keys(app, wait, live_server):
+def test_favourites_popover_does_not_build_scripts_from_keys(app, wait):
     """A favourite key must never reach an inline event-handler attribute.
 
     Keys are corpus-derived -- document filenames and words -- so building a
@@ -419,12 +429,7 @@ def test_favourites_popover_does_not_build_scripts_from_keys(app, wait, live_ser
     markup the view produces, before Bootstrap's sanitizer sees it, since the
     sanitizer masks the problem rather than fixing it.
     """
-    key = 'favs-dataset-%s-analysis-%s-documents' % (DATASET_NAME, ANALYSIS_NAME)
-    app.execute_script(
-        'window.localStorage[arguments[0]] = '
-        'JSON.stringify({"x\'; window.PWNED = 1; //": true});', key)
-    app.get(live_server.url)
-    wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, '#main-nav-bar li'))
+    add_favourite_document(app, "x'; window.PWNED = 1; //")
 
     markup = app.execute_script(
         'globalViewModel.favsView.render();'
