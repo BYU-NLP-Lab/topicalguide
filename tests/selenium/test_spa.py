@@ -305,10 +305,18 @@ def test_topics_over_time_bars_have_real_geometry(app, wait):
         assert bar.get_attribute('height') != 'NaN'
 
 
-def test_global_selectors_show_the_current_dataset_and_analysis(app):
+def nav_text(driver):
     # Each label and its value are separate elements, so the rendered text
     # comes back newline-separated.
-    nav = ' '.join(app.find_element(By.ID, 'main-nav').text.split())
+    return ' '.join(driver.find_element(By.ID, 'main-nav').text.split())
+
+
+def test_global_selectors_show_the_current_dataset_and_analysis(app, wait):
+    # The topic-name scheme is fetched separately from the dataset and
+    # analysis and shows "Loading..." until it arrives, so wait for it rather
+    # than racing it -- on a slow runner it is not ready when the nav is.
+    wait.until(lambda d: 'Loading' not in nav_text(d))
+    nav = nav_text(app)
 
     assert 'Dataset: %s' % DATASET_READABLE_NAME in nav
     assert 'Analysis: %s' % ANALYSIS_READABLE_NAME in nav
