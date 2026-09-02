@@ -5,7 +5,7 @@
   "description": "Declares the front-end libraries vendored under visualize/static/ so Dependabot can scan them. Nothing is installed from here -- the files are committed. See visualize/static/VENDOR.md before changing a version.",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "backbone": "1.1.2",
+    "backbone": "1.6.1",
     "bootstrap": "3.2.0",
     "d3": "3.4.11",
     "jquery": "1.11.1",
