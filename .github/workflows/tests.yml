@@ -1,0 +1,48 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # requirements.txt notes that BERTopic's dependencies (numba) need
+          # Python <= 3.13. 3.11 matches what the project is developed on.
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create settings.py from the template
+        # topicalguide/settings.py is gitignored, so a checkout has none. Using
+        # the same script a new developer runs keeps that path honest: if the
+        # template stops working, CI fails here rather than silently in a year.
+        run: python scripts/bootstrap_settings.py
+
+      - name: Django system checks
+        run: python manage.py check
+
+      - name: Run tests
+        # The browser fixture finds Chrome (preinstalled on this runner) via
+        # Selenium Manager and runs it headless unless HEADED is set.
+        # TG_REQUIRE_BROWSER turns "Chrome is missing" from a skip into a
+        # failure, so CI cannot go green having silently skipped the browser
+        # suite. -rs lists the reason for any test that does skip.
+        env:
+          TG_REQUIRE_BROWSER: '1'
+        run: pytest -v -rs

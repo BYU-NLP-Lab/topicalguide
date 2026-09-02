@@ -38,6 +38,11 @@ def driver():
         else:
             chrome = webdriver.Chrome(options=options)
     except WebDriverException as e:
+        # Locally, no Chrome means skip. In CI it must be a failure: a green
+        # run that quietly skipped every browser test is worse than a red one.
+        if os.environ.get('TG_REQUIRE_BROWSER'):
+            raise RuntimeError(
+                'TG_REQUIRE_BROWSER is set but Chrome could not start: %s' % e)
         pytest.skip('needs Chrome and a matching chromedriver: %s' % e)
     yield chrome
     chrome.quit()
