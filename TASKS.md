@@ -279,19 +279,40 @@ file without asking; it is working data with no backup in the repository.
 
 ## 2. Security and operations
 
-### 2.1 Vendored front-end libraries are a decade old **[verified]**
+### 2.1 Vendored front-end libraries are a decade old — **scanning done, upgrade open**
 
-`visualize/static/scripts/libs/` ships jQuery **1.11.1** (2014), d3 v3,
-Backbone and lodash as committed files with no manifest. jQuery below 3.5.0
-carries known XSS advisories (CVE-2020-11022, CVE-2020-11023) in
-`html()`/`append()` handling of untrusted markup — and the views build markup
-from API data throughout.
+The app loads jQuery **1.11.1** (2014), jQuery UI 1.11.0, Backbone 1.1.2,
+Lodash 2.4.1, D3 **3.4.11**, d3-tip 0.6.3, d3.layout.cloud, Bootstrap 3.2.0 and
+Bootstrap Toggle 2.1.0 — all committed under `visualize/static/` rather than
+installed. Versions in `visualize/static/VENDOR.md` were read from each file's
+own banner, not inferred from filenames.
 
-Because these are vendored blobs rather than entries in a `package.json`,
-**Dependabot does not see them at all**. The 6 open alerts on this repo are all
-Python; the front end is an unscanned blind spot. Introducing a manifest (even
-one that only records versions) would put them under the same scrutiny as the
-Python dependencies.
+**Scanning — done.** Because they were vendored blobs with no manifest,
+Dependabot could not see them at all, and every alert this repository has ever
+raised was Python. Reaching zero open alerts made the repo look clean while
+this whole surface stayed invisible. `/package.json` now declares the five
+whose exact versions exist in the npm registry, and `.github/dependabot.yml`
+enables the npm and github-actions ecosystems alongside pip.
+
+Four cannot be declared — jQuery UI 1.11.0, d3-tip 0.6.3, bootstrap-toggle
+2.1.0 and d3.layout.cloud, which has no version banner at all — because those
+exact versions are not in the registry. Declaring a nearby version would be
+worse than declaring nothing, since a version newer than reality would hide
+real advisories. `VENDOR.md` lists them so the gap is visible; they need
+checking by hand.
+
+Note the limitation that makes this easy to misread: **a Dependabot PR against
+`package.json` edits one line of JSON and does not update the committed file.**
+It is a notification, not a fix.
+
+**Upgrade — open, and a real project.** jQuery below 3.5.0 carries
+CVE-2020-11022 and CVE-2020-11023 in `html()`/`append()` handling of untrusted
+markup, and these views build markup from `/api` data throughout, so the
+exposure is not theoretical. But jQuery 1.x → 3.x removes `.load()`, `.size()`
+and `.andSelf()` and changes deferred semantics, and D3 v3 → v4+ restructures
+every module, touching all six visualizations. The browser suite in
+`tests/selenium/` is what makes it attemptable: one library at a time, letting
+the tests say what broke.
 
 ### 2.2 `DEBUG` puts every SQL query in the API response body
 
@@ -829,7 +850,7 @@ task (#20) instead of sixteen.
 | #3 Browser coverage | 4.1, 4.3 | done — 49 tests |
 | #4 Django 5.2 LTS | — | done |
 | #5 CI | 2.3 | done |
-| #6 Front-end dependency scanning | 2.1 | open |
+| #6 Front-end dependency scanning | 2.1 | scanning done; **the upgrade itself is still open** |
 | #7 Falsy metadata | 1.1 | open |
 | #8 README onboarding + empty state | 5.1, 5.2, 0.9 | open |
 | #9 `/api` error contract | 1.2, 4.3 | open |
