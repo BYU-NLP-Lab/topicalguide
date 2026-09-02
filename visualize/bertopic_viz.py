@@ -35,8 +35,12 @@ def get_bertopic_visualization(request, dataset_name, analysis_name, viz_type):
         HTML response containing the Plotly visualization
     """
     try:
-        # Get the dataset and analysis
-        dataset = Dataset.objects.get(name=dataset_name)
+        # Only publicly visible datasets are reachable here, matching the
+        # policy /api enforces in query_datasets. Without this filter the
+        # endpoint served visualizations for private datasets, and its distinct
+        # error messages let their names be enumerated.
+        dataset = Dataset.objects.get(name=dataset_name,
+                                      public=True, visible=True)
         analysis = Analysis.objects.get(dataset=dataset, name=analysis_name)
 
         # Check if this is a BERTopic analysis
