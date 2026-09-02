@@ -39,7 +39,7 @@ priorities change.
 
 | Item | Why |
 | --- | --- |
-| **4.1** no test for the import pipeline | The core product is untested. Would have caught two bugs fixed this session, years earlier. |
+| **4.1** no test for the import pipeline | The core product is untested. Two bugs that lived in it for years were found by inspection, not by a test. |
 | **0.4** five recoverable topic metrics | Cheapest route to showing a user which topics are worth reading. |
 | **1.3, 1.4, 1.5** error handling | 26 bare excepts, plus failures that render as content. Hides the next bug. |
 | **1.2, 4.3** `/api` error contract | Failure reported two incompatible ways, neither with a usable status code. |
@@ -71,12 +71,6 @@ exactly what type-level topic browsers throw away.
 2027. Django 6.1's support ends four months *earlier* than 5.2's, so upgrading
 to it would shorten the security horizon, and 6.x additionally requires Python
 3.12+. Revisit early only if an advisory has no 5.2 fix.
-
-### Done this session
-
-**2.3** CI · **2.1** front-end scanning (the upgrade remains open) · plus the
-nltk and Django upgrades, the 49-test suite, the Django 4.2 settings template,
-and the Python 3 cleanup. See the task table at the end.
 
 ---
 
@@ -137,16 +131,17 @@ axes keep working.
 
 ### 0.4 Topic quality is not surfaced, and the metrics that would show it are gone
 
-**Correction to an earlier draft of this file.** This item originally said
-these metrics were "computed but not surfaced", implying they only needed
-reconnecting. They were not computed. Nine metric modules had been commented
-out of their registries for years, and were written against the pre-4.2
-`add_metric()` protocol and models that no longer exist — `TopicMetric`,
-`topic.topicword_set`, `word.ngram`, `word.type`. They could not have run.
-They have since been removed from the tree, and remain in git history — see
-`git log --diff-filter=D -- import_tool/metric/`.
+These metrics were never computed — a distinction worth being precise about,
+since "topic coherence exists but is not displayed" and "topic coherence does
+not exist" call for very different work.
 
-What was lost, and what reviving each would take:
+Nine metric modules sat commented out of their registries for years, written
+against the pre-4.2 `add_metric()` protocol and against models that no longer
+exist: `TopicMetric`, `topic.topicword_set`, `word.ngram`, `word.type`. They
+could not have run. They have been removed from the tree and remain in git
+history — `git log --diff-filter=D -- import_tool/metric/`.
+
+What they measured, and what reviving each would take:
 
 | module | computed | blocker beyond the schema |
 | --- | --- | --- |
@@ -289,11 +284,12 @@ This was visible in the browser tests before the fixture wrote real files to
 disk: three documents rendered the error text as their preview and every
 assertion still passed.
 
-### 1.4 27 bare `except:` clauses **[verified]**
+### 1.4 26 bare `except:` clauses **[verified]**
 
-`grep -rn "except:" --include="*.py" . | grep -v venv` returns 27, including
-`import_tool/basic_tools.py` (three), `import_tool/analysis/utilities.py` and
-`import_tool/analysis/bigram_finder.py`. A bare `except:` swallows
+`grep -rn "except:" --include="*.py" . | grep -v venv` returns 26 across 10
+files, including `import_tool/basic_tools.py` (three),
+`import_tool/analysis/utilities.py`, `import_tool/analysis/bigram_finder.py`,
+`visualize/models.py` and `visualize/root.py`. A bare `except:` swallows
 `KeyboardInterrupt` and `SystemExit`, so a long import cannot be interrupted
 cleanly, and it hides the kind of argument bug described in 1.5.
 
@@ -434,10 +430,10 @@ Drop `master` from the workflow trigger once that has settled.
 
 ### 2.4 The front-end manifest immediately exposed 15 alerts **[verified]**
 
-Within minutes of `/package.json` landing, Dependabot raised **15 alerts on
-libraries that had never been scanned** — one critical, two high, twelve
-medium. This is the concrete answer to whether 2.1 was worth doing: the
-repository had shown zero open alerts an hour earlier.
+Adding `/package.json` made Dependabot raise **15 alerts on libraries it had
+never been able to scan** — one critical, two high, twelve medium. Before the
+manifest existed the repository reported zero open alerts, which is the measure
+of how much 2.1 was hiding.
 
 | Severity | Package | CVE | Fixed in | Issue |
 | --- | --- | --- | --- | --- |
@@ -487,20 +483,16 @@ of the code as it stands today — the moment someone writes `_.merge`, it
 becomes exploitable with no warning. Treat it as reduced urgency, not as
 resolved.
 
-**This changes the order.** Since the critical is unreachable, the best first
-move is the cheapest one with the largest alert reduction: Bootstrap
-3.2.0 → 3.4.1, which clears six advisories and is a patch-level move within
-3.x. lodash and jQuery follow on their own merits.
-
-**Effort is very unevenly distributed, so do the cheap ones first:**
+**Effort is very unevenly distributed, and because the critical is unreachable
+the cheap wins come first:**
 
 - **Bootstrap 3.2.0 → 3.4.1** clears six of the twelve medium alerts and is a
   patch-level move within 3.x. Very likely a drop-in file swap. Do this first.
 - **lodash 2.4.1 → 4.17.21+** clears the critical and both highs — the whole
   top of the table — but crosses two major versions with real API changes
   (`_.pluck` and `_.where` removed, `_.first`/`_.rest` renamed, callback
-  shorthand changed). Check what actually uses lodash before estimating;
-  Backbone pulls it in, but this codebase may touch little of it directly.
+  shorthand changed). The reachability table above shows how little of lodash
+  this codebase actually touches, so the migration surface is small.
 - **jQuery 1.11.1 → 3.5.0+** clears the remaining three but is the big one, and
   drags jQuery UI with it. See 2.1.
 - **CVE-2024-6485 has no fixed version in Bootstrap 3.x** — clearing it means
@@ -511,9 +503,8 @@ The browser suite is the safety net for all of these: change one library, run
 
 ### 2.5 Django: stay on 5.2 LTS and wait for 6.2 **[decided]**
 
-Dependabot proposed Django 6.1 within an hour of the 5.2 upgrade landing. It
-was declined deliberately, and this records why so the same PR is not merged
-reflexively next time.
+Dependabot proposes Django 6.1. It was declined deliberately; this records why,
+so the PR is not merged reflexively when it reappears.
 
 | Release | Support ends |
 | --- | --- |
@@ -594,8 +585,8 @@ tests reach `basic_tools` and `GenericDataset`; everything downstream of
 A small end-to-end test is now cheap to write: import the four-document
 corpus already in `tests/import_tool/test_resources/`, run the smallest
 analysis available, and assert the resulting Dataset/Analysis/Topic/Document
-rows. That would also have caught the dead `import_tool/metric/` tree (task #1)
-years ago.
+rows. That would also have caught the dead `import_tool/metric/` tree years
+ago.
 
 ### 4.2 No coverage measurement
 
@@ -1007,42 +998,12 @@ new modelling either, only occurrence-level and object-level embedding runs
 over data already in the database. 7.2 and 7.5 are the research-grade items and
 deserve their own design.
 
-## Task list ↔ this document
+## Two things to carry forward
 
-Every task on the session list maps to a section here, and every open section
-has a task. Sections 6 and 7 are the exception by design: they are a catalogue
-of a research programme rather than a queue, so they carry a single foundation
-task (#20) instead of sixteen.
+**4.1 is the largest coverage gap.** The API and the single-page app are
+covered by 49 tests; the import and analysis pipeline — the core product — has
+none.
 
-| Task | Sections | Status |
-| --- | --- | --- |
-| #1 Python 2 → 3 | 1.4, 1.5, 0.4 | done — dead modules removed; **1.4's 26 bare excepts were not addressed, see #16** |
-| #2 USE_L10N | 5.1 | done |
-| #3 Browser coverage | 4.1, 4.3 | done — 49 tests |
-| #4 Django 5.2 LTS | — | done |
-| #5 CI | 2.3 | done |
-| #6 Front-end dependency scanning | 2.1 | scanning done; **the upgrade itself is still open** |
-| #7 Falsy metadata | 1.1 | open |
-| #8 README onboarding + empty state | 5.1, 5.2, 0.9 | open |
-| #9 `/api` error contract | 1.2, 4.3 | open |
-| #10 Pipeline end-to-end test | 4.1, 4.2 | open |
-| #11 Full README review | 5.3, 5.4 | open |
-| #12 Dev database integrity | 1.6 | open |
-| #13 Demo database / Git LFS | 5.5 | open |
-| #14 Re-enable visualizations | 0.1 | open |
-| #15 Topics Over Time default | 0.2, 6.7 | open |
-| #16 Bare excepts | 1.3, 1.4, 1.5 | open |
-| #17 `DEBUG` leaks SQL | 2.2 | open |
-| #18 N+1 and caching | 3.1, 3.2 | open |
-| #19 Recoverable metrics | 0.4 | open |
-| #20 Embeddings foundation | 6.1, and 6.2/6.3/6.5/7.x downstream | open |
-| #21 Split ML dependencies | 2.3, 5.5 | open |
-
-Sections with no dedicated task, folded into the ones above: 0.3, 0.5, 0.6,
-0.7 and 0.8 are product proposals awaiting a decision rather than queued work;
-6.2–6.8 and 7.1–7.8 sit behind #20.
-
-Two things to carry forward: 4.1 is the largest remaining coverage gap now that
-the SPA and API are covered, and 0.4's five recoverable metrics (#19) are the
-cheapest way to put something in the topics table that tells a good topic from
-a bad one.
+**0.4's five recoverable metrics are the cheapest way to make the topics table
+say something useful.** Right now it shows only "% of Corpus" and "% of Topic",
+so a reader cannot tell a coherent topic from noise.

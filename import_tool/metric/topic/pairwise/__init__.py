@@ -4,9 +4,6 @@ from . import document_correlation
 from . import word_correlation
 from . import embedding_distance
 
-# coherence was commented out here and has been removed for the same reasons as
-# its topic-level counterpart -- see the note in ../__init__.py and TASKS.md 0.4.
-
 database_table = TopicPairwiseMetricValue
 metrics = OrderedDict([
     ('document_correlation', document_correlation),

@@ -5,14 +5,6 @@ from . import type_count
 from . import document_entropy
 from . import word_entropy
 
-# alpha, attribute_entropy, coherence, sentiment, subset_document_entropy and
-# subset_token_count were commented out here for years and have been removed.
-# They used the pre-4.2 add_metric() protocol and models that no longer exist
-# (TopicMetric, topic.topicword_set, word.ngram); coherence also needed an
-# external co-occurrence database that is not in this repository. Reviving any
-# of them means reimplementing against compute_metric() and the current schema
-# -- see TASKS.md 0.4. Recover the originals from git history if useful.
-
 database_table = TopicMetricValue
 metrics = OrderedDict([
     ('token_count', token_count),

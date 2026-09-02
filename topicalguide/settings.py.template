@@ -95,10 +95,6 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-# USE_L10N is not set: it was deprecated in Django 4.0 and removed in 5.0,
-# where localized formatting is always enabled -- which is what USE_L10N = True
-# already selected here, so dropping it changes no behaviour.
-
 USE_TZ = True
 
 
