@@ -21,7 +21,7 @@ priorities change.
 
 | Item | Why now |
 | --- | --- |
-| **2.4** 15 front-end CVEs | 1 critical, 2 high, 12 medium. The lodash critical was checked and is **not reachable** in current code, so this is urgent-ish rather than an emergency. Start with Bootstrap 3.2.0 → 3.4.1: clears six, patch-level within 3.x. |
+| **2.4** 9 front-end CVEs remaining | Bootstrap cleared six. The lodash critical is **not reachable** from app code, so this is urgent-ish rather than an emergency. Next move is replacing lodash with Underscore — Backbone 1.1.2 blocks lodash 4, and that swap clears all five lodash alerts including the critical. |
 | **1.1** falsy metadata | Any `0`, `False` or `""` silently reads back as absent. Corrupts data in every view, and the fix is a few lines. |
 | **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
 
@@ -512,20 +512,53 @@ of the code as it stands today — the moment someone writes `_.merge`, it
 becomes exploitable with no warning. Treat it as reduced urgency, not as
 resolved.
 
-**Effort is very unevenly distributed, and because the critical is unreachable
-the cheap wins come first:**
+**Bootstrap 3.2.0 → 3.4.1 is done**, clearing six of the twelve medium alerts.
+It was a drop-in dist swap needing no template change. Nine alerts remain.
 
-- **Bootstrap 3.2.0 → 3.4.1** clears six of the twelve medium alerts and is a
-  patch-level move within 3.x. Very likely a drop-in file swap. Do this first.
-- **lodash 2.4.1 → 4.17.21+** clears the critical and both highs — the whole
-  top of the table — but crosses two major versions with real API changes
-  (`_.pluck` and `_.where` removed, `_.first`/`_.rest` renamed, callback
-  shorthand changed). The reachability table above shows how little of lodash
-  this codebase actually touches, so the migration surface is small.
-- **jQuery 1.11.1 → 3.5.0+** clears the remaining three but is the big one, and
-  drags jQuery UI with it. See 2.1.
-- **CVE-2024-6485 has no fixed version in Bootstrap 3.x** — clearing it means
-  Bootstrap 4/5, a redesign. Accept and document it, or plan separately.
+**Backbone 1.1.2 is the pin holding the rest in place** — this is the finding
+that matters, and it was measured rather than assumed.
+
+Swapping lodash 4.17.21 in and loading the app produces:
+
+```
+backbone.min.js  Uncaught TypeError: i.any is not a function
+```
+
+lodash 4 renamed `_.any` to `_.some`; Backbone 1.1.2 still calls `_.any`. The
+nav bar renders, because that happens before the failure, and `#main-container`
+stays **empty** — the application is dead. `backbone.min.js` also references
+`.where` and `.invoke`, both likewise removed or redefined in lodash 4.
+
+So the reachability analysis above, while accurate about the application's own
+code, understates the work: the blocker is not how the app uses lodash but how
+**Backbone** does. lodash 3.10.1, the last release with an Underscore-compatible
+build, does not help either — CVE-2019-10744 is fixed in 4.17.12.
+
+Three ways out, in increasing order of ambition:
+
+1. **Replace lodash with Underscore.** Backbone is written against Underscore,
+   not lodash; using lodash here was always a substitution. The application's
+   own usage is six functions — `extend`, `size`, `reduce`, `map`, `keys`,
+   `uniq` (plus `template`) — all of which Underscore provides. This removes
+   lodash from the tree entirely and with it **all five lodash advisories,
+   including the critical**, without touching Backbone. Most likely the right
+   answer, and the cheapest.
+2. **Upgrade Backbone and lodash together.** Larger surface, and needs checking
+   that current Backbone tolerates lodash 4 at all.
+3. **Leave it**, on the basis that the vulnerable entry points are unreachable
+   from application code today. Only defensible while that stays true, which
+   nothing enforces.
+
+**jQuery 1.11.1 → 3.5.0+** clears the remaining three alerts and is coupled the
+same way: jQuery UI 1.11.0 predates jQuery 3 support, so both move together.
+Expect the Backbone interaction to need checking too.
+
+**CVE-2024-6485 has no fixed version in Bootstrap 3.x** — clearing it means
+Bootstrap 4 or 5, a redesign. Accept and document it, or plan it separately.
+
+Whatever is attempted, the loop is fast: swap the file, run
+`pytest tests/selenium`, and read the console guard. Finding the lodash
+incompatibility above took about two minutes.
 
 The browser suite is the safety net for all of these: change one library, run
 `pytest tests/selenium`, see what broke.
