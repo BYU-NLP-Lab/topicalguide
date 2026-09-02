@@ -23,6 +23,19 @@ updates:
       python-dependencies:
         patterns:
           - "*"
+    ignore:
+      # This project tracks Django LTS releases deliberately: 6.1's support
+      # ends four months EARLIER than the 5.2 LTS already installed, and 6.x
+      # additionally requires Python 3.12+. See TASKS.md 2.5. Without this,
+      # grouping quietly swept "Django 5.2.17 -> 6.1" in beside a dozen
+      # harmless floor bumps, where merging the group would have reversed that
+      # decision without anyone reading the diff.
+      #
+      # Security updates are unaffected: they are configured separately from
+      # version updates and still arrive.
+      - dependency-name: django
+        update-types:
+          - version-update:semver-major
 
   # Front-end libraries. These are VENDORED, not installed -- /package.json
   # exists only so this ecosystem has a manifest for Dependabot to read.
