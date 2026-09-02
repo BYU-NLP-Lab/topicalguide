@@ -23,7 +23,7 @@ pytest-django>=4.9.0
 selenium>=4.30.0
 
 # For LLM-based topic naming (optional)
-openai>=1.0.0
+openai>=3.6.0
 
 # For BERTopic topic modeling (optional)
 # NOTE: BERTopic dependencies (specifically numba) currently require Python <=3.13
