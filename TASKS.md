@@ -23,7 +23,6 @@ priorities change.
 | --- | --- |
 | **2.4** front-end CVEs — **all 15 cleared** | Bootstrap 5.3.8, jQuery 3.7.1, jQuery UI 1.13.3, lodash replaced by Underscore. Kept in Tier 1 as the record of how it was done and what it cost. |
 | **4.4** `/bertopic-viz` access control — **fixed** | It served private datasets and let their names be enumerated. Kept here because it is the argument for 4.1: the bug was found by measuring coverage, not by reading code. |
-| **1.1** falsy metadata — **fixed** | Any `0`, `False` or `""` used to read back as absent. Now selected by NULL rather than truthiness, with 30 tests. |
 | **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
 
 ### Tier 2 — hours of work, disproportionate payoff
@@ -48,7 +47,7 @@ priorities change.
 | **2.1** front-end upgrades — **done** except D3 | Bootstrap 5, jQuery 3, jQuery UI 1.13, Underscore. D3 stays at v3 deliberately: no advisory, and v4+ rewrites all six visualizations. |
 | **5.3, 5.4** architecture note and README rewrite | Half the README no longer describes this project. |
 | **5.5** nothing to look at on a fresh clone | Decide demo database vs `make demo` before reaching for Git LFS. |
-| **2.3, 4.2** CI follow-ups — **coverage done** | `pytest-cov` declared and `--cov` in the CI run. Remaining: split the ML deps. |
+| **2.3, 2.6** dependency follow-ups | Split the ML deps out of the default install, and grep the rest of `requirements.txt` for packages nothing imports. |
 | **2.5** Python 3.11 → 3.13 | Independent of Django, and removes half the work from the 6.2 LTS jump in April 2027. |
 
 ### Tier 4 — the research programme
@@ -261,54 +260,6 @@ fix; disproportionate effect on first impressions.
 
 ## 1. Correctness
 
-### 1.1 `MetadataValue.value()` treats 0, False and "" as missing **[verified]**
-
-`visualize/models.py:73` picks the populated column with truthiness tests:
-
-```python
-if self.float_value:  result = self.float_value
-if self.text_value:   ...
-if self.int_value:    ...
-if self.bool_value:   ...
-```
-
-So any *falsy* stored value reads back as `None`:
-
-| stored              | `value()` returns |
-| ------------------- | ----------------- |
-| `int` 0             | `None`            |
-| `bool` False        | `None`            |
-| `float` 0.0         | `None`            |
-| `text` ""           | `None`            |
-
-A boolean metadata field can therefore never report `False`, and any count,
-score or year of zero silently disappears from the API and every view. The
-same block raises "MetadataValues cannot be of more than one type" by counting
-truthy columns, so it also mis-detects when a legitimate zero is present.
-
-**Fixed.** Both accessors now go through one `_populated()` helper that selects
-the column with `is not None`, so the type is decided by which column holds a
-value and the "more than one type" guard counts populated columns rather than
-truthy ones. `type()` had the same bug and was equally wrong: a zero-valued
-field reported *no type at all*.
-
-Driving the choice off the stored `MetadataType.datatype`, as this item
-originally suggested, was considered and rejected. It would cost a query per
-value wherever `metadata_type` is not prefetched — the N+1 shape 3.1 is about —
-and it would disagree with the data on any row whose populated column and
-declared datatype differ, which is exactly the case worth surfacing rather than
-silently resolving. The write path makes the column authoritative: every value
-is written by `MetadataValue.set()`, which populates one column and leaves the
-rest NULL.
-
-Covered by `tests/visualize/test_models.py` — 30 tests, parametrised over
-int/float/bool/text at both their zero and an ordinary value, in memory and
-after a reload from the database. Reverting the fix fails 15 of them.
-
-One loose end: `type()` has **no callers in production code**. It is exercised
-only by the new tests. Worth deciding whether it earns its place before the
-next round of model cleanup.
-
 ### 1.2 `/api` reports failure two different ways, both with the wrong status
 
 `visualize/api.py:99` raises out of `filter_request` *before* the `try`, so an
@@ -411,6 +362,15 @@ Investigate read-only first: group the violations by table to see whether only
 even enforced when the rows were written — Django enables them per connection,
 so data written by another tool may never have been checked. Do not repair the
 file without asking; it is working data with no backup in the repository.
+
+### 1.7 `MetadataValue.type()` has no callers
+
+`type()` reports which of the five typed columns a metadata value uses. Nothing
+in `visualize/` or `import_tool/` calls it — only `tests/visualize/test_models.py`
+does. Either it is a public accessor the API should be using where it currently
+infers types in JavaScript, or it is dead weight that has to be kept correct
+for nothing. Decide which before the next round of model cleanup; it shares its
+implementation with `value()`, so the cost of keeping it is small but not zero.
 
 ---
 
@@ -582,29 +542,15 @@ numba supports 3.14 now. Fix that comment while you are there.
 The suite emits no Django deprecation warnings on either 4.2 or 5.2, so
 nothing in the code obstructs whichever path is taken.
 
-### 2.6 nltk dropped rather than pinned — **done**
+### 2.6 Audit `requirements.txt` for dependencies nothing imports
 
-Dependabot raised CVE-2026-81726 (High, CVSS 4.0 8.3): NLTK's model-artifact
-APIs — `TransitionParser`, `AveragedPerceptron`, `PerceptronTagger` and the
-maxent parameter APIs — use raw file operations on caller-controlled paths and
-so read and write outside the sandbox roots even with `nltk.pathsec`
-`ENFORCE=True`. It affects **every release through 3.10.3, which is still the
-newest on PyPI**, so there was no fixed version to pin to. It is the fourth in
-the same family, after CVE-2026-54293 (`nltk.data.load()`), CVE-2026-12074
-(`FramenetCorpusReader.frame()`) and the downloader's arbitrary file overwrite.
-
-The resolution was to remove the dependency: a case-insensitive grep across the
-repository matched `nltk` on exactly one line — its own entry in
-`requirements.txt`. Nothing imports it. The stopword lists are plain files in
-`stopwords/` and tokenization is hand-rolled in `import_tool/`. It was also
-uninstalled from the development `venv/`, where `pip show` listed no
-`Required-by`, so nothing else lost a dependency.
-
-The suite passes unchanged without it (61 passed, 1 xfailed) and got roughly
-4× faster — 59s to 14s — because nltk's import is no longer paid for at
-collection. Worth remembering as the general lesson: **an unused pinned
-dependency is a recurring alert with no upside**, and the rest of
-`requirements.txt` deserves the same grep.
+`nltk` was pinned but never imported — a grep matched it on one line, its own
+entry — so four rounds of path-traversal advisories were spent on a package the
+project does not use. An unused pinned dependency is a recurring alert with no
+upside. Grep the rest of `requirements.txt` the same way, and note that this
+overlaps with 2.3's remaining ML-dependency split: `bertopic`,
+`sentence-transformers`, `umap-learn` and `hdbscan` are genuinely used but only
+by the optional BERTopic path.
 
 ---
 
@@ -682,16 +628,12 @@ on every import.
 
 Pairs with 5.5: the same fixture is what a `make demo` target would use.
 
-### 4.2 Coverage measurement — **done and wired in**
+### 4.2 No coverage threshold until 4.1 lands **[decided]**
 
-The numbers above came from `pytest-cov`, which is now a declared dependency
-(`requirements.txt`) and runs on every build: the CI step in
-`.github/workflows/tests.yml` passes `--cov=visualize --cov=import_tool`. A
-local run reproduces the same **22%** total over 3,480 statements.
-
-Deliberately no `--cov-fail-under`. At 22% a threshold would either be set so
-low it means nothing or would fail every build; revisit once 4.1 has covered
-the import pipeline.
+CI reports coverage on every build but deliberately passes no
+`--cov-fail-under`. At 22% a gate would either be set so low it means nothing
+or would fail every build. Revisit once 4.1 has covered the import pipeline —
+that is the point at which a floor becomes meaningful.
 
 ### 4.3 The API's own error paths are thinly covered
 
@@ -723,14 +665,7 @@ expensive, so it is reasonable to leave — but note the route calls
 from the database rather than the URL, so it is not attacker-controlled today;
 it is worth keeping that way deliberately rather than by accident.
 
-### 4.5 Two specific gaps worth closing before the big one
-
-**`MetadataValue.set` and `value()` in `models.py` — done.**
-`tests/visualize/test_models.py` covers both, plus `type()` and `__str__`,
-parametrised over int/float/bool/text at their zero values through
-`tests/conftest.py`'s `set_metadata`. That is what 1.1 was fixed against;
-`visualize/models.py` went from 61% to 67% covered and the suite from 61 tests
-to 91.
+### 4.5 A specific gap worth closing before the big one
 
 **`visualize/utils.py` at 18%.** `reservoir_sample` is the document-sampling
 path `/api` takes whenever `document_limit` is exceeded. Sampling code is easy
