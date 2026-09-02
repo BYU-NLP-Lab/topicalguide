@@ -515,6 +515,151 @@ future pipeline changes is measurable rather than felt.
   belongs in the `tg.py` pipeline next to tokenising and modelling, not in a
   request handler.
 
+## 7. Beyond document embeddings: what else to embed
+
+Section 6 assumes the obvious move — embed documents, search them. This section
+is about the less obvious question: *what other objects are worth embedding?*
+Several of these need no new data at all, only a different reading of the
+schema that already exists.
+
+**The asset nobody is using.** `WordToken` stores every token *occurrence* with
+its document, its `token_index`, and a `start_index` character offset into the
+source text. `WordTokenTopic` attaches the topic assignment to that
+occurrence — not to the word type. `Document.get_key_word_in_context()` already
+materialises the surrounding window for any occurrence.
+
+So the database holds, for every word in the corpus: where it appeared, what
+surrounded it, and which topic the model assigned *that instance*. Most topic
+browsers keep only type-level counts. This one can support occurrence-level
+work, and does not.
+
+### 7.1 Embed occurrences, not word types — and get word senses for free
+
+Embed each token occurrence in its context window. Cluster the occurrences of a
+word and its senses separate out: "defense" splits into military, legal and
+fiscal; "address" into speech and location; "state" into polity, condition and
+the verb.
+
+What that unlocks:
+
+- **Topics described by senses rather than strings.** Two topics that both list
+  "state" in their top words may be about entirely different things, and today
+  nothing reveals that. Sense-resolved top words would.
+- **Honest word statistics.** Every count in the app is type-level, so senses
+  are silently pooled. Occurrence clustering makes "% of topic" and top-word
+  lists say what they appear to say.
+- **A sharper reading view.** The single-document view already highlights token
+  spans; highlighting by *sense* rather than by string is a small change to a
+  view that already exists.
+
+The joins are already there. This is a genuinely distinctive capability, and
+the schema was apparently built for it.
+
+### 7.2 Diachronic embeddings: measure meaning change, don't infer it
+
+6.6 proposes tracking semantic drift. The rigorous form: train or fine-tune a
+separate embedding space per era, align consecutive spaces by orthogonal
+Procrustes, then measure each word's displacement — the HistWords method
+(Hamilton, Leskovec and Jurafsky).
+
+The deliverable is a ranked list: *the words whose meaning moved most*, each
+with its nearest neighbours in 1800 beside its nearest neighbours in 2000. On
+a 235-year single-genre corpus with consistent form, that is close to an ideal
+testbed — genre and register are held roughly constant, so displacement is
+more plausibly meaning and less plausibly style.
+
+This is the finding a historian would actually publish, and no view in the app
+comes close to it today.
+
+### 7.3 Embed presidents, eras and analyses — not just text
+
+Documents are not the only objects with a position in semantic space.
+
+- **Speakers.** A per-president embedding — pooled from their documents, or
+  learned directly — gives a rhetorical similarity map. "Who does this
+  president sound most like?" is immediately interesting, frequently
+  surprising, and completely unavailable today.
+- **Years and eras.** Embedding each time slice gives the corpus a trajectory
+  through semantic space: where it moved fast, where it stalled, and which
+  distant years *rhyme*. Finding that the early 1930s sit near 2008–09 is the
+  kind of result that starts a paper.
+- **Topics across analyses.** Embedding topics from different analyses into one
+  space lets them be aligned by similarity — which is exactly the machinery
+  0.5's side-by-side comparison needs. It answers "what did LDA-100 split that
+  LDA-20 merged?" and "what did BERTopic find that LDA missed?" concretely
+  rather than impressionistically.
+
+### 7.4 Let researchers define their own axes
+
+The most expressive idea here, and among the cheapest to build.
+
+A semantic axis can be defined by its poles: supply a handful of example
+passages (or word sets) for each end — optimistic ↔ pessimistic, concrete ↔
+abstract, domestic ↔ foreign, conciliatory ↔ combative — take the difference of
+the pole centroids, and project the whole corpus onto it.
+
+That turns the 2D-plots view from a chooser over fixed fields into an
+instrument the researcher configures: *pick your own two dimensions, by
+example, and see where every document falls.* Related and equally cheap: a
+**concept probe**, where a user supplies five passages exemplifying something
+they cannot name precisely, and the corpus is scored and ranked by it. Search
+by resemblance instead of by keyword, for concepts with no reliable keyword.
+
+Both are a few dot products over precomputed vectors. The expressive range is
+out of all proportion to the effort.
+
+### 7.5 Separate what is said from how it is said
+
+Embeddings mix content and style. Partial out speaker identity — train a probe
+to predict the speaker, then project its direction out — and you get a content
+space where similarity is not dominated by personal idiom. Keep the removed
+component and you get a style space instead.
+
+That distinction matters for the comparative question in 6.5: when two
+presidents look different, is it because they addressed different subjects, or
+because they addressed the same subjects differently? Nothing in the app can
+currently tell those apart, and they are different findings.
+
+### 7.6 Trace echoes and influence
+
+State of the Union addresses are formulaic and self-referential; passages get
+reused, paraphrased and answered across administrations. Passage-level
+embeddings plus nearest-neighbour search across the whole corpus surfaces those
+echoes — near-duplicates first, then paraphrases at a looser threshold.
+
+"Which later address most closely echoes this passage?" is a question with a
+concrete, checkable answer and an obvious route into a finding. It is nearly
+free once 6.1 exists, and unlike most similarity features its results are
+self-evidently interesting rather than requiring interpretation.
+
+### 7.7 Score passages against their own era
+
+With per-era spaces from 7.2, each passage can be scored against the era it
+came from: which passages used language that had not yet settled into its
+period's idiom, and which read as holdovers. Ranking a corpus by how *unusual
+for its moment* each passage is gives a novelty detector that is native to the
+collection rather than imported from a general-purpose model.
+
+This pairs with 6.7 — it is a principled way to decide what "stands out" is
+worth surfacing.
+
+### 7.8 Interface ideas that fall out of any of the above
+
+- **Query by example.** Select a span in the reading view, get the most similar
+  passages across the collection. The selection affordance already exists.
+- **Semantic diff.** Given two documents, or two subsets, show what each says
+  that the other does not.
+- **A reading tour.** Order a diversity-maximising path through the collection
+  so a newcomer sees its range in ten documents rather than its first ten.
+
+### Sequencing
+
+7.4 and 7.6 are the quick wins once passage embeddings from 6.1 exist — days,
+not weeks, and both produce visible results immediately. 7.1 and 7.3 need no
+new modelling either, only occurrence-level and object-level embedding runs
+over data already in the database. 7.2 and 7.5 are the research-grade items and
+deserve their own design.
+
 ## Where to start
 
 If only a few of these get done:
@@ -534,6 +679,16 @@ embeddings with hybrid search. It is the missing foundation under semantic
 search, grounded question answering, the semantic map and contrastive analysis
 — four of the six discovery features in section 6 are blocked on it, and the
 libraries are already installed.
+
+Once that exists, **7.4** (researcher-defined semantic axes) is the highest
+ratio of expressive power to effort in this document: a difference of two
+centroids and a projection, and the 2D-plots view becomes an instrument the
+researcher configures by example rather than a chooser over fixed fields.
+
+The most *distinctive* item, in the sense that few tools could offer it, is
+**7.1** — the database already records every token occurrence with its context
+offset and its own topic assignment, which is exactly what word-sense work
+needs and what type-level topic browsers throw away.
 
 ## Relationship to the session task list
 
