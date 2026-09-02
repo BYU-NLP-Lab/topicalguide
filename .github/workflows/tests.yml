@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           # requirements.txt notes that BERTopic's dependencies (numba) need
           # Python <= 3.13. 3.11 matches what the project is developed on.
