@@ -91,10 +91,17 @@ var FavoritesQuickSelectView = DefaultView.extend({
                     .enter()
                     .append("li")
                     .append("a")
-                    .classed("nounderline pointer", true)
-                    .text(function(d, i) { return d.key; })
-                    // The onclick is triggered like this because the elements don't exist yet and so events cannot be bound to them.
-                    .attr("onclick", function(d, i) { return "var hash = {}; hash['"+d.value+"'] = '"+d.key+"'; globalSelectionModel.set(hash);"; });
+                    // The selection type travels in the class, and the key is
+                    // the link's own text, read back by the delegated handler
+                    // below. A bound listener would not survive this markup
+                    // being serialised into the popover, and an onclick
+                    // attribute would be removed by Bootstrap's sanitizer --
+                    // which is also why the key must never be concatenated
+                    // into a script string.
+                    .attr("class", function(d, i) {
+                        return "nounderline pointer fav-item fav-type-" + d.value;
+                    })
+                    .text(function(d, i) { return d.key; });
             }
         });
     },
@@ -258,6 +265,17 @@ var LoadScriptsView = DefaultSettingsView.extend({
 
 // Add when the DOM is ready so the modal elements are present.
 $(function() {
+    // Delegated from the document, because the favourites markup is serialised
+    // into the popover by Bootstrap and re-inserted elsewhere in the DOM, which
+    // drops any listener bound directly to those anchors.
+    $(document).on("click", "a.fav-item", function() {
+        var type = (this.className.match(/fav-type-(\S+)/) || [])[1];
+        if (!type) return;
+        var hash = {};
+        hash[type] = $(this).text();
+        globalSelectionModel.set(hash);
+    });
+
     globalViewModel.setHelpViewClass(HelpView);
     globalViewModel.setFavoritesViewClass(FavoritesQuickSelectView);
     globalViewModel.addSettingsClass(LoginView);

@@ -383,6 +383,61 @@ def test_bootstrap_javascript_is_functional(app):
             "return jQuery('#main-nav-help-modal').hasClass('in');"))
 
 
+def test_favourites_popover_selects_the_favourite(app, wait, live_server):
+    """Clicking a favourite in the quick-select popover must change selection.
+
+    Bootstrap 3.4 sanitizes popover content and strips event-handler
+    attributes, so the `onclick` this view used to generate was silently
+    removed and the links did nothing. Nothing caught that, because the popover
+    still rendered and the text still looked right.
+    """
+    key = 'favs-dataset-%s-analysis-%s-documents' % (DATASET_NAME, ANALYSIS_NAME)
+    app.execute_script(
+        'window.localStorage[arguments[0]] = JSON.stringify({"doc1.txt": true});',
+        key)
+    app.get(live_server.url)
+    wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, '#main-nav-bar li'))
+
+    app.execute_script("jQuery('#main-nav-favs').popover('show');")
+    link = wait.until(lambda d: d.find_element(
+        By.CSS_SELECTOR, '.popover .popover-content a.fav-item'))
+    # The popover animates in, so read textContent rather than the rendered
+    # text, which is empty until the element is visible.
+    assert link.get_attribute('textContent') == 'doc1.txt'
+
+    wait.until(lambda d: link.is_displayed())
+    link.click()
+
+    wait.until(lambda d: 'document=doc1.txt' in d.current_url)
+
+
+def test_favourites_popover_does_not_build_scripts_from_keys(app, wait, live_server):
+    """A favourite key must never reach an inline event-handler attribute.
+
+    Keys are corpus-derived -- document filenames and words -- so building a
+    script string from them by concatenation is injectable. This asserts on the
+    markup the view produces, before Bootstrap's sanitizer sees it, since the
+    sanitizer masks the problem rather than fixing it.
+    """
+    key = 'favs-dataset-%s-analysis-%s-documents' % (DATASET_NAME, ANALYSIS_NAME)
+    app.execute_script(
+        'window.localStorage[arguments[0]] = '
+        'JSON.stringify({"x\'; window.PWNED = 1; //": true});', key)
+    app.get(live_server.url)
+    wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, '#main-nav-bar li'))
+
+    markup = app.execute_script(
+        'globalViewModel.favsView.render();'
+        'return globalViewModel.favsView.$el.html();')
+
+    # The key must appear, but only as escaped text content -- never inside an
+    # attribute that the browser will execute.
+    assert 'window.PWNED = 1' in markup, 'the favourite should still render'
+    assert 'onclick' not in markup.lower()
+    assert 'javascript:' not in markup.lower()
+    assert not app.execute_script('return window.PWNED === 1;')
+
+
 def test_jquery_ui_slider_initialises(app, wait):
     """The chord view's threshold control is a jQuery UI slider.
 
