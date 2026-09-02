@@ -22,7 +22,8 @@ priorities change.
 | Item | Why now |
 | --- | --- |
 | **2.4** front-end CVEs — **all 15 cleared** | Bootstrap 5.3.8, jQuery 3.7.1, jQuery UI 1.13.3, lodash replaced by Underscore. Kept in Tier 1 as the record of how it was done and what it cost. |
-| **1.1** falsy metadata | Any `0`, `False` or `""` silently reads back as absent. Corrupts data in every view, and the fix is a few lines. |
+| **4.4** `/bertopic-viz` access control — **fixed** | It served private datasets and let their names be enumerated. Kept here because it is the argument for 4.1: the bug was found by measuring coverage, not by reading code. |
+| **1.1** falsy metadata | Any `0`, `False` or `""` silently reads back as absent. Corrupts data in every view, the fix is a few lines, and 4.5 says where the tests go. |
 | **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
 
 ### Tier 2 — hours of work, disproportionate payoff
@@ -39,7 +40,7 @@ priorities change.
 
 | Item | Why |
 | --- | --- |
-| **4.1** no test for the import pipeline | The core product is untested. Two bugs that lived in it for years were found by inspection, not by a test. |
+| **4.1** no test for the import pipeline | 571 statements at **0%**, plus all 16 metrics that run on every import. The largest gap, and now cheap to close. |
 | **0.4** five recoverable topic metrics | Cheapest route to showing a user which topics are worth reading. |
 | **1.3, 1.4, 1.5** error handling | 26 bare excepts, plus failures that render as content. Hides the next bug. |
 | **1.2, 4.3** `/api` error contract | Failure reported two incompatible ways, neither with a usable status code. |
@@ -47,7 +48,7 @@ priorities change.
 | **2.1** front-end upgrades — **done** except D3 | Bootstrap 5, jQuery 3, jQuery UI 1.13, Underscore. D3 stays at v3 deliberately: no advisory, and v4+ rewrites all six visualizations. |
 | **5.3, 5.4** architecture note and README rewrite | Half the README no longer describes this project. |
 | **5.5** nothing to look at on a fresh clone | Decide demo database vs `make demo` before reaching for Git LFS. |
-| **2.3, 4.2** CI follow-ups | Split ML deps, add coverage measurement. |
+| **2.3, 4.2** CI follow-ups | Declare `pytest-cov`, put `--cov` in the CI run, split the ML deps. |
 | **2.5** Python 3.11 → 3.13 | Independent of Django, and removes half the work from the 6.2 LTS jump in April 2027. |
 
 ### Tier 4 — the research programme
@@ -374,40 +375,39 @@ file without asking; it is working data with no backup in the repository.
 
 ## 2. Security and operations
 
-### 2.1 Vendored front-end libraries are a decade old — **scanning done, upgrade open**
+### 2.1 Vendored front-end libraries — **scanning and upgrades done**
 
-The app loads jQuery **1.11.1** (2014), jQuery UI 1.11.0, Backbone 1.1.2,
-Lodash 2.4.1, D3 **3.4.11**, d3-tip 0.6.3, d3.layout.cloud, Bootstrap 3.2.0 and
-Bootstrap Toggle 2.1.0 — all committed under `visualize/static/` rather than
-installed. Versions in `visualize/static/VENDOR.md` were read from each file's
-own banner, not inferred from filenames.
+Everything the app loads in the browser is committed under `visualize/static/`
+rather than installed, and `visualize/static/VENDOR.md` is the inventory.
+Versions there were read from each file's own banner, not inferred from
+filenames.
 
 **Scanning — done.** Because they were vendored blobs with no manifest,
-Dependabot could not see them at all, and every alert this repository has ever
-raised was Python. Reaching zero open alerts made the repo look clean while
-this whole surface stayed invisible. `/package.json` now declares the five
-whose exact versions exist in the npm registry, and `.github/dependabot.yml`
-enables the npm and github-actions ecosystems alongside pip.
-
-Four cannot be declared — jQuery UI 1.11.0, d3-tip 0.6.3, bootstrap-toggle
-2.1.0 and d3.layout.cloud, which has no version banner at all — because those
-exact versions are not in the registry. Declaring a nearby version would be
-worse than declaring nothing, since a version newer than reality would hide
-real advisories. `VENDOR.md` lists them so the gap is visible; they need
-checking by hand.
+Dependabot could not see them at all, and every alert this repository had ever
+raised was Python. `/package.json` now declares them, and
+`.github/dependabot.yml` enables npm and github-actions alongside pip. What
+that exposed is 2.4.
 
 Note the limitation that makes this easy to misread: **a Dependabot PR against
 `package.json` edits one line of JSON and does not update the committed file.**
-It is a notification, not a fix.
+It is a notification, not a fix, and npm pull requests are disabled for that
+reason — alerts stay on.
 
-**Upgrade — open, and a real project.** jQuery below 3.5.0 carries
-CVE-2020-11022 and CVE-2020-11023 in `html()`/`append()` handling of untrusted
-markup, and these views build markup from `/api` data throughout, so the
-exposure is not theoretical. But jQuery 1.x → 3.x removes `.load()`, `.size()`
-and `.andSelf()` and changes deferred semantics, and D3 v3 → v4+ restructures
-every module, touching all six visualizations. The browser suite in
-`tests/selenium/` is what makes it attemptable: one library at a time, letting
-the tests say what broke.
+**Upgrades — done.** Bootstrap 3.2.0 → **5.3.8**, jQuery 1.11.1 → **3.7.1**,
+jQuery UI 1.11.0 → **1.13.3**, lodash 2.4.1 → **Underscore 1.13.8**, and
+bootstrap-toggle removed in favour of Bootstrap 5's form-switch.
+
+**What is deliberately left:**
+
+- **D3 3.4.11.** No open advisory, and v3 → v4+ restructures every module,
+  which would touch all six visualizations for no security gain.
+- **Backbone 1.1.2.** No open advisory. Worth noting it is the constraint that
+  forced Underscore over lodash, and it would need to move before lodash could
+  ever come back.
+- **d3-tip 0.6.3 and d3.layout.cloud**, which cannot be declared in
+  `package.json` at all — the exact versions are not in the npm registry, and
+  the second carries no version banner. They are listed in `VENDOR.md` so the
+  gap stays visible, and they need checking by hand.
 
 ### 2.2 `DEBUG` puts every SQL query in the API response body
 
@@ -578,35 +578,101 @@ guess at which requests are worth caching.
 
 ## 4. Testing
 
+61 tests: 12 on `/api`, 6 on `/bertopic-viz`, 18 unit tests, and 25 in the
+browser. Coverage was measured rather than guessed, with
+
+    pytest --cov=visualize --cov=import_tool --cov-report=term-missing
+
+and the headline is **22%**. The distribution matters more than the number:
+
+| Module | Coverage | Note |
+| --- | --- | --- |
+| `visualize/root.py` | 90% | fine |
+| `import_tool/basic_tools.py` | 84% | fine |
+| `visualize/api.py` | 69% | the uncovered part is error paths — 4.3 |
+| `visualize/models.py` | 61% | the uncovered part is where 1.1 lives — 4.5 |
+| `visualize/bertopic_viz.py` | 21% | was 9%; measuring it found a bug — 4.4 |
+| `visualize/utils.py` | 18% | `reservoir_sample` — 4.5 |
+| `import_tool/import_system_utilities.py` | **0%** | 571 statements — 4.1 |
+| `import_tool/metric/**` | **0%** | all 16 live metrics — 4.1 |
+| `import_tool/tokenizer/**` | **0%** | 4.1 |
+
 ### 4.1 The import and analysis pipeline has no tests
 
 `tg.py` and `import_tool/` are the core product — tokenising, running the topic
-model, writing the ORM rows — and nothing covers them end to end. The unit
-tests reach `basic_tools` and `GenericDataset`; everything downstream of
-`import_system_utilities` is untested.
+model, writing the ORM rows — and nothing covers them end to end.
+`import_system_utilities.py` is **571 statements at 0%**, and every one of the
+**16 metrics that run automatically on every import** is untested.
 
-A small end-to-end test is now cheap to write: import the four-document
-corpus already in `tests/import_tool/test_resources/`, run the smallest
-analysis available, and assert the resulting Dataset/Analysis/Topic/Document
-rows. That would also have caught the dead `import_tool/metric/` tree years
-ago.
+This is the largest remaining gap, and it is now cheap to close: import the
+four-document corpus already in `tests/import_tool/test_resources/`, run
+`import_tool/analysis/interfaces/random_analysis.py` — which needs no MALLET —
+and assert the resulting Dataset, Analysis, Topic and Document rows plus the
+metrics that get written along the way.
 
-### 4.2 No coverage measurement
+Two bugs fixed in this repository lived on exactly this path and were found by
+inspection rather than by a test: the dead `import_tool/metric/` tree, and
+`metric/utilities.py` rewriting `DJANGO_SETTINGS_MODULE` to a deleted package
+on every import.
 
-Nothing reports what the 49 tests actually exercise. Adding `pytest-cov` and a
-`--cov=visualize --cov=import_tool` run would show where the gaps are rather
-than leaving it to intuition — useful input to 4.1 in particular.
+Pairs with 5.5: the same fixture is what a `make demo` target would use.
+
+### 4.2 Coverage measurement — **done, now wire it in**
+
+The numbers above came from `pytest-cov`, which is not yet a declared
+dependency. Two steps remain:
+
+- add `pytest-cov` to `requirements.txt` beside the other test tooling;
+- add `--cov=visualize --cov=import_tool` to the CI run in
+  `.github/workflows/tests.yml`, so the figure appears on every build instead
+  of being something to go looking for.
+
+Resist a coverage *threshold* until 4.1 lands. At 22% any gate would either be
+set so low it means nothing or would fail every build.
 
 ### 4.3 The API's own error paths are thinly covered
 
-`tests/visualize/test_api.py` covers the happy paths and two rejections. It
-does not cover a malformed `document_limit`, an out-of-range int, an unknown
-dataset name mixed with a known one, or unicode in the filter-set parser
-(`filter_set_to_list` has a `%`-unescaping branch at `api.py:48` that nothing
-exercises). Worth extending alongside 1.2, since fixing the error contract will
-touch this code anyway.
+`tests/visualize/test_api.py` covers the happy paths and two rejections, which
+is most of `api.py`'s missing 31%. Not covered: a malformed or out-of-range
+`document_limit`, an unknown dataset name mixed with a known one, and the
+`%`-unescaping branch of `filter_set_to_list` at `api.py:48`. Worth extending
+alongside 1.2, since fixing the error contract touches this code anyway.
 
----
+### 4.4 `/bertopic-viz` was 9% covered, and that hid an access control bug **[verified]**
+
+Measuring coverage is what surfaced this. The route looked its dataset up with
+`Dataset.objects.get(name=...)` where `/api` uses
+`filter(..., public=True, visible=True)`, so the two disagreed about who may
+see what. Demonstrated against a `public=False, visible=False` dataset:
+`/api?datasets=*` returned `[]` while `/bertopic-viz/secret_corpus/...` got past
+both lookups and failed only because the model file was absent — with the
+pickle present it would have rendered the visualization for anyone. Its error
+messages were also an enumeration oracle, giving three distinguishable answers
+for "no such dataset", "private dataset" and "wrong analysis type".
+
+Fixed, with six tests where there were none; three of them fail against the
+previous code.
+
+The endpoint is still only 21% covered, because the rest needs a real BERTopic
+pickle to exercise. That is the one place where a fixture is genuinely
+expensive, so it is reasonable to leave — but note the route calls
+`pickle.load` on a file path built from `dataset.dataset_dir`. That path comes
+from the database rather than the URL, so it is not attacker-controlled today;
+it is worth keeping that way deliberately rather than by accident.
+
+### 4.5 Two specific gaps worth closing before the big one
+
+**`MetadataValue.set` and `value()` in `models.py`.** Uncovered, and precisely
+where the falsy-value bug in 1.1 lives. Tests here do double duty: they pin the
+current behaviour and then verify the fix. `tests/conftest.py`'s `set_metadata`
+already takes a datatype, so a parametrised test over int/float/bool/text at
+their zero values is a few lines.
+
+**`visualize/utils.py` at 18%.** `reservoir_sample` is the document-sampling
+path `/api` takes whenever `document_limit` is exceeded. Sampling code is easy
+to get subtly wrong and hard to notice when it is — worth a test that fixes the
+seed and asserts the sample size, that every index is in range, and that the
+same seed gives the same sample.
 
 ## 5. Documentation and onboarding
 
@@ -1001,12 +1067,16 @@ new modelling either, only occurrence-level and object-level embedding runs
 over data already in the database. 7.2 and 7.5 are the research-grade items and
 deserve their own design.
 
-## Two things to carry forward
+## Three things to carry forward
 
-**4.1 is the largest coverage gap.** The API and the single-page app are
-covered by 49 tests; the import and analysis pipeline — the core product — has
-none.
+**4.1 is the largest coverage gap.** 61 tests cover `/api` and the single-page
+app well; the import and analysis pipeline — the core product — is at 0%.
 
 **0.4's five recoverable metrics are the cheapest way to make the topics table
 say something useful.** Right now it shows only "% of Corpus" and "% of Topic",
 so a reader cannot tell a coherent topic from noise.
+
+**Measuring coverage found a bug, twice over.** The 9% file turned out to be
+serving private datasets (4.4), and the uncovered half of `models.py` is
+exactly where the falsy-value bug lives (1.1, 4.5). Low coverage is not only a
+missing-tests problem; it marks the code nobody has looked at recently.
