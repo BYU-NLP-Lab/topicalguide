@@ -467,15 +467,33 @@ of how much 2.1 was hiding.
 **Thirteen have since been cleared.** Two remain, both Bootstrap, both with no
 fix available in the 3.x line:
 
-| Severity | CVE | Reachable? | Note |
-| --- | --- | --- | --- |
-| medium | CVE-2024-6485 | not checked | XSS via `data-*` attributes |
-| medium | CVE-2025-1647 | **yes** | XSS in popover/tooltip; `router.js` calls `.popover()` in four places. Only became visible after moving to 3.4.1. |
+| Severity | CVE | Note |
+| --- | --- | --- |
+| medium | CVE-2024-6485 | XSS via `data-*` attributes |
+| medium | CVE-2025-1647 | XSS in popover/tooltip. Only became visible after moving to 3.4.1. |
 
-Clearing either means Bootstrap 4 or 5 — a redesign, not an upgrade. The
-sensible interim step is to audit what reaches `.popover()`: it is driven by
-the favourites UI rather than by corpus text, which if confirmed would put it
-out of reach of a hostile document.
+Clearing either means Bootstrap 4 or 5 — a redesign, not an upgrade.
+
+**The reachability audit found a worse problem in our own code, since fixed.**
+The favourites popover runs with `html: true` and its content is
+`favsView.$el.html()`, so whatever that view renders is injected as markup. It
+rendered links whose `onclick` was built by concatenating the favourite's key —
+a document filename or a word, both corpus-derived — into a script string. An
+ordinary English possessive was enough to break the quoting.
+
+That is now fixed: the type travels in the class, the key is the link's text,
+and a delegated listener does the work. Two tests cover it, both verified to
+fail against the old code.
+
+Worth noting how the two interacted. Bootstrap 3.4's sanitizer — added upstream
+precisely to fix this advisory class — stripped those `onclick` attributes, so
+the 3.4.1 upgrade both neutralised the injection **and** silently broke the
+favourites links, which looked correct and did nothing. Neither effect was
+visible without opening the popover and reading the DOM.
+
+For the two that remain, the useful next step is narrowing what reaches
+`.popover()` and any `data-*` the views generate, so that a Bootstrap 4/5
+migration can be scheduled on its merits rather than forced by these.
 
 What was done, and what each move cost:
 
