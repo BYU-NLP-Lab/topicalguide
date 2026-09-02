@@ -12,8 +12,8 @@ from visualize.models import (Analysis, AnalysisMetadataValue,
                               DatasetMetadataValue, DatasetMetricValue,
                               Document, DocumentMetadataValue, MetadataType,
                               Metric, Topic, TopicMetricValue, TopicName,
-                              TopicNameScheme, WordToken, WordType,
-                              WordTokenTopic)
+                              TopicNameScheme, TopicPairwiseMetricValue,
+                              WordToken, WordType, WordTokenTopic)
 
 DATASET_NAME = 'test_corpus'
 DATASET_READABLE_NAME = 'Test Corpus'
@@ -35,14 +35,21 @@ TOPIC_WORDS = [
     ['nu', 'xi', 'omicron'],
 ]
 TOPIC_NAMES = [' '.join(words) for words in TOPIC_WORDS]
+# The topics-over-time view only offers metadata whose name looks time-related
+# ('year', 'date', 'decade', 'month', 'timestamp', 'time') and defaults to
+# 'year', so the documents carry one.
+FIRST_YEAR = 2001
+DOCUMENT_YEARS = [FIRST_YEAR + index for index in range(DOCUMENT_COUNT)]
+# The pairwise topic metric the chord diagram draws its chords from.
+PAIRWISE_METRIC = 'Document Correlation'
 
 
-def set_metadata(model_class, owner_field, owner, name, value):
+def set_metadata(model_class, owner_field, owner, name, value, datatype='text'):
     metadata_type, __ = MetadataType.objects.get_or_create(name=name,
-                                                           datatype='text')
+                                                           datatype=datatype)
     metadata_value = model_class(metadata_type=metadata_type,
                                  **{owner_field: owner})
-    metadata_value.set(value)
+    metadata_value.set(value, datatype)
     metadata_value.save()
     return metadata_value
 
@@ -96,6 +103,8 @@ def sample_dataset(db, dataset_dir):
                                            source='', length=100)
         set_metadata(DocumentMetadataValue, 'document', document,
                      'title', 'Document %d' % index)
+        set_metadata(DocumentMetadataValue, 'document', document,
+                     'year', DOCUMENT_YEARS[index], datatype='int')
         documents.append(document)
 
     # Give every topic tokens in every document so top-word and document
@@ -128,6 +137,19 @@ def sample_dataset(db, dataset_dir):
     for topic, name in zip(topics, TOPIC_NAMES):
         TopicName.objects.create(topic=topic, name_scheme=name_scheme,
                                  name=name)
+
+    # The chord diagram draws one chord per topic pair from a pairwise metric,
+    # and needs a full matrix -- it reads topics[j].pairwise[metric] as a row.
+    # Correlation is 1 on the diagonal and falls off with the gap between
+    # topic numbers, so the drawn chords differ from each other visibly.
+    pairwise_metric, __ = Metric.objects.get_or_create(name=PAIRWISE_METRIC)
+    for origin in topics:
+        for ending in topics:
+            gap = abs(origin.number - ending.number)
+            TopicPairwiseMetricValue.objects.create(
+                metric=pairwise_metric, origin_topic=origin,
+                ending_topic=ending,
+                value=round(1.0 - gap / float(TOPIC_COUNT), 4))
 
     return dataset
 

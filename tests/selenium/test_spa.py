@@ -5,18 +5,25 @@ navigates via the nav bar and then waits for the view to draw rather than
 assuming any server-rendered markup.
 """
 
+import json
+
 import pytest
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 
 from tests.conftest import (ANALYSIS_NAME, ANALYSIS_READABLE_NAME,
                             DATASET_NAME, DATASET_READABLE_NAME,
-                            DOCUMENT_COUNT, TOPIC_COUNT, TOPIC_NAMES,
+                            DOCUMENT_COUNT, DOCUMENT_YEARS, NAME_SCHEME,
+                            PAIRWISE_METRIC, TOPIC_COUNT, TOPIC_NAMES,
                             TOPIC_WORDS, document_text)
 
 pytestmark = pytest.mark.selenium
 
 NAV_VIEWS = ['Dataset Info', 'Topics', 'Documents', '2D Plots',
              'Chord Diagram', 'Topics Over Time']
+# The topics table shows generated names verbatim, but the pickers in the
+# plot, chord and topics-over-time views title-case them.
+TOPIC_PICKER_NAMES = [name.title() for name in TOPIC_NAMES]
 
 
 def nav_to(driver, wait, label):
@@ -129,8 +136,12 @@ def test_documents_table_lists_documents(app, wait):
     assert [cell.text for cell
             in view.find_elements(By.CSS_SELECTOR, 'thead th')] == \
         ['', 'Document', 'Year', 'Topic 1', 'Topic 2', 'Topic 3', 'Preview']
-    assert [row[1] for row in rows] == ['doc%d.txt' % i
-                                        for i in range(DOCUMENT_COUNT)]
+    # Row order follows the table's current sort, which is not part of what
+    # this test pins down.
+    assert sorted(row[1] for row in rows) == ['doc%d.txt' % i
+                                              for i in range(DOCUMENT_COUNT)]
+    assert sorted(row[2] for row in rows) == [str(year)
+                                              for year in DOCUMENT_YEARS]
     # Every document draws on all five topics equally, so the top three are
     # the first three topics in order.
     assert rows[0][3:6] == TOPIC_NAMES[:3]
@@ -142,5 +153,158 @@ def test_documents_table_shows_previews(app, wait):
     wait.until(lambda d: len(table_rows(view, 'tbody tr')) == DOCUMENT_COUNT)
     rows = table_rows(view, 'tbody tr')
 
-    assert [row[-1] for row in rows] == [document_text(i)
-                                         for i in range(DOCUMENT_COUNT)]
+    # Pair each filename with its own preview, so this holds whatever order
+    # the table is sorted in.
+    previews = {row[1]: row[-1] for row in rows}
+    assert previews == {'doc%d.txt' % i: document_text(i)
+                        for i in range(DOCUMENT_COUNT)}
+
+
+def open_first_document(app, wait):
+    """Click through from the documents table to the single-document view.
+
+    Returns the filename that was clicked. The table's row order is not
+    guaranteed, so the caller compares against what was actually clicked
+    rather than assuming doc0.
+    """
+    view = nav_to(app, wait, 'Documents')
+    wait.until(lambda d: len(table_rows(view, 'tbody tr')) == DOCUMENT_COUNT)
+    cell = view.find_elements(By.CSS_SELECTOR, 'tbody tr')[0] \
+               .find_elements(By.TAG_NAME, 'td')[1]
+    filename = cell.text
+    cell.click()
+    # #single-doc-topmatter appears before the panels below it are drawn, so
+    # wait on the last thing to render instead -- waiting on the topmatter
+    # alone made the highlight-mode assertions intermittently race the view.
+    wait.until(lambda d: len(d.find_elements(
+        By.CSS_SELECTOR, '#highlight-buttons label')) == 3)
+    wait.until(lambda d: d.find_elements(
+        By.CSS_SELECTOR, '#document-info-container h3'))
+    return filename
+
+
+def test_single_document_view_shows_the_text(app, wait):
+    filename = open_first_document(app, wait)
+    index = int(filename[len('doc'):-len('.txt')])
+
+    heading = app.find_element(By.CSS_SELECTOR, '#document-info-container h3')
+    assert heading.text == 'Document: %s' % filename
+    # The panel carries its own "Document Text" heading above the content.
+    highlighted = wait.until(
+        lambda d: d.find_element(By.ID, 'highlighted-text'))
+    assert highlighted.text == 'Document Text\n%s' % document_text(index)
+
+
+def test_single_document_view_offers_highlight_modes(app, wait):
+    open_first_document(app, wait)
+
+    # The ids sit on the radio inputs; the text is on the wrapping labels.
+    labels = [label.text for label in app.find_elements(
+        By.CSS_SELECTOR, '#highlight-buttons label')]
+    assert labels == ['No Highlights', 'Topic Highlights', 'Word Highlights']
+
+
+def test_plots_view_draws_a_point_per_document(app, wait):
+    view = nav_to(app, wait, '2D Plots')
+    points = wait.until(
+        lambda d: view.find_elements(By.CSS_SELECTOR, '#scatter-plot circle'))
+
+    assert len(points) == DOCUMENT_COUNT
+
+
+def test_plots_view_offers_metadata_and_topics_as_axes(app, wait):
+    view = nav_to(app, wait, '2D Plots')
+    wait.until(lambda d: view.find_elements(By.CSS_SELECTOR,
+                                            '#x-axis-control option'))
+    options = [option.text for option
+               in view.find_elements(By.CSS_SELECTOR, '#x-axis-control option')]
+
+    # Document metadata and metrics first, then one entry per topic.
+    assert options[:4] == ['Title', 'Year', 'Length', 'Uniform']
+    assert options[4:] == TOPIC_PICKER_NAMES
+
+
+def test_chord_diagram_draws_a_group_per_topic(app, wait):
+    view = nav_to(app, wait, 'Chord Diagram')
+    groups = wait.until(
+        lambda d: view.find_elements(By.CSS_SELECTOR, 'svg g.group'))
+
+    assert len(groups) == TOPIC_COUNT
+
+
+def test_chord_diagram_draws_chords_from_the_pairwise_metric(app, wait):
+    view = nav_to(app, wait, 'Chord Diagram')
+    wait.until(lambda d: view.find_elements(By.CSS_SELECTOR, 'svg path.chord'))
+
+    metrics = [option.text for option
+               in view.find_elements(By.CSS_SELECTOR, '#metric-options option')]
+    assert metrics == [PAIRWISE_METRIC]
+    # How many chords survive depends on the threshold slider's default, so
+    # assert only that the matrix produced some.
+    assert view.find_elements(By.CSS_SELECTOR, 'svg path.chord')
+
+
+def test_topics_over_time_offers_only_time_metadata(app, wait):
+    """The view filters metadata down to time-related names, so 'title' is out."""
+    view = nav_to(app, wait, 'Topics Over Time')
+    wait.until(lambda d: view.find_elements(By.CSS_SELECTOR,
+                                            '#metadata-control option'))
+
+    metadata = [option.text for option
+                in view.find_elements(By.CSS_SELECTOR, '#metadata-control option')]
+    assert metadata == ['Year']
+    topics = [option.text for option
+              in view.find_elements(By.CSS_SELECTOR, '#topics-control option')]
+    assert topics == TOPIC_PICKER_NAMES
+
+
+def test_topics_over_time_axis_covers_the_document_years(app, wait):
+    view = nav_to(app, wait, 'Topics Over Time')
+    wait.until(lambda d: view.find_elements(By.CSS_SELECTOR, '#x-axis text'))
+    ticks = {tick.text for tick
+             in view.find_elements(By.CSS_SELECTOR, '#x-axis text')}
+
+    assert {str(year) for year in DOCUMENT_YEARS} <= ticks
+
+
+def test_topics_over_time_draws_a_bar_per_year_for_a_topic(app, wait):
+    """No topic is selected initially; picking one plots it."""
+    view = nav_to(app, wait, 'Topics Over Time')
+    topics_control = wait.until(
+        lambda d: view.find_element(By.ID, 'topics-control'))
+    assert not view.find_elements(By.CSS_SELECTOR, '#plot rect.bar')
+
+    Select(topics_control).select_by_visible_text(TOPIC_PICKER_NAMES[0])
+
+    bars = wait.until(
+        lambda d: view.find_elements(By.CSS_SELECTOR, '#plot rect.bar'))
+    assert len(bars) == len(DOCUMENT_YEARS)
+
+
+def test_global_selectors_show_the_current_dataset_and_analysis(app):
+    # Each label and its value are separate elements, so the rendered text
+    # comes back newline-separated.
+    nav = ' '.join(app.find_element(By.ID, 'main-nav').text.split())
+
+    assert 'Dataset: %s' % DATASET_READABLE_NAME in nav
+    assert 'Analysis: %s' % ANALYSIS_READABLE_NAME in nav
+    assert 'Topic Names: %s' % NAME_SCHEME in nav
+
+
+def test_favouriting_a_topic_persists_to_local_storage(app, wait):
+    """The star in each table's first column is backed by localStorage."""
+    view = nav_to(app, wait, 'Topics')
+    wait.until(lambda d: len(table_rows(view, '#table-container tbody tr'))
+               == TOPIC_COUNT)
+    star_cell = view.find_elements(
+        By.CSS_SELECTOR, '#table-container tbody tr')[0] \
+        .find_elements(By.TAG_NAME, 'td')[0]
+    assert star_cell.find_elements(By.CSS_SELECTOR, '.glyphicon-star-empty')
+
+    star_cell.find_element(By.TAG_NAME, 'a').click()
+
+    wait.until(lambda d: star_cell.find_elements(By.CSS_SELECTOR,
+                                                 '.glyphicon-star'))
+    key = 'favs-dataset-%s-analysis-%s-topics' % (DATASET_NAME, ANALYSIS_NAME)
+    stored = app.execute_script('return window.localStorage[arguments[0]];', key)
+    assert json.loads(stored) == {'0': True}
