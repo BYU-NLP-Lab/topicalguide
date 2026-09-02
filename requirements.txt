@@ -1,6 +1,6 @@
 # Core dependencies
 Django==4.2.30  # Current LTS version - security updates (CVE-2026-33034, CVE-2026-3902, CVE-2026-33033, +2)
-nltk==3.10.0  # Security update (CVE-2026-12061 ReDoS in ReviewsCorpusReader)
+nltk==3.10.3  # Security update (CVE-2026-79675 JVM arg injection, CVE-2026-78680 Graphviz 'dot' search path, CVE-2026-12061 ReDoS)
 numpy>=2.0.0
 scipy>=1.15.0
 GitPython>=3.1.0
