@@ -82,3 +82,17 @@ def test_generic_dataset_non_recursive_skips_subdirectories():
     dataset = GenericDataset(root_dataset_dir(), is_recursive=False)
 
     assert sorted(doc.name for doc in dataset) == ['test1.txt', 'test2.txt']
+
+
+def test_generic_dataset_name_strips_punctuation(tmp_path):
+    """Punctuation is dropped from readable_name and spaces become underscores."""
+    (tmp_path / 'dataset_metadata.txt').write_text(
+        'readable_name: Test With Spaces: And Semicolon\ndescription: Testing\n')
+    documents = tmp_path / 'documents'
+    documents.mkdir()
+    (documents / 'test1.txt').write_text('meta1: value1-1\n\ncontent')
+
+    dataset = GenericDataset(str(tmp_path))
+
+    assert dataset.metadata['readable_name'] == 'Test With Spaces: And Semicolon'
+    assert dataset.name == 'test_with_spaces_and_semicolon'
