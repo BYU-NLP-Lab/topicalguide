@@ -22,3 +22,6 @@ datasets/
 venv/
 ENV/
 logs/
+
+# Screenshot captures from tests/selenium/capture_baseline.py
+/tests/selenium/screenshots/
