@@ -1,0 +1,29 @@
+version: 2
+
+updates:
+  # Python. This was already being scanned via requirements.txt; declaring it
+  # here turns on update pull requests as well as alerts.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  # Front-end libraries. These are VENDORED, not installed -- /package.json
+  # exists only so this ecosystem has a manifest to read. A pull request here
+  # edits one line of JSON and does NOT update the committed file under
+  # visualize/static/. Read visualize/static/VENDOR.md before merging one.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "vendored:"
+
+  # Workflow actions. CI currently warns that actions/checkout@v4 and
+  # actions/setup-python@v5 target the deprecated Node.js 20.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
