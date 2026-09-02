@@ -21,7 +21,7 @@ priorities change.
 
 | Item | Why now |
 | --- | --- |
-| **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
+| **1.6** 1.76M orphaned rows — diagnosed | Not a pipeline bug: one superseded import removed by hand. What remains is your call on whether to repair the file. |
 
 ### Tier 2 — hours of work, disproportionate payoff
 
@@ -328,17 +328,11 @@ inside an async callback in these views has the same shape**, because
 flight. 1.5 asks for an audit of wrong-argument bugs; this is the sibling
 audit, for unguarded lookups after an await.
 
-### 1.6 The dev database has 1.76 million foreign key violations **[verified]**
+### 1.6 The dev database's 1.76M orphans: diagnosed, repair not yet decided
 
-Found during the Django 5.2 upgrade and not caused by it. `working/tg.sqlite3`
-(gitignored, 1 GB, last modified December 2025) fails `PRAGMA
-foreign_key_check` with **1,762,639** violations. The sample is uniform: rows
-in `visualize_analysismetadatavalue` whose `analysis_id` points at a
-`visualize_analysis` row that does not exist — `analysis_id` 1, while the table
-holds six analyses.
-
-The visible symptom is that any command opening a SQLite schema editor against
-it fails:
+`working/tg.sqlite3` (gitignored, 1 GB, last modified December 2025) fails
+`PRAGMA foreign_key_check` with **1,762,639** violations. The visible symptom
+is that any command opening a SQLite schema editor against it fails:
 
 ```
 $ python manage.py sqlmigrate visualize 0002
@@ -349,17 +343,56 @@ with primary key '1' has an invalid foreign key ...
 Against a clean database the same command succeeds and prints `-- (no-op)`, so
 the migration is fine and the data is not.
 
-The question worth answering is whether a delete path in the import pipeline
-can orphan rows — `tg.py remove-metrics`, or re-importing and re-analysing a
-dataset. Django cascades in Python, so deletes issued as raw SQL or as bulk
-operations that bypass the ORM are the usual cause, and 1.7 million of them
-suggests something systematic rather than a one-off.
+**Grouped, the violations are not what the first sample suggested.** Every one
+of them points at one of exactly **two** missing parent rows — `dataset` 1 and
+`analysis` 1:
 
-Investigate read-only first: group the violations by table to see whether only
-`analysismetadatavalue` is affected, and check whether SQLite foreign keys were
-even enforced when the rows were written — Django enables them per connection,
-so data written by another tool may never have been checked. Do not repair the
-file without asking; it is working data with no backup in the repository.
+| Child table | Missing parent | Rows |
+| --- | --- | --- |
+| `visualize_wordtoken` | analysis 1 | 1,761,710 |
+| `visualize_documentanalysismetricvalue` | analysis 1 | 669 |
+| `visualize_document` | dataset 1 | 223 |
+| `visualize_topic` | analysis 1 | 20 |
+| `visualize_analysismetadatavalue` | analysis 1 | 6 |
+| `visualize_analysismetricvalue` | analysis 1 | 5 |
+| `visualize_datasetmetadatavalue` | dataset 1 | 4 |
+| `visualize_analysis` (row 2) | dataset 1 | 1 |
+| `visualize_datasetmetricvalue` | dataset 1 | 1 |
+
+The orphaned metadata says what was deleted: dataset 1 was `State of the Union`
+sourced from WikiSource covering 1790–2010 with 223 documents, and analysis 1
+was `LDA with 20 Topics`. Dataset 2 is the same corpus re-imported and extended
+to 238 documents with the American Presidency Project as a second source. So
+this is the residue of **one superseded first import**, removed by deleting two
+parent rows — not a pipeline that orphans rows on every run. `analysis` 2, also
+a child of dataset 1, was left behind by the same partial delete.
+
+**Neither suspected delete path can be the cause, because neither one runs.**
+
+- `Dataset.delete()` was overridden to remove children by hand and could never
+  complete: `self.analyses` is a `RelatedManager`, and Django deliberately does
+  not give managers a `delete()`, so it raised `AttributeError` before reaching
+  `super().delete()`. The last branch referenced an undefined name
+  (`datasetmetricvalues`) and would have raised `NameError` even if it got
+  there. It raised on every path, including for a dataset with no children at
+  all. Removed — all 37 FKs into the model already cascade, so the override was
+  redundant as well as broken. Covered by
+  `tests/visualize/test_models.py::test_deleting_a_dataset_leaves_no_orphans`.
+- `tg.py remove-metrics` raises `ModuleNotFoundError: No module named
+  'metric_scripts'` on its first statement. `import_system_utilities.py:529`
+  imports a package that does not exist, and the `metric_import` module it then
+  calls is never imported either. Dead command; see 4.1.
+
+That leaves a manual `DELETE` as the explanation — SQLite enforces foreign keys
+only when `PRAGMA foreign_keys=ON`, which is off by default and which Django
+sets per connection, so anything issued from the `sqlite3` shell or a GUI
+browser would have been accepted silently.
+
+**Still open: whether to repair the file.** The rows are recoverable in
+principle — re-creating `dataset` 1 and `analysis` 1 would reattach 1.76M
+tokens for a corpus that dataset 2 supersedes — but deleting them is the
+likelier intent. Do not repair without asking; it is working data with no
+backup in the repository, and a 1 GB file is worth copying before any write.
 
 ### 1.7 `MetadataValue.type()` has no callers
 

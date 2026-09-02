@@ -194,18 +194,6 @@ class Dataset(models.Model):
         except:
             return 'No description available.'
     
-    def delete(self, *args, **kwargs):
-        """Remove everything pertaining to this dataset."""
-        if self.analyses.exists():
-            self.analyses.delete()
-        if self.documents.exists():
-            self.documents.delete()
-        if self.metadata_values.exists():
-            self.metadata_values.delete()
-        if datasetmetricvalues.exists():
-            datasetmetricvalues.delete()
-        super(Dataset, self).delete(*args, **kwargs)
-
 class DatasetMetadataValue(MetadataValue):
     dataset = models.ForeignKey('Dataset', on_delete=models.CASCADE, related_name='metadata_values')
 

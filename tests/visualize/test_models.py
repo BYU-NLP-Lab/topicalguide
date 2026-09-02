@@ -11,8 +11,9 @@ import pytest
 
 from tests.conftest import set_metadata
 
-from visualize.models import (Dataset, DatasetMetadataValue, Document,
-                              DocumentMetadataValue)
+from visualize.models import (Analysis, Dataset, DatasetMetadataValue,
+                              Document, DocumentMetadataValue, Topic,
+                              WordToken)
 
 
 # (datatype, stored value, what value() should return). Each row is a falsy
@@ -117,3 +118,27 @@ def test_document_metadata_round_trips_a_zero_year(db):
 
     assert metadata.value() == 0
     assert metadata.type() == 'int'
+
+
+def test_deleting_a_dataset_leaves_no_orphans(sample_dataset):
+    """Deleting a dataset must take its whole subtree with it.
+
+    `Dataset.delete()` used to be overridden to remove the children by hand,
+    and the override could never run: `self.analyses` is a RelatedManager, and
+    Django deliberately does not give managers a `delete()`. Every FK into the
+    dataset already cascades, so the override was redundant as well as broken.
+    """
+    dataset = sample_dataset
+
+    assert dataset.analyses.exists()
+    assert dataset.documents.exists()
+    assert WordToken.objects.filter(document__dataset=dataset).exists()
+
+    dataset.delete()
+
+    assert not Dataset.objects.filter(pk=dataset.pk).exists()
+    assert not Analysis.objects.filter(dataset_id=dataset.pk).exists()
+    assert not Document.objects.filter(dataset_id=dataset.pk).exists()
+    assert not DatasetMetadataValue.objects.filter(dataset_id=dataset.pk).exists()
+    assert not WordToken.objects.exists()
+    assert not Topic.objects.exists()
