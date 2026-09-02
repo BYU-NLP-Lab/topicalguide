@@ -247,7 +247,14 @@ var ChordView = DefaultView.extend({
             .padding(0.5/topicCount) // Set angular padding between groups in radians.
             .sortSubgroups(d3.descending)
             .matrix(linkMatrix);
-        var controlBoxDimensions = $("#chord-controls").get(0).getBoundingClientRect(); // Use the controls element to set height of the svg element.
+        // Use the controls element to set height of the svg element. This runs
+        // in an async callback, so the element can be absent -- the view is
+        // disposed if the user navigates away before the data arrives, and
+        // reading .getBoundingClientRect() off undefined then throws and takes
+        // the render down with it.
+        var controlBox = $("#chord-controls").get(0);
+        if(!controlBox) return;
+        var controlBoxDimensions = controlBox.getBoundingClientRect();
         var svg = container.append("svg")
             .attr("width", "100%")
             .attr("height", controlBoxDimensions.height*2)

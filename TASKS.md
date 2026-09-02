@@ -42,7 +42,7 @@ priorities change.
 | --- | --- |
 | **4.1** no test for the import pipeline | 571 statements at **0%**, plus all 16 metrics that run on every import. The largest gap, and now cheap to close. |
 | **0.4** five recoverable topic metrics | Cheapest route to showing a user which topics are worth reading. |
-| **1.3, 1.4, 1.5** error handling | 26 bare excepts, plus failures that render as content. Hides the next bug. |
+| **1.3, 1.4, 1.5, 1.5b** error handling | 26 bare excepts, failures that render as content, and unguarded DOM lookups in async callbacks. Hides the next bug. |
 | **1.2, 4.3** `/api` error contract | Failure reported two incompatible ways, neither with a usable status code. |
 | **3.1, 3.2** N+1 queries and dead cache | One request can issue hundreds of queries; the cache never engages and never invalidates. |
 | **2.1** front-end upgrades — **done** except D3 | Bootstrap 5, jQuery 3, jQuery UI 1.13, Underscore. D3 stays at v3 deliberately: no advisory, and v4+ rewrites all six visualizations. |
@@ -337,6 +337,28 @@ That shape — a flag accepted, threaded through several layers, and never
 asserted against — is worth grepping for deliberately. Every boolean parameter
 in `import_tool/` that no test exercises in its non-default state is a
 candidate.
+
+### 1.5b The chord view measured an element that may not exist **[verified]**
+
+Found by the console guard, on CI rather than locally, which is the whole point
+of that test:
+
+```
+chord_view.js 249  Uncaught TypeError:
+    Cannot read properties of undefined (reading 'getBoundingClientRect')
+```
+
+`$("#chord-controls").get(0).getBoundingClientRect()` runs inside the callback
+that receives the pairwise metric data. If the element is not in the DOM at that
+moment — the view is disposed when the user navigates away before the data
+arrives — `.get(0)` is `undefined` and the throw takes the whole render with it.
+
+Fixed by checking before measuring, so a disposed view aborts cleanly instead
+of throwing. Worth noting as a pattern rather than a one-off: **any DOM lookup
+inside an async callback in these views has the same shape**, because
+`changeView` disposes the current view while its requests may still be in
+flight. 1.5 asks for an audit of wrong-argument bugs; this is the sibling
+audit, for unguarded lookups after an await.
 
 ### 1.6 The dev database has 1.76 million foreign key violations **[verified]**
 
