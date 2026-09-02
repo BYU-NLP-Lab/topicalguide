@@ -365,6 +365,156 @@ client-side caching would save the next person the reconstruction.
 
 ---
 
+## 6. Discovery with modern ML
+
+Everything above is a fix or an unlock of something already built. This section
+is about capabilities the code does not have at all.
+
+The framing question is what a researcher wants from a document collection:
+*what is in here, what is unusual, and where is the evidence?* A topic model
+answers the first. The app currently has no answer to the second or third, and
+the ingredients for both are already in `requirements.txt` —
+`sentence-transformers`, `umap-learn`, `hdbscan`, and an LLM client.
+
+**What exists today, precisely.** `extract_embeddings.py` pulls
+`topic_embeddings_` out of a pickled BERTopic model — *topic*-level vectors,
+only for BERTopic analyses, stored on disk outside the database.
+`llm_namer.py` calls an LLM to turn a topic's top words and a few sample
+documents into a short name. That is the entire extent of embedding and LLM
+use. There are **no document or passage embeddings, no vector index, and no
+retrieval of any kind.**
+
+That single absence is what limits most of what follows.
+
+### 6.1 Semantic search over documents and passages
+
+The only text-based entry point in the app is the topics view's exact-word
+filter. A user who does not already know a corpus's vocabulary — its era's
+idiom, its euphemisms, its spelling — cannot find anything.
+
+Embedding documents (and the subdocuments the importer already produces) with
+`sentence-transformers`, then searching by vector similarity, changes the entry
+point from "which word appears" to "what is this about". At this corpus size a
+NumPy matrix and a dot product suffice; no vector database is needed until the
+collection is orders of magnitude larger.
+
+Worth doing as **hybrid** retrieval — dense vectors plus BM25 — because
+historical corpora are exactly where exact terms still matter: a user searching
+for a specific phrase should not have it smoothed away by a nearest-neighbour
+search.
+
+This is the foundation for 6.2, 6.3 and 6.5, and the highest-value item in this
+section.
+
+### 6.2 Grounded question answering over the collection
+
+With passage retrieval in place, the natural interface is a question:
+"how did presidents talk about immigration between the wars?" Retrieve the
+relevant passages, have an LLM answer *from those passages only*, and cite each
+claim back to a document and offset.
+
+The citation substrate already exists — `Document.get_key_word_in_context()`
+returns character offsets, and the single-document view already highlights
+spans — so answers can link into the exact passage rather than gesturing at a
+document. That matters: an ungrounded summary is a liability in research, and a
+cited one is evidence.
+
+Keep the retrieved passages visible beside the answer, so the user can audit
+what the model was given rather than trusting the prose.
+
+### 6.3 A semantic map of the collection
+
+The 2D-plots view positions documents on axes the user chooses — a metadata
+field or a topic proportion. That answers a question you already have. It
+cannot show you the shape of the collection.
+
+Projecting document embeddings with UMAP (already a dependency, already used by
+BERTopic internally) gives a map where proximity means similarity, clusters are
+discovered rather than specified, and outliers are visible. Colour it by
+metadata — president, era, party — and the comparative questions from 0.3
+become visual. Cluster with HDBSCAN (also already a dependency) and you have a
+second, embedding-native view of structure to set against the topic model's.
+
+### 6.4 Topic summaries and representative passages, not just names
+
+`llm_namer.py` produces a short label. The same retrieved context could produce
+much more: a paragraph describing what the topic covers and how it is used, the
+passages most representative of it, the passages most *atypical* of it, and a
+note on how it shifts across the time axis.
+
+A label tells you a topic exists. A summary with evidence tells you whether it
+is worth your afternoon.
+
+### 6.5 Contrastive analysis: what distinguishes these documents from those?
+
+This is the question a comparative corpus invites and the app cannot answer at
+all. Given two subsets — two presidents, two eras, two parties — report the
+language that distinguishes them.
+
+The established statistical method is log-odds with an informative Dirichlet
+prior (Monroe, Colaresi and Quinn), which is well-behaved on the small,
+unbalanced subsets this corpus produces and does not require any ML
+infrastructure. Layering an LLM summary of the distinguishing terms on top
+turns a word list into a readable characterisation.
+
+Pairs naturally with 0.3's faceting: once a user can select a subset, the
+obvious next affordance is comparing it to its complement.
+
+### 6.6 Semantic drift: how a topic's meaning changes, not just its share
+
+Topics Over Time plots how much a topic is discussed. It cannot show that the
+*content* of a topic changed — that "defense" in 1850 and "defense" in 1985 are
+different subjects wearing the same label. The README already names this as an
+ambition, mentioning dynamic topic models and time slices.
+
+Embedding a topic's contexts per era and tracking the trajectory would surface
+the corpus's most interesting finding class: continuity of vocabulary masking
+discontinuity of meaning. That is a genuine research contribution, not a
+convenience feature, and this corpus's 235-year span is unusually well suited
+to it.
+
+### 6.7 Rank what is interesting, rather than waiting to be asked
+
+Every view in the app is a query interface: the user must know what to look
+for. Nothing volunteers a finding.
+
+Cheap, high-value additions in rough order of effort: rank topics by how much
+their share changed over time (this alone fixes 0.2's blank default); flag
+years or documents that introduced unusual language, via novelty against a
+trailing window; detect bursts. A short "what stands out in this collection"
+panel on the dataset page would change the app's posture from a browser into a
+discovery tool — which is what the name promises.
+
+### 6.8 Measure whether the models are any good
+
+0.5 asks for analyses to be comparable in the interface; this asks for them to
+be comparable *numerically*. Without that, choosing between 20 topics, 100
+topics and BERTopic is guesswork.
+
+Standard automated coherence (NPMI over a reference corpus) is the baseline.
+An LLM-judged word-intrusion test — the human evaluation from Chang et al.,
+automated — is a good modern complement, and cheap at this scale. Report both
+per analysis, so model selection becomes evidence-based and so the effect of
+future pipeline changes is measurable rather than felt.
+
+### Notes on doing this well
+
+- **Store embeddings in the database, versioned by model.** Today's topic
+  vectors live in a pickle beside the analysis; embeddings that several
+  features depend on need to be first-class rows, tagged with the model and
+  revision that produced them, or results become irreproducible the first time
+  a model is upgraded.
+- **Keep the LLM out of the trusted path.** Use it to summarise, label and
+  explain retrieved evidence — never as the source of a fact the user cannot
+  check. Every generated statement should link to the passage behind it.
+- **Pin and record model versions.** `llm_namer.py` hard-codes its model as a
+  default argument. Generated names, summaries and evaluations should record
+  which model produced them, or a corpus ends up with topic names from three
+  different eras and no way to tell them apart.
+- **Treat embedding cost as an import-time step.** Embedding a collection
+  belongs in the `tg.py` pipeline next to tokenising and modelling, not in a
+  request handler.
+
 ## Where to start
 
 If only a few of these get done:
@@ -378,6 +528,12 @@ If only a few of these get done:
 4. **2.3** — CI, before the Django upgrade rather than after.
 5. **1.1** — the falsy-metadata bug. Small fix, and it silently corrupts any
    zero or `False` in the data.
+
+And if there is appetite for one larger build: **6.1**, document and passage
+embeddings with hybrid search. It is the missing foundation under semantic
+search, grounded question answering, the semantic map and contrastive analysis
+— four of the six discovery features in section 6 are blocked on it, and the
+libraries are already installed.
 
 ## Relationship to the session task list
 
