@@ -31,7 +31,7 @@ priorities change.
 | --- | --- |
 | **0.9** empty state names a file that does not exist | One line. It is the first thing a new user reads. |
 | **0.1** two finished visualizations switched off | The code is written. Uncomment, run the browser tests, find out. |
-| **0.2** Topics Over Time opens blank | The signature view of a 235-year corpus draws nothing until you know to click. |
+| **0.2** Topics Over Time draws `NaN` bars | The signature view of a 235-year corpus renders nothing visible even after you select a topic, and starts blank besides. |
 | **5.1, 5.2** README onboarding | The documented install path cannot work on a fresh clone. |
 | **2.2** `DEBUG` leaks every SQL query into API responses | Small change, removes an information-disclosure footgun. |
 
@@ -96,11 +96,40 @@ more ways of seeing the model come back. Start by re-enabling them behind the
 new browser tests — `tests/selenium/test_spa.py` will say immediately whether
 they render.
 
-### 0.2 Topics Over Time shows nothing until you know to ask **[verified]**
+### 0.2 Topics Over Time is blank by default, and broken once you use it **[verified]**
 
-The view loads with **no topic selected** and an empty plot; you must know to
-multi-select from the topics list before anything is drawn. The test
-`test_topics_over_time_draws_a_bar_per_year_for_a_topic` documents exactly this.
+Two separate problems, the second worse than the first.
+
+**It draws bars with no geometry.** Selecting a topic appends the right number
+of `rect.bar` elements with valid `x` and `width`, but **`y="NaN"` and
+`height="NaN"`**, so nothing is visible. One selection produced 546 severe
+browser console errors (`<rect> attribute height: Expected length, "NaN"`).
+
+```
+bars: 3
+  x=0    y=NaN  w=171  h=NaN
+  x=190  y=NaN  w=171  h=NaN
+  x=380  y=NaN  w=171  h=NaN
+```
+
+The bars are positioned from `yScale(yInfo.min)` at
+`topics_over_time_view.js:844`; `yInfo.min` appears not to be set in that state,
+so the initial `y` and the transitioned `height` are both NaN. That last step is
+a hypothesis — the symptom above is measured.
+
+Caveat worth checking first: the test fixture gives every topic identical token
+counts in every document, so the y domain is degenerate. Confirm against a real
+corpus before concluding the view is broken for actual data.
+
+`test_topics_over_time_bars_have_real_geometry` records this as a strict xfail,
+so fixing the view turns the test green and fails the run until the marker is
+removed. Its sibling `test_topics_over_time_draws_a_bar_per_year_for_a_topic`
+passes throughout, because it counts elements rather than measuring them —
+which is precisely how this stayed invisible.
+
+**It also starts empty.** The view loads with no topic selected and an empty
+plot; you must know to multi-select from the topics list before anything is
+drawn at all.
 
 This is the app's most distinctive view — a 235-year corpus of State of the
 Union addresses is *about* change over time — and its default state shows a

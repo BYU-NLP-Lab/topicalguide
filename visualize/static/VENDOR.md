@@ -34,7 +34,7 @@ inferred from filenames.
 | D3 | 3.4.11 | 2014 | `scripts/libs/d3.v3.min.js` | yes |
 | d3-tip | 0.6.3 | 2013 | `scripts/libs/d3.tip.v0.6.3.js` | **no** — npm's `d3-tip` starts at 0.6.7 |
 | d3.layout.cloud | unknown | — | `scripts/libs/d3.layout.cloud.js` | **no** — the file carries no version banner |
-| Bootstrap | 3.2.0 | 2014 | `bootstrap/` | yes |
+| Bootstrap | 3.4.1 | 2019 | `bootstrap/` | yes |
 | Bootstrap Toggle | 2.1.0 | — | `bootstrap-toggle/` | **no** — npm has 1.1.0, then 2.0.0 and 2.2.x |
 
 Four entries cannot be expressed in `package.json` because the exact vendored
@@ -50,6 +50,29 @@ jQuery below 3.5.0 carries CVE-2020-11022 and CVE-2020-11023: passing
 attacker-influenced markup to `html()`, `append()` and similar can execute
 script. The Backbone views build markup from `/api` data throughout, so this is
 not a theoretical concern for this codebase.
+
+Bootstrap was upgraded 3.2.0 → 3.4.1, clearing six XSS advisories
+(CVE-2016-10735, CVE-2018-14040, CVE-2018-14042, CVE-2018-20676,
+CVE-2018-20677, CVE-2019-8331). One remains with no fix in the 3.x line —
+CVE-2024-6485 — which would require Bootstrap 4 or 5 and a redesign.
+
+## Upgrading one of these
+
+The procedure that keeps the manifest and the shipped file in step:
+
+1. Download the official dist and confirm its version banner really is what you
+   asked for.
+2. Replace the files under `visualize/static/`.
+3. Update the `<script>`/`<link>` tags in `visualize/templates/root.html` if the
+   filename carries a version.
+4. Update the table above.
+5. Run `pytest tests/selenium`. Two tests exist specifically for this:
+   `test_no_severe_console_errors` visits every view and fails on any severe
+   browser console message, and `test_bootstrap_javascript_is_functional`
+   drives a Bootstrap plugin through its own API. A broken library often still
+   renders an approximately correct page, so the rendered-output assertions
+   alone are not sufficient evidence.
+6. Bump the version in `/package.json` in the **same commit**.
 
 Upgrading is a real project, not a version bump — jQuery 1.x → 3.x removes
 `.load()`, `.size()` and `.andSelf()` and changes deferred semantics, and D3 v3

@@ -9,7 +9,9 @@ import json
 
 import pytest
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import Select, WebDriverWait
+
+from tests.selenium.conftest import WAIT_SECONDS
 
 from tests.conftest import (ANALYSIS_NAME, ANALYSIS_READABLE_NAME,
                             DATASET_NAME, DATASET_READABLE_NAME,
@@ -281,6 +283,28 @@ def test_topics_over_time_draws_a_bar_per_year_for_a_topic(app, wait):
     assert len(bars) == len(DOCUMENT_YEARS)
 
 
+@pytest.mark.xfail(reason='known bug: bars are drawn with y=NaN and height=NaN '
+                          '- see TASKS.md 0.2', strict=True)
+def test_topics_over_time_bars_have_real_geometry(app, wait):
+    """The bars exist but have no vertical geometry, so nothing is visible.
+
+    Counting elements is not enough here: the sibling test above passes while
+    the chart draws nothing, which is exactly how this went unnoticed. Marked
+    xfail(strict) so that fixing the view turns this green and fails the run
+    until the marker is removed.
+    """
+    view = nav_to(app, wait, 'Topics Over Time')
+    topics_control = wait.until(
+        lambda d: view.find_element(By.ID, 'topics-control'))
+    Select(topics_control).select_by_visible_text(TOPIC_PICKER_NAMES[0])
+    bars = wait.until(
+        lambda d: view.find_elements(By.CSS_SELECTOR, '#plot rect.bar'))
+
+    for bar in bars:
+        assert bar.get_attribute('y') != 'NaN'
+        assert bar.get_attribute('height') != 'NaN'
+
+
 def test_global_selectors_show_the_current_dataset_and_analysis(app):
     # Each label and its value are separate elements, so the rendered text
     # comes back newline-separated.
@@ -308,3 +332,44 @@ def test_favouriting_a_topic_persists_to_local_storage(app, wait):
     key = 'favs-dataset-%s-analysis-%s-topics' % (DATASET_NAME, ANALYSIS_NAME)
     stored = app.execute_script('return window.localStorage[arguments[0]];', key)
     assert json.loads(stored) == {'0': True}
+
+
+def test_no_severe_console_errors(app, wait):
+    """Visit every view and assert the browser logged nothing severe.
+
+    The assertions elsewhere check rendered output, which a broken vendored
+    library can survive -- a missing plugin or a removed jQuery method shows up
+    as a console error while the page still looks approximately right. This is
+    the guard for upgrading the libraries in visualize/static/ (VENDOR.md).
+    """
+    # The log is cumulative over the session-scoped driver, so drain whatever
+    # earlier tests produced before doing anything this test is responsible for.
+    app.get_log('browser')
+
+    for label in NAV_VIEWS:
+        nav_to(app, wait, label)
+
+    severe = [entry for entry in app.get_log('browser')
+              if entry['level'] == 'SEVERE']
+    assert not severe, 'console errors: %s' % [e['message'][:200]
+                                               for e in severe]
+
+
+def test_bootstrap_javascript_is_functional(app):
+    """Bootstrap's modal plugin, driven through its own API.
+
+    Bootstrap ships as a jQuery plugin, so a version mismatch between the two
+    shows up as a missing function rather than a visual change.
+    """
+    assert app.execute_script('return typeof jQuery.fn.modal;') == 'function'
+    assert app.execute_script('return typeof jQuery.fn.tooltip;') == 'function'
+
+    app.execute_script("jQuery('#main-nav-help-modal').modal('show');")
+    assert WebDriverWait(app, WAIT_SECONDS).until(
+        lambda d: d.execute_script(
+            "return jQuery('#main-nav-help-modal').hasClass('in');"))
+
+    app.execute_script("jQuery('#main-nav-help-modal').modal('hide');")
+    assert WebDriverWait(app, WAIT_SECONDS).until(
+        lambda d: not d.execute_script(
+            "return jQuery('#main-nav-help-modal').hasClass('in');"))
