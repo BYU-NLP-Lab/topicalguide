@@ -21,7 +21,7 @@ priorities change.
 
 | Item | Why now |
 | --- | --- |
-| **2.4** 15 front-end CVEs | One critical and two high, live in production code. Bootstrap 3.2.0 → 3.4.1 alone clears six and is likely a file swap. |
+| **2.4** 15 front-end CVEs | 1 critical, 2 high, 12 medium. The lodash critical was checked and is **not reachable** in current code, so this is urgent-ish rather than an emergency. Start with Bootstrap 3.2.0 → 3.4.1: clears six, patch-level within 3.x. |
 | **1.1** falsy metadata | Any `0`, `False` or `""` silently reads back as absent. Corrupts data in every view, and the fix is a few lines. |
 | **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
 
@@ -441,6 +441,37 @@ threat model is "someone imports a corpus containing hostile text", not "any
 visitor can attack the page". That is a narrower risk than the raw counts
 suggest — and not zero, since importing third-party corpora is exactly what
 this tool is for.
+
+**Reachability of the lodash advisories — checked, and they do not appear to be
+reachable.** The critical and both highs are lodash, so the vulnerable entry
+points were grepped across `visualize/static/scripts/` excluding `libs/`:
+
+| Function | Advisory | Call sites in app code |
+| --- | --- | --- |
+| `_.defaultsDeep` | CVE-2019-10744 (**critical**) | **0** |
+| `_.merge`, `_.mergeWith` | CVE-2018-16487 (high) | **0** |
+| `_.set`, `_.setWith`, `_.zipObjectDeep` | CVE-2018-3721, CVE-2026-2950 | **0** |
+| `_.template` | CVE-2021-23337 (high) | 3 — **all pass string literals** |
+
+The three `_.template` calls (`router.js:227`, `router.js:235`,
+`datasets_view.js:5`) compile hard-coded markup at module load. CVE-2021-23337
+requires attacker-controlled *template source*, not attacker-controlled data
+interpolated into a fixed template, so it is not reachable either.
+
+The app's actual lodash usage is `_.extend`, `_.size`, `_.reduce`, `_.map`,
+`_.keys` and `_.uniq` — none of them implicated.
+
+So **the critical alert is real but not currently exploitable here.** Two
+caveats keep it worth fixing rather than dismissing: this checked application
+code only, not what Backbone 1.1.2 calls internally; and the analysis is true
+of the code as it stands today — the moment someone writes `_.merge`, it
+becomes exploitable with no warning. Treat it as reduced urgency, not as
+resolved.
+
+**This changes the order.** Since the critical is unreachable, the best first
+move is the cheapest one with the largest alert reduction: Bootstrap
+3.2.0 → 3.4.1, which clears six advisories and is a patch-level move within
+3.x. lodash and jQuery follow on their own merits.
 
 **Effort is very unevenly distributed, so do the cheap ones first:**
 
