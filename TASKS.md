@@ -47,7 +47,8 @@ priorities change.
 | **2.1** the front-end upgrade itself | jQuery 1→3 and D3 v3→v4+. Real project; 2.4 lists the cheap parts to take first. |
 | **5.3, 5.4** architecture note and README rewrite | Half the README no longer describes this project. |
 | **5.5** nothing to look at on a fresh clone | Decide demo database vs `make demo` before reaching for Git LFS. |
-| **2.3, 4.2** CI follow-ups | Split ML deps, bump the Node-20 actions, add coverage measurement. |
+| **2.3, 4.2** CI follow-ups | Split ML deps, add coverage measurement. |
+| **2.5** Python 3.11 → 3.13 | Independent of Django, and removes half the work from the 6.2 LTS jump in April 2027. |
 
 ### Tier 4 — the research programme
 
@@ -63,6 +64,13 @@ projection. **7.1** (embedding token occurrences rather than word types, for
 word senses) is the most distinctive, because the schema already records every
 occurrence with its context offset and its own topic assignment, which is
 exactly what type-level topic browsers throw away.
+
+### Decided, not to be re-litigated
+
+**2.5** — stay on Django **5.2 LTS** and go straight to **6.2 LTS** in April
+2027. Django 6.1's support ends four months *earlier* than 5.2's, so upgrading
+to it would shorten the security horizon, and 6.x additionally requires Python
+3.12+. Revisit early only if an advisory has no 5.2 fix.
 
 ### Done this session
 
@@ -450,6 +458,44 @@ this tool is for.
 
 The browser suite is the safety net for all of these: change one library, run
 `pytest tests/selenium`, see what broke.
+
+### 2.5 Django: stay on 5.2 LTS and wait for 6.2 **[decided]**
+
+Dependabot proposed Django 6.1 within an hour of the 5.2 upgrade landing. It
+was declined deliberately, and this records why so the same PR is not merged
+reflexively next time.
+
+| Release | Support ends |
+| --- | --- |
+| **5.2 LTS** — what this project runs | **April 2028** |
+| 6.0 | April 2027 |
+| 6.1 | **December 2027** |
+| **6.2 LTS** — ships April 2027 | **April 2030** |
+
+**Moving to 6.1 would shorten the security horizon by four months rather than
+extend it.** That inverts the usual reason to upgrade, and it is the whole
+argument. This repository went roughly four years between Django upgrades; a
+release with a 15-month window does not suit that cadence, whereas an LTS does.
+
+There is a second cost. **Django 6.x requires Python ≥ 3.12**, while CI and the
+development environment both run 3.11 — so 6.1 is two upgrades, not one.
+
+**The plan: go 5.2 → 6.2 directly in April 2027.** One hop, LTS to LTS,
+supported to 2030, skipping 6.0 and 6.1 entirely.
+
+**Revisit early only on this signal:** a security advisory against Django with
+no fix available in the 5.2 series. That is exactly what forced 4.2 → 5.2 — all
+six of 4.2's final advisories listed first-patched versions in 5.2.x — and it
+is worth watching for rather than upgrading on cadence.
+
+**Worth doing now, independently:** upgrade Python 3.11 → 3.13. It is
+unrelated to Django, removes half the change from the eventual 6.2 jump, and
+can be validated by CI today. The ceiling is 3.13 because BERTopic's
+classifiers stop there — *not* numba, whose `requirements.txt` note is stale;
+numba supports 3.14 now. Fix that comment while you are there.
+
+The suite emits no Django deprecation warnings on either 4.2 or 5.2, so
+nothing in the code obstructs whichever path is taken.
 
 ---
 
