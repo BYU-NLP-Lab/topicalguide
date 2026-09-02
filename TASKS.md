@@ -491,9 +491,30 @@ the 3.4.1 upgrade both neutralised the injection **and** silently broke the
 favourites links, which looked correct and did nothing. Neither effect was
 visible without opening the popover and reading the DOM.
 
-For the two that remain, the useful next step is narrowing what reaches
-`.popover()` and any `data-*` the views generate, so that a Bootstrap 4/5
-migration can be scheduled on its merits rather than forced by these.
+**Groundwork for a Bootstrap 5 migration is done; the switch itself is not.**
+Rather than migrate under time pressure to clear two mediums, the safe half was
+taken first:
+
+- `capture_baseline.py` screenshots every view, so a future migration can be
+  checked for visual drift rather than only for "not broken".
+- `styles/glyphicons.css` extracts the icon font Bootstrap 4 dropped, taking
+  all 35 icon uses out of the migration surface.
+- The markup is **dual-classed**: every Bootstrap 5 class name that does not
+  exist in Bootstrap 3 now sits beside its Bootstrap 3 counterpart, and
+  `data-bs-*` twins sit beside the `data-*` attributes. 73 class changes and 13
+  attributes, verified to produce byte-identical screenshots on the five views
+  that render deterministically.
+
+What the migration still has to do: the navbar markup (19 occurrences),
+`panel` → `card` structure (13), `label-*` → `badge bg-*` (7, which cannot be
+dual-classed because Bootstrap 3 defines `.badge` and `.bg-*` differently),
+nav-tabs/pills (4), `caret` (3), `input-group-btn` (2), replacing
+bootstrap-toggle — a Bootstrap 3-only plugin — and porting the modal and
+popover call sites to Bootstrap 5's JS API, since 5 drops jQuery.
+
+Given the remaining two advisories are both medium and the reachable injection
+path has already been fixed, that migration is better scheduled on its own
+merits than forced by these alerts.
 
 What was done, and what each move cost:
 
