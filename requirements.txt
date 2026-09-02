@@ -31,4 +31,4 @@ openai>=1.0.0
 bertopic>=0.16.0
 sentence-transformers>=2.2.0
 umap-learn>=0.5.12
-hdbscan>=0.8.33
+hdbscan>=0.8.44
