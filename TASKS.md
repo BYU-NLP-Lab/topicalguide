@@ -409,9 +409,28 @@ in 5.1 cannot rot unnoticed again.
 torch and the rest of the ML stack on every cache miss, though nothing the
 tests touch needs it. Installing everything is deliberate — it also verifies
 the README's install instructions — but if CI proves slow, split the file
-rather than trimming the CI install. See 5.5. Separately, GitHub now warns that
-`actions/checkout@v4` and `actions/setup-python@v5` target the deprecated
-Node.js 20 and are being forced onto Node 24; bump both when convenient.
+rather than trimming the CI install. See 5.5.
+
+The Node 20 deprecation warning is resolved: `actions/checkout` and
+`actions/setup-python` are now on v7, merged from Dependabot with CI green on
+both.
+
+**Default branch renamed `master` → `main`.** The workflow lists
+`branches: [main, master]` during the transition, because the push trigger is
+the only branch-filtered part and renaming first would have stopped CI firing
+on every push while still showing green from the last old run. GitHub redirects
+`master` to `main` for fetches and clones, so existing checkouts keep working,
+but the repository has 13 forks whose owners should re-point at their
+convenience:
+
+```
+git branch -m master main
+git fetch origin --prune
+git branch -u origin/main main
+git remote set-head origin -a
+```
+
+Drop `master` from the workflow trigger once that has settled.
 
 ### 2.4 The front-end manifest immediately exposed 15 alerts **[verified]**
 
