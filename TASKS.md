@@ -21,7 +21,7 @@ priorities change.
 
 | Item | Why now |
 | --- | --- |
-| **2.4** 5 front-end CVEs remaining | Down from 15: Bootstrap 3.4.1 cleared six, replacing lodash with Underscore cleared five including the critical. Left are 3 jQuery (needs jQuery UI moved too) and 2 Bootstrap with **no fix in 3.x** — one of which, CVE-2025-1647, is reachable via `.popover()`. |
+| **2.4** 2 front-end CVEs remaining | Down from 15. Both are Bootstrap with **no fix in the 3.x line**, so clearing them means Bootstrap 4/5 — a redesign. One, CVE-2025-1647, is reachable via `.popover()`. Audit what reaches it before planning that. |
 | **1.1** falsy metadata | Any `0`, `False` or `""` silently reads back as absent. Corrupts data in every view, and the fix is a few lines. |
 | **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
 
@@ -44,7 +44,7 @@ priorities change.
 | **1.3, 1.4, 1.5** error handling | 26 bare excepts, plus failures that render as content. Hides the next bug. |
 | **1.2, 4.3** `/api` error contract | Failure reported two incompatible ways, neither with a usable status code. |
 | **3.1, 3.2** N+1 queries and dead cache | One request can issue hundreds of queries; the cache never engages and never invalidates. |
-| **2.1** the front-end upgrade itself | jQuery 1→3 and D3 v3→v4+. Real project; 2.4 lists the cheap parts to take first. |
+| **2.1** front-end upgrades — **done** except D3 | Bootstrap, jQuery, jQuery UI and lodash→Underscore all moved. D3 stays at v3 deliberately: no advisory, and v4+ rewrites all six visualizations. |
 | **5.3, 5.4** architecture note and README rewrite | Half the README no longer describes this project. |
 | **5.5** nothing to look at on a fresh clone | Decide demo database vs `make demo` before reaching for Git LFS. |
 | **2.3, 4.2** CI follow-ups | Split ML deps, add coverage measurement. |
@@ -457,12 +457,36 @@ git remote set-head origin -a
 
 Drop `master` from the workflow trigger once that has settled.
 
-### 2.4 The front-end manifest immediately exposed 15 alerts **[verified]**
+### 2.4 The manifest exposed 15 alerts; 13 are now cleared **[verified]**
 
 Adding `/package.json` made Dependabot raise **15 alerts on libraries it had
 never been able to scan** — one critical, two high, twelve medium. Before the
 manifest existed the repository reported zero open alerts, which is the measure
 of how much 2.1 was hiding.
+
+**Thirteen have since been cleared.** Two remain, both Bootstrap, both with no
+fix available in the 3.x line:
+
+| Severity | CVE | Reachable? | Note |
+| --- | --- | --- | --- |
+| medium | CVE-2024-6485 | not checked | XSS via `data-*` attributes |
+| medium | CVE-2025-1647 | **yes** | XSS in popover/tooltip; `router.js` calls `.popover()` in four places. Only became visible after moving to 3.4.1. |
+
+Clearing either means Bootstrap 4 or 5 — a redesign, not an upgrade. The
+sensible interim step is to audit what reaches `.popover()`: it is driven by
+the favourites UI rather than by corpus text, which if confirmed would put it
+out of reach of a hostile document.
+
+What was done, and what each move cost:
+
+| Change | Cleared | Cost |
+| --- | --- | --- |
+| Bootstrap 3.2.0 → 3.4.1 | 6 | drop-in dist swap, no code change |
+| lodash 2.4.1 → **Underscore 1.13.8** | 5, incl. the critical | one call site: `_.forOwn` → `_.each` |
+| jQuery 1.11.1 → 3.7.1, jQuery UI 1.11.0 → 1.13.3 | 3 | no application code change |
+
+The original table and the reachability analysis are kept below, because the
+reasoning is what makes the remaining decisions tractable.
 
 | Severity | Package | CVE | Fixed in | Issue |
 | --- | --- | --- | --- | --- |
