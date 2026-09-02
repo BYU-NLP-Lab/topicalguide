@@ -21,7 +21,7 @@ priorities change.
 
 | Item | Why now |
 | --- | --- |
-| **2.4** 2 front-end CVEs remaining | Down from 15. Both are Bootstrap with **no fix in the 3.x line**, so clearing them means Bootstrap 4/5 — a redesign. One, CVE-2025-1647, is reachable via `.popover()`. Audit what reaches it before planning that. |
+| **2.4** front-end CVEs — **all 15 cleared** | Bootstrap 5.3.8, jQuery 3.7.1, jQuery UI 1.13.3, lodash replaced by Underscore. Kept in Tier 1 as the record of how it was done and what it cost. |
 | **1.1** falsy metadata | Any `0`, `False` or `""` silently reads back as absent. Corrupts data in every view, and the fix is a few lines. |
 | **1.6** 1.76M orphaned rows | If the import pipeline is producing these, the bug is far bigger than one database. Investigate before repairing. |
 
@@ -44,7 +44,7 @@ priorities change.
 | **1.3, 1.4, 1.5** error handling | 26 bare excepts, plus failures that render as content. Hides the next bug. |
 | **1.2, 4.3** `/api` error contract | Failure reported two incompatible ways, neither with a usable status code. |
 | **3.1, 3.2** N+1 queries and dead cache | One request can issue hundreds of queries; the cache never engages and never invalidates. |
-| **2.1** front-end upgrades — **done** except D3 | Bootstrap, jQuery, jQuery UI and lodash→Underscore all moved. D3 stays at v3 deliberately: no advisory, and v4+ rewrites all six visualizations. |
+| **2.1** front-end upgrades — **done** except D3 | Bootstrap 5, jQuery 3, jQuery UI 1.13, Underscore. D3 stays at v3 deliberately: no advisory, and v4+ rewrites all six visualizations. |
 | **5.3, 5.4** architecture note and README rewrite | Half the README no longer describes this project. |
 | **5.5** nothing to look at on a fresh clone | Decide demo database vs `make demo` before reaching for Git LFS. |
 | **2.3, 4.2** CI follow-ups | Split ML deps, add coverage measurement. |
@@ -457,182 +457,52 @@ git remote set-head origin -a
 
 Drop `master` from the workflow trigger once that has settled.
 
-### 2.4 The manifest exposed 15 alerts; 13 are now cleared **[verified]**
+### 2.4 The manifest exposed 15 front-end alerts; all are now cleared **[verified]**
 
 Adding `/package.json` made Dependabot raise **15 alerts on libraries it had
 never been able to scan** — one critical, two high, twelve medium. Before the
 manifest existed the repository reported zero open alerts, which is the measure
 of how much 2.1 was hiding.
 
-**Thirteen have since been cleared.** Two remain, both Bootstrap, both with no
-fix available in the 3.x line:
-
-| Severity | CVE | Note |
-| --- | --- | --- |
-| medium | CVE-2024-6485 | XSS via `data-*` attributes |
-| medium | CVE-2025-1647 | XSS in popover/tooltip. Only became visible after moving to 3.4.1. |
-
-Clearing either means Bootstrap 4 or 5 — a redesign, not an upgrade.
-
-**The reachability audit found a worse problem in our own code, since fixed.**
-The favourites popover runs with `html: true` and its content is
-`favsView.$el.html()`, so whatever that view renders is injected as markup. It
-rendered links whose `onclick` was built by concatenating the favourite's key —
-a document filename or a word, both corpus-derived — into a script string. An
-ordinary English possessive was enough to break the quoting.
-
-That is now fixed: the type travels in the class, the key is the link's text,
-and a delegated listener does the work. Two tests cover it, both verified to
-fail against the old code.
-
-Worth noting how the two interacted. Bootstrap 3.4's sanitizer — added upstream
-precisely to fix this advisory class — stripped those `onclick` attributes, so
-the 3.4.1 upgrade both neutralised the injection **and** silently broke the
-favourites links, which looked correct and did nothing. Neither effect was
-visible without opening the popover and reading the DOM.
-
-**Groundwork for a Bootstrap 5 migration is done; the switch itself is not.**
-Rather than migrate under time pressure to clear two mediums, the safe half was
-taken first:
-
-- `capture_baseline.py` screenshots every view, so a future migration can be
-  checked for visual drift rather than only for "not broken".
-- `styles/glyphicons.css` extracts the icon font Bootstrap 4 dropped, taking
-  all 35 icon uses out of the migration surface.
-- The markup is **dual-classed**: every Bootstrap 5 class name that does not
-  exist in Bootstrap 3 now sits beside its Bootstrap 3 counterpart, and
-  `data-bs-*` twins sit beside the `data-*` attributes. 73 class changes and 13
-  attributes, verified to produce byte-identical screenshots on the five views
-  that render deterministically.
-
-What the migration still has to do: the navbar markup (19 occurrences),
-`panel` → `card` structure (13), `label-*` → `badge bg-*` (7, which cannot be
-dual-classed because Bootstrap 3 defines `.badge` and `.bg-*` differently),
-nav-tabs/pills (4), `caret` (3), `input-group-btn` (2), replacing
-bootstrap-toggle — a Bootstrap 3-only plugin — and porting the modal and
-popover call sites to Bootstrap 5's JS API, since 5 drops jQuery.
-
-Given the remaining two advisories are both medium and the reachable injection
-path has already been fixed, that migration is better scheduled on its own
-merits than forced by these alerts.
-
-What was done, and what each move cost:
-
 | Change | Cleared | Cost |
 | --- | --- | --- |
-| Bootstrap 3.2.0 → 3.4.1 | 6 | drop-in dist swap, no code change |
-| lodash 2.4.1 → **Underscore 1.13.8** | 5, incl. the critical | one call site: `_.forOwn` → `_.each` |
-| jQuery 1.11.1 → 3.7.1, jQuery UI 1.11.0 → 1.13.3 | 3 | no application code change |
+| Bootstrap 3.2.0 → 3.4.1 | 6 | drop-in dist swap |
+| lodash 2.4.1 → **Underscore 1.13.8** | 5, incl. the critical | one call site |
+| jQuery 1.11.1 → 3.7.1, jQuery UI → 1.13.3 | 3 | no application code |
+| Bootstrap 3.4.1 → **5.3.8** | 2 | the migration below |
 
-The original table and the reachability analysis are kept below, because the
-reasoning is what makes the remaining decisions tractable.
+Three findings worth keeping.
 
-| Severity | Package | CVE | Fixed in | Issue |
-| --- | --- | --- | --- | --- |
-| **critical** | lodash 2.4.1 | CVE-2019-10744 | 4.17.12 | prototype pollution |
-| **high** | lodash | CVE-2018-16487 | 4.17.11 | prototype pollution |
-| **high** | lodash | CVE-2021-23337 | 4.17.21 | command injection |
-| medium | lodash | CVE-2018-3721, CVE-2026-2950 | 4.17.5 / 4.18.0 | prototype pollution |
-| medium | jquery 1.11.1 | CVE-2015-9251 | 1.12.2 | XSS |
-| medium | jquery | CVE-2019-11358 | 3.4.0 | prototype pollution → XSS |
-| medium | jquery | CVE-2020-11023 | 3.5.0 | XSS via `html()`/`append()` |
-| medium | bootstrap 3.2.0 | CVE-2016-10735, CVE-2018-14040, CVE-2018-14042, CVE-2018-20676, CVE-2018-20677 | 3.4.0 | XSS |
-| medium | bootstrap | CVE-2019-8331 | 3.4.1 | XSS |
-| medium | bootstrap | CVE-2024-6485 | **none** | XSS |
+**The lodash advisories were not reachable, but that was beside the point.**
+None of `_.defaultsDeep`, `_.merge`, `_.set` or `_.zipObjectDeep` appears in
+application code, and the three `_.template` calls compile hard-coded markup.
+The blocker on upgrading was not how the app used lodash but how **Backbone**
+did: lodash 4 renamed `_.any` to `_.some`, and Backbone 1.1.2 still calls it, so
+lodash 4 killed the app on boot. Underscore — what Backbone is written against
+— was the fix, not a workaround.
 
-**On the real exposure.** These are mostly XSS and prototype pollution, which
-need attacker-influenced input to reach the vulnerable call. In this app the
-untrusted surface is corpus content: documents are imported from disk, stored,
-returned by `/api`, and rendered into markup by the Backbone views. So the
-threat model is "someone imports a corpus containing hostile text", not "any
-visitor can attack the page". That is a narrower risk than the raw counts
-suggest — and not zero, since importing third-party corpora is exactly what
-this tool is for.
+**An upgrade can hide a break.** Bootstrap 3.4's sanitizer, added upstream to
+fix this very advisory class, stripped the `onclick` attributes the favourites
+view generated. The injection was neutralised and the links stopped working at
+the same time, and neither was visible without opening the popover and reading
+the DOM. The underlying fault was ours: those handlers were built by
+concatenating corpus-derived favourite keys into a script string, which an
+ordinary English possessive is enough to break. Fixed by carrying the type in a
+class and the key in the link text, read back by a delegated listener.
 
-**Reachability of the lodash advisories — checked, and they do not appear to be
-reachable.** The critical and both highs are lodash, so the vulnerable entry
-points were grepped across `visualize/static/scripts/` excluding `libs/`:
+**Screenshots caught what the tests could not.** The Bootstrap 5 migration
+introduced four visual regressions that 55 passing tests did not notice —
+stacked global selectors, a stacked filter form, stacked footer pills, and
+underlined links everywhere. One of them was not merely cosmetic: the taller
+header overflowed the fixed 160px body padding and covered the page, so clicks
+on the documents table were being intercepted by the navbar.
 
-| Function | Advisory | Call sites in app code |
-| --- | --- | --- |
-| `_.defaultsDeep` | CVE-2019-10744 (**critical**) | **0** |
-| `_.merge`, `_.mergeWith` | CVE-2018-16487 (high) | **0** |
-| `_.set`, `_.setWith`, `_.zipObjectDeep` | CVE-2018-3721, CVE-2026-2950 | **0** |
-| `_.template` | CVE-2021-23337 (high) | 3 — **all pass string literals** |
-
-The three `_.template` calls (`router.js:227`, `router.js:235`,
-`datasets_view.js:5`) compile hard-coded markup at module load. CVE-2021-23337
-requires attacker-controlled *template source*, not attacker-controlled data
-interpolated into a fixed template, so it is not reachable either.
-
-The app's actual lodash usage is `_.extend`, `_.size`, `_.reduce`, `_.map`,
-`_.keys` and `_.uniq` — none of them implicated.
-
-So **the critical alert is real but not currently exploitable here.** Two
-caveats keep it worth fixing rather than dismissing: this checked application
-code only, not what Backbone 1.1.2 calls internally; and the analysis is true
-of the code as it stands today — the moment someone writes `_.merge`, it
-becomes exploitable with no warning. Treat it as reduced urgency, not as
-resolved.
-
-**Bootstrap 3.2.0 → 3.4.1 — done.** A drop-in dist swap needing no template
-change, clearing six advisories.
-
-**Lodash → Underscore 1.13.8 — done.** Clears the remaining five, *including
-the critical*. The reasoning is below; the change itself was small.
-
-Two Bootstrap advisories survive and have **no fix in the 3.x line**:
-CVE-2024-6485 (`data-*` attributes) and CVE-2025-1647 (popover and tooltip),
-the latter only becoming visible once 3.4.1 was in place. Unlike the lodash
-advisories, **CVE-2025-1647 is reachable** — `router.js` calls `.popover()` in
-four places. Clearing either means Bootstrap 4 or 5, a redesign.
-
-**Backbone 1.1.2 was the pin** — measured, not assumed.
-
-Swapping lodash 4.17.21 in and loading the app produces:
-
-```
-backbone.min.js  Uncaught TypeError: i.any is not a function
-```
-
-lodash 4 renamed `_.any` to `_.some`; Backbone 1.1.2 still calls `_.any`. The
-nav bar renders, because that happens before the failure, and `#main-container`
-stays **empty** — the application is dead. `backbone.min.js` also references
-`.where` and `.invoke`, both likewise removed or redefined in lodash 4.
-
-So the reachability analysis above, while accurate about the application's own
-code, understates the work: the blocker is not how the app uses lodash but how
-**Backbone** does. lodash 3.10.1, the last release with an Underscore-compatible
-build, does not help either — CVE-2019-10744 is fixed in 4.17.12.
-
-**The fix was to replace lodash with Underscore rather than upgrade it.**
-Backbone is written against Underscore; lodash was always a substitution here.
-Underscore 1.13.8 provides everything the application used —`extend`, `size`,
-`reduce`, `map`, `keys`, `uniq`, `filter`, `forEach`, `template` — and retains
-the `_.any`, `_.where` and `_.invoke` that Backbone 1.1.2 needs and lodash 4
-dropped. One call had to change: `_.forOwn` in `utilities.js` became `_.each`,
-which takes the same arguments.
-
-Verified in the browser afterwards: `_.VERSION` is 1.13.8, `_.forOwn` is gone,
-`_.any`/`_.where`/`_.invoke` are present, `#main-container` renders, and the
-console is clean across all six views.
-
-This also *reduces* what is vendored — lodash is gone from the tree rather than
-replaced with a newer copy.
-
-**jQuery 1.11.1 → 3.5.0+** clears the remaining three alerts and is coupled the
-same way: jQuery UI 1.11.0 predates jQuery 3 support, so both move together.
-Expect the Backbone interaction to need checking too.
-
-**CVE-2024-6485 has no fixed version in Bootstrap 3.x** — clearing it means
-Bootstrap 4 or 5, a redesign. Accept and document it, or plan it separately.
-
-Whatever is attempted, the loop is fast: swap the file, run
-`pytest tests/selenium`, and read the console guard. Finding the lodash
-incompatibility above took about two minutes.
-
-The browser suite is the safety net for all of these: change one library, run
-`pytest tests/selenium`, see what broke.
+Migration notes, for the next framework move: dual-classing first (adding the
+Bootstrap 5 name beside the Bootstrap 3 one wherever 5's name did not exist in
+3) took the class renames out of the risky step entirely, and extracting
+Glyphicons into a standalone stylesheet took another 35 changes out of it.
+What remained was structural — the navbar, the JS API, and the two plugins
+Bootstrap 5 has no equivalent for.
 
 ### 2.5 Django: stay on 5.2 LTS and wait for 6.2 **[decided]**
 
