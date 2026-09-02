@@ -8,8 +8,8 @@ var ChordView = DefaultView.extend({
 "<div id=\"topic-info-container\" class=\"row container-fluid\"></div>",
     
     chordDiagramTemplate:
-"<div id=\"chord-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>"+
-"<div id=\"chord-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
+"<div id=\"chord-view\" class=\"col-xs-9 col-9\" style=\"display: inline; float: left;\"></div>"+
+"<div id=\"chord-controls\" class=\"col-xs-3 col-3 text-center\" style=\"display: inline; float: left;\"></div>",
 
     controlsTemplate:   
 "<h3><b>Controls</b></h3>"+
@@ -19,9 +19,9 @@ var ChordView = DefaultView.extend({
 "<div id=\"chords-slider\" style=\"clear: both;\"></div>"+
 "<hr />"+
 "<div><label>Correlation Color Legend</label></div>"+
-"<div class=\"col-xs-4\" style=\"text-align: left; padding-left: 2px; padding-right: 2px;\"><b>Low</b></div>"+
-"<div class=\"col-xs-4\" style=\"text-align: center; padding-left: 2px; padding-right: 2px;\"><b>Average</b></div>"+
-"<div class=\"col-xs-4\" style=\"text-align: right; padding-left: 2px; padding-right: 2px;\"><b>High</b></div>"+
+"<div class=\"col-xs-4 col-4\" style=\"text-align: left; padding-left: 2px; padding-right: 2px;\"><b>Low</b></div>"+
+"<div class=\"col-xs-4 col-4\" style=\"text-align: center; padding-left: 2px; padding-right: 2px;\"><b>Average</b></div>"+
+"<div class=\"col-xs-4 col-4\" style=\"text-align: right; padding-left: 2px; padding-right: 2px;\"><b>High</b></div>"+
 "<div id=\"palette\" style=\"clear: both; height: 1.4em; display: block; padding: 2px; margin: 2px; border: 1px solid black;\"></div>"+
 "<hr />"+
 "<label>Distance Metric</label>"+

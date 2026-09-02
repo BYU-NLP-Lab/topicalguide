@@ -4,8 +4,8 @@ var ForceView = DefaultView.extend({
     readableName: "Force Diagram",
     
     visualizationTemplate:
-"<div id=\"force-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>"+
-"<div id=\"force-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
+"<div id=\"force-view\" class=\"col-xs-9 col-9\" style=\"display: inline; float: left;\"></div>"+
+"<div id=\"force-controls\" class=\"col-xs-3 col-3 text-center\" style=\"display: inline; float: left;\"></div>",
 
     controlsTemplate:   
 "<h3><b>Controls</b></h3>"+

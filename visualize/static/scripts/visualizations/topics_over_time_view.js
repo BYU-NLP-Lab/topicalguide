@@ -2,8 +2,8 @@
 var TopicsOverTimeView = DefaultView.extend({
 
     mainTemplate:
-        "<div id=\"plot-controls\" class=\"col-xs-3\" style=\"display: inline; float: left;\"></div>"+
-        "<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>",
+        "<div id=\"plot-controls\" class=\"col-xs-3 col-3\" style=\"display: inline; float: left;\"></div>"+
+        "<div id=\"plot-view\" class=\"col-xs-9 col-9\" style=\"display: inline; float: left;\"></div>",
 
     controlsTemplate:
         "<h3><b>Controls</b></h3>"+
@@ -31,7 +31,7 @@ var TopicsOverTimeView = DefaultView.extend({
         "<div>"+
         "   <label for=\"graph-control\">Graph Type</label>"+
         "   <br />"+
-        "   <input id=\"graph-control\" type=\"checkbox\" checked data-toggle=\"toggle\" data-on=\"Stacked\" data-off=\"Overlaid\" data-onstyle=\"success\" data-offstyle=\"warning\" data-size=\"small\">"+
+        "   <input id=\"graph-control\" type=\"checkbox\" checked data-toggle=\"toggle\" data-bs-toggle=\"toggle\" data-on=\"Stacked\" data-off=\"Overlaid\" data-onstyle=\"success\" data-offstyle=\"warning\" data-size=\"small\">"+
         "</div>",
 
     readableName: "Topics Over Time",

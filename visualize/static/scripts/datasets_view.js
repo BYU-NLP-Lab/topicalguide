@@ -8,7 +8,7 @@ var DatasetView = DefaultView.extend({
         "    <p>Welcome to the Topical Guide! If you need help click on the help icon on the navigation bar.</p>"+
         "    <div id=\"accordion\" class=\"panel-group\"></div>"+
         "<% } else { %>"+
-        "    <div class=\"panel\"><p>No datasets yet. Import one using <code>python topicalguide.py -h</code>.</p></div>"+
+        "    <div class=\"panel card\"><p>No datasets yet. Import one using <code>python topicalguide.py -h</code>.</p></div>"+
         "<% } %>"
     ),
     
@@ -40,18 +40,20 @@ var DatasetView = DefaultView.extend({
             .data(d3.entries(datasets))
             .enter()
             .append("div")
-            .classed("panel panel-default", true);
+            .classed("panel panel-default card", true);
         
         // Create the panel title.
         var bold = panels.append("div")
-            .classed("panel-heading text-center", true)
+            .classed("panel-heading card-header text-center", true)
             .append("h3")
-            .classed("panel-title", true)
+            .classed("panel-title card-title", true)
             .append("b");
         bold.append("a") // Add dataset name.
             .classed("nounderline", true)
             .attr("data-toggle", "collapse")
+            .attr("data-bs-toggle", "collapse")
             .attr("data-parent", "#accordion")
+            .attr("data-bs-parent", "#accordion")
             .attr("href", function(d, i) { return "#collapse-"+d.key; })
             .text(function(d, i) { return d.value.readable_name+" "; })
             .on("click", function(d, i) {
@@ -70,11 +72,11 @@ var DatasetView = DefaultView.extend({
             .classed("panel-collapse collapse", true)
             .classed("in", function(d, i) { return d.key === that.selectionModel.get("dataset"); })
             .append("div")
-            .classed("panel-body", true)
+            .classed("panel-body card-body", true)
             .append("div")
             .classed("container-fluid", true);
         var analyses = panel.append("div")
-            .classed("col-xs-4", true);
+            .classed("col-xs-4 col-4", true);
         analyses.each(function(d, i) {
             var el = d3.select(this);
             if(_.size(d.value.analyses) === 0) {
@@ -111,7 +113,7 @@ var DatasetView = DefaultView.extend({
             }
         });
         var body = panel.append("div")
-            .classed("col-xs-8", true);
+            .classed("col-xs-8 col-8", true);
         // Create description.
         body.append("h4")
             .text("Description");

@@ -11,23 +11,23 @@ var DatasetMetadataView = DefaultView.extend({
     template:
         '<div class="container-fluid">' +
         '  <div class="row">' +
-        '    <div class="col-xs-12">' +
+        '    <div class="col-xs-12 col-12">' +
         '      <h2 id="dataset-title"></h2>' +
         '      <p id="dataset-description"></p>' +
         '    </div>' +
         '  </div>' +
         '  <div class="row">' +
-        '    <div class="col-xs-6">' +
+        '    <div class="col-xs-6 col-6">' +
         '      <h3>Metadata</h3>' +
         '      <div id="dataset-metadata-table"></div>' +
         '    </div>' +
-        '    <div class="col-xs-6">' +
+        '    <div class="col-xs-6 col-6">' +
         '      <h3>Metrics</h3>' +
         '      <div id="dataset-metrics-table"></div>' +
         '    </div>' +
         '  </div>' +
         '  <div class="row" style="margin-top: 20px;">' +
-        '    <div class="col-xs-12">' +
+        '    <div class="col-xs-12 col-12">' +
         '      <h3>Available Analyses</h3>' +
         '      <div id="analyses-list"></div>' +
         '    </div>' +
@@ -124,7 +124,7 @@ var DatasetMetadataView = DefaultView.extend({
 
         // Create a table for analyses
         var table = container.append("table")
-            .classed("table table-hover table-condensed", true);
+            .classed("table table-hover table-condensed table-sm", true);
 
         var thead = table.append("thead").append("tr");
         thead.append("th").text("Analysis Name");

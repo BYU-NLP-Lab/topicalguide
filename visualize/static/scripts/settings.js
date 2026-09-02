@@ -9,14 +9,14 @@ var HelpView = DefaultView.extend({
 "<div class=\"modal-dialog\">"+
 "    <div class=\"modal-content\">"+
 "        <div class=\"modal-header\">"+
-"            <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>"+
+"            <button type=\"button\" class=\"close\" data-dismiss=\"modal\" data-bs-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>"+
 "            <h3 class=\"modal-title\">Modal title</h3>"+
 "        </div>"+
 "        <div class=\"modal-body\">"+
 "            Modal Body"+
 "        </div>"+
 "        <div class=\"modal-footer\">"+
-"            <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button>"+
+"            <button type=\"button\" class=\"btn btn-default btn-secondary\" data-dismiss=\"modal\" data-bs-dismiss=\"modal\">Close</button>"+
 "        </div>"+
 "    </div>"+
 "</div>",
@@ -111,12 +111,12 @@ var DefaultSettingsView = DefaultView.extend({
     template:   "<div class=\"modal-dialog\">"+
                 "    <div class=\"modal-content\">"+
                 "        <div class=\"modal-header\">"+
-                "            <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>"+
+                "            <button type=\"button\" class=\"close\" data-dismiss=\"modal\" data-bs-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>"+
                 "            <h3 class=\"modal-title\"></h3>"+
                 "        </div>"+
                 "        <div class=\"modal-body\"></div>"+
                 "        <div class=\"modal-footer\">"+
-                "            <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button>"+
+                "            <button type=\"button\" class=\"btn btn-default btn-secondary\" data-dismiss=\"modal\" data-bs-dismiss=\"modal\">Close</button>"+
                 "        </div>"+
                 "    </div>"+
                 "</div>",
@@ -127,21 +127,21 @@ var LoginView = DefaultSettingsView.extend({
     
     loginTemplate:
 "<form role=\"form\">"+
-"    <div class=\"form-group\">"+
+"    <div class=\"form-group mb-3\">"+
 "        <label for=\"username-input\">Username:</label>"+
 "        <input id=\"username-input\" type=\"text\" class=\"form-control\" placeholder=\"Enter your username here.\"></input>"+
 "    </div>"+
-"    <div class=\"form-group\">"+
+"    <div class=\"form-group mb-3\">"+
 "        <label for=\"password-input\">Password:</label>"+
 "        <input id=\"password-input\" type=\"password\" class=\"form-control\" placeholder=\"Enter your password here.\"></input>"+
 "    </div>"+
-"    <button type=\"submit\" class=\"btn btn-default\">Login</button>"+
+"    <button type=\"submit\" class=\"btn btn-default btn-secondary\">Login</button>"+
 "    <label id=\"error-msg\" class=\"label label-danger\"></label>"+
 "</form>",
 
     logoutTemplate:
 "<form role=\"form\">"+
-"    <button type=\"submit\" class=\"btn btn-default\">Logout</button>"+
+"    <button type=\"submit\" class=\"btn btn-default btn-secondary\">Logout</button>"+
 "    <label id=\"error-msg\" class=\"label label-danger\"></label>"+
 "</form>",
 
@@ -226,7 +226,7 @@ var LoadScriptsView = DefaultSettingsView.extend({
         var form = body.append("form")
             .attr("role", "form");
         var group = form.append("div")
-            .classed("form-group", true);
+            .classed("form-group mb-3", true);
         group.append("label")
             .attr("for", "script-input")
             .text("Load Script:");
@@ -237,7 +237,7 @@ var LoadScriptsView = DefaultSettingsView.extend({
             .attr("placeholder", "Enter the web address of the script...");
         form.append("button")
             .attr("type", "submit")
-            .classed("btn btn-default", true)
+            .classed("btn btn-default btn-secondary", true)
             .text("Load");
             
         body.append("span")

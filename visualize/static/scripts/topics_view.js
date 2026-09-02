@@ -10,17 +10,17 @@ var AllTopicSubView = DefaultView.extend({
     
     formTemplate:
 "<form role=\"form\">"+
-"    <div class=\"form-group col-xs-6\">"+
+"    <div class=\"form-group mb-3 col-xs-6 col-6\">"+
 "        <label for=\"words-input\">Filter Topics by Words</label>"+
 "        <input id=\"words-input\" class=\"form-control\" type=\"text\" placeholder=\"Enter words...\"></input>"+
 "    </div>"+
-"    <div class=\"form-group col-xs-4\">"+
+"    <div class=\"form-group mb-3 col-xs-4 col-4\">"+
 "        <label for=\"top-words-input\">Top Words</label>"+
 "        <input id=\"top-words-input\" class=\"form-control\" type=\"number\" placeholder=\"Enter a #.\"></input>"+
 "    </div>"+
-"    <div class=\"form-group col-xs-2\">"+
+"    <div class=\"form-group mb-3 col-xs-2 col-2\">"+
 "        <label for=\"submit-button\"></label>"+
-"        <input id=\"submit-button\" class=\"btn btn-default\" type=\"submit\"></input>"+
+"        <input id=\"submit-button\" class=\"btn btn-default btn-secondary\" type=\"submit\"></input>"+
 "    </div>"+
 "</form>",
     
@@ -123,7 +123,7 @@ var AllTopicSubView = DefaultView.extend({
             // Create HTML table element.
             var table = container.append("table")
                 .attr("id", "topics-table")
-                .classed("table table-hover table-condensed", true);
+                .classed("table table-hover table-condensed table-sm", true);
             // Table header.
             var header = ["", "#", "% of Corpus", "Name", "Top Words", "% of Topic"];
             // Format data.
@@ -306,7 +306,7 @@ var SingleTopicView = DefaultView.extend({
                 return [entry.key, entry.key, entry.value.token_count, (entry.value.token_count/tokenCount)*100];
             });
             var table = content.append("table")
-                .classed("table table-hover table-condensed", true);
+                .classed("table table-hover table-condensed table-sm", true);
             var onClick = function(d, i) {
                 this.selectionModel.set({ "document": d[0] });
                 window.location.href = "#documents";
@@ -363,7 +363,7 @@ var SingleTopicView = DefaultView.extend({
                     });
 
                     var hierarchyTable = content.append("table")
-                        .classed("table table-hover table-condensed", true);
+                        .classed("table table-hover table-condensed table-sm", true);
                     var onClick = function(d, i) {
                         that.selectionModel.set({ "topic": d[0] });
                     };
@@ -407,7 +407,7 @@ var SingleTopicView = DefaultView.extend({
                     });
                 
                 var table = content.append("table")
-                    .classed("table table-hover table-condensed", true);
+                    .classed("table table-hover table-condensed table-sm", true);
                 var onClick = function(d, i) {
                     this.selectionModel.set({ "topic": d[0] });
                 }.bind(this);
@@ -593,12 +593,12 @@ var SingleTopicView = DefaultView.extend({
 
 var SingleTopicSubView = DefaultView.extend({
     
-    mainTemplate: "<div id=\"all-topic-container\" class=\"col-xs-3\"></div>"+
-                  "<div id=\"topic-info\" class=\"col-xs-9\"></div>",
+    mainTemplate: "<div id=\"all-topic-container\" class=\"col-xs-3 col-3\"></div>"+
+                  "<div id=\"topic-info\" class=\"col-xs-9 col-9\"></div>",
     
     dropdownTemplate: "<div class=\"btn-group\">"+
                           "<button type=\"button\" class=\"btn btn-primary\">Sort By</button>"+
-                          "<button type=\"button\" class=\"btn btn-primary dropdown-toggle\" data-toggle=\"dropdown\">"+
+                          "<button type=\"button\" class=\"btn btn-primary dropdown-toggle\" data-toggle=\"dropdown\" data-bs-toggle=\"dropdown\">"+
                             "<span class=\"caret\"></span>"+
                             "<span class=\"sr-only\">Toggle Dropdown</span>"+
                           "</button>"+
@@ -634,7 +634,7 @@ var SingleTopicSubView = DefaultView.extend({
         var container = d3.select("#all-topic-container");
         container.html("");  // Clear the container before re-rendering
         container.append("button")
-            .classed("btn btn-default", true)
+            .classed("btn btn-default btn-secondary", true)
             .attr("type", "button")
             .html("<span class=\"glyphicon glyphicon-chevron-left pewter\"></span> Back to All Topics")
             .on("click", function() {

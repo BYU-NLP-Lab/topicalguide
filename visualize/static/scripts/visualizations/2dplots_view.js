@@ -2,8 +2,8 @@
 var PlotView = DefaultView.extend({
     
     mainTemplate:
-"<div id=\"plot-view\" class=\"col-xs-9\" style=\"display: inline; float: left;\"></div>"+
-"<div id=\"plot-controls\" class=\"col-xs-3 text-center\" style=\"display: inline; float: left;\"></div>",
+"<div id=\"plot-view\" class=\"col-xs-9 col-9\" style=\"display: inline; float: left;\"></div>"+
+"<div id=\"plot-controls\" class=\"col-xs-3 col-3 text-center\" style=\"display: inline; float: left;\"></div>",
 
     controlsTemplate:
 "<h3><b>Controls</b></h3>"+
@@ -32,11 +32,11 @@ var PlotView = DefaultView.extend({
 "    <select id=\"color-control\" type=\"selection\" class=\"form-control\" name=\"Color\"></select>"+
 "</div>"+
 "<hr />"+
-"<div id=\"plot-remove-documents\" class=\"btn btn-default\">Remove Documents</div>"+
-"<div id=\"plot-add-all-removed-documents\" class=\"btn btn-default\">Add Removed Documents</div>"+
+"<div id=\"plot-remove-documents\" class=\"btn btn-default btn-secondary\">Remove Documents</div>"+
+"<div id=\"plot-add-all-removed-documents\" class=\"btn btn-default btn-secondary\">Add Removed Documents</div>"+
 "<hr />"+
 "<div>"+
-"    <a id=\"plot-save-svg\" class=\"btn btn-default\">Download as SVG</a>"+
+"    <a id=\"plot-save-svg\" class=\"btn btn-default btn-secondary\">Download as SVG</a>"+
 "</div>",
 
     readableName: "2D Plots",

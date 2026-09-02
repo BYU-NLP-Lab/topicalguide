@@ -46,15 +46,15 @@
             '        </a>' +
             '      </div>' +
             '      <div id="global-selectors" class="form-inline" style="flex: 1;">' +
-            '        <div class="form-group">' +
+            '        <div class="form-group mb-3">' +
             '          <label for="dataset-selector" style="margin-right: 5px; color: #555; font-weight: 600;">Dataset:</label>' +
             '          <select id="dataset-selector" class="form-control input-sm" style="min-width: 200px;"></select>' +
             '        </div>' +
-            '        <div class="form-group" style="margin-left: 15px;">' +
+            '        <div class="form-group mb-3" style="margin-left: 15px;">' +
             '          <label for="analysis-selector" style="margin-right: 5px; color: #555; font-weight: 600;">Analysis:</label>' +
             '          <select id="analysis-selector" class="form-control input-sm" style="min-width: 200px;"></select>' +
             '        </div>' +
-            '        <div class="form-group" style="margin-left: 15px;">' +
+            '        <div class="form-group mb-3" style="margin-left: 15px;">' +
             '          <label for="global-nameScheme-selector" style="margin-right: 5px; color: #555; font-weight: 600;">Topic Names:</label>' +
             '          <select id="global-nameScheme-selector" class="form-control input-sm" style="min-width: 180px;"></select>' +
             '        </div>' +

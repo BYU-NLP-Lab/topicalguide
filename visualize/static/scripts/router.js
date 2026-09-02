@@ -233,7 +233,7 @@ var NavigationView = DefaultView.extend({
         "<a href=\"<%= href %>\"><%= name %></a></li>"
     ),
     compiledDropdownTemplate: _.template(
-        "<a class=\"dropdown-toggle\" data-toggle=\"dropdown\" style=\"cursor: pointer;\"><%= name %><% if(isTopMenu) { %><span class=\"caret\"></span><% } %></a>"+
+        "<a class=\"dropdown-toggle\" data-toggle=\"dropdown\" data-bs-toggle=\"dropdown\" style=\"cursor: pointer;\"><%= name %><% if(isTopMenu) { %><span class=\"caret\"></span><% } %></a>"+
         "<ul class=\"dropdown-menu\" role=\"menu\"></ul>"
     ),
     settingsTemplate: 
@@ -241,7 +241,7 @@ var NavigationView = DefaultView.extend({
         "    <li><a id=\"main-nav-favs\" style=\"cursor: pointer;\">"+icons.filledStar+"</a></li>"+
         "    <li><a id=\"main-nav-help\" style=\"cursor: pointer;\">"+icons.help+"</a></li>"+
         "    <li class=\"dropdown\" style=\"cursor: pointer;\">"+
-        "        <a class=\"dropdown-toggle\" data-toggle=\"dropdown\">"+icons.settings+"</a>"+
+        "        <a class=\"dropdown-toggle\" data-toggle=\"dropdown\" data-bs-toggle=\"dropdown\">"+icons.settings+"</a>"+
         "        <ul id=\"main-nav-settings\" class=\"dropdown-menu\" role=\"menu\"></ul>"+
         "    </li>"+
         "</ul>",

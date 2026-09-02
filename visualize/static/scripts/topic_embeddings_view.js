@@ -11,23 +11,23 @@ var TopicEmbeddingsView = DefaultView.extend({
 
     template:
         '<div id="embeddings-container" class="row">' +
-        '  <div id="embeddings-info" class="col-xs-12">' +
+        '  <div id="embeddings-info" class="col-xs-12 col-12">' +
         '    <p>Select a visualization type:</p>' +
         '    <div class="btn-group" role="group" style="margin-bottom: 10px;">' +
         '      <button type="button" class="btn btn-primary" data-viz="topics">Topics Map</button>' +
-        '      <button type="button" class="btn btn-default" data-viz="documents">Documents Map</button>' +
-        '      <button type="button" class="btn btn-default" data-viz="heatmap">Similarity Heatmap</button>' +
-        '      <button type="button" class="btn btn-default" data-viz="hierarchy">Topic Hierarchy</button>' +
-        '      <button type="button" class="btn btn-default" data-viz="barchart">Top Words</button>' +
+        '      <button type="button" class="btn btn-default btn-secondary" data-viz="documents">Documents Map</button>' +
+        '      <button type="button" class="btn btn-default btn-secondary" data-viz="heatmap">Similarity Heatmap</button>' +
+        '      <button type="button" class="btn btn-default btn-secondary" data-viz="hierarchy">Topic Hierarchy</button>' +
+        '      <button type="button" class="btn btn-default btn-secondary" data-viz="barchart">Top Words</button>' +
         '    </div>' +
         '    <div class="btn-group" role="group">' +
-        '      <button type="button" class="btn btn-default" data-viz="term_rank">Term Rank</button>' +
-        '      <button type="button" class="btn btn-default" data-viz="topics_over_time">Topics Over Time</button>' +
-        '      <button type="button" class="btn btn-default" data-viz="topics_per_class">Topics Per Class</button>' +
-        '      <button type="button" class="btn btn-default" data-viz="hierarchical_documents">Hierarchical Documents</button>' +
+        '      <button type="button" class="btn btn-default btn-secondary" data-viz="term_rank">Term Rank</button>' +
+        '      <button type="button" class="btn btn-default btn-secondary" data-viz="topics_over_time">Topics Over Time</button>' +
+        '      <button type="button" class="btn btn-default btn-secondary" data-viz="topics_per_class">Topics Per Class</button>' +
+        '      <button type="button" class="btn btn-default btn-secondary" data-viz="hierarchical_documents">Hierarchical Documents</button>' +
         '    </div>' +
         '  </div>' +
-        '  <div id="embeddings-plot" class="col-xs-12" style="margin-top: 20px;">' +
+        '  <div id="embeddings-plot" class="col-xs-12 col-12" style="margin-top: 20px;">' +
         '  </div>' +
         '</div>',
 
@@ -63,8 +63,8 @@ var TopicEmbeddingsView = DefaultView.extend({
         // Set up button click handlers
         d3.selectAll(".btn-group button").on("click", function() {
             // Update button states
-            d3.selectAll(".btn-group button").classed("btn-primary", false).classed("btn-default", true);
-            d3.select(this).classed("btn-primary", true).classed("btn-default", false);
+            d3.selectAll(".btn-group button").classed("btn-primary", false).classed("btn-default btn-secondary", true);
+            d3.select(this).classed("btn-primary", true).classed("btn-default btn-secondary", false);
 
             // Load the selected visualization
             that.currentVizType = d3.select(this).attr("data-viz");

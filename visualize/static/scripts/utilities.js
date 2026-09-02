@@ -412,7 +412,7 @@ function createTableFromHash(container, hash, header, word) {
             .text("No "+word+" available.");
     } else {
         var table = container.append("table")
-            .classed("table table-hover table-condensed", true);
+            .classed("table table-hover table-condensed table-sm", true);
         table.append("thead")
             .append("tr")
             .selectAll("th")

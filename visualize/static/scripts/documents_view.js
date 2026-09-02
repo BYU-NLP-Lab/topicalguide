@@ -39,12 +39,12 @@ var AllDocumentsSubView = DefaultView.extend({
     },
     
     tableTemplate:
-"<div class=\"row\"><div class=\"col-xs-1\">"+
+"<div class=\"row\"><div class=\"col-xs-1 col-1\">"+
 "    <span class=\"glyphicon glyphicon-step-backward pointer\"></span>"+
 "    <span class=\"glyphicon glyphicon-chevron-left pointer\"></span>"+
 "</div>"+
-"<div id=\"documents-table-container\" class=\"col-xs-10\"></div>"+
-"<div class=\"col-xs-1\">"+
+"<div id=\"documents-table-container\" class=\"col-xs-10 col-10\"></div>"+
+"<div class=\"col-xs-1 col-1\">"+
 "    <span class=\"glyphicon glyphicon-chevron-right pointer\"></span>"+
 "    <span class=\"glyphicon glyphicon-step-forward pointer\"></span>"+
 "</div></div>",
@@ -103,10 +103,10 @@ var AllDocumentsSubView = DefaultView.extend({
                     if(documentContinue > (documentCount-displayNDocuments)) return "none";
                     else return "inline-block";
                 });
-            container.select(".col-xs-1")
+            container.select(".col-xs-1 col-1")
                 .classed("text-center", true);
             var table = container.select("#documents-table-container").append("table")
-                .classed("table table-hover table-condensed", true);
+                .classed("table table-hover table-condensed table-sm", true);
 
             // Get topic names for display
             var topics = extractTopics(data);
@@ -217,16 +217,16 @@ var DocumentInfoView = DefaultView.extend({
     readableName: "Document Information",
     
     textFormTemplate:
-"<div class=\"row\"><div class=\"col-xs-12\">"+
+"<div class=\"row\"><div class=\"col-xs-12 col-12\">"+
 "    <form id=\"text-highlight-form\" role=\"form\" class=\"input-group\">"+
-"        <span id=\"highlight-buttons\" class=\"input-group-btn\" data-toggle=\"buttons\">"+
+"        <span id=\"highlight-buttons\" class=\"input-group-btn\" data-toggle=\"buttons\" data-bs-toggle=\"buttons\">"+
 "            <label class=\"btn btn-primary\">No Highlights<input type=\"radio\" name=\"options\" id=\"no-highlights\" checked></label>"+
 "            <label class=\"btn btn-primary\">Topic Highlights<input type=\"radio\" name=\"options\" id=\"topic-highlights\"></label>"+
 "            <label class=\"btn btn-primary\">Word Highlights<input type=\"radio\" name=\"options\" id=\"word-highlights\"></label>"+
 "        </span>"+
 "        <input disabled class=\"form-control\" type=\"text\" id=\"topic-word-input\" placeholder=\"\">"+
 "        <span class=\"input-group-btn\">"+
-"            <input disabled class=\"btn btn-default\" id=\"topic-word-submit-button\" type=\"submit\"></input>"+
+"            <input disabled class=\"btn btn-default btn-secondary\" id=\"topic-word-submit-button\" type=\"submit\"></input>"+
 "        </span>"+
 "    </form>"+
 "</div></div>",
@@ -271,7 +271,7 @@ var DocumentInfoView = DefaultView.extend({
             container.append("div")
                 .classed("row", true)
                 .append("div")
-                .classed("col-xs-12", true)
+                .classed("col-xs-12 col-12", true)
                 .attr("id", "highlighted-text")
                 .text("");
             // Set up form functionality.
@@ -576,8 +576,8 @@ var SingleDocumentSubView = DefaultView.extend({
     
     initialize: function() {},
     
-    mainTemplate: "<div id=\"single-doc-topmatter\" class=\"col-xs-12\"></div>"+
-                  "<div id=\"document-info-container\" class=\"col-xs-12\"></div>",
+    mainTemplate: "<div id=\"single-doc-topmatter\" class=\"col-xs-12 col-12\"></div>"+
+                  "<div id=\"document-info-container\" class=\"col-xs-12 col-12\"></div>",
     
     cleanup: function(topics) {
         if(this.docInfoView !== undefined) {
@@ -597,7 +597,7 @@ var SingleDocumentSubView = DefaultView.extend({
     renderTopMatter: function() {
         var top = d3.select("#single-doc-topmatter");
         top.append("button")
-            .classed("btn btn-default", true)
+            .classed("btn btn-default btn-secondary", true)
             .attr("type", "button")
             .html("<span class=\"glyphicon glyphicon-chevron-left pewter\"></span> Back to All Documents")
             .on("click", function() {
