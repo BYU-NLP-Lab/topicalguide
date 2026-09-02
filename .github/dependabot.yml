@@ -3,11 +3,26 @@ version: 2
 updates:
   # Python. This was already being scanned via requirements.txt; declaring it
   # here turns on update pull requests as well as alerts.
+  #
+  # Grouped into ONE pull request. Most of requirements.txt is declared with
+  # ">=", so Dependabot proposes raising every floor to the newest release and
+  # opens a separate PR per package -- fifteen of them on the first sweep, each
+  # editing requirements.txt and so each conflicting with whichever merged
+  # first. Grouping keeps the updates without the conflict storm.
+  #
+  # Note these floor bumps do not change what actually gets installed: ">="
+  # already resolves to the newest compatible release. They only raise the
+  # minimum, so treat them as low-risk housekeeping and read the changelog for
+  # anything crossing a major version.
   - package-ecosystem: pip
     directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
 
   # Front-end libraries. These are VENDORED, not installed -- /package.json
   # exists only so this ecosystem has a manifest for Dependabot to read.
