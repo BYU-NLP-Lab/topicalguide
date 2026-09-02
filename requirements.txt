@@ -1,34 +1,34 @@
 # Core dependencies
-Django==5.2.17  # Current LTS. 4.2 reached end of life at 4.2.30, so its last 6 CVEs had no fix in that series.
+Django==6.1  # Current LTS. 4.2 reached end of life at 4.2.30, so its last 6 CVEs had no fix in that series.
 nltk==3.10.3  # Security update (CVE-2026-79675 JVM arg injection, CVE-2026-78680 Graphviz 'dot' search path, CVE-2026-12061 ReDoS)
-numpy>=2.0.0
-scipy>=1.15.0
+numpy>=2.5.2
+scipy>=1.18.1
 GitPython>=3.1.61
-python-dateutil>=2.9.0  # Replaces DateTime
+python-dateutil>=2.9.0.post0  # Replaces DateTime
 
 # For downloading State of the Union addresses
-requests>=2.31.0
-beautifulsoup4>=4.12.0
+requests>=2.34.2
+beautifulsoup4>=4.15.0
 
 # Optional but recommended
-django-debug-toolbar>=4.4.0
+django-debug-toolbar>=7.1.1
 django-extensions>=4.1
-gunicorn>=23.0.0
+gunicorn>=26.2.0
 docopt>=0.6.2
 chardet>=7.6.0  # 7.x removed chardet.universaldetector; basic_tools imports UniversalDetector from the package root
 
 # For testing
-pytest>=9.0.0
+pytest>=9.1.1
 pytest-django>=4.14.0
-selenium>=4.30.0
+selenium>=4.48.0
 
 # For LLM-based topic naming (optional)
-openai>=1.0.0
+openai>=3.6.0
 
 # For BERTopic topic modeling (optional)
 # NOTE: BERTopic dependencies (specifically numba) currently require Python <=3.13
 # If using Python 3.14+, BERTopic installation will fail until dependencies are updated
-bertopic>=0.16.0
-sentence-transformers>=2.2.0
+bertopic>=0.17.4
+sentence-transformers>=6.0.0
 umap-learn>=0.5.12
 hdbscan>=0.8.44
