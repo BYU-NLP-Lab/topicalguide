@@ -4,7 +4,7 @@ nltk==3.10.3  # Security update (CVE-2026-79675 JVM arg injection, CVE-2026-7868
 numpy>=2.0.0
 scipy>=1.15.0
 GitPython>=3.1.0
-python-dateutil>=2.9.0  # Replaces DateTime
+python-dateutil>=2.9.0.post0  # Replaces DateTime
 
 # For downloading State of the Union addresses
 requests>=2.31.0
