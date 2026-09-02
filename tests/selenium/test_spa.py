@@ -67,8 +67,20 @@ def test_nav_bar_lists_the_views(app):
     assert labels == NAV_VIEWS
 
 
-def test_dataset_info_shows_metadata(app, wait):
+def dataset_info(app, wait):
+    """Open Dataset Info and wait for its contents, not just its container.
+
+    nav_to returns as soon as the view container is replaced, but this view
+    fills itself from a further /api call. Reading immediately passed locally
+    and failed on the slower CI runner.
+    """
     view = nav_to(app, wait, 'Dataset Info')
+    wait.until(lambda d: view.find_elements(By.ID, 'analyses-list'))
+    return view
+
+
+def test_dataset_info_shows_metadata(app, wait):
+    view = dataset_info(app, wait)
 
     assert view.find_element(By.ID, 'dataset-title').text == DATASET_READABLE_NAME
     assert view.find_element(By.ID, 'dataset-description').text == \
@@ -78,7 +90,8 @@ def test_dataset_info_shows_metadata(app, wait):
 
 
 def test_dataset_info_lists_the_analysis(app, wait):
-    view = nav_to(app, wait, 'Dataset Info')
+    view = dataset_info(app, wait)
+    wait.until(lambda d: table_rows(view.find_element(By.ID, 'analyses-list')))
     rows = table_rows(view.find_element(By.ID, 'analyses-list'))
 
     assert len(rows) == 1
