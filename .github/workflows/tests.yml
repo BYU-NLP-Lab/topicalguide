@@ -2,7 +2,11 @@ name: tests
 
 on:
   push:
-    branches: [master]
+    # master is listed alongside main only for the default-branch rename: the
+    # push trigger is the one filter that would silently stop firing. Drop it
+    # once forks and clones have moved over. (pull_request has no branch
+    # filter, so PRs from forks run regardless.)
+    branches: [main, master]
   pull_request:
   workflow_dispatch:
 
