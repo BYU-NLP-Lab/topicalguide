@@ -1,5 +1,6 @@
-import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'topic_modeling.settings'
+# DJANGO_SETTINGS_MODULE is set by import_system_utilities, which is the only
+# caller of this module. Setting it here as well used to overwrite it with the
+# long-deleted 'topic_modeling.settings'.
 from django.db import transaction
 from visualize.models import *
 
