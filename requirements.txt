@@ -29,6 +29,6 @@ openai>=1.0.0
 # NOTE: BERTopic dependencies (specifically numba) currently require Python <=3.13
 # If using Python 3.14+, BERTopic installation will fail until dependencies are updated
 bertopic>=0.16.0
-sentence-transformers>=2.2.0
+sentence-transformers>=6.0.0
 umap-learn>=0.5.5
 hdbscan>=0.8.33
