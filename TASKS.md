@@ -34,6 +34,7 @@ priorities change.
 | **4.1** no test for the import pipeline | 571 statements at **0%**, plus all 16 metrics that run on every import. The largest gap, and now cheap to close. |
 | **0.4** five recoverable topic metrics | Cheapest route to showing a user which topics are worth reading. |
 | **1.3, 1.4, 1.5, 1.5b** error handling | 26 bare excepts, failures that render as content, and unguarded DOM lookups in async callbacks. Hides the next bug. |
+| **1.8** `tg.py remove-metrics` always crashes | A shipped subcommand that dies on its first import. Repair it or delete it, and audit the other six while deciding. |
 | **1.2, 4.3** `/api` error contract | Failure reported two incompatible ways, neither with a usable status code. |
 | **3.1, 3.2** N+1 queries and dead cache | One request can issue hundreds of queries; the cache never engages and never invalidates. |
 | **2.1** vendored front-end leftovers | D3 3.4.11 and Backbone 1.1.2 stay put deliberately; d3-tip and d3.layout.cloud cannot be declared at all and need checking by hand. |
@@ -354,6 +355,34 @@ infers types in JavaScript, or it is dead weight that has to be kept correct
 for nothing. Decide which before the next round of model cleanup; it shares its
 implementation with `value()`, so the cost of keeping it is small but not zero.
 
+### 1.8 `tg.py remove-metrics` crashes on every invocation **[verified]**
+
+The subcommand parses, then dies as soon as it runs:
+
+```
+$ python tg.py remove-metrics <dataset> <analysis> -m document_word_count
+ModuleNotFoundError: No module named 'metric_scripts'
+```
+
+`import_system_utilities.py:529` opens `remove_metrics()` with
+`from metric_scripts import all_metrics`, and no such package exists anywhere
+in the tree. The function then calls `metric_import.remove_*`, and
+`metric_import` is never imported either, so it would raise `NameError` on the
+line after even if the first import were fixed.
+
+The neighbouring `run_metrics()` at line 499 gets this right —
+`from .metric import all_metrics, all_tables, all_metrics_exists` — so
+`tg.py measure` works and only the removal path is dead. That also says what
+the fix looks like: the same relative import, plus whatever `metric_import`
+was meant to be. Check whether the live `import_tool/metric/` modules even
+expose the six `remove_*_metric` functions it wants before assuming this is a
+two-line repair; if they do not, deleting the subcommand is the honest option.
+
+Worth an audit of the other six `tg.py` subcommands while in here. All seven
+parse, which proves nothing — this one parsed too. `migrate` is a known
+candidate: `migrate_dataset()` carries a "Warning! This code hasn't been
+updated" comment. 4.1's pipeline tests would catch this whole class.
+
 ---
 
 ## 2. Security and operations
@@ -498,9 +527,9 @@ guess at which requests are worth caching.
 
 ## 4. Testing
 
-92 tests: 12 on `/api`, 6 on `/bertopic-viz`, 30 on the model-level metadata
-accessors, 17 unit tests, and 27 in the browser. Coverage is measured rather
-than guessed, on every CI run and locally with
+93 tests: 12 on `/api`, 6 on `/bertopic-viz`, 31 on the model layer, 17 unit
+tests, and 27 in the browser. Coverage is measured rather than guessed, on
+every CI run and locally with
 
     pytest --cov=visualize --cov=import_tool --cov-report=term-missing
 
@@ -511,7 +540,7 @@ and the headline is **22%**. The distribution matters more than the number:
 | `visualize/root.py` | 90% | fine |
 | `import_tool/basic_tools.py` | 84% | fine |
 | `visualize/api.py` | 69% | the uncovered part is error paths — 4.3 |
-| `visualize/models.py` | 67% | tested only through the metadata accessors |
+| `visualize/models.py` | 69% | tested only through the metadata accessors and `Dataset.delete` |
 | `visualize/bertopic_viz.py` | 21% | the rest needs a real BERTopic pickle — 4.4 |
 | `visualize/utils.py` | 18% | `reservoir_sample` — 4.5 |
 | `import_tool/import_system_utilities.py` | **0%** | 571 statements — 4.1 |
@@ -622,10 +651,11 @@ and much of it no longer describes this project.
   does not exist anywhere in the codebase** — not in the settings template, not
   in any `.py`. The whole POSTGRESQL section needs checking against how
   `DATABASES` is actually configured.
-- It never mentions tests, though there are now 49 and CI runs them on every
-  push. It needs a "Running the tests" section covering `pytest` and the
-  environment variables the browser fixture honours: `HEADED`, `CHROMEDRIVER`,
-  `TG_REQUIRE_BROWSER`, `TG_TEST_URL`, `TG_TEST_WAIT`.
+- It never mentions tests, though there are now 93 and CI runs them with
+  coverage on every push. It needs a "Running the tests" section covering
+  `pytest` and the environment variables the browser fixture honours:
+  `HEADED`, `CHROMEDRIVER`, `TG_REQUIRE_BROWSER`, `TG_TEST_URL`,
+  `TG_TEST_WAIT`.
 - It never mentions `scripts/bootstrap_settings.py`, now the supported way to
   create `settings.py` and what CI runs.
 - It says "Python 3.10 or higher" while `requirements.txt` notes BERTopic's
@@ -966,8 +996,9 @@ deserve their own design.
 
 ## Two things to carry forward
 
-**4.1 is the largest coverage gap.** 91 tests cover `/api` and the single-page
-app well; the import and analysis pipeline — the core product — is at 0%.
+**4.1 is the largest coverage gap.** 93 tests cover `/api`, the model layer and
+the single-page app well; the import and analysis pipeline — the core product —
+is at 0%.
 
 **0.4's five recoverable metrics are the cheapest way to make the topics table
 say something useful.** Right now it shows only "% of Corpus" and "% of Topic",
