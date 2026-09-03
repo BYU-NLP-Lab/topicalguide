@@ -17,12 +17,6 @@ priorities change.
 
 ## Priorities
 
-### Tier 1 — do first: security and silent data loss
-
-| Item | Why now |
-| --- | --- |
-| **1.6** 1.76M orphaned rows — diagnosed | Not a pipeline bug: one superseded import removed by hand. What remains is your call on whether to repair the file. |
-
 ### Tier 2 — hours of work, disproportionate payoff
 
 | Item | Why |
@@ -328,71 +322,28 @@ inside an async callback in these views has the same shape**, because
 flight. 1.5 asks for an audit of wrong-argument bugs; this is the sibling
 audit, for unguarded lookups after an await.
 
-### 1.6 The dev database's 1.76M orphans: diagnosed, repair not yet decided
+### 1.6 Retire the two dev-database backups when you are satisfied
 
-`working/tg.sqlite3` (gitignored, 1 GB, last modified December 2025) fails
-`PRAGMA foreign_key_check` with **1,762,639** violations. The visible symptom
-is that any command opening a SQLite schema editor against it fails:
+Clearing the orphaned dataset-1 subtree out of `working/tg.sqlite3` left two
+gitignored files beside it, and both are holding disk against a restore nobody
+may ever need:
 
-```
-$ python manage.py sqlmigrate visualize 0002
-django.db.utils.IntegrityError: The row in table 'visualize_analysismetadatavalue'
-with primary key '1' has an invalid foreign key ...
-```
+- `tg.sqlite3.backup-20260902` — the whole 1 GB database as it stood before.
+- `tg-dataset1-subtree.sqlite3` — 118 MB, exactly the 5,312,660 rows removed
+  (plus the 160 word types named below), built by
+  `scripts/archive_dataset1_subtree.sql`.
 
-Against a clean database the same command succeeds and prints `-- (no-op)`, so
-the migration is fine and the data is not.
+The subtree archive is the one worth keeping: analysis 1 is the only
+tokenization this project has that kept function words (155,287 `the`, 100,301
+`of`, 61,517 `and`; every surviving analysis has none), and `visualize_stopword`
+is empty, so nothing else records which words the other analyses dropped. The
+full backup is pure insurance and can go once the working database has been
+exercised enough to trust.
 
-**Grouped, the violations are not what the first sample suggested.** Every one
-of them points at one of exactly **two** missing parent rows — `dataset` 1 and
-`analysis` 1:
-
-| Child table | Missing parent | Rows |
-| --- | --- | --- |
-| `visualize_wordtoken` | analysis 1 | 1,761,710 |
-| `visualize_documentanalysismetricvalue` | analysis 1 | 669 |
-| `visualize_document` | dataset 1 | 223 |
-| `visualize_topic` | analysis 1 | 20 |
-| `visualize_analysismetadatavalue` | analysis 1 | 6 |
-| `visualize_analysismetricvalue` | analysis 1 | 5 |
-| `visualize_datasetmetadatavalue` | dataset 1 | 4 |
-| `visualize_analysis` (row 2) | dataset 1 | 1 |
-| `visualize_datasetmetricvalue` | dataset 1 | 1 |
-
-The orphaned metadata says what was deleted: dataset 1 was `State of the Union`
-sourced from WikiSource covering 1790–2010 with 223 documents, and analysis 1
-was `LDA with 20 Topics`. Dataset 2 is the same corpus re-imported and extended
-to 238 documents with the American Presidency Project as a second source. So
-this is the residue of **one superseded first import**, removed by deleting two
-parent rows — not a pipeline that orphans rows on every run. `analysis` 2, also
-a child of dataset 1, was left behind by the same partial delete.
-
-**Neither suspected delete path can be the cause, because neither one runs.**
-
-- `Dataset.delete()` was overridden to remove children by hand and could never
-  complete: `self.analyses` is a `RelatedManager`, and Django deliberately does
-  not give managers a `delete()`, so it raised `AttributeError` before reaching
-  `super().delete()`. The last branch referenced an undefined name
-  (`datasetmetricvalues`) and would have raised `NameError` even if it got
-  there. It raised on every path, including for a dataset with no children at
-  all. Removed — all 37 FKs into the model already cascade, so the override was
-  redundant as well as broken. Covered by
-  `tests/visualize/test_models.py::test_deleting_a_dataset_leaves_no_orphans`.
-- `tg.py remove-metrics` raises `ModuleNotFoundError: No module named
-  'metric_scripts'` on its first statement. `import_system_utilities.py:529`
-  imports a package that does not exist, and the `metric_import` module it then
-  calls is never imported either. Dead command; see 4.1.
-
-That leaves a manual `DELETE` as the explanation — SQLite enforces foreign keys
-only when `PRAGMA foreign_keys=ON`, which is off by default and which Django
-sets per connection, so anything issued from the `sqlite3` shell or a GUI
-browser would have been accepted silently.
-
-**Still open: whether to repair the file.** The rows are recoverable in
-principle — re-creating `dataset` 1 and `analysis` 1 would reattach 1.76M
-tokens for a corpus that dataset 2 supersedes — but deleting them is the
-likelier intent. Do not repair without asking; it is working data with no
-backup in the repository, and a 1 GB file is worth copying before any write.
+Left behind deliberately: the **160 word types** used only by the deleted
+analyses — the stopword vocabulary. They are unreferenced now rather than
+orphaned, so they break nothing, and removing them is a separate decision about
+vocabulary rows that nothing currently forces.
 
 ### 1.7 `MetadataValue.type()` has no callers
 
@@ -697,13 +648,12 @@ analysis. That is a steep first five minutes for a tool whose value is visual.
 Git LFS is the right mechanism for shipping a prebuilt database, but the sizing
 decides the approach:
 
-- `working/tg.sqlite3` is 1 GB. GitHub's free LFS tier is 1 GB of storage and
-  1 GB/month of bandwidth, so one copy exhausts it, and every re-import stores
-  another **full** 1 GB object — SQLite files do not delta-compress, and LFS
-  deduplicates whole objects only.
-- That file must not be published in any case: it is the one carrying the 1.76
-  million foreign key violations in 1.6. Shipping it distributes the corruption
-  to every clone.
+- `working/tg.sqlite3` is 600 MB even after the dataset-1 cleanup. GitHub's
+  free LFS tier is 1 GB of storage and 1 GB/month of bandwidth, so a couple of
+  copies exhaust it, and every re-import stores another **full** object —
+  SQLite files do not delta-compress, and LFS deduplicates whole objects only.
+- It is also the wrong thing to ship on its own terms: five analyses of one
+  corpus, most of which a newcomer does not need to see the app work.
 
 Cheaper options to price first: a trimmed demo database (one dataset, one
 20-topic analysis — likely tens of MB), or nothing binary at all. The corpus is
